@@ -13,336 +13,284 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.frontend.svlib
 
-package hu.bme.mit.theta.frontend.svlib;
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.frontend.svlib.SvLibUtils.metadata
+import hu.bme.mit.theta.frontend.svlib.SvLibUtils.nextLoc
+import hu.bme.mit.theta.frontend.svlib.SvLibUtils.sortOf
+import hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
-import hu.bme.mit.theta.xcfa.model.*;
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
+class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager)
+  : SvLibBaseVisitor<Unit>() {
 
-import java.util.*;
+  private val globalVars: MutableMap<String, VarDecl<*>> = LinkedHashMap()
+  private var entryProcedureName: String? = null
 
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.frontend.svlib.SvLibUtils.*;
-import static hu.bme.mit.theta.xcfa.utils.UtilsKt.AssignStmtLabel;
+  private var entryProcedure: XcfaProcedureBuilder? = null
 
+  private var entryArguments = mutableListOf<TermContext>()
 
-public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
+  var generateWitness: Boolean = false
+    private set
 
-  private final ProcedurePassManager procedurePassManager;
+  private val postconditions: MutableList<RelationalTermContext> = ArrayList()
+  private val checkTrueByTag: MutableMap<String, MutableList<RelationalTermContext>> = LinkedHashMap()
 
-  private final LinkedHashMap<String, VarDecl<?>> declarations = new LinkedHashMap<>();
-  private String entryProcedureName;
+  private var procedureCount = 0
 
-  private XcfaProcedureBuilder entryProcedure;
+  fun buildXcfa(parser: SvLibParser): XCFA {
+    val script = parser.script()
 
-  private List<SvLibParser.TermContext> entryArguments = List.of();
+    collectGlobalsAndEntry(script)
 
-  private boolean generateWitness = false;
+    val xcfaBuilder = XcfaBuilder("SvLibMain")
 
-  private final List<SvLibParser.RelationalTermContext> postconditions = new ArrayList<>();
-  private final Map<String, List<SvLibParser.RelationalTermContext>> checkTrueByTag =
-      new LinkedHashMap<>();
-
-  private int procedureCount;
-
-  private int locCounter;
-
-  SvLibXcfaBuilder(ProcedurePassManager procedurePassManager) {
-    this.procedurePassManager = procedurePassManager;
-  }
-
-  XCFA buildXcfa(SvLibParser.ScriptContext script) {
-    collectGlobalsAndEntry(script);
-    XcfaBuilder xcfaBuilder = new XcfaBuilder("SvLibXCFA");
-    for (VarDecl<?> declaration : declarations.values()) {
-      xcfaBuilder.addVar(new XcfaGlobalVar(declaration));
+    for (declaration in globalVars.values) {
+      xcfaBuilder.addVar(XcfaGlobalVar(declaration))
     }
-    visit(script);
-    if (entryProcedure == null) {
-      throw new IllegalStateException("SV-LIB input does not define a procedure");
-    }
-    xcfaBuilder.addEntryPoint(entryProcedure, Collections.emptyList());
-    return xcfaBuilder.build();
+
+    visit(script)
+
+    checkNotNull(entryProcedure) { "SV-LIB input does not define a procedure" }
+
+    xcfaBuilder.addEntryPoint(entryProcedure!!, mutableListOf())
+
+    return xcfaBuilder.build()
   }
 
-  boolean getGenerateWitness() {
-    return generateWitness;
-  }
-
-  private void collectGlobalsAndEntry(SvLibParser.ScriptContext script) {
-    for (SvLibParser.CommandSvLibContext command : script.commandSvLib()) {
-      if (command instanceof SvLibParser.DeclareVarContext declareVarContext) {
-        String name = declareVarContext.symbol().getText();
-        VarDecl<?> declaration = Var(name, sortOf(declareVarContext.sort()));
-        declarations.put(name, declaration);
-        SvLibUtils.registerVar(declaration, true);
-      } else if (command instanceof SvLibParser.SMTLIBv2CommandContext smtlibCommandContext
-          && smtlibCommandContext.command()
-          instanceof SvLibParser.DeclareConstCommandContext declareConstCommandContext) {
-        String name = declareConstCommandContext.cmd_declareConst().symbol().getText();
-        VarDecl<?> declaration =
-            Var(name, sortOf(declareConstCommandContext.cmd_declareConst().sort()));
-        declarations.put(name, declaration);
-        SvLibUtils.registerVar(declaration, true);
-      } else if (command instanceof SvLibParser.DefineProcContext) {
-        procedureCount++;
-      } else if (command instanceof SvLibParser.VerifyCallContext verifyCallContext) {
-        entryProcedureName = verifyCallContext.symbol().getText();
-        entryArguments = List.copyOf(verifyCallContext.term());
-      } else if (command instanceof SvLibParser.AnnotateTagContext annotateTagContext) {
-        collectAnnotateTagProperties(annotateTagContext.annotateTagCommand());
-      } else if (command instanceof SvLibParser.GetWitnessContext) {
-        generateWitness = true;
+  private fun collectGlobalsAndEntry(script: ScriptContext) {
+    for (command in script.commandSvLib()) {
+      when (command) {
+        is DeclareVarContext -> {
+          val name = command.symbol().text
+          val declaration = Decls.Var(name, sortOf(command.sort()))
+          globalVars[name] = declaration
+          SvLibUtils.registerVar(declaration, true)
+        }
+        is SMTLIBv2CommandContext if command.command() is DeclareConstCommandContext -> {
+          val cmd = command.command() as DeclareConstCommandContext
+          val name = cmd.cmd_declareConst().symbol().text
+          val declaration = Decls.Var(name, sortOf(cmd.cmd_declareConst().sort()))
+          globalVars[name] = declaration
+          SvLibUtils.registerVar(declaration, true)
+        }
+        is DefineProcContext -> {
+          procedureCount++
+        }
+        is VerifyCallContext -> {
+          entryProcedureName = command.symbol().text
+          entryArguments = command.term().toMutableList()
+        }
+        is AnnotateTagContext -> {
+          collectAnnotateTagProperties(command.annotateTagCommand())
+        }
+        is GetWitnessContext -> {
+          generateWitness = true
+        }
       }
     }
     if (procedureCount > 1) {
-      throw new UnsupportedOperationException(
-          "Current SV-LIB prototype supports exactly one procedure");
+      throw UnsupportedOperationException(
+        "Multiple procedures are not supported"
+      )
     }
   }
 
-  private void collectAnnotateTagProperties(SvLibParser.AnnotateTagCommandContext ctx) {
-    String tag = ctx.symbol().getText();
-    for (SvLibParser.AttributeSvLibContext attribute : ctx.attributeSvLib()) {
-      if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
-          && tagPropertyContext.property()
-          instanceof SvLibParser.EnsuresPropertyContext ensuresPropertyContext) {
-        postconditions.add(ensuresPropertyContext.relationalTerm());
-      } else if (attribute instanceof SvLibParser.TagPropertyContext tagPropertyContext
-          && tagPropertyContext.property()
-          instanceof SvLibParser.CheckTruePropertyContext checkTruePropertyContext) {
-        checkTrueByTag
-            .computeIfAbsent(tag, unused -> new ArrayList<>())
-            .add(checkTruePropertyContext.relationalTerm());
+  private fun collectAnnotateTagProperties(ctx: AnnotateTagCommandContext) {
+    val tag = ctx.symbol().text
+
+    for (attribute in ctx.attributeSvLib()) {
+      if (attribute is TagPropertyContext && attribute.property() is EnsuresPropertyContext) {
+        postconditions.add((attribute.property() as EnsuresPropertyContext).relationalTerm())
+      } else if (attribute is TagPropertyContext && attribute.property() is CheckTruePropertyContext) {
+        checkTrueByTag.getOrPut(tag) { mutableListOf() }
+          .add((attribute.property() as CheckTruePropertyContext).relationalTerm())
       }
     }
   }
 
-  //Extract the parameter names and types from the ctx,
-  // and then add them to the current procedure as either input or output parameters.
-  private void addParams(
-      XcfaProcedureBuilder procedure,
-      SvLibParser.ProcDeclarationArgumentsContext ctx,
-      ParamDirection direction) {
-    List<SvLibParser.SymbolContext> symbols = ctx.symbol();
-    List<SvLibParser.SortContext> sorts = ctx.sort();
-    for (int i = 0; i < symbols.size(); i++) {
-      String name = symbols.get(i).getText();
-      VarDecl<?> param = Var(name, sortOf(sorts.get(i)));
-      procedure.addParam(param, direction);
-      SvLibUtils.registerVar(param, false);
-    }
-
-  }
-
-  private void addLocals(
-      XcfaProcedureBuilder procedure, SvLibParser.ProcDeclarationArgumentsContext ctx) {
-    List<SvLibParser.SymbolContext> symbols = ctx.symbol();
-    List<SvLibParser.SortContext> sorts = ctx.sort();
-    for (int i = 0; i < symbols.size(); i++) {
-      String name = symbols.get(i).getText();
-      VarDecl<?> local = Var(name, sortOf(sorts.get(i)));
-      procedure.addVar(local);
-      SvLibUtils.registerVar(local, false);
+  private fun addParams(
+    procedure: XcfaProcedureBuilder,
+    ctx: ProcDeclarationArgumentsContext,
+    direction: ParamDirection
+  ) {
+    val symbols = ctx.symbol()
+    val sorts = ctx.sort()
+    symbols.zip(sorts).forEach { (symbol, sort) ->
+      val name = symbol.text
+      val param = Decls.Var(name, sortOf(sort))
+      procedure.addParam(param, direction)
+      SvLibUtils.registerVar(param, false)
     }
   }
 
-  private SvLibMetadata metadata(String sourceName) {
-    return new SvLibMetadata(sourceName);
-  }
-
-  private SvLibMetadata tagMetadata(String tag) {
-    return new SvLibMetadata(tag, tag);
-  }
-
-  private XcfaLocation nextLoc(String sourceName) {
-    return nextLoc(sourceName, false);
-  }
-
-  private XcfaLocation nextLoc(String sourceName, boolean tag) {
-    return new XcfaLocation("l" + locCounter++, tag ? tagMetadata(sourceName) : metadata(sourceName));
-  }
-
-  @Override
-  public Void visitDefineProc(SvLibParser.DefineProcContext ctx) {
-    String name = ctx.symbol().getText();
-    if (entryProcedureName != null && !entryProcedureName.equals(name)) {
-      return null;
+  private fun addLocals(procedure: XcfaProcedureBuilder, ctx: ProcDeclarationArgumentsContext) {
+    val symbols = ctx.symbol()
+    val sorts = ctx.sort()
+    symbols.zip(sorts).forEach { (symbol, sort) ->
+      val name = symbol.text
+      val local = Decls.Var(name, sortOf(sort))
+      procedure.addVar(local)
+      SvLibUtils.registerVar(local, false)
     }
-    if (entryProcedure != null) {
-      return null;
-    }
-    XcfaProcedureBuilder procedure = new XcfaProcedureBuilder(name, procedurePassManager);
-    SvLibUtils.resetSymbolTable();
-    addParams(procedure, ctx.procDeclarationArguments(0), ParamDirection.IN);
-    addParams(procedure, ctx.procDeclarationArguments(1), ParamDirection.OUT);
-    addLocals(procedure, ctx.procDeclarationArguments(2));
+  }
 
+  override fun visitDefineProc(ctx: DefineProcContext) {
+    val name = ctx.symbol().text
+    if (entryProcedureName != null && entryProcedureName != name || entryProcedure != null) return
 
-    procedure.createInitLoc();
-    procedure.createFinalLoc();
-    procedure.createErrorLoc();
+    val procedure = XcfaProcedureBuilder(name, procedurePassManager)
 
-    List<XcfaLabel> entryLabels = new ArrayList<>();
-    if (Objects.equals(entryProcedureName, name)) {
-      List<VarDecl<?>> inputVars = new ArrayList<>();
-      for (kotlin.Pair<VarDecl<?>, ParamDirection> param : procedure.getParams()) {
-        if (param.getSecond() == ParamDirection.IN) {
-          inputVars.add(param.getFirst());
+    SvLibUtils.resetSymbolTable()
+
+    addParams(procedure, ctx.procDeclarationArguments(0), ParamDirection.IN)
+    addParams(procedure, ctx.procDeclarationArguments(1), ParamDirection.OUT)
+    addLocals(procedure, ctx.procDeclarationArguments(2))
+
+    procedure.createInitLoc()
+    procedure.createFinalLoc()
+    procedure.createErrorLoc()
+
+    val entryLabels = mutableListOf<XcfaLabel>()
+    if (entryProcedureName == name) {
+      val inputVars = mutableListOf<VarDecl<*>>()
+
+      for (param in procedure.getParams()) {
+        if (param.second == ParamDirection.IN) {
+          inputVars.add(param.first)
         }
       }
-      for (int i = 0; i < Math.min(entryArguments.size(), inputVars.size()); i++) {
+
+      entryArguments.zip(inputVars).forEach { (arg, param) ->
         entryLabels.add(
-            AssignStmtLabel(
-                inputVars.get(i),
-                expr(entryArguments.get(i), inputVars.get(i).getType(), procedure, declarations),
-                metadata(inputVars.get(i).getName())));
+          AssignStmtLabel(
+            param,
+            SvLibUtils.expr(arg, param.getType(), procedure, globalVars),
+            metadata(param.name)
+          )
+        )
       }
     }
 
-    XcfaLocation start = addLabels(procedure, procedure.getInitLoc(), entryLabels);
-    SvLibStatementVisitor statementVisitor =
-        new SvLibStatementVisitor(procedure, declarations, this::nextLoc);
-    XcfaLocation exit = statementVisitor.visit(ctx.statement(), start);
+    val start = addLabels(procedure, procedure.initLoc, entryLabels)
+    val statementVisitor = SvLibStatementVisitor(procedure, globalVars)
+    val exit = statementVisitor.visit(ctx.statement(), start)
 
-    applyTaggedCheckTrueProperties(procedure);
-    checkTrueByTag.clear();
+    applyTaggedCheckTrueProperties(procedure)
+    checkTrueByTag.clear()
 
-    if (!statementVisitor.isTerminal(exit)) {
-      addExitEdges(procedure, exit);
-    }
-    this.entryProcedure = procedure;
+    if (!statementVisitor.isTerminal(exit))
+      addExitEdges(procedure, exit)
 
-    return null;
+    this.entryProcedure = procedure
   }
 
-  @Override
-  public Void visitSelectTrace(SvLibParser.SelectTraceContext ctx) {
-    return unsupported("command 'select-trace'");
-  }
+  override fun visitSelectTrace(ctx: SelectTraceContext) = unsupported("command 'select-trace'")
 
-  private void applyTaggedCheckTrueProperties(XcfaProcedureBuilder procedure) {
-    if (checkTrueByTag.isEmpty()) {
-      return;
-    }
+  private fun applyTaggedCheckTrueProperties(procedure: XcfaProcedureBuilder) {
+    if (checkTrueByTag.isEmpty()) return
 
-    for (XcfaLocation location : new ArrayList<>(procedure.getLocs())) {
-      if (!(location.getMetadata() instanceof SvLibMetadata metadata) || !metadata.isTag()) {
-        continue;
-      }
+    for (location in procedure.getLocs().toMutableList()) {
+      if (location.metadata !is SvLibMetadata || !(location.metadata as SvLibMetadata).isTag()) continue
 
-      List<SvLibParser.RelationalTermContext> checkTrueTerms =
-          checkTrueByTag.get(metadata.getTag());
-      if (checkTrueTerms == null || checkTrueTerms.isEmpty()) {
-        continue;
-      }
+      val checkTrueTerms = checkTrueByTag[(location.metadata as SvLibMetadata).tag]
+      if (checkTrueTerms.isNullOrEmpty()) continue
 
-      insertChecksBeforeOutgoingEdges(procedure, location, checkTrueTerms);
+      insertChecksBeforeOutgoingEdges(procedure, location, checkTrueTerms)
     }
   }
 
-  private void insertChecksBeforeOutgoingEdges(
-      XcfaProcedureBuilder procedure,
-      XcfaLocation source,
-      List<SvLibParser.RelationalTermContext> checkTrueTerms) {
-    List<XcfaEdge> originalOutgoingEdges = new ArrayList<>(source.getOutgoingEdges());
+  private fun insertChecksBeforeOutgoingEdges(
+    procedure: XcfaProcedureBuilder,
+    source: XcfaLocation,
+    checkTrueTerms: List<RelationalTermContext>
+  ) {
+    val originalOutgoingEdges = source.outgoingEdges.toMutableList()
 
-    XcfaLocation checkedSource = source;
-    for (SvLibParser.RelationalTermContext checkTrueTerm : checkTrueTerms) {
-      Expr<BoolType> condition = relationalBoolExpr(checkTrueTerm, procedure, declarations);
-      XcfaLocation nextCheckedSource = nextLoc("check-true");
+    var checkedSource = source
+    for (checkTrueTerm in checkTrueTerms) {
+      val condition = SvLibUtils.relationalBoolExpr(checkTrueTerm, procedure, globalVars)
+      val nextCheckedSource = nextLoc("check-true")
 
       procedure.addEdge(
-          new XcfaEdge(
-              checkedSource,
-              procedure.getErrorLoc().get(),
-              new StmtLabel(AssumeStmt.of(Not(condition))),
-              EmptyMetaData.INSTANCE));
+        XcfaEdge(
+          checkedSource,
+          procedure.errorLoc.get(),
+          StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
+          EmptyMetaData
+        )
+      )
       procedure.addEdge(
-          new XcfaEdge(
-              checkedSource,
-              nextCheckedSource,
-              new StmtLabel(AssumeStmt.of(condition)),
-              EmptyMetaData.INSTANCE));
+        XcfaEdge(
+          checkedSource,
+          nextCheckedSource,
+          StmtLabel(AssumeStmt.of(condition)),
+          EmptyMetaData
+        )
+      )
 
-      checkedSource = nextCheckedSource;
+      checkedSource = nextCheckedSource
     }
 
-    for (XcfaEdge outgoingEdge : originalOutgoingEdges) {
-      procedure.removeEdge(outgoingEdge);
-      procedure.addEdge(outgoingEdge.withSource(checkedSource));
+    for (outgoingEdge in originalOutgoingEdges) {
+      procedure.removeEdge(outgoingEdge)
+      procedure.addEdge(outgoingEdge.withSource(checkedSource))
     }
   }
 
-  private void addExitEdges(XcfaProcedureBuilder procedure, XcfaLocation exit) {
-    XcfaLocation finalSource = exit;
+  private fun addExitEdges(procedure: XcfaProcedureBuilder, exit: XcfaLocation) {
+    var finalSource = exit
 
-    for (SvLibParser.RelationalTermContext postcondition : postconditions) {
-      Expr<BoolType> condition = relationalBoolExpr(postcondition, procedure, declarations);
+    for (postcondition in postconditions) {
+      val condition = SvLibUtils.relationalBoolExpr(postcondition, procedure, globalVars)
 
       procedure.addEdge(
-          new XcfaEdge(
-              finalSource,
-              procedure.getErrorLoc().get(),
-              new StmtLabel(AssumeStmt.of(Not(condition))),
-              EmptyMetaData.INSTANCE));
+        XcfaEdge(
+          finalSource,
+          procedure.errorLoc.get(),
+          StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
+          EmptyMetaData
+        )
+      )
 
       finalSource =
-          addLabels(
-              procedure,
-              finalSource,
-              List.of(new StmtLabel(AssumeStmt.of(condition))));
+        addLabels(
+          procedure,
+          finalSource,
+          listOf(StmtLabel(AssumeStmt.of(condition)))
+        )
     }
 
     procedure.addEdge(
-        new XcfaEdge(
-            finalSource,
-            procedure.getFinalLoc().get(),
-            NopLabel.INSTANCE,
-            EmptyMetaData.INSTANCE));
+      XcfaEdge(
+        finalSource,
+        procedure.finalLoc.get(),
+        NopLabel,
+        EmptyMetaData
+      )
+    )
   }
 
-  private XcfaLocation addLabels(
-      XcfaProcedureBuilder builder, XcfaLocation from, List<XcfaLabel> labels) {
-    if (labels.isEmpty()) {
-      return from;
-    }
-    XcfaLocation to = nextLoc("sequence");
-    XcfaLabel label = labels.size() == 1 ? labels.get(0) : new SequenceLabel(labels);
-    builder.addEdge(new XcfaEdge(from, to, label, EmptyMetaData.INSTANCE));
-    return to;
+  private fun addLabels(
+    builder: XcfaProcedureBuilder, from: XcfaLocation, labels: List<XcfaLabel>
+  ): XcfaLocation {
+    if (labels.isEmpty()) return from
+
+    val to = nextLoc("sequence")
+    val label = if (labels.size == 1) labels[0] else SequenceLabel(labels)
+
+    builder.addEdge(XcfaEdge(from, to, label, EmptyMetaData))
+
+    return to
   }
-
-  private static Type sortOf(SvLibParser.SortContext sort) {
-    if (sort instanceof SvLibParser.SimpleSortContext simpleSort) {
-      return switch (simpleSort.identifier().getText()) {
-        case "Int" -> Int();
-        case "Bool" -> Bool();
-        default -> unsupported("sort '" + sort.getText() + "'");
-      };
-    } else if (sort instanceof SvLibParser.ParametricSortContext parametricSort) {
-      return switch (parametricSort.identifier().getText()) {
-        case "Array" -> {
-          Type indexType = sortOf(parametricSort.sort(0));
-          Type elementType = sortOf(parametricSort.sort(1));
-          yield Array(indexType, elementType);
-        }
-        default -> unsupported("sort '" + sort.getText() + "'");
-      };
-    }
-    return unsupported("sort '" + sort.getText() + "'");
-  }
-
-
 }

@@ -13,237 +13,164 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.xcfa.cli.utils
 
-package hu.bme.mit.theta.xcfa.cli.utils;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.ConstDecl
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.svlib.SvLibMetadata
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
+import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import java.io.File
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
+class SvLibWitnessWriter : XcfaWitnessWriter {
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.svlib.SvLibMetadata;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
-import hu.bme.mit.theta.xcfa.XcfaProperty;
-import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants;
-import hu.bme.mit.theta.xcfa.model.XcfaLocation;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+  override val extension = "svlib"
 
-public final class SvLibWitnessWriter implements XcfaWitnessWriter {
+  override fun writeWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    cexSolverFactory: SolverFactory,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureType?,
+    logger: Logger
+  ) {
+    if (safetyResult.isSafe() && (safetyResult.proof is LocationInvariants)) {
+      witnessfile.writeText(toSvLibCorrectnessWitness(safetyResult.proof as LocationInvariants))
+    }
+  }
 
-    @Override
-    public @NotNull String getExtension() {
-        return "svlib";
+  override fun writeTrivialCorrectnessWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    witnessfile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureType?
+  ) {
+    witnessfile.writeText(emptyWitness())
+  }
+
+  override fun generateEmptyViolationWitness(
+    inputFile: File,
+    ltlSpecification: String,
+    architecture: ArchitectureType?
+  ): String {
+    throw UnsupportedOperationException("SV-LIB violation witnesses are not supported")
+  }
+
+  private fun toSvLibCorrectnessWitness(proof: LocationInvariants): String {
+    val invariantsByTag: Map<String, Expr<BoolType>> = locationInvariantsByTag(proof)
+    if (invariantsByTag.isEmpty()) {
+      return emptyWitness()
     }
 
-    @Override
-    public void writeWitness(
-            @NotNull final SafetyResult<?, ?> safetyResult,
-            @NotNull final File inputFile,
-            @NotNull final XcfaProperty property,
-            @NotNull final SolverFactory cexSolverFactory,
-            @NotNull final ParseContext parseContext,
-            @NotNull final File witnessfile,
-            @NotNull final String ltlSpecification,
-            @Nullable final ArchitectureConfig.ArchitectureType architecture,
-            @NotNull final Logger logger) {
-        if (safetyResult.isSafe() && safetyResult.getProof() instanceof LocationInvariants proof) {
-            writeString(witnessfile, toSvLibCorrectnessWitness(proof));
-        }
+    val transformer = SvLibTermTransformer(invariantsByTag.values)
+    val annotations = invariantsByTag.map { (tag, invariant) ->
+      """
+      (annotate-tag
+        ${GenericSmtLibSymbolTable.encodeSymbol(tag)}
+        :invariant
+      ${transformer.toTerm(invariant).indent()}
+      )
+      """.trimIndent()
     }
 
-    @Override
-    public void writeTrivialCorrectnessWitness(
-            @NotNull final SafetyResult<?, ?> safetyResult,
-            @NotNull final File inputFile,
-            @NotNull final XcfaProperty property,
-            @NotNull final ParseContext parseContext,
-            @NotNull final File witnessfile,
-            @NotNull final String ltlSpecification,
-            @Nullable final ArchitectureConfig.ArchitectureType architecture) {
-        // No SV-LIB annotation can be emitted without location invariants and tagged locations.
+    return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"
+  }
+
+  private fun locationInvariantsByTag(proof: LocationInvariants): Map<String, Expr<BoolType>> {
+    val invariantsByTag: MutableMap<String, MutableList<Expr<BoolType>>> = LinkedHashMap()
+
+    for ((location, states) in proof.getPartitions()) {
+      val tag = svLibTag(location)
+      if (tag == null || states.isEmpty()) continue
+
+      val invariant = ExprUtils.simplify(BoolExprs.Or(states.map(ExprState::getInvariant)))
+      invariantsByTag.getOrPut(tag) { mutableListOf() }.add(invariant)
     }
 
-    @Override
-    public @NotNull String generateEmptyViolationWitness(
-            @NotNull final File inputFile,
-            @NotNull final String ltlSpecification,
-            @Nullable final ArchitectureConfig.ArchitectureType architecture) {
-        throw new UnsupportedOperationException("SV-LIB violation witnesses are not supported");
+    return invariantsByTag.mapValues { (_, invariants) ->
+      ExprUtils.simplify(BoolExprs.Or(invariants))
     }
+  }
 
-    private static String toSvLibCorrectnessWitness(final LocationInvariants proof) {
-        final Map<String, Expr<BoolType>> invariantsByTag = locationInvariantsByTag(proof);
-        if (invariantsByTag.isEmpty()) {
-            return emptyWitness();
-        }
+  private fun svLibTag(location: XcfaLocation) = (location.metadata as? SvLibMetadata)?.tag
 
-        final SvLibTermTransformer transformer =
-                new SvLibTermTransformer(invariantsByTag.values());
-        final String annotations =
-                new TreeMap<>(invariantsByTag).entrySet().stream()
-                        .map(
-                                entry ->
-                                        "(annotate-tag\n"
-                                                + "    "
-                                                + encodeSymbol(entry.getKey())
-                                                + "\n"
-                                                + "    :invariant\n"
-                                                + indent(transformer.toTerm(entry.getValue()), 8)
-                                                + ")")
-                        .collect(Collectors.joining("\n\n"));
+  private fun String.indent(spaces: Int = 4)
+    = this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }
 
-        return "(" + annotations + ")\n";
+
+  private fun emptyWitness() = "()\n"
+}
+
+private class SvLibTermTransformer(expressions: Collection<Expr<BoolType>>) {
+  private val symbolTable = GenericSmtLibSymbolTable()
+  private val transformationManager = GenericSmtLibTransformationManager(symbolTable)
+  private val variableConstants: MutableMap<VarDecl<*>, ConstDecl<*>> = LinkedHashMap()
+
+  init {
+    expressions.forEach { expr -> this.registerVariables(expr) }
+  }
+
+  fun toTerm(expr: Expr<BoolType>): String {
+    registerVariables(expr)
+    val printableExpr = ExprUtils.changeDecls(expr, variableConstants)
+    return transformationManager.toTerm(printableExpr)
+  }
+
+  fun registerVariables(expr: Expr<*>) {
+    for (varDecl in ExprUtils.getVars(expr)) {
+      if (variableConstants.containsKey(varDecl)) continue
+
+      val constDecl = Decls.Const(varDecl.name, varDecl.type)
+      transformConst(constDecl)
+      variableConstants.putIfAbsent(varDecl, constDecl)
     }
+  }
 
-    private static Map<String, Expr<BoolType>> locationInvariantsByTag(
-            final LocationInvariants proof) {
-        final Map<String, List<Expr<BoolType>>> invariants = new LinkedHashMap<>();
+  private fun transformConst(decl: ConstDecl<*>) {
+    val (paramTypes, returnType) = extractTypes(decl.type)
 
-        for (final Map.Entry<XcfaLocation, Collection<ExprState>> entry :
-                proof.getPartitions().entrySet()) {
-            final String tag = svLibTag(entry.getKey());
-            if (tag == null || entry.getValue().isEmpty()) {
-                continue;
-            }
-            invariants.computeIfAbsent(tag, unused -> new ArrayList<>())
-                    .add(ExprUtils.simplify(Or(entry.getValue().stream()
-                            .map(ExprState::getInvariant)
-                            .collect(Collectors.toList()))));
-        }
+    val returnSort = transformationManager.toSort(returnType)
+    val paramSorts = paramTypes.map(transformationManager::toSort)
 
-        return simplifyByTag(invariants);
+    val symbolName = GenericSmtLibSymbolTable.encodeSymbol(decl.name)
+    val symbolDeclaration = "(declare-fun $symbolName (${paramSorts.joinToString(" ")}) $returnSort)"
+    symbolTable.put(decl, symbolName, symbolDeclaration)
+  }
+
+  private fun extractTypes(type: Type): Pair<List<Type>, Type> {
+    if (type is FuncType<*, *>) {
+      val paramType = type.getParamType()
+      val resultType = type.getResultType()
+
+      check(paramType !is FuncType<*, *>)
+
+      val (paramTypes, newResultType) = extractTypes(resultType)
+      val newParamTypes = listOf(paramType) + paramTypes
+      return Pair(newParamTypes, newResultType)
+    } else {
+      return Pair(emptyList(), type)
     }
-
-    private static Map<String, Expr<BoolType>> simplifyByTag(
-            final Map<String, List<Expr<BoolType>>> invariants) {
-        return invariants.entrySet().stream()
-                .collect(
-                        Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> ExprUtils.simplify(Or(entry.getValue())),
-                                (left, right) -> left,
-                                LinkedHashMap::new));
-    }
-
-    private static String svLibTag(@Nullable final XcfaLocation location) {
-        if (location != null
-                && location.getMetadata() instanceof SvLibMetadata metadata
-                && metadata.isTag()) {
-            return metadata.getTag();
-        }
-        return null;
-    }
-
-    private static String indent(final String text, final int spaces) {
-        final String prefix = " ".repeat(spaces);
-        return text.lines().map(line -> prefix + line).collect(Collectors.joining("\n")) + "\n";
-    }
-
-    private static String emptyWitness() {
-        return "()\n";
-    }
-
-    private static void writeString(final File file, final String content) {
-        try {
-            Files.writeString(file.toPath(), content);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static final class SvLibTermTransformer {
-        private final GenericSmtLibSymbolTable symbolTable = new GenericSmtLibSymbolTable();
-        private final GenericSmtLibTransformationManager transformationManager =
-                new GenericSmtLibTransformationManager(symbolTable);
-        private final Map<VarDecl<?>, ConstDecl<?>> variableConstants = new LinkedHashMap<>();
-
-        private SvLibTermTransformer(final Collection<Expr<BoolType>> expressions) {
-            expressions.forEach(this::registerVariables);
-        }
-
-        private String toTerm(final Expr<BoolType> expr) {
-            registerVariables(expr);
-            final Expr<BoolType> printableExpr = ExprUtils.changeDecls(expr, variableConstants);
-            return transformationManager.toTerm(printableExpr);
-        }
-
-        private void registerVariables(final Expr<?> expr) {
-            for (final VarDecl<?> varDecl : ExprUtils.getVars(expr)) {
-                if (variableConstants.containsKey(varDecl))
-                  continue;
-                ConstDecl<?> constDecl = Decls.Const(varDecl.getName(), varDecl.getType());
-                transformConst(constDecl);
-                variableConstants.putIfAbsent(varDecl, constDecl);
-            }
-        }
-
-        private void transformConst(final ConstDecl<?> decl) {
-            final Type type = decl.getType();
-
-            final Tuple2<List<Type>, Type> extractedTypes = extractTypes(type);
-            final List<Type> paramTypes = extractedTypes.get1();
-            final Type returnType = extractedTypes.get2();
-
-            final String returnSort = transformationManager.toSort(returnType);
-            final String[] paramSorts =
-                paramTypes.stream().map(transformationManager::toSort).toArray(String[]::new);
-
-            final String symbolName = decl.getName();
-            final String symbolDeclaration =
-                String.format(
-                    "(declare-fun %s (%s) %s)",
-                    symbolName, String.join(" ", paramSorts), returnSort);
-            symbolTable.put(decl, symbolName, symbolDeclaration);
-        }
-
-        private Tuple2<List<Type>, Type> extractTypes(final Type type) {
-            if (type instanceof FuncType<?, ?>) {
-                final FuncType<?, ?> funcType = (FuncType<?, ?>) type;
-
-                final Type paramType = funcType.getParamType();
-                final Type resultType = funcType.getResultType();
-
-                checkArgument(!(paramType instanceof FuncType));
-
-                final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
-                final List<Type> paramTypes = subResult.get1();
-                final Type newResultType = subResult.get2();
-                final List<Type> newParamTypes =
-                    ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
-                final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
-
-                return result;
-            } else {
-                return Tuple2.of(ImmutableList.of(), type);
-            }
-        }
-    }
+  }
 }

@@ -13,46 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.frontend.svlib
 
-package hu.bme.mit.theta.frontend.svlib;
+import hu.bme.mit.theta.xcfa.model.MetaData
 
-import hu.bme.mit.theta.xcfa.model.MetaData;
-import org.jetbrains.annotations.NotNull;
+class SvLibMetadata(val sourceName: String, val tag: String? = null) : MetaData() {
 
-public class SvLibMetadata extends MetaData {
+  override fun combine(other: MetaData) =
+    if (isSubstantial() || !other.isSubstantial()) this else other
 
-  private final String sourceName;
-  private final String tag;
+  override fun isSubstantial() = isTag()
 
-  public SvLibMetadata(String sourceName) {
-    this(sourceName, null);
-  }
-
-  public SvLibMetadata(String sourceName, String tag) {
-    this.sourceName = sourceName;
-    this.tag = tag;
-  }
-
-  @Override
-  @NotNull
-  public MetaData combine(@NotNull MetaData other) {
-    return isTag() || !other.isSubstantial() ? this : other;
-  }
-
-  @Override
-  public boolean isSubstantial() {
-    return isTag();
-  }
-
-  public String getSourceName() {
-    return sourceName;
-  }
-
-  public String getTag() {
-    return tag;
-  }
-
-  public boolean isTag() {
-    return tag != null;
-  }
+  fun isTag() = tag != null
 }

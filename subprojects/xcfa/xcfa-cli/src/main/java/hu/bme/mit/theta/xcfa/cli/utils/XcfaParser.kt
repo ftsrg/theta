@@ -361,7 +361,7 @@ private fun parseChc(
 
 private fun parseSvLib(input: File, svLibOutputConfig: SvLibOutputConfig): XCFA {
   val frontend = SvLibFrontend()
-  val xcfa = frontend.buildXcfa(input)
+  val xcfa = frontend.buildXcfa(FileInputStream(input))
   svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
   return xcfa
 }

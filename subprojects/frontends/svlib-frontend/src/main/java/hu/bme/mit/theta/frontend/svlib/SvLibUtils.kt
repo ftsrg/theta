@@ -13,200 +13,179 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.frontend.svlib
 
-package hu.bme.mit.theta.frontend.svlib;
+import hu.bme.mit.theta.core.decl.ConstDecl
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.OldRelationalTermContext
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.RelationalTermContext
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.passes.changeVars
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.misc.Interval
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
-import static hu.bme.mit.theta.xcfa.passes.UtilsKt.changeVars;
+object SvLibUtils {
 
-import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
-import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
-import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
+  private var initialSymbolTable = GenericSmtLibSymbolTable()
+  private var symbolTable: GenericSmtLibSymbolTable? = null
+  private var typeTransformer: SmtLibTypeTransformer = GenericSmtLibTypeTransformer(null)
+  private var termTransformer: SmtLibTermTransformer = GenericSmtLibTermTransformer(initialSymbolTable)
+  private var charStream: CharStream? = null
 
-import java.util.*;
+  private var locCounter = 0
 
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
-
-final class SvLibUtils {
-
-  private static GenericSmtLibSymbolTable initialSymbolTable = new GenericSmtLibSymbolTable();
-  private static GenericSmtLibSymbolTable symbolTable;
-  private static SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
-  private static SmtLibTermTransformer termTransformer =
-      new GenericSmtLibTermTransformer(initialSymbolTable);
-  private static CharStream charStream;
-
-  private SvLibUtils() {}
-
-  static void init(CharStream cs) {
-    initialSymbolTable = new GenericSmtLibSymbolTable();
-    typeTransformer = new GenericSmtLibTypeTransformer(null);
-    termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
-    charStream = cs;
+  fun init(cs: CharStream) {
+    initialSymbolTable = GenericSmtLibSymbolTable()
+    typeTransformer = GenericSmtLibTypeTransformer(null)
+    termTransformer = GenericSmtLibTermTransformer(initialSymbolTable)
+    charStream = cs
   }
 
-  static void resetSymbolTable() {
-    symbolTable = new GenericSmtLibSymbolTable(initialSymbolTable);
-    termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+  fun resetSymbolTable() {
+    symbolTable = GenericSmtLibSymbolTable(initialSymbolTable)
+    termTransformer = GenericSmtLibTermTransformer(symbolTable)
   }
 
-  static void registerVar(VarDecl<?> var, boolean initial) {
-    transformConst(Decls.Const(var.getName(), var.getType()), initial);
+  fun registerVar(varDecl: VarDecl<*>, initial: Boolean) {
+    transformConst(Decls.Const(varDecl.name, varDecl.type), initial)
   }
 
-  static Expr<BoolType> boolExpr(
-      SvLibParser.TermContext term,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    return (Expr<BoolType>) expr(term, Bool(), procedure, declarations);
-  }
+  fun boolExpr(
+    term: SvLibParser.TermContext,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  ) = expr(term, BoolExprs.Bool(), procedure, declarations) as Expr<BoolType>
 
-  static Expr<IntType> intExpr(
-      SvLibParser.TermContext term,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    return (Expr<IntType>) expr(term, Int(), procedure, declarations);
-  }
+  fun intExpr(
+    term: SvLibParser.TermContext,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  ) = expr(term, IntExprs.Int(), procedure, declarations) as Expr<IntType>
 
-  static Expr<BoolType> relationalBoolExpr(
-      SvLibParser.RelationalTermContext term,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    return (Expr<BoolType>) relationalExpr(term, Bool(), procedure, declarations);
-  }
+  fun relationalBoolExpr(
+    term: RelationalTermContext,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  ) =  relationalExpr(term, BoolExprs.Bool(), procedure, declarations) as Expr<BoolType>
 
-  static Expr<?> relationalExpr(
-      SvLibParser.RelationalTermContext term,
-      Type expectedType,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    if (term instanceof SvLibParser.OldRelationalTermContext) {
-      return unsupported("relational term 'old'");
+  fun relationalExpr(
+    term: RelationalTermContext,
+    expectedType: Type,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  )
+  = if (term is OldRelationalTermContext) unsupported("relational term 'old'")
+    else parseAndReplace(getOriginalText(term), expectedType, procedure, declarations)
+
+  fun expr(
+    term: SvLibParser.TermContext,
+    expectedType: Type,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  ) = parseAndReplace(getOriginalText(term), expectedType, procedure, declarations)
+
+
+  private fun parseAndReplace(
+    text: String,
+    expectedType: Type,
+    procedure: XcfaProcedureBuilder,
+    declarations: Map<String, VarDecl<*>>
+  ): Expr<*> {
+    val expr = termTransformer.toExpr(text, expectedType, SmtLibModel(mapOf()))
+    val exprVars = ArrayList<ConstDecl<*>>()
+    ExprUtils.collectConstants(expr, exprVars)
+    val varsToLocal = HashMap<Decl<*>, VarDecl<*>>()
+
+    for (constDecl in exprVars) {
+      varsToLocal[constDecl] = resolveVar(constDecl.name, procedure, declarations)
     }
-    return parseAndReplace(getOriginalText(term), expectedType, procedure, declarations);
+
+    return expr.changeVars(varsToLocal)
   }
 
-  static Expr<?> expr(
-      SvLibParser.TermContext term,
-      Type expectedType,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    return parseAndReplace(getOriginalText(term), expectedType, procedure, declarations);
-  }
+  fun resolveVar(name: String, procedure: XcfaProcedureBuilder, declarations: Map<String, VarDecl<*>>)
+    = procedure.getVars().find { it.name == name }
+      ?: procedure.getParams().find { (param, _) -> param.name == name }?.first
+      ?: declarations[name]
+      ?: throw IllegalStateException("Unknown SV-LIB variable '$name'")
 
 
-  private static Expr<?> parseAndReplace(
-      String text,
-      Type expectedType,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    Expr<?> expr =
-        termTransformer.toExpr(text, expectedType, new SmtLibModel(Collections.emptyMap()));
-    var exprVars = new ArrayList<ConstDecl<?>>();
-    ExprUtils.collectConstants(expr, exprVars);
-    Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();
-    for (Decl<?> var : exprVars) {
-      varsToLocal.put(var, resolveVar(var.getName(), procedure, declarations));
-    }
-    return changeVars(expr, varsToLocal);
-  }
+  fun getOriginalText(ctx: ParserRuleContext): String
+    = charStream!!.getText(Interval(ctx.start.startIndex, ctx.stop.stopIndex))
 
-  static VarDecl<?> resolveVar(
-      String symbol,
-      XcfaProcedureBuilder procedure,
-      Map<String, VarDecl<?>> declarations) {
-    String name = symbol;
-    VarDecl<?> variable = null;
-    for (VarDecl<?> candidate : procedure.getVars()) {
-      if (candidate.getName().equals(name)) {
-        variable = candidate;
-        break;
+  fun metadata(sourceName: String) = SvLibMetadata(sourceName)
+
+  fun tagMetadata(tag: String) = SvLibMetadata(tag, tag)
+
+  fun nextLoc(sourceName: String, tag: Boolean = false)
+    = XcfaLocation("l" + locCounter++, metadata = if (tag) tagMetadata(sourceName) else metadata(sourceName))
+
+  fun sortOf(sort: SvLibParser.SortContext): Type =
+    when (sort) {
+      is SvLibParser.SimpleSortContext -> when (sort.identifier().text) {
+        "Int" -> IntExprs.Int()
+        "Bool" -> BoolExprs.Bool()
+        else -> unsupported("sort '${sort.text}'")
       }
-    }
-    if (variable == null) {
-      for (kotlin.Pair<VarDecl<?>, hu.bme.mit.theta.xcfa.model.ParamDirection> param :
-          procedure.getParams()) {
-        if (param.getFirst().getName().equals(name)) {
-          variable = param.getFirst();
-          break;
+      is SvLibParser.ParametricSortContext -> when (sort.identifier().text) {
+        "Array" -> {
+          val indexType: Type = sortOf(sort.sort(0))
+          val elementType: Type = sortOf(sort.sort(1))
+          ArrayExprs.Array(indexType, elementType)
         }
+
+        else -> unsupported("sort '${sort.text}'")
       }
+      else -> unsupported("sort '${sort.text}'")
     }
-    if (variable == null) {
-      variable = declarations.get(name);
-    }
-    if (variable == null) {
-      throw new IllegalStateException("Unknown SV-LIB variable '" + name + "'");
-    }
-    return variable;
+
+  private fun transformConst(decl: ConstDecl<*>, initial: Boolean) {
+    val (paramTypes, returnType) = extractTypes(decl.type)
+
+    val returnSort = typeTransformer.toSort(returnType)
+    val paramSorts = paramTypes.map(typeTransformer::toSort)
+
+    val symbolName = GenericSmtLibSymbolTable.encodeSymbol(decl.name)
+    val symbolDeclaration = "(declare-fun $symbolName (${paramSorts.joinToString(" ")}) $returnSort)"
+    (if (initial) initialSymbolTable else symbolTable)!!.put(decl, symbolName, symbolDeclaration)
   }
 
+  private fun extractTypes(type: Type): Pair<List<Type>, Type> {
+    if (type is FuncType<*, *>) {
+      val paramType = type.getParamType()
+      val resultType = type.getResultType()
 
-  static String getOriginalText(ParserRuleContext ctx) {
-    return charStream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
-  }
+      check(paramType !is FuncType<*, *>)
 
-  private static void transformConst(ConstDecl<?> decl, boolean initial) {
-    final Type type = decl.getType();
-
-    final Tuple2<List<Type>, Type> extractedTypes = extractTypes(type);
-    final List<Type> paramTypes = extractedTypes.get1();
-    final Type returnType = extractedTypes.get2();
-
-    final String returnSort = typeTransformer.toSort(returnType);
-    final String[] paramSorts =
-        paramTypes.stream().map(typeTransformer::toSort).toArray(String[]::new);
-
-    String symbolName = encodeSymbol(decl.getName());
-    String symbolDeclaration =
-        String.format(
-            "(declare-fun %s (%s) %s)",
-            symbolName, String.join(" ", paramSorts), returnSort);
-    (initial ? initialSymbolTable : symbolTable).put(decl, symbolName, symbolDeclaration);
-  }
-
-  private static Tuple2<List<Type>, Type> extractTypes(final Type type) {
-    if (type instanceof FuncType<?, ?> funcType) {
-      final Type paramType = funcType.getParamType();
-      final Type resultType = funcType.getResultType();
-
-      checkArgument(!(paramType instanceof FuncType));
-
-      final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
-      final List<Type> paramTypes = subResult.get1();
-      final Type newResultType = subResult.get2();
-      final List<Type> newParamTypes =
-          ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
-      return Tuple2.of(newParamTypes, newResultType);
+      val (paramTypes, newResultType) = extractTypes(resultType)
+      val newParamTypes = listOf(paramType) + paramTypes
+      return Pair(newParamTypes, newResultType)
     } else {
-      return Tuple2.of(ImmutableList.of(), type);
+      return Pair(emptyList(), type)
     }
   }
 
-  static <T> T unsupported(String what) {
-    throw new UnsupportedOperationException("Unsupported SV-LIB " + what);
-  }
+  fun unsupported(message: String): Nothing
+    = throw UnsupportedOperationException("Unsupported SV-LIB element: $message")
 }
 

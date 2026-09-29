@@ -13,63 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.frontend.svlib
 
-package hu.bme.mit.theta.frontend.svlib;
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import org.antlr.v4.runtime.BailErrorStrategy
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import java.io.FileInputStream
 
-import hu.bme.mit.theta.xcfa.model.XCFA;
-import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
-import org.antlr.v4.runtime.*;
+class SvLibFrontend(private val procedurePassManager: ProcedurePassManager = ProcedurePassManager()) {
 
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
+  var generateWitness: Boolean = false
+    private set
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+  fun buildXcfa(input: FileInputStream): XCFA {
+    val charStream: CharStream = CharStreams.fromStream(input)
+    SvLibUtils.init(charStream)
+    val parser = SvLibParser(CommonTokenStream(SvLibLexer(charStream)))
+      .apply { errorHandler = BailErrorStrategy() }
 
-import static java.util.Objects.requireNonNull;
+    val builder = SvLibXcfaBuilder(procedurePassManager)
+    val xcfa = builder.buildXcfa(parser)
+    generateWitness = builder.generateWitness
 
-public class SvLibFrontend {
-
-    private final ProcedurePassManager procedurePassManager;
-    private boolean generateWitness = false;
-
-    public SvLibFrontend() {
-        this(new ProcedurePassManager());
-    }
-
-    public SvLibFrontend(ProcedurePassManager procedurePassManager) {
-        this.procedurePassManager = requireNonNull(procedurePassManager);
-    }
-
-    public XCFA buildXcfa(File input) {
-        try {
-            return buildXcfa(Files.readString(input.toPath()));
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read SV-LIB input from " + input, e);
-        }
-    }
-
-    public XCFA buildXcfa(String source) {
-        SvLibParser parser = createParser(source);
-        SvLibParser.ScriptContext script = parser.script();
-        SvLibXcfaBuilder builder = new SvLibXcfaBuilder(procedurePassManager);
-        XCFA xcfa = builder.buildXcfa(script);
-        generateWitness = builder.getGenerateWitness();
-        return xcfa;
-    }
-
-    public boolean getGenerateWitness() {
-        return generateWitness;
-    }
-
-    private SvLibParser createParser(String source) {
-        CharStream charStream = CharStreams.fromString(source);
-        SvLibUtils.init(charStream);
-        SvLibLexer lexer = new SvLibLexer(charStream);
-        SvLibParser parser = new SvLibParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-        return parser;
-    }
-
+    return xcfa
+  }
 }

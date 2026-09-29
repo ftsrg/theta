@@ -1,241 +1,183 @@
+package hu.bme.mit.theta.frontend.svlib
 
-package hu.bme.mit.theta.frontend.svlib;
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import java.io.FileInputStream
+import java.nio.file.Path
 
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
-import hu.bme.mit.theta.xcfa.model.SequenceLabel;
-import hu.bme.mit.theta.xcfa.model.StmtLabel;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.junit.jupiter.api.Test;
+internal class SvLibFrontendTest {
 
-import java.nio.file.Path;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-class SvLibFrontendTest {
   @Test
-  void testParsing() {
-    String source = """
+  fun testParsing() {
+    val source = """
         (define-proc foo
           ((x Int))
           ((y Int))
           ((tmp Int))
           (sequence)
         )
-        """;
+        
+        """.trimIndent()
 
-    SvLibParser parser = new SvLibParser(
-        new CommonTokenStream(
-            new SvLibLexer(CharStreams.fromString(source))
-        )
-    );
-
-    SvLibParser.ScriptContext tree =
-        assertDoesNotThrow(parser::script);
-
-    System.out.println(tree.toStringTree(parser));
-
-    assertNotNull(tree);
+    val parser = SvLibParser(CommonTokenStream(SvLibLexer(CharStreams.fromString(source))))
+    val tree = parser.script()
+    assertNotNull(tree)
   }
 
   @Test
-  void safeIfVerificationExampleIsTranslatedToXCFA() {
-    var xcfa = parseResource("if-simple-safe.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
+  fun safeIfVerificationExampleIsTranslatedToXCFA() {
+    val xcfa: XCFA = parseResource("if-simple-safe.svlib")
+    val procedure = xcfa.procedures.first()
 
-    assertFalse(procedure.getLocs().isEmpty());
-    assertTrue(procedure.getFinalLoc().isPresent());
+    assertTrue(procedure.locs.isNotEmpty())
+    assertTrue(procedure.finalLoc.isPresent)
   }
 
   @Test
-  void safeIfVerificationExampleCreatesBranchingLocation() {
-    var xcfa = parseResource("if-simple-safe.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
+  fun safeIfVerificationExampleCreatesBranchingLocation() {
+    val xcfa: XCFA = parseResource("if-simple-safe.svlib")
+    val procedure = xcfa.procedures.first()
 
-    var branchingLocCount =
-        procedure.getEdges().stream()
-            .collect(
-                java.util.stream.Collectors.groupingBy(
-                    edge -> edge.getSource(),
-                    java.util.stream.Collectors.counting()))
-            .values()
-            .stream()
-            .filter(count -> count >= 2)
-            .count();
+    val branchingLocCount = procedure.edges
+      .groupBy(XcfaEdge::source)
+      .count { (_, edges) -> edges.size >= 2 }
 
     assertTrue(
-        branchingLocCount >= 2,
-        "Expected if and check-true translations to create branching locations");
+      branchingLocCount >= 2,
+      "Expected if and check-true translations to create branching locations"
+    )
   }
 
   @Test
-  void unsafeIfVerificationExampleCreatesErrorLocation() {
-    var xcfa = parseResource("if-simple-unsafe.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
+  fun unsafeIfVerificationExampleCreatesErrorLocation() {
+    val xcfa: XCFA = parseResource("if-simple-unsafe.svlib")
+    val procedure = xcfa.procedures.first()
 
-    assertTrue(procedure.getErrorLoc().isPresent());
-    assertTrue(procedure.getEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
+    assertTrue(procedure.errorLoc.isPresent)
+    assertTrue(procedure.edges.any { it.target.error })
   }
 
   @Test
-  void checkTrueCreatesNormalAndErrorBranches() {
-    var xcfa = parseResource("check-true-middle.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
+  fun checkTrueCreatesNormalAndErrorBranches() {
+    val xcfa: XCFA = parseResource("check-true-middle.svlib")
+    val procedure = xcfa.procedures.first()
 
-    var checkLocation =
-        procedure.getEdges().stream()
-            .filter(edge -> edge.getTarget().getError())
-            .map(edge -> edge.getSource())
-            .findFirst()
-            .orElseThrow();
+    val checkLocation = procedure.edges
+        .filter { it.target.error }
+        .map(XcfaEdge::source)
+        .first()
 
-    assertEquals(
-        2,
-        procedure.getEdges().stream()
-            .filter(edge -> edge.getSource().equals(checkLocation))
-            .count());
+    assertEquals(2, procedure.edges.count { it.source == checkLocation })
   }
 
   @Test
-  void annotateTagCheckTrueRewritesTaggedLocation() {
-    var xcfa = parseResource("check-true-annotate-tag.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
+  fun annotateTagCheckTrueRewritesTaggedLocation() {
+    val xcfa: XCFA = parseResource("check-true-annotate-tag.svlib")
+    val procedure = xcfa.procedures.first()
 
-    var taggedLocation =
-        procedure.getLocs().stream()
-            .filter(
-                loc ->
-                    loc.getMetadata() instanceof SvLibMetadata metadata
-                        && metadata.isTag()
-                        && metadata.getTag().equals("xto0"))
-            .findFirst()
-            .orElseThrow();
-
-    assertEquals(2, taggedLocation.getOutgoingEdges().size());
-    assertTrue(taggedLocation.getOutgoingEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
-  }
-
-  @Test
-  void multiAssignStatementCreatesSingleSequenceLabelEdge() {
-    var xcfa = parseResource("multi-assign.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-
-    var sequenceLabel =
-        procedure.getEdges().stream()
-            .map(edge -> edge.getLabel())
-            .filter(SequenceLabel.class::isInstance)
-            .map(SequenceLabel.class::cast)
-            .findFirst()
-            .orElseThrow();
-
-    assertEquals(2, sequenceLabel.getLabels().size());
-  }
-
-  @Test
-  void havocStatementCreatesHavocLabel() {
-    var xcfa = parseResource("havoc.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-
-    assertTrue(
-        procedure.getEdges().stream()
-            .map(edge -> edge.getLabel())
-            .filter(StmtLabel.class::isInstance)
-            .map(StmtLabel.class::cast)
-            .anyMatch(label -> label.getStmt() instanceof HavocStmt<?>));
-  }
-
-  @Test
-  void returnStatementCreatesFinalLocationEdge() {
-    var xcfa = parseResource("return.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-    var finalLoc = procedure.getFinalLoc().orElseThrow();
-
-    assertTrue(
-        procedure.getEdges().stream()
-            .anyMatch(
-                edge ->
-                    edge.getTarget().equals(finalLoc)
-                        && edge.getSource().getMetadata() instanceof SvLibMetadata metadata
-                        && metadata.getSourceName().equals("assign")));
-  }
-
-  @Test
-  void ifWithReturningBranchContinuesOnlyFromOtherBranch() {
-    var xcfa = parseResource("return-if.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-    var finalLoc = procedure.getFinalLoc().orElseThrow();
-
-    assertEquals(
-        2,
-        procedure.getEdges().stream()
-            .filter(edge -> edge.getTarget().equals(finalLoc))
-            .count());
-  }
-
-  @Test
-  void whileBodyReturnDoesNotCreateBackEdge() {
-    var xcfa = parseResource("return-while.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-    var finalLoc = procedure.getFinalLoc().orElseThrow();
-
-    assertEquals(
-        2,
-        procedure.getEdges().stream()
-            .filter(edge -> edge.getTarget().equals(finalLoc))
-            .count());
-    assertTrue(
-        procedure.getLocs().stream()
-            .anyMatch(
-                loc ->
-                    loc.getIncomingEdges().size() >= 2
-                        && loc.getOutgoingEdges().stream()
-                            .anyMatch(edge -> edge.getLabel().toString().contains("(< x 3)"))));
-    assertTrue(
-        procedure.getEdges().stream()
-            .filter(edge -> edge.getTarget().equals(finalLoc))
-            .filter(edge -> edge.getLabel().toString().contains("Nop"))
-            .map(edge -> edge.getSource())
-            .anyMatch(source -> source.getOutgoingEdges().size() == 1));
-  }
-
-  @Test
-  void whileLoopCreatesLoopHeadAndBackEdge() {
-    var xcfa = parseResource("loop-simple-safe.svlib");
-    var procedure = xcfa.getProcedures().iterator().next();
-
-    var incomingCounts =
-        procedure.getEdges().stream()
-            .collect(Collectors.groupingBy(edge -> edge.getTarget(), Collectors.counting()));
-    var outgoingCounts =
-        procedure.getEdges().stream()
-            .collect(Collectors.groupingBy(edge -> edge.getSource(), Collectors.counting()));
-
-    assertTrue(
-        procedure.getLocs().stream()
-            .anyMatch(
-                loc ->
-                    incomingCounts.getOrDefault(loc, 0L) >= 2
-                        && outgoingCounts.getOrDefault(loc, 0L) >= 2));
-
-
-  }
-
-  private static hu.bme.mit.theta.xcfa.model.XCFA parseResource(String name) {
-    try {
-      var resource = SvLibFrontendTest.class.getClassLoader().getResource(name);
-
-      assertNotNull(resource, "Test resource not found: " + name);
-
-      var file = Path.of(resource.toURI()).toFile();
-      assertTrue(file.exists(), "Test resource file does not exist: " + file);
-
-      return new SvLibFrontend().buildXcfa(file);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to parse test resource: " + name, e);
+    val taggedLocation = procedure.locs.find { loc ->
+      loc.metadata.let { metadata ->
+        metadata is SvLibMetadata && metadata.tag == "xto0"
+      }
     }
+
+    assertNotNull(taggedLocation)
+    assertEquals(2, taggedLocation!!.outgoingEdges.size)
+    assertTrue(taggedLocation.outgoingEdges.any { it.target.error })
   }
 
+  @Test
+  fun multiAssignStatementCreatesSingleSequenceLabelEdge() {
+    val xcfa: XCFA = parseResource("multi-assign.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val sequenceLabel = procedure.edges
+        .map(XcfaEdge::label)
+        .filterIsInstance<SequenceLabel>()
+        .first()
+
+    assertEquals(2, sequenceLabel.labels.size)
+  }
+
+  @Test
+  fun havocStatementCreatesHavocLabel() {
+    val xcfa: XCFA = parseResource("havoc.svlib")
+    val procedure = xcfa.procedures.first()
+
+    assertTrue(procedure.edges
+      .map(XcfaEdge::label)
+      .filterIsInstance<StmtLabel>()
+      .any { it.stmt is HavocStmt<*> }
+    )
+  }
+
+  @Test
+  fun returnStatementCreatesFinalLocationEdge() {
+    val xcfa: XCFA = parseResource("return.svlib")
+    val procedure = xcfa.procedures.first()
+    val finalLoc = procedure.finalLoc.orElseThrow()
+
+    assertTrue(procedure.edges
+      .any { edge ->
+        edge.target == finalLoc && edge.source.metadata.let { metadata ->
+          metadata is SvLibMetadata && metadata.sourceName == "assign"
+        }
+      }
+    )
+  }
+
+  @Test
+  fun ifWithReturningBranchContinuesOnlyFromOtherBranch() {
+    val xcfa: XCFA = parseResource("return-if.svlib")
+    val procedure = xcfa.procedures.first()
+    val finalLoc = procedure.finalLoc.orElseThrow()
+
+    assertEquals(2, procedure.edges.count { it.target == finalLoc })
+  }
+
+  @Test
+  fun whileBodyReturnDoesNotCreateBackEdge() {
+    val xcfa: XCFA = parseResource("return-while.svlib")
+    val procedure = xcfa.procedures.first()
+    val finalLoc = procedure.finalLoc.orElseThrow()
+
+    assertEquals(2, procedure.edges.count { it.target == finalLoc })
+    assertTrue(procedure.locs.any { loc ->
+      loc.incomingEdges.size >= 2 && loc.outgoingEdges.any { it.label.toString().contains("(< x 3)") }
+    })
+    assertTrue(procedure.edges
+      .filter { it.target == finalLoc && it.label.toString().contains("Nop") }
+      .map(XcfaEdge::source)
+      .any { it.outgoingEdges.size == 1 }
+    )
+  }
+
+  @Test
+  fun whileLoopCreatesLoopHeadAndBackEdge() {
+    val xcfa: XCFA = parseResource("loop-simple-safe.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val incomingCounts = procedure.edges.groupBy(XcfaEdge::target).mapValues { (_, edges) -> edges.size }
+    val outgoingCounts = procedure.edges.groupBy(XcfaEdge::source).mapValues { (_, edges) -> edges.size }
+
+    assertTrue(procedure.locs.any { loc -> (incomingCounts[loc] ?: 0) >= 2 && (outgoingCounts[loc] ?: 0) >= 2 })
+  }
+
+  private fun parseResource(name: String) =
+    try {
+      val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
+      val file = Path.of(resource!!.toURI()).toFile()
+      SvLibFrontend().buildXcfa(FileInputStream(file))
+    } catch (e: Exception) {
+      throw RuntimeException("Failed to parse test resource: $name", e)
+    }
 }
