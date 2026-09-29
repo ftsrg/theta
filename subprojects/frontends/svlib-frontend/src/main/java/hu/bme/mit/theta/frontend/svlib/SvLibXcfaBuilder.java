@@ -48,6 +48,8 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
 
   private List<SvLibParser.TermContext> entryArguments = List.of();
 
+  private boolean generateWitness = false;
+
   private final List<SvLibParser.RelationalTermContext> postconditions = new ArrayList<>();
   private final Map<String, List<SvLibParser.RelationalTermContext>> checkTrueByTag =
       new LinkedHashMap<>();
@@ -74,6 +76,10 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
     return xcfaBuilder.build();
   }
 
+  boolean getGenerateWitness() {
+    return generateWitness;
+  }
+
   private void collectGlobalsAndEntry(SvLibParser.ScriptContext script) {
     for (SvLibParser.CommandSvLibContext command : script.commandSvLib()) {
       if (command instanceof SvLibParser.DeclareVarContext declareVarContext) {
@@ -96,6 +102,8 @@ public class SvLibXcfaBuilder extends SvLibBaseVisitor<Void> {
         entryArguments = List.copyOf(verifyCallContext.term());
       } else if (command instanceof SvLibParser.AnnotateTagContext annotateTagContext) {
         collectAnnotateTagProperties(annotateTagContext.annotateTagCommand());
+      } else if (command instanceof SvLibParser.GetWitnessContext) {
+        generateWitness = true;
       }
     }
     if (procedureCount > 1) {

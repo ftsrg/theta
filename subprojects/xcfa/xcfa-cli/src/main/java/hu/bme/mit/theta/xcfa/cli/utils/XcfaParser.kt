@@ -132,7 +132,9 @@ fun getXcfa(
         )
       }
 
-      InputType.SVLIB -> parseSvLib(config.inputConfig.input!!)
+      InputType.SVLIB -> {
+        parseSvLib(config.inputConfig.input!!, config.outputConfig.svLibOutputConfig)
+      }
     }
   } catch (e: Exception) {
     // Give the caller its chance to retry under a memory model that has no pointer splitting at
@@ -357,8 +359,11 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseSvLib(input: File): XCFA {
-  return SvLibFrontend().buildXcfa(input)
+private fun parseSvLib(input: File, svLibOutputConfig: SvLibOutputConfig): XCFA {
+  val frontend = SvLibFrontend()
+  val xcfa = frontend.buildXcfa(input)
+  svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
+  return xcfa
 }
 
 private fun parseBTOR2(

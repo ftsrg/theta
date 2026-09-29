@@ -97,16 +97,26 @@ internal fun postVerificationLogging(
         writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants, logger)
       }
 
-      when {
+      val witnessWriters = when {
         config.outputConfig.witnessConfig.enabled == WitnessLevel.SVCOMP -> {
-          writeSvcompWitness(
-            config,
+          val witnessWriter = XcfaWitnessWriter.getSvCompWitnessWriter(
+            config.frontendConfig.inputType,
+            config.inputConfig.property,
             parseContext,
             safetyResult,
-            resultFolder,
-            ltlSpecification,
-            logger,
           )
+          when {
+            witnessWriter == null -> {
+              logger.info(
+                "No suitable SV-COMP witness writer found for the given property (${config.inputConfig.property.inputProperty}), category (${if (parseContext.multiThreading) "concurrency" else "not concurrency"}) and safety result ($safetyResult)."
+              )
+              emptyList()
+            }
+            config.frontendConfig.inputType == InputType.SVLIB ->
+              if (config.outputConfig.svLibOutputConfig.generateWitness) listOf(witnessWriter)
+              else emptyList()
+            else -> listOf(witnessWriter)
+          }
         }
 
         forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
@@ -124,73 +134,33 @@ internal fun postVerificationLogging(
             writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
           }
 
-          try {
-            val witnessFile = File(resultFolder, "witness.graphml")
-            GraphmlWitnessWriter()
-              .writeWitness(
-                safetyResult,
-                config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
-                config.inputConfig.property,
-                getSolver(
-                  config.outputConfig.witnessConfig.concretizerSolver,
-                  config.outputConfig.witnessConfig.validateConcretizerSolver,
-                ),
-                parseContext,
-                witnessFile,
-                ltlSpecification,
-                logger = logger,
-              )
-          } catch (e: Exception) {
-            logger.info("Could not emit witness as GraphML file: ${e.stackTraceToString()}")
-          }
-
-          try {
-            val yamlWitnessFile = File(resultFolder, "witness.yml")
-            YamlWitnessWriter()
-              .writeWitness(
-                safetyResult,
-                config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
-                config.inputConfig.property,
-                getSolver(
-                  config.outputConfig.witnessConfig.concretizerSolver,
-                  config.outputConfig.witnessConfig.validateConcretizerSolver,
-                ),
-                parseContext,
-                yamlWitnessFile,
-                ltlSpecification,
-                (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
-                logger,
-              )
-          } catch (e: Exception) {
-            logger.info("Could not emit witness as YAML file: ${e.stackTraceToString()}")
-          }
-
-          if (config.frontendConfig.inputType == InputType.SVLIB) {
-            try {
-              val svLibWitnessFile = File(resultFolder, "witness.svlib")
-              SvLibWitnessWriter()
-                .writeWitness(
-                  safetyResult,
-                  config.outputConfig.witnessConfig.inputFileForWitness
-                    ?: config.inputConfig.input!!,
-                  config.inputConfig.property,
-                  getSolver(
-                    config.outputConfig.witnessConfig.concretizerSolver,
-                    config.outputConfig.witnessConfig.validateConcretizerSolver,
-                  ),
-                  parseContext,
-                  svLibWitnessFile,
-                  ltlSpecification,
-                  (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
-                  logger,
-                )
-            } catch (e: Exception) {
-              logger.info("Could not emit witness as SV-LIB file: ${e.stackTraceToString()}")
-            }
-          }
+          if (config.frontendConfig.inputType == InputType.SVLIB) listOf(SvLibWitnessWriter())
+          else listOf(GraphmlWitnessWriter(), YamlWitnessWriter())
         }
 
-        else -> {}
+        else -> emptyList()
+      }
+
+      witnessWriters.forEach { witnessWriter ->
+        try {
+          val witnessFile = File(resultFolder, "witness.${witnessWriter.extension}")
+          witnessWriter.writeWitness(
+            safetyResult,
+            config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
+            config.inputConfig.property,
+            getSolver(
+              config.outputConfig.witnessConfig.concretizerSolver,
+              config.outputConfig.witnessConfig.validateConcretizerSolver,
+            ),
+            parseContext,
+            witnessFile,
+            ltlSpecification,
+            (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
+            logger,
+          )
+        } catch (e: Exception) {
+          logger.info("Could not emit witness in the required ${witnessWriter.extension} format: ${e.stackTraceToString()}")
+        }
       }
 
       if (config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER) {
@@ -295,48 +265,6 @@ private fun writeChcAnswer(
     }
   } catch (e: Exception) {
     logger.info("Could not write CHC answer to file: ${e.stackTraceToString()}")
-  }
-}
-
-private fun writeSvcompWitness(
-  config: XcfaConfig<*, *>,
-  parseContext: ParseContext,
-  safetyResult: SafetyResult<*, *>,
-  resultFolder: File,
-  ltlSpecification: String,
-  logger: Logger,
-) {
-  try {
-    val witnessWriter =
-      XcfaWitnessWriter.Companion.getSvCompWitnessWriter(
-        config.inputConfig.property,
-        parseContext,
-        safetyResult,
-      )
-
-    if (witnessWriter != null) {
-      val witnessFile = File(resultFolder, "witness.${witnessWriter.extension}")
-      witnessWriter.writeWitness(
-        safetyResult,
-        config.outputConfig.witnessConfig.inputFileForWitness ?: config.inputConfig.input!!,
-        config.inputConfig.property,
-        getSolver(
-          config.outputConfig.witnessConfig.concretizerSolver,
-          config.outputConfig.witnessConfig.validateConcretizerSolver,
-        ),
-        parseContext,
-        witnessFile,
-        ltlSpecification,
-        (config.frontendConfig.specConfig as? CFrontendConfig)?.architecture,
-        logger,
-      )
-    } else {
-      logger.info(
-        "No suitable SV-COMP witness writer found for the given property (${config.inputConfig.property.inputProperty}), category (${if (parseContext.multiThreading) "concurrency" else "not concurrency"}) and safety result ($safetyResult)."
-      )
-    }
-  } catch (e: Exception) {
-    logger.info("Could not emit witness in the required SV-COMP format: ${e.stackTraceToString()}")
   }
 }
 
