@@ -82,6 +82,7 @@ import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import java.math.BigInteger
+import java.util.IdentityHashMap
 
 class FrontendXcfaBuilder(
   val parseContext: ParseContext,
@@ -96,6 +97,9 @@ class FrontendXcfaBuilder(
   private var staticBaseCursor = 1
   private val ptrCnt: Int
     get() = staticBaseCursor.also { staticBaseCursor += 3 }
+
+  // The compile-time base each global object's expression was given, keyed by identity.
+  private val staticObjectBases = IdentityHashMap<Expr<*>, Int>()
 
   private var structArgCnt =
     0 // names the per-call temporaries a by-value struct argument copies into
@@ -526,6 +530,20 @@ class FrontendXcfaBuilder(
     }
   }
 
+  private fun recordStaticObject(base: Int, type: CComplexType, objectExpr: Expr<*>, parent: Int?) {
+    staticObjectBases[objectExpr] = base
+    parseContext.recordStaticObject(
+      BigInteger.valueOf(base.toLong()),
+      type is CStruct && type.isUnion,
+      parent?.let { BigInteger.valueOf(it.toLong()) },
+    )
+    recordObjectAtomicity(base, type)
+  }
+
+  /** The static object whose cell [objectExpr] is, if any. */
+  private fun parentStaticObject(objectExpr: Expr<*>): Int? =
+    (objectExpr as? Dereference<*, *, *>)?.array?.let(staticObjectBases::get)
+
   private fun giveStructObjectStorage(
     builder: XcfaBuilder,
     objectExpr: Expr<*>,
@@ -567,7 +585,7 @@ class FrontendXcfaBuilder(
           unitOffset,
           BigInteger.valueOf(subObjectBase.toLong()),
         )
-        recordObjectAtomicity(subObjectBase, fieldType)
+        recordStaticObject(subObjectBase, fieldType, deref, parentBase)
         giveStructObjectStorage(builder, deref, fieldType, initStmtList, subObjectBase)
       }
     }
@@ -1042,7 +1060,7 @@ class FrontendXcfaBuilder(
           type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
         )
       )
-      recordObjectAtomicity(objectBase, type)
+      recordStaticObject(objectBase, type, globalDeclaration, parentStaticObject(globalDeclaration))
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
       // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
       // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
@@ -1150,7 +1168,7 @@ class FrontendXcfaBuilder(
           type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
         )
       )
-      recordObjectAtomicity(objectBase, type)
+      recordStaticObject(objectBase, type, globalDeclaration, parentStaticObject(globalDeclaration))
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
       // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
       // struct every member is its own unit, so this is the historical field-indexed iteration.

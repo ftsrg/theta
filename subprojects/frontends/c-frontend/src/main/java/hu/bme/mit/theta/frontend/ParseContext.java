@@ -77,6 +77,10 @@ public class ParseContext {
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
 
+    // Compile-time base ids of global objects, mapped to the object they are a part of (if any).
+    private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
+    private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
+
     public boolean isCheckMemsafety() {
         return checkMemsafety;
     }
@@ -220,5 +224,36 @@ public class ParseContext {
         }
         Map<Integer, BigInteger> cells = subObjectCells.get(parentBase);
         return cells == null ? null : cells.get(unitOffset);
+    }
+
+    /**
+     * Records that [base] is the compile-time base id of a global object, stored within the object
+     * [parent] (null for a top-level object).
+     */
+    public void recordStaticObject(BigInteger base, boolean union, BigInteger parent) {
+        staticObjectParents.put(base, parent);
+        if (union) {
+            staticUnions.add(base);
+        }
+    }
+
+    public boolean isStaticObject(BigInteger base) {
+        return staticObjectParents.containsKey(base);
+    }
+
+    /**
+     * The outermost union the static object [base] is a part of (itself included), or null when
+     * there is none.
+     */
+    public BigInteger enclosingStaticUnion(BigInteger base) {
+        BigInteger union = null;
+        for (BigInteger current = base;
+                current != null;
+                current = staticObjectParents.get(current)) {
+            if (staticUnions.contains(current)) {
+                union = current;
+            }
+        }
+        return union;
     }
 }
