@@ -1,0 +1,16 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc multiAssignExample
+  ((x0 Int))
+  ((x Int) (y Int))
+  ()
+  (assign
+    (x (+ x0 1))
+    (y (+ x0 2))))
+
+(declare-const input Int)
+
+(verify-call multiAssignExample (input))
+(get-witness)

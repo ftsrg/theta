@@ -1,0 +1,18 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc returnIfExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (if (< x0 0)
+      (return)
+      (assign (x x0)))
+    (assign (x (+ x 1)))))
+
+(declare-const input Int)
+
+(verify-call returnIfExample (input))
+(get-witness)

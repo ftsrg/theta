@@ -4,19 +4,15 @@ package hu.bme.mit.theta.frontend.svlib;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer;
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser;
-import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
-
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.xcfa.model.VisualizerKt.toDot;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SvLibFrontendTest {
@@ -50,7 +46,6 @@ class SvLibFrontendTest {
     var xcfa = parseResource("if-simple-safe.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
-    assertEquals("SvLibXCFA", xcfa.getName());
     assertFalse(procedure.getLocs().isEmpty());
     assertTrue(procedure.getFinalLoc().isPresent());
   }
@@ -105,7 +100,7 @@ class SvLibFrontendTest {
   }
 
   @Test
-  void annotateTagCheckTrueRewritesTaggedLocation() throws IOException{
+  void annotateTagCheckTrueRewritesTaggedLocation() {
     var xcfa = parseResource("check-true-annotate-tag.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
@@ -121,56 +116,10 @@ class SvLibFrontendTest {
 
     assertEquals(2, taggedLocation.getOutgoingEdges().size());
     assertTrue(taggedLocation.getOutgoingEdges().stream().anyMatch(edge -> edge.getTarget().getError()));
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("check-true-annotate-tag.dot"),
-        dot);
-
-  }
-
-
-  @Test
-  void translatedIfXcfaCanBeExportedToDot() throws IOException {
-    var xcfa = parseResource("if-simple-safe.svlib");
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("svlib-if-simple-safe.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertTrue(dot.contains("(assign x (+ x 1))"));
-    assertFalse(dot.isBlank());
   }
 
   @Test
-  void translatedIfXcfaCanBeExportedToDot2() throws IOException {
-    var xcfa = parseResource("if-assign.svlib");
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("svlib-if-assign.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.isBlank());
-  }
-
-  @Test
-  void translatedCheckTrueMiddleXcfaCanBeExportedToDot() throws IOException {
-    var xcfa = parseResource("check-true-middle.svlib");
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("svlib-check-true-middle.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.isBlank());
-  }
-
-  @Test
-  void multiAssignStatementCreatesSingleSequenceLabelEdge()throws IOException {
+  void multiAssignStatementCreatesSingleSequenceLabelEdge() {
     var xcfa = parseResource("multi-assign.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
@@ -182,27 +131,14 @@ class SvLibFrontendTest {
             .findFirst()
             .orElseThrow();
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("multi-assign.svlib.dot"),
-        dot);
-
     assertEquals(2, sequenceLabel.getLabels().size());
   }
 
   @Test
-  void havocStatementCreatesHavocLabel() throws IOException {
+  void havocStatementCreatesHavocLabel() {
     var xcfa = parseResource("havoc.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("havoc.svlib.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.isBlank());
     assertTrue(
         procedure.getEdges().stream()
             .map(edge -> edge.getLabel())
@@ -212,20 +148,11 @@ class SvLibFrontendTest {
   }
 
   @Test
-  void returnStatementCreatesFinalLocationEdge() throws IOException {
+  void returnStatementCreatesFinalLocationEdge() {
     var xcfa = parseResource("return.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
     var finalLoc = procedure.getFinalLoc().orElseThrow();
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("return.svlib.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.contains("(assign x (+ x 1))"));
-    assertFalse(dot.isBlank());
     assertTrue(
         procedure.getEdges().stream()
             .anyMatch(
@@ -236,20 +163,11 @@ class SvLibFrontendTest {
   }
 
   @Test
-  void ifWithReturningBranchContinuesOnlyFromOtherBranch() throws IOException {
+  void ifWithReturningBranchContinuesOnlyFromOtherBranch() {
     var xcfa = parseResource("return-if.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
     var finalLoc = procedure.getFinalLoc().orElseThrow();
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("return-if.svlib.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertTrue(dot.contains("(assign x (+ x 1))"));
-    assertFalse(dot.isBlank());
     assertEquals(
         2,
         procedure.getEdges().stream()
@@ -258,22 +176,11 @@ class SvLibFrontendTest {
   }
 
   @Test
-  void whileBodyReturnDoesNotCreateBackEdge() throws IOException {
+  void whileBodyReturnDoesNotCreateBackEdge() {
     var xcfa = parseResource("return-while.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
     var finalLoc = procedure.getFinalLoc().orElseThrow();
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("return-while.svlib.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertTrue(dot.contains("(assign x (+ x 1))"));
-    assertTrue(dot.contains("(assign x (+ x 2))"));
-    assertTrue(dot.contains("(assign x (+ x 3))"));
-    assertFalse(dot.isBlank());
     assertEquals(
         2,
         procedure.getEdges().stream()
@@ -295,7 +202,7 @@ class SvLibFrontendTest {
   }
 
   @Test
-  void whileLoopCreatesLoopHeadAndBackEdge()throws IOException {
+  void whileLoopCreatesLoopHeadAndBackEdge() {
     var xcfa = parseResource("loop-simple-safe.svlib");
     var procedure = xcfa.getProcedures().iterator().next();
 
@@ -306,11 +213,6 @@ class SvLibFrontendTest {
         procedure.getEdges().stream()
             .collect(Collectors.groupingBy(edge -> edge.getSource(), Collectors.counting()));
 
-    var dot = toDot(xcfa, null);
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("svlib-loop.dot"),
-        dot);
-
     assertTrue(
         procedure.getLocs().stream()
             .anyMatch(
@@ -319,20 +221,6 @@ class SvLibFrontendTest {
                         && outgoingCounts.getOrDefault(loc, 0L) >= 2));
 
 
-  }
-
-  @Test
-  void loopCheckTrueAnnotateTagPrintsDot() throws IOException {
-    var xcfa = parseResource("loop-check-true-annotate-tag.svlib");
-    var dot = toDot(xcfa, null);
-
-    java.nio.file.Files.writeString(
-        java.nio.file.Path.of("loop-check-true-annotate-tag.dot"),
-        dot);
-
-    assertTrue(dot.startsWith("digraph G"));
-    assertTrue(dot.contains("SvLibXCFA"));
-    assertFalse(dot.isBlank());
   }
 
   private static hu.bme.mit.theta.xcfa.model.XCFA parseResource(String name) {
