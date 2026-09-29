@@ -97,6 +97,9 @@ final class JavaSMTTermTransformer {
 
     private static final String PARAM_NAME_FORMAT = "_p%d";
 
+    // `(_ extract hi lo)` in SMT-LIB-printing solvers, `bvextract_hi_lo_w` in MathSAT.
+    static final Pattern EXTRACT_INDICES = Pattern.compile("extract[ _]([0-9]+)[ _]([0-9]+)");
+
     private final JavaSMTSymbolTable symbolTable;
     private final SolverContext context;
     private final Map<
@@ -470,9 +473,8 @@ final class JavaSMTTermTransformer {
         environment.put(
                 Tuple2.of(FunctionDeclarationKind.BV_EXTRACT, 1),
                 (term, args, model, vars) -> {
-                    final Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
                     final String termStr = term.toString();
-                    final Matcher match = pattern.matcher(termStr);
+                    final Matcher match = EXTRACT_INDICES.matcher(termStr);
                     if (match.find()) {
                         final int to = Integer.parseInt(match.group(1)) + 1;
                         final int from = Integer.parseInt(match.group(2));
