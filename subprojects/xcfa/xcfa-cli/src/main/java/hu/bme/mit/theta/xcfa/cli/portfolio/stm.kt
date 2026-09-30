@@ -42,6 +42,19 @@ ${innerSTM.visualize()}
       .trimIndent()
 }
 
+/**
+ * A portfolio nested in another one. Its STM is built only when the node runs, as a portfolio can
+ * nest itself (e.g., COMPLEX falls back to COMPLEX). Like [HierarchicalNode], it returns the inner
+ * config that succeeded.
+ */
+class NestedPortfolioNode(name: String, private val portfolio: () -> STM) : Node(name) {
+
+  override fun execute(logger: Logger): Pair<Any, Any> = portfolio().execute(logger)
+
+  override fun visualize(): String =
+    "state ${name.replace(Regex("[:\\.-]+"), "_")}: nested portfolio"
+}
+
 fun XcfaConfig<*, *>.visualize(): String =
   if (backendConfig.backend == Backend.BOUNDED) {
     val specConfig = backendConfig.specConfig as BoundedConfig

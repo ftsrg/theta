@@ -40,9 +40,6 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleBindings
 
-/** Leaf config that succeeded in the last finished portfolio of this JVM (null if none yet). */
-private var lastSucceededConfig: String? = null
-
 fun getPortfolioChecker(
   xcfa: XCFA,
   mcm: MCM,
@@ -103,19 +100,11 @@ fun getPortfolioChecker(
       }
     }
 
-  lastSucceededConfig = null
   val result =
     portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
 
-  val (nodeName, nodeConfig) = result.first
-  // a nested portfolio already set its own succeeded leaf config: report that, not the node
-  val succeededConfig =
-    if (nodeConfig.backendConfig.specConfig is PortfolioConfig) lastSucceededConfig ?: nodeName
-    else nodeName
-  lastSucceededConfig = succeededConfig
-
-  logger.result("Config $succeededConfig succeeded in ${sw.elapsedMillis()} ms")
-  logger.benchmark("success-result: $succeededConfig\n")
+  logger.result("Config ${result.first.first} succeeded in ${sw.elapsedMillis()} ms")
+  logger.benchmark("success-result: ${result.first.first}\n")
   result.second
     as
     SafetyResult<
