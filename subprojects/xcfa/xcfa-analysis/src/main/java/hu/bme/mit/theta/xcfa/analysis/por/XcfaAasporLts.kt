@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
+import kotlin.random.Random
 
 open class XcfaAasporLts(
   xcfa: XCFA,
   private val ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
-) : XcfaSporLts(xcfa) {
+  random: Random,
+) : XcfaSporLts(xcfa, random) {
 
   override fun <P : Prec> getEnabledActionsFor(
     state: XcfaState<out PtrState<*>>,
@@ -132,7 +134,7 @@ open class XcfaAasporLts(
     ignoredVariables: MutableSet<VarDecl<*>>,
   ): Boolean {
     if (sourceSetAction.pid == action.pid) return true
-    val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
+    val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction), state)
     val influencedVars = getInfluencedVars(getEdge(action))
     val sourceSetMemLocs = getCachedMemLocs(getEdge(sourceSetAction))
     val influencedMemLocs = getInfluencedMemLocs(getEdge(action))
@@ -146,7 +148,7 @@ open class XcfaAasporLts(
     val precVars = prec.usedVars
     for (varDecl in influencedVars) {
       if (varDecl in sourceSetActionVars) {
-        if (varDecl !in precVars && varDecl !in fenceVars) {
+        if (varDecl !in precVars) {
           // the actions would be dependent, but we can ignore it in the current abstraction
           ignoredVariables.add(varDecl)
           continue
