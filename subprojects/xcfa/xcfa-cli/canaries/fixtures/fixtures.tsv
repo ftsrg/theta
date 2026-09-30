@@ -96,3 +96,4 @@ global_union_zero_init.c	efficient	LP64	SAFE	a global union without an initializ
 global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is stored in the byte cells / word its members are read from
 typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
 race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
+unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped

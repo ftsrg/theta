@@ -84,7 +84,9 @@ import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import java.math.BigInteger
+import java.util.IdentityHashMap
 
 class FrontendXcfaBuilder(
   val parseContext: ParseContext,
@@ -99,6 +101,19 @@ class FrontendXcfaBuilder(
   private var staticBaseCursor = 1
   private val ptrCnt: Int
     get() = staticBaseCursor.also { staticBaseCursor += 3 }
+
+  // The compile-time base each global object's expression was given, keyed by identity.
+  private val staticObjectBases = IdentityHashMap<Expr<*>, Int>()
+  private val staticObjects = HashMap<Int, StaticObject>()
+
+  /** Which cells of a global object its initialization writes. */
+  private enum class InitMode {
+    ALL,
+    ACCESSED,
+    NONE,
+  }
+
+  private class StaticObject(val type: CComplexType, val mode: InitMode)
 
   private var structArgCnt =
     0 // names the per-call temporaries a by-value struct argument copies into
@@ -340,6 +355,9 @@ class FrontendXcfaBuilder(
         globalDeclaration.get1(),
       )
     }
+    if (property.witness == null) {
+      initStmtList.removeIf { !it.isNeededInitWrite() }
+    }
     // Every compile-time base has now been handed out (only globals take one), so publish the
     // high-water mark before any procedure is built: `alloca` mints its bases from the *runtime*
     // counter in the same `3k+1` residue class, and that counter used to start at 0 -- so the very
@@ -529,6 +547,65 @@ class FrontendXcfaBuilder(
     }
   }
 
+  private fun recordStaticObject(
+    base: Int,
+    type: CComplexType,
+    objectExpr: Expr<*>,
+    parent: Pair<Int, Int?>?,
+  ) {
+    staticObjectBases[objectExpr] = base
+    staticObjects[base] = StaticObject(type, initModeOf(type, parent))
+    parseContext.recordStaticObject(
+      BigInteger.valueOf(base.toLong()),
+      type is CStruct && type.isUnion,
+      parent?.let { BigInteger.valueOf(it.first.toLong()) },
+    )
+    recordObjectAtomicity(base, type)
+  }
+
+  /** The static object, and the cell of it, that [objectExpr] is stored in, if any. */
+  private fun parentCell(objectExpr: Expr<*>): Pair<Int, Int?>? {
+    val cell = objectExpr as? Dereference<*, *, *> ?: return null
+    val parent = staticObjectBases[cell.array] ?: return null
+    return parent to cell.offset.asConstantBigInteger()?.toInt()
+  }
+
+  /**
+   * Only the members the program accesses are initialized, along with everything they contain. A
+   * union is initialized as a whole if any of its members is accessed, and not at all otherwise.
+   */
+  private fun initModeOf(type: CComplexType, parent: Pair<Int, Int?>?): InitMode {
+    val parentObject = parent?.let { staticObjects[it.first] }
+    val union = (type as? CStruct)?.takeIf { it.isUnion }
+    return when {
+      parentObject != null && parentObject.mode != InitMode.ACCESSED -> parentObject.mode
+      parentObject?.needsCell(parent?.second) == false -> InitMode.NONE
+      union == null -> InitMode.ACCESSED
+      parentObject?.type is CStruct || parseContext.isAnyMemberAccessed(union) -> InitMode.ALL
+      else -> InitMode.NONE
+    }
+  }
+
+  private fun StaticObject.needsCell(unit: Int?): Boolean {
+    if (mode != InitMode.ACCESSED || unit == null) return mode != InitMode.NONE
+    val struct =
+      type as? CStruct
+        ?: ((type as? CArray)?.embeddedType as? CStruct)?.takeIf(::isFlatScalarStruct)
+        ?: return true
+    if (struct.isUnion || struct.unitCount == 0) return true
+    val structUnit = if (type is CArray) unit % struct.unitCount else unit
+    return struct.fields.any {
+      struct.unitOffsetOf(it.get1()) == structUnit &&
+        parseContext.isMemberAccessed(struct, it.get1())
+    }
+  }
+
+  private fun XcfaLabel.isNeededInitWrite(): Boolean {
+    val deref = ((this as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>)?.deref ?: return true
+    val obj = staticObjectBases[deref.array]?.let(staticObjects::get) ?: return true
+    return obj.needsCell(deref.offset.asConstantBigInteger()?.toInt())
+  }
+
   private fun giveStructObjectStorage(
     builder: XcfaBuilder,
     objectExpr: Expr<*>,
@@ -570,7 +647,7 @@ class FrontendXcfaBuilder(
           unitOffset,
           BigInteger.valueOf(subObjectBase.toLong()),
         )
-        recordObjectAtomicity(subObjectBase, fieldType)
+        recordStaticObject(subObjectBase, fieldType, deref, parentBase to unitOffset)
         giveStructObjectStorage(builder, deref, fieldType, initStmtList, subObjectBase)
       }
     }
@@ -1041,7 +1118,7 @@ class FrontendXcfaBuilder(
           type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
         )
       )
-      recordObjectAtomicity(objectBase, type)
+      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
       // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
       // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
@@ -1160,8 +1237,16 @@ class FrontendXcfaBuilder(
             type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
           )
         )
-        recordObjectAtomicity(objectBase, type)
+        recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
         giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+      } else {
+        // This cell expression names the sub-object recorded there; register it so the writes
+        // through it can be dropped like those of any other unread member.
+        parentCell(globalDeclaration)?.let { (parent, unit) ->
+          parseContext.subObjectBaseAt(BigInteger.valueOf(parent.toLong()), unit)?.let {
+            staticObjectBases[globalDeclaration] = it.toInt()
+          }
+        }
       }
       if (type.isUnion) initializeUnion(type, globalDeclaration, initExpr, initStmtList)
       else

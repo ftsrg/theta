@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Mod
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.xcfa.model.ParamDirection
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
@@ -135,7 +136,53 @@ class PointerUtilsTest {
             )
           },
         ),
+        arrayOf(
+          callXcfa("xcfa4", "r"),
+          { partitions: PointerPartitions ->
+            assertPartitionEquals(
+              partitions,
+              listOf(setOf("p") to setOf(Int(1)), setOf("q") to setOf(Int(2))),
+            )
+          },
+        ),
+        arrayOf(
+          callXcfa("xcfa5", "0"),
+          { partitions: PointerPartitions ->
+            assertPartitionEquals(
+              partitions,
+              listOf(setOf("p") to setOf(Int(1)), setOf("q") to setOf(Int(2))),
+            )
+          },
+        ),
       )
+
+    /** Passes `a = 1` and `b = 2` to the pointers `p` and `q`, after the return value [ret]. */
+    private fun callXcfa(name: String, ret: String): XCFA =
+      xcfa(name) {
+        val callee =
+          procedure("callee") {
+            "ret" type Int() direction ParamDirection.OUT
+            "p" type Int() direction ParamDirection.IN
+            "q" type Int() direction ParamDirection.IN
+            val x = "x" type Int()
+            (init to final) {
+              x.assign("(deref p 0 Int)")
+              x.assign("(deref q 0 Int)")
+            }
+          }
+        val main =
+          procedure("main") {
+            "r" type Int()
+            val a = "a" type Int()
+            val b = "b" type Int()
+            (init to "L") {
+              a.assign("1")
+              b.assign("2")
+            }
+            ("L" to final) { callee(ret, "a", "b") }
+          }
+        main.start()
+      }
 
     private fun assertPartitionEquals(
       expected: PointerPartitions,

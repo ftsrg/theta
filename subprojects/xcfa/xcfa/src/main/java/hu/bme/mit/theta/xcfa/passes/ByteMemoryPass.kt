@@ -171,11 +171,6 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     expr: Expr<*>,
   ): MemoryAssignStmt<*, *, *> = buildMemoryAssign(deref as Dereference<Type, Type, Type>, expr)
 
-  private fun <P : Type, O : Type, D : Type> buildMemoryAssign(
-    deref: Dereference<P, O, D>,
-    expr: Expr<*>,
-  ): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
-
   /** Replaces every wide dereference read inside this expression with its byte `Concat`. */
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.expandReads(): Expr<T> =

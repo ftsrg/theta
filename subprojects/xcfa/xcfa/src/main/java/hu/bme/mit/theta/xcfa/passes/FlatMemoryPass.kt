@@ -140,11 +140,6 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   private fun foldMemoryAssign(stmt: MemoryAssignStmt<*, *, *>): MemoryAssignStmt<*, *, *> =
     buildMemoryAssign(stmt.deref.foldFlat() as Dereference<*, *, *>, stmt.expr.foldFlat())
 
-  private fun <P : Type, O : Type, D : Type> buildMemoryAssign(
-    deref: Dereference<P, O, D>,
-    expr: Expr<*>,
-  ): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
-
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.foldFlat(): Expr<T> =
     if (this is Dereference<*, *, *>) {
