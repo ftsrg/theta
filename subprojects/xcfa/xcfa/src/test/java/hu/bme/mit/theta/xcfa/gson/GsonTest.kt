@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
@@ -153,6 +154,19 @@ class GsonTest {
     assertEquals(
       parseContext.metadata.lookupKeyValue,
       gson.fromJson(gson.toJson(parseContext), ParseContext::class.java).metadata.lookupKeyValue,
+    )
+  }
+
+  @Test
+  fun testParseContextArithmeticTraitsRoundTrip() {
+    val parseContext = ParseContext()
+    parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
+    parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT)
+
+    val gson = getGson(XcfaScope(SymbolTable()), Env(), true)
+    assertEquals(
+      setOf(ArithmeticTrait.BITWISE, ArithmeticTrait.FLOAT),
+      gson.fromJson(gson.toJson(parseContext), ParseContext::class.java).arithmeticTraits,
     )
   }
 }

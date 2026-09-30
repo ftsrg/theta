@@ -100,6 +100,43 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         }
     }
 
+    /**
+     * The type one declarator of a declaration list declares: the specifiers' type plus the stars
+     * written in the declarator itself.
+     *
+     * <p>The grammar folds the stars of the *first* declarator into the specifiers (`int *a, b`
+     * reads as `int *` followed by `a, b`), so every later declarator sheds them, and its own stars
+     * (the `*PP` of `typedef struct P {...} P, *PP`) are added here. Stars around array dimensions
+     * are left to {@link CDeclaration#getActualType()}, which places them.
+     */
+    CSimpleType declaratorType(
+            CSimpleType specifierType,
+            CDeclaration declaration,
+            CParser.DeclaratorContext declarator,
+            boolean ownsSpecifierStars) {
+        final CParser.PointerContext pointer =
+                declarator != null && declaration.getArrayDimensions().isEmpty()
+                        ? declarator.pointer()
+                        : null;
+        final boolean shedStars = !ownsSpecifierStars && specifierType.getStarPointers() > 0;
+        if (pointer == null && !shedStars) {
+            return specifierType;
+        }
+        final CSimpleType type = specifierType.copyOf();
+        if (shedStars) {
+            type.dropStarPointers();
+        }
+        if (pointer != null) {
+            for (int i = 0; i < pointer.stars.size(); i++) {
+                type.incrementPointer();
+                if (TypeVisitor.qualifiersAfter(pointer, i).contains("_Atomic")) {
+                    type.markLastPointerAtomic();
+                }
+            }
+        }
+        return type;
+    }
+
     public List<CDeclaration> getDeclarations(
             CParser.DeclarationSpecifiersContext declSpecContext,
             CParser.InitDeclaratorListContext initDeclContext,
@@ -114,6 +151,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.add(cDeclaration);
         }
         if (initDeclContext != null) {
+            boolean ownsSpecifierStars = cSimpleType.getAssociatedName() == null;
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
                 // The initializer's container is the *declared* type, dimensions and all: for
@@ -128,6 +166,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 // the specifier.
                 declaration.setType(cSimpleType);
                 inheritTypedefArrayDimensions(declaration, cSimpleType);
+                final CSimpleType declaredType =
+                        declaratorType(
+                                cSimpleType, declaration, context.declarator(), ownsSpecifierStars);
+                ownsSpecifierStars = false;
+                declaration.setType(declaredType);
                 CStatement initializerExpression;
                 if (context.initializer() != null && getInitExpr) {
                     // The name is in scope inside its own initializer (C: the declarator is
@@ -151,7 +194,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                     .create(
                                             initializerExpression.getExpression(),
                                             "cType",
-                                            cSimpleType);
+                                            declaredType);
                         }
                     } else {
                         // `char s[8] = "ab"` is an aggregate initializer written without braces,
@@ -175,7 +218,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
-                declaration.setType(cSimpleType);
+                declaration.setType(declaredType);
                 ret.add(declaration);
             }
         }

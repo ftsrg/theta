@@ -20,16 +20,21 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
+import hu.bme.mit.theta.core.type.fptype.FpExprs.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /**
  * The flat and bytes memory models build their addresses after the last [SimplifyExprsPass], so the
@@ -124,5 +129,21 @@ class FlatMemoryPassTest {
     val derefs = result.derefs()
     assertEquals((0x310004L..0x310007L).map { bv(it, 64) }, derefs.map { it.offset })
     derefs.forEach { assertEquals(bv(0, 64), it.array) }
+  }
+
+  @Test
+  fun floatCellRefusalDoesNotRecommendAModelThatRefusesItToo() {
+    // The float members of unions that reach this refusal are refused by multi and flat as well.
+    val parseContext = context(MemoryModelType.bytes, ArithmeticType.bitvector)
+    val refusal =
+      assertThrows<UnsupportedFrontendElementException> {
+        runPasses(listOf(FlatMemoryPass(parseContext), ByteMemoryPass(parseContext))) {
+          val f = "f" type FpType(11, 53)
+          (init to final) { Dereference.of(bv(0x310000, 64), bv(0, 64), f.type) memassign f.ref }
+        }
+      }
+    val message = refusal.message!!
+    assertFalse("Use --memory-model" in message, message)
+    assertTrue("member of a union" in message, message)
   }
 }

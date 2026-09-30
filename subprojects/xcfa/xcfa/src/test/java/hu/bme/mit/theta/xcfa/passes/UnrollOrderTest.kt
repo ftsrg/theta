@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -85,5 +86,26 @@ class UnrollOrderTest {
         }
         .builder
     assertTrue(UnrollPass(5).runChecked(builder).unsafeUnrollUsed)
+  }
+
+  @Test
+  fun uncountableLoopIsForcedWhenSubstitutingTheLoopVariable() {
+    // `i` is the loop variable, but its update shares an edge with `c`, so the loop is not counted.
+    val builder =
+      XcfaBuilder("")
+        .procedure("main") {
+          "i" type Int()
+          "c" type Int()
+          (init to "L1") { "i".assign("0") }
+          ("L1" to "L2") { assume("(< i 10)") }
+          ("L2" to "L1") {
+            havoc("c")
+            "i".assign("(+ i 1)")
+          }
+          ("L1" to final) { assume("(>= i 10)") }
+        }
+        .builder
+    val pass = UnrollPass(2, substituteLoopVar = true, parseContext = ParseContext())
+    assertTrue(pass.runChecked(builder).unsafeUnrollUsed)
   }
 }

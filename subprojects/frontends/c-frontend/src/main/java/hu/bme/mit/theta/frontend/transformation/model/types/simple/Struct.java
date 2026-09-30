@@ -273,7 +273,7 @@ public class Struct extends NamedType {
         }
         if (currentlyBeingBuilt) {
             uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
+                    Level.INFO, "WARNING: self-embedded structs! Using int as a placeholder\n");
             CComplexType placeholder = CComplexType.getSignedInt(parseContext);
             for (int i = 0; i < getPointerLevel(); i++) {
                 placeholder = new CPointer(this, placeholder, parseContext);

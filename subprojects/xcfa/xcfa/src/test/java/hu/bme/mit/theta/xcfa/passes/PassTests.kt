@@ -785,4 +785,22 @@ class PassTests {
     val newEdges = edge.splitIf { it is InvokeLabel }
     assertTrue(newEdges.size == 3)
   }
+
+  @Test
+  fun testSplitSingleLabel() {
+    // Inlining and recursion expansion leave edges whose label is not a SequenceLabel.
+    val call = InvokeLabel("proc1", listOf(), EmptyMetaData)
+    val edge =
+      XcfaEdge(
+        XcfaLocation("L0", metadata = EmptyMetaData),
+        XcfaLocation("L1", metadata = EmptyMetaData),
+        call,
+        EmptyMetaData,
+      )
+
+    val split = edge.splitIf { it is InvokeLabel }
+    assertEquals(listOf(SequenceLabel(listOf(call))), split.map { it.label })
+    assertEquals(listOf(edge.source to edge.target), split.map { it.source to it.target })
+    assertEquals(listOf(call), edge.splitIf { false }.single().label.getFlatLabels())
+  }
 }

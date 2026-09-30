@@ -1003,6 +1003,7 @@ class FrontendXcfaBuilder(
     initExpr: CStatement? = null,
     isAtomic: Boolean = false,
     declaration: CDeclaration? = null,
+    storageGiven: Boolean = false,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
@@ -1148,17 +1149,31 @@ class FrontendXcfaBuilder(
         globalDeclaration,
       )
     } else if (type is CStruct) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+      // A struct field of a struct already got its base from [giveStructObjectStorage], which
+      // recorded it as the sub-object cell; minting another here would orphan that record.
+      if (!storageGiven) {
+        // reading ptrCnt hands out this base and advances it -- capture once
+        val objectBase = ptrCnt
+        initStmtList.add(
+          AssignStmtLabel(
+            globalDeclaration,
+            type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+          )
         )
-      )
-      recordObjectAtomicity(objectBase, type)
-      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+        recordObjectAtomicity(objectBase, type)
+        giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+      }
       if (type.isUnion) initializeUnion(type, globalDeclaration, initExpr, initStmtList)
-      else initializeStructUnits(builder, type, globalDeclaration, 0, initExpr, initStmtList)
+      else
+        initializeStructUnits(
+          builder,
+          type,
+          globalDeclaration,
+          0,
+          initExpr,
+          initStmtList,
+          unitsHaveStorage = true,
+        )
     } else {
       // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of
       // a
@@ -1200,6 +1215,7 @@ class FrontendXcfaBuilder(
     firstCell: Int,
     initExpr: CStatement?,
     initStmtList: MutableList<XcfaLabel>,
+    unitsHaveStorage: Boolean = false,
   ) {
     // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
     // struct every member is its own unit, so this is the historical field-indexed iteration.
@@ -1222,7 +1238,13 @@ class FrontendXcfaBuilder(
         val et = unitTypes[unit]
         val cell = Dereference(target, offsetLiteral((firstCell + unit).toLong()), et.smtType)
         parseContext.metadata.create(cell, "cType", et)
-        initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
+        initializeGlobalVariable(
+          builder,
+          cell,
+          initStmtList,
+          if (unit == 0) initExpr else null,
+          storageGiven = unitsHaveStorage,
+        )
       }
       return
     }
@@ -1236,6 +1258,7 @@ class FrontendXcfaBuilder(
         initStmtList,
         target,
         firstCell,
+        unitsHaveStorage,
       )
     } else {
       initializeCompound(
@@ -1246,6 +1269,7 @@ class FrontendXcfaBuilder(
         initStmtList,
         target,
         firstCell,
+        unitsHaveStorage,
       )
     }
   }
@@ -1464,6 +1488,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
     firstCell: Int = 0,
+    storageGiven: Boolean = false,
   ) {
     val initExprs = elementPositions(initExpr)
     for (i in 0 until dimension) {
@@ -1471,7 +1496,13 @@ class FrontendXcfaBuilder(
       val embeddedDeclaration =
         Dereference(globalDeclaration, offsetLiteral((firstCell + i).toLong()), et.smtType)
       parseContext.metadata.create(embeddedDeclaration, "cType", et)
-      initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
+      initializeGlobalVariable(
+        builder,
+        embeddedDeclaration,
+        initStmtList,
+        initExprs[i],
+        storageGiven = storageGiven,
+      )
     }
   }
 
@@ -1687,6 +1718,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
     firstCell: Int = 0,
+    storageGiven: Boolean = false,
   ) {
     val initExprs = elementPositions(initExpr)
     val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
@@ -1697,7 +1729,13 @@ class FrontendXcfaBuilder(
       parseContext.metadata.create(cell, "cType", cellType)
       val members = type.fields.indices.filter { slotOf(it).unitIndex() == unit }
       if (members.size == 1 && !slotOf(members[0]).bitfield()) {
-        initializeGlobalVariable(builder, cell, initStmtList, initExprs[members[0]])
+        initializeGlobalVariable(
+          builder,
+          cell,
+          initStmtList,
+          initExprs[members[0]],
+          storageGiven = storageGiven,
+        )
         continue
       }
       // Fold onto zero rather than onto a read of the cell: the object was just created, and none

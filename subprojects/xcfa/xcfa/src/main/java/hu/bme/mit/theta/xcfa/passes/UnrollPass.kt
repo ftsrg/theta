@@ -251,9 +251,13 @@ class UnrollPass(
       return cnt
     }
 
-    /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
+    /**
+     * Replaces the loop variable with its constant value for iteration [index], when enabled and
+     * [count] got that far: a loop it could not count at all can still be force unrolled.
+     */
     private fun substituteLoopVarIn(label: XcfaLabel, index: Int): XcfaLabel {
       if (!substituteLoopVar || parseContext == null || loopVar == null) return label
+      if (index !in loopVarValues.indices) return label
       val valuation = MutableValuation()
       valuation.put(loopVar, loopVarValues[index])
       return label.simplify(valuation, parseContext)

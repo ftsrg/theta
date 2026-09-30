@@ -108,7 +108,8 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
         " into byte cells requires the IEEE bit reinterpretation, which SMT-LIB leaves" +
         " underspecified for NaN (every NaN shares one encoding and the theory does not fix" +
         " which), so a program that inspects those bits can be given a spurious counterexample." +
-        " Use --memory-model multi or flat for this input."
+        " The multi and flat memory models do support floats in memory, except as a member of a" +
+        " union, which no memory model supports yet."
     )
 
   private fun XcfaLabel.bytify(): XcfaLabel =

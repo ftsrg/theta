@@ -76,7 +76,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
           cStmtCounter = gson.fromJson(reader, CStmtCounter::class.java)
         }
 
-        "bitwiseOption" -> {
+        "arithmeticTraits" -> {
           reader.beginArray()
           while (reader.peek() != JsonToken.END_ARRAY) {
             val optionName = reader.nextString()

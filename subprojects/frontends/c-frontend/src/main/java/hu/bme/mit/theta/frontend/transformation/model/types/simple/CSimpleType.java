@@ -111,6 +111,20 @@ public abstract class CSimpleType {
         ++starPointers;
     }
 
+    public int getStarPointers() {
+        return starPointers;
+    }
+
+    /**
+     * Drops the pointer levels written as stars in this declaration's specifiers, keeping the ones
+     * the named type came with. In `int *a, b` the grammar folds `a`'s star into the specifiers `b`
+     * shares, so `b` has to shed it.
+     */
+    public void dropStarPointers() {
+        keepInnermostPointers(pointerLevel - starPointers);
+        starPointers = 0;
+    }
+
     /**
      * Drops outermost pointer levels until at most [levels] remain, i.e. what dereferencing a value
      * of this type yields. Their atomicity goes with them.
