@@ -84,6 +84,7 @@ public class ParseContext {
 
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
+    private boolean everyMemberAccessed = false;
 
     public boolean isCheckMemsafety() {
         return checkMemsafety;
@@ -250,13 +251,18 @@ public class ParseContext {
         accessedMembers.computeIfAbsent(type, k -> new LinkedHashSet<>()).add(member);
     }
 
+    /** Records that an access could not be attributed to a type, so every member may be read. */
+    public void markEveryMemberAccessed() {
+        everyMemberAccessed = true;
+    }
+
     public boolean isMemberAccessed(CStruct type, String member) {
         final Set<String> members = accessedMembers.get(type);
-        return members != null && members.contains(member);
+        return everyMemberAccessed || (members != null && members.contains(member));
     }
 
     public boolean isAnyMemberAccessed(CStruct type) {
-        return accessedMembers.containsKey(type);
+        return everyMemberAccessed || accessedMembers.containsKey(type);
     }
 
     /**

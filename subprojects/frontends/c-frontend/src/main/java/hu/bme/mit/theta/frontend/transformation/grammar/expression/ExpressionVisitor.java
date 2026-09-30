@@ -3287,6 +3287,41 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return swapped;
     }
 
+    /**
+     * `memcmp` reads the objects it compares byte by byte, so every struct its operands point to is
+     * treated as accessed in all of its members. The operands' pointer types are trusted.
+     */
+    private void markComparedObjects(String functionName, List<CStatement> arguments) {
+        if (!functionName.equals("memcmp")) {
+            return;
+        }
+        for (CStatement argument : arguments.subList(0, Math.min(2, arguments.size()))) {
+            final CComplexType type;
+            try {
+                type = CComplexType.getType(argument.getExpression(), parseContext);
+            } catch (RuntimeException e) {
+                parseContext.markEveryMemberAccessed();
+                return;
+            }
+            if (type instanceof CPointer pointer) {
+                markEveryMemberAccessed(pointer.getEmbeddedType());
+            } else if (type instanceof CArray array) {
+                markEveryMemberAccessed(array.getEmbeddedType());
+            }
+        }
+    }
+
+    private void markEveryMemberAccessed(CComplexType type) {
+        if (type instanceof CArray array) {
+            markEveryMemberAccessed(array.getEmbeddedType());
+        } else if (type instanceof CStruct struct) {
+            for (Tuple2<String, CComplexType> field : struct.getFields()) {
+                parseContext.markMemberAccessed(struct, field.get1());
+                markEveryMemberAccessed(field.get2());
+            }
+        }
+    }
+
     private Expr<?> callModeledLibraryFunction(
             String functionName,
             List<AssignmentExpressionContext> args,
@@ -3303,6 +3338,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     CComplexType.getType(arguments.get(0).getExpression(), parseContext);
             parseContext.getMetadata().create(functionName, "cType", returnType);
         }
+        markComparedObjects(functionName, arguments);
         CCall cCall = new CCall(functionName, arguments, parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
@@ -3717,6 +3753,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     if (functionVisitor != null)
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);
                 }
+                markComparedObjects(calleeName, arguments);
                 CCall cCall =
                         new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
                 if (cCall.getFunctionId().contains("pthread")) parseContext.setMultiThreading(true);

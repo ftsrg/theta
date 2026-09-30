@@ -19,12 +19,16 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
+import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
+import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -44,15 +48,32 @@ class UnusedMemoryWriteTest {
         XcfaProperty(ErrorDetection.ERROR_LOCATION),
         NullLogger.getInstance(),
       )
-    fun count(label: XcfaLabel): Int =
-      when (label) {
-        is SequenceLabel -> label.labels.sumOf(::count)
-        is NondetLabel -> label.labels.sumOf(::count)
-        is StmtLabel -> if (label.stmt is MemoryAssignStmt<*, *, *>) 1 else 0
-        else -> 0
-      }
-    return xcfa.procedures.sumOf { proc -> proc.edges.sumOf { count(it.label) } }
+    return xcfa.procedures.sumOf { proc -> proc.edges.sumOf { writesIn(it.label) } }
   }
+
+  /** The memory writes the frontend emits, before any pass could remove one. */
+  private fun emittedWrites(src: String): Int {
+    val parseContext = ParseContext()
+    val program =
+      parseTypeAware(CharStreams.fromString(src.trimIndent()))
+        .accept(FunctionVisitor(parseContext, NullLogger.getInstance()))
+    val builder =
+      FrontendXcfaBuilder(
+          parseContext,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+        .buildXcfa(program as CProgram)
+    return builder.getProcedures().sumOf { proc -> proc.getEdges().sumOf { writesIn(it.label) } }
+  }
+
+  private fun writesIn(label: XcfaLabel): Int =
+    when (label) {
+      is SequenceLabel -> label.labels.sumOf(::writesIn)
+      is NondetLabel -> label.labels.sumOf(::writesIn)
+      is StmtLabel -> if (label.stmt is MemoryAssignStmt<*, *, *>) 1 else 0
+      else -> 0
+    }
 
   @Test
   fun unusedMutexArrayIsNotInitialized() {
@@ -91,6 +112,18 @@ class UnusedMemoryWriteTest {
     val oneMutex = memoryWrites(program(1), MemoryModelType.flat)
     val tenMutexes = memoryWrites(program(10), MemoryModelType.flat)
     assertEquals(9, tenMutexes - oneMutex, "only the array cells of the extra mutexes are written")
+  }
+
+  @Test
+  fun memcmpOperandsAreInitializedInEveryMember() {
+    val declarations =
+      "struct In { int x; int y; }; struct S { int a; struct In in; } s1, s2;" +
+        " extern int memcmp(const void *, const void *, unsigned long);"
+    val compared =
+      emittedWrites("$declarations int main() { return s1.a + memcmp(&s1, &s2, sizeof(s1)); }")
+    val allRead =
+      emittedWrites("$declarations int main() { return s1.a + s1.in.x + s1.in.y + s2.a; }")
+    assertEquals(allRead, compared)
   }
 
   @Test

@@ -17,8 +17,8 @@ gets a **base id** and a run of **cells**.
 - A member that is itself an aggregate holds a **base id**, not contents. Copying that cell aliases
   the two objects instead of copying them, which is why whole-object copies are restricted to objects
   whose every cell is a scalar.
-- A global is only **initialized in the members the program accesses** (by `.` or `->` anywhere) and
-  in everything those contain; a union as a whole if any of its members is accessed. Its storage and
+- A global is only **initialized in the members the program accesses** (by `.` or `->` anywhere, or
+  by passing a pointer to the struct to `memcmp`) and in everything those contain; a union as a whole if any of its members is accessed. Its storage and
   base ids are still created, so a member no access names (e.g. a mutex's internals) costs nothing.
 - `FrontendMetadata` is **identity-keyed**. A rebuilt expression is a different object and carries no
   `cType`, so any pass that reconstructs an lvalue loses its type unless it re-stamps it. Several
