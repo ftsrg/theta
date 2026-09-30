@@ -650,7 +650,7 @@ data class MddConfig(
     description = "MDD to expression conversion strategy",
   )
   var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
-    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   @Parameter(
     names = ["--proof-strategy"],
     description = "MDD to expression conversion strategy for the proof invariant",

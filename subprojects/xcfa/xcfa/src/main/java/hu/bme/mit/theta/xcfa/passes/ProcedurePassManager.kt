@@ -43,6 +43,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ErrorLocationPass(property),
       AssertionToErrorLocationPass(property),
       FinalLocationPass(property),
+    ),
+    listOf(
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
@@ -79,6 +81,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlineProceduresPass(parseContext),
       NondetFunctionPass(parseContext),
     ),
+    listOf(CloneProcedureForStaticThreadsPass()),
     listOf(
       // Clean up procedures after inlining
       InlinedProcedureRemovalPass()
@@ -89,9 +92,10 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
-      UnrollPass(busyWaitsOnly = true, specificRecursionUnrollLimit = -1),
+      SimplifyExprsPass(parseContext, property), // before unroll to have more chance of unrolling
+      UnrollPass(specificRecursionUnrollLimit = -1),
       EmptyEdgeRemovalPass(),
-      SimplifyExprsPass(parseContext, property),
+      SimplifyExprsPass(parseContext, property), // after unroll to simplify with fewer loops
       UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
@@ -131,7 +135,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),
     listOf(ByteMemoryPass(parseContext)),
-    listOf(CloneProcedureForStaticThreadsPass()),
     listOf(InlinedProcedureRemovalPass()),
     listOf(SimplifyExprsPass(parseContext, property)),
     listOf(

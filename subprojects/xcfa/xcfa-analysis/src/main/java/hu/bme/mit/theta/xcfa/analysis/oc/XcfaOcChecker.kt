@@ -114,8 +114,8 @@ class XcfaOcChecker(
           listOf(
             UnrollPass(
               specificForceUnrollLimit = forceUnrollBound,
-              parseContext = parseContext,
               specificRecursionUnrollLimit = forceUnrollBound,
+              parseContext = parseContext,
             ),
             AssumeFalseRemovalPass(property),
             MutexToVarPass(),

@@ -28,13 +28,9 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.collectVars
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.dereferences
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isWritten
-import hu.bme.mit.theta.xcfa.utils.simplify
+import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
+import kotlin.random.Random
 
 /**
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
@@ -87,20 +83,19 @@ class UnrollPass(
     /**
      * Replace a loop that only waits for a condition with a single iteration of itself.
      *
-     * Off by default: it is exact for reachability but not for termination (see [Loop.isBusyWait]),
-     * and a program without a waiting loop has nothing for it to change.
+     * Off by default: it is exact for reachability but not for termination and a program without
+     * a waiting loop has nothing for it to change.
      */
     var COLLAPSE_BUSY_WAITS = false
 
     /**
-     * Seed for the order [findLoop] explores edges in.
+     * Random generator for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
-     * are left for the fallbacks, so an unseeded source made the whole pass -- and every verdict
-     * downstream of it -- differ between two runs of the same input. That turns a reproducible
-     * failure into an intermittent one; set this to vary the exploration deliberately instead.
+     * are left for the fallbacks; set this to vary the exploration deliberately. Prefer setting
+     * the random in the config-to-checker utilities (see [ConfigToCegarChecker]).
      */
-    var EXPLORATION_SEED = 0L
+    var random = Random.Default
 
     private val transFunc: ExplStmtTransFunc by lazy {
       val solver = Z3SolverFactory.getInstance().createSolver()
@@ -116,9 +111,6 @@ class UnrollPass(
 
   /** The program's global variables, i.e. the ones another thread can observe. */
   private var globalVars: Set<VarDecl<*>> = emptySet()
-
-  /** Seeded so that the same input explores loops the same way on every run. */
-  private val exploration = Random(EXPLORATION_SEED)
 
   private val testedLoops = mutableSetOf<Loop>()
 
@@ -227,6 +219,8 @@ class UnrollPass(
     }
 
     private fun count(): Int? {
+      if (isBusyWait()) return 1
+
       if (!properlyUnrollable) return null
       check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
       check(loopStartEdges.size == 1)
@@ -236,10 +230,7 @@ class UnrollPass(
       // rejects outright ("Incomplete dereferences ... are not handled properly"). That index is
       // added later, and only on the CEGAR path (`PtrUtils.uniqueDereferences`, driven by
       // `PtrAction`), so a pass running before it must not hand a dereference to the solver at all.
-      // A loop whose trip count touches memory therefore counts as "not statically known", exactly
-      // like any other loop this analysis cannot resolve: return null and let the caller force
-      // unroll it. Without this the pass throws, which killed every OC run on a task with such a
-      // loop.
+      // A loop whose trip count touches memory therefore counts as "not statically known".
       if (
         (loopStartEdges + loopVarModifiers + loopVarInit).any { it.label.dereferences.isNotEmpty() }
       )
@@ -259,6 +250,108 @@ class UnrollPass(
         state = transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
       }
       return cnt
+    }
+
+    /**
+     * A loop is a busy wait if it does not modify global state (global variables or heap memory)
+     * and the values of local variables are the same for any positive number of executing the
+     * loop.
+     *
+     * That is, we must check the following:
+     * - No write access on global variables and dereferences
+     * - Written local variables only transitively depend on variables/memory not modified in the
+     *   loop
+     */
+    private fun isBusyWait() : Boolean {
+      // A dependency associate read variables to a written one with the following:
+      // - global variables/memory are omitted (we can return right away when written)
+      // - the map index is the written local variable
+      // - the associated value is the set of values it depends on
+      // A set of non-input variables is also maintained: a non-input is a local variable
+      // that is already written in the loop.
+      val waitlist = mutableMapOf(loopStart to (mapOf<VarDecl<*>, Set<VarDecl<*>>>() to setOf<VarDecl<*>>()))
+      val visited = mutableSetOf<XcfaLocation>()
+
+      while (waitlist.isNotEmpty()) {
+        val visiting = waitlist.keys.find { l ->
+          l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
+        } ?: return false
+        visited.add(visiting)
+        val (dependencies, nonInputs) = waitlist.remove(visiting)!!
+        visiting.outgoingEdges.forEach { edge ->
+          if (edge.target in visited && edge.target != loopStart) {
+            // nested loop, data flow is tricky
+            return false
+          }
+          val d = dependencies.toMutableMap()
+          val ni = nonInputs.toMutableSet()
+          edge.getFlatLabels().forEach { label ->
+            if (label is InvokeLabel || !update(d, ni, label)) {
+              return false
+            }
+          }
+          if (edge.target in loopLocs && edge.target != loopStart) {
+            val target = waitlist[edge.target]
+            val newTarget = d to ni
+            waitlist[edge.target] =
+              if (target == null) newTarget
+              else merge(target, newTarget)
+          }
+        }
+      }
+
+      return true
+    }
+
+    private fun update(
+      dependencies: MutableMap<VarDecl<*>, Set<VarDecl<*>>>,
+      nonInputs: MutableSet<VarDecl<*>>,
+      label: XcfaLabel,
+    ): Boolean {
+      if (label.dereferencesWithAccessType.any { it.value.isWritten }) {
+        // heap memory is written -> not a busy wait
+        return false
+      }
+
+      val accesses = label.collectVarsWithAccessType()
+      val writes = accesses.mapNotNull {
+        if (it.value.isWritten) {
+          if (it.key in globalVars) {
+            // a global variable is written -> not a busy wait
+            return false
+          }
+          it.key
+        } else null
+      }
+      var reads = accesses.mapNotNull { if (it.value.isRead) it.key else null }.toSet()
+      reads = reads.flatMap {
+        when (it) {
+          in nonInputs -> dependencies[it]!!
+          in globalVars -> listOf()
+          else -> listOf(it)
+        }
+      }.toSet()
+
+      writes.forEach { w ->
+        dependencies[w] = reads
+        if (dependencies.any { w in it.value }) {
+          // a written (local) variable is read in the loop -> not a busy wait
+          return false
+        }
+        nonInputs.add(w)
+      }
+
+      return true
+    }
+
+    private fun merge(
+      target1: Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>>,
+      target2: Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>>,
+    ): Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>> {
+      val (d1, ni1) = target1
+      val (d2, ni2) = target2
+      return ((d1.keys + d2.keys).associateWith { (d1[it] ?: setOf()) + (d2[it] ?: setOf()) }) to
+        (ni1 intersect ni2)
     }
 
     /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
@@ -511,9 +604,7 @@ class UnrollPass(
       if (edgesToExplore.isEmpty()) {
         stack.pop()
       } else {
-        // Deterministic given EXPLORATION_SEED: `edgesToExplore` keeps insertion order (the sets
-        // it comes from are linked), so indexing it with a seeded source repeats exactly.
-        val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
+        val edge = edgesToExplore.elementAt(random.nextInt(edgesToExplore.size))
         if (edge.target in stack) { // loop found
           getLoop(builder, edge)?.let {
             return it
