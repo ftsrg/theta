@@ -13,20 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.ptr
 
-import hu.bme.mit.theta.analysis.WrapperState
-import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolType
+package hu.bme.mit.theta.analysis;
 
-data class PtrState<S : ExprState>
-@JvmOverloads
-constructor(val innerState: S, val nextCnt: Int = 0) : ExprState, WrapperState {
+/**
+ * A state that wraps another state. In some cases, we are interested in a specific type of state in
+ * the state containment hierarchy which can be conveniently retrieved this way (for example,
+ * without implementing a separate case in a switch for all potential wrapper states).
+ */
+public interface WrapperState extends State {
 
-  override fun isBottom(): Boolean = innerState.isBottom()
-
-  override fun toExpr(): Expr<BoolType> = innerState.toExpr()
-
-  override fun getWrappedState(): S = innerState
+    /** Returns the wrapped state of the state. */
+    State getWrappedState();
 }

@@ -42,8 +42,6 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -60,7 +58,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
-import kotlin.random.Random
 
 fun runConfig(
   config: XcfaConfig<*, *>,
@@ -99,19 +96,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig
     cegarConfig as CegarConfig
-    val random = Random(cegarConfig.porSeed)
-    XcfaSporLts.random = random
-    XcfaDporLts.random = random
   }
   if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
     RemoveDeadEnds.enabled = false
-  }
-  if (config.backendConfig.backend == Backend.PATH_ENUMERATION) {
-    val pathEnumerationConfig = config.backendConfig.specConfig
-    pathEnumerationConfig as PathEnumerationConfig
-    val random = Random(pathEnumerationConfig.porRandomSeed)
-    XcfaSporLts.random = random
-    XcfaDporLts.random = random
   }
   if (
     config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||

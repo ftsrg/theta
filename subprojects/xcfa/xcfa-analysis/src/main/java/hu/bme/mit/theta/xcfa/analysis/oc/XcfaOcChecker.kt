@@ -49,7 +49,7 @@ import kotlin.time.measureTime
  * limit), only the cut points whose [unroll exits][UnrollExits] are reachable are unrolled deeper.
  */
 class XcfaOcChecker(
-  xcfa: XCFA,
+  private val xcfa: XCFA,
   private val property: XcfaProperty,
   private val parseContext: ParseContext,
   private val decisionProcedure: OcDecisionProcedureType,
@@ -73,13 +73,8 @@ class XcfaOcChecker(
     }
   }
 
-  val xcfa =
-    xcfa.optimizeFurther(
-      ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass()))
-    )
-
   // cuts made before this checker (e.g. by the frontend) have no exit locations to query
-  private val cutWithoutExits = this.xcfa.unsafeUnrollUsed
+  private val cutWithoutExits = xcfa.unsafeUnrollUsed
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
@@ -146,7 +141,9 @@ class XcfaOcChecker(
               specificRecursionUnrollLimit = bound,
               cutBounds = bounds,
               markUnrollExits = maxExitQueries != 0,
-            )
+            ),
+            AssumeFalseRemovalPass(property),
+            MutexToVarPass(),
           )
         )
       )
