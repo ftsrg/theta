@@ -15,15 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.ptr
 
+import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
 data class PtrState<S : ExprState>
 @JvmOverloads
-constructor(val innerState: S, val nextCnt: Int = 0) : ExprState {
+constructor(val innerState: S, val nextCnt: Int = 0) : ExprState, WrapperState {
 
   override fun isBottom(): Boolean = innerState.isBottom()
 
   override fun toExpr(): Expr<BoolType> = innerState.toExpr()
+
+  override fun getWrappedState(): S = innerState
 }

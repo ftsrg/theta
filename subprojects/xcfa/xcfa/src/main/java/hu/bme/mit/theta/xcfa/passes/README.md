@@ -37,7 +37,7 @@ Each phase below is one group in `CPasses`, in order.
 | | `MemoryFunctionsPass` | spell out `memcpy`/`memset`/`memmove` over the destination's cells | before anything that havocs the same objects, i.e. before `UnresolvedInvokeToHavocPass` |
 | | `UnresolvedInvokeToHavocPass` | havoc whatever calls are left | **last** of the call-consuming passes, by definition |
 | memory model | `FlatMemoryPass`, `ByteMemoryPass` | fold `(base, offset)` to one flat address, then split wide cells into bytes; both no-ops unless their `--memory-model` is selected | after every pass that creates or rewrites a dereference; `ByteMemoryPass` after `FlatMemoryPass` |
-| final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead | last |
+| final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead, and the writes to global objects that nothing reads (a union only as a whole) | last |
 
 Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
 `AssumeFalseRemovalPass`, `AtomicReadsOneWritePass` and `WitnessOptimizer` by the OC checker,
