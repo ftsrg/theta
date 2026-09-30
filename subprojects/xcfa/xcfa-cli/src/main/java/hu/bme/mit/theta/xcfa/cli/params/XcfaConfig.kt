@@ -334,11 +334,6 @@ data class CegarConfig(
   @Parameter(names = ["--prec-file"], description = "File of precision to reuse")
   var precFile: String? = null,
   @Parameter(names = ["--por"], description = "POR algorithm type") var por: POR = POR.NOPOR,
-  @Parameter(
-    names = ["--por-seed"],
-    description = "Random seed used by POR algorithms for testing purposes",
-  )
-  var porSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
   var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
   @Parameter(
@@ -895,8 +890,6 @@ data class PathEnumerationConfig(
   @Parameter(names = ["--prec"], description = "Precision") var initPrec: InitPrec = InitPrec.EMPTY,
   @Parameter(names = ["--por-level"], description = "POR dependency level")
   var porLevel: POR = POR.NOPOR,
-  @Parameter(names = ["--por-seed"], description = "Random seed used for DPOR")
-  var porRandomSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
   var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
   @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")

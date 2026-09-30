@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
+import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -183,7 +184,7 @@ class XcfaDataRaceTest {
         false,
       )
 
-    val lts = XcfaSporLts(xcfa)
+    val lts = XcfaSporLts(xcfa, Random(-1))
 
     val errorDetector = getXcfaErrorDetector(property.verifiedProperty, parseContext)
     val abstractor =

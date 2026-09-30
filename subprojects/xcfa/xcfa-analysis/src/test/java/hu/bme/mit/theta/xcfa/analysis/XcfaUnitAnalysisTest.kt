@@ -23,6 +23,7 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
+import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -84,7 +85,7 @@ class XcfaUnitAnalysisTest {
           NullLogger.getInstance(),
         )
         .first
-    val lts = XcfaSporLts(xcfa)
+    val lts = XcfaSporLts(xcfa, Random(-1))
 
     val solver = Z3LegacySolverFactory.getInstance().createSolver()
     val checker = getBoundedXcfaChecker(xcfa, lts, ErrorDetection.ERROR_LOCATION, bound, solver)

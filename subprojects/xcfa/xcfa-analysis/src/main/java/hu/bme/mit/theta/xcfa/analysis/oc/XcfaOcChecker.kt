@@ -42,8 +42,8 @@ import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import kotlin.time.measureTime
 
 class XcfaOcChecker(
-  xcfa: XCFA,
-  property: XcfaProperty,
+  private val xcfa: XCFA,
+  private val property: XcfaProperty,
   private val parseContext: ParseContext,
   decisionProcedure: OcDecisionProcedureType,
   smtSolver: String,
@@ -65,11 +65,6 @@ class XcfaOcChecker(
       "Unsupported property by OC checker: $property. Consider using a specification transformation."
     }
   }
-
-  val xcfa =
-    xcfa.optimizeFurther(
-      ProcedurePassManager(listOf(AssumeFalseRemovalPass(property), MutexToVarPass()))
-    )
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
@@ -121,7 +116,9 @@ class XcfaOcChecker(
               forceUnrollBound,
               parseContext = parseContext,
               specificRecursionUnrollLimit = forceUnrollBound,
-            )
+            ),
+            AssumeFalseRemovalPass(property),
+            MutexToVarPass(),
           )
         )
       )

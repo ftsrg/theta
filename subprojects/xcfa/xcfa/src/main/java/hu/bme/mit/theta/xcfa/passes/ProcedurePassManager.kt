@@ -126,6 +126,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
+    listOf(AmbiguousMutexPass()),
     // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),
     listOf(ByteMemoryPass(parseContext)),
