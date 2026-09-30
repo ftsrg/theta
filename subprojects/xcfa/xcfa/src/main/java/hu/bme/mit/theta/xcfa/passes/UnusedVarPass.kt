@@ -30,7 +30,6 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -331,7 +330,7 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
           val deref = stmt.deref.forwardAddress(known.values)
           val expr = stmt.expr.forwardAddresses(known.values)
           known.write(cellOf(deref), expr)
-          if (deref === stmt.deref && expr === stmt.expr) stmt else memoryAssign(deref, expr)
+          if (deref === stmt.deref && expr === stmt.expr) stmt else buildMemoryAssign(deref, expr)
         }
         is AssignStmt<*> ->
           stmt.expr.forwardAddresses(known.values).let {
@@ -345,11 +344,6 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
       }
     return if (newStmt === stmt) this else copy(stmt = newStmt)
   }
-
-  private fun <P : Type, O : Type, D : Type> memoryAssign(
-    deref: Dereference<P, O, D>,
-    expr: Expr<*>,
-  ): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
 
   /** Forwards the addresses of the dereferences in this expression. */
   private fun Expr<*>.forwardAddresses(known: Map<Cell, LitExpr<*>>): Expr<*> =
