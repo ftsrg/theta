@@ -278,8 +278,7 @@ fun complex27(
         checker,
       )
 
-    val termination =
-      termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+    val termination = termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
     val multithread =
       multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)

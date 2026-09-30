@@ -26,12 +26,12 @@ import java.util.Map;
  * Counts the C constructs a program actually uses, for offline study of what predicts which
  * algorithm suits it.
  *
- * It walks the same reachable global declarations {@link BitwiseChecker} does, so what it reports is
- * the program's own code rather than everything its headers happen to declare -- a distinction that
- * matters enormously on preprocessed input, where a trivial program still drags in thousands of
- * lines of libc types.
+ * <p>It walks the same reachable global declarations {@link BitwiseChecker} does, so what it
+ * reports is the program's own code rather than everything its headers happen to declare -- a
+ * distinction that matters enormously on preprocessed input, where a trivial program still drags in
+ * thousands of lines of libc types.
  *
- * Only construct *kinds* are counted, never an identifier, so the record cannot encode which
+ * <p>Only construct *kinds* are counted, never an identifier, so the record cannot encode which
  * benchmark it came from.
  */
 public class SourceTraitCollector extends IncludeHandlingCBaseVisitor<Void> {
@@ -110,8 +110,7 @@ public class SourceTraitCollector extends IncludeHandlingCBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitTypeSpecifierFunctionPointer(
-            CParser.TypeSpecifierFunctionPointerContext ctx) {
+    public Void visitTypeSpecifierFunctionPointer(CParser.TypeSpecifierFunctionPointerContext ctx) {
         bump("functionPointer");
         return super.visitTypeSpecifierFunctionPointer(ctx);
     }
@@ -191,8 +190,7 @@ public class SourceTraitCollector extends IncludeHandlingCBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitDirectDeclaratorFunctionDecl(
-            CParser.DirectDeclaratorFunctionDeclContext ctx) {
+    public Void visitDirectDeclaratorFunctionDecl(CParser.DirectDeclaratorFunctionDeclContext ctx) {
         bump("functionDeclarator");
         return super.visitDirectDeclaratorFunctionDecl(ctx);
     }

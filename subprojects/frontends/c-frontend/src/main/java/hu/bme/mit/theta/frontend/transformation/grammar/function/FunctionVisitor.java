@@ -43,8 +43,8 @@ import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisi
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.SourceTraitCollector;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.SourceTraitCollector;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
