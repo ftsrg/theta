@@ -652,7 +652,7 @@ data class MddConfig(
     description = "MDD to expression conversion strategy",
   )
   var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
-    MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL,
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   @Parameter(
     names = ["--proof-strategy"],
     description = "MDD to expression conversion strategy for the proof invariant",
@@ -677,7 +677,7 @@ data class MddConfig(
     description =
       "What to do with a decision diagram node that exceeds --edge-limit: NONE gives up (verification stuck), UNDER keeps the edges found so far and keeps only an unsafe verdict",
   )
-  var edgeCapStrategy: MddApproximation.Strategy = MddApproximation.Strategy.NONE,
+  var edgeCapStrategy: MddApproximation.Strategy = MddApproximation.Strategy.UNDER,
   @Parameter(
     names = ["--edge-limit"],
     description =
