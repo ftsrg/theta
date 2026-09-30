@@ -47,9 +47,11 @@ ${innerSTM.visualize()}
  * nest itself (e.g., COMPLEX falls back to COMPLEX). Like [HierarchicalNode], it returns the inner
  * config that succeeded.
  */
-class NestedPortfolioNode(name: String, private val portfolio: () -> STM) : Node(name) {
+class NestedPortfolioNode(name: String, portfolio: () -> STM) : Node(name) {
 
-  override fun execute(logger: Logger): Pair<Any, Any> = portfolio().execute(logger)
+  val innerSTM: STM by lazy(portfolio)
+
+  override fun execute(logger: Logger): Pair<Any, Any> = innerSTM.execute(logger)
 
   override fun visualize(): String =
     "state ${name.replace(Regex("[:\\.-]+"), "_")}: nested portfolio"
