@@ -2153,6 +2153,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> directMemberAccess(Expr<?> base, CStruct structType, String memberName) {
+        parseContext.markMemberAccessed(structType, memberName);
         final CComplexType embeddedType = structType.getFieldsAsMap().get(memberName);
 
         // Under the bytes model every member sits at its real ObjectLayout byte offset in the one

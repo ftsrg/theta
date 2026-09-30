@@ -29,7 +29,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/** Writes to global objects that nothing reads are removed; a union is only removed as a whole. */
+/**
+ * Writes to global objects that nothing reads are removed, and members nothing accesses are not
+ * initialized; a union is only removed as a whole.
+ */
 class UnusedMemoryWriteTest {
 
   private fun memoryWrites(src: String, memoryModel: MemoryModelType = MemoryModelType.multi): Int {
@@ -67,6 +70,27 @@ class UnusedMemoryWriteTest {
         MemoryModelType.flat,
       )
     assertEquals(0, writes)
+  }
+
+  @Test
+  fun readsThroughPointersDoNotKeepUnaccessedMembers() {
+    fun program(mutexes: Int) =
+      """
+      #include <pthread.h>
+      extern void reach_error();
+      pthread_mutex_t m[$mutexes];
+      int x = 1;
+      void *thr(void *arg) {
+        if (*(int *)arg != 1) reach_error();
+        pthread_mutex_lock(&m[0]);
+        pthread_mutex_unlock(&m[0]);
+        return 0;
+      }
+      int main() { pthread_t t; pthread_create(&t, 0, thr, &x); pthread_join(t, 0); return 0; }
+      """
+    val oneMutex = memoryWrites(program(1), MemoryModelType.flat)
+    val tenMutexes = memoryWrites(program(10), MemoryModelType.flat)
+    assertEquals(9, tenMutexes - oneMutex, "only the array cells of the extra mutexes are written")
   }
 
   @Test

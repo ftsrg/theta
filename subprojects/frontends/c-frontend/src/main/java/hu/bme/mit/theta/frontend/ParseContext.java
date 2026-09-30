@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -80,6 +81,9 @@ public class ParseContext {
     // Compile-time base ids of global objects, mapped to the object they are a part of (if any).
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
+
+    // Members accessed anywhere in the program, keyed by their (structurally compared) type.
+    private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
 
     public boolean isCheckMemsafety() {
         return checkMemsafety;
@@ -239,6 +243,20 @@ public class ParseContext {
 
     public boolean isStaticObject(BigInteger base) {
         return staticObjectParents.containsKey(base);
+    }
+
+    /** Records that member [member] of [type] is accessed somewhere in the program. */
+    public void markMemberAccessed(CStruct type, String member) {
+        accessedMembers.computeIfAbsent(type, k -> new LinkedHashSet<>()).add(member);
+    }
+
+    public boolean isMemberAccessed(CStruct type, String member) {
+        final Set<String> members = accessedMembers.get(type);
+        return members != null && members.contains(member);
+    }
+
+    public boolean isAnyMemberAccessed(CStruct type) {
+        return accessedMembers.containsKey(type);
     }
 
     /**
