@@ -97,3 +97,4 @@ global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is
 typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
 race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
+fp_negative_zero_division.c	efficient	LP64	UNSAFE	the sign of a floating-point zero literal survives constant folding: 1.0f / -0.0f is -inf
