@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,18 @@ package hu.bme.mit.theta.xcfa
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Mod
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
+import hu.bme.mit.theta.xcfa.utils.pointsTo
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -143,6 +150,16 @@ class PointerUtilsTest {
         }
       assertEquals(expected.toSet(), transformedActual.toSet())
     }
+  }
+
+  @Test
+  fun valuesOfAnExpression() {
+    val xcfa = data().first()[0] as XCFA
+    val p = xcfa.procedures.flatMap { it.vars }.first { it.name == "p" }
+    assertEquals(setOf(Int(1)), Add(cast(p.ref, Int()), Int(1)).pointsTo(xcfa))
+    // A memory read has no variables to substitute, but its value is still unknown.
+    val index = Mod(Dereference.of(Int(2), Int(0), Int()), Int(8))
+    assertNull(index.pointsTo(xcfa))
   }
 
   @ParameterizedTest
