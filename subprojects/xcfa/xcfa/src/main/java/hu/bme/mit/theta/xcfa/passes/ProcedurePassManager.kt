@@ -132,7 +132,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(ByteMemoryPass(parseContext)),
     listOf(
       // Final cleanup
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(uniqueWarningLogger, property, parseContext),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
