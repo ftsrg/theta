@@ -108,7 +108,11 @@ class UnusedVarPass(
           }
         }
       }
-      if (!keepGlobalVariableAccesses && !isOverflow) {
+      if (
+        !keepGlobalVariableAccesses &&
+          !isOverflow &&
+          property?.inputProperty != ErrorDetection.DATA_RACE
+      ) {
         memoryWriteRemoval?.run(builder.parent.getProcedures())
       }
 
