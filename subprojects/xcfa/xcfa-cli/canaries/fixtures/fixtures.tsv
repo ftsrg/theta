@@ -92,3 +92,5 @@ recursive_struct_byvalue_cycle.c	efficient	LP64	SAFE	a pointer cycle through a b
 hex_literal_unsigned_add.c	efficient	LP64	SAFE:no-overflow	a hex constant that does not fit in int is unsigned int (no signed overflow on i + 0x80000000)
 hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/unsigned/long/... candidate list, width and sign kept in bitvector
 rebuild_struct_registry.c	bitvector	ILP32	SAFE	an in-process frontend rebuild (multi -> flat fallback) starts from an empty struct registry
+global_union_zero_init.c	efficient	LP64	SAFE	a global union without an initializer reads back zero through every member view, also with a struct first member
+global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is stored in the byte cells / word its members are read from

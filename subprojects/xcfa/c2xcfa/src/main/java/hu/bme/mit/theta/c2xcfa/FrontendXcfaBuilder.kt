@@ -50,6 +50,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -73,6 +74,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.Obj
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -1155,7 +1157,8 @@ class FrontendXcfaBuilder(
       )
       recordObjectAtomicity(objectBase, type)
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
-      initializeStructUnits(builder, type, globalDeclaration, 0, initExpr, initStmtList)
+      if (type.isUnion) initializeUnion(type, globalDeclaration, initExpr, initStmtList)
+      else initializeStructUnits(builder, type, globalDeclaration, 0, initExpr, initStmtList)
     } else {
       // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of
       // a
@@ -1246,6 +1249,169 @@ class FrontendXcfaBuilder(
       )
     }
   }
+
+  /**
+   * Scalar bits an initializer stores into a union: [width] bits at [bitOffset], null if unknown.
+   */
+  private data class UnionLeaf(val bitOffset: Int, val width: Int, val value: Expr<*>?)
+
+  /**
+   * Initializes a union in the cells its members are read from, the ones [unionCopy] copies: the
+   * single word of a word-sliceable union, or the byte cells of a byte-laid-out one. The storage
+   * starts out zero (C17 6.7.10p10), then the scalars of the initialized member are placed at the
+   * bit offsets the member reads use.
+   *
+   * The bytes of a non-zero floating-point member are left unwritten, i.e. unconstrained: storing
+   * its bits needs the IEEE reinterpretation that byte-laid-out unions refuse.
+   */
+  private fun initializeUnion(
+    type: CStruct,
+    target: Expr<*>,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val wordWidth = type.unionCellWidth()
+    val leaves = mutableListOf<UnionLeaf>()
+    collectUnionLeaves(type, initExpr, 0, 0, wordWidth != null, leaves)
+    val (cellType, cells) =
+      if (wordWidth != null) unionWordCell(wordWidth, leaves) else unionByteCells(type, leaves)
+    cells.forEachIndexed { i, value ->
+      if (value == null) return@forEachIndexed
+      val offset = offsetLiteral(i.toLong())
+      val cell = Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
+      parseContext.metadata.create(cell, "cType", cellType)
+      initStmtList.add(AssignStmtLabel(cell, cast(value, cell.type)))
+    }
+  }
+
+  private fun unionWordCell(
+    wordWidth: Int,
+    leaves: List<UnionLeaf>,
+  ): Pair<CComplexType, List<Expr<*>?>> {
+    // The type ExpressionVisitor#unsignedIntegerOfWidth reads a union's word at.
+    val wordType =
+      unsignedTypeOfWidth(wordWidth)
+        ?: CComplexType.getUnsignedLong(parseContext).takeIf { it.width() >= wordWidth }
+        ?: CComplexType.getUnsignedLongLong(parseContext)
+    // A member filling the whole word keeps its own representation, which a read of a member
+    // sharing it takes as is (the two differ for a negative value under integer arithmetic).
+    val whole =
+      leaves.singleOrNull()?.value?.takeIf {
+        leaves[0].bitOffset == 0 && leaves[0].width == wordWidth && it.type == wordType.smtType
+      }
+    val value =
+      whole
+        ?: wordType.castTo(
+          leaves.fold(wordType.nullValue as Expr<*>) { word, leaf ->
+            val bits = wordType.castTo(checkNotNull(leaf.value))
+            BitfieldSlice.write(word, bits, leaf.bitOffset, leaf.width)
+          }
+        )
+    return wordType to listOf(value)
+  }
+
+  private fun unionByteCells(
+    type: CStruct,
+    leaves: List<UnionLeaf>,
+  ): Pair<CComplexType, List<Expr<*>?>> {
+    val byteType = CUnsignedChar(null, parseContext)
+    val bytes = MutableList<Expr<*>?>(unionCellCount(type)) { byteType.nullValue }
+    for (leaf in leaves) {
+      val first = leaf.bitOffset / 8
+      val last = (leaf.bitOffset + leaf.width - 1) / 8
+      if (leaf.value == null) {
+        for (k in first..last) bytes[k] = null
+      } else if (leaf.bitOffset % 8 == 0 && leaf.width % 8 == 0) {
+        // Widened to its storage first: a `_Bool` is one bit wide, but takes a whole byte.
+        val value = unsignedTypeOfWidth(leaf.width)?.castTo(leaf.value) ?: leaf.value
+        ByteUnionSlice.toBytes(value, leaf.width / 8).forEachIndexed { j, byte ->
+          bytes[first + j] = byte
+        }
+      } else {
+        // A bitfield: splice its bits into each byte it spans.
+        for (k in first..last) {
+          val from = maxOf(leaf.bitOffset, 8 * k)
+          val until = minOf(leaf.bitOffset + leaf.width, 8 * k + 8)
+          val part = BitfieldSlice.read(leaf.value, from - leaf.bitOffset, until - from, false)
+          bytes[k] =
+            bytes[k]?.let {
+              BitfieldSlice.write(it, byteType.castTo(part), from - 8 * k, until - from)
+            }
+        }
+      }
+    }
+    return byteType to bytes
+  }
+
+  /**
+   * Collects the scalars [init] stores into a [type] object lying [bitOffset] bits into a union's
+   * storage, [width] bits wide. Offsets follow the member reads: the slices of the word for a
+   * word-sliceable union ([CStruct.unionSlotOf], [CStruct.overlaySlotOf]), the [ObjectLayout]
+   * offsets for a byte-laid-out one.
+   */
+  private fun collectUnionLeaves(
+    type: CComplexType,
+    init: CStatement?,
+    bitOffset: Int,
+    width: Int,
+    word: Boolean,
+    out: MutableList<UnionLeaf>,
+  ) {
+    if (init == null) return
+    // A bare scalar in place of a braced initializer initializes the first leaf (brace elision).
+    val entries =
+      if (init is CInitializerList) elementPositions(init).toList() else listOf(0 to init)
+    when (type) {
+      is CStruct -> {
+        // Of a union's members only the last one initialized is stored (C17 6.7.10p19).
+        for ((position, value) in if (type.isUnion) entries.takeLast(1) else entries) {
+          if (position !in type.fields.indices) continue
+          val name = type.fields[position].get1()
+          val (offset, memberWidth) =
+            if (word) {
+              val slot = if (type.isUnion) type.unionSlotOf(name) else type.overlaySlotOf(name)
+              slot.bitOffset() to slot.width()
+            } else {
+              val field =
+                ObjectLayout.of(type, parseContext.architecture).field(name)
+                  ?: throw UnsupportedFrontendElementException(
+                    "Initializing a union: the layout of member [$name] could not be determined."
+                  )
+              field.bitOffset() to field.bitWidth()
+            }
+          val memberType = type.fields[position].get2()
+          collectUnionLeaves(memberType, value, bitOffset + offset, memberWidth, word, out)
+        }
+      }
+      is CArray -> {
+        val count = ObjectLayout.constantDimension(type) ?: return
+        val elementBits = ObjectLayout.sizeBits(type.embeddedType, parseContext.architecture)
+        for ((index, value) in entries) {
+          if (index !in 0 until count) continue
+          val elementOffset = bitOffset + index * elementBits
+          collectUnionLeaves(type.embeddedType, value, elementOffset, elementBits, word, out)
+        }
+      }
+      else -> {
+        val scalar = unwrapScalarInitializer(init)?.expression ?: return
+        if (scalar is UnsupportedInitializer) return
+        if (type is CReal) {
+          if (!isZeroBitsLiteral(scalar)) out.add(UnionLeaf(bitOffset, width, null))
+          return
+        }
+        out.add(UnionLeaf(bitOffset, width, type.castTo(scalar)))
+      }
+    }
+  }
+
+  /** Whether [expr] is a constant whose representation is all zero bits: `0`, `0.0`, not `-0.0`. */
+  private fun isZeroBitsLiteral(expr: Expr<*>): Boolean =
+    when (val literal = ExprUtils.simplify(expr)) {
+      is FpLitExpr -> literal.isPositiveZero
+      is IntLitExpr -> literal.value.signum() == 0
+      is BvLitExpr -> literal.value.none { it }
+      else -> false
+    }
 
   /**
    * Initializes an array whose innermost elements are structs laid inline -- `a[i].f` at cell
