@@ -74,6 +74,7 @@ import hu.bme.mit.theta.xcfa.utils.collectAssumes
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.lang.reflect.Type
 import java.util.function.Predicate
+import kotlin.random.Random
 
 enum class InputType {
   C,
@@ -108,7 +109,7 @@ enum class Backend {
 
 enum class POR(
   val getLts:
-    (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> LTS<
+    (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>, Random) -> LTS<
         XcfaState<out PtrState<out ExprState>>,
         XcfaAction,
       >,
@@ -116,11 +117,11 @@ enum class POR(
   val isAbstractionAware: Boolean,
 ) {
 
-  NOPOR({ _, _ -> getXcfaLts() }, false, false),
-  SPOR({ xcfa, _ -> XcfaSporLts(xcfa) }, false, false),
-  AASPOR({ xcfa, registry -> XcfaAasporLts(xcfa, registry) }, false, true),
-  DPOR({ xcfa, _ -> XcfaDporLts(xcfa) }, true, false),
-  AADPOR({ xcfa, _ -> XcfaAadporLts(xcfa) }, true, true),
+  NOPOR({ _, _, random -> getXcfaLts(random) }, false, false),
+  SPOR({ xcfa, _, random -> XcfaSporLts(xcfa, random) }, false, false),
+  AASPOR({ xcfa, registry, random -> XcfaAasporLts(xcfa, registry, random) }, false, true),
+  DPOR({ xcfa, _, random -> XcfaDporLts(xcfa, random) }, true, false),
+  AADPOR({ xcfa, _, random -> XcfaAadporLts(xcfa, random) }, true, true),
 }
 
 enum class Strategy {
@@ -779,43 +780,44 @@ enum class InitPrec(
 
 enum class ConeOfInfluenceMode(
   val getLts:
-    (XCFA, ParseContext, POR, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> Pair<
+    (XCFA, ParseContext, POR, MutableMap<VarDecl<*>, MutableSet<ExprState>>, Random) -> Pair<
         XcfaCoi?,
         LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
       >
 ) {
 
-  NO_COI({ xcfa, _, por, ivr ->
-    val lts = por.getLts(xcfa, ivr).also { NO_COI.porLts = it }
+  NO_COI({ xcfa, _, por, ivr, random ->
+    val lts = por.getLts(xcfa, ivr, random).also { NO_COI.porLts = it }
     null to lts
   }),
-  COI({ xcfa, pc, por, ivr ->
-    val coi = getCoi(xcfa, pc)
-    coi.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
+  COI({ xcfa, pc, por, ivr, random ->
+    val coi = getCoi(xcfa, pc, random)
+    coi.coreLts = por.getLts(xcfa, ivr, random).also { COI.porLts = it }
     coi to coi.lts
   }),
-  POR_COI({ xcfa, pc, por, ivr ->
-    val coi = getCoi(xcfa, pc)
-    coi.coreLts = getXcfaLts()
+  POR_COI({ xcfa, pc, por, ivr, random ->
+    val coi = getCoi(xcfa, pc, random)
+    coi.coreLts = getXcfaLts(random)
     val lts =
-      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts)
-      else XcfaSporCoiLts(xcfa, coi.lts)
+      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts, random)
+      else XcfaSporCoiLts(xcfa, coi.lts, random)
     coi to lts
   }),
-  POR_COI_POR({ xcfa, pc, por, ivr ->
-    val coi = getCoi(xcfa, pc)
-    coi.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
+  POR_COI_POR({ xcfa, pc, por, ivr, random ->
+    val coi = getCoi(xcfa, pc, random)
+    coi.coreLts = por.getLts(xcfa, ivr, random).also { POR_COI_POR.porLts = it }
     val lts =
-      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts)
-      else XcfaSporCoiLts(xcfa, coi.lts)
+      if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, coi.lts, random)
+      else XcfaSporCoiLts(xcfa, coi.lts, random)
     coi to lts
   });
 
   var porLts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>? = null
 }
 
-private fun getCoi(xcfa: XCFA, parseContext: ParseContext): XcfaCoi =
-  if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
+private fun getCoi(xcfa: XCFA, parseContext: ParseContext, random: Random): XcfaCoi =
+  if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa, random)
+  else XcfaCoiSingleThread(xcfa, random)
 
 // TODO CexMonitor: disable for multi_seq
 // TODO add new monitor to xsts cli

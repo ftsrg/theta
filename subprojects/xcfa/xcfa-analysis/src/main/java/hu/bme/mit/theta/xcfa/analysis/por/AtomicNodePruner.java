@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction>
         implements NodePruner<S, A> {
     @Override
     public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
-        var atomicMutex = AtomicFenceLabel.Companion.getATOMIC_MUTEX().getName();
+        var atomicMutex = AtomicFenceLabel.Companion.getATOMIC_MUTEX();
         while (node.getState().getMutexes().containsKey(atomicMutex)) {
             ArgEdge<S, A> inEdge = node.getInEdge().get();
             node = inEdge.getSource();
