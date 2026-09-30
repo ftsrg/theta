@@ -48,15 +48,12 @@ class AssumeFalseRemovalPass(private val property: XcfaProperty) : ProcedurePass
       unreachable = getUnreachable()
     }
 
-    // also for native data race checks: unrolling merges the aborts of a loop's iterations, which
-    // the OC checker rejects when they abort different atomic blocks
-    if (
-      property.verifiedProperty == ErrorDetection.ERROR_LOCATION ||
-        property.verifiedProperty == ErrorDetection.DATA_RACE
-    ) {
-      // remove atomic abort branches
+    if (property.verifiedProperty == ErrorDetection.ERROR_LOCATION) {
+      // remove atomic abort branches (unroll exits are no aborts: their reachability is queried)
       val abortLocs =
-        builder.getLocs().filter { it.outgoingEdges.isEmpty() && !it.final && !it.error }
+        builder.getLocs().filter {
+          it.outgoingEdges.isEmpty() && !it.final && !it.error && UnrollCut.keyOf(it) == null
+        }
 
       val locsToRemove = mutableSetOf<XcfaLocation>()
       abortLocs.forEach { abortLoc ->

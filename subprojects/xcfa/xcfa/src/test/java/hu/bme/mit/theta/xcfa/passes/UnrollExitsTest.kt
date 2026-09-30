@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
 
 class UnrollExitsTest {
 
-  private val loopKey = UnrollExits.key(UnrollExits.Kind.LOOP, "main", "L1")
+  private val loopKey = UnrollCut.LOOP.key("main", "L1")
 
   /** A loop whose trip count depends on two variables, so it can only be force unrolled. */
   private fun unrolled(
@@ -57,14 +57,14 @@ class UnrollExitsTest {
       .runChecked(procedure)
   }
 
-  private fun XcfaProcedureBuilder.exits() = getLocs().filter { UnrollExits.keyOf(it) != null }
+  private fun XcfaProcedureBuilder.exits() = getLocs().filter { UnrollCut.keyOf(it) != null }
 
   @Test
   fun forcedUnrollLeadsTheNextIterationIntoAnExit() {
     val procedure = unrolled(2)
     assertTrue(procedure.unsafeUnrollUsed)
     val exit = procedure.exits().single()
-    assertEquals(loopKey, UnrollExits.keyOf(exit))
+    assertEquals(loopKey, UnrollCut.keyOf(exit))
     // the exit is reached exactly when the loop condition holds once more
     val labels = exit.incomingEdges.single().getFlatLabels()
     assertEquals(1, labels.size)
@@ -83,17 +83,17 @@ class UnrollExitsTest {
   fun cutBoundsOverrideTheDefaultPerKey() {
     val procedure = unrolled(2, cutBounds = mapOf(loopKey to 4))
     assertEquals(4, procedure.getLocs().count { it.name.startsWith("L2_loop") })
-    assertEquals(loopKey, UnrollExits.keyOf(procedure.exits().single()))
+    assertEquals(loopKey, UnrollCut.keyOf(procedure.exits().single()))
   }
 
   @Test
   fun copiesOfAnExitKeepItsKey() {
-    val name = UnrollExits.locationName(loopKey)
+    val name = UnrollCut.locationName(loopKey)
     val spliced = XcfaLocation(name + 42, metadata = EmptyMetaData)
     val perThread = XcfaLocation(name + 42 + "_3", metadata = EmptyMetaData)
-    assertEquals(loopKey, UnrollExits.keyOf(spliced))
-    assertEquals(loopKey, UnrollExits.keyOf(perThread))
-    assertNull(UnrollExits.keyOf(XcfaLocation("L1", metadata = EmptyMetaData)))
-    assertTrue(UnrollExits.kindOf(loopKey).deepenable)
+    assertEquals(loopKey, UnrollCut.keyOf(spliced))
+    assertEquals(loopKey, UnrollCut.keyOf(perThread))
+    assertNull(UnrollCut.keyOf(XcfaLocation("L1", metadata = EmptyMetaData)))
+    assertTrue(UnrollCut.of(loopKey).deepenable)
   }
 }

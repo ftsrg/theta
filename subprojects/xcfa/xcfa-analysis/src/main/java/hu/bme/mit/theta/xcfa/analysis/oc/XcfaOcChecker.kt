@@ -46,7 +46,7 @@ import kotlin.time.measureTime
 
 /**
  * Bounded OC checking; IDL under SC checks data races natively. With [maxExitQueries] != 0 (< 0: no
- * limit), only the cut points whose [unroll exits][UnrollExits] are reachable are unrolled deeper.
+ * limit), only the cut points whose [unroll exits][UnrollCut] are reachable are unrolled deeper.
  */
 class XcfaOcChecker(
   private val xcfa: XCFA,
@@ -63,7 +63,7 @@ class XcfaOcChecker(
   private val forceUnrollBoundStart: Int = 2,
   private val forceUnrollBoundEnd: Int = 2,
   private val forceUnrollBoundStep: Int = 1,
-  private val maxExitQueries: Int = 0,
+  private val maxExitQueries: Int = -1,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   init {
@@ -116,7 +116,7 @@ class XcfaOcChecker(
       logger.mainStep("Unroll bounds reached at: $reached")
       val deepened =
         reached
-          .filter { UnrollExits.kindOf(it).deepenable }
+          .filter { UnrollCut.of(it).deepenable }
           .associateWith { (bounds[it] ?: forceUnrollBoundStart) + forceUnrollBoundStep }
           .filterValues { unbounded || it <= forceUnrollBoundEnd }
       if (deepened.isEmpty()) break
@@ -161,12 +161,9 @@ class XcfaOcChecker(
     private val wss: Map<VarDecl<*>, Set<R>>
 
     /** Ordering conflicts of this event graph, valid for every query of the round. */
-    private val lemmas = mutableListOf<Expr<BoolType>>()
+    private val lemmas = linkedSetOf<Expr<BoolType>>()
 
-    // The propagator does not reset its state between checks, so it gets a new checker per query.
-    private val roundChecker: OcChecker<E>? =
-      if (decisionProcedure == OcDecisionProcedureType.PROPAGATOR) null
-      else decisionProcedure.checker(smtSolver, memoryModel)
+    private val checker = decisionProcedure.checker(smtSolver, memoryModel)
 
     init {
       logger.mainStep("Creating event graph...")
@@ -178,16 +175,15 @@ class XcfaOcChecker(
     }
 
     override fun close() {
-      roundChecker?.solver?.close()
+      checker.solver.close()
     }
 
     private fun <T> query(block: (OcChecker<E>) -> T): T {
-      val checker = roundChecker ?: decisionProcedure.checker(smtSolver, memoryModel)
-      roundChecker?.solver?.push()
+      checker.solver.push()
       try {
         return block(checker)
       } finally {
-        if (roundChecker != null) roundChecker.solver.pop() else checker.solver.close()
+        checker.solver.pop()
       }
     }
 

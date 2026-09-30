@@ -55,12 +55,13 @@ class XcfaOcCheckerTest {
     /** Verdicts depending on the unroll exits and on cell-sensitive ordering constraints. */
     @JvmStatic
     fun unrollData(): Collection<Array<Any>> =
-      listOf(OcDecisionProcedureType.IDL, OcDecisionProcedureType.BASIC).flatMap { dp ->
+      OcDecisionProcedureType.entries.flatMap { dp ->
         listOf(
           arrayOf("/13loop_bound_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/14sequential_loops_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/15sequential_loops_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/20mutex_counter_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/23atomic_loop_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
         )
       }
 
@@ -81,6 +82,7 @@ class XcfaOcCheckerTest {
         arrayOf("/19norace_join.c", SafetyResult<*, *>::isSafe),
         arrayOf("/21race_atomic_abort_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/22race_atomic_reach_error_loop.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/24race_atomic_abort_write.c", SafetyResult<*, *>::isUnsafe),
       )
 
     @BeforeAll

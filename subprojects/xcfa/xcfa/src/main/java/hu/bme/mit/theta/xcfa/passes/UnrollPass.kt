@@ -60,7 +60,7 @@ import kotlin.math.max
  *   therefore means giving handles an identity that survives re-basing, not reordering passes.
  *
  * @param cutBounds per-cut-point overrides of the force unroll and recursion bounds
- * @param markUnrollExits whether cut-off continuations lead into [UnrollExits] instead of nowhere
+ * @param markUnrollExits whether cut-off continuations lead into [unroll exit locations][UnrollCut]
  */
 class UnrollPass(
   specificForceUnrollLimit: Int = -1,
@@ -131,7 +131,7 @@ class UnrollPass(
 
   /**
    * Maps every copied location (by identity) to its input location, so all copies of a loop share
-   * one [UnrollExits] key. Also creates the exit locations.
+   * one [UnrollCut] key. Also creates the exit locations.
    */
   private inner class CutTracker {
 
@@ -143,8 +143,8 @@ class UnrollPass(
       origins[copy] = origin(of)
     }
 
-    fun key(kind: UnrollExits.Kind, builder: XcfaProcedureBuilder, loc: XcfaLocation) =
-      UnrollExits.key(kind, builder.name, origin(loc).name)
+    fun key(kind: UnrollCut, builder: XcfaProcedureBuilder, loc: XcfaLocation) =
+      kind.key(builder.name, origin(loc).name)
 
     fun bound(key: String, default: Int): Int = if (default == -1) -1 else cutBounds[key] ?: default
 
@@ -156,7 +156,7 @@ class UnrollPass(
       metadata: MetaData,
     ) {
       if (!markUnrollExits) return
-      val name = UnrollExits.locationName(key)
+      val name = UnrollCut.locationName(key)
       val exit =
         builder.getLocs().find { it.name == name }
           ?: XcfaLocation(name, metadata = EmptyMetaData).also(builder::addLoc)
@@ -432,7 +432,7 @@ class UnrollPass(
           val callee = checkNotNull(builder.calleeOf(invokeLabel))
           val bounded = callee.name in recursive
           val used = expansions.getOrDefault(callee.name, 0)
-          val key = UnrollExits.key(UnrollExits.Kind.RECURSION, builder.name, callee.name)
+          val key = UnrollCut.RECURSION.key(builder.name, callee.name)
           if (bounded && used >= tracker.bound(key, recursionUnrollLimit)) {
             // Past the bound: drop the path rather than expand it again.
             builder.setUnsafeUnroll()
@@ -475,7 +475,7 @@ class UnrollPass(
       val backEdge = findBackEdge(builder.initLoc) ?: break
       builder.setUnsafeUnroll()
       builder.removeEdge(backEdge)
-      val key = tracker.key(UnrollExits.Kind.BACK_EDGE, builder, backEdge.target)
+      val key = tracker.key(UnrollCut.BACK_EDGE, builder, backEdge.target)
       tracker.cut(builder, key, backEdge.source, listOf(backEdge.label), backEdge.metadata)
     }
   }
@@ -649,7 +649,7 @@ class UnrollPass(
           if (exitEdges.isEmpty()) null else (loc to exitEdges)
         }
         .toMap()
-    val exitKey = tracker.key(UnrollExits.Kind.LOOP, builder, loopStart)
+    val exitKey = tracker.key(UnrollCut.LOOP, builder, loopStart)
     return Loop(
         loopStart = loopStart,
         loopCondStart = loopCondStart,

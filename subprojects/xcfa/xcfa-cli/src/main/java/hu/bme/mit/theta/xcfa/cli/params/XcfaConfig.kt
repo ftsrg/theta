@@ -616,7 +616,7 @@ data class OcConfig(
     description =
       "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
   )
-  var maxExitQueries: Int = 0,
+  var maxExitQueries: Int = -1,
   @Parameter(
     names = ["--oc-witness-optimizations"],
     description =

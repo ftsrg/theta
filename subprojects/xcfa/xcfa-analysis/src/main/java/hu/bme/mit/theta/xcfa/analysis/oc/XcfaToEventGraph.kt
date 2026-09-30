@@ -42,7 +42,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.UnrollExits
+import hu.bme.mit.theta.xcfa.passes.UnrollCut
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.dereferences
@@ -358,7 +358,7 @@ internal class XcfaToEventGraph(
           continue
         }
 
-        UnrollExits.keyOf(current.loc)?.let { key ->
+        UnrollCut.keyOf(current.loc)?.let { key ->
           unrollExits.add(UnrollExit(key, pid, Or(current.guards.map { it.toAnd() })))
           continue
         }
