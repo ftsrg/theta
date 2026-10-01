@@ -119,7 +119,8 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
         val identity = activationLiterals.filter { it !in connected }
         And(
           listOf(
-            And(connected.map { lambda[it]!! }),
+            // every literal stays tied to its predicate in the source state
+            And(lambda.values),
             And(connected.map { lambdaPrime[it]!! }),
             Or(transitions.map { concreteModel.split[it] }),
             And(identity.map { Eq(Exprs.Prime(it.ref), it.ref) }),
