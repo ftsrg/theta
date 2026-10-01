@@ -707,6 +707,8 @@ data class MddCegarConfig(
   var refinementSolver: String = "",
   @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
   var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
+  @Parameter(names = ["--predsplit"], description = "Predicate splitting (for interpolation)")
+  var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.ATOMS,
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
