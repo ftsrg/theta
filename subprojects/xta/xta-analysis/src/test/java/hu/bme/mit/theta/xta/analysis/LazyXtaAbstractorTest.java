@@ -17,12 +17,14 @@
 package hu.bme.mit.theta.xta.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy.BFS;
-import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
+import static hu.bme.mit.theta.analysis.algorithm.lazy.ClockStrategy.LU;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
+import hu.bme.mit.theta.analysis.algorithm.lazy.ClockStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.DataStrategy;
 import hu.bme.mit.theta.analysis.expr.ExprLattice;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;

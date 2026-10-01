@@ -24,6 +24,8 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.ClockStrategy;
+import hu.bme.mit.theta.analysis.algorithm.lazy.DataStrategy;
 import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprLattice;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;

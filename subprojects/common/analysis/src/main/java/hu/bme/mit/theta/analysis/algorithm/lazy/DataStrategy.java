@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xta.analysis.lazy;
+package hu.bme.mit.theta.analysis.algorithm.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
