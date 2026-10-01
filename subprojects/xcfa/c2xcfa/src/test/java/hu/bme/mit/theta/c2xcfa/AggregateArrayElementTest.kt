@@ -117,6 +117,12 @@ class AggregateArrayElementTest {
     )
   }
 
+  /** Reads a nondeterministic cell of `a`, so that none of its initializer writes is unused. */
+  private fun readAnyCell(dimensions: Int) =
+    "extern int __VERIFIER_nondet_int();\nint main() { return a" +
+      "[__VERIFIER_nondet_int()]".repeat(dimensions) +
+      "; }"
+
   /** The literal values a program's memory writes store, in program order, offset paired. */
   private fun writtenValues(src: String): List<Pair<String, String>> {
     val parseContext = ParseContext()
@@ -149,7 +155,7 @@ class AggregateArrayElementTest {
     // outright ("Not handling init expression of high dimsension array"), almost all
     // neural-network weight matrices and hardness. `int a[2][3] = {{1,2,3},{4,5,6}}` is one
     // contiguous object, so its values land in cells 0..5 in row-major order.
-    val w = writtenValues("int a[2][3] = {{1,2,3},{4,5,6}};\nint main() { return a[0][0]; }")
+    val w = writtenValues("int a[2][3] = {{1,2,3},{4,5,6}};\n${readAnyCell(2)}")
     assertEquals(
       listOf("1", "2", "3", "4", "5", "6"),
       (0..5).map { off -> w.first { it.first == off.toString() }.second },
@@ -162,7 +168,7 @@ class AggregateArrayElementTest {
     // C allows the inner braces to be dropped: `{1,2,3,4,5,6}` fills `int a[2][3]` identically.
     // This is where the frontend's per-element position stops being a cell index -- element k is
     // row k, three cells wide -- so the flat walk descends by the running cursor instead.
-    val w = writtenValues("int a[2][3] = {1,2,3,4,5,6};\nint main() { return a[0][0]; }")
+    val w = writtenValues("int a[2][3] = {1,2,3,4,5,6};\n${readAnyCell(2)}")
     assertEquals(
       listOf("1", "2", "3", "4", "5", "6"),
       (0..5).map { off -> w.first { it.first == off.toString() }.second },
@@ -174,7 +180,7 @@ class AggregateArrayElementTest {
   fun shortRowsInAMatrixInitializerZeroFillTheRest() {
     // A braced sub-object that runs out early still advances past its whole row, so
     // `{{1,2},{4}}` is 1,2,0,4,0,0 -- the untouched cells keep the zero C guarantees them.
-    val w = writtenValues("int a[2][3] = {{1,2},{4}};\nint main() { return a[0][0]; }")
+    val w = writtenValues("int a[2][3] = {{1,2},{4}};\n${readAnyCell(2)}")
     assertEquals(
       listOf("1", "2", "0", "4", "0", "0"),
       (0..5).map { off -> w.first { it.first == off.toString() }.second },
@@ -207,10 +213,7 @@ class AggregateArrayElementTest {
   fun aThreeDimensionalInitializerFlattensToo() {
     // The walk is depth-first, so it generalises past two dimensions. `int a[2][2][2]` fully
     // braced fills cells 0..7 with 1..8 in order.
-    val w =
-      writtenValues(
-        "int a[2][2][2] = {{{1,2},{3,4}},{{5,6},{7,8}}};\nint main() { return a[0][0][0]; }"
-      )
+    val w = writtenValues("int a[2][2][2] = {{{1,2},{3,4}},{{5,6},{7,8}}};\n${readAnyCell(3)}")
     assertEquals(
       (1..8).map { it.toString() },
       (0..7).map { off -> w.first { it.first == off.toString() }.second },

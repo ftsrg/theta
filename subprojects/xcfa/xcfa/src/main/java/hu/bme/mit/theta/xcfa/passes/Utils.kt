@@ -282,3 +282,9 @@ val XcfaProcedureBuilder.loopEdges: Set<XcfaEdge>
 
 val XcfaProcedure.loopEdges: Set<XcfaEdge>
   get() = getLoopEdges(initLoc)
+
+/** A memory assignment of [expr], cast to the type of [deref]. */
+fun <P : Type, O : Type, D : Type> buildMemoryAssign(
+  deref: Dereference<P, O, D>,
+  expr: Expr<*>,
+): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
