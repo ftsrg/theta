@@ -498,6 +498,18 @@ public class XstsHornTest {
                         true,
                         "golem:0.5.0"
                     },
+                    {
+                        "src/test/resources/model/localvars_same_name.xsts",
+                        "src/test/resources/property/localvars_same_name.prop",
+                        false,
+                        "z3:4.13.0"
+                    },
+                    {
+                        "src/test/resources/model/localvars_shadow.xsts",
+                        "src/test/resources/property/localvars_shadow.prop",
+                        false,
+                        "z3:4.13.0"
+                    },
 
                     //                {"src/test/resources/model/loopxy.xsts",
                     // "src/test/resources/property/loopxy.prop",

@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
+import java.time.Duration
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -114,5 +115,58 @@ class XcfaDslTest {
       val safetyResult = checker.check()
       Assertions.assertTrue(safetyResult.isUnsafe)
     }
+  }
+
+  private fun unsatCoreConfig(domain: Domain) =
+    XcfaConfig<SpecFrontendConfig, CegarConfig>(
+      backendConfig =
+        BackendConfig(
+          backend = Backend.CEGAR,
+          specConfig =
+            CegarConfig(
+              abstractorConfig = CegarAbstractorConfig(domain = domain),
+              refinerConfig = CegarRefinerConfig(refinement = Refinement.UNSAT_CORE),
+            ),
+        )
+    )
+
+  @Test
+  fun verifyXcfaWithUnsatCoreRefinement() {
+    SolverManager.registerSolverManager(Z3SolverManager.create())
+    val config = unsatCoreConfig(Domain.EXPL)
+    // Unsat-core variables left at their SSA indices make this CEGAR loop diverge, not fail.
+    Assertions.assertTimeoutPreemptively(Duration.ofSeconds(60)) {
+      for ((xcfa, expectSafe) in listOf(getSyncXcfa() to true, getAsyncXcfa() to false)) {
+        val checker =
+          getSafetyChecker(
+            xcfa,
+            emptySet(),
+            config,
+            ParseContext(),
+            NullLogger.getInstance(),
+            UniqueWarningLogger(NullLogger.getInstance()),
+          )
+        val result = checker.check()
+        Assertions.assertTrue(if (expectSafe) result.isSafe else result.isUnsafe)
+      }
+    }
+  }
+
+  @Test
+  fun rejectUnsatCoreRefinementWithoutExplDomain() {
+    SolverManager.registerSolverManager(Z3SolverManager.create())
+    val exception =
+      Assertions.assertThrows(UnsupportedOperationException::class.java) {
+        getSafetyChecker(
+            getSyncXcfa(),
+            emptySet(),
+            unsatCoreConfig(Domain.PRED_CART),
+            ParseContext(),
+            NullLogger.getInstance(),
+            UniqueWarningLogger(NullLogger.getInstance()),
+          )
+          .check()
+      }
+    Assertions.assertTrue(exception.message!!.contains("UNSAT_CORE"))
   }
 }

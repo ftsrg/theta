@@ -184,8 +184,12 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr udiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
+        final BigInteger divisor = unsignedBvLitExprToBigInteger(that);
+        // Folding must agree with the solvers: SMT-LIB bvudiv by zero is all ones.
         BigInteger div =
-                unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that));
+                divisor.signum() == 0
+                        ? BigInteger.TWO.pow(getType().getSize()).subtract(BigInteger.ONE)
+                        : unsignedBvLitExprToBigInteger(this).divide(divisor);
         div = fitBigIntegerIntoUnsignedDomain(div, getType().getSize());
         return bigIntegerToUnsignedBvLitExpr(div, getType().getSize());
     }
@@ -317,11 +321,12 @@ public final class BvLitExpr extends NullaryExpr<BvType>
     }
 
     public BvLitExpr urem(final BvLitExpr that) {
-        // Semantics:
-        // 5 rem 3 = 2
-        BigInteger thisInt = signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = signedBvLitExprToBigInteger(that);
-        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        checkArgument(this.getType().equals(that.getType()));
+        final BigInteger dividend = unsignedBvLitExprToBigInteger(this);
+        final BigInteger divisor = unsignedBvLitExprToBigInteger(that);
+        // SMT-LIB bvurem by zero is the dividend (see udiv)
+        final BigInteger rem = divisor.signum() == 0 ? dividend : dividend.mod(divisor);
+        return bigIntegerToUnsignedBvLitExpr(rem, getType().getSize());
     }
 
     public BvLitExpr srem(final BvLitExpr that) {

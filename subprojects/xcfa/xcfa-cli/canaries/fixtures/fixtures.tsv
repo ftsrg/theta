@@ -66,6 +66,7 @@ calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the
 memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
+redeclaration_after_definition.c	efficient	ILP32	SAFE	a redeclaration without an initializer (extern, tentative, or in a multi-declarator list) does not replace the definition that has one
 union_wide_cell_halves.c	efficient	ILP32	SAFE	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)
 union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	a bitfield write to a union splices at the cell width, not the aggregate placeholder
 global_struct_brace_elision.c	efficient	LP64	SAFE	brace elision: { 0 } over an array of structs zero-initialises every member
@@ -75,4 +76,25 @@ nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only 
 stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
 stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
+ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
+ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
+typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
+typeof_rvalue.c	efficient	LP64	SAFE	typeof over a literal or an arithmetic result
+global_nested_struct_array.c	efficient	ILP32	SAFE	a global struct array's nested-struct cells hold distinct bases, and its scalar cells are zero
+global_nested_struct_array_init.c	efficient	ILP32	SAFE	a global struct array with nested struct/array fields is initialized in its inline cells
+global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct and 2-D nested-struct arrays are initialized in their inline cells
+uninit_local_per_call.c	efficient	ILP32	UNSAFE	an uninitialized local gets a fresh value at each declaration, not the previous inlined call's
+short_circuit_postfix.c	efficient	LP64	SAFE	a postfix ++/-- in a && / || operand runs only if the operand does, before the next operand
+short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values taken before a later operand's side effect
+recursive_struct_depth2.c	efficient	LP64	SAFE	a recursive struct is typed correctly beyond one hop through its self-pointer (p->next->next->data)
+recursive_struct_sizeof_depth2.c	efficient	LP64	SAFE	sizeof two hops through a recursive struct self-pointer is the struct size, not the int placeholder
+recursive_struct_byvalue_cycle.c	efficient	LP64	SAFE	a pointer cycle through a by-value member (A holds B, B points to A) is typed beyond one hop
+hex_literal_unsigned_add.c	efficient	LP64	SAFE:no-overflow	a hex constant that does not fit in int is unsigned int (no signed overflow on i + 0x80000000)
+hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/unsigned/long/... candidate list, width and sign kept in bitvector
+rebuild_struct_registry.c	bitvector	ILP32	SAFE	an in-process frontend rebuild (multi -> flat fallback) starts from an empty struct registry
+global_union_zero_init.c	efficient	LP64	SAFE	a global union without an initializer reads back zero through every member view, also with a struct first member
+global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is stored in the byte cells / word its members are read from
+typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
+race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
+fp_negative_zero_division.c	efficient	LP64	UNSAFE	the sign of a floating-point zero literal survives constant folding: 1.0f / -0.0f is -inf

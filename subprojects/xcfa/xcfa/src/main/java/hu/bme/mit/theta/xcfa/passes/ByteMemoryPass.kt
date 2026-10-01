@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
@@ -107,7 +108,8 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
         " into byte cells requires the IEEE bit reinterpretation, which SMT-LIB leaves" +
         " underspecified for NaN (every NaN shares one encoding and the theory does not fix" +
         " which), so a program that inspects those bits can be given a spurious counterexample." +
-        " Use --memory-model multi or flat for this input."
+        " The multi and flat memory models do support floats in memory, except as a member of a" +
+        " union, which no memory model supports yet."
     )
 
   private fun XcfaLabel.bytify(): XcfaLabel =
@@ -189,7 +191,8 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   /** The one-byte cell at byte `O + j` of base [base]. */
   private fun byteCell(base: Expr<*>, offset: Expr<*>, j: Int): Dereference<Type, Type, BvType> {
     val off: Expr<*> =
-      if (j == 0) offset else Add(cast(offset, offset.type), literalOf(offset.type, j))
+      if (j == 0) offset
+      else ExprUtils.simplify(Add(cast(offset, offset.type), literalOf(offset.type, j)))
     return Dereference.of(cast(base, base.type), cast(off, base.type), BvType.of(8, false))
   }
 

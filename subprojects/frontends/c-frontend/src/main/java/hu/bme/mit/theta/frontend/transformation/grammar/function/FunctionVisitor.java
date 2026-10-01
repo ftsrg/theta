@@ -48,6 +48,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -56,6 +57,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.*;
@@ -88,14 +91,20 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         flatVariables.clear();
         functions.clear();
         staticLocals.clear();
+        initializedGlobals.clear();
         currentStatementContext.clear();
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+    private int loopDepth = 0;
+    private String currentFunction;
     private final Set<VarDecl<?>> atomicVariables;
     private int anonCnt = 0;
     private final List<VarDecl<?>> flatVariables;
     private final Map<VarDecl<?>, CDeclaration> functions;
+
+    /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
+    private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
 
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
@@ -488,9 +497,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         scopedAllocas.clear();
         scopedRegistered.clear();
         atomicVariables.clear();
+        initializedGlobals.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
+        // These registries are static, and one JVM can build the same input more than once (the
+        // memory-model and arithmetic fallbacks, the portfolio): each build starts from none.
+        Struct.resetRegistry();
+        Enum.resetRegistry();
+        FunctionIds.reset();
         declareMallocReturnsPointer();
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
@@ -735,9 +750,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (!declaration.getType().isTypedef()) {
                 if (!declaration
                         .isFunc()) { // functions should not be interpreted as global variables
+                    // A redeclaration without an initializer after the definition (`int x = 5;
+                    // extern int x, y;` lists this context for y) must not re-initialize x.
+                    if (declaration.getInitExpr() == null
+                            && initializedGlobals.contains(
+                                    variables.peek().get2().get(declaration.getName()))) {
+                        continue;
+                    }
                     createVars(declaration);
                     for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                         decls.getcDeclarations().add(Tuple2.of(declaration, varDecl));
+                        if (declaration.getInitExpr() != null) {
+                            initializedGlobals.add(varDecl);
+                        }
                     }
                 } else {
                     CSimpleType returnType = declaration.getType();
@@ -785,6 +810,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
             if (functionParam.getName() != null) createVars(functionParam);
@@ -944,6 +970,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopWhileStatement(CParser.WhileStatementContext ctx) {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
         final int whileMark = scopeMark();
@@ -959,6 +994,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopDoWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
         final int doWhileMark = scopeMark();
         CDoWhile cDoWhile =
@@ -973,6 +1017,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopForStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopForStatement(CParser.ForStatementContext ctx) {
         parseContext.getCStmtCounter().incrementForLoops();
         pushScope(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
         CStatement init = ctx.forCondition().forInit().accept(this);
@@ -1718,7 +1771,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     AssumeStmt assumeStmt =
                             CComplexType.getType(varDecl.getRef(), parseContext)
                                     .limit(varDecl.getRef());
-                    CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                    // A re-executed declaration (a loop body, or a callee that is inlined or
+                    // called again) must havoc, or it reads the previous activation's value. An
+                    // array variable holds its alloca base, assigned just above, so it keeps it.
+                    boolean mayRepeat = loopDepth > 0 || !"main".equals(currentFunction);
+                    CAssume cAssume =
+                            declaration.getActualType() instanceof CArray || !mayRepeat
+                                    ? new CAssume(assumeStmt, parseContext)
+                                    : new CAssume(varDecl, assumeStmt, parseContext);
                     recordMetadata(ctx, cAssume);
                     cAssume.setFunctionName("NotC");
                     // assumption is not in C file
@@ -1907,7 +1967,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         uniqueWarningLogger);
 
         Expr<?> iteExpr;
-        if (!ctx.expression().isEmpty()) {
+        if (ctx.ifFalse != null) {
             // GNU `a ?: b`: the middle operand is omitted, its value is the guard itself.
             CStatement ifTrue = ctx.ifTrue == null ? null : ctx.ifTrue.accept(this);
             CStatement ifFalse = ctx.ifFalse.accept(this);

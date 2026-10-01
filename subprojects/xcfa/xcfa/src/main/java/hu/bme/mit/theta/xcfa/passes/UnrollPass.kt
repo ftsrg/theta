@@ -197,6 +197,13 @@ class UnrollPass(
       override fun getStmts() = listOf(stmt)
     }
 
+    /** Unrolls the loop only if its iteration count is known, and tells whether it did. */
+    fun unrollCounted(builder: XcfaProcedureBuilder): Boolean {
+      val c = count() ?: return false
+      unroll(builder, c, true)
+      return true
+    }
+
     fun unroll(builder: XcfaProcedureBuilder) {
       val c = count()
       if (c != null) {
@@ -299,9 +306,13 @@ class UnrollPass(
       return cnt
     }
 
-    /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
+    /**
+     * Replaces the loop variable with its constant value for iteration [index], when enabled and
+     * [count] got that far: a loop it could not count at all can still be force unrolled.
+     */
     private fun substituteLoopVarIn(label: XcfaLabel, index: Int): XcfaLabel {
       if (!substituteLoopVar || parseContext == null || loopVar == null) return label
+      if (index !in loopVarValues.indices) return label
       val valuation = MutableValuation()
       valuation.put(loopVar, loopVarValues[index])
       return label.simplify(valuation, parseContext)
@@ -373,10 +384,19 @@ class UnrollPass(
     // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
     // taken apart by the search below.
     if (recursionUnrollLimit != -1) unrollRecursiveCalls(builder)
+    // Countable loops first, forcing one only when none is left: unrolling a loop can make the next
+    // one countable (its initialization is found by walking back through the loops before it).
+    val uncounted = mutableSetOf<Loop>()
     while (true) {
-      val loop = findLoop(builder) ?: break
-      loop.unroll(builder)
-      testedLoops.add(loop)
+      val loop = findLoop(builder, uncounted)
+      if (loop != null) {
+        if (loop.unrollCounted(builder)) testedLoops.add(loop) else uncounted.add(loop)
+        continue
+      }
+      if (forceUnrollLimit == -1) break
+      val forced = findLoop(builder) ?: break
+      forced.unroll(builder)
+      testedLoops.add(forced)
     }
     if (forceUnrollLimit != -1) cutRemainingBackEdges(builder)
     // Force unrolling leaves behind copies past the bound that nothing can reach, including whole
@@ -514,7 +534,8 @@ class UnrollPass(
     return null
   }
 
-  private fun findLoop(builder: XcfaProcedureBuilder): Loop? { // DFS
+  private fun findLoop(builder: XcfaProcedureBuilder, skipped: Set<Loop> = emptySet()): Loop? {
+    // DFS
     val stack = Stack<XcfaLocation>()
     val explored = mutableSetOf<XcfaEdge>()
     stack.push(builder.initLoc)
@@ -528,9 +549,8 @@ class UnrollPass(
         // it comes from are linked), so indexing it with a seeded source repeats exactly.
         val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
         if (edge.target in stack) { // loop found
-          getLoop(builder, edge)?.let {
-            return it
-          }
+          val loop = getLoop(builder, edge)
+          if (loop != null && loop !in skipped) return loop
         } else {
           stack.push(edge.target)
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,9 +33,19 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.lang.System.err
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
+
+/**
+ * A fresh folder inside [resultFolder] for the child process's outputs. [resultFolder] is created
+ * first, as every other writer of it does: `--output-directory` may name one that does not exist.
+ */
+internal fun createChildResultFolder(resultFolder: File): Path {
+  resultFolder.mkdirs()
+  return createTempDirectory(resultFolder.toPath())
+}
 
 class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   val xcfa: XCFA?,
@@ -49,7 +59,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   }
 
   override fun check(): SafetyResult<EmptyProof, EmptyCex> {
-    val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
+    val tempDir = createChildResultFolder(config.outputConfig.resultFolder)
     Runtime.getRuntime()
       .addShutdownHook(
         Thread {

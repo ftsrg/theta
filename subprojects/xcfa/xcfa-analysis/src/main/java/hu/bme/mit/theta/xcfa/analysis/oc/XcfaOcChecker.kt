@@ -344,7 +344,13 @@ class XcfaOcChecker(
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }
-          solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
+          // A local may be unassigned on the path taken (e.g. the skipped call of `f() || g()`), so
+          // a read must take its value from a write only if one of its candidates executed.
+          // A candidate whose guard is a subset of the read's always executes with it.
+          val mustRead =
+            if (rels.any { event.guard.containsAll(it.from.guard) }) event.guardExpr
+            else And(event.guardExpr, Or(rels.map { it.from.guardExpr }))
+          solver.add(Imply(mustRead, Or(rels.map { it.declRef }))) // RF-Some
         }
     }
   }

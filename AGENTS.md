@@ -84,6 +84,8 @@ Spotless is configured `ratchetFrom("origin/master")` (`buildSrc/src/main/kotlin
 
 `checkCopyright` derives the expected year from a file's **last commit date** (`git log -1`), so run `applyCopyright` *after* committing, never before — otherwise it writes the previous year and the check then fails.
 
+Both copyright tasks need the full git history and refuse to run in a shallow clone (where every file older than the boundary would get the boundary commit's year): run `git fetch --unshallow` first.
+
 ## Committing
 
 Only commit when explicitly asked. Commit messages: **short**, following the project's convention — and do **not** mention Claude/AI or add Claude co-author trailers.

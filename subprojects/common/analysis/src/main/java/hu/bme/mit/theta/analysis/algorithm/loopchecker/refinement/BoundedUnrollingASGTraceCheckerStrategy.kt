@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import hu.bme.mit.theta.core.type.DomainSize
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
@@ -40,7 +42,6 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.ItpMarker
 import hu.bme.mit.theta.solver.SolverFactory
-import java.util.function.Consumer
 
 class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
   private val trace: ASGTrace<S, A>,
@@ -60,49 +61,38 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
       throw TraceCheckingFailedException("Required number of unrolling is above $bound")
     }
     logger.write(Logger.Level.INFO, "Unrolling loop of trace at most %d times%n", requiredLoops)
-    solver.reset()
-    var loopIndexing = VarIndexingFactory.indexing(0)
-    for (i in 0 until requiredLoops) {
-      solver.push()
-      putLoopOnSolver(satMarker, loopIndexing)
-      if (solver.check().isUnsat) {
-        solver.pop()
-        putLoopOnSolver(unreachableMarker, loopIndexing)
-        logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i + 1)
-        return infeasibleThroughInterpolant(trace.tail.size, loopIndexing)
+    // The solver still holds init, tail and the first loop iteration, so every unrolling continues
+    // from a reachable honda state. Equal states at any two honda visits form a concrete lasso.
+    val hondaIndexings = mutableListOf(indexingBeforeLoop)
+    var loopIndexing = indexingBeforeLoop
+    for (i in 1..requiredLoops) {
+      if (i > 1) {
+        solver.push()
+        putLoopOnSolver(satMarker, loopIndexing)
+        if (solver.check().isUnsat) {
+          solver.pop()
+          putLoopOnSolver(unreachableMarker, loopIndexing)
+          logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i)
+          return infeasibleThroughInterpolant(trace.tail.size, loopIndexing)
+        }
       }
       loopIndexing = loopIndexing.add(deltaIndexing)
       solver.push()
-      val finalLoopIndexing = loopIndexing
-      variables.forEach(
-        Consumer { variable: VarDecl<*> ->
-          solver.add(
-            unreachableMarker,
-            Eq(
-              PathUtils.unfold(variable.ref, VarIndexingFactory.indexing(0)),
-              PathUtils.unfold(variable.ref, finalLoopIndexing),
-            ),
-          )
-        }
-      )
+      solver.add(unreachableMarker, Or(hondaIndexings.map { sameState(it, loopIndexing) }))
       if (solver.check().isSat) {
-        logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i + 1)
+        logger.write(Logger.Level.INFO, "Unrolled loop of trace %d times%n", i)
         return getItpRefutationFeasible()
       }
       solver.pop()
+      hondaIndexings.add(loopIndexing)
     }
-    val finalLoopIndexing = loopIndexing
-    variables.forEach { variable ->
-      solver.add(
-        unreachableMarker,
-        Eq(
-          PathUtils.unfold(variable.ref, VarIndexingFactory.indexing(0)),
-          PathUtils.unfold(variable.ref, finalLoopIndexing),
-        ),
-      )
-    }
-    return infeasibleThroughInterpolant(trace.tail.size, loopIndexing.sub(deltaIndexing))
+    // A deterministic loop feasible this often would have repeated a honda state, so the bound does
+    // not hold here (e.g. due to nondeterminism): let the default strategy decide
+    throw TraceCheckingFailedException("Loop did not close within $requiredLoops unrollings")
   }
+
+  private fun sameState(first: VarIndexing, second: VarIndexing): Expr<BoolType> =
+    And(variables.map { Eq(PathUtils.unfold(it.ref, first), PathUtils.unfold(it.ref, second)) })
 
   private fun findSmallestAbstractState(i: Int, bound: Int, usedVariablesPrecision: ExplPrec): Int {
     val loop = trace.loop
@@ -120,8 +110,8 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
     val currentSize: DomainSize =
       statesForExpr
         .map { state ->
-          val filtVars =
-            usedVariablesPrecision.vars.filter(ExprUtils.getVars(state.toExpr())::contains)
+          val fixedVars = ExprUtils.getVars(state.toExpr())
+          val filtVars = usedVariablesPrecision.vars.filterNot(fixedVars::contains)
           val types = filtVars.map(VarDecl<*>::getType)
           val sizes = types.map(Type::getDomainSize)
           val res = sizes.fold(DomainSize.ONE, DomainSize::multiply)
@@ -135,9 +125,10 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
 
   fun expandUsedVariables(usedVariables: Set<VarDecl<*>>): Set<VarDecl<*>> {
     val expanded =
-      trace.loop.fold(emptySet<VarDecl<*>>()) { acc, edge ->
-        if (edge.action is StmtAction) VarCollectorStmtVisitor.visitAll(edge.action.getStmts(), acc)
-        else emptySet()
+      trace.loop.fold(usedVariables) { acc, edge ->
+        if (edge.action is StmtAction)
+          acc + VarCollectorStmtVisitor.visitAll(edge.action.getStmts(), acc)
+        else acc
       }
 
     return if (expanded.size > usedVariables.size) expandUsedVariables(expanded) else usedVariables
