@@ -49,9 +49,11 @@ class AssumeFalseRemovalPass(private val property: XcfaProperty) : ProcedurePass
     }
 
     if (property.verifiedProperty == ErrorDetection.ERROR_LOCATION) {
-      // remove atomic abort branches
+      // remove atomic abort branches (unroll exits are no aborts: their reachability is queried)
       val abortLocs =
-        builder.getLocs().filter { it.outgoingEdges.isEmpty() && !it.final && !it.error }
+        builder.getLocs().filter {
+          it.outgoingEdges.isEmpty() && !it.final && !it.error && UnrollCut.keyOf(it) == null
+        }
 
       val locsToRemove = mutableSetOf<XcfaLocation>()
       abortLocs.forEach { abortLoc ->

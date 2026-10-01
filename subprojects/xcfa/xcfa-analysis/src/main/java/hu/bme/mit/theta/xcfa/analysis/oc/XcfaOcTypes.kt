@@ -23,16 +23,24 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>
+  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>,
+  internal val supportsProperty: (ErrorDetection, XcfaOcMemoryConsistencyModel) -> Boolean,
 ) {
 
-  IDL({ solver, mcm -> IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC) }),
-  BASIC({ solver, _ -> BasicOcChecker(solver) }),
-  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }),
+  IDL(
+    { solver, mcm -> IDLOcChecker(solver, mcm == SC) },
+    { property, mcm -> property == ERROR_LOCATION || (property == DATA_RACE && mcm == SC) },
+  ),
+  BASIC({ solver, _ -> BasicOcChecker(solver) }, { property, _ -> property == ERROR_LOCATION }),
+  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }, { property, _ -> property == ERROR_LOCATION }),
 }
 
 internal class XcfaEvent(
@@ -52,6 +60,10 @@ internal class XcfaEvent(
   private var arrayLit: LitExpr<*>? = null
   private var offsetLit: LitExpr<*>? = null
 
+  var inAtomicBlock: Boolean = false
+
+  var raceCandidate: Boolean = false
+
   init {
     check((array == null && offset == null) || (array != null && offset != null)) {
       "Array and offset expressions must be both null or both non-null."
@@ -68,6 +80,12 @@ internal class XcfaEvent(
     private fun uniqueId(): Int = idCnt++
 
     internal fun uniqueClkId(): Int = clkCnt++
+
+    internal fun resetIds() {
+      idCnt = 0
+      clkCnt = 0
+      resetClkSize()
+    }
 
     /** The unconstrained initial write of each memory partition (see `XcfaToEventGraph`). */
     internal var memoryGarbages: Set<IndexedConstDecl<*>> = setOf()
@@ -102,7 +120,8 @@ internal class XcfaEvent(
     return potentialSameMemory(other)
   }
 
-  fun potentialSameMemory(other: XcfaEvent): Boolean {
+  override fun potentialSameMemory(other: Event): Boolean {
+    other as XcfaEvent
     if (!super.sameMemory(other)) return false
     if (const in memoryGarbages || other.const in memoryGarbages) return true
     if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic)

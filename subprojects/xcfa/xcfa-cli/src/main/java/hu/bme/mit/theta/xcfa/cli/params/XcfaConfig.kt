@@ -575,8 +575,6 @@ data class OcConfig(
     description = "Decision procedure for ordering-consistency check",
   )
   var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
-  @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
-  var inputConflictClauseFile: String? = null,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(
@@ -584,11 +582,6 @@ data class OcConfig(
     description = "Output file to write conflict clauses",
   )
   var inputConflictDecisionProcedure: String = "",
-  @Parameter(
-    names = ["--non-permissive-validation"],
-    description = "Output file to write conflict clauses",
-  )
-  var nonPermissiveValidation: Boolean = false,
   @Parameter(
     names = ["--auto-conflict"],
     description = "Level of manual conflict detection before verification",
@@ -618,6 +611,12 @@ data class OcConfig(
     description = "Step size for force loop unrolling bound for OC checker",
   )
   var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-max-exit-queries"],
+    description =
+      "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
+  )
+  var maxExitQueries: Int = -1,
   @Parameter(
     names = ["--oc-witness-optimizations"],
     description =

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,18 +45,30 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
 
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
 
+  // kept across checks: a solver refuses a second declaration of the same name
+  private val hbDecls: MutableMap<Pair<Int, Int>, ConstDecl<BoolType>> = mutableMapOf()
+
   private lateinit var events: List<E>
 
   private fun hbVar(i: Int, j: Int): Expr<BoolType> {
     check(i != j)
     if (isSc) return Lt(i.clkGlobalVar.ref, j.clkGlobalVar.ref)
     return hbVars[i][j]?.ref
-      ?: Decls.Const("__hb__${i}_${j}", Bool())
+      ?: hbDecls
+        .getOrPut(i to j) { Decls.Const("__hb__${i}_${j}", Bool()) }
         .also {
           hbVars[i][j] = it
           addLt(it.ref, i, j)
         }
         .ref
+  }
+
+  /** Whether the atomic units of [e1] and [e2] are at neighbouring clock values. */
+  override fun raceCondition(e1: E, e2: E): Expr<BoolType> {
+    check(isSc && e1.clkId != e2.clkId)
+    val clk1 = e1.clkId.clkGlobalVar.ref
+    val clk2 = e2.clkId.clkGlobalVar.ref
+    return Or(Eq(Add(clk1, Int(1)), clk2), Eq(Add(clk2, Int(1)), clk1))
   }
 
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
@@ -138,7 +150,7 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
         writes.forEach { w2 ->
           if (w1 != w2) {
             vRfs.forEach { rf ->
-              if (w1 == rf.from) {
+              if (w1 == rf.from && rf.to.potentialSameMemory(w2)) {
                 val wsExpr =
                   And(
                     w1.guardExpr,
@@ -149,7 +161,8 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
                       hbVar(w1.clkId, w2.clkId)
                     },
                   )
-                addHb(And(wsExpr, rf.declRef), rf.to, w2)
+                val sameCell = rf.to.interferenceCond(w2)
+                addHb(listOfNotNull(wsExpr, rf.declRef, sameCell).toAnd(), rf.to, w2)
               }
             }
           }
