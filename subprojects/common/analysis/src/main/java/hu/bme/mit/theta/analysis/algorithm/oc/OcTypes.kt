@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ abstract class Event(
   companion object {
     var clkSize = 0
       private set
+
+    fun resetClkSize() {
+      clkSize = 0
+    }
   }
 
   init {
@@ -72,6 +76,12 @@ abstract class Event(
     if (this === other) return true
     return const.varDecl == other.const.varDecl
   }
+
+  /**
+   * Whether [this] and [other] can access the same memory cell at all. If so, they do exactly when
+   * [interferenceCond] holds (null: always).
+   */
+  open fun potentialSameMemory(other: Event): Boolean = const.varDecl == other.const.varDecl
 
   open fun interferenceCond(other: Event): Expr<BoolType>? = null
 

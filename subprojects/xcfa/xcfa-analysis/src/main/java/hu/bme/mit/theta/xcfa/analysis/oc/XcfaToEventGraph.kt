@@ -39,14 +39,22 @@ import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.UnrollCut
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
+import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
 
-internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext: ParseContext) {
+internal class XcfaToEventGraph(
+  private val xcfa: XCFA,
+  private val parseContext: ParseContext,
+  private val property: ErrorDetection,
+) {
 
   init {
     if (xcfa.initProcedures.size > 1) exit("multiple entry points.")
@@ -63,6 +71,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     val branchingConditions: List<Expr<BoolType>>,
     val memoryDecls: Set<VarDecl<*>>,
     val memoryGarbages: Set<IndexedConstDecl<*>>,
+    val unrollExits: List<UnrollExit>,
   ) {
 
     override fun toString(): String =
@@ -93,6 +102,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
   private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
   private val violations: MutableList<Violation> = mutableListOf()
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
+  private val unrollExits: MutableList<UnrollExit> = mutableListOf()
+
+  private val racingGlobals: Set<VarDecl<*>> =
+    xcfa.globalVars.filter { !it.threadLocal && !it.atomic }.map { it.wrappedVar }.toSet()
 
   /**
    * One memory declaration per [MemoryTypeKey], typed with the partition's element type.
@@ -112,6 +125,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       .also { XcfaEvent.memoryGarbages = it.values.toSet() }
 
   fun create(): EventGraph {
+    XcfaEvent.resetIds()
+    Thread.resetIds()
     ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
     addCrossThreadRelations()
     return EventGraph(
@@ -125,6 +140,7 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       branchingConditions,
       memoryDeclSet,
       memoryGarbages.values.toSet(),
+      unrollExits,
     )
   }
 
@@ -207,6 +223,9 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     private var atomicBlock: Int? = null
     private val multipleUsePidVars = mutableSetOf<VarDecl<*>>()
 
+    // accesses synthesised for a library call are not program accesses: they do not race
+    private var inLibraryCall = false
+
     init {
       if (addMemoryGarbage) {
         val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
@@ -234,6 +253,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
           else -> E.uniqueClkId()
         }
       val e = E(decl.getNewIndexed(), type, guard, pid, edge, clkId)
+      e.inAtomicBlock = atomicBlock != null
+      e.raceCandidate = property == DATA_RACE && !inLibraryCall && d in racingGlobals
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
@@ -268,6 +289,13 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
           decl.getNewIndexed()
         }
       val e = E(const, type, guard, pid, edge, clkId, array, offset)
+      e.inAtomicBlock = atomicBlock != null
+      e.raceCandidate =
+        property == DATA_RACE &&
+          !inLibraryCall &&
+          // an address that cannot be resolved is not known to be atomic: keep it as a candidate
+          runCatching { !deref.addressesAtomicData(xcfa.globalVars, parseContext) }
+            .getOrDefault(true)
       last.forEach { po(it, e) }
       inEdge = true
       when (type) {
@@ -327,6 +355,11 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
         if (current.loc.error) {
           val errorGuard = Or(current.guards.map { it.toAnd() })
           violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
+          continue
+        }
+
+        UnrollCut.keyOf(current.loc)?.let { key ->
+          unrollExits.add(UnrollExit(key, pid, Or(current.guards.map { it.toAnd() })))
           continue
         }
 
@@ -445,7 +478,8 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
       if (final || outgoingEdges.isEmpty()) return true
       if (!seen.add(this)) return false
       val edge = outgoingEdges.singleOrNull() ?: return false
-      return edge.label.getFlatLabels().all { it is NopLabel } && edge.target.isTerminalSink(seen)
+      val doesNothing = { l: XcfaLabel -> l is NopLabel || (l is StmtLabel && l.stmt is SkipStmt) }
+      return edge.label.getFlatLabels().all(doesNothing) && edge.target.isTerminalSink(seen)
     }
 
     private fun AssignStmt<*>.process() {
@@ -573,6 +607,15 @@ internal class XcfaToEventGraph(private val xcfa: XCFA, private val parseContext
     }
 
     private fun InvokeLabel.process() {
+      inLibraryCall = true
+      try {
+        processLibraryCall()
+      } finally {
+        inLibraryCall = false
+      }
+    }
+
+    private fun InvokeLabel.processLibraryCall() {
       when (name) {
         "pthread_getspecific" -> {
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
