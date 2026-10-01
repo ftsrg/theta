@@ -286,7 +286,8 @@ class UnrollPass(
           val d = dependencies.toMutableMap()
           val ni = nonInputs.toMutableSet()
           edge.getFlatLabels().forEach { label ->
-            if (label is InvokeLabel || !update(d, ni, label)) {
+            if (label is InvokeLabel || label is StartLabel || label is JoinLabel ||
+                !update(d, ni, label)) {
               return@lazy false
             }
           }
@@ -437,17 +438,14 @@ class UnrollPass(
 
     // First, try to unroll without forcing (even if force unroll is allowed)
     if (forceUnrollLimit != -1) {
-      val loopStarts = mutableSetOf<XcfaLocation>()
       var arbitraryLoop: Loop? = null
       while (true) {
         val loop = findLoop(builder) ?: break
         if (arbitraryLoop == null) arbitraryLoop = loop
         if (loop.unroll(builder, -1)) {
           arbitraryLoop = null
-          loopStarts.clear()
-        } else {
-          loopStarts.add(loop.loopStart)
         }
+        testedLoops.add(loop)
       }
 
       // Spare one loop finding iteration
