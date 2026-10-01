@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 class CloneProcedureForStaticThreadsPass : ProcedurePass {
@@ -33,8 +34,16 @@ class CloneProcedureForStaticThreadsPass : ProcedurePass {
       val updatedLabels =
         edge.getFlatLabels().map { label ->
           if (label is StartLabel) {
-            val procedure = builder.parent.getProcedures().find { it.name == label.name }
-              ?: return@forEach
+            val procedure =
+              builder.parent.getProcedures().find { proc ->
+                proc.name == label.name &&
+                  proc.getParams()
+                    .mapNotNull { if (it.second != ParamDirection.OUT) it.first else null }
+                    .toSet()
+                    .let { params ->
+                      proc.getEdges().any { (it.label.collectVars() intersect params).isNotEmpty() }
+                    }
+              } ?: return@forEach
             val fixedArgs = procedure.getParams().mapIndexed { index, param ->
               if (param.second != ParamDirection.OUT) {
                 label.params[index] as? LitExpr<*>

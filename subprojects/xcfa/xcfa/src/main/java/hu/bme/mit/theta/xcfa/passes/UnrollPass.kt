@@ -158,7 +158,7 @@ class UnrollPass(
     fun unroll(builder: XcfaProcedureBuilder, forceLimit: Int = forceUnrollLimit): Boolean {
       val c = count()
       if (c != null) {
-        unroll(builder, c, true)
+        unroll(builder, c, !isBusyWait)
         return true
       } else if (forceLimit != -1) {
         builder.setUnsafeUnroll()
@@ -219,7 +219,7 @@ class UnrollPass(
     }
 
     private fun count(): Int? {
-      if (isBusyWait()) return 1
+      if (isBusyWait) return 1
 
       if (!properlyUnrollable) return null
       check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
@@ -262,7 +262,7 @@ class UnrollPass(
      * - Written local variables only transitively depend on variables/memory not modified in the
      *   loop
      */
-    private fun isBusyWait() : Boolean {
+    private val isBusyWait: Boolean by lazy {
       // A dependency associate read variables to a written one with the following:
       // - global variables/memory are omitted (we can return right away when written)
       // - the map index is the written local variable
@@ -275,19 +275,19 @@ class UnrollPass(
       while (waitlist.isNotEmpty()) {
         val visiting = waitlist.keys.find { l ->
           l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
-        } ?: return false
+        } ?: return@lazy false
         visited.add(visiting)
         val (dependencies, nonInputs) = waitlist.remove(visiting)!!
         visiting.outgoingEdges.forEach { edge ->
           if (edge.target in visited && edge.target != loopStart) {
             // nested loop, data flow is tricky
-            return false
+            return@lazy false
           }
           val d = dependencies.toMutableMap()
           val ni = nonInputs.toMutableSet()
           edge.getFlatLabels().forEach { label ->
             if (label is InvokeLabel || !update(d, ni, label)) {
-              return false
+              return@lazy false
             }
           }
           if (edge.target in loopLocs && edge.target != loopStart) {
@@ -300,7 +300,7 @@ class UnrollPass(
         }
       }
 
-      return true
+      true
     }
 
     private fun update(
