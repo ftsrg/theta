@@ -367,22 +367,18 @@ public final class LazyXtaCheckerConfigFactory {
             }
             final Interpolator interpolator = createDataInterpolator(abstrDom);
             final InvTransFunc invTransFunc = createDataInvTransFunc();
-            final UnitPrec prec = UnitPrec.getInstance();
+            final Function<State, Prec> prec = s -> UnitPrec.getInstance();
             if (itpStrategy == DataStrategy.ItpStrategy.BIN_BW) {
                 return new BwItpStrategy(
-                        lens, abstrLattice, interpolator, concretizer, invTransFunc, prec);
+                    lens, abstrLattice, interpolator, concretizer, invTransFunc, prec
+                );
             }
             final TransFunc abstrTransFunc = createDataAbstrTransFunc(abstrDom);
             if (itpStrategy == DataStrategy.ItpStrategy.BIN_FW) {
                 return new FwItpStrategy(
-                        lens,
-                        abstrLattice,
-                        interpolator,
-                        concretizer,
-                        invTransFunc,
-                        prec,
-                        abstrTransFunc,
-                        prec);
+                    lens, abstrLattice, interpolator, concretizer, invTransFunc, prec,
+                    abstrTransFunc
+                );
             }
             throw new AssertionError();
         }
@@ -500,24 +496,23 @@ public final class LazyXtaCheckerConfigFactory {
                     BasicConcretizer.create(partialOrd);
             final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc =
                     XtaZoneInvTransFunc.getInstance();
-            final ZonePrec prec = ZonePrec.of(system.getClockVars());
+            final Function<
+                LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>,
+                ZonePrec>
+                    prec = s -> ZonePrec.of(system.getClockVars());
 
             switch (clockStrategy) {
                 case BW_ITP:
                     return new BwItpStrategy<>(
-                            lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
+                        lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec
+                    );
                 case FW_ITP:
                     final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc =
                             XtaZoneTransFunc.getInstance();
                     return new FwItpStrategy<>(
-                            lens,
-                            lattice,
-                            interpolator,
-                            concretizer,
-                            zoneInvTransFunc,
-                            prec,
-                            zoneTransFunc,
-                            prec);
+                        lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec,
+                        zoneTransFunc
+                    );
                 default:
                     throw new AssertionError();
             }

@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 import java.util.Collection;
+import java.util.function.Function;
 
 public abstract class BinItpStrategy<
                 SConcr extends State,
@@ -41,7 +42,7 @@ public abstract class BinItpStrategy<
 
     protected final Interpolator<SAbstr, SItp> interpolator;
     protected final InvTransFunc<SItp, A, P> preImage;
-    protected final P prec;
+    protected final Function<S, P> prec;
 
     protected BinItpStrategy(
             final Lens<S, LazyState<SConcr, SAbstr>> lens,
@@ -49,7 +50,7 @@ public abstract class BinItpStrategy<
             final Concretizer<SConcr, SAbstr> concretizer,
             final Interpolator<SAbstr, SItp> interpolator,
             final InvTransFunc<SItp, A, P> preImage,
-            final P prec) {
+            final Function<S, P> prec) {
         super(lens, abstrLattice, concretizer);
         this.interpolator = checkNotNull(interpolator);
         this.preImage = checkNotNull(preImage);
@@ -81,7 +82,11 @@ public abstract class BinItpStrategy<
         assert inconsistentState(lens.get(succState).getConcrState());
         stats.startExpandRefinement();
         final Collection<? extends SItp> abstrStatesWhereActionIsEnabled =
-                preImage.getPreStates(interpolator.toItpDom(abstrLattice.top()), action, prec);
+                preImage.getPreStates(
+                    interpolator.toItpDom(abstrLattice.top()),
+                    action,
+                    prec.apply(node.getState())
+                );
         abstrStatesWhereActionIsEnabled.forEach(
                 badAbstrState -> block(node, badAbstrState, uncoveredNodes, stats));
         stats.stopExpandRefinement();

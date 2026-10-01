@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 import java.util.Collection;
+import java.util.function.Function;
 
 public final class BwItpStrategy<
                 SConcr extends State,
@@ -44,7 +45,7 @@ public final class BwItpStrategy<
             final Interpolator<SAbstr, SItp> interpolator,
             final Concretizer<SConcr, SAbstr> concretizer,
             final InvTransFunc<SItp, A, P> preImage,
-            final P prec) {
+            final Function<S, P> prec) {
         super(lens, abstrLattice, concretizer, interpolator, preImage, prec);
     }
 
@@ -71,9 +72,10 @@ public final class BwItpStrategy<
             final ArgEdge<S, A> inEdge = node.getInEdge().get();
             final A action = inEdge.getAction();
             final ArgNode<S, A> parent = inEdge.getSource();
+            final P parentPrec = prec.apply(parent.getState());
 
             for (final SItp itpNeg : interpolator.complement(interpolator.toItpDom(interpolant))) {
-                for (final SItp preItpNeg : preImage.getPreStates(itpNeg, action, prec)) {
+                for (final SItp preItpNeg : preImage.getPreStates(itpNeg, action, parentPrec)) {
                     block(parent, preItpNeg, uncoveredNodes, stats);
                 }
             }

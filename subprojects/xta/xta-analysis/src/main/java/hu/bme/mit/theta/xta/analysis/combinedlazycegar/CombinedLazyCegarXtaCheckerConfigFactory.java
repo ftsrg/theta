@@ -467,24 +467,22 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         final Concretizer<ZoneState, ZoneState> concretizer = BasicConcretizer.create(partialOrd);
         final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc =
                 XtaZoneInvTransFunc.getInstance();
-        final ZonePrec prec = ZonePrec.of(system.getClockVars());
+        final Function<
+            LazyState<XtaState<Prod2State<?, ZoneState>>, XtaState<Prod2State<?, ZoneState>>>,
+            ZonePrec>
+                prec = s -> ZonePrec.of(system.getClockVars());
 
         switch (clockStrategy) {
             case BW_ITP:
                 return new BwItpStrategy<>(
-                        lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
+                    lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec
+                );
             case FW_ITP:
                 final TransFunc<ZoneState, XtaAction, ZonePrec> zoneTransFunc =
                         XtaZoneTransFunc.getInstance();
                 return new FwItpStrategy<>(
-                        lens,
-                        lattice,
-                        interpolator,
-                        concretizer,
-                        zoneInvTransFunc,
-                        prec,
-                        zoneTransFunc,
-                        prec);
+                    lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec, zoneTransFunc
+                );
             default:
                 throw new AssertionError();
         }

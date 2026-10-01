@@ -31,6 +31,7 @@ import hu.bme.mit.theta.analysis.algorithm.lazy.LazyStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.utils.Lens;
 import java.util.Collection;
+import java.util.function.Function;
 
 public final class FwItpStrategy<
                 SConcr extends State,
@@ -38,12 +39,10 @@ public final class FwItpStrategy<
                 SItp extends State,
                 S extends State,
                 A extends Action,
-                P extends Prec,
-                PAbstr extends Prec>
+                P extends Prec>
         extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
 
-    private final TransFunc<SAbstr, A, PAbstr> postImage;
-    private final PAbstr abstrPrec;
+    private final TransFunc<SAbstr, A, P> postImage;
 
     public FwItpStrategy(
             final Lens<S, LazyState<SConcr, SAbstr>> lens,
@@ -51,12 +50,10 @@ public final class FwItpStrategy<
             final Interpolator<SAbstr, SItp> interpolator,
             final Concretizer<SConcr, SAbstr> concretizer,
             final InvTransFunc<SItp, A, P> preImage,
-            final P prec,
-            final TransFunc<SAbstr, A, PAbstr> postImage,
-            final PAbstr abstrPrec) {
+            final Function<S, P> prec,
+            final TransFunc<SAbstr, A, P> postImage) {
         super(lens, abstrLattice, concretizer, interpolator, preImage, prec);
         this.postImage = checkNotNull(postImage);
-        this.abstrPrec = checkNotNull(abstrPrec);
     }
 
     @Override
@@ -78,13 +75,15 @@ public final class FwItpStrategy<
             final ArgEdge<S, A> inEdge = node.getInEdge().get();
             final A action = inEdge.getAction();
             final ArgNode<S, A> parent = inEdge.getSource();
+            final P parentPrec = prec.apply(parent.getState());
 
-            for (final SItp preBadState : preImage.getPreStates(badState, action, prec)) {
+            for (final SItp preBadState : preImage.getPreStates(badState, action, parentPrec)) {
 
                 final SAbstr preItp = block(parent, preBadState, uncoveredNodes, stats);
 
+                final P nodePrec = prec.apply(node.getState());
                 final Collection<? extends SAbstr> preItpSuccessors =
-                        postImage.getSuccStates(preItp, action, abstrPrec);
+                        postImage.getSuccStates(preItp, action, nodePrec);
                 assert preItpSuccessors.size() == 1;
                 final SAbstr preItpSuccessor = preItpSuccessors.stream().findFirst().get();
 
