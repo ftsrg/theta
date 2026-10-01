@@ -102,7 +102,7 @@ class XcfaDataRaceTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
         false,
       )
 

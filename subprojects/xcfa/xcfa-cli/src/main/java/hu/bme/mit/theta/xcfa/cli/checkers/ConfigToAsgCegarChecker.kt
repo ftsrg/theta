@@ -133,8 +133,8 @@ fun getAsgCegarChecker(
       logger,
       lts.second,
       asgCegarConfig.abstractorConfig.search,
-      getPartialOrder(
         asgCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
+      getXcfaPartialOrder(
           as PartialOrd<PtrState<ExprState>>
       ),
       statePredicate as Predicate<XcfaState<PtrState<ExprState>>?>,

@@ -267,7 +267,7 @@ fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   }
 }
 
-fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
+fun <S : ExprState> getXcfaPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
     s1.processes == s2.processes &&
       s1.bottom == s2.bottom &&
@@ -283,7 +283,7 @@ private fun <S : ExprState> stackIsLeq(s1: XcfaState<PtrState<S>>, s2: XcfaState
     } ?: false
   }
 
-fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
+fun <S : ExprState> getStackXcfaPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
     s1.processes.keys == s2.processes.keys &&
       stackIsLeq(s1, s2) &&
@@ -344,14 +344,14 @@ private fun <S : ExprState, P : Prec> getXcfaInitFunc(
 
 private fun <S : ExprState, P : Prec> getXcfaTransFunc(
     transFunc : TransFunc<S, ExprAction, P>,
-    newPrec : (XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<PtrPrec<P>>) -> PtrPrec<P>,
+    precTransform : (XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<PtrPrec<P>>) -> PtrPrec<P>,
     isHavoc : Boolean,
 ) : (XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<PtrPrec<P>>) -> List<XcfaState<PtrState<S>>> {
     val ptrTransFunc = transFunc.getPtrTransFunc(isHavoc)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         ptrTransFunc
-            .getSuccStates(newSt.sGlobal, newAct, newPrec(s, a, p))
+            .getSuccStates(newSt.sGlobal, newAct, precTransform(s, a, p))
             .map { newSt.withState(it) }
     }
 }
@@ -418,7 +418,7 @@ class ExplZoneXcfaAnalysis(
     isHavoc: Boolean,
     coi: XcfaCoi? = null,
 ) : XcfaAnalysis<Prod2State<ExplState, ZoneState>, PtrPrec<Prod2Prec<ExplPrec, ZonePrec>>>(
-    corePartialOrd = getPartialOrder(
+    corePartialOrd = getXcfaPartialOrder(
         Prod2Ord.create(
             partialOrd, ZoneOrd.getInstance()
         ).getPtrPartialOrd()
@@ -477,7 +477,7 @@ class PredZoneXcfaAnalysis(
     isHavoc: Boolean,
     coi: XcfaCoi? = null,
 ) : XcfaAnalysis<Prod2State<PredState, ZoneState>, PtrPrec<Prod2Prec<PredPrec, ZonePrec>>>(
-    corePartialOrd = getPartialOrder(
+    corePartialOrd = getXcfaPartialOrder(
         Prod2Ord.create(
             partialOrd, ZoneOrd.getInstance()
         ).getPtrPartialOrd()
@@ -543,9 +543,9 @@ class ExplPredCombinedXcfaAnalysis(
 private fun getUnitXcfaPartialOrd(xcfa: XCFA): PartialOrd<XcfaState<PtrState<UnitState>>> {
   val ptrPartialOrd = UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd()
   return if (xcfa.isInlined) {
-    getPartialOrder(ptrPartialOrd)
+    getXcfaPartialOrder(ptrPartialOrd)
   } else {
-    getStackPartialOrder(ptrPartialOrd)
+    getStackXcfaPartialOrder(ptrPartialOrd)
   }
 }
 

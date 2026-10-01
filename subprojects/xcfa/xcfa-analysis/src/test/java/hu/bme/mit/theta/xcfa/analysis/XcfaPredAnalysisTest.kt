@@ -78,7 +78,7 @@ class XcfaPredAnalysisTest {
         xcfa,
         solver,
         PredAbstractors.cartesianAbstractor(solver),
-        getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
+        getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
         false,
       )
 
@@ -136,7 +136,7 @@ class XcfaPredAnalysisTest {
         xcfa,
         solver,
         PredAbstractors.cartesianAbstractor(solver),
-        getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
+        getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
         false,
       )
 
@@ -195,7 +195,7 @@ class XcfaPredAnalysisTest {
         xcfa,
         solver,
         PredAbstractors.cartesianAbstractor(solver),
-        XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver).getPtrPartialOrd())),
+        XcfaDporLts.getPartialOrder(getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd())),
         false,
       )
 
@@ -251,7 +251,7 @@ class XcfaPredAnalysisTest {
         xcfa,
         solver,
         PredAbstractors.cartesianAbstractor(solver),
-        getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
+        getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
         false,
       )
 
@@ -314,7 +314,7 @@ class XcfaPredAnalysisTest {
         xcfa,
         solver,
         PredAbstractors.cartesianAbstractor(solver),
-        XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver).getPtrPartialOrd())),
+        XcfaDporLts.getPartialOrder(getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd())),
         false,
       )
 

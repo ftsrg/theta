@@ -80,7 +80,7 @@ class XcfaExplAnalysisTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
         false,
       )
 
@@ -137,7 +137,7 @@ class XcfaExplAnalysisTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
         false,
       )
 
@@ -195,7 +195,7 @@ class XcfaExplAnalysisTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
+        XcfaDporLts.getPartialOrder(getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
         false,
       )
 
@@ -250,7 +250,7 @@ class XcfaExplAnalysisTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
+        getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd()),
         false,
       )
 
@@ -312,7 +312,7 @@ class XcfaExplAnalysisTest {
         xcfa,
         Z3LegacySolverFactory.getInstance().createSolver(),
         1,
-        XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
+        XcfaDporLts.getPartialOrder(getXcfaPartialOrder(ExplOrd.getInstance().getPtrPartialOrd())),
         false,
       )
 

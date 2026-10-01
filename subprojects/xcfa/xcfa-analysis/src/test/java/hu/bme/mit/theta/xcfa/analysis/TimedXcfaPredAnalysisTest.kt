@@ -81,7 +81,7 @@ class TimedXcfaPredAnalysisTest {
                 xcfa,
                 solver,
                 PredAbstractors.cartesianAbstractor(solver),
-                getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
+                getXcfaPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
                 false,
                 XcfaCoiMultiThread(xcfa)
             )

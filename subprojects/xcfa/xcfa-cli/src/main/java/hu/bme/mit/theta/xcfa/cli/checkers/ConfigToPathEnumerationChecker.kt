@@ -83,8 +83,8 @@ fun getPathEnumerationChecker(
     pathEnumerationConfig.domain.partialOrd(abstractionSolverInstance)
       as PartialOrd<PtrState<ExprState>>
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
-    if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
-    else getStackPartialOrder(globalStatePartialOrd)
+    if (xcfa.isInlined) getXcfaPartialOrder(globalStatePartialOrd)
+    else getStackXcfaPartialOrder(globalStatePartialOrd)
   val abstractor =
     pathEnumerationConfig.domain.abstractor(
       xcfa,

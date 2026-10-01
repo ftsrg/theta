@@ -66,8 +66,8 @@ fun getTracegenChecker(
     tracegenConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
       as PartialOrd<PtrState<ExprState>>
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
-    if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
-    else getStackPartialOrder(globalStatePartialOrd)
+    if (xcfa.isInlined) getXcfaPartialOrder(globalStatePartialOrd)
+    else getStackXcfaPartialOrder(globalStatePartialOrd)
   val errorDetector = getXcfaErrorDetector(config.inputConfig.property.verifiedProperty)
   val abstractor: BasicArgAbstractor<ExprState, ExprAction, Prec> =
     tracegenConfig.abstractorConfig.domain.abstractor(
