@@ -179,7 +179,7 @@ public final class LazyXtaCheckerConfigFactory {
                     lazyAbstractor =
                             new LazyAbstractor(
                                     XtaLts.create(system),
-                                    searchStrategy,
+                                    searchStrategy.createWaitlist(),
                                     lazyStrategy,
                                     lazyAnalysis,
                                     s -> ((XtaState) s).isError(),

@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
@@ -43,7 +43,7 @@ public final class LazyAbstractor<
                 P extends Prec>
         implements ArgAbstractor<LazyState<FSConcr, FSAbstr>, A, P> {
     private final LTS<FSConcr, A> lts;
-    private final SearchStrategy searchStrategy;
+    private final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waitlist;
     private final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy;
     private final Analysis<LazyState<FSConcr, FSAbstr>, A, P> analysis;
     private final Predicate<FSConcr> isTarget;
@@ -52,14 +52,14 @@ public final class LazyAbstractor<
 
     public LazyAbstractor(
             final LTS<FSConcr, A> lts,
-            final SearchStrategy searchStrategy,
+            final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waitlist,
             final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy,
             final LazyAnalysis<FSConcr, FSAbstr, A, P> analysis,
             final Predicate<FSConcr> isTarget,
             final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens,
             final Logger logger) {
         this.lts = checkNotNull(lts);
-        this.searchStrategy = checkNotNull(searchStrategy);
+        this.waitlist = checkNotNull(waitlist);
         this.lazyStrategy = checkNotNull(lazyStrategy);
         this.analysis = checkNotNull(analysis);
         this.isTarget = isTarget;
@@ -74,7 +74,7 @@ public final class LazyAbstractor<
 
     @Override
     public LazyAbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
-        Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting = searchStrategy.createWaitlist();
+        waitlist.clear();
         if (arg.getNodes().findAny().isEmpty()) {
             final Collection<? extends LazyState<FSConcr, FSAbstr>> initStates =
                     analysis.getInitFunc().getInitStates(prec);
@@ -82,13 +82,18 @@ public final class LazyAbstractor<
                 final boolean target = isTarget.test(initState.getConcrState());
                 arg.createInitNode(initState, target);
             }
-            waiting.addAll(arg.getInitNodes());
+            waitlist.addAll(arg.getInitNodes());
         } else {
             Stream<ArgNode<LazyState<FSConcr, FSAbstr>, A>> incompleteNodes =
                     arg.getIncompleteNodes();
-            waiting.addAll(incompleteNodes);
+            waitlist.addAll(incompleteNodes);
         }
-        return new CheckMethod(arg, waiting, prec).run();
+        return new CheckMethod(arg, prec).run();
+    }
+
+    @Override
+    public ArgBuilder<LazyState<FSConcr, FSAbstr>, A, P> getArgBuilder() {
+      throw new UnsupportedOperationException();
     }
 
     private final class CheckMethod {
@@ -96,17 +101,14 @@ public final class LazyAbstractor<
         final P prec;
         final LazyStatistics.Builder stats;
         final Partition<ArgNode<LazyState<FSConcr, FSAbstr>, A>, ?> passed;
-        final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting;
 
         public CheckMethod(
                 final ARG<LazyState<FSConcr, FSAbstr>, A> arg,
-                final Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting,
                 final P prec) {
             this.arg = arg;
             this.prec = prec;
             stats = LazyStatistics.builder(arg);
             passed = Partition.of(n -> lazyStrategy.getProjection().apply(n.getState()));
-            this.waiting = waiting;
         }
 
         public LazyAbstractorResult run() {
@@ -116,8 +118,8 @@ public final class LazyAbstractor<
                 return stopAlgorithm(false);
             }
 
-            while (!waiting.isEmpty()) {
-                final ArgNode<LazyState<FSConcr, FSAbstr>, A> v = waiting.remove();
+            while (!waitlist.isEmpty()) {
+                final ArgNode<LazyState<FSConcr, FSAbstr>, A> v = waitlist.remove();
                 assert v.isFeasible();
 
                 close(v, stats);
@@ -149,7 +151,7 @@ public final class LazyAbstractor<
                     final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>> uncoveredNodes =
                             new ArrayList<>();
                     lazyStrategy.cover(coveree, coverer, uncoveredNodes, stats);
-                    waiting.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
+                    waitlist.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
 
                     if (coveree.isCovered()) {
                         stats.successfulCoverage();
@@ -183,7 +185,7 @@ public final class LazyAbstractor<
                             final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
                                     uncoveredNodes = new ArrayList<>();
                             lazyStrategy.disable(node, action, succState, uncoveredNodes, stats);
-                            waiting.addAll(uncoveredNodes);
+                            waitlist.addAll(uncoveredNodes);
                         } else {
                             final boolean target = isTarget.test(succState.getConcrState());
                             final ArgNode<LazyState<FSConcr, FSAbstr>, A> succNode =
@@ -192,7 +194,7 @@ public final class LazyAbstractor<
                                 stats.stopExpanding();
                                 return false;
                             }
-                            waiting.add(succNode);
+                            waitlist.add(succNode);
                         }
                     }
                 }

@@ -191,7 +191,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                 CegarChecker.create(
                         new LazyAbstractor<>(
                                 forceCast(XtaLts.create(system)),
-                                searchStrategy,
+                                searchStrategy.createWaitlist(),
                                 lazyStrategy,
                                 lazyAnalysis,
                                 XtaState::isError,
