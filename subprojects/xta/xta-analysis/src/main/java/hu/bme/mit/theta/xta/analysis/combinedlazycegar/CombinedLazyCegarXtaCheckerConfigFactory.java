@@ -390,7 +390,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
     }
 
     private Analysis createExplPredAnalysis(final Solver solver) {
-        return Prod2ExplPredAnalysis.create(
+        return Prod2ExplPredAnalysis.createDedicated(
                 createExplAnalysis(),
                 createPredAnalysis(solver),
                 Prod2ExplPredStrengtheningOperator.create(solver),

@@ -589,7 +589,7 @@ public class XstsConfigBuilder {
             } else {
                 final Prod2ExplPredAbstractors.Prod2ExplPredAbstractor prodAbstractor =
                         Prod2ExplPredAbstractors.booleanAbstractor(abstractionSolver);
-                return Prod2ExplPredAnalysis.create(
+                return Prod2ExplPredAnalysis.createDedicated(
                         ExplAnalysis.create(abstractionSolver, xsts.getInitFormula()),
                         PredAnalysis.create(
                                 abstractionSolver,

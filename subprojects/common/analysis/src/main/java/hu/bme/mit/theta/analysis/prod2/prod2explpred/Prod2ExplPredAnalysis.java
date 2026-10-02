@@ -24,10 +24,12 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.prod2.*;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors.Prod2ExplPredAbstractor;
+import hu.bme.mit.theta.solver.Solver;
 
 public final class Prod2ExplPredAnalysis<A extends ExprAction>
         implements Analysis<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
@@ -42,25 +44,35 @@ public final class Prod2ExplPredAnalysis<A extends ExprAction>
             final Analysis<ExplState, ? super A, ExplPrec> analysis1,
             final Analysis<PredState, ? super A, PredPrec> analysis2,
             final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec>
-                    strenghteningOperator,
-            final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
+                strenghteningOperator,
+            final TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>>
+                transFunc) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
-        partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
-        initFunc =
-                Prod2InitFunc.create(
-                        analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
-        transFunc = Prod2ExplPredDedicatedTransFunc.create(prod2ExplPredAbstractor);
+        this.partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
+        this.initFunc = Prod2InitFunc.create(
+                analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
+        this.transFunc = transFunc;
     }
 
-    public static <A extends ExprAction> Prod2ExplPredAnalysis<A> create(
+    public static <A extends ExprAction> Prod2ExplPredAnalysis<A> createDedicated(
             final Analysis<ExplState, ? super A, ExplPrec> analysis1,
             final Analysis<PredState, ? super A, PredPrec> analysis2,
             final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec>
                     strenghteningOperator,
             final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
-        return new Prod2ExplPredAnalysis<A>(
-                analysis1, analysis2, strenghteningOperator, prod2ExplPredAbstractor);
+        return new Prod2ExplPredAnalysis<A>(analysis1, analysis2, strenghteningOperator,
+            Prod2ExplPredDedicatedTransFunc.create(prod2ExplPredAbstractor));
+    }
+
+    public static <A extends StmtAction> Prod2ExplPredAnalysis<A> createStmtAnalysis(
+            final Analysis<ExplState, ? super A, ExplPrec> analysis1,
+            final Analysis<PredState, ? super A, PredPrec> analysis2,
+            final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec>
+                strenghteningOperator,
+            final Solver solver) {
+        return new Prod2ExplPredAnalysis<A>(analysis1, analysis2, strenghteningOperator,
+            Prod2ExplPredStmtTransFunc.create(solver));
     }
 
     @Override
