@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.integerOf
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.math.BigInteger
 
@@ -92,11 +93,13 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
      * such variables, as their integer encoding (e.g. `m == 0`) is not a valid C expression.
      */
     const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
+
+    private var uniqueCounter = 0
   }
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
   private fun markSynchronizationObject(handle: VarDecl<*>) {
-    parseContext.metadata?.create(handle.name, SYNC_VAR_METADATA_KEY, true)
+    parseContext.metadata?.create(handle, SYNC_VAR_METADATA_KEY, true)
   }
 
   /** Best-effort tagging of the synchronization object referenced by parameter [index], if any. */
@@ -138,24 +141,32 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val copySource = invokeLabel.params[2]
                 val copyTarget = invokeLabel.params[1]
 
-                val indexVar = Decls.Var("__strcpy_index_var", Int())
-                val initLabel = AssignStmtLabel(indexVar, Int(0))
+                val type = copySource.type
+                val indexVar = Decls.Var("__theta_strcpy_index_var_${uniqueCounter++}", type)
+                builder.addVar(indexVar)
+                val initLabel = AssignStmtLabel(indexVar, type.integerOf(0))
                 val loc = XcfaLocation("${it.source.name}_strcpy", metadata = it.source.metadata)
                 val initEdge = XcfaEdge(it.source, loc, SequenceLabel(listOf(initLabel)), metadata)
                 builder.addEdge(initEdge)
 
-                val sourceDeref = Dereference.of(copySource, indexVar.ref, Int())
-                val targetDeref = Dereference.of(copyTarget, indexVar.ref, Int())
+                val sourceDeref = Dereference.of(copySource, indexVar.ref, copySource.type)
+                val targetDeref = Dereference.of(copyTarget, indexVar.ref, copyTarget.type)
 
-                val continueAssume = StmtLabel(AssumeStmt.of(NeqExpr.create2(sourceDeref, Int(0))))
+                val continueAssume =
+                  StmtLabel(
+                    AssumeStmt.of(NeqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                  )
                 val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
                 val increment =
-                  AssignStmtLabel(indexVar.ref, AddExpr.create2(listOf(indexVar.ref, Int(1))))
+                  AssignStmtLabel(indexVar.ref, Add(listOf(indexVar.ref, type.integerOf(1))))
                 val copyLabel = SequenceLabel(listOf(continueAssume, copyCurrent, increment))
                 val copyEdge = XcfaEdge(loc, loc, copyLabel, metadata)
                 builder.addEdge(copyEdge)
 
-                val exitAssume = StmtLabel(AssumeStmt.of(EqExpr.create2(sourceDeref, Int(0))))
+                val exitAssume =
+                  StmtLabel(
+                    AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                  )
                 val exitLabel = SequenceLabel(listOf(exitAssume))
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
@@ -197,39 +208,39 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               }
 
               "pthread_mutex_lock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(MutexLockLabel(handle, metadata))
               }
 
               "pthread_mutex_unlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(MutexUnlockLabel(handle, metadata))
               }
 
               "pthread_mutex_trylock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 val ret = invokeLabel.getParam(0)
                 addSingle(MutexTryLockLabel(handle, ret, metadata))
               }
 
               "pthread_rwlock_rdlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockReadLockLabel(handle, metadata))
               }
 
               "pthread_rwlock_wrlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockWriteLockLabel(handle, metadata))
               }
 
               "pthread_rwlock_unlock" -> {
-                val handle = invokeLabel.getMutexHandle(builder)
+                val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockUnlockLabel(handle, metadata))
               }
 
               "pthread_cond_wait" -> {
                 invokeLabel.markSyncParam(1) // the condition variable (non-scalar source type)
-                val handle = invokeLabel.getMutexHandle(builder, 2)
+                val handle = invokeLabel.getMutexHandle(2)
                 // Due to spurious wakeup, it is basically equivalent to unlock+lock
                 addSeq(listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata)))
               }
@@ -362,13 +373,5 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
   }
 
-  private fun InvokeLabel.getMutexHandle(
-    builder: XcfaProcedureBuilder,
-    index: Int = 1,
-  ): VarDecl<*> {
-    val handle = getParam(index)
-    checkMutexDecl(handle, builder)
-    markSynchronizationObject(handle)
-    return handle
-  }
+  private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
 }

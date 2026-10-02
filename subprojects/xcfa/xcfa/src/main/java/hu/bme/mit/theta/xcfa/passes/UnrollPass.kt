@@ -58,12 +58,17 @@ import kotlin.math.max
  *   cannot move after it at all: an address-taken local is re-based onto a runtime counter, leaving
  *   a thread handle with no static identity to match a create to its join. Removing this parameter
  *   therefore means giving handles an identity that survives re-basing, not reordering passes.
+ *
+ * @param cutBounds per-cut-point overrides of the force unroll and recursion bounds
+ * @param markUnrollExits whether cut-off continuations lead into [unroll exit locations][UnrollCut]
  */
 class UnrollPass(
   specificForceUnrollLimit: Int = -1,
   private val substituteLoopVar: Boolean = false,
   private val parseContext: ParseContext? = null,
   specificRecursionUnrollLimit: Int = -1,
+  private val cutBounds: Map<String, Int> = emptyMap(),
+  private val markUnrollExits: Boolean = false,
 ) : ProcedurePass {
 
   companion object {
@@ -122,6 +127,47 @@ class UnrollPass(
    */
   private var recursiveProcedures: Set<String>? = null
 
+  private val tracker = CutTracker()
+
+  /**
+   * Maps every copied location (by identity) to its input location, so all copies of a loop share
+   * one [UnrollCut] key. Also creates the exit locations.
+   */
+  private inner class CutTracker {
+
+    private val origins = IdentityHashMap<XcfaLocation, XcfaLocation>()
+
+    private fun origin(loc: XcfaLocation): XcfaLocation = origins[loc] ?: loc
+
+    fun copied(copy: XcfaLocation, of: XcfaLocation) {
+      origins[copy] = origin(of)
+    }
+
+    fun key(kind: UnrollCut, builder: XcfaProcedureBuilder, loc: XcfaLocation) =
+      kind.key(builder.name, origin(loc).name)
+
+    fun bound(key: String, default: Int): Int = if (default == -1) -1 else cutBounds[key] ?: default
+
+    fun cut(
+      builder: XcfaProcedureBuilder,
+      key: String,
+      source: XcfaLocation,
+      labels: List<XcfaLabel>,
+      metadata: MetaData,
+    ) {
+      if (!markUnrollExits) return
+      val name = UnrollCut.locationName(key)
+      val exit =
+        builder.getLocs().find { it.name == name }
+          ?: XcfaLocation(name, metadata = EmptyMetaData).also(builder::addLoc)
+      // only the condition of the cut-off step matters: its other effects would just add events
+      labels.forEach { label ->
+        val condition = label.getFlatLabels().takeWhile { it is StmtLabel && it.stmt is AssumeStmt }
+        builder.addEdge(XcfaEdge(source, exit, SequenceLabel(condition), metadata))
+      }
+    }
+  }
+
   private data class Loop(
     val loopStart: XcfaLocation,
     val loopCondStart: XcfaLocation,
@@ -136,6 +182,8 @@ class UnrollPass(
     val forceUnrollLimit: Int,
     val substituteLoopVar: Boolean = false,
     val parseContext: ParseContext? = null,
+    val exitKey: String,
+    private val tracker: CutTracker,
   ) {
 
     /** The loop variable's value at each iteration, filled by [count] when [substituteLoopVar]. */
@@ -155,11 +203,16 @@ class UnrollPass(
         unroll(builder, c, true)
       } else if (forceUnrollLimit != -1) {
         builder.setUnsafeUnroll()
-        unroll(builder, forceUnrollLimit, false)
+        val next = unroll(builder, forceUnrollLimit, false)
+        // no entry edge to copy the condition from: the next iteration starts unconditionally
+        val entries = loopStartEdges.map { it.label }.ifEmpty { listOf(SequenceLabel(listOf())) }
+        val metadata = loopStartEdges.firstOrNull()?.metadata ?: EmptyMetaData
+        tracker.cut(builder, exitKey, next, entries, metadata)
       }
     }
 
-    fun unroll(builder: XcfaProcedureBuilder, count: Int, removeCond: Boolean) {
+    /** Returns the location where the iteration after the last copy would start. */
+    fun unroll(builder: XcfaProcedureBuilder, count: Int, removeCond: Boolean): XcfaLocation {
       // Save loopStart->...->loopCondStart path for finish (to preserve metadata)
       val metadataEdges = mutableListOf<XcfaEdge>()
       var loc = loopStart
@@ -186,6 +239,7 @@ class UnrollPass(
         metadataEdges.forEach { metadataEdge ->
           val oldTarget = metadataEdge.target
           val newLoc = XcfaLocation("${oldTarget.name}_loop_exit", metadata = oldTarget.metadata)
+          tracker.copied(newLoc, oldTarget)
           val newEdge = XcfaEdge(startLocation, newLoc, metadataEdge.label, metadataEdge.metadata)
           builder.addEdge(newEdge)
           startLocation = newLoc
@@ -207,6 +261,7 @@ class UnrollPass(
         .getEdges()
         .filter { it.source !in builder.getLocs() || it.target !in builder.getLocs() }
         .forEach(builder::removeEdge)
+      return startLocation
     }
 
     private fun count(): Int? {
@@ -277,6 +332,7 @@ class UnrollPass(
             "${it.name}_loop${index}_${XcfaLocation.uniqueCounter()}"
           val loc = XcfaLocation(name, metadata = it.metadata)
           builder.addLoc(loc)
+          tracker.copied(loc, it)
           loc
         }
 
@@ -376,9 +432,11 @@ class UnrollPass(
           val callee = checkNotNull(builder.calleeOf(invokeLabel))
           val bounded = callee.name in recursive
           val used = expansions.getOrDefault(callee.name, 0)
-          if (bounded && used >= recursionUnrollLimit) {
+          val key = UnrollCut.RECURSION.key(builder.name, callee.name)
+          if (bounded && used >= tracker.bound(key, recursionUnrollLimit)) {
             // Past the bound: drop the path rather than expand it again.
             builder.setUnsafeUnroll()
+            tracker.cut(builder, key, e.source, listOf(SequenceLabel(listOf())), e.metadata)
             return@forEach
           }
           expansions[callee.name] = used + 1
@@ -392,6 +450,7 @@ class UnrollPass(
             parseContext = parseContext,
             freshFrame = true,
             metadata = e.metadata,
+            onCopy = tracker::copied,
           )
         }
       }
@@ -416,6 +475,8 @@ class UnrollPass(
       val backEdge = findBackEdge(builder.initLoc) ?: break
       builder.setUnsafeUnroll()
       builder.removeEdge(backEdge)
+      val key = tracker.key(UnrollCut.BACK_EDGE, builder, backEdge.target)
+      tracker.cut(builder, key, backEdge.source, listOf(backEdge.label), backEdge.metadata)
     }
   }
 
@@ -529,7 +590,7 @@ class UnrollPass(
 
         // find (a subset of) edges that are executed in every loop iteration
         var edge = loopCondStart.outgoingEdges.find { it.target in loopLocations }!!
-        val necessaryLoopEdges = mutableSetOf(edge)
+        val necessaryLoopEdges = mutableListOf(edge)
         while (edge.target.outgoingEdges.size == 1) {
           edge = edge.target.outgoingEdges.first()
           necessaryLoopEdges.add(edge)
@@ -537,11 +598,12 @@ class UnrollPass(
         val finalEdges = loopStart.incomingEdges.filter { it.source in loopLocations }
         if (finalEdges.size == 1) {
           edge = finalEdges.first()
-          necessaryLoopEdges.add(edge)
+          val finalPath = mutableListOf(edge)
           while (edge.source.incomingEdges.size == 1) {
             edge = edge.source.incomingEdges.first()
-            necessaryLoopEdges.add(edge)
+            finalPath.add(edge)
           }
+          necessaryLoopEdges.addAll(finalPath.reversed().filter { it !in necessaryLoopEdges })
         }
 
         // find edges that modify the loop variable
@@ -573,7 +635,7 @@ class UnrollPass(
           loc = inEdge.source
         }
 
-        loopVarInit to loopVarModifiers
+        loopVarInit to loopVarModifiers.sortedBy(necessaryLoopEdges::indexOf)
       }
         ?: run {
           properlyUnrollable = false
@@ -587,6 +649,7 @@ class UnrollPass(
           if (exitEdges.isEmpty()) null else (loc to exitEdges)
         }
         .toMap()
+    val exitKey = tracker.key(UnrollCut.LOOP, builder, loopStart)
     return Loop(
         loopStart = loopStart,
         loopCondStart = loopCondStart,
@@ -598,13 +661,15 @@ class UnrollPass(
         loopStartEdges = loopCondEdges,
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
-        forceUnrollLimit = forceUnrollLimit,
+        forceUnrollLimit = tracker.bound(exitKey, forceUnrollLimit),
         // Never for a global loop variable: another thread could write it, so its per-iteration
         // value is not a constant of the copy, and baking one in would hide a race or a
         // memory-safety violation on whatever the loop indexes.
         substituteLoopVar =
           substituteLoopVar && builder.parent.getVars().none { it.wrappedVar == loopVar },
         parseContext = parseContext,
+        exitKey = exitKey,
+        tracker = tracker,
       )
       .also { if (it in testedLoops) return null }
   }

@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
@@ -69,6 +70,7 @@ constructor(
     MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
   private val solverMeasurements: Boolean = false,
   private val traceSearch: TraceSearch = TraceSearch.DFS,
+  private val approximation: MddApproximation = MddApproximation.exact(),
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
@@ -78,6 +80,8 @@ constructor(
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
+    mddGraph.setAttribute(MddExpressionRepresentation.APPROXIMATION, approximation)
+    mddGraph2.setAttribute(MddExpressionRepresentation.APPROXIMATION, approximation)
 
     val stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph)
     val transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph2)
@@ -199,6 +203,11 @@ constructor(
     if (solverMeasurements) {
       stateSpaceProvider.clear()
       structuralRerun(transNodes, transSig, initNode, stateSig, ssgTime.elapsedMillis())
+    }
+
+    if (violatingSize == 0L && approximation.isUnderApproximated) {
+      logger.write(Logger.Level.RESULT, "Cannot justify the verdict under %s\n", approximation)
+      return SafetyResult.unknown(statistics)
     }
 
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>

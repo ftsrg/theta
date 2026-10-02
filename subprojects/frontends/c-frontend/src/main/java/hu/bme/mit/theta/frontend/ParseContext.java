@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -76,6 +77,14 @@ public class ParseContext {
     // dereference yields the subobject's base. This maps (parent base, field offset) -> subobject
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
+
+    // Compile-time base ids of global objects, mapped to the object they are a part of (if any).
+    private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
+    private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
+
+    // Members accessed anywhere in the program, keyed by their (structurally compared) type.
+    private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
+    private boolean everyMemberAccessed = false;
 
     public boolean isCheckMemsafety() {
         return checkMemsafety;
@@ -220,5 +229,55 @@ public class ParseContext {
         }
         Map<Integer, BigInteger> cells = subObjectCells.get(parentBase);
         return cells == null ? null : cells.get(unitOffset);
+    }
+
+    /**
+     * Records that [base] is the compile-time base id of a global object, stored within the object
+     * [parent] (null for a top-level object).
+     */
+    public void recordStaticObject(BigInteger base, boolean union, BigInteger parent) {
+        staticObjectParents.put(base, parent);
+        if (union) {
+            staticUnions.add(base);
+        }
+    }
+
+    public boolean isStaticObject(BigInteger base) {
+        return staticObjectParents.containsKey(base);
+    }
+
+    /** Records that member [member] of [type] is accessed somewhere in the program. */
+    public void markMemberAccessed(CStruct type, String member) {
+        accessedMembers.computeIfAbsent(type, k -> new LinkedHashSet<>()).add(member);
+    }
+
+    /** Records that an access could not be attributed to a type, so every member may be read. */
+    public void markEveryMemberAccessed() {
+        everyMemberAccessed = true;
+    }
+
+    public boolean isMemberAccessed(CStruct type, String member) {
+        final Set<String> members = accessedMembers.get(type);
+        return everyMemberAccessed || (members != null && members.contains(member));
+    }
+
+    public boolean isAnyMemberAccessed(CStruct type) {
+        return everyMemberAccessed || accessedMembers.containsKey(type);
+    }
+
+    /**
+     * The outermost union the static object [base] is a part of (itself included), or null when
+     * there is none.
+     */
+    public BigInteger enclosingStaticUnion(BigInteger base) {
+        BigInteger union = null;
+        for (BigInteger current = base;
+                current != null;
+                current = staticObjectParents.get(current)) {
+            if (staticUnions.contains(current)) {
+                union = current;
+            }
+        }
+        return union;
     }
 }

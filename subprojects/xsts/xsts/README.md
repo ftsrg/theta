@@ -314,3 +314,11 @@ The PNML frontend can parse Petri net models described in the [PNML](http://www.
 and automatically transform them to equivalent XSTS models. Currently standard, discrete Petri nets
 are supported with weighted arcs. For examples, see
 the [test models](../xsts-analysis/src/test/resources/model/pnml).
+## Further reading
+
+The full publication list is at [theta.mit.bme.hu/publications](https://theta.mit.bme.hu/publications/).
+
+* [Formal verification of engineering models via extended symbolic transition systems](https://theta.mit.bme.hu/publications/mondokmBsc2020.pdf) (BSc, 2020) — introduces XSTS and its integration into the Gamma framework.
+* [Efficient formal verification of component-based engineering models](https://theta.mit.bme.hu/publications/mondokmMsc2022.pdf) (MSc, 2022) — the extensions that made an industrial SysML case study verifiable.
+* [Exploiting Hierarchy in the Abstraction-Based Verification of Statecharts Using SMT Solvers](https://doi.org/10.4204/EPTCS.245.3) (FESCA 2017) — an encoding of hierarchical statecharts with variables, enabling SMT-based exploration and bounded model checking.
+* [Hierarchical Abstraction for the Verification of State-based Systems](https://theta.mit.bme.hu/publications/czipobBsc2016.pdf) (BSc, 2016) — CEGAR that takes statechart hierarchy into account during refinement.
