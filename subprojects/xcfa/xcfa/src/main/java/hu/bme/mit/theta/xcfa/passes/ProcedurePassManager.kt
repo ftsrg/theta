@@ -133,7 +133,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(
       // Final cleanup
       SimplifyExprsPass(parseContext, property),
-      UnusedVarPass(uniqueWarningLogger, property),
+      UnusedVarPass(uniqueWarningLogger, property, parseContext),
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),

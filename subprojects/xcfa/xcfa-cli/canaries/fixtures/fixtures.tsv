@@ -75,3 +75,4 @@ nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only 
 stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
 stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
+unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
