@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -269,7 +270,7 @@ class UnrollPass(
       // - the associated value is the set of values it depends on
       // A set of non-input variables is also maintained: a non-input is a local variable
       // that is already written in the loop.
-      val waitlist = mutableMapOf(loopStart to (mapOf<VarDecl<*>, Set<VarDecl<*>>>() to setOf<VarDecl<*>>()))
+      val waitlist = mutableMapOf(loopStart to BusyWaitState())
       val visited = mutableSetOf<XcfaLocation>()
 
       while (waitlist.isNotEmpty()) {
@@ -277,7 +278,7 @@ class UnrollPass(
           l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
         } ?: return@lazy false
         visited.add(visiting)
-        val (dependencies, nonInputs) = waitlist.remove(visiting)!!
+        val (dependencies, nonInputs, toggledMutexes) = waitlist.remove(visiting)!!
         visiting.outgoingEdges.forEach { edge ->
           if (edge.target in visited && edge.target != loopStart) {
             // nested loop, data flow is tricky
@@ -285,18 +286,20 @@ class UnrollPass(
           }
           val d = dependencies.toMutableMap()
           val ni = nonInputs.toMutableSet()
+          val tm = toggledMutexes.toMutableMap()
           edge.getFlatLabels().forEach { label ->
-            if (label is InvokeLabel || label is StartLabel || label is JoinLabel ||
-                !update(d, ni, label)) {
+            if (label is InvokeLabel || label is ReturnLabel ||
+                label is StartLabel || label is JoinLabel ||
+                !update(d, ni, tm, label)) {
               return@lazy false
             }
           }
           if (edge.target in loopLocs && edge.target != loopStart) {
             val target = waitlist[edge.target]
-            val newTarget = d to ni
+            val newTarget = BusyWaitState(d, ni, tm)
             waitlist[edge.target] =
               if (target == null) newTarget
-              else merge(target, newTarget)
+              else merge(target, newTarget) ?: return@lazy false
           }
         }
       }
@@ -304,14 +307,37 @@ class UnrollPass(
       true
     }
 
+    /**
+     * A "state" of the busy wait check loop exploration.
+     *
+     * @param dependencies the index var depends on the associated set of "input" local vars
+     * @param nonInputs the local vars that should not be treated as inputs (as they are written)
+     * @param toggledMutexes changed mutexes in the loop (0: unchanged, -1: unlocked, 1: locked)
+     */
+    private data class BusyWaitState(
+      val dependencies: Map<VarDecl<*>, Set<VarDecl<*>>> = emptyMap(),
+      val nonInputs: Set<VarDecl<*>> = emptySet(),
+      val toggledMutexes: Map<Expr<*>, Int> = emptyMap(),
+    )
+
     private fun update(
       dependencies: MutableMap<VarDecl<*>, Set<VarDecl<*>>>,
       nonInputs: MutableSet<VarDecl<*>>,
+      toggledMutexes: MutableMap<Expr<*>, Int>,
       label: XcfaLabel,
     ): Boolean {
       if (label.dereferencesWithAccessType.any { it.value.isWritten }) {
         // heap memory is written -> not a busy wait
         return false
+      }
+
+      if (label is FenceLabel) {
+        label.acquiredMutexes.forEach { m ->
+          toggledMutexes[m.lock] = toggledMutexes.getOrDefault(m.lock, 0) + 1
+        }
+        label.releasedMutexes.forEach { m ->
+          toggledMutexes[m.lock] = toggledMutexes.getOrDefault(m.lock, 0) - 1
+        }
       }
 
       val accesses = label.collectVarsWithAccessType()
@@ -345,14 +371,15 @@ class UnrollPass(
       return true
     }
 
-    private fun merge(
-      target1: Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>>,
-      target2: Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>>,
-    ): Pair<Map<VarDecl<*>, Set<VarDecl<*>>>, Set<VarDecl<*>>> {
-      val (d1, ni1) = target1
-      val (d2, ni2) = target2
-      return ((d1.keys + d2.keys).associateWith { (d1[it] ?: setOf()) + (d2[it] ?: setOf()) }) to
-        (ni1 intersect ni2)
+    private fun merge(target1: BusyWaitState, target2: BusyWaitState): BusyWaitState? {
+      val (d1, ni1, tm1) = target1
+      val (d2, ni2, tm2) = target2
+      if (tm1 != tm2) return null
+      return BusyWaitState(
+        (d1.keys + d2.keys).associateWith { (d1[it] ?: setOf()) + (d2[it] ?: setOf()) },
+        (ni1 intersect ni2),
+        tm1,
+      )
     }
 
     /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
