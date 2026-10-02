@@ -203,6 +203,33 @@ fun getCoreXcfaLts(random: Random) =
           }
         }
       }
+      .let { actions ->
+        if (actions.any { a -> a.label.getFlatLabels().any { it is MutexTryLockLabel } }) {
+          // flatMap could go outer, but we should execute the slow flatMap only if we have
+          // a MutexTryLockLabel in the actions which is rare
+          actions.flatMap { action ->
+            action.label
+              .getFlatLabels()
+              .fold<XcfaLabel, List<List<XcfaLabel>>>(listOf(emptyList())) { combinations, label ->
+                if (label is MutexTryLockLabel) {
+                  combinations.flatMap { combination ->
+                    // we need to hard-code a successful and an unsuccessful try-lock to see the
+                    // correct return status var assignment in the trace
+                    listOf(
+                      combination + label.copy(successful = true),
+                      combination + label.copy(successful = false),
+                    )
+                  }
+                } else {
+                  combinations.map { combination -> combination + label }
+                }
+              }
+              .map { action.withLabel(SequenceLabel(it)) }
+          }
+        } else {
+          actions
+        }
+      }
       .shuffled(random)
       .toSet()
   }
@@ -210,7 +237,7 @@ fun getCoreXcfaLts(random: Random) =
 fun getXcfaLts(random: Random): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
   val lts = getCoreXcfaLts(random)
   return LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
-    lts.getEnabledActionsFor(s).filter { !s.apply(it).first.bottom }.toSet()
+    lts.getEnabledActionsFor(s).filter { !s.apply(it).bottom }.toSet()
   }
 }
 
@@ -301,11 +328,11 @@ private fun getExplXcfaTransFunc(
     (ExplStmtTransFunc.create(solver, maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     explTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(
           listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label)))
             .flatten()
@@ -368,11 +395,11 @@ private fun getPredXcfaTransFunc(
     (PredTransFunc.create<StmtAction>(predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     predTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -441,11 +468,11 @@ fun getExplPredStmtXcfaTransFunc(
         as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     combinedTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -465,11 +492,11 @@ fun getExplPredSplitXcfaTransFunc(
         as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     combinedTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -539,8 +566,8 @@ private fun getUnitXcfaTransFunc(
   val unitTransFunc =
     TransFunc<UnitState, ExprAction, UnitPrec> { s, _, _ -> listOf(s) }.getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
-    unitTransFunc.getSuccStates(s.sGlobal, newAct, p.p).map { newSt.withState(it) }
+    val newSt = s.apply(a)
+    unitTransFunc.getSuccStates(s.sGlobal, a, p.p).map { newSt.withState(it) }
   }
 }
 
