@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -154,31 +154,13 @@ fun chcCompPortfolioModel25(
     }
 
     val complex25 =
-      ConfigNode(
-        "Complex25-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX25")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Complex-$inProcess") {
+        complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val types = xcfa.collectVars().map { it.type }.toSet()
 
-    infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
+    infix fun Node.then(node: Node): Node {
       edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
     }

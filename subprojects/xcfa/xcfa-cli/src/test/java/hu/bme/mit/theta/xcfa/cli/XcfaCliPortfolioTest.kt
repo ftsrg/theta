@@ -69,6 +69,17 @@ class XcfaCliPortfolioTest {
           emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
+      val chcModelPortfolio =
+        {
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          chcCompPortfolioModel25(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+
       val hornPortfolio =
         {
           xcfa: XCFA,
@@ -168,6 +179,7 @@ class XcfaCliPortfolioTest {
         arrayOf(Portfolios.emergentPortfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.chcModelPortfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.multithread, defaultCheck),
         arrayOf(Portfolios.hornPortfolio, Programs.pointer, defaultCheck),
