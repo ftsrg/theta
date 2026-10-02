@@ -18,6 +18,7 @@
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.google.gson.reflect.TypeToken
+import hu.bme.mit.theta.analysis.Analysis
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
@@ -30,30 +31,41 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.AcceptancePredicate
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
+import hu.bme.mit.theta.analysis.expl.ExplOrd
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.prod2.Prod2Analysis
 import hu.bme.mit.theta.analysis.prod2.Prod2Ord
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.AutomaticItpRefToProd2ExplPredPrec
-import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAnalysis
+import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStrengtheningOperator
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.unit.UnitAnalysis
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
+import hu.bme.mit.theta.analysis.zone.ZoneOrd
+import hu.bme.mit.theta.analysis.zone.ZonePrec
+import hu.bme.mit.theta.analysis.zone.ZoneState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
@@ -63,6 +75,8 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
+import hu.bme.mit.theta.xcfa.analysis.timed.ItpRefToProd2DataZonePrec
+import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneAnalysis
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
@@ -124,7 +138,6 @@ enum class Strategy {
   PORTFOLIO,
 }
 
-// TODO partial orders nicely
 enum class Domain(
   val asgAbstractor:
     (
@@ -152,19 +165,16 @@ enum class Domain(
       isHavoc: Boolean,
       coi: XcfaCoi?,
     ) -> ArgAbstractor<out ExprState, out ExprAction, out Prec>,
-  val itpPrecRefiner:
-    (exprSplitter: ExprSplitter, xcfa: XCFA) -> PrecRefiner<
-        out ExprState,
-        out ExprAction,
-        out Prec,
-        out Refutation,
-      >,
+  val analysis:
+    (solver: Solver, initExpr: Expr<BoolType>, maxEnum: Int, xcfa: XCFA) ->
+    Analysis<out ExprState, out ExprAction, out Prec>,
+  val itpRefToPrec: (ExprSplitter, XCFA) -> RefutationToPrec<out Prec, out ItpRefutation>,
   val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
-  val partialOrd: (Solver) -> PartialOrd<out PtrState<out ExprState>>,
+  val partialOrd: (Solver) -> PartialOrd<out ExprState>,
+  val varLookups: (XcfaState<*>, XcfaAction) -> List<Map<VarDecl<*>, VarDecl<*>>>,
   val nodePruner: NodePruner<out ExprState, out ExprAction>,
   val stateType: Type,
 ) {
-
   EXPL(
     asgAbstractor = {
       xcfa,
@@ -201,15 +211,82 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { _, _ ->
-      XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(
-        ItpRefToPtrPrec(ItpRefToExplPrec())
-      )
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      ExplStmtAnalysis.create(solver, initExpr, maxEnum)
     },
+    itpRefToPrec = { _, _ -> ItpRefToExplPrec() as RefutationToPrec<Prec, ItpRefutation> },
     initPrec = { x, ip -> ip.explPrec(x) },
-    partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) }.getPtrPartialOrd() },
+    partialOrd = { solver -> ExplOrd.getInstance() },
+    varLookups = { s, a -> getLookups(s, a) },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<ExplState>>, XcfaAction>(),
     stateType = TypeToken.get(ExplState::class.java).type,
+  ),
+  EXPL_ZONE(
+    asgAbstractor = {
+        xcfa,
+        solver,
+        maxenum,
+        logger,
+        lts,
+        search,
+        partialOrd,
+        statePredicate,
+        transitionPredicate ->
+      ASGAbstractor(
+        ExplZoneXcfaAnalysis(
+          xcfa,
+          solver,
+          maxenum,
+          ExplOrd.getInstance(),
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<ExplState, ZoneState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        ExplZoneXcfaAnalysis(
+          a,
+          b,
+          c,
+          ExplOrd.getInstance(),
+          j,
+          k,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2Analysis.create(
+        ExplStmtAnalysis.create(solver, initExpr, maxEnum),
+        XcfaZoneAnalysis(xcfa)
+      )
+    },
+    itpRefToPrec = { _, _ -> ItpRefToProd2DataZonePrec(ItpRefToExplPrec()) },
+    initPrec = { x, ip -> XcfaPrec(PtrPrec(
+      Prod2Prec.of(
+        ip.explPrec(x).p.innerPrec,
+        ZonePrec.of(x.clocks
+          .filter { !it.threadLocal }
+          .map { cast(it.wrappedVar, Rat()) }
+        )
+      ),
+      emptySet()
+    )) },
+    partialOrd = { _ ->
+      Prod2Ord.create(ExplOrd.getInstance(), ZoneOrd.getInstance())
+    },
+    varLookups = { s, a -> getLookups(s, a) },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, ZoneState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   PRED_BOOL(
     asgAbstractor = {
@@ -254,15 +331,80 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a, _ ->
-      XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
-        ItpRefToPtrPrec(ItpRefToPredPrec(a))
-      )
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      PredAnalysis.create(solver, PredAbstractors.booleanAbstractor(solver), initExpr)
     },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToPredPrec(exprSplitter) as RefutationToPrec<Prec, ItpRefutation> },
     initPrec = { x, ip -> ip.predPrec(x) },
-    partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+    partialOrd = { solver -> PredOrd.create(solver) },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
+  ),
+  PRED_BOOL_ZONE(
+    asgAbstractor = {
+        xcfa,
+        solver,
+        maxenum,
+        logger,
+        lts,
+        search,
+        partialOrd,
+        statePredicate,
+        transitionPredicate ->
+      ASGAbstractor(
+        PredZoneXcfaAnalysis(
+          xcfa,
+          PredAbstractors.booleanAbstractor(solver),
+          PredOrd.create(solver),
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        PredZoneXcfaAnalysis(
+          a,
+          PredAbstractors.booleanAbstractor(b),
+          PredOrd.create(b),
+          j,
+          k,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2Analysis.create(
+        PredAnalysis.create(solver, PredAbstractors.booleanAbstractor(solver), initExpr),
+        XcfaZoneAnalysis(xcfa)
+      )
+    },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToProd2DataZonePrec(ItpRefToPredPrec(exprSplitter)) },
+    initPrec = { x, ip -> XcfaPrec(PtrPrec(
+      Prod2Prec.of(
+        ip.predPrec(x).p.innerPrec,
+        ZonePrec.of(x.clocks
+          .filter { !it.threadLocal }
+          .map { cast(it.wrappedVar, Rat()) }
+        )
+      ),
+      emptySet()
+    )) },
+    partialOrd = { solver ->
+      Prod2Ord.create(PredOrd.create(solver), ZoneOrd.getInstance())
+    },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   PRED_CART(
     asgAbstractor = {
@@ -307,15 +449,80 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a, _ ->
-      XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
-        ItpRefToPtrPrec(ItpRefToPredPrec(a))
-      )
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      PredAnalysis.create(solver, PredAbstractors.cartesianAbstractor(solver), initExpr)
     },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToPredPrec(exprSplitter) as RefutationToPrec<Prec, ItpRefutation> },
     initPrec = { x, ip -> ip.predPrec(x) },
-    partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+    partialOrd = { solver -> PredOrd.create(solver) },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
+  ),
+  PRED_CART_ZONE(
+    asgAbstractor = {
+        xcfa,
+        solver,
+        maxenum,
+        logger,
+        lts,
+        search,
+        partialOrd,
+        statePredicate,
+        transitionPredicate ->
+      ASGAbstractor(
+        PredZoneXcfaAnalysis(
+          xcfa,
+          PredAbstractors.cartesianAbstractor(solver),
+          PredOrd.create(solver),
+          false
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        PredZoneXcfaAnalysis(
+          a,
+          PredAbstractors.cartesianAbstractor(b),
+          PredOrd.create(b),
+          j,
+          k,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2Analysis.create(
+        PredAnalysis.create(solver, PredAbstractors.cartesianAbstractor(solver), initExpr),
+        XcfaZoneAnalysis(xcfa)
+      )
+    },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToProd2DataZonePrec(ItpRefToPredPrec(exprSplitter)) },
+    initPrec = { x, ip -> XcfaPrec(PtrPrec(
+      Prod2Prec.of(
+        ip.predPrec(x).p.innerPrec,
+        ZonePrec.of(x.clocks
+          .filter { !it.threadLocal }
+          .map { cast(it.wrappedVar, Rat()) }
+        )
+      ),
+      emptySet()
+    )) },
+    partialOrd = { solver ->
+      Prod2Ord.create(PredOrd.create(solver), ZoneOrd.getInstance())
+    },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   PRED_SPLIT(
     asgAbstractor = {
@@ -360,15 +567,80 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a, _ ->
-      XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
-        ItpRefToPtrPrec(ItpRefToPredPrec(a))
-      )
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      PredAnalysis.create(solver, PredAbstractors.booleanSplitAbstractor(solver), initExpr)
     },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToPredPrec(exprSplitter) as RefutationToPrec<Prec, ItpRefutation> },
     initPrec = { x, ip -> ip.predPrec(x) },
-    partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+    partialOrd = { solver -> PredOrd.create(solver) },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
     stateType = TypeToken.get(PredState::class.java).type,
+  ),
+  PRED_SPLIT_ZONE(
+    asgAbstractor = {
+        xcfa,
+        solver,
+        maxenum,
+        logger,
+        lts,
+        search,
+        partialOrd,
+        statePredicate,
+        transitionPredicate ->
+      ASGAbstractor(
+        PredZoneXcfaAnalysis(
+          xcfa,
+          PredAbstractors.booleanSplitAbstractor(solver),
+          PredOrd.create(solver),
+          false,
+        ),
+        lts,
+        AcceptancePredicate(statePredicate::test, transitionPredicate?.let { it::test })
+          as AcceptancePredicate<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>,
+        search,
+        logger,
+      )
+    },
+    abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
+      getXcfaAbstractor(
+        PredZoneXcfaAnalysis(
+          a,
+          PredAbstractors.booleanSplitAbstractor(b),
+          PredOrd.create(b),
+          j,
+          k,
+        ),
+        d,
+        e,
+        f,
+        g,
+        h,
+      )
+    },
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2Analysis.create(
+        PredAnalysis.create(solver, PredAbstractors.booleanSplitAbstractor(solver), initExpr),
+        XcfaZoneAnalysis(xcfa)
+      )
+    },
+    itpRefToPrec = { exprSplitter, _ -> ItpRefToProd2DataZonePrec(ItpRefToPredPrec(exprSplitter)) },
+    initPrec = { x, ip -> XcfaPrec(PtrPrec(
+      Prod2Prec.of(
+        ip.predPrec(x).p.innerPrec,
+        ZonePrec.of(x.clocks
+          .filter { !it.threadLocal }
+          .map { cast(it.wrappedVar, Rat()) }
+        )
+      ),
+      emptySet()
+    )) },
+    partialOrd = { solver ->
+      Prod2Ord.create(PredOrd.create(solver), ZoneOrd.getInstance())
+    },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
+    nodePruner = AtomicNodePruner<XcfaState<PtrState<Prod2State<PredState, ZoneState>>>, XcfaAction>(),
+    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   EXPL_PRED_SPLIT(
     asgAbstractor = {
@@ -413,20 +685,23 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a, b ->
-      XcfaPrecRefiner<
-        PtrState<Prod2State<ExplState, PredState>>,
-        Prod2Prec<ExplPrec, PredPrec>,
-        ItpRefutation,
-      >(
-        ItpRefToPtrPrec(AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(b), a))
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2ExplPredAnalysis.createDedicated(
+        ExplStmtAnalysis.create(solver, initExpr, maxEnum),
+        PredAnalysis.create(solver, PredAbstractors.booleanAbstractor(solver), initExpr),
+        Prod2ExplPredStrengtheningOperator.create(solver),
+        Prod2ExplPredAbstractors.booleanAbstractor(solver)
       )
+    },
+    itpRefToPrec = { exprSplitter, xcfa ->
+      AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(xcfa), exprSplitter)
+      as RefutationToPrec<Prec, ItpRefutation>
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
-        .getPtrPartialOrd()
+      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver))
     },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
@@ -474,20 +749,23 @@ enum class Domain(
         h,
       )
     },
-    itpPrecRefiner = { a, b ->
-      XcfaPrecRefiner<
-        PtrState<Prod2State<ExplState, PredState>>,
-        Prod2Prec<ExplPrec, PredPrec>,
-        ItpRefutation,
-      >(
-        ItpRefToPtrPrec(AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(b), a))
+    analysis = { solver, initExpr, maxEnum, xcfa ->
+      Prod2ExplPredAnalysis.createStmtAnalysis(
+        ExplStmtAnalysis.create(solver, initExpr, maxEnum),
+        PredAnalysis.create(solver, PredAbstractors.booleanAbstractor(solver), initExpr),
+        Prod2ExplPredStrengtheningOperator.create(solver),
+        solver
       )
+    },
+    itpRefToPrec = { exprSplitter, xcfa ->
+      AutomaticItpRefToProd2ExplPredPrec.create(xcfaNewOperandsAutoExpl(xcfa), exprSplitter)
+        as RefutationToPrec<Prec, ItpRefutation>
     },
     initPrec = { x, ip -> ip.prod2Prec(x) },
     partialOrd = { solver ->
-      Prod2Ord.create(hu.bme.mit.theta.analysis.expl.ExplOrd.getInstance(), PredOrd.create(solver))
-        .getPtrPartialOrd()
+      Prod2Ord.create(ExplOrd.getInstance(), PredOrd.create(solver))
     },
+    varLookups = { s, a -> getFoldedLookups(s, a) },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
     stateType = TypeToken.get(Prod2State::class.java).type,
@@ -515,19 +793,14 @@ enum class Domain(
     abstractor = { a, b, c, d, e, f, g, h, i, j, k ->
       getXcfaAbstractor(UnitXcfaAnalysis(a, j, k), d, e, f, g, h)
     },
-    itpPrecRefiner = { a, b ->
-      XcfaPrecRefiner<PtrState<UnitState>, UnitPrec, ItpRefutation>(
-        ItpRefToPtrPrec(
-          object : RefutationToPrec<UnitPrec, ItpRefutation> {
-            override fun join(prec1: UnitPrec?, prec2: UnitPrec?) = UnitPrec.getInstance()
-
-            override fun toPrec(refutation: ItpRefutation?, index: Int) = UnitPrec.getInstance()
-          }
-        )
-      )
-    },
+    analysis = { _, _, _, _ -> UnitAnalysis.getInstance() as Analysis<ExprState, ExprAction, Prec> },
+    itpRefToPrec = { _, _ -> object : RefutationToPrec<Prec, ItpRefutation> {
+      override fun toPrec(r: ItpRefutation, i: Int) = UnitPrec.getInstance()
+      override fun join(p1: Prec, p2: Prec) = UnitPrec.getInstance()
+    } },
     initPrec = { _, _ -> XcfaPrec(PtrPrec(UnitPrec.getInstance())) },
-    partialOrd = { UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd() },
+    partialOrd = { UnitAnalysis.getInstance().partialOrd },
+    varLookups = { _, _ -> listOf() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<UnitState>>, XcfaAction>(),
     stateType = TypeToken.get(UnitState::class.java).type,
   ),

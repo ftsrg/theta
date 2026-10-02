@@ -31,7 +31,9 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
@@ -133,8 +135,8 @@ fun getAsgCegarChecker(
       logger,
       lts.second,
       asgCegarConfig.abstractorConfig.search,
-        asgCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
       getXcfaPartialOrder(
+        asgCegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance).getPtrPartialOrd()
           as PartialOrd<PtrState<ExprState>>
       ),
       statePredicate as Predicate<XcfaState<PtrState<ExprState>>?>,
@@ -147,9 +149,13 @@ fun getAsgCegarChecker(
     asgCegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
 
   val precRefiner =
-    asgCegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      asgCegarConfig.refinerConfig.exprSplitter.exprSplitter,
-      xcfa,
+    XcfaPrecRefiner<PtrState<ExprState>, Prec, ItpRefutation>(
+      ItpRefToPtrPrec(
+        asgCegarConfig.abstractorConfig.domain.itpRefToPrec(
+          asgCegarConfig.refinerConfig.exprSplitter.exprSplitter,
+          xcfa,
+        ) as RefutationToPrec<Prec, ItpRefutation>
+      )
     ) as PrecRefiner<ExprState, ExprAction, Prec, ItpRefutation>
 
   val refiner =

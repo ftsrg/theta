@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTrace
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -63,7 +64,7 @@ fun getTracegenChecker(
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
   val globalStatePartialOrd: PartialOrd<PtrState<ExprState>> =
-    tracegenConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
+    tracegenConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance).getPtrPartialOrd()
       as PartialOrd<PtrState<ExprState>>
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getXcfaPartialOrder(globalStatePartialOrd)

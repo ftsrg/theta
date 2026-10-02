@@ -30,7 +30,9 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.prod2.Prod2State
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
@@ -84,7 +86,7 @@ fun getCegarChecker(
 
   val abstractionSolverInstance = abstractionSolverFactory.createSolver()
   val globalStatePartialOrd: PartialOrd<PtrState<ExprState>> =
-    cegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
+    cegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance).getPtrPartialOrd()
       as PartialOrd<PtrState<ExprState>>
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getXcfaPartialOrder(globalStatePartialOrd)
@@ -114,10 +116,14 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
         as ExprTraceChecker<Refutation>
     )
-  val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
-    cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter,
-      xcfa,
+  val precRefiner =
+    XcfaPrecRefiner<PtrState<ExprState>, Prec, ItpRefutation>(
+      ItpRefToPtrPrec(
+        cegarConfig.abstractorConfig.domain.itpRefToPrec(
+          cegarConfig.refinerConfig.exprSplitter.exprSplitter,
+          xcfa,
+        ) as RefutationToPrec<Prec, ItpRefutation>
+      )
     ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>

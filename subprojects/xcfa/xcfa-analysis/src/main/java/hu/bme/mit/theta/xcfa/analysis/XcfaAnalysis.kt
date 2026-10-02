@@ -366,7 +366,7 @@ private fun <S : ExprState, P : Prec> getProd2DataZoneTransFunc(
   DataClockXcfaActionSplitter
 ) as TransFunc<Prod2State<S, ZoneState>, ExprAction, Prod2Prec<P, ZonePrec>>
 
-private fun getLookups(
+fun getLookups(
     xcfaState : XcfaState<*>,
     xcfaAction: XcfaAction
 ) = listOf(
@@ -374,7 +374,7 @@ private fun getLookups(
     listOf(getTempLookup(xcfaAction.label))
 ).flatten()
 
-private fun getFoldedLookups(
+fun getFoldedLookups(
     xcfaState : XcfaState<*>,
     xcfaAction: XcfaAction
 ) = xcfaState.processes.map { it.value.foldVarLookup() + getTempLookup(xcfaAction.label) }

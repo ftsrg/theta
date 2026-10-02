@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.zone.ZonePrec
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -127,6 +128,8 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
       is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 
       is Prod2Prec<*,*> -> Prod2Prec.of(prec1.addVars(lookups), prec2.addVars(lookups)) as P
+
+      is UnitPrec -> UnitPrec.getInstance() as P
 
       else -> error("Precision type ${this.javaClass} not supported.")
     }

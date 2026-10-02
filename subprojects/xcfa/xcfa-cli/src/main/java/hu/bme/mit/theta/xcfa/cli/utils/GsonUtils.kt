@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -167,7 +168,7 @@ private fun getGson(
     ARG::class.java,
     ArgAdapter(
       { gson },
-      { domain().partialOrd(solver()) },
+      { domain().partialOrd(solver()).getPtrPartialOrd() },
       { argAdapterHelper(domain().stateType) },
     ),
   )
