@@ -100,3 +100,4 @@ unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex
 fp_negative_zero_division.c	efficient	LP64	UNSAFE	the sign of a floating-point zero literal survives constant folding: 1.0f / -0.0f is -inf
 string_literal_read.c	efficient	ILP32	SAFE	a string literal whose characters are read keeps its initialization
 strcpy_terminator.c	efficient	ILP32	SAFE	strcpy copies the terminating null byte, not only the characters before it
+pthread_array_handle_global_index.c	efficient	ILP32	SAFE	thread handle array indexed by a file-scope loop counter
