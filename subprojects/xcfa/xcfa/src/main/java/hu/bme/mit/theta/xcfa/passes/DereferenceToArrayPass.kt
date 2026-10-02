@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
@@ -110,14 +111,142 @@ class DereferenceToArrayPass : ProcedurePass {
       arraysByType = arrays
     }
 
+    // Only the first edge of an init procedure that nothing loops back to runs before any other
+    // write to memory, so only there may a whole row be overwritten (see [zeroWholeRows]).
+    val firstEdges =
+      if (
+        builder.parent.getInitProcedures().any { it.first === builder } &&
+          builder.initLoc.incomingEdges.isEmpty()
+      )
+        builder.initLoc.outgoingEdges.toSet()
+      else emptySet()
     builder.getEdges().toList().forEach { edge ->
-      val newLabel = edge.label.replaceDereferences(builder.parent)
+      val label = if (edge in firstEdges) edge.label.zeroWholeRows() else edge.label
+      val newLabel = label.replaceDereferences(builder.parent)
       if (newLabel != edge.label) {
         builder.removeEdge(edge)
         builder.addEdge(edge.withLabel(newLabel))
       }
     }
     return builder
+  }
+
+  /**
+   * A global object without an initializer is zeroed one cell at a time, one store per cell, so a
+   * large global array gives a long chain of nested array writes. Here the default-valued stores to
+   * one object are replaced by one store of a constant default row: `arrays[b] := const(0)`.
+   *
+   * Only cells that no store names change: they were unconstrained and now read the default. In the
+   * object that is what C gives a global anyway; outside it, a read is out of bounds.
+   *
+   * A row qualifies only if nothing on this edge could see the difference:
+   * - its base is a literal and not the default (the flat models put all memory at base 0);
+   * - every other access of its array (same [MemoryTypeKey]) comes after its last store: a read, a
+   *   store through a symbolic address, or a conditional store could otherwise meet the row;
+   * - its stores are plain, directly in a sequence, at distinct literal offsets, so no default
+   *   store is needed to undo an earlier one.
+   *
+   * The row store takes the place of the first store to the row; the other stores stay in order.
+   */
+  private fun XcfaLabel.zeroWholeRows(): XcfaLabel {
+    val items = flatSequence()
+    val plain = mutableListOf<IndexedValue<MemoryAssignStmt<*, *, *>>>()
+    val firstOther = mutableMapOf<MemoryTypeKey, Int>()
+    items.forEachIndexed { index, item ->
+      val store = (item as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>
+      val others =
+        if (store != null && store.isPlain()) {
+          plain.add(IndexedValue(index, store))
+          store.expr.dereferences
+        } else item.allDereferences()
+      others.forEach { firstOther.putIfAbsent(it.memoryTypeKey, index) }
+    }
+    val rows =
+      plain
+        .groupBy { it.value.deref.memoryTypeKey to it.value.deref.array }
+        .values
+        .filter { row ->
+          val key = row.first().value.deref.memoryTypeKey
+          val stores = row.map { it.value }
+          row.last().index < (firstOther[key] ?: Int.MAX_VALUE) &&
+            stores.map { it.deref.offset }.toSet().size == stores.size &&
+            stores.count { it.isDefault() } >= 2
+        }
+        .map { row -> row.map { it.value } }
+    if (rows.isEmpty()) return this
+    return replaceStores(
+      rows.map { it.first() }.toIdentitySet(),
+      rows.flatMap { row -> row.filter { it.isDefault() } }.toIdentitySet(),
+    )
+  }
+
+  private fun MemoryAssignStmt<*, *, *>.isPlain() =
+    deref.array is LitExpr<*> &&
+      deref.array != deref.array.type.defaultValue &&
+      deref.offset is LitExpr<*>
+
+  private fun MemoryAssignStmt<*, *, *>.isDefault() = expr == deref.type.defaultValue
+
+  private fun <T> Collection<T>.toIdentitySet(): Set<T> =
+    java.util.Collections.newSetFromMap(java.util.IdentityHashMap<T, Boolean>()).also {
+      it.addAll(this)
+    }
+
+  /** The labels of (nested) sequences, in execution order. */
+  private fun XcfaLabel.flatSequence(): List<XcfaLabel> =
+    if (this is SequenceLabel) labels.flatMap { it.flatSequence() } else listOf(this)
+
+  /** Every dereference in the label, also the ones in a return. */
+  private fun XcfaLabel.allDereferences(): List<Dereference<*, *, *>> =
+    when (this) {
+      is SequenceLabel -> labels.flatMap { it.allDereferences() }
+      is NondetLabel -> labels.flatMap { it.allDereferences() }
+      is ReturnLabel -> enclosedLabel.allDereferences()
+      else -> dereferences
+    }
+
+  private fun XcfaLabel.replaceStores(
+    first: Set<MemoryAssignStmt<*, *, *>>,
+    dropped: Set<MemoryAssignStmt<*, *, *>>,
+  ): XcfaLabel =
+    when (this) {
+      is SequenceLabel ->
+        SequenceLabel(
+          labels.flatMap { label ->
+            val store = (label as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>
+            when {
+              store == null -> listOf(label.replaceStores(first, dropped))
+              store in first ->
+                listOfNotNull(
+                  StmtLabel(defaultRow(store.deref), metadata = label.metadata),
+                  label.takeUnless { store in dropped },
+                )
+              store in dropped -> emptyList()
+              else -> listOf(label)
+            }
+          },
+          metadata,
+        )
+      else -> this
+    }
+
+  /** `arrays[base] := const(default)` for the row of [deref]. */
+  private fun defaultRow(deref: Dereference<*, *, *>): AssignStmt<*> {
+    val arrayType = ArrayType.of(deref.array.type, ArrayType.of(deref.offset.type, deref.type))
+    val arrays = deref.arrays
+    val row =
+      ArrayLitExpr.of(listOf(), cast(deref.type.defaultValue, deref.type), arrayType.elemType)
+    return AssignStmt.of(
+      cast(arrays, arrayType),
+      cast(
+        ArrayWriteExpr.of(
+          cast(arrays.ref, arrayType),
+          cast(deref.array, arrayType.indexType),
+          cast(row, arrayType.elemType),
+        ),
+        arrayType,
+      ),
+    )
   }
 
   private fun XcfaLabel.replaceDereferences(xcfa: XcfaBuilder): XcfaLabel {

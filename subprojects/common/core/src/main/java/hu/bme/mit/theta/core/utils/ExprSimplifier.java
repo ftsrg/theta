@@ -313,6 +313,18 @@ public final class ExprSimplifier {
             final ArrayReadExpr<IT, ET> expr, final Valuation val) {
         Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
         Expr<IT> index = simplify(expr.getIndex(), val);
+        // Read over write: the read of the written index is the written element, and a read of
+        // another index looks past the write. Expressions have no side effects, so the write
+        // itself is not lost -- only this read no longer refers to it.
+        while (arr instanceof ArrayWriteExpr<IT, ET> write) {
+            if (write.getIndex().equals(index)) {
+                return write.getElem();
+            } else if (distinctLiterals(write.getIndex(), index)) {
+                arr = write.getArray();
+            } else {
+                break;
+            }
+        }
         if (arr instanceof LitExpr<?>
                 && index
                         instanceof
@@ -325,6 +337,16 @@ public final class ExprSimplifier {
             return expr.with(arr, index).eval(val);
         }
         return expr.with(arr, index);
+    }
+
+    /**
+     * Only integer and bitvector literals: their equality is equality of value. Two float literals
+     * can differ and still be equal as values (+0 and -0), so they are never called distinct.
+     */
+    private static boolean distinctLiterals(final Expr<?> a, final Expr<?> b) {
+        return ((a instanceof IntLitExpr && b instanceof IntLitExpr)
+                        || (a instanceof BvLitExpr && b instanceof BvLitExpr))
+                && !a.equals(b);
     }
 
     private Expr<?> simplifyArrayWrite(final ArrayWriteExpr<?, ?> expr, final Valuation val) {
