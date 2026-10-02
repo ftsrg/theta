@@ -27,17 +27,23 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.utils.Lens
 import java.util.*
 
 class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Refutation> :
   SingleExprTraceRefiner<S, A, P, R> {
+
+  private val xcfaStateLens: Lens<S, XcfaState<PtrState<*>>>
 
   private constructor(
     exprTraceChecker: ExprTraceChecker<R>,
     precRefiner: PrecRefiner<S, A, P, R>,
     pruneStrategy: PruneStrategy,
     logger: Logger,
-  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger)
+    xcfaStateLens: Lens<S, XcfaState<PtrState<*>>>,
+  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger) {
+    this.xcfaStateLens = xcfaStateLens
+  }
 
   private constructor(
     exprTraceChecker: ExprTraceChecker<R>,
@@ -45,11 +51,14 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     pruneStrategy: PruneStrategy,
     logger: Logger,
     nodePruner: NodePruner<S, A>,
-  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner)
+    xcfaStateLens: Lens<S, XcfaState<PtrState<*>>>,
+  ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner) {
+    this.xcfaStateLens = xcfaStateLens
+  }
 
-  private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
+  private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<*>>? {
     trace.states.forEachIndexed { i, s ->
-      val state = s as XcfaState<S>
+      val state = xcfaStateLens.get(s)
       state.processes.entries
         .find { (_, processState) -> processState.popped != null }
         ?.let { (pid, processState) ->
@@ -85,12 +94,12 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val (wTriple, cnt) = wTripleCnt
         val newA = (a as XcfaAction).withLastWrites(wTriple, cnt)
         val newState =
-          (rawTrace.getState(i + 1) as XcfaState<PtrState<*>>).let {
+          xcfaStateLens.get(rawTrace.getState(i + 1)).let {
             it.withState(PtrState(it.sGlobal.innerState.patch(newA.nextWriteTriples())))
           }
         Triple(
           Pair(newA.nextWriteTriples(), newA.cnts.values.maxOrNull() ?: newA.inCnt),
-          states + (newState as S),
+          states + (xcfaStateLens.set(rawTrace.getState(i + 1), newState)),
           actions + (newA as A),
         )
       }
@@ -140,7 +149,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     val traceToConcretize = cexToConcretize.toTrace()
 
     val refinerResult = refineTemp(arg, prec) // super.refine(arg, prec)
-    val checkForPop = !(traceToConcretize.states.first() as XcfaState<*>).xcfa!!.isInlined
+    val checkForPop = !(xcfaStateLens.get(traceToConcretize.states.first())).xcfa!!.isInlined
 
     return if (checkForPop && refinerResult.isUnsafe)
       findPoppedState(traceToConcretize)?.let { (i, state) ->
@@ -168,13 +177,22 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
 
   companion object {
 
+    fun <S : ExprState> getDefaultLens() = object : Lens<S, XcfaState<PtrState<*>>> {
+      override fun get(s: S): XcfaState<PtrState<*>> = s as XcfaState<PtrState<*>>
+      override fun set(s: S, newS: XcfaState<PtrState<*>>): S {
+        s as XcfaState<PtrState<*>>
+        return newS as S
+      }
+    }
+
     fun <S : ExprState, A : ExprAction, P : Prec, R : Refutation> create(
       exprTraceChecker: ExprTraceChecker<R>,
       precRefiner: PrecRefiner<S, A, P, R>,
       pruneStrategy: PruneStrategy,
       logger: Logger,
+      xcfaStateLens: Lens<S, XcfaState<PtrState<*>>> = getDefaultLens(),
     ): XcfaSingleExprTraceRefiner<S, A, P, R> {
-      return XcfaSingleExprTraceRefiner(exprTraceChecker, precRefiner, pruneStrategy, logger)
+      return XcfaSingleExprTraceRefiner(exprTraceChecker, precRefiner, pruneStrategy, logger, xcfaStateLens)
     }
 
     fun <S : ExprState, A : ExprAction, P : Prec, R : Refutation> create(
@@ -183,6 +201,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       pruneStrategy: PruneStrategy,
       logger: Logger,
       nodePruner: NodePruner<S, A>,
+      xcfaStateLens: Lens<S, XcfaState<PtrState<*>>> = getDefaultLens(),
     ): XcfaSingleExprTraceRefiner<S, A, P, R> {
       return XcfaSingleExprTraceRefiner(
         exprTraceChecker,
@@ -190,6 +209,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         pruneStrategy,
         logger,
         nodePruner,
+        xcfaStateLens,
       )
     }
   }

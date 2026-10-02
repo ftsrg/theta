@@ -55,6 +55,7 @@ fun getSafetyChecker(
       Backend.PATH_ENUMERATION -> getPathEnumerationChecker(xcfa, parseContext, config, logger)
       Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
       Backend.LAZY -> TODO()
+      Backend.COMBINED_LAZY_CEGAR -> getCombinedLazyCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.PORTFOLIO ->
         getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
       Backend.MDD -> getMddChecker(xcfa, parseContext, config, logger)

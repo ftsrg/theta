@@ -265,6 +265,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
+        Backend.COMBINED_LAZY_CEGAR -> CombinedLazyCegarConfig() as T
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
@@ -300,6 +301,22 @@ data class CegarConfig(
 
   override fun update(): Boolean =
     listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
+}
+
+data class CombinedLazyCegarConfig(
+
+  @Parameter(names = ["--lazy-domain"], description = "Domain for lazy abstractor in combined abstraction")
+  var lazyDomain: LazyTimeDomain = LazyTimeDomain.ZONE_BW,
+
+  val cegarConfig : CegarConfig = CegarConfig(),
+) : SpecBackendConfig {
+
+  override fun getObjects(): Set<Config> {
+    return super.getObjects() union cegarConfig.getObjects()
+  }
+
+  override fun update(): Boolean =
+    listOf(cegarConfig).map { it.update() }.any { it }
 }
 
 data class AsgCegarConfig(

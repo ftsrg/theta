@@ -107,6 +107,7 @@ enum class Backend {
   CHC,
   OC,
   LAZY,
+  COMBINED_LAZY_CEGAR,
   PORTFOLIO,
   TRACEGEN,
   MDD,
@@ -923,6 +924,24 @@ enum class Refinement(
     },
     stopCriterion = StopCriterions.firstCex(),
   ),
+}
+
+enum class TimeDomain {
+  ZONE, LU
+}
+
+enum class LazyRefinement {
+  BW_ITP, FW_ITP, LU
+}
+
+enum class LazyTimeDomain(
+  val concrDomain : TimeDomain,
+  val abstrDomain : TimeDomain,
+  val refinement : LazyRefinement,
+) {
+  ZONE_BW(TimeDomain.ZONE, TimeDomain.ZONE, LazyRefinement.BW_ITP),
+  ZONE_FW(TimeDomain.ZONE, TimeDomain.ZONE, LazyRefinement.FW_ITP),
+  LU(TimeDomain.ZONE, TimeDomain.LU, LazyRefinement.LU),
 }
 
 enum class ExprSplitterOptions(val exprSplitter: ExprSplitter) {

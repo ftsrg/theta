@@ -316,7 +316,7 @@ fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfa
     }
     .build() // TODO: can we do this nicely?
 
-private fun <S : ExprState, P : Prec> getXcfaInitFunc(
+fun <S : ExprState, P : Prec> getXcfaInitFunc(
     xcfa : XCFA,
     initFunc : InitFunc<S, P>
 ) : (XcfaPrec<PtrPrec<P>>) -> List<XcfaState<PtrState<S>>> {
@@ -343,7 +343,7 @@ private fun <S : ExprState, P : Prec> getXcfaInitFunc(
     }
 }
 
-private fun <S : ExprState, P : Prec> getXcfaTransFunc(
+fun <S : ExprState, P : Prec> getXcfaTransFunc(
     transFunc : TransFunc<S, ExprAction, P>,
     precTransform : (XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<PtrPrec<P>>) -> PtrPrec<P>,
     isHavoc : Boolean,

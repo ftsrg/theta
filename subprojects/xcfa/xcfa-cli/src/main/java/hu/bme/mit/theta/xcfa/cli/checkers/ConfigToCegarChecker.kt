@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
@@ -36,7 +37,10 @@ import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
+import hu.bme.mit.theta.analysis.zone.ZoneState
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -176,73 +180,16 @@ fun getCegarChecker(
     MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
   }
 
-  return object :
-    SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+  return object : SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+
     override fun check(
       prec: XcfaPrec<*>?
     ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
       val ret = cegarChecker.check(prec)
       if (ret.isSafe) {
-        val arg = ret.asSafe().proof
-
-        val locmap =
-          xcfa.procedures
-            .flatMap { it.locs }
-            .associateWith { loc ->
-              arg.nodes
-                .filter {
-                  (it.state as XcfaState<PtrState<*>>).processes.any { it.value.locs.peek() == loc }
-                }
-                .map {
-                  (it.state as XcfaState<PtrState<*>>).sGlobal.innerState.let { s ->
-                    val declMap =
-                      (it.state as XcfaState<PtrState<*>>)
-                        .processes
-                        .map {
-                          it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
-                        }
-                        .reduce { a, b -> a + b }
-                        // TODO: Right now, it filters out threadLocal variables as the current witness format is not
-                        //       able to handle them
-                        .filter { !xcfa.globalVars.filter { it.threadLocal }.map { it.wrappedVar }.contains(it.value) }
-                    when (s) {
-                      is ExplState -> {
-                        if (s.isBottom) {
-                          ExplState.bottom()
-                        } else {
-                          ExplState.of(s.`val`.changeVars(declMap))
-                        }
-                      }
-                      is PredState -> {
-                        PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
-                      }
-                      is Prod2State<*, *> -> {
-                        if (s.state1.isBottom) ExplState.bottom()
-                        else
-                          Prod2State.of(
-                            ExplState.of((s.state1 as ExplState).`val`.changeVars(declMap)),
-                            PredState.of(
-                              (s.state2 as PredState).preds.map {
-                                ExprUtils.changeDecls(it, declMap)
-                              }
-                            ),
-                          )
-                      }
-                      else -> {
-                        error("Unknown state: ${s}")
-                      }
-                    }
-                  }
-                }
-                .toList()
-            }
-
-        return SafetyResult.safe(LocationInvariants(locmap))
+        return safeCegarResult(ret.asSafe().proof, xcfa)
       } else {
-        return SafetyResult.unsafe(
-          ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-          LocationInvariants(),
-        )
+        return unsafeCegarResult(ret.asUnsafe().cex)
       }
     }
 
@@ -251,4 +198,76 @@ fun getCegarChecker(
       return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
     }
   }
+}
+
+fun unsafeCegarResult(
+  cex: Trace<ExprState, ExprAction>,
+  toXcfaState: (ExprState) -> XcfaState<PtrState<*>> = { s -> s as XcfaState<PtrState<*>> },
+) : SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+  return SafetyResult.unsafe(
+    Trace.of(cex.states.map { s -> toXcfaState(s) }, cex.actions)
+      as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+    LocationInvariants(),
+  )
+}
+
+fun safeCegarResult(
+  arg: ARG<ExprState, ExprAction>,
+  xcfa: XCFA,
+  toXcfaState: (ExprState) -> XcfaState<PtrState<*>> = { s -> s as XcfaState<PtrState<*>> },
+) : SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+  val locmap =
+    xcfa.procedures
+      .flatMap { it.locs }
+      .associateWith { loc ->
+        arg.nodes
+          .filter {
+            toXcfaState(it.state).processes.any { it.value.locs.peek() == loc }
+          }
+          .map {
+            toXcfaState(it.state).sGlobal.innerState.let { s ->
+              val declMap =
+                toXcfaState(it.state)
+                  .processes
+                  .map {
+                    it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
+                  }
+                  .reduce { a, b -> a + b }
+                  // TODO: Right now, it filters out threadLocal variables as the current witness format is not
+                  //       able to handle them
+                  .filter { !xcfa.globalVars.filter { it.threadLocal }.map { it.wrappedVar }.contains(it.value) }
+              val mapped : ExprState = mapState(s, declMap)
+              mapped
+            }
+          }
+          .toList()
+      }
+  return SafetyResult.safe(LocationInvariants(locmap))
+}
+
+fun mapState(s: ExprState, declMap: Map<out Decl<*>, VarDecl<*>>) : ExprState = when (s) {
+  is ExplState -> {
+    if (s.isBottom)
+      ExplState.bottom()
+    else
+      ExplState.of(s.`val`.changeVars(declMap))
+  }
+  is PredState -> {
+    PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
+  }
+  is ZoneState, is LuZoneState -> {
+    PredState.of(ExprUtils.changeDecls(s.toExpr(), declMap))
+  }
+  is Prod2State<*, *> -> {
+    if (s.isBottom1)
+      mapState(s.state1 as ExprState, declMap)
+    else if (s.isBottom2)
+      mapState(s.state2 as ExprState, declMap)
+    else
+      Prod2State.of(
+        mapState(s.state1 as ExprState, declMap),
+        mapState(s.state2 as ExprState, declMap)
+      )
+  }
+  else -> error("Unknown state: $s")
 }
