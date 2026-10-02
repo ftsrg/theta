@@ -138,9 +138,6 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     public void push() {
         assertions.push();
         markers.push();
-        // The markers keep their own copy of what was asserted through them; that copy has to
-        // follow the solver stack, or an interpolation query built after a pop still sees the
-        // popped assertions.
         markers.forEach(Z3ItpMarker::push);
         z3Solver.push();
     }
@@ -312,7 +309,7 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
                     new InterpolationMetadata(transformationManager, z3ItpPattern.getRoot())
                             .interpolate(z3Context);
             if (itps == null) {
-                // Spacer cannot always answer the Horn query the interpolants are derived from
+                // The Horn query the interpolants come from is not always answerable
                 // (uninterpreted functions, for one): there is nothing to hand back.
                 throw new NotSolvableException();
             }

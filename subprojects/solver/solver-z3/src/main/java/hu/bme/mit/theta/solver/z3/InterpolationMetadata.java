@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.ItpMarkerTree;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,40 +43,82 @@ import java.util.Set;
  */
 final class InterpolationMetadata {
 
-    /** A node of the pattern, in post-order: every child comes before its parent. */
+    /** A node of the pattern, together with the children whose interpolants imply it. */
     private record Node(
             Z3ItpMarker marker,
             BoolExpr term,
             com.microsoft.z3.Expr<?>[] own,
             com.microsoft.z3.Expr<?>[] shared,
-            List<Integer> children) {}
+            List<Node> children) {}
 
+    /** Every node of the pattern, children before their parent, so the root comes last. */
     private final List<Node> nodes;
 
     InterpolationMetadata(final Z3TransformationManager t, final ItpMarkerTree<Z3ItpMarker> root) {
-        final List<Z3ItpMarker> markers = new ArrayList<>();
-        final List<hu.bme.mit.theta.core.type.Expr<BoolType>> exprs = new ArrayList<>();
-        final List<List<Integer>> children = new ArrayList<>();
-        final List<Set<ConstDecl<?>>> subtreeConsts = new ArrayList<>();
-        flatten(root, markers, exprs, children, subtreeConsts);
+        final Map<ItpMarkerTree<Z3ItpMarker>, Set<ConstDecl<?>>> subtreeConsts =
+                new IdentityHashMap<>();
+        collectConsts(root, subtreeConsts);
+        nodes = new ArrayList<>();
+        build(t, root, Set.of(), subtreeConsts, nodes);
+    }
 
-        nodes = new ArrayList<>(markers.size());
-        for (int i = 0; i < markers.size(); i++) {
-            // Everything outside node i's subtree; what the subtree and that share is i's scope.
-            final Set<ConstDecl<?>> outside = new LinkedHashSet<>();
-            for (int j = 0; j < markers.size(); j++) {
-                if (!isInSubtree(children, i, j)) {
-                    outside.addAll(ExprUtils.getConstants(exprs.get(j)));
+    /** The constants of a whole subtree, for that subtree and every subtree below it. */
+    private static Set<ConstDecl<?>> collectConsts(
+            final ItpMarkerTree<Z3ItpMarker> tree,
+            final Map<ItpMarkerTree<Z3ItpMarker>, Set<ConstDecl<?>>> subtreeConsts) {
+        final Set<ConstDecl<?>> consts = new LinkedHashSet<>(ExprUtils.getConstants(exprOf(tree)));
+        for (final ItpMarkerTree<Z3ItpMarker> child : tree.getChildren()) {
+            consts.addAll(collectConsts(child, subtreeConsts));
+        }
+        subtreeConsts.put(tree, consts);
+        return consts;
+    }
+
+    /**
+     * Builds {@code tree} and everything below it into {@code nodes}, children first. {@code
+     * outside} holds the constants of every node outside this subtree; what the subtree shares with
+     * them is this node's scope.
+     */
+    private static Node build(
+            final Z3TransformationManager t,
+            final ItpMarkerTree<Z3ItpMarker> tree,
+            final Set<ConstDecl<?>> outside,
+            final Map<ItpMarkerTree<Z3ItpMarker>, Set<ConstDecl<?>>> subtreeConsts,
+            final List<Node> nodes) {
+        final hu.bme.mit.theta.core.type.Expr<BoolType> expr = exprOf(tree);
+        final Set<ConstDecl<?>> own = ExprUtils.getConstants(expr);
+
+        final List<Node> children = new ArrayList<>(tree.getChildrenNumber());
+        for (final ItpMarkerTree<Z3ItpMarker> child : tree.getChildren()) {
+            // Outside a child's subtree: whatever is outside this one, this node's own assertions
+            // and the sibling subtrees.
+            final Set<ConstDecl<?>> childOutside = new LinkedHashSet<>(outside);
+            childOutside.addAll(own);
+            for (final ItpMarkerTree<Z3ItpMarker> sibling : tree.getChildren()) {
+                if (sibling != child) {
+                    childOutside.addAll(subtreeConsts.get(sibling));
                 }
             }
-            nodes.add(
-                    new Node(
-                            markers.get(i),
-                            (BoolExpr) t.toTerm(exprs.get(i)),
-                            toTerms(t, ExprUtils.getConstants(exprs.get(i))),
-                            toTerms(t, intersect(subtreeConsts.get(i), outside)),
-                            children.get(i)));
+            children.add(build(t, child, childOutside, subtreeConsts, nodes));
         }
+
+        final Set<ConstDecl<?>> shared = new LinkedHashSet<>(subtreeConsts.get(tree));
+        shared.retainAll(outside);
+
+        final Node node =
+                new Node(
+                        tree.getMarker(),
+                        (BoolExpr) t.toTerm(expr),
+                        toTerms(t, own),
+                        toTerms(t, shared),
+                        children);
+        nodes.add(node);
+        return node;
+    }
+
+    private static hu.bme.mit.theta.core.type.Expr<BoolType> exprOf(
+            final ItpMarkerTree<Z3ItpMarker> tree) {
+        return And(tree.getMarker().getTerms().stream().toList());
     }
 
     private static com.microsoft.z3.Expr<?>[] toTerms(
@@ -85,80 +128,35 @@ final class InterpolationMetadata {
                 .toArray(com.microsoft.z3.Expr[]::new);
     }
 
-    /** Post-order flattening of the marker tree; children land before their parent. */
-    private static int flatten(
-            final ItpMarkerTree<Z3ItpMarker> node,
-            final List<Z3ItpMarker> markers,
-            final List<hu.bme.mit.theta.core.type.Expr<BoolType>> exprs,
-            final List<List<Integer>> children,
-            final List<Set<ConstDecl<?>>> subtreeConsts) {
-        final List<Integer> childIndices = new ArrayList<>();
-        final Set<ConstDecl<?>> consts = new LinkedHashSet<>();
-        for (final ItpMarkerTree<Z3ItpMarker> child : node.getChildren()) {
-            final int childIndex = flatten(child, markers, exprs, children, subtreeConsts);
-            childIndices.add(childIndex);
-            consts.addAll(subtreeConsts.get(childIndex));
-        }
-        final hu.bme.mit.theta.core.type.Expr<BoolType> expr =
-                And(node.getMarker().getTerms().stream().toList());
-        consts.addAll(ExprUtils.getConstants(expr));
-
-        markers.add(node.getMarker());
-        exprs.add(expr);
-        children.add(childIndices);
-        subtreeConsts.add(consts);
-        return markers.size() - 1;
-    }
-
-    private static boolean isInSubtree(
-            final List<List<Integer>> children, final int root, final int node) {
-        if (root == node) {
-            return true;
-        }
-        for (final int child : children.get(root)) {
-            if (isInSubtree(children, child, node)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static Set<ConstDecl<?>> intersect(
-            final Set<ConstDecl<?>> a, final Set<ConstDecl<?>> b) {
-        final Set<ConstDecl<?>> result = new LinkedHashSet<>(a);
-        result.retainAll(b);
-        return result;
-    }
-
     /**
      * The interpolant of every marker, or null when the Horn solver cannot answer. The root always
      * maps to false.
      */
     Map<Z3ItpMarker, BoolExpr> interpolate(final Context ctx) {
         final Solver hornSolver = ctx.mkSolver("HORN");
-        final int rootIndex = nodes.size() - 1;
+        final Node root = nodes.get(nodes.size() - 1);
 
-        final List<FuncDecl<BoolSort>> preds = new ArrayList<>();
-        for (int i = 0; i < nodes.size(); i++) {
-            preds.add(
-                    ctx.mkFuncDecl(
-                            "itp!" + i, exprsToSorts(nodes.get(i).shared()), ctx.getBoolSort()));
-        }
-
+        final Map<Node, FuncDecl<BoolSort>> preds = new IdentityHashMap<>();
         for (int i = 0; i < nodes.size(); i++) {
             final Node node = nodes.get(i);
+            preds.put(
+                    node,
+                    ctx.mkFuncDecl("itp!" + i, exprsToSorts(node.shared()), ctx.getBoolSort()));
+        }
+
+        for (final Node node : nodes) {
             final List<BoolExpr> body = new ArrayList<>();
             final Set<com.microsoft.z3.Expr<?>> bound = new LinkedHashSet<>();
-            for (final int child : node.children()) {
-                body.add((BoolExpr) preds.get(child).apply(nodes.get(child).shared()));
-                bound.addAll(Arrays.asList(nodes.get(child).shared()));
+            for (final Node child : node.children()) {
+                body.add((BoolExpr) preds.get(child).apply(child.shared()));
+                bound.addAll(Arrays.asList(child.shared()));
             }
             body.add(node.term());
             bound.addAll(Arrays.asList(node.own()));
             bound.addAll(Arrays.asList(node.shared()));
 
             final BoolExpr head =
-                    i == rootIndex ? ctx.mkFalse() : (BoolExpr) preds.get(i).apply(node.shared());
+                    node == root ? ctx.mkFalse() : (BoolExpr) preds.get(node).apply(node.shared());
             hornSolver.add(
                     forallOrBody(
                             ctx,
@@ -171,12 +169,11 @@ final class InterpolationMetadata {
         }
         final Model model = hornSolver.getModel();
         final Map<Z3ItpMarker, BoolExpr> result = new LinkedHashMap<>();
-        for (int i = 0; i < nodes.size(); i++) {
-            final Node node = nodes.get(i);
-            if (i == rootIndex) {
+        for (final Node node : nodes) {
+            if (node == root) {
                 result.put(node.marker(), ctx.mkFalse());
             } else {
-                final BoolExpr body = interpretation(ctx, model, preds.get(i));
+                final BoolExpr body = interpretation(ctx, model, preds.get(node));
                 // The interpretation speaks about the predicate's arguments as de Bruijn
                 // variables; shared[i] is argument i.
                 result.put(
