@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2InitFunc
 import hu.bme.mit.theta.analysis.prod2.Prod2Ord
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
+import hu.bme.mit.theta.analysis.prod2.Prod2TransFunc
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
@@ -63,7 +64,7 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
-import hu.bme.mit.theta.xcfa.analysis.timed.DataClockXcfaActionPartition
+import hu.bme.mit.theta.xcfa.analysis.timed.DataClockXcfaActionSplitter
 import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneInitFunc
 import hu.bme.mit.theta.xcfa.analysis.timed.XcfaZoneTransFunc
 import hu.bme.mit.theta.xcfa.analysis.timed.addVarsAndClocks
@@ -359,13 +360,11 @@ private fun <S : ExprState, P : Prec> getXcfaTransFunc(
 private fun <S : ExprState, P : Prec> getProd2DataZoneTransFunc(
     dataTransFunc : TransFunc<S, ExprAction, P>,
     zoneTransFunc : TransFunc<ZoneState, ExprAction, ZonePrec>,
-) = TransFunc<Prod2State<S, ZoneState>, ExprAction, Prod2Prec<P, ZonePrec>> { state, action, prec ->
-    val (dataAction, clockAction) = DataClockXcfaActionPartition.getPartition(action as XcfaAction)
-    Prod2State.cartesianOrBottom(
-        dataTransFunc.getSuccStates(state.state1, dataAction, prec.prec1),
-        zoneTransFunc.getSuccStates(state.state2, clockAction, prec.prec2)
-    )
-}
+) : TransFunc<Prod2State<S, ZoneState>, ExprAction, Prod2Prec<P, ZonePrec>> = Prod2TransFunc.create(
+  dataTransFunc,
+  zoneTransFunc,
+  DataClockXcfaActionSplitter
+) as TransFunc<Prod2State<S, ZoneState>, ExprAction, Prod2Prec<P, ZonePrec>>
 
 private fun getLookups(
     xcfaState : XcfaState<*>,

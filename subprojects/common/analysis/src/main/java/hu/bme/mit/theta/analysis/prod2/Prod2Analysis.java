@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.common.Tuple2;
 
 public final class Prod2Analysis<
                 S1 extends State,
@@ -41,7 +42,8 @@ public final class Prod2Analysis<
             final Analysis<S1, ? super A, P1> analysis1,
             final Analysis<S2, ? super A, P2> analysis2,
             final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
-            final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+            final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator,
+            final ActionSplitter<A> actionSplitter) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
         partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
@@ -53,7 +55,8 @@ public final class Prod2Analysis<
                         analysis1.getTransFunc(),
                         analysis2.getTransFunc(),
                         preStrengtheningOperator,
-                        strenghteningOperator);
+                        strenghteningOperator,
+                        actionSplitter);
     }
 
     public static <
@@ -65,11 +68,11 @@ public final class Prod2Analysis<
             Prod2Analysis<S1, S2, A, P1, P2> create(
                     final Analysis<S1, ? super A, P1> analysis1,
                     final Analysis<S2, ? super A, P2> analysis2) {
-        return create(
-                analysis1,
-                analysis2,
+        return create(analysis1, analysis2,
                 DefaultPreStrengtheningOperator.create(),
-                (states, prec) -> states);
+                (states, prec) -> states,
+                action -> Tuple2.of(action, action)
+            );
     }
 
     public static <
@@ -83,8 +86,43 @@ public final class Prod2Analysis<
                     final Analysis<S2, ? super A, P2> analysis2,
                     final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
                     final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
-        return new Prod2Analysis<>(
-                analysis1, analysis2, preStrengtheningOperator, strenghteningOperator);
+        return new Prod2Analysis<>(analysis1, analysis2,
+            preStrengtheningOperator,
+            strenghteningOperator,
+            action -> Tuple2.of(action, action)
+        );
+    }
+
+    public static <
+                    S1 extends State,
+                    S2 extends State,
+                    A extends Action,
+                    P1 extends Prec,
+                    P2 extends Prec>
+            Prod2Analysis<S1, S2, A, P1, P2> create(
+                    final Analysis<S1, ? super A, P1> analysis1,
+                    final Analysis<S2, ? super A, P2> analysis2,
+                    final ActionSplitter<A> actionSplitter) {
+        return new Prod2Analysis<>(analysis1, analysis2,
+            DefaultPreStrengtheningOperator.create(),
+            (states, prec) -> states,
+            actionSplitter);
+    }
+
+    private static <
+                    S1 extends State,
+                    S2 extends State,
+                    A extends Action,
+                    P1 extends Prec,
+                    P2 extends Prec>
+            Prod2Analysis<S1, S2, A, P1, P2> create(
+                    final Analysis<S1, ? super A, P1> analysis1,
+                    final Analysis<S2, ? super A, P2> analysis2,
+                    final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
+                    final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator,
+                    final ActionSplitter<A> actionSplitter) {
+        return new Prod2Analysis<>(analysis1, analysis2,
+            preStrengtheningOperator, strenghteningOperator, actionSplitter);
     }
 
     @Override

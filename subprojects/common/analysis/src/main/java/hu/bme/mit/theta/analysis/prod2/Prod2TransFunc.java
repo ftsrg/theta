@@ -22,10 +22,12 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.common.Tuple2;
+
 import java.util.Collection;
 import java.util.Optional;
 
-final class Prod2TransFunc<
+public final class Prod2TransFunc<
                 S1 extends State,
                 S2 extends State,
                 A extends Action,
@@ -37,16 +39,19 @@ final class Prod2TransFunc<
     private final TransFunc<S2, ? super A, P2> transFunc2;
     private final PreStrengtheningOperator<S1, S2> preStrenghteningOperator;
     private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
+    private final ActionSplitter<A> actionSplitter;
 
     private Prod2TransFunc(
             final TransFunc<S1, ? super A, P1> transFunc1,
             final TransFunc<S2, ? super A, P2> transFunc2,
             final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
-            final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+            final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator,
+            final ActionSplitter<A> actionSplitter) {
         this.transFunc1 = checkNotNull(transFunc1);
         this.transFunc2 = checkNotNull(transFunc2);
         this.strenghteningOperator = checkNotNull(strenghteningOperator);
         this.preStrenghteningOperator = checkNotNull(preStrengtheningOperator);
+        this.actionSplitter = checkNotNull(actionSplitter);
     }
 
     public static <
@@ -58,11 +63,11 @@ final class Prod2TransFunc<
             Prod2TransFunc<S1, S2, A, P1, P2> create(
                     final TransFunc<S1, ? super A, P1> transFunc1,
                     final TransFunc<S2, ? super A, P2> transFunc2) {
-        return create(
-                transFunc1,
-                transFunc2,
+        return create(transFunc1, transFunc2,
                 DefaultPreStrengtheningOperator.create(),
-                (states, prec) -> states);
+                (states, prec) -> states,
+                action -> Tuple2.of(action, action)
+        );
     }
 
     public static <
@@ -76,8 +81,42 @@ final class Prod2TransFunc<
                     final TransFunc<S2, ? super A, P2> transFunc2,
                     final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
                     final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
-        return new Prod2TransFunc<>(
-                transFunc1, transFunc2, preStrengtheningOperator, strenghteningOperator);
+        return create(transFunc1, transFunc2,
+              preStrengtheningOperator,
+              strenghteningOperator,
+              action -> Tuple2.of(action, action)
+        );
+    }
+
+    public static <
+                    S1 extends State,
+                    S2 extends State,
+                    A extends Action,
+                    P1 extends Prec,
+                    P2 extends Prec>
+            Prod2TransFunc<S1, S2, A, P1, P2> create(
+                    final TransFunc<S1, ? super A, P1> transFunc1,
+                    final TransFunc<S2, ? super A, P2> transFunc2,
+                    final ActionSplitter<A> actionSplitter) {
+        return create(transFunc1, transFunc2,
+              DefaultPreStrengtheningOperator.create(),
+              (states, prec) -> states,
+              actionSplitter
+        );
+    }
+
+    static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
+            Prod2TransFunc<S1, S2, A, P1, P2> create(
+                    final TransFunc<S1, ? super A, P1> transFunc1,
+                    final TransFunc<S2, ? super A, P2> transFunc2,
+                    final PreStrengtheningOperator<S1, S2> preStrengtheningOperator,
+                    final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator,
+                    final ActionSplitter<A> actionSplitter) {
+        return new Prod2TransFunc<>(transFunc1, transFunc2,
+              preStrengtheningOperator,
+              strenghteningOperator,
+              actionSplitter
+        );
     }
 
     @Override
@@ -91,9 +130,13 @@ final class Prod2TransFunc<
             return singleton(state);
         }
 
+        final Tuple2<A, A> actions = actionSplitter.apply(action);
+
         final Collection<? extends S1> succStates1 =
                 transFunc1.getSuccStates(
-                        preStrenghteningOperator.strengthenState1(state), action, prec.getPrec1());
+                        preStrenghteningOperator.strengthenState1(state),
+                        actions.get1(),
+                        prec.getPrec1());
         final Optional<? extends S1> optBottom1 =
                 succStates1.stream().filter(State::isBottom).findAny();
 
@@ -104,7 +147,9 @@ final class Prod2TransFunc<
 
         final Collection<? extends S2> succStates2 =
                 transFunc2.getSuccStates(
-                        preStrenghteningOperator.strengthenState2(state), action, prec.getPrec2());
+                        preStrenghteningOperator.strengthenState2(state),
+                        actions.get2(),
+                        prec.getPrec2());
         final Optional<? extends S2> optBottom2 =
                 succStates2.stream().filter(State::isBottom).findAny();
 
