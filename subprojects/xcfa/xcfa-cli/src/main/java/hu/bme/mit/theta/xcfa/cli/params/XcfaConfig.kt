@@ -250,6 +250,12 @@ data class CHCFrontendConfig(
     description = "Direction of transformation from CHC to XCFA",
   )
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
+  @Parameter(
+    names = ["--chc-workers"],
+    description =
+      "Worker threads of the PARALLEL transformation (0: the static bound of the task, or 3 when it has none)",
+  )
+  var chcWorkers: Int = 0,
   @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
   @Parameter(

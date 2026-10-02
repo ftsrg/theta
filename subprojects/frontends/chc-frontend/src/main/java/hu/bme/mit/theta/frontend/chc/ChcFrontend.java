@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,13 +28,20 @@ public class ChcFrontend {
     public enum ChcTransformation {
         PORTFOLIO,
         FORWARD,
-        BACKWARD
+        BACKWARD,
+        PARALLEL
     }
 
     private final ChcTransformation chcTransformation;
+    private final int workers;
 
     public ChcFrontend(ChcTransformation transformation) {
+        this(transformation, 0);
+    }
+
+    public ChcFrontend(ChcTransformation transformation, int workers) {
         chcTransformation = transformation;
+        this.workers = workers;
     }
 
     public XcfaBuilder buildXcfa(CharStream charStream, ProcedurePassManager procedurePassManager) {
@@ -45,6 +52,7 @@ public class ChcFrontend {
                 switch (chcTransformation) {
                     case FORWARD -> new ChcForwardXcfaBuilder(procedurePassManager);
                     case BACKWARD -> new ChcBackwardXcfaBuilder(procedurePassManager);
+                    case PARALLEL -> new ChcParallelXcfaBuilder(procedurePassManager, workers);
                     default ->
                             throw new RuntimeException(
                                     "Should not be here; adapt PORTFOLIO to FW/BW beforehand.");

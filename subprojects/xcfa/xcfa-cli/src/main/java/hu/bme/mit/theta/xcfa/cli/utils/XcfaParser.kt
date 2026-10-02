@@ -26,6 +26,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
+import hu.bme.mit.theta.frontend.chc.ChcParallelXcfaBuilder
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
@@ -82,6 +83,7 @@ fun getXcfa(
           parseContext,
           logger,
           uniqueWarningLogger,
+          chcConfig.chcWorkers,
         )
       }
 
@@ -321,8 +323,12 @@ private fun parseChc(
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
+  chcWorkers: Int,
 ): XCFA {
   var chcFrontend: ChcFrontend
+  if (chcTransformation == ChcFrontend.ChcTransformation.PARALLEL) {
+    parseContext.multiThreading = true
+  }
   val xcfaBuilder =
     if (
       chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO
@@ -345,13 +351,15 @@ private fun parseChc(
         )
       }
     } else {
-      chcFrontend = ChcFrontend(chcTransformation)
+      chcFrontend = ChcFrontend(chcTransformation, chcWorkers)
       chcFrontend.buildXcfa(
         CharStreams.fromStream(FileInputStream(input)),
         ChcPasses(parseContext, uniqueWarningLogger),
       )
     }
-  return xcfaBuilder.build()
+  return xcfaBuilder.build().also {
+    if (xcfaBuilder.metaData[ChcParallelXcfaBuilder.INCOMPLETE] == true) it.unsafeUnrollUsed = true
+  }
 }
 
 private fun parseBTOR2(
