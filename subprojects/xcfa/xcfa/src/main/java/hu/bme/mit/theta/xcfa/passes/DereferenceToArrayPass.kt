@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.BaseAliasPartition
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.xcfa.utils.dereferences
@@ -46,11 +47,14 @@ private typealias ArrayType2D = ArrayType<out Type, ArrayType<out Type, out Type
  * element. Upon each write to the memory location, the corresponding global array is also updated
  * to reflect the change.
  *
- * There is exactly ONE array per [MemoryTypeKey]: a finer, per-dereference partition is unsound,
- * because the same cell can be reached both through a global pointer variable and through its
- * constant-folded base literal, and the two dereferences would then read and write different
- * arrays. The array starts havoced -- stack and heap cells are garbage until written, and a
- * global's initialization is materialized as ordinary writes in the init procedure.
+ * Within a [MemoryTypeKey], the memory is further split by [BaseAliasPartition]: dereferences whose
+ * bases can never hold the same object get different arrays. The split follows the values the base
+ * variables can hold, never the shape of a base expression: the same cell can be reached both
+ * through a global pointer variable and through its constant-folded base literal, and a split by
+ * expression shape would send the two dereferences to different arrays. When the analysis cannot
+ * bound a base, there is exactly one array per [MemoryTypeKey]. An array starts havoced -- stack
+ * and heap cells are garbage until written, and a global's initialization is materialized as
+ * ordinary writes in the init procedure.
  */
 class DereferenceToArrayPass : ProcedurePass {
 
@@ -59,22 +63,31 @@ class DereferenceToArrayPass : ProcedurePass {
     var zeroInitialized: Boolean = false
   }
 
-  private lateinit var arraysByType: Map<MemoryTypeKey, VarDecl<out ArrayType2D>>
+  private lateinit var arraysByType: Map<Pair<MemoryTypeKey, Int>, VarDecl<out ArrayType2D>>
+  private var partition: BaseAliasPartition? = null
+
+  private val Dereference<*, *, *>.arrayKey: Pair<MemoryTypeKey, Int>
+    get() = memoryTypeKey to (partition?.partitionOf(this) ?: 0)
 
   /** Returns an array from the pre-generated lookup of types */
   private val <A : Type, O : Type, T : Type> Dereference<A, O, T>.arrays:
     VarDecl<ArrayType<A, ArrayType<O, T>>>
     get() {
       val arrayType = ArrayType.of(array.type, ArrayType.of(offset.type, type))
-      return cast(arraysByType[memoryTypeKey]!!, arrayType)
+      return cast(arraysByType[arrayKey]!!, arrayType)
     }
 
   /** Creates arrays from dereference types */
-  private fun createArray(key: MemoryTypeKey, xcfa: XcfaBuilder): VarDecl<out ArrayType2D> {
+  private fun createArray(
+    key: MemoryTypeKey,
+    suffix: String,
+    xcfa: XcfaBuilder,
+  ): VarDecl<out ArrayType2D> {
     val (derefArrayType, derefOffsetType, derefType) = key
     val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
 
-    val decl = Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}", arrayType)
+    val decl =
+      Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}$suffix", arrayType)
     val (globalDecl, initLabel) =
       if (zeroInitialized) {
         val defaultValue =
@@ -99,15 +112,19 @@ class DereferenceToArrayPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!::arraysByType.isInitialized) {
-      val arrays = mutableMapOf<MemoryTypeKey, VarDecl<out ArrayType2D>>()
-      val types = mutableSetOf<MemoryTypeKey>()
+      partition = BaseAliasPartition.compute(builder.parent, zeroInitialized)
+      val keys = linkedSetOf<Pair<MemoryTypeKey, Int>>()
       builder.parent.getProcedures().forEach { p ->
         p.getEdges().forEach { e ->
-          e.label.dereferences.forEach { deref -> types.add(deref.memoryTypeKey) }
+          e.label.dereferences.forEach { deref -> keys.add(deref.arrayKey) }
         }
       }
-      types.forEach { arrays[it] = createArray(it, builder.parent) }
-      arraysByType = arrays
+      // a type with a single partition keeps the plain name
+      val split = keys.groupBy { it.first }.filterValues { it.size > 1 }.keys
+      arraysByType =
+        keys.associateWith { (type, part) ->
+          createArray(type, if (type in split) "_p$part" else "", builder.parent)
+        }
     }
 
     builder.getEdges().toList().forEach { edge ->
