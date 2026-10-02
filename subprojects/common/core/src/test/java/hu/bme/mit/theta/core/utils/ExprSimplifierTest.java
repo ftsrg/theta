@@ -744,6 +744,30 @@ public class ExprSimplifierTest {
     }
 
     @Test
+    public void testArrayReadOverWrite() {
+        var arr = Var("arr", Array(Int(), Int()));
+        var i = Var("i", Int());
+        var written = Write(Write(arr.getRef(), Int(1), Int(10)), Int(2), Int(20));
+        assertEquals(Int(20), simplify(Read(written, Int(2))));
+        assertEquals(Int(10), simplify(Read(written, Int(1))));
+        assertEquals(Read(arr.getRef(), Int(3)), simplify(Read(written, Int(3))));
+
+        // A symbolic index is equal only to itself and distinct from nothing.
+        var symbolic = Write(arr.getRef(), i.getRef(), Int(10));
+        assertEquals(Int(10), simplify(Read(symbolic, i.getRef())));
+        assertEquals(Read(symbolic, Int(1)), simplify(Read(symbolic, Int(1))));
+        var behindSymbolic = Write(Write(arr.getRef(), Int(1), Int(10)), i.getRef(), Int(20));
+        assertEquals(Read(behindSymbolic, Int(1)), simplify(Read(behindSymbolic, Int(1))));
+
+        // Two dimensions: a write to another row is skipped, then the cell of the right row.
+        var mem = Var("mem", Array(Int(), Array(Int(), Int())));
+        var row1 = Write(Read(mem.getRef(), Int(1)), Int(0), Int(5));
+        var twoWrites =
+                Write(Write(mem.getRef(), Int(1), row1), Int(2), Read(mem.getRef(), Int(2)));
+        assertEquals(Int(5), simplify(Read(Read(twoWrites, Int(1)), Int(0))));
+    }
+
+    @Test
     public void testArrayInit() {
         var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
         elems.add(Tuple2.of(Int(0), Int(1)));
