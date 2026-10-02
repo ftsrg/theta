@@ -89,6 +89,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      // after inlining, so a read through a callee's parameter is a read through the literal here
+      StringLiteralInitPass(),
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property),
       UnusedLocRemovalPass(),
