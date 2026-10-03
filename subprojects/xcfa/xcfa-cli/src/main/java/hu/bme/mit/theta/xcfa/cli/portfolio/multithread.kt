@@ -145,6 +145,8 @@ fun multithreadPortfolio(
                   decisionProcedure = OcDecisionProcedureType.BASIC,
                   autoConflict = AutoConflictFinderConfig.GENERIC,
                   autoConflictBound = 3,
+                  // the unroll exit queries deepen only the loops that need it
+                  forceUnrollBoundStart = 1,
                 ),
             )
         ),
