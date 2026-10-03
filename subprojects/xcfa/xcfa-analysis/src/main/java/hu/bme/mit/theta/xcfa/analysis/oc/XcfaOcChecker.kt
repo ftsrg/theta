@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
@@ -135,6 +136,7 @@ class XcfaOcChecker(
       xcfa.optimizeFurther(
         ProcedurePassManager(
           listOf(
+            SpinLoopEffectPass(property.verifiedProperty == ErrorDetection.ERROR_LOCATION),
             UnrollPass(
               bound,
               parseContext = parseContext,
