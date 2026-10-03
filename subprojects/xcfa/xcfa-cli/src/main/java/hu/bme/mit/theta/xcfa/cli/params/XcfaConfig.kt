@@ -18,7 +18,9 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
@@ -575,8 +577,6 @@ data class OcConfig(
     description = "Decision procedure for ordering-consistency check",
   )
   var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
-  @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
-  var inputConflictClauseFile: String? = null,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(
@@ -584,11 +584,6 @@ data class OcConfig(
     description = "Output file to write conflict clauses",
   )
   var inputConflictDecisionProcedure: String = "",
-  @Parameter(
-    names = ["--non-permissive-validation"],
-    description = "Output file to write conflict clauses",
-  )
-  var nonPermissiveValidation: Boolean = false,
   @Parameter(
     names = ["--auto-conflict"],
     description = "Level of manual conflict detection before verification",
@@ -618,6 +613,12 @@ data class OcConfig(
     description = "Step size for force loop unrolling bound for OC checker",
   )
   var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-max-exit-queries"],
+    description =
+      "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
+  )
+  var maxExitQueries: Int = -1,
   @Parameter(
     names = ["--oc-witness-optimizations"],
     description =
@@ -670,6 +671,18 @@ data class MddConfig(
     description = "Perform a structural rerun to estimate solver time overhead",
   )
   var solverMeasurements: Boolean = false,
+  @Parameter(
+    names = ["--edge-cap-strategy"],
+    description =
+      "What to do with a decision diagram node that exceeds --edge-limit: NONE gives up (verification stuck), UNDER keeps the edges found so far and keeps only an unsafe verdict",
+  )
+  var edgeCapStrategy: MddApproximation.Strategy = MddApproximation.Strategy.UNDER,
+  @Parameter(
+    names = ["--edge-limit"],
+    description =
+      "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
+  )
+  var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
@@ -678,9 +691,22 @@ data class MddConfig(
   var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
+enum class MddCegarRefinement {
+  SEQ_ITP,
+  FW_BIN_ITP,
+  BW_BIN_ITP,
+}
+
 data class MddCegarConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
+  @Parameter(
+    names = ["--refinement-solver"],
+    description = "Solver for the trace check / interpolation (defaults to --solver)",
+  )
+  var refinementSolver: String = "",
+  @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
+  var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
   @Parameter(
     names = ["--validate-solver", "--validate-mdd-solver"],
     description =
@@ -707,22 +733,22 @@ data class MddCegarConfig(
   @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
   var traceTimeout: Long = 10,
   @Parameter(
-    names = ["--reach-constraint"],
-    description = "Constrain each iteration's saturation to the previous iteration's reach set",
-    arity = 1,
-  )
-  var reachConstraint: Boolean = false,
-  @Parameter(
     names = ["--on-the-fly-reachability"],
     description = "Terminate saturation as soon as a violating state is reached",
   )
   var onTheFlyReachability: Boolean = false,
   @Parameter(
+    names = ["--literal-placement"],
+    description =
+      "Where the literal levels go in the MDD orders: FORCE (the FORCE ordering of ctrl vars and literals, rebuilt every iteration) or TOP (each new literal on top of the existing levels)",
+  )
+  var literalPlacement: LiteralPlacement = LiteralPlacement.FORCE,
+  @Parameter(
     names = ["--trace-search"],
     description =
-      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+      "Search for the abstract counterexample: BFS (forward layers then one backward step per layer: shortest counterexample), BFS_BACKWARD (backward layers from all violating states) or DFS (backward, one predecessor per step, order-dependent length)",
   )
-  var traceSearch: TraceSearch = TraceSearch.DFS,
+  var traceSearch: TraceSearch = TraceSearch.BFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(

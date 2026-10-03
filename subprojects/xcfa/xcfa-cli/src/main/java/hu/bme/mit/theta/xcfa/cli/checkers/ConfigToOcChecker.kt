@@ -52,9 +52,7 @@ fun getOcChecker(
       decisionProcedure = ocConfig.decisionProcedure,
       smtSolver = ocConfig.smtSolver,
       logger = logger,
-      conflictInput = ocConfig.inputConflictClauseFile,
       outputConflictClauses = ocConfig.outputConflictClauses,
-      nonPermissiveValidation = ocConfig.nonPermissiveValidation,
       autoConflictConfig = ocConfig.autoConflict,
       autoConflictBound = ocConfig.autoConflictBound,
       memoryModel = ocConfig.memoryConsistencyModel,
@@ -62,6 +60,7 @@ fun getOcChecker(
       forceUnrollBoundStart = forceUnrollBoundStart,
       forceUnrollBoundEnd = forceUnrollBoundEnd,
       forceUnrollBoundStep = ocConfig.forceUnrollBoundStep,
+      maxExitQueries = ocConfig.maxExitQueries,
     )
   return SafetyChecker { ocChecker.check() }
 }
