@@ -315,17 +315,12 @@ class UnrollPass(
      *
      * That is, we must check the following:
      * - No write access on global variables and dereferences
-     * - Written local variables only transitively depend on variables/memory not modified in the
-     *   loop
+     * - No local variable written in the loop is live at the loop start
      */
     private val isBusyWait: Boolean by lazy {
-      // A dependency associate read variables to a written one with the following:
-      // - global variables/memory are omitted (we can return right away when written)
-      // - the map index is the written local variable
-      // - the associated value is the set of values it depends on
-      // A set of non-input variables is also maintained: a non-input is a local variable
-      // that is already written in the loop.
-      val waitlist = mutableMapOf(loopStart to BusyWaitState())
+      if (!collapseBusyWaits) return@lazy false
+      // the mutexes toggled on the way to each location (0: unchanged, -1: unlocked, 1: locked)
+      val waitlist = mutableMapOf(loopStart to mapOf<Expr<*>, Int>())
       val visited = mutableSetOf<XcfaLocation>()
 
       while (waitlist.isNotEmpty()) {
@@ -333,56 +328,48 @@ class UnrollPass(
           l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
         } ?: return@lazy false
         visited.add(visiting)
-        val (dependencies, nonInputs, toggledMutexes) = waitlist.remove(visiting)!!
+        val toggledMutexes = waitlist.remove(visiting)!!
         visiting.outgoingEdges.forEach { edge ->
           if (edge.target in visited && edge.target != loopStart) {
             // nested loop, data flow is tricky
             return@lazy false
           }
-          val d = dependencies.toMutableMap()
-          val ni = nonInputs.toMutableSet()
           val tm = toggledMutexes.toMutableMap()
           edge.getFlatLabels().forEach { label ->
             if (label is InvokeLabel || label is ReturnLabel ||
                 label is StartLabel || label is JoinLabel ||
-                !update(d, ni, tm, label)) {
+                !update(tm, label)) {
               return@lazy false
             }
           }
           if (edge.target in loopLocs && edge.target != loopStart) {
             val target = waitlist[edge.target]
-            val newTarget = BusyWaitState(d, ni, tm)
-            waitlist[edge.target] =
-              if (target == null) newTarget
-              else merge(target, newTarget) ?: return@lazy false
+            if (target != null && target != tm) return@lazy false
+            waitlist[edge.target] = tm
           }
         }
       }
 
-      true
+      // A local written in the loop must not be live at the loop start: otherwise a later
+      // iteration (or the code after the loop) can observe what an earlier iteration wrote, e.g.
+      // through a guard or because the exit path does not overwrite it.
+      val writtenLocals =
+        loopEdges
+          .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
+          .filter { it !in globalVars }
+      writtenLocals.none { it in liveAtLoopStart }
     }
 
-    /**
-     * A "state" of the busy wait check loop exploration.
-     *
-     * @param dependencies the index var depends on the associated set of "input" local vars
-     * @param nonInputs the local vars that should not be treated as inputs (as they are written)
-     * @param toggledMutexes changed mutexes in the loop (0: unchanged, -1: unlocked, 1: locked)
-     */
-    private data class BusyWaitState(
-      val dependencies: Map<VarDecl<*>, Set<VarDecl<*>>> = emptyMap(),
-      val nonInputs: Set<VarDecl<*>> = emptySet(),
-      val toggledMutexes: Map<Expr<*>, Int> = emptyMap(),
-    )
+    /** Locals live at [loopStart] in the whole procedure (back edge and loop exits included). */
+    var liveAtLoopStart: Set<VarDecl<*>> = emptySet()
 
-    private fun update(
-      dependencies: MutableMap<VarDecl<*>, Set<VarDecl<*>>>,
-      nonInputs: MutableSet<VarDecl<*>>,
-      toggledMutexes: MutableMap<Expr<*>, Int>,
-      label: XcfaLabel,
-    ): Boolean {
+    private fun update(toggledMutexes: MutableMap<Expr<*>, Int>, label: XcfaLabel): Boolean {
       if (label.dereferencesWithAccessType.any { it.value.isWritten }) {
         // heap memory is written -> not a busy wait
+        return false
+      }
+      if (label.collectVarsWithAccessType().any { it.value.isWritten && it.key in globalVars }) {
+        // a global variable is written -> not a busy wait
         return false
       }
 
@@ -394,47 +381,7 @@ class UnrollPass(
           toggledMutexes[m.lock] = toggledMutexes.getOrDefault(m.lock, 0) - 1
         }
       }
-
-      val accesses = label.collectVarsWithAccessType()
-      val writes = accesses.mapNotNull {
-        if (it.value.isWritten) {
-          if (it.key in globalVars) {
-            // a global variable is written -> not a busy wait
-            return false
-          }
-          it.key
-        } else null
-      }
-      var reads = accesses.mapNotNull { if (it.value.isRead) it.key else null }.toSet()
-      reads = reads.flatMap {
-        when (it) {
-          in nonInputs -> dependencies[it]!!
-          in globalVars -> listOf()
-          else -> listOf(it)
-        }
-      }.toSet()
-
-      writes.forEach { w ->
-        dependencies[w] = reads
-        if (dependencies.any { w in it.value }) {
-          // a written (local) variable is read in the loop -> not a busy wait
-          return false
-        }
-        nonInputs.add(w)
-      }
-
       return true
-    }
-
-    private fun merge(target1: BusyWaitState, target2: BusyWaitState): BusyWaitState? {
-      val (d1, ni1, tm1) = target1
-      val (d2, ni2, tm2) = target2
-      if (tm1 != tm2) return null
-      return BusyWaitState(
-        (d1.keys + d2.keys).associateWith { (d1[it] ?: setOf()) + (d2[it] ?: setOf()) },
-        (ni1 intersect ni2),
-        tm1,
-      )
     }
 
     /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
@@ -838,5 +785,6 @@ class UnrollPass(
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
+      .also { it.liveAtLoopStart = strongLiveVars(builder)[loopStart] ?: emptySet() }
   }
 }
