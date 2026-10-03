@@ -319,6 +319,7 @@ class UnrollPass(
      *   loop
      */
     private val isBusyWait: Boolean by lazy {
+      if (!collapseBusyWaits) return@lazy false
       // A dependency associate read variables to a written one with the following:
       // - global variables/memory are omitted (we can return right away when written)
       // - the map index is the written local variable
@@ -359,8 +360,18 @@ class UnrollPass(
         }
       }
 
-      true
+      // A local written in the loop must not be live at the loop start: otherwise a later
+      // iteration (or the code after the loop) can observe what an earlier iteration wrote, e.g.
+      // through a guard or because the exit path does not overwrite it.
+      val writtenLocals =
+        loopEdges
+          .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
+          .filter { it !in globalVars }
+      writtenLocals.none { it in liveAtLoopStart }
     }
+
+    /** Locals live at [loopStart] in the whole procedure (back edge and loop exits included). */
+    var liveAtLoopStart: Set<VarDecl<*>> = emptySet()
 
     /**
      * A "state" of the busy wait check loop exploration.
@@ -838,5 +849,6 @@ class UnrollPass(
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
+      .also { it.liveAtLoopStart = strongLiveVars(builder)[loopStart] ?: emptySet() }
   }
 }
