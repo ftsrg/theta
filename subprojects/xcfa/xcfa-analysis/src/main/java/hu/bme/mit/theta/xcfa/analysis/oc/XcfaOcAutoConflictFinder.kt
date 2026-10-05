@@ -75,7 +75,7 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
     val writes = events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
     vRfs.forEach { rf ->
       writes
-        .filter { rf.from != it && rf.from.potentialSameMemory(it) }
+        .filter { rf.from != it && rf.to.potentialSameMemory(it) }
         .forEach { w ->
           findSimplePath(w, rf.to)?.let { wRfTo ->
             findSimplePath(rf.from, w)?.let { rfFromW ->
@@ -139,7 +139,7 @@ internal class GenericConflictFinder(private val bound: Int) : XcfaOcAutoConflic
           events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
         vRfs.forEach { rf ->
           writes
-            .filter { rf.from != it && rf.from.potentialSameMemory(it) }
+            .filter { rf.from != it && rf.to.potentialSameMemory(it) }
             .forEach { w ->
               if ((rf to w) !in enabledWss) {
                 findPath(w, rf.to)?.let { wRfTo ->
