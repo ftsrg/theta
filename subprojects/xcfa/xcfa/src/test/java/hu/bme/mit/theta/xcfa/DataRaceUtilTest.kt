@@ -102,8 +102,12 @@ class DataRaceUtilTest {
                 main.start()
               },
             check = { transformed ->
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_write_flag_x" })
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_read_flag_x" })
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_write_counter_x" }
+              )
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_read_counter_x" }
+              )
               assertTrue(
                 transformed.procedures.all {
                   it.errorLoc.isEmpty || it.errorLoc.get().incomingEdges.isEmpty()
