@@ -63,6 +63,11 @@ class DataRaceToReachabilityPass(
   private val enabled: Boolean = enabled ?: Companion.enabled
 
   companion object {
+
+    const val READ_COUNTER_PREFIX = "__theta_dr_read_counter_"
+    const val WRITE_COUNTER_PREFIX = "__theta_dr_write_counter_"
+    const val DEREF_PREFIX = "__theta_dr_deref_"
+
     var enabled = false
 
     private val potentialRacingVars = mutableMapOf<XcfaBuilder, Set<VarDecl<*>>>()
@@ -91,7 +96,7 @@ class DataRaceToReachabilityPass(
     private fun derefFlagVar(kind: String, type: Type): VarDecl<*> =
       derefFlagVars.getOrPut(kind to type) {
         val suffix = type.toString().filter { it.isLetterOrDigit() }
-        Decls.Var("_deref_${kind}_$suffix", type)
+        Decls.Var("${DEREF_PREFIX}${kind}_$suffix", type)
       }
 
     /** A value no real address takes, marking "this thread is not accessing anything". */
@@ -417,8 +422,8 @@ class DataRaceToReachabilityPass(
 
       val initializeFlags =
         racingVars.flatMap { v ->
-          writeFlagVars[v] = Decls.Var("_write_flag_${v.name}", Int())
-          readFlagVars[v] = Decls.Var("_read_flag_${v.name}", Int())
+          writeFlagVars[v] = Decls.Var("${WRITE_COUNTER_PREFIX}${v.name}", Int())
+          readFlagVars[v] = Decls.Var("${READ_COUNTER_PREFIX}${v.name}", Int())
           xcfaBuilder.addVar(XcfaGlobalVar(writeFlagVars[v]!!, Int(0), atomic = true))
           xcfaBuilder.addVar(XcfaGlobalVar(readFlagVars[v]!!, Int(0), atomic = true))
           listOf(

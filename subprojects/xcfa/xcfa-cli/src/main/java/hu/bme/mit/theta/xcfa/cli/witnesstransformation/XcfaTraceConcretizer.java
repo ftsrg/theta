@@ -214,7 +214,10 @@ public class XcfaTraceConcretizer {
                                     ChoiceType.NONE,
                                     label.getMetadata());
                 }
-                final MetaData metadata = label.getMetadata();
+                final MetaData metadata =
+                        label.getMetadata() == EmptyMetaData.INSTANCE
+                                ? action.getEdge().getMetadata()
+                                : label.getMetadata();
                 final XcfaState<PtrState<?>> nextState =
                         j == labels.size() - 1
                                 ? trace.getState(i + 1)

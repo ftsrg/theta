@@ -102,8 +102,12 @@ class DataRaceUtilTest {
                 main.start()
               },
             check = { transformed ->
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_write_flag_x" })
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_read_flag_x" })
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_write_counter_x" }
+              )
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_read_counter_x" }
+              )
               assertTrue(
                 transformed.procedures.all {
                   it.errorLoc.isEmpty || it.errorLoc.get().incomingEdges.isEmpty()
@@ -168,8 +172,12 @@ class DataRaceUtilTest {
                 main.start()
               },
             check = { transformed ->
-              assertNotNull(transformed.globalVars.find { it.wrappedVar.name == "_write_flag_x" })
-              assertNotNull(transformed.globalVars.find { it.wrappedVar.name == "_read_flag_x" })
+              assertNotNull(
+                transformed.globalVars.find { it.wrappedVar.name == "__theta_dr_write_counter_x" }
+              )
+              assertNotNull(
+                transformed.globalVars.find { it.wrappedVar.name == "__theta_dr_read_counter_x" }
+              )
               assertTrue(
                 transformed.procedures.all {
                   when (it.name) {
@@ -177,7 +185,8 @@ class DataRaceUtilTest {
                     else ->
                       it.errorLoc.get().incomingEdges.isNotEmpty() &&
                         it.errorLoc.get().incomingEdges.all { e ->
-                          "_write_flag_x" in e.collectVarsWithAccessType().map { a -> a.key.name }
+                          "__theta_dr_write_counter_x" in
+                            e.collectVarsWithAccessType().map { a -> a.key.name }
                         }
                   }
                 }
