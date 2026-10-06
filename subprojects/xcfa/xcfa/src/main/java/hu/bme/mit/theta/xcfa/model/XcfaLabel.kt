@@ -31,6 +31,7 @@ import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
+import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
@@ -307,6 +308,7 @@ data class MutexTryLockLabel(
   override val lock: Expr<*>,
   val successVar: VarDecl<*>,
   override val metadata: MetaData = EmptyMetaData,
+  val successful: Boolean? = null,
 ) : FenceLabel(lock, metadata) {
 
   override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
@@ -316,6 +318,13 @@ data class MutexTryLockLabel(
   override fun withLock(newLock: Expr<*>): MutexTryLockLabel = copy(lock = newLock)
 
   override fun toString(): String = "F[$label(${lock}, ${successVar.name})]"
+
+  override fun toStmt(): Stmt =
+    when (successful) {
+      true -> Assign(cast(successVar, successVar.type), successVar.type.integerOf(0))
+      false -> Assign(cast(successVar, successVar.type), successVar.type.integerOf(1))
+      else -> Skip()
+    }
 
   companion object {
 
@@ -447,10 +456,6 @@ constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyM
 }
 
 object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
-
-  override fun toStmt(): Stmt {
-    return Skip()
-  }
 
   override fun toString(): String {
     return "Nop"
