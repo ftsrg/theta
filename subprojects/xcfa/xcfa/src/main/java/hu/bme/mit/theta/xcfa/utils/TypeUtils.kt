@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -23,9 +24,12 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
@@ -67,12 +71,31 @@ val Type.defaultValue: LitExpr<out Type>
       else -> error("No default value for type $this")
     }
 
-fun Type.integerOf(value: Int): LitExpr<out Type> =
+fun <T : Type> T.integerOf(value: Int): LitExpr<T> =
+  integerOf(BigInteger.valueOf(value.toLong()))
+    ?: error("Cannot create an integer value of type $this")
+
+fun <T : Type> T.integerOf(value: BigInteger): LitExpr<T>? =
   when (this) {
-    is IntType -> Int(value)
-    is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), size)
-    else -> error("Cannot create an integer value of type $this")
+    is IntType -> IntLitExpr.of(value)
+    is BvType ->
+      when (signedness) {
+        null -> BvUtils.bigIntegerToNeutralBvLitExpr(value, size)
+        true -> BvUtils.bigIntegerToSignedBvLitExpr(value, size)
+        false -> BvUtils.bigIntegerToUnsignedBvLitExpr(value, size)
+      }
+
+    else -> null
   }
+    as LitExpr<T>?
+
+val LitExpr<*>.intValue: BigInteger?
+  get() =
+    when (this) {
+      is IntLitExpr -> value
+      is BvLitExpr -> BvToIntExpr.of(this).eval(MutableValuation()).intValue
+      else -> null
+    }
 
 /**
  * States that a havoced value is one its C type can actually hold.

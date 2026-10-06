@@ -19,12 +19,12 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
@@ -37,17 +37,13 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 class MutexToVarPass : ProcedurePass {
 
   companion object {
-    private val mutexVars = mutableMapOf<LitExpr<*>, VarDecl<IntType>>()
+    private val mutexVars = mutableMapOf<MutexLock, VarDecl<IntType>>()
 
-    private val LitExpr<*>.mutexFlag
-      get() = mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_$this", Int()) }
-
-    private val Expr<*>.mutexFlag
-      get() =
-        (this as? IntLitExpr)?.mutexFlag
-          ?: throw UnsupportedOperationException(
-            "Unknown mutex not supported by mutex elimination."
-          )
+    private val MutexLock.mutexFlag: VarDecl<IntType>
+      get() {
+        check(lock is LitExpr<*>) { "Unknown mutex not supported by mutex elimination." }
+        return mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_${this.uniqueId}", Int()) }
+      }
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -94,8 +90,8 @@ class MutexToVarPass : ProcedurePass {
           is RWLockUnlockLabel -> {
             // this is a hack because RWLockUnlock unlocks both read and write locks
             // if write lock is held, it unlocks that, otherwise a read lock
-            val writeFlag = lock.mutexFlag
-            val readFlag = lock.mutexFlag
+            val writeFlag = ReadWriteMutexLock(lock, WRITE).mutexFlag
+            val readFlag = ReadWriteMutexLock(lock, READ).mutexFlag
             return setOf(
               SequenceLabel(
                 listOf(
@@ -114,14 +110,14 @@ class MutexToVarPass : ProcedurePass {
 
           else -> {
             blockingMutexes.forEach {
-              actions.add(StmtLabel(AssumeStmt.of(Eq(it.lock.mutexFlag.ref, Int(0)))))
+              actions.add(StmtLabel(AssumeStmt.of(Eq(it.mutexFlag.ref, Int(0)))))
             }
             acquiredMutexes.forEach {
-              val m = it.lock.mutexFlag
+              val m = it.mutexFlag
               actions.add(StmtLabel(AssignStmt.of(m, Add(m.ref, Int(1)))))
             }
             releasedMutexes.forEach {
-              val m = it.lock.mutexFlag
+              val m = it.mutexFlag
               actions.add(StmtLabel(AssignStmt.of(m, Sub(m.ref, Int(1)))))
             }
           }

@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.BinaryExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.IteExpr
@@ -35,18 +34,12 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr
-import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.intValue
+import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.math.BigInteger
-import kotlin.inc
-import kotlin.minus
 
 class AmbiguousMutexPass : ProcedurePass {
 
@@ -198,7 +191,7 @@ class AmbiguousMutexPass : ProcedurePass {
                       if (upperBound - lowerBound + BigInteger.ONE <= HAVOC_ENUMERATION_LIMIT) {
                         var i = lowerBound
                         while (i <= upperBound) {
-                          val litExpr = i.litExpr(assumedVar.type)
+                          val litExpr = assumedVar.type.integerOf(i)
                           if (litExpr != null) {
                             assignments.getOrPut(assumedVar) { mutableSetOf() }.add(litExpr)
                           }
@@ -516,27 +509,4 @@ class AmbiguousMutexPass : ProcedurePass {
 
   private fun <A, B> pairIfBothNotNull(first: A?, second: B?): Pair<A, B>? =
     if (first != null && second != null) Pair(first, second) else null
-
-  private val LitExpr<*>.intValue: BigInteger?
-    get() =
-      when (this) {
-        is IntLitExpr -> value
-        is BvLitExpr -> BvToIntExpr.of(this).eval(MutableValuation()).intValue
-        else -> null
-      }
-
-  private fun <T : Type> BigInteger.litExpr(type: T): LitExpr<T>? {
-    return when (type) {
-      is IntType -> IntLitExpr.of(this)
-      is BvType ->
-        when (type.signedness) {
-          null -> BvUtils.bigIntegerToNeutralBvLitExpr(this, type.size)
-          true -> BvUtils.bigIntegerToSignedBvLitExpr(this, type.size)
-          false -> BvUtils.bigIntegerToUnsignedBvLitExpr(this, type.size)
-        }
-
-      else -> null
-    }
-      as LitExpr<T>?
-  }
 }
