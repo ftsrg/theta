@@ -171,7 +171,7 @@ sealed class DerivedReason<E : Event>(
 ) : Reason() {
 
   override val expressions: List<Expr<BoolType>> =
-    listOfNotNull(rf.declRef, w.guardExpr, rf.from.interferenceCond(w)) + wRfRelation.exprs
+    listOfNotNull(rf.declRef, w.guardExpr, rf.to.interferenceCond(w)) + wRfRelation.exprs
 
   override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
 

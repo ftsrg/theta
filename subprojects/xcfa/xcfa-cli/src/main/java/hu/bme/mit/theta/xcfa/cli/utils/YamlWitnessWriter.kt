@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
@@ -60,6 +61,7 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -748,12 +750,13 @@ private val LitExpr<*>.intValue: Int?
 
 /**
  * True if [flagName] is a flag declaration name introduced by `DataRaceToReachabilityPass`: a
- * per-variable `_write_flag_`/`_read_flag_`, or one of the shared `_deref_*` pointer-access flags.
+ * per-variable `_theta_dr_write`/`read_counter_`, or one of the shared `_theta_deref_*`
+ * pointer-access flags.
  */
 private fun isRaceFlagName(flagName: String): Boolean =
-  flagName.startsWith("_write_flag_") ||
-    flagName.startsWith("_read_flag_") ||
-    flagName.startsWith("_deref_")
+  DataRaceToReachabilityPass.WRITE_COUNTER_PREFIX in flagName ||
+    DataRaceToReachabilityPass.READ_COUNTER_PREFIX in flagName ||
+    DataRaceToReachabilityPass.DEREF_PREFIX in flagName
 
 /**
  * True if this assignment sets a racing flag in [raceFlagNames] to its "held" value: the
@@ -762,7 +765,7 @@ private fun isRaceFlagName(flagName: String): Boolean =
  */
 private fun AssignStmt<*>.isHeldFlagSet(raceFlagNames: Set<String>): Boolean {
   if (varDecl.name !in raceFlagNames) return false
-  return if (varDecl.name.startsWith("_deref_")) {
+  return if (DataRaceToReachabilityPass.DEREF_PREFIX in varDecl.name) {
     (expr as? LitExpr<*>)?.intValue != -1
   } else {
     expr == Add(varDecl.ref, Int(1))
@@ -827,7 +830,7 @@ private fun reconstructDataRaceFromFlags(
   val locA = nearestLocatedAction(actions, errorActionIndex, pidA, inputFile) ?: return null
 
   val raceFlagNames =
-    errorAction.edge.label.collectVars().map { it.name }.filter(::isRaceFlagName).toSet()
+    errorAction.edge.label.collectVars().map { it.name }.filter(::isRaceFlagName).toMutableSet()
   if (raceFlagNames.isEmpty()) return null
 
   // Thread B is the other thread holding the racing access: the most recent edge that set one of
@@ -835,6 +838,18 @@ private fun reconstructDataRaceFromFlags(
   // pointer-dereference flags, whose unset sentinel is `-1`) and that does not belong to thread A.
   val flagSetActionIndex =
     actions.indexOfLast { action ->
+      if (action.pid == pidA) {
+        // the data race counters/flags might have been replaced by temporary local variants in the
+        // AtomicReadsOneWritePass
+        action.edge.getFlatLabels().forEach { l ->
+          if (l is StmtLabel && l.stmt is AssignStmt<*>) {
+            val stmt = l.stmt as AssignStmt<*>
+            if (stmt.varDecl.name in raceFlagNames) {
+              (stmt.expr as? RefExpr<*>)?.let { raceFlagNames.add(it.decl.name) }
+            }
+          }
+        }
+      }
       action.pid != pidA &&
         action.edge.getFlatLabels().any { label ->
           label is StmtLabel &&
