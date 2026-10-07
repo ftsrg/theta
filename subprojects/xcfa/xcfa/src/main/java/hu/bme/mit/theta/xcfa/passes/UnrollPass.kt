@@ -490,6 +490,7 @@ class UnrollPass(
         return
       }
       arbitraryLoop.unroll(builder)
+      testedLoops.clear()
     }
 
     while (true) {
