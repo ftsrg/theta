@@ -35,24 +35,24 @@ fun strongLiveVars(builder: XcfaProcedureBuilder): Map<XcfaLocation, Set<VarDecl
     .getParams()
     .filter { it.second != ParamDirection.IN }
     .forEach { (v, _) -> builder.finalLoc.ifPresent { live[it]?.add(v) } }
-  var changed = true
-  while (changed) {
-    changed = false
-    for (edge in builder.getEdges()) {
-      var l: Set<VarDecl<*>> = live[edge.target] ?: continue
-      for (label in edge.getFlatLabels().reversed()) {
-        val stmt = (label as? StmtLabel)?.stmt
-        l =
-          when (stmt) {
-            is AssignStmt<*> ->
-              if (stmt.varDecl in l) l - stmt.varDecl + ExprUtils.getVars(stmt.expr) else l
-            is HavocStmt<*> -> l - stmt.varDecl
-            else -> l + label.collectVarsWithAccessType().keys
-          }
-      }
-      val src = live.getOrPut(edge.source) { mutableSetOf() }
-      if (src.addAll(l)) changed = true
+  val worklist = ArrayDeque(builder.getEdges())
+  val queued = worklist.toMutableSet()
+  while (worklist.isNotEmpty()) {
+    val edge = worklist.removeFirst()
+    queued.remove(edge)
+    var l: Set<VarDecl<*>> = live[edge.target] ?: continue
+    for (label in edge.getFlatLabels().reversed()) {
+      val stmt = (label as? StmtLabel)?.stmt
+      l =
+        when (stmt) {
+          is AssignStmt<*> ->
+            if (stmt.varDecl in l) l - stmt.varDecl + ExprUtils.getVars(stmt.expr) else l
+          is HavocStmt<*> -> l - stmt.varDecl
+          else -> l + label.collectVarsWithAccessType().keys
+        }
     }
+    val src = live.getOrPut(edge.source) { mutableSetOf() }
+    if (src.addAll(l)) edge.source.incomingEdges.forEach { if (queued.add(it)) worklist.add(it) }
   }
   return live
 }

@@ -361,11 +361,12 @@ class UnrollPass(
         loopEdges
           .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
           .filter { it !in globalVars }
-      writtenLocals.none { it in liveAtLoopStart }
+      val live = liveAtLoopStart()
+      writtenLocals.none { it in live }
     }
 
     /** Locals live at [loopStart] in the whole procedure (back edge and loop exits included). */
-    var liveAtLoopStart: Set<VarDecl<*>> = emptySet()
+    var liveAtLoopStart: () -> Set<VarDecl<*>> = { emptySet() }
 
     private fun update(toggledMutexes: MutableMap<Expr<*>, Int>, label: XcfaLabel): Boolean {
       if (label.dereferencesWithAccessType.any { it.value.isWritten }) {
@@ -789,6 +790,6 @@ class UnrollPass(
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
-      .also { it.liveAtLoopStart = strongLiveVars(builder)[loopStart] ?: emptySet() }
+      .also { it.liveAtLoopStart = { strongLiveVars(builder)[loopStart] ?: emptySet() } }
   }
 }
