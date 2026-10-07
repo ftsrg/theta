@@ -373,26 +373,26 @@ constructor(
         if (identifier.isEmpty()) it.copy() else it.copy(name = "${it.name}_$identifier")
       }
     return XcfaProcedureBuilder(
-      name = name,
-      manager = manager,
-      params = getParams().toMutableList(),
-      vars = getVars().toMutableSet(),
-      locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
-      edges =
-        getEdges()
-          .map {
-            val source = newLocs[it.source]!!
-            val target = newLocs[it.target]!!
-            val edge = it.withSource(source).withTarget(target)
-            source.outgoingEdges.add(edge)
-            target.incomingEdges.add(edge)
-            edge
-          }
-          .toMutableSet(),
-      metaData = metaData.toMutableMap(),
-      unsafeUnrollUsed = unsafeUnrollUsed,
-      prop = prop,
-    )
+        name = name,
+        manager = manager,
+        params = getParams().toMutableList(),
+        vars = getVars().toMutableSet(),
+        locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
+        edges =
+          getEdges()
+            .map {
+              val source = newLocs[it.source]!!
+              val target = newLocs[it.target]!!
+              val edge = it.withSource(source).withTarget(target)
+              source.outgoingEdges.add(edge)
+              target.incomingEdges.add(edge)
+              edge
+            }
+            .toMutableSet(),
+        metaData = metaData.toMutableMap(),
+        unsafeUnrollUsed = unsafeUnrollUsed,
+        prop = prop,
+      )
       .also { proc ->
         proc.lastOptimized = lastOptimized
         proc.copyMetaLocs(

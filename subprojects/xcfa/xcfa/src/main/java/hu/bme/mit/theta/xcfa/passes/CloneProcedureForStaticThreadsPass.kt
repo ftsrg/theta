@@ -37,33 +37,40 @@ class CloneProcedureForStaticThreadsPass : ProcedurePass {
             val procedure =
               builder.parent.getProcedures().find { proc ->
                 proc.name == label.name &&
-                  proc.getParams()
+                  proc
+                    .getParams()
                     .mapNotNull { if (it.second != ParamDirection.OUT) it.first else null }
                     .toSet()
                     .let { params ->
                       proc.getEdges().any { (it.label.collectVars() intersect params).isNotEmpty() }
                     }
               } ?: return@forEach
-            val fixedArgs = procedure.getParams().mapIndexed { index, param ->
-              if (param.second != ParamDirection.OUT) {
-                label.params[index] as? LitExpr<*>
-              } else {
-                null
+            val fixedArgs =
+              procedure.getParams().mapIndexed { index, param ->
+                if (param.second != ParamDirection.OUT) {
+                  label.params[index] as? LitExpr<*>
+                } else {
+                  null
+                }
               }
-            }
             if (fixedArgs.all { it == null }) {
               return@forEach
             }
 
-            val specializedName = "${procedure.name}__theta_specialized__" + fixedArgs.mapIndexedNotNull { index, litExpr ->
-              if (litExpr != null) "arg${index}__val${litExpr}"
-              else null
-            }.joinToString("__")
+            val specializedName =
+              "${procedure.name}__theta_specialized__" +
+                fixedArgs
+                  .mapIndexedNotNull { index, litExpr ->
+                    if (litExpr != null) "arg${index}__val${litExpr}" else null
+                  }
+                  .joinToString("__")
 
             // Specialize procedure
             if (builder.parent.getProcedures().none { it.name == specializedName }) {
               val specializedProcedure =
-                procedure.deepCopy("spec_${locationCopyCounter++}").also { it.name = specializedName }
+                procedure.deepCopy("spec_${locationCopyCounter++}").also {
+                  it.name = specializedName
+                }
               val init = specializedProcedure.initLoc
               val pseudoInitLoc =
                 XcfaLocation("${specializedName}__init__${init.name}", metadata = init.metadata)
@@ -72,12 +79,13 @@ class CloneProcedureForStaticThreadsPass : ProcedurePass {
                 specializedProcedure.removeEdge(outEdge)
                 specializedProcedure.addEdge(copiedEdge)
               }
-              val fixArguments = fixedArgs.mapIndexedNotNull { index, arg ->
-                if (arg != null) {
-                  val param = specializedProcedure.getParams()[index].first
-                  AssignStmtLabel(param.ref, arg, label.metadata)
-                } else null
-              }
+              val fixArguments =
+                fixedArgs.mapIndexedNotNull { index, arg ->
+                  if (arg != null) {
+                    val param = specializedProcedure.getParams()[index].first
+                    AssignStmtLabel(param.ref, arg, label.metadata)
+                  } else null
+                }
               val fixLabel = SequenceLabel(fixArguments)
               specializedProcedure.addEdge(XcfaEdge(init, pseudoInitLoc, fixLabel, edge.metadata))
               builder.parent.addProcedure(specializedProcedure)

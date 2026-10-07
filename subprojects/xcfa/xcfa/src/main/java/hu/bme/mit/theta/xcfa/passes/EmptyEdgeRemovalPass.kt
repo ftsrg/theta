@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -73,8 +72,9 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       is NondetLabel -> labels.all { it.isNop() }
       is SequenceLabel -> labels.all { it.isNop() }
       is NopLabel -> true
-      is StmtLabel -> stmt == SkipStmt.getInstance() ||
-        (stmt as? AssumeStmt)?.cond?.let { ExprUtils.simplify(it) } == True()
+      is StmtLabel ->
+        stmt == SkipStmt.getInstance() ||
+          (stmt as? AssumeStmt)?.cond?.let { ExprUtils.simplify(it) } == True()
       else -> false
     }
 }

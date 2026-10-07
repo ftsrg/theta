@@ -357,11 +357,13 @@ private fun mayBeSameMemoryLocation(
   val indexing2 = access2.finalIndexing
 
   val zeroIndexing = VarIndexingFactory.indexing(0)
-  if (state.sGlobal.innerState is ExplState &&
-    precondition1 == True() &&
-    precondition2 == True() &&
-    indexing1 == zeroIndexing &&
-    indexing2 == zeroIndexing) {
+  if (
+    state.sGlobal.innerState is ExplState &&
+      precondition1 == True() &&
+      precondition2 == True() &&
+      indexing1 == zeroIndexing &&
+      indexing2 == zeroIndexing
+  ) {
     val expr = And(Eq(access1.array, access2.array), Eq(access1.offset, access2.offset))
     val simplified = ExprUtils.simplify(expr, (state.sGlobal.innerState as ExplState).`val`)
     if (simplified == False()) return false

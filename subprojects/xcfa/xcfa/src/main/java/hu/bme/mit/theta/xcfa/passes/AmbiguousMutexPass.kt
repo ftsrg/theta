@@ -88,7 +88,11 @@ class AmbiguousMutexPass : ProcedurePass {
                   }
                   .toSet()
               val elseGuard =
-                ExprUtils.simplify(Not(Or(simplifiedAlternatives.mapNotNull { it.first }.ifEmpty { listOf(False()) })))
+                ExprUtils.simplify(
+                  Not(
+                    Or(simplifiedAlternatives.mapNotNull { it.first }.ifEmpty { listOf(False()) })
+                  )
+                )
               newAccumulated =
                 simplifiedAlternatives
                   .flatMap { (guard, simplifiedLock) ->

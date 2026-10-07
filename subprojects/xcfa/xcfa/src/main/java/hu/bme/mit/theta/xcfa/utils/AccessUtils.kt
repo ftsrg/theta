@@ -108,8 +108,7 @@ val READ: AccessType
 infix fun AccessType?.merge(other: AccessType?) =
   Pair(this?.first == true || other?.first == true, this?.second == true || other?.second == true)
 
-infix fun VarAccessMap.merge(other: VarAccessMap) =
-  listOf(this, other).mergeVarAccesses()
+infix fun VarAccessMap.merge(other: VarAccessMap) = listOf(this, other).mergeVarAccesses()
 
 private fun List<VarAccessMap>.mergeVarAccesses(): VarAccessMap =
   this.fold(mapOf()) { acc, next ->
@@ -142,8 +141,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
-    is InvokeLabel ->
-      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ }
+    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }.associateWith { READ }
     is StartLabel ->
       params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } merge mapOf(pidVar to WRITE)
 

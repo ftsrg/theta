@@ -305,10 +305,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       val pointee = pointeeOf(p)
       val newValue = pointee.castTo(bitwise(op, cell(p, pointee), args[1], pointee))
       return atomic(
-        listOf(
-          AssignStmtLabel(cell(p, pointee), newValue),
-          AssignStmtLabel(ret, cell(p, pointee)),
-        )
+        listOf(AssignStmtLabel(cell(p, pointee), newValue), AssignStmtLabel(ret, cell(p, pointee)))
       )
     }
 

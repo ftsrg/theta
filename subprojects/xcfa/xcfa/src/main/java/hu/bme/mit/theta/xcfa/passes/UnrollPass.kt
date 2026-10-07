@@ -89,8 +89,8 @@ class UnrollPass(
     /**
      * Replace a loop that only waits for a condition with a single iteration of itself.
      *
-     * Off by default: it is exact for reachability but not for termination and a program without
-     * a waiting loop has nothing for it to change.
+     * Off by default: it is exact for reachability but not for termination and a program without a
+     * waiting loop has nothing for it to change.
      */
     var COLLAPSE_BUSY_WAITS = false
 
@@ -98,8 +98,8 @@ class UnrollPass(
      * Random generator for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
-     * are left for the fallbacks; set this to vary the exploration deliberately. Prefer setting
-     * the random in the config-to-checker utilities (see [ConfigToCegarChecker]).
+     * are left for the fallbacks; set this to vary the exploration deliberately. Prefer setting the
+     * random in the config-to-checker utilities (see [ConfigToCegarChecker]).
      */
     var random = Random.Default
 
@@ -310,8 +310,7 @@ class UnrollPass(
 
     /**
      * A loop is a busy wait if it does not modify global state (global variables or heap memory)
-     * and the values of local variables are the same for any positive number of executing the
-     * loop.
+     * and the values of local variables are the same for any positive number of executing the loop.
      *
      * That is, we must check the following:
      * - No write access on global variables and dereferences
@@ -324,9 +323,10 @@ class UnrollPass(
       val visited = mutableSetOf<XcfaLocation>()
 
       while (waitlist.isNotEmpty()) {
-        val visiting = waitlist.keys.find { l ->
-          l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
-        } ?: return@lazy false
+        val visiting =
+          waitlist.keys.find { l ->
+            l == loopStart || l.incomingEdges.all { it.source in loopLocs && it.source in visited }
+          } ?: return@lazy false
         visited.add(visiting)
         val toggledMutexes = waitlist.remove(visiting)!!
         visiting.outgoingEdges.forEach { edge ->
@@ -336,9 +336,13 @@ class UnrollPass(
           }
           val tm = toggledMutexes.toMutableMap()
           edge.getFlatLabels().forEach { label ->
-            if (label is InvokeLabel || label is ReturnLabel ||
-                label is StartLabel || label is JoinLabel ||
-                !update(tm, label)) {
+            if (
+              label is InvokeLabel ||
+                label is ReturnLabel ||
+                label is StartLabel ||
+                label is JoinLabel ||
+                !update(tm, label)
+            ) {
               return@lazy false
             }
           }

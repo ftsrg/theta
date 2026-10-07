@@ -211,13 +211,13 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     val potentialConsts =
       filter { v ->
-        if (writeCounts[v]!! > 1) {
-          modifiedVariables.add(v)
-          false
-        } else {
-          true
+          if (writeCounts[v]!! > 1) {
+            modifiedVariables.add(v)
+            false
+          } else {
+            true
+          }
         }
-      }
         .toMutableSet()
 
     do {
