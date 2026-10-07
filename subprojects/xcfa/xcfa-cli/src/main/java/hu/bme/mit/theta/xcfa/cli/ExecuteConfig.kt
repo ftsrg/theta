@@ -383,57 +383,44 @@ private fun backend(
       )
 
       // we would not do post analysis logging if running in a portfolio otherwise
-      if (
+      when {
         config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
           (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false) &&
-          !portfolioRun
-      ) {
-        val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-        logger.result("Input is trivially safe: no path leads to the error location.")
-        result
-      } else if (
+          !portfolioRun -> {
+          logger.result("Input is trivially safe: no path leads to the error location.")
+          SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+        }
+
         config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
           xcfa != null &&
           !isDataRacePossible(xcfa, logger) &&
-          !portfolioRun
-      ) {
-        val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-        logger.result(
-          "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses."
-        )
-        result
-      } else {
-        val stopwatch = Stopwatch.createStarted()
-        val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+          !portfolioRun -> {
+          logger.result(
+            "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses."
+          )
+          SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+        }
 
-        logger.info(
-          "%s",
-          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
-        )
+        else -> {
+          val stopwatch = Stopwatch.createStarted()
+          val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
-        logger.info(
-          "%s",
-          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
-        )
+          logger.info(
+            "%s",
+            "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
+          )
 
-        val result =
-          exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-              checker.check()
-            }
-            .let ResultMapper@{ result ->
-              when {
-                result.isSafe &&
-                  (xcfa?.unsafeUnrollUsed ?: false) &&
-                  !config.outputConfig.acceptUnreliableSafe -> {
-                  // cannot report safe if force unroll was used
-                  logger.benchmark("%s", "Analysis result: $result")
-                  logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
-                  if (config.outputConfig.acceptUnreliableSafe)
-                    result // for comparison with BMC tools
-                  else SafetyResult.unknown<EmptyProof, EmptyCex>()
-                }
+          logger.info(
+            "%s",
+            "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
+          )
 
-                result.isUnsafe -> {
+          val result =
+            exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+                checker.check()
+              }
+              .let ResultMapper@{ result ->
+                if (result.isUnsafe) {
                   // need to determine what kind
                   val property =
                     try {
@@ -448,14 +435,30 @@ private fun backend(
                     property?.also { logger.result("(Property %s)", it.name) }
                   }
                   result
+                } else {
+                  result
                 }
-
-                else -> result
               }
-            }
 
-        logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
-        result
+          logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
+          result
+        }
+      }.let { result ->
+        if (
+          result.isSafe &&
+            (xcfa?.unsafeUnrollUsed ?: false) &&
+            !config.outputConfig.acceptUnreliableSafe
+        ) {
+          logger.benchmark("%s", "Analysis result: $result")
+          logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
+          if (config.outputConfig.acceptUnreliableSafe) {
+            result // for comparison with BMC tools
+          } else {
+            SafetyResult.unknown<EmptyProof, EmptyCex>()
+          }
+        } else {
+          result
+        }
       }
     }
   if (!portfolioRun) {
