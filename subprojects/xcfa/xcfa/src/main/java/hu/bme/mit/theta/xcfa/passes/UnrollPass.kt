@@ -31,7 +31,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
-import kotlin.random.Random
 
 /**
  * Unrolls loops where the number of loop executions can be determined statically. The UNROLL_LIMIT
@@ -95,13 +94,14 @@ class UnrollPass(
     var COLLAPSE_BUSY_WAITS = false
 
     /**
-     * Random generator for the order [findLoop] explores edges in.
+     * Seed for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
-     * are left for the fallbacks; set this to vary the exploration deliberately. Prefer setting the
-     * random in the config-to-checker utilities (see [ConfigToCegarChecker]).
+     * are left for the fallbacks, so an unseeded source made the whole pass -- and every verdict
+     * downstream of it -- differ between two runs of the same input. That turns a reproducible
+     * failure into an intermittent one; set this to vary the exploration deliberately instead.
      */
-    var random = Random.Default
+    var EXPLORATION_SEED = 0L
 
     private val transFunc: ExplStmtTransFunc by lazy {
       val solver = Z3SolverFactory.getInstance().createSolver()
@@ -117,6 +117,9 @@ class UnrollPass(
 
   /** The program's global variables, i.e. the ones another thread can observe. */
   private var globalVars: Set<VarDecl<*>> = emptySet()
+
+  /** Seeded so that the same input explores loops the same way on every run. */
+  private val exploration = java.util.Random(EXPLORATION_SEED)
 
   private val testedLoops = mutableSetOf<Loop>()
 
@@ -643,7 +646,9 @@ class UnrollPass(
       if (edgesToExplore.isEmpty()) {
         stack.pop()
       } else {
-        val edge = edgesToExplore.elementAt(random.nextInt(edgesToExplore.size))
+        // Deterministic given EXPLORATION_SEED: `edgesToExplore` keeps insertion order (the sets
+        // it comes from are linked), so indexing it with a seeded source repeats exactly.
+        val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
         if (edge.target in stack) { // loop found
           getLoop(builder, edge)?.let {
             return it
