@@ -177,6 +177,7 @@ class UnrollPass(
   }
 
   private data class Loop(
+    val builder: XcfaProcedureBuilder,
     val loopStart: XcfaLocation,
     val loopCondStart: XcfaLocation,
     val loopLocs: Set<XcfaLocation>,
@@ -207,7 +208,7 @@ class UnrollPass(
       override fun getStmts() = listOf(stmt)
     }
 
-    fun unroll(builder: XcfaProcedureBuilder, forceLimit: Int = forceUnrollLimit): Boolean {
+    fun unroll(forceLimit: Int = forceUnrollLimit): Boolean {
       val c = count()
       if (c != null) {
         unroll(builder, c, !isBusyWait)
@@ -364,12 +365,10 @@ class UnrollPass(
         loopEdges
           .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
           .filter { it !in globalVars }
-      val live = liveAtLoopStart()
+      // Locals live at [loopStart] in the whole procedure (back edge and loop exits included).
+      val live = strongLiveVars(builder)[loopStart] ?: emptySet()
       writtenLocals.none { it in live }
     }
-
-    /** Locals live at [loopStart] in the whole procedure (back edge and loop exits included). */
-    var liveAtLoopStart: () -> Set<VarDecl<*>> = { emptySet() }
 
     private fun update(toggledMutexes: MutableMap<Expr<*>, Int>, label: XcfaLabel): Boolean {
       if (label.dereferencesWithAccessType.any { it.value.isWritten }) {
@@ -480,7 +479,7 @@ class UnrollPass(
       while (true) {
         val loop = findLoop(builder) ?: break
         if (arbitraryLoop == null) arbitraryLoop = loop
-        if (loop.unroll(builder, -1)) {
+        if (loop.unroll(-1)) {
           arbitraryLoop = null
         }
         testedLoops.add(loop)
@@ -492,13 +491,13 @@ class UnrollPass(
         cutRemainingBackEdges(builder)
         return
       }
-      arbitraryLoop.unroll(builder)
+      arbitraryLoop.unroll()
       testedLoops.clear()
     }
 
     while (true) {
       val loop = findLoop(builder) ?: break
-      loop.unroll(builder)
+      loop.unroll()
       testedLoops.add(loop)
     }
 
@@ -773,6 +772,7 @@ class UnrollPass(
         .toMap()
     val exitKey = tracker.key(UnrollCut.LOOP, builder, loopStart)
     return Loop(
+        builder = builder,
         loopStart = loopStart,
         loopCondStart = loopCondStart,
         loopLocs = loopLocations,
@@ -796,6 +796,5 @@ class UnrollPass(
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
-      .also { it.liveAtLoopStart = { strongLiveVars(builder)[loopStart] ?: emptySet() } }
   }
 }

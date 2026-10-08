@@ -29,6 +29,8 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -55,7 +57,7 @@ import hu.bme.mit.theta.xcfa.utils.strongLiveVars
  * Only for reachability: it removes spinning forever (termination), and it makes the checked writes
  * atomic (data races).
  */
-class SpinLoopEffectPass(private val enabled: Boolean = true) : ProcedurePass {
+class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
 
   companion object {
     /** Off with --disable-spin-loop-effects. */
@@ -75,7 +77,7 @@ class SpinLoopEffectPass(private val enabled: Boolean = true) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled || !ENABLED) return builder
+    if (!ENABLED || property.verifiedProperty != ErrorDetection.ERROR_LOCATION) return builder
     val loops = findLoops(builder)
     if (loops.isEmpty()) return builder
 
