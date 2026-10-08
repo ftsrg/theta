@@ -25,16 +25,22 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
@@ -44,6 +50,9 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 private val dependencySolver: Solver by lazy { Z3SolverFactory.getInstance().createSolver() }
 
@@ -111,7 +120,7 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                   !m1.atomic &&
                   !m2.atomic &&
                   mayExecuteConcurrently(m1, m2) &&
-                  mayBeSameMemoryLocation(m1.array, m1.offset, m2.array, m2.offset, s)
+                  mayBeSameMemoryLocation(m1, m2, s)
               ) {
                 return DataRace(
                   DataRaceAccess(process1.key, edge1, m1.label),
@@ -198,13 +207,16 @@ private sealed class GlobalAccessWithMutexes(
   val access: AccessType,
   val acquiredMutexes: Set<MutexLock>,
   val blockingMutexes: Set<MutexLock>,
-  val precedingAssumes: List<AssumeStmt>,
+  val precedingStatements: List<Stmt>,
 ) {
   val precondition: Expr<BoolType>
-    get() =
-      precedingAssumes.fold<AssumeStmt, Expr<BoolType>>(True()) { acc, assume ->
-        And(acc, assume.cond)
-      }
+  val finalIndexing: VarIndexing
+
+  init {
+    val unfolded = StmtUtils.toExpr(precedingStatements, VarIndexingFactory.indexing(0))
+    precondition = And(unfolded.exprs)
+    finalIndexing = unfolded.indexing
+  }
 }
 
 /**
@@ -217,8 +229,8 @@ private class GlobalVarAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<MutexLock>,
   blockingMutexes: Set<MutexLock>,
-  precedingAssumes: List<AssumeStmt>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
+  precedingStmts: List<Stmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingStmts)
 
 /**
  * Represents a memory access: stores the array expression, the offset expression, the access type
@@ -233,8 +245,8 @@ private class MemoryAccessWithMutexes(
   access: AccessType,
   acquiredMutexes: Set<MutexLock>,
   blockingMutexes: Set<MutexLock>,
-  precedingAssumes: List<AssumeStmt>,
-) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingAssumes)
+  precedingStmts: List<Stmt>,
+) : GlobalAccessWithMutexes(label, access, acquiredMutexes, blockingMutexes, precedingStmts)
 
 /**
  * Returns the global variable accesses of the label.
@@ -252,7 +264,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
-  val precedingAssumes = mutableListOf<AssumeStmt>()
+  val precedingStmts = mutableListOf<Stmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes(state))
@@ -267,14 +279,14 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
-              precedingAssumes.toList(),
+              precedingStmts.toList(),
             )
           )
         }
       }
     }
 
-    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
+    label.toStmt().takeUnless { it is SkipStmt }?.let(precedingStmts::add)
   }
   return accesses
 }
@@ -294,23 +306,19 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
-  val changedVars = mutableSetOf<VarDecl<*>>()
-  val precedingAssumes = mutableListOf<AssumeStmt>()
+  val precedingStmts = mutableListOf<Stmt>()
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes(state))
       blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
       label.dereferencesWithAccessType.forEach { (deref, access) ->
-        val vars = ExprUtils.getVars(deref.array) + ExprUtils.getVars(deref.offset)
-        check(changedVars.intersect(vars).isEmpty()) {
-          "Cannot handle dereferences with changed variables in between: $this"
-        }
         if (
           accesses.none {
             it.array == deref.array &&
               it.offset == deref.offset &&
-              (it.access == access && it.access == WRITE)
+              (it.access == access && it.access == WRITE) &&
+              it.precedingStatements == precedingStmts
           }
         ) {
           accesses.add(
@@ -322,16 +330,13 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
-              precedingAssumes.toList(),
+              precedingStmts.toList(),
             )
           )
         }
       }
     }
-    ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
-    label.collectVarsWithAccessType().forEach { (v, access) ->
-      if (access.isWritten) changedVars.add(v)
-    }
+    label.toStmt().takeUnless { it is SkipStmt }?.let(precedingStmts::add)
   }
   return accesses
 }
@@ -339,29 +344,50 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
 /**
  * Checks whether the two given memory locations may be the same under the given state.
  *
- * @param array1 the array expression of the first memory location
- * @param offset1 the offset expression of the first memory location
- * @param array2 the array expression of the second memory location
- * @param offset2 the offset expression of the second memory location
- * @param state the state to check under
  * @return true if the two memory locations may be the same, false otherwise
  */
 private fun mayBeSameMemoryLocation(
-  array1: Expr<*>,
-  offset1: Expr<*>,
-  array2: Expr<*>,
-  offset2: Expr<*>,
+  access1: MemoryAccessWithMutexes,
+  access2: MemoryAccessWithMutexes,
   state: XcfaState<out PtrState<out ExprState>>,
 ): Boolean {
-  var expr: Expr<BoolType> = And(Eq(array1, array2), Eq(offset1, offset2))
-  expr =
-    (state.sGlobal.innerState as? ExplState)?.let { s -> ExprUtils.simplify(expr, s.`val`) }
-      ?: ExprUtils.simplify(expr)
+  val precondition1 = ExprUtils.simplify(access1.precondition)
+  val precondition2 = ExprUtils.simplify(access2.precondition)
+  val indexing1 = access1.finalIndexing
+  val indexing2 = access2.finalIndexing
+
+  val zeroIndexing = VarIndexingFactory.indexing(0)
+  if (
+    state.sGlobal.innerState is ExplState &&
+      precondition1 == True() &&
+      precondition2 == True() &&
+      indexing1 == zeroIndexing &&
+      indexing2 == zeroIndexing
+  ) {
+    val expr = And(Eq(access1.array, access2.array), Eq(access1.offset, access2.offset))
+    val simplified = ExprUtils.simplify(expr, (state.sGlobal.innerState as ExplState).`val`)
+    if (simplified == False()) return false
+  }
+
+  val array1 = access1.array
+  val offset1 = access1.offset
+  val array2 = access2.array
+  val offset2 = access2.offset
+
   val possibleSameLocation =
     try {
       WithPushPop(dependencySolver).use {
-        dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
-        dependencySolver.add(PathUtils.unfold(expr, 0))
+        dependencySolver.add(
+          ExprUtils.simplify(
+            And(
+              PathUtils.unfold(state.sGlobal.toExpr(), zeroIndexing),
+              PathUtils.unfold(precondition1, zeroIndexing),
+              PathUtils.unfold(precondition2, zeroIndexing),
+              Eq(PathUtils.unfold(array1, indexing1), PathUtils.unfold(array2, indexing2)),
+              Eq(PathUtils.unfold(offset1, indexing1), PathUtils.unfold(offset2, indexing2)),
+            )
+          )
+        )
         dependencySolver.check().isSat
       }
     } catch (_: Exception) {

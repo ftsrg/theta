@@ -135,6 +135,7 @@ class XcfaOcChecker(
       xcfa.optimizeFurther(
         ProcedurePassManager(
           listOf(
+            SpinLoopEffectPass(property),
             UnrollPass(
               bound,
               parseContext = parseContext,

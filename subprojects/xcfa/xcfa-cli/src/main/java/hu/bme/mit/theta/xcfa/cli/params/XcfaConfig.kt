@@ -163,6 +163,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses",
   )
   var enableFew: Boolean = false,
+  @Parameter(
+    names = ["--disable-spin-loop-effects"],
+    description = "Disable the pruning of loop iterations that change nothing (spinning)",
+  )
+  var disableSpinLoopEffects: Boolean = false,
   @Parameter(names = ["--input-type"], description = "Format of the input")
   var inputType: InputType = InputType.C,
   override var specConfig: T? = null,

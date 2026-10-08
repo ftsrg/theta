@@ -15,10 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 
 /** Removes edges that only contain NopLabels (possibly nested) */
@@ -62,7 +63,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
     when (this) {
       is SequenceLabel -> labels.any { it.isSureStuck() }
       is NondetLabel -> labels.all { it.isSureStuck() }
-      is StmtLabel -> stmt == Assume(False())
+      is StmtLabel -> (stmt as? AssumeStmt)?.cond?.let { ExprUtils.simplify(it) } == False()
       else -> false
     }
 
@@ -71,7 +72,9 @@ class EmptyEdgeRemovalPass : ProcedurePass {
       is NondetLabel -> labels.all { it.isNop() }
       is SequenceLabel -> labels.all { it.isNop() }
       is NopLabel -> true
-      is StmtLabel -> stmt == SkipStmt.getInstance() || stmt == Assume(True())
+      is StmtLabel ->
+        stmt == SkipStmt.getInstance() ||
+          (stmt as? AssumeStmt)?.cond?.let { ExprUtils.simplify(it) } == True()
       else -> false
     }
 }

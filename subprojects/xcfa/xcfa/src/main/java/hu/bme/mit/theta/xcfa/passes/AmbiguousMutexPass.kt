@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -75,6 +76,7 @@ class AmbiguousMutexPass : ProcedurePass {
               val simplifiedAlternatives: Set<Pair<Expr<BoolType>?, Expr<*>>> =
                 label.lock
                   .getPossibleValuations(possibleLiteralValues)
+                  .ifEmpty { setOf(ImmutableValuation.empty()) }
                   .map { possibleValuation: Valuation ->
                     val simplified =
                       ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
@@ -85,7 +87,12 @@ class AmbiguousMutexPass : ProcedurePass {
                     guard to (simplified ?: label.lock)
                   }
                   .toSet()
-              val elseGuard = Not(Or(simplifiedAlternatives.mapNotNull { it.first }))
+              val elseGuard =
+                ExprUtils.simplify(
+                  Not(
+                    Or(simplifiedAlternatives.mapNotNull { it.first }.ifEmpty { listOf(False()) })
+                  )
+                )
               newAccumulated =
                 simplifiedAlternatives
                   .flatMap { (guard, simplifiedLock) ->
