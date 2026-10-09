@@ -113,6 +113,13 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EliminateSelfLoops(),
       HavocPromotionAndRange(parseContext),
     ),
+    listOf(DataRaceToReachabilityPass(property, parseContext)),
+    listOf(OverflowDetectionPass(property, parseContext)),
+    // spells out the mem* copies before anything below havocs the same objects
+    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
+    // last of the passes consuming specific calls: everything left is havoced here
+    // witness instrumentation must happen after specification transformation
+    //
     property.witness?.let {
       listOf( // witness
         NormalizePass(), // needed after lbe, TODO
@@ -125,11 +132,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
         SimplifyExprsPass(parseContext, property),
       )
     } ?: emptyList(),
-    listOf(DataRaceToReachabilityPass(property, parseContext)),
-    listOf(OverflowDetectionPass(property, parseContext)),
-    // spells out the mem* copies before anything below havocs the same objects
-    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
-    // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
     listOf(AmbiguousMutexPass()),
     // the memory-model passes, downstream of everything that creates or rewrites a dereference

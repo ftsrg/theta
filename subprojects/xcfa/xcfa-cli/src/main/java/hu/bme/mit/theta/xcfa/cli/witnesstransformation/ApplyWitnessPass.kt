@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
@@ -81,7 +82,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
   private data class Instrumentation(
     val segmentCounter: VarDecl<IntType>,
-    val segmentFlag: VarDecl<BoolType>,
+    val lastSegment: VarDecl<IntType>,
     /** thread_id (0 = entry procedure) -> name of the procedure the thread executes */
     val threadProcedures: Map<Int, String>,
     /** the thread-creating `function_enter` waypoints, in registration (witness) order */
@@ -220,7 +221,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val instrumentation =
       instrumentations.computeIfAbsent(builder.parent) { createInstrumentation(it) }
     val segmentCounter = instrumentation.segmentCounter
-    val segmentFlag = instrumentation.segmentFlag
+    val lastSegment = instrumentation.lastSegment
 
     val segments = witness.content.mapNotNull { c -> c.segment }
     val segmentCount = segments.size
@@ -277,7 +278,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         val initLabels =
           mutableListOf<XcfaLabel>(
             AssignStmtLabel(segmentCounter, Int(0)),
-            AssignStmtLabel(segmentFlag, False()),
+            AssignStmtLabel(lastSegment, Int(0)),
           )
         if (logicalThreadId != null) initLabels.add(AssignStmtLabel(logicalThreadId, Int(0)))
         builder.addEdge(
@@ -335,7 +336,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           }
         val segmentFlagUpdate =
           if (isLastSegment) {
-            AssignStmtLabel(segmentFlag, Ite(guardPred, True(), segmentFlag.ref))
+            AssignStmtLabel(lastSegment, Ite(guardPred, Inc(lastSegment.ref), lastSegment.ref))
           } else null
 
         val labelsOnEdges =
@@ -476,6 +477,12 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       flushLabels(edge.target, true)
     }
 
+    val targetCount =
+      segments.lastOrNull()?.count {
+        it.waypoint.type == WaypointType.TARGET && it.waypoint.action == Action.FOLLOW
+      } ?: 1
+    val lastSegmentPassed = Eq(lastSegment.ref, Int(targetCount))
+
     if (firstCycle == -1) { // we are checking reachability, TODO refactor
       // The violation is only accepted after the full segment sequence has been passed; this
       // gates the error location of every procedure (the target may be in a spawned thread).
@@ -484,7 +491,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         builder.addEdge(
           it.withLabel(
             SequenceLabel(
-              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(lastSegmentPassed)),
               metadata = it.label.metadata,
             )
           )
@@ -497,7 +504,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     // ConfigToOcChecker. Unrolling here as well would only duplicate that work -- and, for loops
     // containing an atomic block, produce ill-formed multi-instance atomic merges.
 
-    builder.prop = segmentFlag.ref
+    builder.prop = lastSegmentPassed
     return builder
   }
 
@@ -677,7 +684,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     firstCycle: Int,
   ) {
     val segmentCounter = instrumentation.segmentCounter
-    val segmentFlag = instrumentation.segmentFlag
+    val lastSegment = instrumentation.lastSegment
     val registeredRoots = instrumentation.threadProcedures.filterKeys { it != 0 }.values.toSet()
     if (registeredRoots.isEmpty()) return
 
@@ -729,19 +736,19 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           cut()
           if (regs.isNotEmpty()) {
             var counterExpr = segmentCounter.ref as Expr<IntType>
-            var flagExpr = segmentFlag.ref as Expr<BoolType>
+            var flagExpr = lastSegment.ref as Expr<IntType>
             var anyFlag = false
             for (reg in regs) {
               val guard = parentGuard(reg)
               if (reg.segmentIndex == segmentCount - 1) {
                 if (firstCycle > -1) counterExpr = Ite(guard, Int(firstCycle), counterExpr)
-                flagExpr = Ite(guard, True(), flagExpr)
+                flagExpr = Ite(guard, Inc(flagExpr), flagExpr)
                 anyFlag = true
               } else {
                 counterExpr = Ite(guard, Int(reg.segmentIndex + 1), counterExpr)
               }
             }
-            if (anyFlag) collector.add(AssignStmtLabel(segmentFlag, flagExpr))
+            if (anyFlag) collector.add(AssignStmtLabel(lastSegment, flagExpr))
             collector.add(AssignStmtLabel(segmentCounter, counterExpr))
             cut()
           }
@@ -757,15 +764,13 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
   private fun createInstrumentation(parent: XcfaBuilder): Instrumentation {
     val segmentCounter = Var(SEGMENT_COUNTER, Int())
-    val segmentFlag = Var(LAST_SEGMENT_PASSED, Bool())
+    // both waypoints of a data race multi-follow segment must be passed, so we need an int
+    val lastSegment = Var(LAST_SEGMENT_PASSED, Int())
     // Global: waypoints of different threads must see the same segment progression.
-    // Atomic: the instrumentation itself must never introduce a data race -- a non-atomic
-    // counter would make every pair of instrumented edges a (spurious) race, breaking the
-    // validation of no-data-race witnesses.
     parent.addVar(XcfaGlobalVar(segmentCounter, Int(0), atomic = true))
-    parent.addVar(XcfaGlobalVar(segmentFlag, False(), atomic = true))
+    parent.addVar(XcfaGlobalVar(lastSegment, Int(0), atomic = true))
     val (threadProcedures, registrations) = mapThreads(parent)
-    return Instrumentation(segmentCounter, segmentFlag, threadProcedures, registrations)
+    return Instrumentation(segmentCounter, lastSegment, threadProcedures, registrations)
   }
 
   /**
