@@ -165,8 +165,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   var enableFew: Boolean = false,
   @Parameter(
     names = ["--disable-spin-loop-effects"],
-    description =
-      "Disable the pruning of loop iterations that change nothing (spinning) in the OC backend",
+    description = "Disable the pruning of loop iterations that change nothing (spinning)",
   )
   var disableSpinLoopEffects: Boolean = false,
   @Parameter(names = ["--input-type"], description = "Format of the input")
