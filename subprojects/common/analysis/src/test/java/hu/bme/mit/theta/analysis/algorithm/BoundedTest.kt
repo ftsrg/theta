@@ -41,7 +41,7 @@ class BoundedTest {
     init {
       val x = Decls.Var("x", Int())
       val unfoldResult =
-        StmtUtils.toExpr(Assign(x, IntExprs.Add(x.ref, Int(1))), VarIndexingFactory.indexing(0))
+        StmtUtils.toExpr(Assign(x, IntExprs.Inc(x.ref)), VarIndexingFactory.indexing(0))
       unsafeMonolithicExpr =
         MonolithicExpr(
           AbstractExprs.Eq(x.ref, Int(0)),

@@ -17,9 +17,7 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,7 +47,7 @@ public class ExplTransFuncTest {
     @Test
     public void testNormal() {
         final ExprAction action = mock(ExprAction.class);
-        doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
+        doReturn(Eq(Prime(x.getRef()), Inc(x.getRef()))).when(action).toExpr();
         when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
         final Collection<? extends ExplState> succStates =

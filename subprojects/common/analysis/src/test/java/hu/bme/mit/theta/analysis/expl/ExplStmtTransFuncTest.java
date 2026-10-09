@@ -19,12 +19,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
@@ -59,8 +54,8 @@ public class ExplStmtTransFuncTest {
         final List<Stmt> stmts = new ArrayList<>();
         stmts.add(Havoc(x));
         stmts.add(Assign(x, Int(0)));
-        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
-        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
+        stmts.add(Assign(x, Inc(x.getRef())));
+        stmts.add(Assign(x, Inc(x.getRef())));
         stmts.add(Assume(Leq(x.getRef(), Int(100))));
 
         final Collection<? extends ExplState> succStates =

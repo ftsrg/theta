@@ -16,9 +16,7 @@
 package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -96,9 +94,9 @@ final class XtaUpdate {
 
                 final PostfixOpContext op = Utils.singleElementOf(ctx.fOpers);
                 if (op.fPostIncOp != null) {
-                    return Stmts.Assign(intVar, Add(intRef, Int(1)));
+                    return Stmts.Assign(intVar, Inc(intRef));
                 } else if (op.fPostDeclOp != null) {
-                    return Stmts.Assign(intVar, Sub(intRef, Int(1)));
+                    return Stmts.Assign(intVar, Dec(intRef));
                 } else {
                     throw new UnsupportedOperationException();
                 }

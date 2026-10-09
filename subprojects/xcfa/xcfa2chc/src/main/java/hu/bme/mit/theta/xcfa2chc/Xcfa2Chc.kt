@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -47,7 +47,7 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 enum class RankingFunction(val constraint: (Expr<IntType>, Expr<IntType>) -> Expr<BoolType>) {
-  ADD({ old, new -> Eq(new, Add(old, Int(1))) }) // +1
+  ADD({ old, new -> Eq(new, Inc(old)) }) // +1
 }
 
 fun XcfaProcedure.toCHC(

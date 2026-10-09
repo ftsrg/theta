@@ -16,11 +16,7 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -51,7 +47,7 @@ public class PredTransFuncTest {
         // (x<5) ---[x := x+1]--> (x<5)?
         final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
         final PredState state = PredState.of(Lt(x.getRef(), Int(5)));
-        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
+        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Inc(x.getRef())));
         Assertions.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
     }
 
@@ -60,7 +56,7 @@ public class PredTransFuncTest {
         // (x<4) ---[x := x+1]--> (x<5)?
         final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
         final PredState state = PredState.of(Lt(x.getRef(), Int(4)));
-        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
+        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Inc(x.getRef())));
         Assertions.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
     }
 

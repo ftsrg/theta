@@ -129,6 +129,16 @@ public final class IntExprs {
         return IntAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 
+    /** Increment: short for Add(op, Int(1)) */
+    public static IntAddExpr Inc(final Expr<IntType> op) {
+        return Add(op, Int(1));
+    }
+
+    /** Decrement: short for Sub(op, Int(1)) */
+    public static IntSubExpr Dec(final Expr<IntType> op) {
+        return Sub(op, Int(1));
+    }
+
     ////
 
     public static IntMulExpr Mul(final Expr<IntType> op1, final Expr<IntType> op2) {

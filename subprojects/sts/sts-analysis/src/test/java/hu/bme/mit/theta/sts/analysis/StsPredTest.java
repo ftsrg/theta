@@ -70,7 +70,7 @@ public class StsPredTest {
         builder.addInit(Eq(x, Int(0)));
         builder.addTrans(
                 And(
-                        Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+                        Imply(Lt(x, Int(mod)), Eq(Prime(x), Inc(x))),
                         Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
         builder.setProp(Not(Eq(x, Int(mod))));
 

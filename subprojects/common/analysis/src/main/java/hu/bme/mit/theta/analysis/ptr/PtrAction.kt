@@ -70,7 +70,7 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
         )
         val expr = deref.getIte(nextWriteTriples)
         if (type == AccessType.WRITE) {
-          val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
+          val writeExpr = ExprUtils.simplify(IntExprs.Inc(expr))
           nextWriteTriples
             .getOrPut(deref.type) { ArrayList() }
             .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx.get()))

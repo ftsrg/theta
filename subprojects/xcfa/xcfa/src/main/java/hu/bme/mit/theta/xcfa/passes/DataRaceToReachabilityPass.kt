@@ -26,10 +26,10 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Dec
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Sub
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -311,12 +311,12 @@ class DataRaceToReachabilityPass(
     val unsetLabels = mutableListOf<XcfaLabel>()
     vars.forEach { (v, access) ->
       if (access.isWritten) {
-        setLabels.add(AssignStmtLabel(v.writeFlag, Add(v.writeFlag.ref, Int(1))))
-        unsetLabels.add(AssignStmtLabel(v.writeFlag, Sub(v.writeFlag.ref, Int(1))))
+        setLabels.add(AssignStmtLabel(v.writeFlag, Inc(v.writeFlag.ref)))
+        unsetLabels.add(AssignStmtLabel(v.writeFlag, Dec(v.writeFlag.ref)))
       }
       if (access.isRead) {
-        setLabels.add(AssignStmtLabel(v.readFlag, Add(v.readFlag.ref, Int(1))))
-        unsetLabels.add(AssignStmtLabel(v.readFlag, Sub(v.readFlag.ref, Int(1))))
+        setLabels.add(AssignStmtLabel(v.readFlag, Inc(v.readFlag.ref)))
+        unsetLabels.add(AssignStmtLabel(v.readFlag, Dec(v.readFlag.ref)))
       }
     }
     dereferences.forEach { (deref, access) ->
