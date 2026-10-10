@@ -114,9 +114,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
         }
-        waitlist
-          .getOrPut(edge.target) { mutableListOf() }
-          .add(mergedValuation to passedSegments)
+        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation to passedSegments)
       }
     }
 
@@ -149,9 +147,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
             }
           }
           newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
-          newLabels.add(
-            AssignStmtLabel(segmentVar, segmentUpdate.next, segmentUpdate.metadata)
-          )
+          newLabels.add(AssignStmtLabel(segmentVar, segmentUpdate.next, segmentUpdate.metadata))
         }
       } else {
         newLabels.add(label)
@@ -202,8 +198,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           expr = expr.`else`
         }
         updates.sortedBy { it.current }
-      }
-      ?: emptyList()
+      } ?: emptyList()
 
   private fun simplifyStartLabelLogicalThread(
     label: XcfaLabel,
@@ -236,7 +231,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
         } else param
       }
     return if (assumption == null) null
-      else listOf(StmtLabel(assumption), label.copy(params = newParams))
+    else listOf(StmtLabel(assumption), label.copy(params = newParams))
   }
 
   private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {

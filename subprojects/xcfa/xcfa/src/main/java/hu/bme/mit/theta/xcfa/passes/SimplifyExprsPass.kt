@@ -159,8 +159,9 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     globalVars: Set<XcfaGlobalVar>,
   ): Boolean {
     fun nonAtomicGlobals(label: XcfaLabel) =
-      label.collectVarsWithAccessType()
-        .filterKeys { globalVars.any { v -> v.wrappedVar == it && !v.atomic } }
+      label.collectVarsWithAccessType().filterKeys {
+        globalVars.any { v -> v.wrappedVar == it && !v.atomic }
+      }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
 
