@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -26,10 +27,10 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Dec
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Sub
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -209,6 +210,7 @@ class DataRaceToReachabilityPass(
               // Clears what the edge into the branch flagged, which is the aggregate of every
               // branch condition -- this branch's own accesses may be only part of it.
               return@mapIndexed getNewLabelsForAccesses(
+                builder,
                 allVarsToCheck.associateWith { READ },
                 allDereferencesToCheck.associateWith { READ },
                 label,
@@ -218,7 +220,7 @@ class DataRaceToReachabilityPass(
 
             if (vars.isEmpty() && dereferences.isEmpty()) return@mapIndexed listOf(label) to null
             anyChange = true
-            getNewLabelsForAccesses(vars, dereferences, label)
+            getNewLabelsForAccesses(builder, vars, dereferences, label)
           }
 
         if (anyChange) {
@@ -234,6 +236,7 @@ class DataRaceToReachabilityPass(
         builder.addLoc(newLoc)
         val (newLabels, errorLabel) =
           getNewLabelsForAccesses(
+            builder,
             allVarsToCheck.associateWith { READ },
             allDereferencesToCheck.associateWith { READ },
             onlyPreLabels = true,
@@ -276,6 +279,7 @@ class DataRaceToReachabilityPass(
     }
 
   private fun getNewLabelsForAccesses(
+    builder: XcfaProcedureBuilder,
     vars: VarAccessMap,
     dereferences: DereferenceAccessMap,
     originalLabel: XcfaLabel? = null,
@@ -305,18 +309,22 @@ class DataRaceToReachabilityPass(
           else listOf()
       }
     val assertion =
-      (varAssertions + derefAssertions).let { if (it.size == 1) it.first() else And(it) }
+      (varAssertions + derefAssertions).let {
+        val dataRaceAssertions = if (it.size == 1) it.first() else And(it)
+        if (builder.prop == True()) dataRaceAssertions
+        else Or(Not(builder.prop), dataRaceAssertions)
+      }
 
     val setLabels = mutableListOf<XcfaLabel>()
     val unsetLabels = mutableListOf<XcfaLabel>()
     vars.forEach { (v, access) ->
       if (access.isWritten) {
-        setLabels.add(AssignStmtLabel(v.writeFlag, Add(v.writeFlag.ref, Int(1))))
-        unsetLabels.add(AssignStmtLabel(v.writeFlag, Sub(v.writeFlag.ref, Int(1))))
+        setLabels.add(AssignStmtLabel(v.writeFlag, Inc(v.writeFlag.ref)))
+        unsetLabels.add(AssignStmtLabel(v.writeFlag, Dec(v.writeFlag.ref)))
       }
       if (access.isRead) {
-        setLabels.add(AssignStmtLabel(v.readFlag, Add(v.readFlag.ref, Int(1))))
-        unsetLabels.add(AssignStmtLabel(v.readFlag, Sub(v.readFlag.ref, Int(1))))
+        setLabels.add(AssignStmtLabel(v.readFlag, Inc(v.readFlag.ref)))
+        unsetLabels.add(AssignStmtLabel(v.readFlag, Dec(v.readFlag.ref)))
       }
     }
     dereferences.forEach { (deref, access) ->
@@ -338,7 +346,7 @@ class DataRaceToReachabilityPass(
     if (!skipPreLabels) {
       result.add(
         SequenceLabel(
-          listOf(StmtLabel(AssumeStmt.of(assertion), choiceType = ChoiceType.MAIN_PATH)) + setLabels
+          listOf(StmtLabel(Assume(assertion), choiceType = ChoiceType.MAIN_PATH)) + setLabels
         )
       )
     }
@@ -349,7 +357,7 @@ class DataRaceToReachabilityPass(
 
     val negatedAssertion =
       if (skipPreLabels) null
-      else StmtLabel(AssumeStmt.of(Not(assertion)), choiceType = ChoiceType.ALTERNATIVE_PATH)
+      else StmtLabel(Assume(Not(assertion)), choiceType = ChoiceType.ALTERNATIVE_PATH)
 
     return result to negatedAssertion
   }
@@ -404,7 +412,7 @@ class DataRaceToReachabilityPass(
         SequenceLabel(
           listOf(
             edge.label,
-            StmtLabel(AssumeStmt.of(False())), // abort at original error edges
+            StmtLabel(Assume(False())), // abort at original error edges
           )
         )
       builder.removeEdge(edge)

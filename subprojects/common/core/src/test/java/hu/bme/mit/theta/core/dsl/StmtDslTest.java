@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class StmtDslTest {
         return Arrays.asList(
                 new Object[][] {
                     {"assume true", Assume(True()), null},
-                    {"x := x + 1", Assign(x, Add(x.getRef(), Int(1))), Collections.singleton(x)},
+                    {"x := x + 1", Assign(x, Inc(x.getRef())), Collections.singleton(x)},
                     {"havoc x", Havoc(x), Collections.singleton(x)}
                 });
     }

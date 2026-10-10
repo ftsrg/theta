@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
         )
         val expr = deref.getIte(nextWriteTriples)
         if (type == AccessType.WRITE) {
-          val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
+          val writeExpr = ExprUtils.simplify(IntExprs.Inc(expr))
           nextWriteTriples
             .getOrPut(deref.type) { ArrayList() }
             .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx.get()))

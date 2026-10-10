@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class VarCollectorStmtVisitorTest {
         arrayOf(Stmts.Havoc(VA), setOf(VA), setOf(VA)),
         arrayOf(Stmts.Havoc(VB), setOf(VA), setOf(VA, VB)),
         arrayOf(Stmts.Assign(VB, IntExprs.Int(0)), setOf(VB), setOf(VB)),
-        arrayOf(Stmts.Assign(VB, IntExprs.Add(VB.ref, IntExprs.Int(1))), setOf(VB), setOf(VB)),
+        arrayOf(Stmts.Assign(VB, IntExprs.Inc(VB.ref)), setOf(VB), setOf(VB)),
         arrayOf(Stmts.Assign(VB, IntExprs.Add(VC.ref, VC.ref)), setOf(VC), setOf(VB, VC)),
         arrayOf(
           Stmts.Assume(BoolExprs.And(VA.ref, IntExprs.Eq(VB.ref, VC.ref))),

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -127,6 +127,16 @@ public final class IntExprs {
             final Expr<IntType> op4,
             final Expr<IntType> op5) {
         return IntAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
+    }
+
+    /** Increment: short for Add(op, Int(1)) */
+    public static IntAddExpr Inc(final Expr<IntType> op) {
+        return Add(op, Int(1));
+    }
+
+    /** Decrement: short for Sub(op, Int(1)) */
+    public static IntSubExpr Dec(final Expr<IntType> op) {
+        return Sub(op, Int(1));
     }
 
     ////
