@@ -17,12 +17,16 @@ package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class SvLibMetadata(val sourceName: String, val tag: String? = null) : MetaData() {
-
+class SvLibTagMetadata(val tags: List<String> = listOf()) : MetaData() {
   override fun combine(other: MetaData) =
-    if (isSubstantial() || !other.isSubstantial()) this else other
+    if (other is SvLibTagMetadata) SvLibTagMetadata(this.tags + other.tags) else this
 
-  override fun isSubstantial() = isTag()
+  override fun isSubstantial() = tags.isNotEmpty()
+}
 
-  fun isTag() = tag != null
+class SvLibSourceMetadata(val source: String) : MetaData() {
+  override fun combine(other: MetaData) =
+    if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}") else this
+
+  override fun isSubstantial() = source.isNotEmpty()
 }

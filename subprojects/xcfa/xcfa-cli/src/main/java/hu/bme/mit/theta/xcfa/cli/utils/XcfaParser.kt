@@ -133,7 +133,7 @@ fun getXcfa(
       }
 
       InputType.SVLIB -> {
-        parseSvLib(config.inputConfig.input!!, config.outputConfig.svLibOutputConfig)
+        parseSvLib(config.inputConfig.input!!, config.outputConfig.svLibOutputConfig, logger)
       }
     }
   } catch (e: Exception) {
@@ -359,8 +359,8 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseSvLib(input: File, svLibOutputConfig: SvLibOutputConfig): XCFA {
-  val frontend = SvLibFrontend()
+private fun parseSvLib(input: File, svLibOutputConfig: SvLibOutputConfig, logger: Logger): XCFA {
+  val frontend = SvLibFrontend(logger)
   val xcfa = frontend.buildXcfa(FileInputStream(input))
   svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
   return xcfa

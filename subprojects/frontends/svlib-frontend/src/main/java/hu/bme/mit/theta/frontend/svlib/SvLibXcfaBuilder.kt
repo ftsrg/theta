@@ -15,282 +15,130 @@
  */
 package hu.bme.mit.theta.frontend.svlib
 
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.metadata
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.nextLoc
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.sortOf
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import org.antlr.v4.runtime.CharStream
 
-class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager)
-  : SvLibBaseVisitor<Unit>() {
-
-  private val globalVars: MutableMap<String, VarDecl<*>> = LinkedHashMap()
-  private var entryProcedureName: String? = null
-
-  private var entryProcedure: XcfaProcedureBuilder? = null
-
-  private var entryArguments = mutableListOf<TermContext>()
+class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, charStream: CharStream, logger: Logger)
+  : SvLibVisitor<Unit>(charStream, logger) {
+  private val xcfaBuilder = XcfaBuilder("SvLibMain")
+  private val globalSymbolTable = SvLibSymbolTable()
+  private val procedures = LinkedHashMap<XcfaProcedureBuilder, SvLibSymbolTable>()
+  private val taggedLocations: MutableMap<String, Set<XcfaLocation>> = LinkedHashMap()
 
   var generateWitness: Boolean = false
     private set
 
-  private val postconditions: MutableList<RelationalTermContext> = ArrayList()
-  private val checkTrueByTag: MutableMap<String, MutableList<RelationalTermContext>> = LinkedHashMap()
-
-  private var procedureCount = 0
-
   fun buildXcfa(parser: SvLibParser): XCFA {
-    val script = parser.script()
-
-    collectGlobalsAndEntry(script)
-
-    val xcfaBuilder = XcfaBuilder("SvLibMain")
-
-    for (declaration in globalVars.values) {
-      xcfaBuilder.addVar(XcfaGlobalVar(declaration))
-    }
-
-    visit(script)
-
-    checkNotNull(entryProcedure) { "SV-LIB input does not define a procedure" }
-
-    xcfaBuilder.addEntryPoint(entryProcedure!!, mutableListOf())
-
+    visit(parser.script())
     return xcfaBuilder.build()
   }
 
-  private fun collectGlobalsAndEntry(script: ScriptContext) {
-    for (command in script.commandSvLib()) {
-      when (command) {
-        is DeclareVarContext -> {
-          val name = command.symbol().text
-          val declaration = Decls.Var(name, sortOf(command.sort()))
-          globalVars[name] = declaration
-          SvLibUtils.registerVar(declaration, true)
-        }
-        is SMTLIBv2CommandContext if command.command() is DeclareConstCommandContext -> {
-          val cmd = command.command() as DeclareConstCommandContext
-          val name = cmd.cmd_declareConst().symbol().text
-          val declaration = Decls.Var(name, sortOf(cmd.cmd_declareConst().sort()))
-          globalVars[name] = declaration
-          SvLibUtils.registerVar(declaration, true)
-        }
-        is DefineProcContext -> {
-          procedureCount++
-        }
-        is VerifyCallContext -> {
-          entryProcedureName = command.symbol().text
-          entryArguments = command.term().toMutableList()
-        }
-        is AnnotateTagContext -> {
-          collectAnnotateTagProperties(command.annotateTagCommand())
-        }
-        is GetWitnessContext -> {
-          generateWitness = true
-        }
-      }
-    }
-    if (procedureCount > 1) {
-      throw UnsupportedOperationException(
-        "Multiple procedures are not supported"
-      )
-    }
+  override fun visitDeclareVar(ctx: DeclareVarContext) {
+    createGlobalVar(ctx.symbol().original, sortOf(ctx.sort()))
   }
 
-  private fun collectAnnotateTagProperties(ctx: AnnotateTagCommandContext) {
-    val tag = ctx.symbol().text
-
-    for (attribute in ctx.attributeSvLib()) {
-      if (attribute is TagPropertyContext && attribute.property() is EnsuresPropertyContext) {
-        postconditions.add((attribute.property() as EnsuresPropertyContext).relationalTerm())
-      } else if (attribute is TagPropertyContext && attribute.property() is CheckTruePropertyContext) {
-        checkTrueByTag.getOrPut(tag) { mutableListOf() }
-          .add((attribute.property() as CheckTruePropertyContext).relationalTerm())
-      }
-    }
-  }
-
-  private fun addParams(
-    procedure: XcfaProcedureBuilder,
-    ctx: ProcDeclarationArgumentsContext,
-    direction: ParamDirection
-  ) {
-    val symbols = ctx.symbol()
-    val sorts = ctx.sort()
-    symbols.zip(sorts).forEach { (symbol, sort) ->
-      val name = symbol.text
-      val param = Decls.Var(name, sortOf(sort))
-      procedure.addParam(param, direction)
-      SvLibUtils.registerVar(param, false)
-    }
-  }
-
-  private fun addLocals(procedure: XcfaProcedureBuilder, ctx: ProcDeclarationArgumentsContext) {
-    val symbols = ctx.symbol()
-    val sorts = ctx.sort()
-    symbols.zip(sorts).forEach { (symbol, sort) ->
-      val name = symbol.text
-      val local = Decls.Var(name, sortOf(sort))
-      procedure.addVar(local)
-      SvLibUtils.registerVar(local, false)
-    }
+  override fun visitDeclareConstCommand(ctx: DeclareConstCommandContext) {
+    val cmd = ctx.cmd_declareConst()
+    createGlobalVar(cmd.symbol().original, sortOf(cmd.sort()))
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
-    val name = ctx.symbol().text
-    if (entryProcedureName != null && entryProcedureName != name || entryProcedure != null) return
-
+    val name = ctx.symbol().original
     val procedure = XcfaProcedureBuilder(name, procedurePassManager)
+    val procedureSymbolTable = SvLibSymbolTable(globalSymbolTable)
+    xcfaBuilder.addProcedure(procedure)
+    procedures[procedure] = procedureSymbolTable
 
-    SvLibUtils.resetSymbolTable()
-
-    addParams(procedure, ctx.procDeclarationArguments(0), ParamDirection.IN)
-    addParams(procedure, ctx.procDeclarationArguments(1), ParamDirection.OUT)
-    addLocals(procedure, ctx.procDeclarationArguments(2))
+    // input parameters
+    ctx.procDeclarationArguments(0).getVars().forEach {
+      procedure.addParam(it, ParamDirection.IN)
+      procedureSymbolTable.registerVar(it)
+    }
+    // output parameters
+    ctx.procDeclarationArguments(1).getVars().forEach {
+      procedure.addParam(it, ParamDirection.OUT)
+      procedureSymbolTable.registerVar(it)
+    }
+    // local variables
+    ctx.procDeclarationArguments(2).getVars().forEach {
+      procedure.addVar(it)
+      procedureSymbolTable.registerVar(it)
+    }
 
     procedure.createInitLoc()
     procedure.createFinalLoc()
     procedure.createErrorLoc()
 
-    val entryLabels = mutableListOf<XcfaLabel>()
-    if (entryProcedureName == name) {
-      val inputVars = mutableListOf<VarDecl<*>>()
+    val start = newLoc()
+    procedure.addEdge(XcfaEdge(procedure.initLoc, start, metadata = EmptyMetaData))
+    val statementVisitor = SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
+    statementVisitor.visit(ctx.statement())
+    procedure.addEdge(XcfaEdge(statementVisitor.current, procedure.finalLoc.get(), metadata = EmptyMetaData))
 
-      for (param in procedure.getParams()) {
-        if (param.second == ParamDirection.IN) {
-          inputVars.add(param.first)
+    taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
+  }
+
+  override fun visitVerifyCall(ctx: VerifyCallContext) {
+    val name = ctx.symbol().original
+    val procedure = procedures.keys.find { it.name == name }
+      ?: throw IllegalStateException("No such procedure to verify: $name")
+
+    val termTransformer = SvLibTermTransformer(globalSymbolTable)
+    val args = procedure.getParams().zip(ctx.term()).map { (param, term) ->
+      termTransformer.toExpr(term.original, param.first.type)
+    }
+
+    xcfaBuilder.addEntryPoint(procedure, args)
+  }
+
+  override fun visitAnnotateTagCommand(ctx: AnnotateTagCommandContext) {
+    val tag = ctx.symbol().original
+    val locations = taggedLocations[tag] ?: return warn("Annotated tag '$tag' doesn't exist")
+
+    for (attribute in ctx.attributeSvLib().reversed()) {
+      when (attribute) {
+        is TagAttributeContext -> { // annotating a tag with a tag
+          val newTag = attribute.symbol().original
+          taggedLocations[newTag] = taggedLocations[tag] ?: emptySet()
+        }
+        is TagPropertyContext -> {
+          when (val property = attribute.property()) {
+            is CheckTruePropertyContext -> {
+              locations.forEach { it.insertCheck(property.relationalTerm().original) }
+            }
+            else -> warn("Unsupported SV-LIB property: '${property.original}'")
+          }
         }
       }
-
-      entryArguments.zip(inputVars).forEach { (arg, param) ->
-        entryLabels.add(
-          AssignStmtLabel(
-            param,
-            SvLibUtils.expr(arg, param.getType(), procedure, globalVars),
-            metadata(param.name)
-          )
-        )
-      }
-    }
-
-    val start = addLabels(procedure, procedure.initLoc, entryLabels)
-    val statementVisitor = SvLibStatementVisitor(procedure, globalVars)
-    val exit = statementVisitor.visit(ctx.statement(), start)
-
-    applyTaggedCheckTrueProperties(procedure)
-    checkTrueByTag.clear()
-
-    if (!statementVisitor.isTerminal(exit))
-      addExitEdges(procedure, exit)
-
-    this.entryProcedure = procedure
-  }
-
-  override fun visitSelectTrace(ctx: SelectTraceContext) = unsupported("command 'select-trace'")
-
-  private fun applyTaggedCheckTrueProperties(procedure: XcfaProcedureBuilder) {
-    if (checkTrueByTag.isEmpty()) return
-
-    for (location in procedure.getLocs().toMutableList()) {
-      if (location.metadata !is SvLibMetadata || !(location.metadata as SvLibMetadata).isTag()) continue
-
-      val checkTrueTerms = checkTrueByTag[(location.metadata as SvLibMetadata).tag]
-      if (checkTrueTerms.isNullOrEmpty()) continue
-
-      insertChecksBeforeOutgoingEdges(procedure, location, checkTrueTerms)
     }
   }
 
-  private fun insertChecksBeforeOutgoingEdges(
-    procedure: XcfaProcedureBuilder,
-    source: XcfaLocation,
-    checkTrueTerms: List<RelationalTermContext>
-  ) {
-    val originalOutgoingEdges = source.outgoingEdges.toMutableList()
-
-    var checkedSource = source
-    for (checkTrueTerm in checkTrueTerms) {
-      val condition = SvLibUtils.relationalBoolExpr(checkTrueTerm, procedure, globalVars)
-      val nextCheckedSource = nextLoc("check-true")
-
-      procedure.addEdge(
-        XcfaEdge(
-          checkedSource,
-          procedure.errorLoc.get(),
-          StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
-          EmptyMetaData
-        )
-      )
-      procedure.addEdge(
-        XcfaEdge(
-          checkedSource,
-          nextCheckedSource,
-          StmtLabel(AssumeStmt.of(condition)),
-          EmptyMetaData
-        )
-      )
-
-      checkedSource = nextCheckedSource
-    }
-
-    for (outgoingEdge in originalOutgoingEdges) {
-      procedure.removeEdge(outgoingEdge)
-      procedure.addEdge(outgoingEdge.withSource(checkedSource))
-    }
+  override fun visitGetWitness(ctx: GetWitnessContext) {
+    generateWitness = true
   }
 
-  private fun addExitEdges(procedure: XcfaProcedureBuilder, exit: XcfaLocation) {
-    var finalSource = exit
+  override fun visitSelectTrace(ctx: SelectTraceContext) = throw ctx.unsupported("command 'select-trace'")
 
-    for (postcondition in postconditions) {
-      val condition = SvLibUtils.relationalBoolExpr(postcondition, procedure, globalVars)
-
-      procedure.addEdge(
-        XcfaEdge(
-          finalSource,
-          procedure.errorLoc.get(),
-          StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
-          EmptyMetaData
-        )
-      )
-
-      finalSource =
-        addLabels(
-          procedure,
-          finalSource,
-          listOf(StmtLabel(AssumeStmt.of(condition)))
-        )
-    }
-
-    procedure.addEdge(
-      XcfaEdge(
-        finalSource,
-        procedure.finalLoc.get(),
-        NopLabel,
-        EmptyMetaData
-      )
-    )
+  private fun createGlobalVar(name: String, type: Type) = Decls.Var(name, type).also {
+    xcfaBuilder.addVar(XcfaGlobalVar(it))
+    globalSymbolTable.registerVar(it)
   }
 
-  private fun addLabels(
-    builder: XcfaProcedureBuilder, from: XcfaLocation, labels: List<XcfaLabel>
-  ): XcfaLocation {
-    if (labels.isEmpty()) return from
-
-    val to = nextLoc("sequence")
-    val label = if (labels.size == 1) labels[0] else SequenceLabel(labels)
-
-    builder.addEdge(XcfaEdge(from, to, label, EmptyMetaData))
-
-    return to
+  private fun XcfaLocation.insertCheck(term: String) = context.let { (procedure, symbolTable) ->
+    procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()))
   }
+
+  private fun ProcDeclarationArgumentsContext.getVars()
+    = symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.original, sortOf(sort)) }
+
+  private val XcfaLocation.context
+    get() = procedures.entries.find { (procedure, _) -> this in procedure.getLocs() }?.toPair()
+      ?: throw IllegalStateException("Location does not belong to a procedure")
 }

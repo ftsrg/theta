@@ -15,230 +15,145 @@
  */
 package hu.bme.mit.theta.frontend.svlib
 
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.Stmts
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.nextLoc
-import hu.bme.mit.theta.frontend.svlib.SvLibUtils.unsupported
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import org.antlr.v4.runtime.CharStream
 
-internal class SvLibStatementVisitor(
-  private val builder: XcfaProcedureBuilder,
-  private val declarations: Map<String, VarDecl<*>>,
-) : SvLibBaseVisitor<XcfaLocation>() {
+class SvLibStatementVisitor(
+  private val procedure: XcfaProcedureBuilder,
+  private val symbolTable: SvLibSymbolTable,
+  charStream: CharStream,
+  logger: Logger,
+) : SvLibVisitor<Unit>(charStream, logger) {
+  private val termTransformer = SvLibTermTransformer(symbolTable)
+  var current: XcfaLocation = procedure.initLoc
+    private set
+  val taggedLocations: MutableMap<String, MutableSet<XcfaLocation>> = LinkedHashMap()
+  private val loops = ArrayDeque<Loop>()
 
-  private val terminalLocations: MutableSet<XcfaLocation> = HashSet()
-  private val loopExitLocations: ArrayDeque<XcfaLocation> = ArrayDeque()
-  private var currentEntry: XcfaLocation? = null
-
-  fun visit(statement: StatementContext, entry: XcfaLocation): XcfaLocation {
-    currentEntry = entry
-    return super.visit(statement)
+  override fun visitAssumeStatement(ctx: AssumeStatementContext) {
+    val condition = termTransformer.toExpr(ctx.term().original, Bool())
+    current = current.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.original)))
   }
 
-  fun isTerminal(location: XcfaLocation): Boolean {
-    return terminalLocations.contains(location)
-  }
-
-  override fun visitAssumeStatement(ctx: AssumeStatementContext): XcfaLocation {
-    val condition = SvLibUtils.boolExpr(ctx.term(), builder, declarations)
-    return addLabel(currentEntry!!, StmtLabel(AssumeStmt.of(condition)))
-  }
-
-  override fun visitAssignStatement(ctx: AssignStatementContext): XcfaLocation {
+  override fun visitAssignStatement(ctx: AssignStatementContext) {
     val labels = ctx.symbol().zip(ctx.term()).map { (symbol, term) ->
-      val variable = SvLibUtils.resolveVar(symbol.text, builder, declarations)
+      val variable = symbolTable.getVar(symbol.original)
       AssignStmtLabel(
         variable,
-        SvLibUtils.expr(term, variable.getType(), builder, declarations),
-        EmptyMetaData
+        termTransformer.toExpr(term.original, variable.getType()),
+        SvLibSourceMetadata("(assign ${symbol.original} ${term.original})")
       )
     }
 
-    return addLabels(currentEntry!!, labels, "assign")
+    current = current.extend(SequenceLabel(labels, metadata = SvLibSourceMetadata(ctx.original)))
   }
 
-  override fun visitSequenceStatement(ctx: SequenceStatementContext): XcfaLocation {
-    var last = currentEntry!!
-
-    for (statement in ctx.statement()) {
-      last = visit(statement, last)
-      if (terminalLocations.contains(last)) {
-        break
-      }
-    }
-
-    return last
-  }
-
-  override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext): XcfaLocation {
-    var statementEntry = addTagLocation(ctx, currentEntry!!)
-
-    for (attribute in ctx.attributeSvLib()) {
-      if (attribute is TagPropertyContext && attribute.property() is CheckTruePropertyContext) {
-        val condition = SvLibUtils.relationalBoolExpr(
-          (attribute.property() as CheckTruePropertyContext).relationalTerm(), builder, declarations
-        )
-
-        builder.addEdge(
-          XcfaEdge(
-            statementEntry,
-            builder.errorLoc.orElseThrow(),
-            StmtLabel(AssumeStmt.of(SmartBoolExprs.Not(condition))),
-            EmptyMetaData
-          )
-        )
-
-        statementEntry = addLabel(statementEntry, StmtLabel(AssumeStmt.of(condition)))
-      }
-    }
-
-    return visit(ctx.statement(), statementEntry)
-  }
-
-  private fun addTagLocation(
-    ctx: AnnotatedStatementContext, entry: XcfaLocation
-  ): XcfaLocation {
-    for (attribute in ctx.attributeSvLib()) {
-      if (attribute is TagAttributeContext) {
-        val taggedEntry = nextLoc(attribute.symbol().getText(), true)
-        builder.addEdge(
-          XcfaEdge(
-            entry,
-            taggedEntry,
-            NopLabel,
-            taggedEntry.metadata
-          )
-        )
-        return taggedEntry
-      }
-    }
-    return entry
-  }
-
-  override fun visitIfStatement(ctx: IfStatementContext): XcfaLocation {
-    val condition = SvLibUtils.boolExpr(ctx.term(), builder, declarations)
-
-    val thenEntry = addLabel(currentEntry!!, StmtLabel(AssumeStmt.of(condition)))
-    val elseEntry = addLabel(currentEntry!!, StmtLabel(AssumeStmt.of(SmartBoolExprs.Not(condition))))
-    val thenEnd = visit(ctx.statement(0), thenEntry)
-    val elseEnd = if (ctx.statement().size > 1) visit(ctx.statement(1), elseEntry) else elseEntry
-
-    val endLoc = nextLoc("if-end", false)
-
-    val thenTerminal = terminalLocations.contains(thenEnd)
-    val elseTerminal = terminalLocations.contains(elseEnd)
-
-    if (!thenTerminal)
-      builder.addEdge(XcfaEdge(thenEnd, endLoc, NopLabel, EmptyMetaData))
-
-    if (!elseTerminal)
-      builder.addEdge(XcfaEdge(elseEnd, endLoc, NopLabel, EmptyMetaData))
-
-    if (thenTerminal && elseTerminal)
-      terminalLocations.add(endLoc)
-
-    return endLoc
-  }
-
-  override fun visitWhileStatement(ctx: WhileStatementContext): XcfaLocation {
-    val head = currentEntry!!
-    val exitLoc = nextLoc("while-exit", false)
-
-    val condition = SvLibUtils.boolExpr(ctx.term(), builder, declarations)
-    val bodyEntry = addLabel(head, StmtLabel(AssumeStmt.of(condition)))
-    builder.addEdge(
-      XcfaEdge(
-        head,
-        exitLoc,
-        StmtLabel(AssumeStmt.of(BoolExprs.Not(condition))),
-        EmptyMetaData
-      )
-    )
-
-    loopExitLocations.addFirst(exitLoc)
-    val exit = visit(ctx.statement(), bodyEntry)
-    loopExitLocations.removeFirst()
-
-    if (!terminalLocations.contains(exit)) {
-      builder.addEdge(XcfaEdge(exit, head, NopLabel, EmptyMetaData))
-    }
-
-    return exitLoc
-  }
-
-  override fun visitHavocStatement(ctx: HavocStatementContext): XcfaLocation {
+  override fun visitHavocStatement(ctx: HavocStatementContext) {
     val labels = ctx.symbol().map { symbol ->
-      val variable = SvLibUtils.resolveVar(symbol.text, builder, declarations)
-      StmtLabel(Stmts.Havoc(variable))
+      val variable = symbolTable.getVar(symbol.original)
+      StmtLabel(Stmts.Havoc(variable), metadata = SvLibSourceMetadata("(havoc ${symbol.original})"))
     }
+    val label = if (labels.size == 1) labels.first() else SequenceLabel(labels, metadata = SvLibSourceMetadata(ctx.original))
 
-    return addLabels(currentEntry!!, labels, "havoc")
+    current = current.extend(label)
   }
 
-  override fun visitCallStatement(ctx: CallStatementContext) = unsupportedStatement("call")
+  override fun visitSequenceStatement(ctx: SequenceStatementContext) = ctx.statement().forEach(::visit)
 
-  override fun visitLabelStatement(ctx: LabelStatementContext) = unsupportedStatement("label")
+  override fun visitIfStatement(ctx: IfStatementContext) {
+    val condition = termTransformer.toExpr(ctx.term().original, Bool())
+    val ifStart = current
+    val ifEnd = newLoc()
 
-  override fun visitGotoStatement(ctx: GotoStatementContext) = unsupportedStatement("goto")
+    current = ifStart.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.term().original)))
+    visit(ctx.statement(0))
+    procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
-  override fun visitBreakStatement(ctx: BreakStatementContext): XcfaLocation {
-    if (loopExitLocations.isEmpty()) {
-      unsupportedStatement("break outside while")
-    }
+    current = ifStart.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = SvLibSourceMetadata(ctx.term().original)))
+    if (ctx.statement().size > 1) visit(ctx.statement(1))
+    procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
-    builder.addEdge(
-      XcfaEdge(
-        currentEntry!!,
-        loopExitLocations.first(),
-        NopLabel,
-        EmptyMetaData
-      )
+    current = ifEnd
+  }
+
+  override fun visitWhileStatement(ctx: WhileStatementContext) {
+    val condition = termTransformer.toExpr(ctx.term().original, Bool())
+    val loopHead = current
+    val loopExit = loopHead.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = SvLibSourceMetadata(ctx.term().original)))
+
+    loops.push(Loop(loopHead, loopExit))
+    current = loopHead.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.term().original)))
+    visit(ctx.statement())
+    procedure.addEdge(XcfaEdge(current, loopHead, NopLabel, EmptyMetaData))
+    loops.pop()
+
+    current = loopExit
+  }
+
+  override fun visitContinueStatement(ctx: ContinueStatementContext) {
+    if (loops.isEmpty()) throw ctx.unsupported("continue outside while")
+
+    procedure.addEdge(
+      XcfaEdge(current, loops.peak().head, NopLabel, SvLibSourceMetadata(ctx.original))
     )
 
-    terminalLocations.add(currentEntry!!)
-
-    return currentEntry!!
+    current = newLoc()
   }
 
-  override fun visitContinueStatement(ctx: ContinueStatementContext) = unsupportedStatement("continue")
+  override fun visitBreakStatement(ctx: BreakStatementContext) {
+    if (loops.isEmpty()) throw ctx.unsupported("break outside while")
 
-
-  override fun visitChoiceStatement(ctx: ChoiceStatementContext) = unsupportedStatement("choice")
-
-  override fun visitReturnStatement(ctx: ReturnStatementContext): XcfaLocation {
-    builder.addEdge(
-      XcfaEdge(
-        currentEntry!!,
-        builder.finalLoc.orElseThrow(),
-        NopLabel,
-        EmptyMetaData
-      )
+    procedure.addEdge(
+      XcfaEdge(current, loops.peak().exit, NopLabel, SvLibSourceMetadata(ctx.original))
     )
 
-    terminalLocations.add(currentEntry!!)
-
-    return currentEntry!!
+    current = newLoc()
   }
 
-  private fun unsupportedStatement(statementName: String): Nothing
-    = unsupported("statement '$statementName'")
+  override fun visitCallStatement(ctx: CallStatementContext) = throw ctx.unsupported("call")
 
-  private fun addLabel(from: XcfaLocation, label: XcfaLabel) = addLabels(from, listOf(label))
+  override fun visitReturnStatement(ctx: ReturnStatementContext) {
+    procedure.addEdge(
+      XcfaEdge(current, procedure.finalLoc.get(), NopLabel, SvLibSourceMetadata(ctx.original))
+    )
 
-  private fun addLabels(
-    from: XcfaLocation, labels: List<XcfaLabel>, sourceName: String = "sequence"
-  ): XcfaLocation {
-    if (labels.isEmpty()) return from
+    current = newLoc()
+  }
 
-    val to = nextLoc(sourceName, false)
-    val label = if (labels.size == 1) labels[0] else SequenceLabel(labels)
-    builder.addEdge(XcfaEdge(from, to, label, EmptyMetaData))
+  override fun visitLabelStatement(ctx: LabelStatementContext) = throw ctx.unsupported("label")
+
+  override fun visitGotoStatement(ctx: GotoStatementContext) = throw ctx.unsupported("goto")
+
+  override fun visitChoiceStatement(ctx: ChoiceStatementContext) = throw ctx.unsupported("choice")
+
+  override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
+    val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }
+    current = current.extend(NopLabel, tags)
+    tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
+
+    ctx.attributeSvLib().filterIsInstance<TagPropertyContext>().forEach { attribute ->
+      when (val property = attribute.property()) {
+        is CheckTruePropertyContext -> {
+          current = procedure.insertCheck(current, termTransformer.toExpr(property.relationalTerm().original, Bool()))
+        }
+        else -> warn("Unsupported SV-LIB property: '${property.original}'")
+      }
+    }
+
+    visit(ctx.statement())
+  }
+
+  private fun XcfaLocation.extend(label: XcfaLabel, locationTags: List<String> = listOf()): XcfaLocation {
+    val to = newLoc(locationTags)
+    procedure.addEdge(XcfaEdge(this, to, label, label.metadata))
     return to
   }
 }
+
+private data class Loop(val head: XcfaLocation, val exit: XcfaLocation)

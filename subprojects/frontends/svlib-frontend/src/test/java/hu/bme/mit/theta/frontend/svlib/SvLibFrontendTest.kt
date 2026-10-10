@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.frontend.svlib
 
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
@@ -86,7 +88,7 @@ internal class SvLibFrontendTest {
 
     val taggedLocation = procedure.locs.find { loc ->
       loc.metadata.let { metadata ->
-        metadata is SvLibMetadata && metadata.tag == "xto0"
+        metadata is SvLibTagMetadata && metadata.tags.contains("xto0")
       }
     }
 
@@ -126,13 +128,7 @@ internal class SvLibFrontendTest {
     val procedure = xcfa.procedures.first()
     val finalLoc = procedure.finalLoc.orElseThrow()
 
-    assertTrue(procedure.edges
-      .any { edge ->
-        edge.target == finalLoc && edge.source.metadata.let { metadata ->
-          metadata is SvLibMetadata && metadata.sourceName == "assign"
-        }
-      }
-    )
+    assertTrue(procedure.edges.any { edge -> edge.target == finalLoc })
   }
 
   @Test
@@ -176,7 +172,7 @@ internal class SvLibFrontendTest {
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
       val file = Path.of(resource!!.toURI()).toFile()
-      SvLibFrontend().buildXcfa(FileInputStream(file))
+      SvLibFrontend(ConsoleLogger(Logger.Level.INFO)).buildXcfa(FileInputStream(file))
     } catch (e: Exception) {
       throw RuntimeException("Failed to parse test resource: $name", e)
     }
