@@ -313,7 +313,6 @@ class DataRaceToReachabilityPass(
         val dataRaceAssertions = if (it.size == 1) it.first() else And(it)
         if (builder.prop == True()) dataRaceAssertions
         else Or(Not(builder.prop), dataRaceAssertions)
-        dataRaceAssertions
       }
 
     val setLabels = mutableListOf<XcfaLabel>()
