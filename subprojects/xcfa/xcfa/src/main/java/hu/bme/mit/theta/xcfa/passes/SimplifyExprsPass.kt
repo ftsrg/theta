@@ -29,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
@@ -69,7 +70,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val constValuation = MutableValuation()
-    val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
+    val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
     val modifiedGlobals = mutableListOf<VarDecl<*>>()
     builder.parent
@@ -155,15 +156,16 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
   private fun dropsSharedAccess(
     old: XcfaLabel,
     new: XcfaLabel,
-    globalVars: Set<VarDecl<*>>,
+    globalVars: Set<XcfaGlobalVar>,
   ): Boolean {
-    fun globals(label: XcfaLabel) =
-      label.collectVarsWithAccessType().filterKeys { it in globalVars }
+    fun nonAtomicGlobals(label: XcfaLabel) =
+      label.collectVarsWithAccessType()
+        .filterKeys { globalVars.any { v -> v.wrappedVar == it && !v.atomic } }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
 
-    val oldGlobals = globals(old)
-    val newGlobals = globals(new)
+    val oldGlobals = nonAtomicGlobals(old)
+    val newGlobals = nonAtomicGlobals(new)
     val lostGlobal =
       oldGlobals.any { (v, access) ->
         val kept = newGlobals[v]
