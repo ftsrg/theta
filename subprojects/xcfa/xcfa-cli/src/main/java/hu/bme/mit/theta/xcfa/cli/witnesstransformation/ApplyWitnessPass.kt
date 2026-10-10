@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -798,7 +799,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           override val varDecl: VarDecl<BoolType> = Var(LAST_SEGMENT_PASSED, Bool())
           override val passLastSegmentNewValue: Expr<BoolType> = True()
           override val initValue: LitExpr<BoolType> = False()
-          override val target: Expr<BoolType> = True()
+          override val target: Expr<BoolType> = Eq(varDecl.ref, True())
         }
       }
     // Global: waypoints of different threads must see the same segment progression.
