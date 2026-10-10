@@ -20,12 +20,14 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
@@ -51,19 +53,15 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    // This pass exists to normalize the segment counters ApplyWitnessPass inserts when *validating*
-    // an input witness; without a witness there are none, and its only other effect -- propagating
-    // the thread-start literal arguments through the body -- is redundant, since the OC event graph
-    // already binds each start parameter (XcfaToEventGraph). So with no segment counter there is
-    // nothing to do, and running the forward propagation anyway deadlocks on any loop in the thread
-    // body (it waits for every incoming edge of a location, which a loop head never gets).
-    val hasSegmentCounter =
-      builder.getEdges().any { edge ->
-        edge.label.getFlatLabels().any { label ->
-          label.collectVars().any { it.name == SEGMENT_COUNTER }
+    val segmentVar: VarDecl<*>? =
+      builder.getEdges().firstNotNullOfOrNull { edge ->
+        edge.label.getFlatLabels().firstNotNullOfOrNull { label ->
+          label.collectVars().find { it.name == SEGMENT_COUNTER }
         }
       }
-    if (!hasSegmentCounter) {
+    if (segmentVar == null) {
+      // This pass normalizes the segment counters ApplyWitnessPass inserts when *validating*
+      // an input witness; without a witness there are none, so we can return
       return builder
     }
 
@@ -85,17 +83,17 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       val mergedValuation = MutableValuation.copyOf(valuations.map { it.first }.reduce(::intersect))
 
       loc.outgoingEdges.toList().forEach { edge ->
+        val loopSegmentUpdates = valuations.flatMap { it.second }.toMutableSet()
         val oldLabels = edge.getFlatLabels()
         val simplifiedLabels =
           oldLabels.flatMap {
             val simplified = it.simplify(mergedValuation, parseContext)
-            simplifyStartLabelLogicalThread(simplified) ?: listOf(simplified)
+            simplifyStartLabelLogicalThread(simplified, loopSegmentUpdates) ?: listOf(simplified)
           }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
 
-        val loopSegmentUpdates = valuations.flatMap { it.second }.toMutableSet()
         val newLabels =
-          simplifySegmentCounterAssignments(simplifiedLabels, loopSegmentUpdates).filter {
+          simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, loopSegmentUpdates).filter {
             if (it is StmtLabel) {
               if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
                 val expr = it.stmt.expr
@@ -122,20 +120,21 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
     return builder
   }
 
-  private fun simplifySegmentCounterAssignments(
+  private fun simplifySegmentCounterUpdates(
+    segmentVar: VarDecl<*>,
     labels: List<XcfaLabel>,
-    alreadyUsedSegmentUpdates: MutableSet<BigInteger>,
+    passedSegmentValues: MutableSet<BigInteger>,
   ): List<XcfaLabel> {
     var updatedSegment = false
     val newLabels = mutableListOf<XcfaLabel>()
-    labels.forEach {
-      val segmentUpdate = getCurrentSegmentFromSegmentCounterUpdate(it)
-      if (segmentUpdate != null) {
-        val value = segmentUpdate.then.value
-        if (updatedSegment || value in alreadyUsedSegmentUpdates) {
+    labels.forEach { label ->
+      val segmentUpdates = getSegmentUpdates(label)
+      if (segmentUpdates.isNotEmpty()) {
+        val segmentUpdate = segmentUpdates.find { it.current.value !in passedSegmentValues }
+        if (updatedSegment || segmentUpdate == null) {
           // do not add the segment update
         } else {
-          alreadyUsedSegmentUpdates.add(value)
+          passedSegmentValues.add(segmentUpdate.current.value)
           updatedSegment = true
           var insertIndex = newLabels.size
           while (insertIndex > 0) {
@@ -148,11 +147,11 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           }
           newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
           newLabels.add(
-            AssignStmtLabel(segmentUpdate.varDecl, segmentUpdate.then, segmentUpdate.metadata)
+            AssignStmtLabel(segmentVar, segmentUpdate.next, segmentUpdate.metadata)
           )
         }
       } else {
-        newLabels.add(it)
+        newLabels.add(label)
       }
     }
 
@@ -180,51 +179,68 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
     }
   }
 
-  private data class SegmentUpdate(
-    val varDecl: VarDecl<*>,
-    val cond: EqExpr<*>,
-    val then: IntLitExpr,
+  private data class SegmentAlternatives(
+    val cond: Expr<BoolType>,
+    val current: IntLitExpr,
+    val next: IntLitExpr,
     val metadata: MetaData,
   )
 
-  private fun getCurrentSegmentFromSegmentCounterUpdate(label: XcfaLabel): SegmentUpdate? {
-    if (label is StmtLabel) {
-      val stmt = label.stmt
-      if (stmt is AssignStmt<*>) {
-        if (stmt.varDecl.name == SEGMENT_COUNTER) {
-          val expr = stmt.expr
-          if (expr is IteExpr<*>) {
-            val cond = expr.cond
-            val then = expr.then
-            if (cond is EqExpr<*> && then is IntLitExpr) {
-              return SegmentUpdate(stmt.varDecl, cond, then, label.metadata)
-            }
+  private fun getSegmentUpdates(label: XcfaLabel): List<SegmentAlternatives> =
+    ((label as? StmtLabel)?.stmt as? AssignStmt<*>)
+      ?.takeIf { stmt -> stmt.varDecl.name == SEGMENT_COUNTER }
+      ?.let { stmt ->
+        val updates = mutableSetOf<SegmentAlternatives>()
+        var expr = stmt.expr
+        while (expr is IteExpr<*>) {
+          segmentIteValues<IntLitExpr>(expr)?.let { (current, next) ->
+            updates.add(SegmentAlternatives(expr.cond, current, next, label.metadata))
           }
+          expr = expr.`else`
         }
+        updates.sortedBy { it.current }
       }
-    }
-    return null
-  }
+      ?: emptyList()
 
-  private fun simplifyStartLabelLogicalThread(label: XcfaLabel): List<XcfaLabel>? {
+  private fun simplifyStartLabelLogicalThread(
+    label: XcfaLabel,
+    passedSegmentValues: Set<BigInteger>,
+  ): List<XcfaLabel>? {
     if (label !is StartLabel) return null
     var assumption: AssumeStmt? = null
     val newParams =
-      label.params.map {
-        if (it is IteExpr) {
-          val cond = it.cond
-          val then = it.then
-          if (cond is EqExpr<*> && then is LitExpr<*>) {
-            val left = cond.leftOp
-            if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER) {
-              assumption = AssumeStmt.of(cond)
-              return@map then
+      label.params.map { param ->
+        var segmentCond: Expr<BoolType>? = null
+        var nextSegmentAlternative: LitExpr<*>? = null
+        var minNotPassedSegment: BigInteger? = null
+        var expr = param
+        while (expr is IteExpr<*>) {
+          segmentIteValues<LitExpr<*>>(expr)?.let { (segmentValue, paramValue) ->
+            if (segmentValue.value !in passedSegmentValues) {
+              if (minNotPassedSegment == null || segmentValue.value < minNotPassedSegment) {
+                segmentCond = expr.cond
+                nextSegmentAlternative = paramValue
+                minNotPassedSegment = segmentValue.value
+              }
             }
           }
+          expr = expr.`else`
         }
-        it
+
+        if (nextSegmentAlternative != null) {
+          assumption = Assume(segmentCond)
+          nextSegmentAlternative
+        } else param
       }
-    if (assumption == null) return null
-    return listOf(StmtLabel(assumption), label.copy(params = newParams))
+    return if (assumption == null) null
+      else listOf(StmtLabel(assumption), label.copy(params = newParams))
+  }
+
+  private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {
+    val eq = e.cond as? EqExpr<*> ?: return null
+    if ((eq.leftOp as? RefExpr<*>)?.decl?.name != SEGMENT_COUNTER) return null
+    val current = eq.rightOp as? IntLitExpr ?: return null
+    val next = e.then as? L ?: return null
+    return current to next
   }
 }
