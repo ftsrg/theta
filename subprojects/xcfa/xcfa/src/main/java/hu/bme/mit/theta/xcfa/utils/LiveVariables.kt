@@ -27,10 +27,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 /**
  * Backward (strong) live-variable analysis over a procedure. Over-approximates: only a plain
  * assignment or havoc kills a variable, every other label just adds what it reads or writes, and an
- * assignment makes its operands live only if its target is.
+ * assignment to a local makes its operands live only if its target is. Globals are always live:
+ * another thread may read what this one writes, so an assignment to a global keeps its operands
+ * live and kills nothing.
  */
 fun strongLiveVars(builder: XcfaProcedureBuilder): Map<XcfaLocation, Set<VarDecl<*>>> {
   val live = builder.getLocs().associateWith { mutableSetOf<VarDecl<*>>() }.toMutableMap()
+  val locals = builder.getVars() + builder.getParams().map { it.first }
   builder
     .getParams()
     .filter { it.second != ParamDirection.IN }
@@ -46,8 +49,12 @@ fun strongLiveVars(builder: XcfaProcedureBuilder): Map<XcfaLocation, Set<VarDecl
       l =
         when (stmt) {
           is AssignStmt<*> ->
-            if (stmt.varDecl in l) l - stmt.varDecl + ExprUtils.getVars(stmt.expr) else l
-          is HavocStmt<*> -> l - stmt.varDecl
+            when {
+              stmt.varDecl !in locals -> l + ExprUtils.getVars(stmt.expr)
+              stmt.varDecl in l -> l - stmt.varDecl + ExprUtils.getVars(stmt.expr)
+              else -> l
+            }
+          is HavocStmt<*> -> if (stmt.varDecl in locals) l - stmt.varDecl else l
           else -> l + label.collectVarsWithAccessType().keys
         }
     }

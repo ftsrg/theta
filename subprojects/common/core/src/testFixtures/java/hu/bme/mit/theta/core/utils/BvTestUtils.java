@@ -41,6 +41,16 @@ public class BvTestUtils {
                     {BvMulExpr.class, UBv16(12), Mul(List.of(UBv16(4), UBv16(3)))},
                     {BvUDivExpr.class, UBv16(4), UDiv(UBv16(12), UBv16(3))},
                     {BvURemExpr.class, UBv16(1), URem(UBv16(13), UBv16(3))},
+                    {BvURemExpr.class, UBv16(2), URem(UBv16(32768), UBv16(3))},
+                    {BvURemExpr.class, UBv16(7), URem(UBv16(7), UBv16(65535))},
+
+                    /* Division by zero (SMT-LIB semantics) */
+                    {BvUDivExpr.class, UBv16(65535), UDiv(UBv16(7), UBv16(0))},
+                    {BvURemExpr.class, UBv16(7), URem(UBv16(7), UBv16(0))},
+                    {BvSDivExpr.class, SBv16(-1), SDiv(SBv16(7), SBv16(0))},
+                    {BvSDivExpr.class, SBv16(1), SDiv(SBv16(-7), SBv16(0))},
+                    {BvSRemExpr.class, SBv16(-7), SRem(SBv16(-7), SBv16(0))},
+                    {BvSModExpr.class, SBv16(-7), SMod(SBv16(-7), SBv16(0))},
 
                     /* Signed basic operations (positive) */
                     {BvAddExpr.class, SBv16(4), Add(List.of(SBv16(1), SBv16(3)))},
