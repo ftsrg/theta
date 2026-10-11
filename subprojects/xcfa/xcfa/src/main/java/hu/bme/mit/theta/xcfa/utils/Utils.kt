@@ -126,8 +126,9 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
   return atomicLocations
 }
 
-fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel =
-  when (this) {
+fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext?): XcfaLabel =
+  if (parseContext == null) simplify(valuation)
+  else when (this) {
     is StmtLabel -> {
       val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
       when (stmt) {
@@ -199,6 +200,33 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
     is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
 
+    else -> this
+  }
+
+fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel =
+  when (this) {
+    is StmtLabel -> {
+      val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
+      when (stmt) {
+        is MemoryAssignStmt<*, *, *> -> StmtLabel(simplified, metadata = metadata)
+        is AssignStmt<*> -> {
+          simplified as AssignStmt<*>
+          AssignStmtLabel(simplified.varDecl, simplified.expr, metadata = metadata)
+        }
+        is AssumeStmt -> StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+        else -> this
+      }
+    }
+    is StartLabel ->
+      StartLabel(
+        name,
+        params.map { ExprUtils.simplify(it, valuation) },
+        pidVar,
+        metadata,
+        tempLookup,
+      )
+    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation) }, metadata)
+    is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
     else -> this
   }
 

@@ -47,7 +47,7 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  * variables (that is, variables assigned only once). Requires the ProcedureBuilder to be
  * `deterministic` (@see DeterministicPass) Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
-class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) :
+class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: XcfaProperty? = null) :
   ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {

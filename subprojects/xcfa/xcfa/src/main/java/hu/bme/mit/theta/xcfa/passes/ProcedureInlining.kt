@@ -123,7 +123,7 @@ internal fun inlineCallSite(
   target: XcfaLocation,
   invokeLabel: InvokeLabel,
   callee: ProcedureBody,
-  parseContext: ParseContext,
+  parseContext: ParseContext?,
   metadata: MetaData,
   freshFrame: Boolean = false,
 ) {
@@ -237,10 +237,12 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(param.first, param.first.type),
           cast(
-            CComplexType.getType(param.first.ref, parseContext).castTo(invokeLabel.params[i]),
-            param.first.type,
-          ),
-        )
+            parseContext?.let {
+                CComplexType.getType(param.first.ref, it).castTo(invokeLabel.params[i])
+              } ?: invokeLabel.params[i],
+              param.first.type,
+            ),
+          )
       inStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
     }
 
@@ -256,10 +258,12 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(varDecl, varDecl.type),
           cast(
-            CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
-            varDecl.type,
-          ),
-        )
+              parseContext?.let {
+                CComplexType.getType(varDecl.ref, it).castTo(param.first.ref)
+              } ?: param.first.ref,
+              varDecl.type,
+            ),
+          )
       outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
     }
   }

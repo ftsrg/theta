@@ -20,13 +20,13 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.FileInputStream
 
-class SvLibFrontend(private val logger: Logger) {
-  private val procedurePassManager: ProcedurePassManager = ProcedurePassManager()
+class SvLibFrontend(private val logger: Logger, private val procedurePassManager: ProcedurePassManager = SvLibPasses(logger)) {
 
   var generateWitness: Boolean = false
     private set

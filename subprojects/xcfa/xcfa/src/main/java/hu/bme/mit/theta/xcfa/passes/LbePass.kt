@@ -31,7 +31,7 @@ import hu.bme.mit.theta.xcfa.utils.*
  * * Middle location: a location whose incoming degree is 1
  */
 class LbePass(
-  parseContext: ParseContext,
+  parseContext: ParseContext? = null,
   level: LbeLevel = defaultLevel,
   private val aggressivelyCollapseNonConcurrentEdges: Boolean = false,
 ) : ProcedurePass {
@@ -77,7 +77,7 @@ class LbePass(
    */
   private var atomicPhase = false
   val level: LbeLevel =
-    if (parseContext.multiThreading && !level.isLocal) LbeLevel.NO_LBE else level
+    if (parseContext?.multiThreading == true && !level.isLocal) LbeLevel.NO_LBE else level
   lateinit var builder: XcfaProcedureBuilder
   private var nonConcurrentEdges: Set<XcfaEdge>? = null
 

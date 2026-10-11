@@ -6,6 +6,7 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -231,7 +232,8 @@ internal class SvLibFrontendTest {
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
       val file = Path.of(resource!!.toURI()).toFile()
-      SvLibFrontend(ConsoleLogger(Logger.Level.INFO)).buildXcfa(FileInputStream(file))
+      SvLibFrontend(ConsoleLogger(Logger.Level.INFO), ProcedurePassManager())
+        .buildXcfa(FileInputStream(file))
     } catch (e: Exception) {
       throw RuntimeException("Failed to parse test resource: $name", e)
     }
