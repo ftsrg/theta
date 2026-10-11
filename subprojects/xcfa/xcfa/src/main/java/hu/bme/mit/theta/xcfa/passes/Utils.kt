@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -26,6 +27,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
@@ -288,3 +290,23 @@ fun <P : Type, O : Type, D : Type> buildMemoryAssign(
   deref: Dereference<P, O, D>,
   expr: Expr<*>,
 ): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
+
+fun XcfaBuilder.addMemoryGlobals(globals: List<Pair<VarDecl<*>, LitExpr<*>>>) {
+  if (globals.isEmpty()) return
+  val inits =
+    globals.map { (v, zero) ->
+      if (DereferenceToArrayPass.zeroInitialized) {
+        addVar(XcfaGlobalVar(v, zero, atomic = true))
+        AssignStmtLabel(v, zero)
+      } else {
+        addVar(XcfaGlobalVar(v, atomic = true))
+        StmtLabel(HavocStmt.of(v))
+      }
+    }
+  getInitProcedures().forEach { (procedure, _) ->
+    procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
+      procedure.removeEdge(edge)
+      procedure.addEdge(edge.withLabel(SequenceLabel(inits + edge.label)))
+    }
+  }
+}
