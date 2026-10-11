@@ -110,7 +110,7 @@ class SvLibStatementVisitor(
   }
 
   override fun visitContinueStatement(ctx: ContinueStatementContext) {
-    if (loops.isEmpty()) throw ctx.unsupported("continue outside while")
+    if (loops.isEmpty()) throw ctx.illegal("continue outside while")
 
     procedure.addEdge(
       XcfaEdge(current, loops.peak().head, NopLabel, ctx.metadata)
@@ -120,7 +120,7 @@ class SvLibStatementVisitor(
   }
 
   override fun visitBreakStatement(ctx: BreakStatementContext) {
-    if (loops.isEmpty()) throw ctx.unsupported("break outside while")
+    if (loops.isEmpty()) throw ctx.illegal("break outside while")
 
     procedure.addEdge(
       XcfaEdge(current, loops.peak().exit, NopLabel, ctx.metadata)
@@ -129,7 +129,26 @@ class SvLibStatementVisitor(
     current = newLoc()
   }
 
-  override fun visitCallStatement(ctx: CallStatementContext) = throw ctx.unsupported("call")
+  override fun visitCallStatement(ctx: CallStatementContext) {
+    val name = ctx.symbol(0).original
+    val calledProcedure = procedure.parent.getProcedures().find { it.name == name }
+      ?: throw ctx.illegal("no such procedure '$name'")
+    if (calledProcedure.getParams().size != ctx.symbol().size - 1 + ctx.term().size)
+      throw ctx.illegal("mismatched arguments for procedure '$name'")
+
+    val (inputParams, outputParams) = calledProcedure.getParams().partition { (_, dir) -> dir == ParamDirection.IN }
+    val inputs = inputParams.map { it.first }.zip(ctx.term()).associate { (param, term) ->
+      param to termTransformer.toExpr(term.original, param.type)
+    }
+    val outputs = outputParams.map { it.first }.zip(ctx.symbol().drop(1)).associate { (param, arg) ->
+      param to symbolTable.getVar(arg.original).ref
+    }
+    val args = calledProcedure.getParams().map { (param, _) ->
+      inputs[param] ?: outputs[param] ?: throw ctx.illegal("mismatched arguments for procedure '$name'")
+    }
+
+    current = current.extend(InvokeLabel(name, args, metadata = ctx.metadata))
+  }
 
   override fun visitReturnStatement(ctx: ReturnStatementContext) {
     procedure.addEdge(
@@ -143,7 +162,20 @@ class SvLibStatementVisitor(
 
   override fun visitGotoStatement(ctx: GotoStatementContext) = throw ctx.unsupported("goto")
 
-  override fun visitChoiceStatement(ctx: ChoiceStatementContext) = throw ctx.unsupported("choice")
+  override fun visitChoiceStatement(ctx: ChoiceStatementContext) {
+    val choiceStart = current
+    val choiceEnd = newLoc()
+
+    ctx.statement().forEach { stmtContext ->
+      current = choiceStart
+      visit(stmtContext)
+      procedure.addEdge(
+        XcfaEdge(current, choiceEnd, NopLabel, SvLibSourceMetadata("choice"))
+      )
+    }
+
+    current = choiceEnd
+  }
 
   override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
     val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }

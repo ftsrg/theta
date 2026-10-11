@@ -5,10 +5,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -99,7 +96,7 @@ internal class SvLibFrontendTest {
   }
 
   @Test
-  fun multiAssignStatementCreatesSingleSequenceLabelEdge() {
+  fun multiAssignStatementSemantics() {
     val xcfa: XCFA = parseResource("multi-assign.svlib")
     val procedure = xcfa.procedures.first()
 
@@ -135,6 +132,26 @@ internal class SvLibFrontendTest {
     val finalLoc = procedure.finalLoc.orElseThrow()
 
     assertTrue(procedure.edges.any { edge -> edge.target == finalLoc })
+  }
+
+  @Test
+  fun choiceCreatesBranching() {
+    val xcfa: XCFA = parseResource("choice.svlib")
+    val procedure = xcfa.procedures.first()
+
+    assertTrue(procedure.initLoc.outgoingEdges.size == 3)
+  }
+
+  @Test
+  fun multipleProceduresCreated() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+    assertEquals(2, xcfa.procedures.size)
+
+    val procedure = xcfa.initProcedures.first().first
+    val calledProcedure = xcfa.procedures.first()
+    val calls = procedure.edges.map(XcfaEdge::label).filterIsInstance<InvokeLabel>()
+    assertEquals(1, calls.size)
+    assertEquals(calledProcedure.name, calls.first().name)
   }
 
   @Test
