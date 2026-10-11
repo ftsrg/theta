@@ -581,7 +581,7 @@ data class OcConfig(
     names = ["--oc-decision-procedure"],
     description = "Decision procedure for ordering-consistency check",
   )
-  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.BASIC,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(

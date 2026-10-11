@@ -96,13 +96,13 @@ class MutexToVarPass : ProcedurePass {
               SequenceLabel(
                 listOf(
                   StmtLabel(AssumeStmt.of(Eq(writeFlag.ref, Int(0)))),
-                  StmtLabel(AssignStmt.of(readFlag, Sub(readFlag.ref, Int(1)))),
+                  StmtLabel(AssignStmt.of(readFlag, Dec(readFlag.ref))),
                 )
               ),
               SequenceLabel(
                 listOf(
                   StmtLabel(AssumeStmt.of(Neq(writeFlag.ref, Int(0)))),
-                  StmtLabel(AssignStmt.of(writeFlag, Sub(writeFlag.ref, Int(1)))),
+                  StmtLabel(AssignStmt.of(writeFlag, Dec(writeFlag.ref))),
                 )
               ),
             )
@@ -114,11 +114,11 @@ class MutexToVarPass : ProcedurePass {
             }
             acquiredMutexes.forEach {
               val m = it.mutexFlag
-              actions.add(StmtLabel(AssignStmt.of(m, Add(m.ref, Int(1)))))
+              actions.add(StmtLabel(AssignStmt.of(m, Inc(m.ref))))
             }
             releasedMutexes.forEach {
               val m = it.mutexFlag
-              actions.add(StmtLabel(AssignStmt.of(m, Sub(m.ref, Int(1)))))
+              actions.add(StmtLabel(AssignStmt.of(m, Dec(m.ref))))
             }
           }
         }

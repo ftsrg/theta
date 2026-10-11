@@ -68,7 +68,7 @@ class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = fal
     check(isSc && e1.clkId != e2.clkId)
     val clk1 = e1.clkId.clkGlobalVar.ref
     val clk2 = e2.clkId.clkGlobalVar.ref
-    return Or(Eq(Add(clk1, Int(1)), clk2), Eq(Add(clk2, Int(1)), clk1))
+    return Or(Eq(Inc(clk1), clk2), Eq(Inc(clk2), clk1))
   }
 
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
