@@ -143,6 +143,7 @@ class XcfaCliVerifyTest {
     @JvmStatic
     fun svLibFiles(): Stream<Arguments> {
       return Stream.of(
+        Arguments.of("/svlib/annotated-loop-head.svlib", null),
         Arguments.of("/svlib/check-true-annotate-tag.svlib", null),
         Arguments.of("/svlib/check-true-middle.svlib", null),
         Arguments.of("/svlib/havoc.svlib", null),
@@ -152,6 +153,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/svlib/loop-check-true-annotate-tag.svlib", null),
         Arguments.of("/svlib/loop-simple-safe.svlib", null),
         Arguments.of("/svlib/multi-assign.svlib", null),
+        Arguments.of("/svlib/procedure-call.svlib", null),
         Arguments.of("/svlib/return.svlib", null),
         Arguments.of("/svlib/return-if.svlib", null),
         Arguments.of("/svlib/return-while.svlib", null),

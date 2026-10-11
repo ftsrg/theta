@@ -132,8 +132,10 @@ class XcfaCliParseTest {
     @JvmStatic
     fun svLibFiles(): Stream<Arguments> {
       return Stream.of(
+        Arguments.of("/svlib/annotated-loop-head.svlib"),
         Arguments.of("/svlib/check-true-annotate-tag.svlib"),
         Arguments.of("/svlib/check-true-middle.svlib"),
+        Arguments.of("/svlib/choice.svlib"),
         Arguments.of("/svlib/havoc.svlib"),
         Arguments.of("/svlib/if-assign.svlib"),
         Arguments.of("/svlib/if-simple-safe.svlib"),
@@ -141,6 +143,7 @@ class XcfaCliParseTest {
         Arguments.of("/svlib/loop-check-true-annotate-tag.svlib"),
         Arguments.of("/svlib/loop-simple-safe.svlib"),
         Arguments.of("/svlib/multi-assign.svlib"),
+        Arguments.of("/svlib/procedure-call.svlib"),
         Arguments.of("/svlib/return.svlib"),
         Arguments.of("/svlib/return-if.svlib"),
         Arguments.of("/svlib/return-while.svlib"),

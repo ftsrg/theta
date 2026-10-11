@@ -191,6 +191,19 @@ internal class SvLibFrontendTest {
     assertTrue(procedure.locs.any { loc -> (incomingCounts[loc] ?: 0) >= 2 && (outgoingCounts[loc] ?: 0) >= 2 })
   }
 
+  @Test
+  fun loopHeadAttributeBeforeCondition() {
+    val xcfa: XCFA = parseResource("annotated-loop-head.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val loopHeads = procedure.locs.filter { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 }
+    assertEquals(2, loopHeads.size)
+
+    loopHeads.forEach { loopHead ->
+      assertTrue(loopHead.outgoingEdges.any { it.target == procedure.errorLoc.get() })
+    }
+  }
+
   private fun parseResource(name: String) =
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)

@@ -37,7 +37,7 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.misc.Interval
 
-internal fun newLoc(tags: List<String> = listOf())
+internal fun newLoc(tags: Set<String> = setOf())
   = XcfaLocation("l" + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
 
 private var tmpVarCnt = 0

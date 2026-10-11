@@ -178,23 +178,27 @@ class SvLibStatementVisitor(
   }
 
   override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
-    val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }
+    val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }.toSet()
     current = current.extend(NopLabel, tags)
     tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
+
+    val annotatedStart = current
+    visit(ctx.statement())
+    val annotatedEnd = current
 
     ctx.attributeSvLib().filterIsInstance<TagPropertyContext>().forEach { attribute ->
       when (val property = attribute.property()) {
         is CheckTruePropertyContext -> {
-          current = procedure.insertCheck(current, termTransformer.toExpr(property.relationalTerm().original, Bool()))
+          current = procedure.insertCheck(annotatedStart, termTransformer.toExpr(property.relationalTerm().original, Bool()))
         }
         else -> warn("Unsupported SV-LIB property: '${property.original}'")
       }
     }
 
-    visit(ctx.statement())
+    current = annotatedEnd
   }
 
-  private fun XcfaLocation.extend(label: XcfaLabel, locationTags: List<String> = listOf()): XcfaLocation {
+  private fun XcfaLocation.extend(label: XcfaLabel, locationTags: Set<String> = setOf()): XcfaLocation {
     val to = newLoc(locationTags)
     procedure.addEdge(XcfaEdge(this, to, label, label.metadata))
     return to

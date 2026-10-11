@@ -86,7 +86,7 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
   override fun visitVerifyCall(ctx: VerifyCallContext) {
     val name = ctx.symbol().original
     val procedure = procedures.keys.find { it.name == name }
-      ?: throw IllegalStateException("No such procedure to verify: $name")
+      ?: throw ctx.symbol().illegal("no such procedure '$name'")
 
     val termTransformer = SvLibTermTransformer(globalSymbolTable)
     val args = procedure.getParams().zip(ctx.term()).map { (param, term) ->

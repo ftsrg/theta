@@ -17,7 +17,7 @@ package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class SvLibTagMetadata(val tags: List<String> = listOf()) : MetaData() {
+class SvLibTagMetadata(val tags: Set<String> = setOf()) : MetaData() {
   override fun combine(other: MetaData) =
     if (other is SvLibTagMetadata) SvLibTagMetadata(this.tags + other.tags) else this
 
