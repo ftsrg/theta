@@ -191,7 +191,7 @@ class SvLibStatementVisitor(
         is CheckTruePropertyContext -> {
           current = procedure.insertCheck(annotatedStart, termTransformer.toExpr(property.relationalTerm().original, Bool()))
         }
-        else -> warn("Unsupported SV-LIB property: '${property.original}'")
+        else -> property.unsupported("property '${property.original}'")
       }
     }
 

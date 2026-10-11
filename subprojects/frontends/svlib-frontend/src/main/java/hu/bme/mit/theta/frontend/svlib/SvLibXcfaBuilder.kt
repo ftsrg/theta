@@ -111,7 +111,7 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
             is CheckTruePropertyContext -> {
               locations.forEach { it.insertCheck(property.relationalTerm().original) }
             }
-            else -> warn("Unsupported SV-LIB property: '${property.original}'")
+            else -> property.unsupported("property '${property.original}'")
           }
         }
       }
