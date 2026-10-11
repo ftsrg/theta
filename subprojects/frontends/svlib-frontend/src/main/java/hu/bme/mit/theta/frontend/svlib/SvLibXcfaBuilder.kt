@@ -50,37 +50,27 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
-    val name = ctx.symbol().original
-    val procedure = XcfaProcedureBuilder(name, procedurePassManager)
-    val procedureSymbolTable = SvLibSymbolTable(globalSymbolTable)
-    xcfaBuilder.addProcedure(procedure)
-    procedures[procedure] = procedureSymbolTable
+    val procedure = declareProcedure(
+      ctx.symbol(),
+      ctx.procDeclarationArguments(0),
+      ctx.procDeclarationArguments(1),
+      ctx.procDeclarationArguments(2),
+    )
+    defineProcedure(procedure, ctx.statement())
+  }
 
-    // input parameters
-    ctx.procDeclarationArguments(0).getVars().forEach {
-      procedure.addParam(it, ParamDirection.IN)
-      procedureSymbolTable.registerVar(it)
+  override fun visitDefineProcsRec(ctx: DefineProcsRecContext) {
+    val procedures = ctx.procDeclaration().map {
+      declareProcedure(
+        it.symbol(),
+        it.procDeclarationArguments(0),
+        it.procDeclarationArguments(1),
+        it.procDeclarationArguments(2),
+      )
     }
-    // output parameters
-    ctx.procDeclarationArguments(1).getVars().forEach {
-      procedure.addParam(it, ParamDirection.OUT)
-      procedureSymbolTable.registerVar(it)
+    procedures.zip(ctx.statement()).forEach { (procedure, statement) ->
+      defineProcedure(procedure, statement)
     }
-    // local variables
-    ctx.procDeclarationArguments(2).getVars().forEach {
-      procedure.addVar(it)
-      procedureSymbolTable.registerVar(it)
-    }
-
-    procedure.createInitLoc()
-    procedure.createFinalLoc()
-    procedure.createErrorLoc()
-
-    val statementVisitor = SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
-    statementVisitor.parseProcedureBody(ctx.statement())
-    procedure.addEdge(XcfaEdge(statementVisitor.current, procedure.finalLoc.get(), metadata = EmptyMetaData))
-
-    taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
   }
 
   override fun visitVerifyCall(ctx: VerifyCallContext) {
@@ -123,6 +113,48 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
   }
 
   override fun visitSelectTrace(ctx: SelectTraceContext) = throw ctx.unsupported("command 'select-trace'")
+
+  private fun declareProcedure(
+    name: SymbolContext,
+    inputs: ProcDeclarationArgumentsContext,
+    outputs: ProcDeclarationArgumentsContext,
+    locals: ProcDeclarationArgumentsContext,
+  ): XcfaProcedureBuilder {
+    val procedure = XcfaProcedureBuilder(name.original, procedurePassManager)
+    val procedureSymbolTable = SvLibSymbolTable(globalSymbolTable)
+    xcfaBuilder.addProcedure(procedure)
+    procedures[procedure] = procedureSymbolTable
+
+    inputs.getVars().forEach {
+      procedure.addParam(it, ParamDirection.IN)
+      procedureSymbolTable.registerVar(it)
+    }
+    outputs.getVars().forEach {
+      procedure.addParam(it, ParamDirection.OUT)
+      procedureSymbolTable.registerVar(it)
+    }
+    locals.getVars().forEach {
+      procedure.addVar(it)
+      procedureSymbolTable.registerVar(it)
+    }
+
+    procedure.createInitLoc()
+    procedure.createFinalLoc()
+    procedure.createErrorLoc()
+
+    return procedure
+  }
+
+  private fun defineProcedure(procedure: XcfaProcedureBuilder, body: StatementContext) {
+    val procedureSymbolTable = procedures[procedure] ?: throw body.illegal("no such procedure '${procedure.name}'")
+    val statementVisitor = SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
+    statementVisitor.parseProcedureBody(body)
+    procedure.addEdge(
+      XcfaEdge(statementVisitor.current, procedure.finalLoc.get(), metadata = EmptyMetaData)
+    )
+
+    taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
+  }
 
   private fun createGlobalVar(name: String, type: Type) = Decls.Var(name, type).also {
     xcfaBuilder.addVar(XcfaGlobalVar(it))
