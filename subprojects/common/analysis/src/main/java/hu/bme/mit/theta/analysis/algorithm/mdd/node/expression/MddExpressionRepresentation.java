@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.hash.HashIntObjMap;
@@ -41,6 +42,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -195,6 +197,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             child = childRepresentation(existingDefault);
         } else {
             final Optional<? extends LitExpr<?>> lit = model.eval(decl);
+            if (lit.isPresent() && LitExprConverter.isWide(lit.get())) return;
             child =
                     lit.isPresent()
                             ? cacheChild(LitExprConverter.toInt(lit.get()), true)
@@ -657,7 +660,15 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                     final LitExpr<?> literal;
                     final Valuation modelToCache;
-                    if (optionalLitExpr.isPresent()) {
+                    final Valuation narrowModel =
+                            optionalLitExpr.isPresent()
+                                            && LitExprConverter.isWide(optionalLitExpr.get())
+                                    ? narrowModel(decl)
+                                    : null;
+                    if (narrowModel != null) {
+                        literal = narrowModel.eval(decl).orElseThrow();
+                        modelToCache = narrowModel;
+                    } else if (optionalLitExpr.isPresent()) {
                         literal = optionalLitExpr.get();
                         modelToCache = model;
                     } else {
@@ -687,10 +698,17 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                             .explicitRepresentation
                                             .getCacheView()
                                             .keySet();
-                            newValue =
+                            final int highest =
                                     cachedKeys.isEmpty()
-                                            ? 0
-                                            : cachedKeys.statistics().highestValue() + 1;
+                                            ? -1
+                                            : cachedKeys.statistics().highestValue();
+                            if (highest < Integer.MAX_VALUE) {
+                                newValue = highest + 1;
+                            } else {
+                                int candidate = 0;
+                                while (cachedKeys.contains(candidate)) candidate++;
+                                newValue = candidate;
+                            }
                         }
                         literal = LitExprConverter.toLitExpr(newValue, decl.getType());
                         final var extendedModel = MutableValuation.copyOf(model);
@@ -721,6 +739,15 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 }
             }
             return QueryResult.failed();
+        }
+
+        private Valuation narrowModel(Decl<?> decl) {
+            if (!(decl.getType() instanceof IntType)) return null;
+            try (WithPushPop wpp = new WithPushPop(solver)) {
+                solver.add(Geq(decl.getRef(), Int(Integer.MIN_VALUE)));
+                solver.add(Leq(decl.getRef(), Int(Integer.MAX_VALUE)));
+                return solver.check().isSat() ? solver.getModel() : null;
+            }
         }
 
         // TODO osszevonni queryChilddal
