@@ -1,7 +1,7 @@
 // This file is part of SV-LIB: A Standard Exchange Format for Software-Verification Tasks
 // https://gitlab.com/sosy-lab/benchmarking/sv-lib
 //
-// SPDX-FileCopyrightText: 2025 The SV-LIB Maintainers
+// SPDX-FileCopyrightText: 2026 The SV-LIB Maintainers
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -38,6 +38,11 @@ commandSvLib
             ParOpen procDeclarationArguments ParClose
                 statement
       ParClose                                                        # DefineProc
+    | ParOpen
+          'define-procs-rec'
+            procDeclaration+
+            (ParOpen statement ParClose)+
+      ParClose                                                        # DefineProcsRec
     | annotateTagCommand                                              # AnnotateTag
     | selectTraceCommand                                              # SelectTrace
     | ParOpen 'verify-call' symbol
@@ -75,7 +80,7 @@ statement
     | ParOpen 'break' ParClose                                        # BreakStatement
     | ParOpen 'continue' ParClose                                     # ContinueStatement
     | ParOpen 'havoc' symbol+ ParClose                                # HavocStatement
-    | ParOpen 'choice' ParOpen statement+ ParClose ParClose           # ChoiceStatement
+    | ParOpen 'choice' statement+ ParClose                            # ChoiceStatement
     ;
 
 attributeSvLib
@@ -97,7 +102,20 @@ property
 
 
 traceVariableAssignment
-  : ParOpen symbol spec_constant ParClose
+  : ParOpen symbol traceValue ParClose
+  ;
+
+// a value as SMT-LIB solvers write it in a model, arrays as constant arrays with stores,
+// and a symbol for a Boolean or a constructor of a datatype
+traceValue
+  : spec_constant
+  | symbol
+  | ParOpen PS_Minus (numeral | decimal) ParClose
+  | ParOpen PS_Divide numeral numeral ParClose
+  | ParOpen PS_Minus ParOpen PS_Divide numeral numeral ParClose ParClose
+  | ParOpen GRW_Underscore symbol numeral ParClose
+  | ParOpen ParOpen GRW_As PS_Const sort ParClose traceValue ParClose
+  | ParOpen PS_Store traceValue traceValue traceValue ParClose
   ;
 
 globalVariableTraceAssignments
@@ -127,6 +145,7 @@ trace
 
 violatedProperty
     : ParOpen 'incorrect-annotation' symbol attributeSvLib+ ParClose
+    | ParOpen 'correct-annotation' symbol attributeSvLib+ ParClose
     | ParOpen 'invalid-step' step ParClose
     ;
 
@@ -146,6 +165,14 @@ relationalTerm
     | ParOpen 'old' term ParClose                                     # OldRelationalTerm
     | ParOpen qual_identifer term+ ParClose                           # ApplicationRelationalTerm
     // TODO: We need to handle the other constructors of terms here as well
+    ;
+
+procDeclaration
+    : ParOpen symbol
+          ParOpen procDeclarationArguments ParClose
+          ParOpen procDeclarationArguments ParClose
+          ParOpen procDeclarationArguments ParClose
+      ParClose
     ;
 
 procDeclarationArguments
