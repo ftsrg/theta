@@ -36,7 +36,14 @@ class SvLibStatementVisitor(
   var current: XcfaLocation = procedure.initLoc
     private set
   val taggedLocations: MutableMap<String, MutableSet<XcfaLocation>> = LinkedHashMap()
+  val labeledLocations: MutableMap<String, XcfaLocation> = LinkedHashMap()
+  val gotos: MutableMap<XcfaEdge, String> = LinkedHashMap()
   private val loops = ArrayDeque<Loop>()
+
+  fun parseProcedureBody(ctx: StatementContext) {
+    visit(ctx)
+    applyGotos()
+  }
 
   override fun visitAssumeStatement(ctx: AssumeStatementContext) {
     val condition = termTransformer.toExpr(ctx.term().original, Bool())
@@ -158,9 +165,17 @@ class SvLibStatementVisitor(
     current = newLoc()
   }
 
-  override fun visitLabelStatement(ctx: LabelStatementContext) = throw ctx.unsupported("label")
+  override fun visitLabelStatement(ctx: LabelStatementContext) {
+    labeledLocations[ctx.symbol().original] = current
+  }
 
-  override fun visitGotoStatement(ctx: GotoStatementContext) = throw ctx.unsupported("goto")
+  override fun visitGotoStatement(ctx: GotoStatementContext) {
+    val to = newLoc()
+    val placeholder = XcfaEdge(current, to, NopLabel, ctx.metadata)
+    procedure.addEdge(placeholder)
+    gotos[placeholder] = ctx.symbol().original
+    current = to
+  }
 
   override fun visitChoiceStatement(ctx: ChoiceStatementContext) {
     val choiceStart = current
@@ -196,6 +211,21 @@ class SvLibStatementVisitor(
     }
 
     current = annotatedEnd
+  }
+
+  private fun applyGotos() {
+    gotos.forEach { (placeholder, label) ->
+      val labeledLocation = labeledLocations[label]
+        ?: throw IllegalStateException("Invalid goto statement: no such label '$label' in procedure '${procedure.name}'")
+      val goto = XcfaEdge(
+        placeholder.source,
+        labeledLocation,
+        NopLabel,
+        metadata = placeholder.metadata
+      )
+      procedure.removeEdge(placeholder)
+      procedure.addEdge(goto)
+    }
   }
 
   private fun XcfaLocation.extend(label: XcfaLabel, locationTags: Set<String> = setOf()): XcfaLocation {

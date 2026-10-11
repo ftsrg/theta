@@ -77,7 +77,7 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
     procedure.createErrorLoc()
 
     val statementVisitor = SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
-    statementVisitor.visit(ctx.statement())
+    statementVisitor.parseProcedureBody(ctx.statement())
     procedure.addEdge(XcfaEdge(statementVisitor.current, procedure.finalLoc.get(), metadata = EmptyMetaData))
 
     taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)

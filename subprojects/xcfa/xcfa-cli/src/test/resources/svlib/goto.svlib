@@ -1,0 +1,30 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc gotoExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (assign (x x0))
+    (!
+      (label loopHead)
+      :tag loop)
+    (if (> x 2) (goto loopEnd))
+    (sequence
+      (assign (x (+ x 1)))
+      (if (= x 2)
+        (return)
+        (assign (x (+ x 3))))
+      (goto loopHead))
+    (label loopEnd)
+    (assign (x (+ x 2)))))
+
+
+(annotate-tag loop :check-true (< x 3))
+
+(declare-const input Int)
+
+(verify-call gotoExample (input))
+(get-witness)

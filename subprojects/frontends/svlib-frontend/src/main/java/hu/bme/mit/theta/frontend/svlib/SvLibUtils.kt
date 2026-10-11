@@ -81,7 +81,7 @@ internal fun ParserRuleContext.unsupported(message: String) =
   UnsupportedOperationException("Unsupported SV-LIB element (${start.line}:${start.charPositionInLine}): $message")
 
 internal fun ParserRuleContext.illegal(message: String) =
-  IllegalStateException("Illegal statement (${start.line}:${start.charPositionInLine}): $message")
+  IllegalStateException("Invalid statement (${start.line}:${start.charPositionInLine}): $message")
 
 open class SvLibVisitor<T>(protected val charStream: CharStream, protected val logger: Logger)
   : SvLibBaseVisitor<T>() {

@@ -136,6 +136,7 @@ class XcfaCliParseTest {
         Arguments.of("/svlib/check-true-annotate-tag.svlib"),
         Arguments.of("/svlib/check-true-middle.svlib"),
         Arguments.of("/svlib/choice.svlib"),
+        Arguments.of("/svlib/goto.svlib"),
         Arguments.of("/svlib/havoc.svlib"),
         Arguments.of("/svlib/if-assign.svlib"),
         Arguments.of("/svlib/if-simple-safe.svlib"),

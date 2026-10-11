@@ -146,6 +146,7 @@ class XcfaCliVerifyTest {
         Arguments.of("/svlib/annotated-loop-head.svlib", null),
         Arguments.of("/svlib/check-true-annotate-tag.svlib", null),
         Arguments.of("/svlib/check-true-middle.svlib", null),
+        Arguments.of("/svlib/goto.svlib", null),
         Arguments.of("/svlib/havoc.svlib", null),
         Arguments.of("/svlib/if-assign.svlib", null),
         Arguments.of("/svlib/if-simple-safe.svlib", null),

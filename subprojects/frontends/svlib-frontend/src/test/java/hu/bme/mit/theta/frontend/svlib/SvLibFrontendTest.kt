@@ -135,6 +135,29 @@ internal class SvLibFrontendTest {
   }
 
   @Test
+  fun gotoLabeledLocations() {
+    val xcfa: XCFA = parseResource("goto.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val loopHead = procedure.locs.find { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 } ?: fail()
+    assertTrue(loopHead.outgoingEdges.any { it.target == procedure.errorLoc.get() })
+
+    var cycleFound = false
+    val visited = mutableListOf(loopHead)
+    var i = 0
+    while (i < visited.size) {
+      val next = visited[i].outgoingEdges.map(XcfaEdge::target)
+      if (next.intersect(visited).isNotEmpty()) {
+        cycleFound = true
+        break
+      }
+      visited.addAll(next)
+      ++i
+    }
+    assertTrue(cycleFound)
+  }
+
+  @Test
   fun choiceCreatesBranching() {
     val xcfa: XCFA = parseResource("choice.svlib")
     val procedure = xcfa.procedures.first()
