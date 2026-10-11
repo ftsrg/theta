@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isRead
+import hu.bme.mit.theta.xcfa.utils.strongLiveVars
 import java.math.BigInteger
 import java.util.Collections
 import java.util.IdentityHashMap
@@ -48,12 +49,14 @@ import java.util.IdentityHashMap
  * (@see DeterministicPass)
  *
  * Given a [ParseContext], unread writes to global objects are removed as well (see
- * [UnusedMemoryWriteRemoval]).
+ * [UnusedMemoryWriteRemoval]). With [removeDeadStores], an assignment to a local is also removed
+ * where the local is dead afterwards, even if it is read elsewhere.
  */
 class UnusedVarPass(
   private val uniqueWarningLogger: Logger,
   val property: XcfaProperty? = null,
   parseContext: ParseContext? = null,
+  private val removeDeadStores: Boolean = false,
 ) : ProcedurePass {
 
   private val memoryWriteRemoval = parseContext?.let(::UnusedMemoryWriteRemoval)
@@ -110,6 +113,9 @@ class UnusedVarPass(
           }
         }
       }
+      if (removeDeadStores && !isOverflow) {
+        builder.parent.getProcedures().forEach { b -> b.removeDeadStores() }
+      }
       if (
         !keepGlobalVariableAccesses &&
           !isOverflow &&
@@ -138,6 +144,34 @@ class UnusedVarPass(
     builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
 
     return builder
+  }
+
+  /** Drops the assignments to locals that are dead right after them (see [strongLiveVars]). */
+  private fun XcfaProcedureBuilder.removeDeadStores() {
+    val locals = getVars() - getParams().map { it.first }.toSet()
+    val live = strongLiveVars(this)
+    getEdges().toList().forEach { edge ->
+      val alive = (live[edge.target] ?: locals).toMutableSet()
+      val labels = edge.getFlatLabels()
+      val kept = ArrayDeque<XcfaLabel>()
+      for (label in labels.reversed()) {
+        val stmt = (label as? StmtLabel)?.stmt
+        if (stmt is AssignStmt<*> && stmt.varDecl in locals && stmt.varDecl !in alive) continue
+        when (stmt) {
+          is AssignStmt<*> -> {
+            alive.remove(stmt.varDecl)
+            alive.addAll(ExprUtils.getVars(stmt.expr))
+          }
+          is HavocStmt<*> -> alive.remove(stmt.varDecl)
+          else -> alive.addAll(label.collectVarsWithAccessType().keys)
+        }
+        kept.addFirst(label)
+      }
+      if (kept.size != labels.size) {
+        removeEdge(edge)
+        addEdge(edge.withLabel(SequenceLabel(kept.toList(), edge.label.metadata)))
+      }
+    }
   }
 
   private fun XcfaLabel.removeUnusedWrites(

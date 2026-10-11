@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
@@ -224,6 +226,35 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
     ),
+  )
+
+/**
+ * Fewer and smaller state variables, for the monolithic (decision-diagram, bounded) analyses of
+ * reachability, after the edges are merged and mutexes are variables: memory cells become variables
+ * (twice, as the first round's constants can bound the second's offsets), literals and copies are
+ * propagated, and what is left unread or dead is removed. Empty for other properties.
+ */
+class StateReductionPasses(property: XcfaProperty, parseContext: ParseContext) :
+  ProcedurePassManager(
+    if (property.inputProperty != ErrorDetection.ERROR_LOCATION) emptyList()
+    else {
+      fun cleanup() =
+        listOf(
+          NormalizePass(),
+          DeterministicPass(), // required by the two below
+          SimplifyExprsPass(parseContext, property),
+          CopyPropagationPass(),
+          UnusedVarPass(NullLogger.getInstance(), property, removeDeadStores = true),
+        )
+      listOf(
+        listOf(StaticCellScalarizationPass()),
+        cleanup() +
+          listOf(LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true)) +
+          cleanup(),
+        listOf(StaticCellScalarizationPass(1)),
+        cleanup(),
+      )
+    }
   )
 
 class LitmusPasses : ProcedurePassManager()

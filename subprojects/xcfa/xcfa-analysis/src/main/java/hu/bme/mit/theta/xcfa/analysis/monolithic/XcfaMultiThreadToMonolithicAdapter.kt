@@ -75,9 +75,8 @@ class XcfaMultiThreadToMonolithicAdapter(
         LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
         RemoveUnnecessaryAtomicBlocksPass(),
         MutexToVarPass(),
-        DereferenceToArrayPass(),
       )
-    ),
+    ) + StateReductionPasses(property, parseContext) + listOf(DereferenceToArrayPass()),
     parseContext,
     initValues,
   ) {

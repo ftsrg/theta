@@ -239,7 +239,7 @@ fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
   return results
 }
 
-private fun getValuationAfterInitPhase(
+internal fun getValuationAfterInitPhase(
   builder: XcfaProcedureBuilder,
   initEdges: Set<XcfaEdge>,
 ): Valuation {

@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
@@ -37,6 +38,7 @@ import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.getInitLoops
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
+import hu.bme.mit.theta.xcfa.utils.getValuationAfterInitPhase
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.mergeIncomingValuations
@@ -79,6 +81,13 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     builder.getVars().getConstAndModifiedVars(setOf(builder), constValuation)
 
+    // a global written only before the first thread start keeps its value after it
+    val initPhaseValues =
+      if (preserveSharedAccesses) MutableValuation()
+      else initPhaseConstants(builder.parent, modifiedGlobals)
+    val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
+    if (!isInitProcedure) constValuation.putAll(initPhaseValues)
+
     lateinit var lastEdges: LinkedHashSet<XcfaEdge>
     do {
       lastEdges = edges
@@ -109,7 +118,9 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         if (edge !in initEdges || newLabels.any { it is InvokeLabel || it is StartLabel }) {
           // note that global variable values are still propagated within an edge (XcfaEdge is
           // considered atomic)
-          modifiedGlobals.forEach { localValuation.remove(it) }
+          modifiedGlobals.forEach {
+            if (initPhaseValues.eval(it).isEmpty) localValuation.remove(it)
+          }
         }
 
         if (newLabels != oldLabels) {
@@ -170,6 +181,29 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         (access.isRead && !kept.isRead) || (access.isWritten && !kept.isWritten)
       }
     return lostGlobal || derefCount(new) < derefCount(old)
+  }
+
+  /**
+   * The values of the [modifiedGlobals] that only the init procedure writes, and only before it
+   * starts any thread, as they are once that phase ends (when every path agrees on the value).
+   */
+  private fun initPhaseConstants(xcfa: XcfaBuilder, modifiedGlobals: List<VarDecl<*>>): Valuation {
+    if (modifiedGlobals.isEmpty()) return MutableValuation()
+    val initPhase = getNonConcurrentEdges(xcfa, true).first
+    if (initPhase.isEmpty()) return MutableValuation()
+    val writtenLater =
+      xcfa
+        .getProcedures()
+        .flatMap { it.getEdges() }
+        .filter { it !in initPhase }
+        .flatMap { e -> e.label.collectVarsWithAccessType().filter { it.value.isWritten }.keys }
+        .toSet()
+    val candidates = modifiedGlobals.filter { it !in writtenLater }
+    if (candidates.isEmpty()) return MutableValuation()
+    val afterInit = getValuationAfterInitPhase(xcfa.getInitProcedures().first().first, initPhase)
+    val result = MutableValuation()
+    candidates.forEach { v -> afterInit.eval(v).ifPresent { result.put(v, it) } }
+    return result
   }
 
   /**
