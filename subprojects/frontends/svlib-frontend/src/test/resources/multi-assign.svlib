@@ -6,9 +6,18 @@
   ((x0 Int))
   ((x Int) (y Int))
   ()
-  (assign
-    (x (+ x0 1))
-    (y (+ x0 2))))
+  (sequence
+    (assign
+      (x 0)
+      (y 0))
+    (assign
+      (x (+ y 1))
+      (y (+ x 1)))
+    (!
+      (sequence)
+      :check-true (and (= x 1) (= y 1))))
+  )
+
 
 (declare-const input Int)
 

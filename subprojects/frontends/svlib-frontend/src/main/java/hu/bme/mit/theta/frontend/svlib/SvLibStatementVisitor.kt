@@ -19,10 +19,12 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.ParserRuleContext
 
 class SvLibStatementVisitor(
   private val procedure: XcfaProcedureBuilder,
@@ -38,28 +40,39 @@ class SvLibStatementVisitor(
 
   override fun visitAssumeStatement(ctx: AssumeStatementContext) {
     val condition = termTransformer.toExpr(ctx.term().original, Bool())
-    current = current.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.original)))
+    current = current.extend(StmtLabel(Stmts.Assume(condition), metadata = ctx.metadata))
   }
 
   override fun visitAssignStatement(ctx: AssignStatementContext) {
-    val labels = ctx.symbol().zip(ctx.term()).map { (symbol, term) ->
-      val variable = symbolTable.getVar(symbol.original)
-      AssignStmtLabel(
-        variable,
-        termTransformer.toExpr(term.original, variable.getType()),
-        SvLibSourceMetadata("(assign ${symbol.original} ${term.original})")
-      )
+    val vars = ctx.symbol().map { symbolTable.getVar(it.original) }
+    val exprs = vars.zip(ctx.term()).map { (varDecl, term) ->
+      termTransformer.toExpr(term.original, varDecl.getType())
     }
 
-    current = current.extend(SequenceLabel(labels, metadata = SvLibSourceMetadata(ctx.original)))
+    val label = if (vars.size == 1) {
+      AssignStmtLabel(vars.first(), exprs.first(), metadata = ctx.metadata)
+    } else {
+      val tempVars = vars.filter { varDecl -> exprs.any { varDecl in ExprUtils.getVars(it) } }.associateWith { it.createTemp() }
+      tempVars.values.forEach(procedure::addVar)
+
+      val assignments = vars.zip(exprs).map { (varDecl, expr) ->
+        AssignStmtLabel(tempVars[varDecl] ?: varDecl, expr, metadata = ctx.metadata)
+      }
+      val tempAssignments = tempVars.map { (varDecl, tempVar) ->
+        AssignStmtLabel(varDecl, tempVar.ref, metadata = ctx.metadata)
+      }
+      SequenceLabel(assignments + tempAssignments, metadata = ctx.metadata)
+    }
+
+    current = current.extend(label)
   }
 
   override fun visitHavocStatement(ctx: HavocStatementContext) {
     val labels = ctx.symbol().map { symbol ->
       val variable = symbolTable.getVar(symbol.original)
-      StmtLabel(Stmts.Havoc(variable), metadata = SvLibSourceMetadata("(havoc ${symbol.original})"))
+      StmtLabel(Stmts.Havoc(variable), metadata = ctx.metadata)
     }
-    val label = if (labels.size == 1) labels.first() else SequenceLabel(labels, metadata = SvLibSourceMetadata(ctx.original))
+    val label = if (labels.size == 1) labels.first() else SequenceLabel(labels, metadata = ctx.metadata)
 
     current = current.extend(label)
   }
@@ -71,11 +84,11 @@ class SvLibStatementVisitor(
     val ifStart = current
     val ifEnd = newLoc()
 
-    current = ifStart.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.term().original)))
+    current = ifStart.extend(StmtLabel(Stmts.Assume(condition), metadata = ctx.term().metadata))
     visit(ctx.statement(0))
     procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
-    current = ifStart.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = SvLibSourceMetadata(ctx.term().original)))
+    current = ifStart.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
     if (ctx.statement().size > 1) visit(ctx.statement(1))
     procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
@@ -85,10 +98,10 @@ class SvLibStatementVisitor(
   override fun visitWhileStatement(ctx: WhileStatementContext) {
     val condition = termTransformer.toExpr(ctx.term().original, Bool())
     val loopHead = current
-    val loopExit = loopHead.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = SvLibSourceMetadata(ctx.term().original)))
+    val loopExit = loopHead.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
 
     loops.push(Loop(loopHead, loopExit))
-    current = loopHead.extend(StmtLabel(Stmts.Assume(condition), metadata = SvLibSourceMetadata(ctx.term().original)))
+    current = loopHead.extend(StmtLabel(Stmts.Assume(condition), metadata = ctx.term().metadata))
     visit(ctx.statement())
     procedure.addEdge(XcfaEdge(current, loopHead, NopLabel, EmptyMetaData))
     loops.pop()
@@ -100,7 +113,7 @@ class SvLibStatementVisitor(
     if (loops.isEmpty()) throw ctx.unsupported("continue outside while")
 
     procedure.addEdge(
-      XcfaEdge(current, loops.peak().head, NopLabel, SvLibSourceMetadata(ctx.original))
+      XcfaEdge(current, loops.peak().head, NopLabel, ctx.metadata)
     )
 
     current = newLoc()
@@ -110,7 +123,7 @@ class SvLibStatementVisitor(
     if (loops.isEmpty()) throw ctx.unsupported("break outside while")
 
     procedure.addEdge(
-      XcfaEdge(current, loops.peak().exit, NopLabel, SvLibSourceMetadata(ctx.original))
+      XcfaEdge(current, loops.peak().exit, NopLabel, ctx.metadata)
     )
 
     current = newLoc()
@@ -120,7 +133,7 @@ class SvLibStatementVisitor(
 
   override fun visitReturnStatement(ctx: ReturnStatementContext) {
     procedure.addEdge(
-      XcfaEdge(current, procedure.finalLoc.get(), NopLabel, SvLibSourceMetadata(ctx.original))
+      XcfaEdge(current, procedure.finalLoc.get(), NopLabel, ctx.metadata)
     )
 
     current = newLoc()
@@ -154,6 +167,9 @@ class SvLibStatementVisitor(
     procedure.addEdge(XcfaEdge(this, to, label, label.metadata))
     return to
   }
+
+  private val ParserRuleContext.metadata: SvLibSourceMetadata
+    get() = SvLibSourceMetadata(original)
 }
 
 private data class Loop(val head: XcfaLocation, val exit: XcfaLocation)

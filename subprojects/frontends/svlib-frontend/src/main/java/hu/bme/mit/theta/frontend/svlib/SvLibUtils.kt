@@ -17,6 +17,8 @@
 package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -37,6 +39,9 @@ import org.antlr.v4.runtime.misc.Interval
 
 internal fun newLoc(tags: List<String> = listOf())
   = XcfaLocation("l" + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
+
+private var tmpVarCnt = 0
+internal fun VarDecl<*>.createTemp() = Decls.Var("__theta_${name}_${tmpVarCnt++}", type)
 
 internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition: Expr<BoolType>): XcfaLocation {
   val originalOutgoingEdges = location.outgoingEdges.toMutableList()

@@ -9,6 +9,7 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Assertions.*
@@ -102,12 +103,17 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("multi-assign.svlib")
     val procedure = xcfa.procedures.first()
 
-    val sequenceLabel = procedure.edges
-        .map(XcfaEdge::label)
-        .filterIsInstance<SequenceLabel>()
-        .first()
+    val vars = xcfa.collectVars()
+    assertTrue(vars.any { it.name.contains("__theta") })
 
-    assertEquals(2, sequenceLabel.labels.size)
+    val sequenceLabels = procedure.edges.map(XcfaEdge::label).filterIsInstance<SequenceLabel>()
+    assertEquals(2, sequenceLabels.size)
+
+    val initAssign = sequenceLabels[0]
+    val incrementAssign = sequenceLabels[1]
+
+    assertEquals(2, initAssign.labels.size)
+    assertEquals(4, incrementAssign.labels.size)
   }
 
   @Test
