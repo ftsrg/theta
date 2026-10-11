@@ -52,6 +52,12 @@ public class BvTestUtils {
                     {BvSRemExpr.class, SBv16(-7), SRem(SBv16(-7), SBv16(0))},
                     {BvSModExpr.class, SBv16(-7), SMod(SBv16(-7), SBv16(0))},
 
+                    /* Signed modulo takes the sign of the divisor (SMT-LIB bvsmod) */
+                    {BvSModExpr.class, SBv16(-1), SMod(SBv16(5), SBv16(-3))},
+                    {BvSModExpr.class, SBv16(1), SMod(SBv16(-5), SBv16(3))},
+                    {BvSModExpr.class, SBv16(-2), SMod(SBv16(-5), SBv16(-3))},
+                    {BvSModExpr.class, SBv16(0), SMod(SBv16(6), SBv16(-3))},
+
                     /* Signed basic operations (positive) */
                     {BvAddExpr.class, SBv16(4), Add(List.of(SBv16(1), SBv16(3)))},
                     {BvSubExpr.class, SBv16(1), Sub(SBv16(4), SBv16(3))},

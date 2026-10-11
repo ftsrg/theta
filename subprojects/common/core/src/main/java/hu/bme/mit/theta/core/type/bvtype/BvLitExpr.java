@@ -313,21 +313,20 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr smod(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        // Always positive semantics:
+        // SMT-LIB bvsmod: the result has the sign of the divisor
         // 5 mod 3 = 2
-        // 5 mod -3 = 2
+        // 5 mod -3 = -1
         // -5 mod 3 = 1
-        // -5 mod -3 = 1
-        // SMT-LIB: x mod 0 is x
-        if (signedBvLitExprToBigInteger(that).signum() == 0) {
+        // -5 mod -3 = -2
+        // x mod 0 = x
+        final BigInteger divisor = signedBvLitExprToBigInteger(that);
+        if (divisor.signum() == 0) {
             return this;
         }
-        BigInteger result =
-                signedBvLitExprToBigInteger(this).mod(signedBvLitExprToBigInteger(that).abs());
-        if (result.compareTo(BigInteger.ZERO) < 0) {
-            result = result.add(signedBvLitExprToBigInteger(that).abs());
+        BigInteger result = signedBvLitExprToBigInteger(this).mod(divisor.abs());
+        if (divisor.signum() < 0 && result.signum() != 0) {
+            result = result.add(divisor);
         }
-        assert result.compareTo(BigInteger.ZERO) >= 0;
         return bigIntegerToSignedBvLitExpr(result, getType().getSize());
     }
 
