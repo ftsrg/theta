@@ -799,7 +799,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           override val varDecl: VarDecl<BoolType> = Var(LAST_SEGMENT_PASSED, Bool())
           override val passLastSegmentNewValue: Expr<BoolType> = True()
           override val initValue: LitExpr<BoolType> = False()
-          override val target: Expr<BoolType> = Eq(varDecl.ref, True())
+          override val target: Expr<BoolType> = varDecl.ref
         }
       }
     // Global: waypoints of different threads must see the same segment progression.
