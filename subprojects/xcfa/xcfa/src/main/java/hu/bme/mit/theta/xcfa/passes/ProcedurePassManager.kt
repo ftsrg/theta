@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
@@ -224,6 +226,29 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
       // Final cleanup
       UnusedVarPass(uniqueWarningLogger),
     ),
+  )
+
+/**
+ * Passes reducing the state variables of the monolithic analyses of reachability: memory cells
+ * become variables, and what is left unread is removed. Empty for other properties.
+ */
+class StateReductionPasses(property: XcfaProperty) :
+  ProcedurePassManager(
+    if (property.inputProperty != ErrorDetection.ERROR_LOCATION) emptyList()
+    else {
+      fun cleanup() =
+        listOf(
+          NormalizePass(),
+          DeterministicPass(),
+          UnusedVarPass(NullLogger.getInstance(), property),
+        )
+      listOf(
+        listOf(StaticCellScalarizationPass()),
+        cleanup(),
+        listOf(StaticCellScalarizationPass(1)),
+        cleanup(),
+      )
+    }
   )
 
 class LitmusPasses : ProcedurePassManager()
