@@ -61,8 +61,8 @@ DSS works on programs with a single XCFA procedure (the CLI rejects others).
 
 | Option | Default | Meaning | CPAchecker counterpart |
 |---|---|---|---|
-| `--dss-decomposition {LINEAR,MERGE,NONE}` | `MERGE` | How the procedure is cut into blocks | `decompositionType` (`MERGE_DECOMPOSITION` by default) |
-| `--dss-target-block-count N` | `2` | Target block count of `MERGE` | hardcoded `2` in `DssDecompositionOptions` |
+| `--dss-decomposition {LINEAR,MERGE,MERGE_ABSORB_SELF_LOOPS,MERGE_ACYCLIC,NONE}` | `MERGE` | How the procedure is cut into blocks (`MERGE_ABSORB_SELF_LOOPS`: 5.4, `MERGE_ACYCLIC`: 5.5) | `decompositionType` (`MERGE_DECOMPOSITION` by default); the two Theta-only ones have none |
+| `--dss-target-block-count N` | `2` | Target block count of `MERGE`, `MERGE_ABSORB_SELF_LOOPS` and `MERGE_ACYCLIC` | hardcoded `2` in `DssDecompositionOptions` |
 | `--dss-largest-horizontal-merge N` | `-1` | Skip a horizontal merge if more than one of its blocks has more than `N` locations (`-1`: no limit) | `largestHorizontalMerge` |
 | `--dss-allow-single-block-decomposition` | off | With `MERGE` and a target of at most 1, use a single block | `allowSingleBlockDecompositionWhenMerging` |
 | `--dss-reset-precision` | off | Analyze every start state with the initial precision | `resetPrecisionForEveryRun` |
@@ -195,19 +195,54 @@ while (blocks > target):
 The default target is 2 (`DEFAULT_TARGET_BLOCK_COUNT`), CPAchecker's hardcoded value (its option
 documentation speaks of "the number of functions", but the code passes 2).
 
-### 5.4 `SingleBlockDecomposition` (`NONE`)
+### 5.4 `SelfLoopAbsorbingDecomposition` (`MERGE_ABSORB_SELF_LOOPS`, Theta-only)
+
+`MERGE`, then every **self loop** (a block whose entry and exit are the same loop head `h`) is
+merged into a neighbouring block `ML<n>` (`absorbSelfLoops`), so the loop runs inside one block
+analysis instead of as postconditions and violation conditions the block keeps sending to itself:
+
+* All self loops at `h` go into the single other block that **ends** at `h` (the block entering the
+  loop; its exit `h` then yields the loop invariant as postcondition), or, if there are several,
+  into the single other block that **starts** at `h` (the loop exit). A loop head with several of
+  both keeps its self loop, since absorbing it would duplicate the loop.
+* Absorbing an inner loop can turn the outer loop into a self loop, so `MERGE` and absorbing
+  alternate until neither changes the graph.
+
+The resulting blocks contain a whole loop, which the analysis handles with per-path violation
+conditions (6.3).
+
+### 5.5 `AcyclicMergeDecomposition` (`MERGE_ACYCLIC`, Theta-only)
+
+`MERGE`, then every **cycle** of the block graph - a self loop or a cycle through many blocks - is
+collapsed into one block `MC<n>` (`collapseCycles`), smallest strongly connected component first,
+so the block graph is acyclic. A block needs one entry and one exit location, so the region of a
+component grows until it has them:
+
+* several entry locations: add the predecessor blocks outside the region;
+* several exit locations (a `break`, an error inside the loop): add the successor blocks;
+* the entry is also the exit: add the predecessors - a block that starts and ends at the same
+  location is extracted with a split head (6.1) and could not iterate its loop.
+
+A region without successors ends at one of its dead ends (preferably not an error location). A
+region can always grow to the whole procedure, a valid single block, so collapsing terminates;
+merging a region can close a new cycle through outside blocks, which a later round collapses.
+`MERGE` and collapsing alternate until neither changes the graph. Collapsed regions can be coarse
+(a loop with an error inside takes its exits along), and the strongly-connected-component rule of
+the analysis (7.7) never applies.
+
+### 5.6 `SingleBlockDecomposition` (`NONE`)
 
 One block `SB1` from the entry to the last location without outgoing edges that a breadth-first
 traversal finds, as in CPAchecker.
 
-### 5.5 `BlockGraphInstrumentation`
+### 5.7 `BlockGraphInstrumentation`
 
 CPAchecker's `BlockGraphModification.instrumentCFA`: every block end with outgoing edges gets a
 "ghost" `NopLabel` edge (marked with `GhostEdgeMetadata`) to a fresh location, which becomes the
 block's `violationConditionLocation`; a single-block graph is left unchanged. The CLI does **not**
 run it - see 11.1.
 
-### 5.6 `BlockGraph.toDot()`
+### 5.8 `BlockGraph.toDot()`
 
 Graphviz rendering for debugging: the root has a double border, blocks with a dedicated
 violation-condition location a dashed one.
@@ -230,7 +265,12 @@ contain the edges of the whole procedure). Parameters:
 If the block starts and ends at the same location (a loop body), that location gets **two clones**:
 the entry clone keeps the outgoing body edges, the exit clone the incoming ones. This is
 CPAchecker's `INITIAL` vs. `FINAL` block state: the block end is not reachable before the first
-edge, and one analysis covers exactly one iteration.
+edge, and one analysis covers exactly one iteration. A block of `MERGE_ABSORB_SELF_LOOPS` (5.4) or
+`MERGE_ACYCLIC` (5.5) may instead contain a whole loop, possibly through its exit; it is extracted as it is, so one analysis
+covers every iteration.
+
+The result also returns the two synthetic edges (`preconditionEdge`, `violationConditionEdge`),
+which the per-path violation conditions (6.3) need to recognize in a counterexample.
 
 ### 6.2 `packPostcondition`
 
@@ -255,6 +295,15 @@ computed over the block's paths by memoized recursion:
 
 * From the exit, only a ghost edge is followed; a loop-body block is entered from its head exactly
   once, so blocks are acyclic for this purpose (a real cycle is reported as an error).
+* **Blocks with an internal cycle** (`hasInternalCycle`, only from `MERGE_ABSORB_SELF_LOOPS` and `MERGE_ACYCLIC`) have
+  infinitely many paths, so they get **per-path** violation conditions instead (Theta-only):
+  `computePathViolationCondition` is the weakest precondition along the counterexample of the run,
+  after the synthetic precondition edge. CEGAR's counterexamples use per-process copies of the
+  variables (`T0::_::x`), which are renamed back via the states' `varLookup`; a condition over any
+  other variable is rejected. A block sends the **disjunction of all** path conditions it found so
+  far: a predecessor keeps only the last condition per sender (7.5), so one path at a time would let
+  it forget the paths it already refuted, and the conditions could alternate until one repeats and
+  is dropped - a wrong SAFE verdict, observed while building this.
 * `(c1 && φ) || (c2 && φ)` is built as `(c1 || c2) && φ`: two branches with the same continuation
   would otherwise double the condition at every unrolling.
 * **Auxiliary variables** (`DssAuxVars`) stand for the existentially quantified values of havocs.
@@ -458,6 +507,13 @@ states exist, relying on those being the
 fixed point of the component. This is the paper's argument ("we can only find valid proofs if all
 postconditions in the SCC reached a fixed point"); the implementation does not check it.
 
+**Per-path violation conditions** (6.3, blocks with an internal cycle) are under-approximations:
+each disjunct is the weakest precondition of one concrete path, so UNSAFE stays sound. For SAFE,
+a predecessor that refutes the union `U` keeps `post ∧ U` unsatisfiable in every later run (it keeps
+`U` as its target), so the block's next counterexample must start outside `U`; its path condition
+is then a new disjunct, and the union grows strictly while a target stays reachable - it cannot
+fall silent.
+
 **Termination** is not guaranteed, neither in CPAchecker (section 12). A loop block can keep
 receiving and refuting ever longer violation conditions while interpolation discovers new
 predicates (e.g. `y >= -1`, `y >= -2`, ...). Unsafe programs whose counterexample unrolls a loop `n`
@@ -566,6 +622,10 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
 * **Checker roster** (`--dss-checker-backends`, `--dss-checker-selection`): block analyses can use
   predicate CEGAR with the cartesian, boolean or split domain, or bounded model checkers (which
   ignore precisions and may miss targets).
+* **Self-loop absorbing and acyclic decompositions** (`--dss-decomposition MERGE_ABSORB_SELF_LOOPS`,
+  `MERGE_ACYCLIC`, 5.4-5.5): blocks that contain a whole loop, with per-path violation conditions
+  (6.3). CPAchecker's blocks never
+  contain a cycle besides the split loop head.
 
 ### 11.5 Deviations in the analysis logic
 
@@ -670,14 +730,16 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `BlockGraphTest` | wiring, root, consistency |
 | | `BlockGraphMergingTest` | horizontal/vertical passes, ids, single-pass and early-stop semantics, cycles |
 | | `MergeBlockDecompositionTest` | target counts, merge size limit |
+| | `SelfLoopAbsorbingDecompositionTest` | absorbing into the entering or the leaving block, nested loops, loop heads left alone, coverage |
+| | `AcyclicMergeDecompositionTest` | multi-block cycles with several exits (`break`, error inside the loop), nested cycles, growth over predecessors, no split-head blocks |
 | | `SingleBlockDecompositionTest` | `SB1`, single-block merging, default target, instrumentation no-op |
 | | `BlockGraphInstrumentationTest`, `BlockGraphDotTest` | ghost edges, DOT |
 | analysis | `BlockXcfaExtractionTest` | isolation of extracted blocks |
 | | `BlockAnalysisPrimitivesTest` | WP rules (assume, assign, sequence, nondet, havoc), unsupported labels, linear growth, preconditions, cleared targets, havoc of auxiliary variables, predicate operators, `predicatesOf` |
-| | `ViolationConditionTest` | path conditions, canonical auxiliary variables, one loop iteration per analysis, violation-condition targets, precision combination |
+| | `ViolationConditionTest` | path conditions, canonical auxiliary variables, one loop iteration per analysis, violation-condition targets, precision combination, internal cycles, per-path conditions |
 | | `PostconditionPackingTest`, `WorkerConfigDelegatorTest`, `DssCheckerRosterTest` | packing, checker delegation, rosters |
 | actor | `PredicateBlockBehaviorStepTest` | every step of the block analysis: initial analysis, precondition coverage, storing violation conditions, laziness, refutation vs. propagation at the root and inside, the lost-violation-condition regression |
-| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check |
+| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check, self-loop-absorbed and acyclic graphs with per-path violation conditions (root and non-root loop blocks) |
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
 | solver | `SolverScopeTest` | solver scopes own, close and nest |
 | solver-z3 | `Z3ItpSolverTest.testInterpolationWithAGroundPartition` | the interpolation fix |

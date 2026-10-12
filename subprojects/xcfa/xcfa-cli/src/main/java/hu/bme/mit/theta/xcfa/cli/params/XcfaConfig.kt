@@ -344,7 +344,7 @@ data class DssConfig(
   @Parameter(
     names = ["--dss-target-block-count"],
     description =
-      "Target block count for --dss-decomposition MERGE; ignored otherwise (CPAchecker's " +
+      "Target block count for --dss-decomposition MERGE(_ABSORB_SELF_LOOPS, _ACYCLIC); ignored otherwise (CPAchecker's " +
         "hardcoded value is 2)",
   )
   var targetBlockCount: Int = 2,
@@ -358,7 +358,7 @@ data class DssConfig(
   @Parameter(
     names = ["--dss-allow-single-block-decomposition"],
     description =
-      "With --dss-decomposition MERGE and a target of at most one block, use a single block " +
+      "With --dss-decomposition MERGE(_ABSORB_SELF_LOOPS, _ACYCLIC) and a target of at most one block, use a single block " +
         "(CPAchecker's allowSingleBlockDecompositionWhenMerging)",
   )
   var allowSingleBlockDecomposition: Boolean = false,

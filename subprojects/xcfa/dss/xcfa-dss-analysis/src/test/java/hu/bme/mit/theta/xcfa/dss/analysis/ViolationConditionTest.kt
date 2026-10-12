@@ -17,6 +17,8 @@ package hu.bme.mit.theta.xcfa.dss.analysis
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
@@ -27,6 +29,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -132,6 +135,32 @@ class ViolationConditionTest {
     val vc3 = computeViolationCondition(body, mapOf(body.finalLocation to And(vc1, Gt(y, x))))
     assertEquals(2, DssAuxVars.varsOf(vc3).size)
     assertNotEquals(vc1, vc3)
+  }
+
+  @Test
+  fun `only a block that contains a whole loop has an internal cycle`() {
+    val procedure = loopProcedure()
+    val linear = LinearBlockDecomposition().decompose(procedure)
+    assertTrue(linear.blocks.none(::hasInternalCycle), "a loop-body block is split at its head")
+
+    val absorbed = SelfLoopAbsorbingDecomposition().decompose(procedure)
+    val loopBlock = absorbed.blocks.single { block -> block.locations.any { it.name == "body" } }
+    assertTrue(hasInternalCycle(loopBlock))
+  }
+
+  @Test
+  fun `the path violation condition unrolls exactly the iterations of the path`() {
+    val procedure = loopProcedure()
+    val x = procedure.intVar("x")
+    val iteration =
+      listOf(StmtLabel(Assume(Lt(x.ref, Int(2)))), StmtLabel(Assign(x, Add(x.ref, Int(1)))))
+    val path = iteration + iteration + StmtLabel(Assume(Geq(x.ref, Int(2))))
+
+    val vc = computePathViolationCondition(path)
+
+    // x < 2 && x + 1 < 2 && x + 2 >= 2, i.e., exactly two iterations from x = 0
+    assertTrue(operators.isSubsumed(vc, Eq(x.ref, Int(0))))
+    assertTrue(operators.isSubsumed(Eq(x.ref, Int(0)), vc))
   }
 
   @Test

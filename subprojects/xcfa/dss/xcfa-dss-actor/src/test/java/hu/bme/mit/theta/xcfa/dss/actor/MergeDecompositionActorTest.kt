@@ -22,12 +22,16 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
+import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.horizontalMergePass
+import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
 import hu.bme.mit.theta.xcfa.model.*
 import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -353,6 +357,156 @@ class MergeDecompositionActorTest {
         }
       main.start()
     }
+
+  private fun selfLoopAbsorbedBlockGraph(wholeProgram: XCFA): BlockGraph {
+    val blockGraph =
+      SelfLoopAbsorbingDecomposition().decompose(wholeProgram.procedures.single()).also {
+        it.checkConsistency()
+      }
+    assertTrue(blockGraph.blocks.none { it.id in it.successorIds }) { "no self loop expected" }
+    return blockGraph
+  }
+
+  @Test
+  fun `absorbing the self loop keeps the SAFE and UNSAFE verdicts of the xy loop`() {
+    val safeProgram = xyLoopXcfa(incrementY = true)
+    val unsafeProgram = xyLoopXcfa(incrementY = false)
+    for (executor in
+      listOf<(BlockGraph, (Block) -> DssBlockBehavior) -> DssResult>(
+        { bg, bf -> runDssActors(bg, bf) },
+        { bg, bf -> runDssActorsSequentially(bg, bf) },
+      )) {
+      assertEquals(
+        DssResult.SAFE,
+        checkDecomposed(safeProgram, selfLoopAbsorbedBlockGraph(safeProgram), executor),
+      )
+      assertEquals(
+        DssResult.UNSAFE,
+        checkDecomposed(unsafeProgram, selfLoopAbsorbedBlockGraph(unsafeProgram), executor),
+      )
+    }
+  }
+
+  /**
+   * `x = 0; n = *; if (n >= 0) { while (x < n) x++; assert(...) }`: the root branches, so the loop
+   * is absorbed into a non-root block, whose per-path violation conditions go back to the root.
+   * Unsafe: the error needs exactly three iterations (`n = 3`); safe: `x == n` after the loop.
+   */
+  private fun guardedLoopXcfa(unsafe: Boolean): XCFA =
+    xcfa("guarded-loop") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          "n" type Int()
+          (init to "branch") {
+            "x" assign "0"
+            havoc("n")
+          }
+          ("branch" to final) { assume("(< n 0)") }
+          ("branch" to "loophead") { assume("(>= n 0)") }
+          ("loophead" to "body") { assume("(< x n)") }
+          ("body" to "loophead") { "x" assign "(+ x 1)" }
+          ("loophead" to "afterloop") { assume("(>= x n)") }
+          val errorCondition = if (unsafe) "(= x 3)" else "(/= x n)"
+          ("afterloop" to final) { assume("(not $errorCondition)") }
+          ("afterloop" to err) { assume(errorCondition) }
+        }
+      main.start()
+    }
+
+  @Test
+  fun `a non-root block absorbing a loop sends per-path violation conditions to the root`() {
+    for (unsafe in listOf(true, false)) {
+      val wholeProgram = guardedLoopXcfa(unsafe)
+      val blockGraph = selfLoopAbsorbedBlockGraph(wholeProgram)
+      val loopBlock = blockGraph.blocks.single { it.locations.any { loc -> loc.name == "body" } }
+      assertTrue(hasInternalCycle(loopBlock) && !loopBlock.isRoot) { "fixture shape: $blockGraph" }
+      assertEquals(unsafe, checkDirectly(wholeProgram).isUnsafe) { "test fixture itself" }
+
+      assertEquals(
+        if (unsafe) DssResult.UNSAFE else DssResult.SAFE,
+        checkDecomposed(wholeProgram, blockGraph) { bg, bf -> runDssActorsSequentially(bg, bf) },
+      )
+    }
+  }
+
+  private fun acyclicBlockGraph(wholeProgram: XCFA): BlockGraph =
+    AcyclicMergeDecomposition().decompose(wholeProgram.procedures.single()).also {
+      it.checkConsistency()
+      assertEquals(0, it.statistics().cyclicSccs) { "acyclic block graph expected" }
+    }
+
+  /**
+   * `n = *; x = 0; if (n >= 0) while (x < n) { x++; if (x == bad) error; }`: the error inside the
+   * loop makes the loop a cycle of two blocks with two exits, entered from a non-root block.
+   */
+  private fun errorInGuardedLoopXcfa(bad: String): XCFA =
+    xcfa("error-in-guarded-loop") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          "n" type Int()
+          (init to "branch") {
+            "x" assign "0"
+            havoc("n")
+          }
+          ("branch" to final) { assume("(< n 0)") }
+          ("branch" to "loophead") { assume("(>= n 0)") }
+          ("loophead" to "check") {
+            assume("(< x n)")
+            "x" assign "(+ x 1)"
+          }
+          ("check" to err) { assume("(= x $bad)") }
+          ("check" to "loophead") { assume("(/= x $bad)") }
+          ("loophead" to final) { assume("(>= x n)") }
+        }
+      main.start()
+    }
+
+  @Test
+  fun `an acyclic block graph keeps the verdicts of loops with an error inside`() {
+    for ((bad, unsafe) in listOf("3" to true, "(- 0 1)" to false)) {
+      val wholeProgram = errorInGuardedLoopXcfa(bad)
+      assertEquals(unsafe, checkDirectly(wholeProgram).isUnsafe) { "test fixture itself" }
+      assertEquals(
+        if (unsafe) DssResult.UNSAFE else DssResult.SAFE,
+        checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)) { bg, bf ->
+          runDssActorsSequentially(bg, bf)
+        },
+      )
+    }
+  }
+
+  @Test
+  fun `an acyclic block graph keeps the verdicts of the xy, guarded and stateful loops`() {
+    val cases =
+      listOf(
+        xyLoopXcfa(incrementY = true) to DssResult.SAFE,
+        xyLoopXcfa(incrementY = false) to DssResult.UNSAFE,
+        guardedLoopXcfa(unsafe = false) to DssResult.SAFE,
+        guardedLoopXcfa(unsafe = true) to DssResult.UNSAFE,
+        statefulCheckXcfa() to DssResult.UNSAFE,
+      )
+    for ((wholeProgram, expected) in cases) {
+      assertEquals(
+        expected,
+        checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)) { bg, bf ->
+          runDssActorsSequentially(bg, bf)
+        },
+      )
+    }
+  }
+
+  @Test
+  fun `absorbing self loops keeps the UNSAFE verdict of a violation four iterations deep`() {
+    val wholeProgram = statefulCheckXcfa()
+    assertEquals(
+      DssResult.UNSAFE,
+      checkDecomposed(wholeProgram, selfLoopAbsorbedBlockGraph(wholeProgram)) { bg, bf ->
+        runDssActorsSequentially(bg, bf)
+      },
+    )
+  }
 
   @Test
   fun `a violation four loop iterations deep is UNSAFE with the global predicate pool`() {

@@ -53,11 +53,13 @@ import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
+import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.DssBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -129,6 +131,18 @@ fun getDssChecker(
       DssDecomposition.LINEAR -> LinearBlockDecomposition()
       DssDecomposition.MERGE ->
         MergeBlockDecomposition(
+          targetBlockCount = dssConfig.targetBlockCount,
+          largestHorizontalMerge = dssConfig.largestHorizontalMerge,
+          allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
+        )
+      DssDecomposition.MERGE_ABSORB_SELF_LOOPS ->
+        SelfLoopAbsorbingDecomposition(
+          targetBlockCount = dssConfig.targetBlockCount,
+          largestHorizontalMerge = dssConfig.largestHorizontalMerge,
+          allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
+        )
+      DssDecomposition.MERGE_ACYCLIC ->
+        AcyclicMergeDecomposition(
           targetBlockCount = dssConfig.targetBlockCount,
           largestHorizontalMerge = dssConfig.largestHorizontalMerge,
           allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,

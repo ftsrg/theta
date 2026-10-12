@@ -37,13 +37,16 @@ import java.util.Optional
  * source procedure). [exitLocation] is the clone where the block's postcondition is read off
  * (CPAchecker's block-end abstraction point). It differs from
  * `locationMapping[block.initialLocation]` even when the block starts and ends at the same location
- * (a loop body), see [extractBlockXcfa].
+ * (a loop body), see [extractBlockXcfa]. [preconditionEdge] and [violationConditionEdge] are the
+ * synthetic edges added for the precondition and the violation condition, if any.
  */
 data class BlockXcfaExtraction(
   val xcfa: XCFA,
   val locationMapping: Map<XcfaLocation, XcfaLocation>,
   val entryLocation: XcfaLocation,
   val exitLocation: XcfaLocation,
+  val preconditionEdge: XcfaEdge? = null,
+  val violationConditionEdge: XcfaEdge? = null,
 )
 
 /**
@@ -128,6 +131,7 @@ fun extractBlockXcfa(
   val procedureVars = sourceProcedure.vars.toMutableSet()
 
   var errorLocation = allLocations.firstOrNull { it.error }
+  var violationConditionEdge: XcfaEdge? = null
   if (violationCondition != null) {
     val target =
       errorLocation
@@ -139,17 +143,17 @@ fun extractBlockXcfa(
     procedureVars.addAll(auxVars)
     val label =
       SequenceLabel(auxVars.map { StmtLabel(Havoc(it)) } + StmtLabel(Assume(violationCondition)))
-    connect(exitLocation, target, XcfaEdge(exitLocation, target, label, EmptyMetaData))
+    violationConditionEdge = XcfaEdge(exitLocation, target, label, EmptyMetaData)
+    connect(exitLocation, target, violationConditionEdge)
   }
 
   var entryLoc = blockEntry
+  var preconditionEdge: XcfaEdge? = null
   if (precondition != null) {
     val syntheticEntry = XcfaLocation("${name}__pre", metadata = EmptyMetaData)
-    connect(
-      syntheticEntry,
-      entryLoc,
-      XcfaEdge(syntheticEntry, entryLoc, StmtLabel(Assume(precondition)), EmptyMetaData),
-    )
+    preconditionEdge =
+      XcfaEdge(syntheticEntry, entryLoc, StmtLabel(Assume(precondition)), EmptyMetaData)
+    connect(syntheticEntry, entryLoc, preconditionEdge)
     allLocations.add(syntheticEntry)
     entryLoc = syntheticEntry
   }
@@ -170,5 +174,12 @@ fun extractBlockXcfa(
   // procedure via `recreate`.
   val xcfa =
     XCFA(name, globalVars).recreate(setOf(blockProcedure), listOf(blockProcedure to emptyList()))
-  return BlockXcfaExtraction(xcfa, clonedLocations, blockEntry, exitLocation)
+  return BlockXcfaExtraction(
+    xcfa,
+    clonedLocations,
+    blockEntry,
+    exitLocation,
+    preconditionEdge,
+    violationConditionEdge,
+  )
 }

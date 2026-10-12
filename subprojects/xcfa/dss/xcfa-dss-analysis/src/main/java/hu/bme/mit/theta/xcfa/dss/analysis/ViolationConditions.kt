@@ -175,6 +175,54 @@ fun computeViolationCondition(
   return DssAuxVars.canonicalize(ExprUtils.simplify(fromEntry))
 }
 
+/**
+ * Whether [block] has a cycle that [computeViolationCondition] cannot handle, i.e., one other than
+ * a loop body that starts and ends at the loop head. Only `SelfLoopAbsorbingDecomposition` creates
+ * such blocks. Unlike there, the block's own edges leaving its final location are followed: only a
+ * split loop head ([extractBlockXcfa]) stops the analysis at the final location, and such a block
+ * can also end on its own loop.
+ */
+fun hasInternalCycle(block: Block): Boolean {
+  val done = HashSet<XcfaLocation>()
+  val onStack = HashSet<XcfaLocation>()
+  val splitHead = block.initialLocation == block.finalLocation
+
+  fun cycleFrom(location: XcfaLocation): Boolean {
+    if (location in done) return false
+    if (!onStack.add(location)) return true
+    val cyclic =
+      location.outgoingEdges.any { edge ->
+        edge in block.edges &&
+          (!splitHead || location != block.finalLocation || edge.metadata == GhostEdgeMetadata) &&
+          cycleFrom(edge.target)
+      }
+    onStack.remove(location)
+    done.add(location)
+    return cyclic
+  }
+
+  return block.initialLocation.outgoingEdges.any {
+    it in block.edges && it.metadata != GhostEdgeMetadata && cycleFrom(it.target)
+  }
+}
+
+/**
+ * The violation condition of a single path ([labels], from the block entry to a target, ending with
+ * the edge that enters the target): the weakest existential precondition of reaching the target
+ * along exactly this path. Theta-only, for blocks with an internal cycle ([hasInternalCycle]),
+ * whose paths cannot all be enumerated: each condition covers one counterexample, and a predecessor
+ * that refutes it excludes it from its postcondition, so the next counterexample takes another
+ * path.
+ */
+fun computePathViolationCondition(labels: List<XcfaLabel>): Expr<BoolType> =
+  DssAuxVars.canonicalize(
+    ExprUtils.simplify(
+      labels.foldRight<XcfaLabel, Expr<BoolType>>(True()) { label, post ->
+        weakestPrecondition(label, post)
+      }
+    )
+  )
+
 private fun weakestPrecondition(label: XcfaLabel, post: Expr<BoolType>): Expr<BoolType> =
   if (post == False()) False()
   else

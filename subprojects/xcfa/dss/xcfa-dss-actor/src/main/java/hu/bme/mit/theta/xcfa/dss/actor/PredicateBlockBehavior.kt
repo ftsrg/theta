@@ -15,7 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
@@ -25,13 +28,20 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.reverseMapping
+import hu.bme.mit.theta.xcfa.dss.analysis.BlockXcfaExtraction
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.dss.analysis.combinePredicatePrecisions
+import hu.bme.mit.theta.xcfa.dss.analysis.computePathViolationCondition
 import hu.bme.mit.theta.xcfa.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.dss.analysis.extractBlockXcfa
 import hu.bme.mit.theta.xcfa.dss.analysis.globalAssumePredicates
+import hu.bme.mit.theta.xcfa.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.dss.analysis.predicatePrecision
 import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOf
@@ -39,8 +49,10 @@ import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOfPrecision
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.passes.changeVars
 
 /**
  * The solver DSS uses by default: Theta's default (legacy) Z3 binding, whose native interpolation
@@ -130,8 +142,24 @@ class PredicateBlockBehavior(
     data class Safe(val postcondition: Expr<BoolType>, val precision: Set<Expr<BoolType>>) :
       RunResult
 
-    data object Unsafe : RunResult
+    /** [path] is only computed for blocks with an internal cycle (see [pathViolation]). */
+    data class Unsafe(val path: PathViolation?) : RunResult
   }
+
+  /**
+   * The violation condition of one counterexample, and whether it reached the received violation
+   * condition (instead of one of the block's own targets).
+   */
+  private data class PathViolation(
+    val condition: Expr<BoolType>,
+    val reachedReceivedViolation: Boolean,
+  )
+
+  /** Theta-only: such blocks get violation conditions per counterexample path. */
+  private val usesPathViolations: Boolean by lazy { hasInternalCycle(block) }
+
+  /** Every path violation condition this block found so far, see [accumulatePathViolations]. */
+  private val pathViolationsSoFar = linkedSetOf<Expr<BoolType>>()
 
   private data class AnalysisResult(
     val summaries: List<Summary>,
@@ -175,7 +203,7 @@ class PredicateBlockBehavior(
       is RunResult.Safe ->
         if (result.postcondition == False()) emptyList()
         else reportPostconditions(listOf(Summary(result.postcondition, result.precision)))
-      RunResult.Unsafe -> {
+      is RunResult.Unsafe -> {
         containsViolationInsideBlock = true
         buildList {
           // CPAchecker sends the top state as postcondition if the block end is reachable at all;
@@ -184,7 +212,11 @@ class PredicateBlockBehavior(
           if (block.successorIds.isNotEmpty()) {
             add(DssPostConditionMessage(block.id, listOf(True()), startPrecision))
           }
-          addAll(reportViolationConditions(targetsOfOwnViolations()))
+          addAll(
+            result.path?.let {
+              reportViolationCondition(accumulatePathViolations(listOf(it.condition)))
+            } ?: reportViolationConditions(targetsOfOwnViolations())
+          )
         }
       }
     }
@@ -320,6 +352,7 @@ class PredicateBlockBehavior(
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
+    val pathViolations = mutableListOf<Expr<BoolType>>()
     var analyzedTrivial = false
     for (start in orderedStartStates) {
       if (start.isTop && analyzedTrivial) continue
@@ -346,7 +379,7 @@ class PredicateBlockBehavior(
               )
           }
         }
-        RunResult.Unsafe -> {
+        is RunResult.Unsafe -> {
           // CPAchecker's block analysis keeps exploring after a target and still yields the
           // block-end states; a Theta checker stops at the counterexample, so the postcondition is
           // computed by a second run without targets.
@@ -363,21 +396,28 @@ class PredicateBlockBehavior(
           // CPAchecker: "For trivial states, the same vc must have been sent already." That does
           // not hold if the violation condition arrived while this block had no precondition yet
           // (then it was not analyzed at all), so here it is checked instead of assumed.
-          if (
+          val reportReceived =
             violations.isNotEmpty() &&
               (!checkOnlyRelevant ||
                 startStates.size == 1 ||
                 !start.isTop ||
                 violationCondition !in reportedFromTop)
-          ) {
+          if (reportReceived) {
             reportReceivedViolations = true
             if (start.isTop && violationCondition != null) reportedFromTop += violationCondition
           }
+          result.path
+            ?.takeIf { !it.reachedReceivedViolation || reportReceived }
+            ?.let { pathViolations += it.condition }
         }
       }
     }
 
     if (!targetReached) return AnalysisResult(summaries, null)
+    if (usesPathViolations) {
+      val condition = accumulatePathViolations(pathViolations)
+      return AnalysisResult(summaries, condition)
+    }
     // Theta's checker does not tell which target its counterexample reached, so the violation
     // condition covers every target CPAchecker would collect paths to after a violation: the
     // block's own targets (if it contains a violation) and the received violation conditions.
@@ -438,13 +478,64 @@ class PredicateBlockBehavior(
           )
           .also { check(it.isSafe || it.isUnsafe) { "Inconclusive block analysis result: $it" } }
       }
-    if (result.isUnsafe) return RunResult.Unsafe
+    if (result.isUnsafe) {
+      return RunResult.Unsafe(
+        if (usesPathViolations) pathViolation(result.asUnsafe().cex, extraction) else null
+      )
+    }
     val proof = result.asSafe().proof
     val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
     return RunResult.Safe(
       normalize(packPostcondition(result, extraction.exitLocation)),
       predicatesOf(reached) + start.precision,
     )
+  }
+
+  /**
+   * The violation condition of the counterexample [cex] of a run on [extraction]: the weakest
+   * precondition of the path after the synthetic precondition edge. CEGAR labels its actions with
+   * per-process copies of the variables, so they are renamed back via the states' `varLookup`; a
+   * condition over any other variable would be unconstrained in the predecessor, so it is rejected.
+   */
+  private fun pathViolation(
+    cex: Trace<XcfaState<PtrState<*>>, XcfaAction>,
+    extraction: BlockXcfaExtraction,
+  ): PathViolation {
+    val actions = cex.actions
+    check(actions.isNotEmpty() && actions.last().target.error) {
+      "Block ${block.id}: counterexample does not end in an error location: $actions"
+    }
+    val originalOf =
+      cex.states
+        .flatMap { state -> state.processes.values.flatMap { it.varLookup } }
+        .fold(mapOf<VarDecl<*>, VarDecl<*>>()) { acc, lookup -> acc + lookup.reverseMapping() }
+    fun XcfaAction.isOn(edge: XcfaEdge?) =
+      edge != null && source == edge.source && target == edge.target
+    // CEGAR traces start with a Nop self loop at the initial location, before the precondition edge
+    val path = actions.drop(actions.indexOfFirst { it.isOn(extraction.preconditionEdge) } + 1)
+    val condition = computePathViolationCondition(path.map { it.label.changeVars(originalOf) })
+    val unknown =
+      ExprUtils.getVars(condition).filterNot { it in programVars || DssAuxVars.isAux(it) }
+    check(unknown.isEmpty()) {
+      "Block ${block.id}: path violation condition over unknown variables $unknown: $condition"
+    }
+    return PathViolation(condition, actions.last().isOn(extraction.violationConditionEdge))
+  }
+
+  /**
+   * The disjunction of [new] and every earlier path violation condition of this block. A
+   * predecessor keeps only the last condition of each sender, so sending one path at a time would
+   * let it forget the paths it already refuted; the union only grows, so a refuted union cannot
+   * recur while a target stays reachable.
+   */
+  private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): Expr<BoolType>? {
+    if (new.isEmpty()) return null
+    pathViolationsSoFar += new
+    return or(pathViolationsSoFar.toList())
+  }
+
+  private val programVars: Set<VarDecl<*>> by lazy {
+    sourceProcedure.vars + wholeProgram.globalVars.map { it.wrappedVar }
   }
 
   /**

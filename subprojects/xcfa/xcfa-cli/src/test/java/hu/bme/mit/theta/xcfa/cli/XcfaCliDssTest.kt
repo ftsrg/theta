@@ -47,13 +47,17 @@ class XcfaCliDssTest {
     // it as-is for the existing single-axis tests;
     // randomCheckerBackendsAndDecompositionAndExecutor()
     // crosses it against every random backend combination, so both method sources stay in sync with
-    // one definition instead of two copies of the same six pairs drifting apart.
+    // one definition instead of two copies of the same ten pairs drifting apart.
     private val decompositionExecutorPairs: List<Pair<String, String>> =
       listOf(
         "LINEAR" to "CONCURRENT",
         "LINEAR" to "SEQUENTIAL",
         "MERGE" to "CONCURRENT",
         "MERGE" to "SEQUENTIAL",
+        "MERGE_ABSORB_SELF_LOOPS" to "CONCURRENT",
+        "MERGE_ABSORB_SELF_LOOPS" to "SEQUENTIAL",
+        "MERGE_ACYCLIC" to "CONCURRENT",
+        "MERGE_ACYCLIC" to "SEQUENTIAL",
         "NONE" to "CONCURRENT",
         "NONE" to "SEQUENTIAL",
       )
@@ -97,7 +101,7 @@ class XcfaCliDssTest {
       }
 
     // The cross product: every one of the five randomCheckerBackendCombinations against every one
-    // of the six decompositionExecutorPairs - 30 argument sets, so each random combination really
+    // of the ten decompositionExecutorPairs - 50 argument sets, so each random combination really
     // does get "run on every testcase," not just the default decomposition/executor.
     @JvmStatic
     fun randomCheckerBackendsAndDecompositionAndExecutor(): Stream<Arguments> =

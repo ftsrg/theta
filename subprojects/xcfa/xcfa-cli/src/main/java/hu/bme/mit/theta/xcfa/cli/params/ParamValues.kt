@@ -121,6 +121,16 @@ enum class DssDecomposition {
    * down toward [DssConfig.targetBlockCount].
    */
   MERGE,
+  /**
+   * Theta-only: `MERGE`, then every self-loop block is absorbed into its neighbouring block, so the
+   * loop runs inside one block analysis (`SelfLoopAbsorbingDecomposition`).
+   */
+  MERGE_ABSORB_SELF_LOOPS,
+  /**
+   * Theta-only: `MERGE`, then every cycle of the block graph (through any number of blocks) is
+   * collapsed into one block, so the block graph is acyclic (`AcyclicMergeDecomposition`).
+   */
+  MERGE_ACYCLIC,
   /** CPAchecker's `NO_DECOMPOSITION`: the whole procedure as a single block. */
   NONE,
 }

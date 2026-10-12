@@ -61,7 +61,7 @@ fun BlockGraph.statistics(): BlockGraphStatistics {
 }
 
 /** Tarjan's algorithm, iterative so that long block chains cannot overflow the stack. */
-private fun stronglyConnectedComponents(successors: Map<String, Set<String>>): List<Set<String>> {
+internal fun stronglyConnectedComponents(successors: Map<String, Set<String>>): List<Set<String>> {
   val index = mutableMapOf<String, Int>()
   val lowLink = mutableMapOf<String, Int>()
   val onStack = mutableSetOf<String>()
