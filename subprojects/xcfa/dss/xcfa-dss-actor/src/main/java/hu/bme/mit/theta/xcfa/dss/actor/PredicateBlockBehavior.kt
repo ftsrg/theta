@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
@@ -24,6 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.dss.analysis.combinePredicatePrecisions
@@ -33,6 +35,7 @@ import hu.bme.mit.theta.xcfa.dss.analysis.globalAssumePredicates
 import hu.bme.mit.theta.xcfa.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.dss.analysis.predicatePrecision
 import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOf
+import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOfPrecision
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -79,21 +82,22 @@ const val DEFAULT_DSS_SOLVER = "Z3"
  * paper ("prevent postconditions of predecessors in the same component from being joined unless
  * they are unequal to the initial state") is CPAchecker's: once every predecessor provided a
  * non-trivial state, top states that were themselves computed from non-trivial preconditions are
- * skipped. Theta extends this to states that are not top but were computed (transitively) from a
- * top start state of a non-root block: once every predecessor provided a state not derived from
- * top, such states are skipped too. With CPAchecker's canonical abstraction and initially empty
- * precision, such summaries are typically literally top; Theta's Cartesian predicate abstraction
- * (and the global predicate pool) produces coarse non-top states instead - e.g. a loop entry that
- * forgot an invariant like `x == z` because it was analyzed from top - which would otherwise
- * sustain themselves around a cycle of the block graph and keep re-deriving violation conditions
- * forever.
+ * skipped. Only top states are skipped: Theta used to skip non-top states computed from top as
+ * well, but that is unsound - such a state can be the only one that already carries entry states a
+ * loop reaches in later iterations (`stateful_check`: the block after the loop only kept the states
+ * of the first iteration and proved a reachable error unreachable). Without it, Cartesian
+ * abstraction (and the global predicate pool) can produce coarse non-top summaries from top that
+ * sustain themselves around a cycle of the block graph, so DSS may not terminate on such loops.
  *
  * Precision: like CPAchecker, the predicates a block used are transmitted with its postconditions,
  * and a block analyzes non-top start states with the combination of the precisions it received
  * (`combinePrecisionIfPossible`, unless [resetPrecisionForEveryRun]); top start states use the
  * start precision. Theta-specific: with [useGlobalPredicatePool], the start precision contains
  * every assume condition of the whole program (see `globalAssumePredicates`), which CPAchecker does
- * not have.
+ * not have. Also Theta-specific: with [reuseBlockPrecision], every run additionally starts with the
+ * predicates the block's earlier CEGAR runs ended with ([ownPrecision]); checkers that report no
+ * precision (the bounded ones) neither add to nor use it. With [checkerFallback], a run whose
+ * checker throws is repeated with the roster's next checkers (see `runWithCheckerFallback`).
  *
  * [checkerRoster] supplies the checker of every single analysis run (default: round-robin over the
  * configured checkers). [solverFactory] is used for the coverage and satisfiability checks of the
@@ -106,6 +110,8 @@ class PredicateBlockBehavior(
   private val checkerRoster: DssCheckerRoster,
   private val useGlobalPredicatePool: Boolean = true,
   private val resetPrecisionForEveryRun: Boolean = false,
+  private val reuseBlockPrecision: Boolean = false,
+  private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
 ) : DssBlockBehavior {
 
@@ -114,15 +120,10 @@ class PredicateBlockBehavior(
     val state: Expr<BoolType>,
     val precision: Set<Expr<BoolType>>,
     val nonTrivialForEachPredecessor: Boolean = false,
-    /** Computed (transitively) from a top start state of a non-root block, see the class doc. */
-    val derivedFromTop: Boolean = false,
   ) {
     /** CPAchecker's `isMostGeneralBlockEntryState` for predicate states. */
     val isTop: Boolean
       get() = state == True()
-
-    /** Whether this state may take the place of [other] when it covers it. */
-    fun mayReplace(other: Summary): Boolean = !derivedFromTop || other.derivedFromTop
   }
 
   private sealed interface RunResult {
@@ -144,6 +145,9 @@ class PredicateBlockBehavior(
   private val startPrecision: Set<Expr<BoolType>> by lazy {
     if (useGlobalPredicatePool) globalAssumePredicates(wholeProgram) else emptySet()
   }
+
+  /** With [reuseBlockPrecision]: the predicates this block's CEGAR analyses ended with so far. */
+  private val ownPrecision = linkedSetOf<Expr<BoolType>>()
 
   private val preconditions = LinkedHashMap<String, MutableList<Summary>>()
   private val violationConditions = LinkedHashMap<String, MutableList<Expr<BoolType>>>()
@@ -170,10 +174,7 @@ class PredicateBlockBehavior(
     return when (val result = run(top(), violationCondition = null)) {
       is RunResult.Safe ->
         if (result.postcondition == False()) emptyList()
-        else
-          reportPostconditions(
-            listOf(Summary(result.postcondition, result.precision, derivedFromTop = !block.isRoot))
-          )
+        else reportPostconditions(listOf(Summary(result.postcondition, result.precision)))
       RunResult.Unsafe -> {
         containsViolationInsideBlock = true
         buildList {
@@ -196,13 +197,8 @@ class PredicateBlockBehavior(
   fun storePrecondition(message: DssPostConditionMessage): Boolean {
     relevant.clear()
     val received =
-      message.postconditions.mapIndexed { i, state ->
-        Summary(
-          state,
-          message.precision,
-          message.nonTrivialForEachPredecessor,
-          message.derivedFromTop.getOrElse(i) { false },
-        )
+      message.postconditions.map { state ->
+        Summary(state, message.precision, message.nonTrivialForEachPredecessor)
       }
     val sender = message.senderId
     val stored = preconditions[sender]
@@ -215,9 +211,7 @@ class PredicateBlockBehavior(
     for (new in received) {
       var isRelevant = true
       for (old in stored.toList()) {
-        // A state derived from top may be skipped later (see the class doc), so it must not
-        // replace a state that is not.
-        if (new.mayReplace(old) && operators.isSubsumed(new.state, old.state)) {
+        if (operators.isSubsumed(new.state, old.state)) {
           stored.remove(old)
         }
         if (isRelevant && operators.isSubsumed(old.state, new.state)) {
@@ -297,9 +291,6 @@ class PredicateBlockBehavior(
 
     val hasNonTrivialSummariesForEachPredecessor =
       preconditions.isNotEmpty() && preconditions.values.all { states -> states.any { !it.isTop } }
-    val hasUnderivedSummariesForEachPredecessor =
-      preconditions.isNotEmpty() &&
-        preconditions.values.all { states -> states.any { !it.isTop && !it.derivedFromTop } }
 
     val startStates = linkedSetOf<Summary>()
     if (checkOnlyRelevant) {
@@ -311,10 +302,6 @@ class PredicateBlockBehavior(
             state.nonTrivialForEachPredecessor &&
             state.isTop
         ) {
-          continue
-        }
-        // Theta-specific generalization of the rule above to non-top states derived from top.
-        if (hasUnderivedSummariesForEachPredecessor && state.derivedFromTop) {
           continue
         }
         startStates.add(state)
@@ -356,7 +343,6 @@ class PredicateBlockBehavior(
                 result.postcondition,
                 result.precision,
                 hasNonTrivialSummariesForEachPredecessor,
-                derivedFromTop(start),
               )
           }
         }
@@ -371,7 +357,6 @@ class PredicateBlockBehavior(
                 summary.postcondition,
                 summary.precision,
                 hasNonTrivialSummariesForEachPredecessor,
-                derivedFromTop(start),
               )
           }
           targetReached = true
@@ -407,10 +392,6 @@ class PredicateBlockBehavior(
     return AnalysisResult(summaries, newViolationCondition)
   }
 
-  /** The root's top start state is the real program entry, so nothing it computes is derived. */
-  private fun derivedFromTop(start: Summary): Boolean =
-    !block.isRoot && (start.isTop || start.derivedFromTop)
-
   private fun targetsOfOwnViolations(): Map<XcfaLocation, Expr<BoolType>> =
     ownTargets.associateWith { True() }
 
@@ -434,8 +415,29 @@ class PredicateBlockBehavior(
         violationCondition = violationCondition,
         keepSpecificationTargets = keepSpecificationTargets,
       )
-    val initialPrecision = start.precision.takeIf { it.isNotEmpty() }?.let(::predicatePrecision)
-    val result = runWorkerConfig(extraction.xcfa, checkerRoster.next(), initialPrecision)
+    val initialPredicates =
+      if (reuseBlockPrecision) start.precision + ownPrecision else start.precision
+    val initialPrecision = initialPredicates.takeIf { it.isNotEmpty() }?.let(::predicatePrecision)
+    val trace =
+      arrayOf<Pair<String, Any?>>(
+        "block" to block.id,
+        "preds" to initialPredicates.size,
+        "pre" to !start.isTop,
+        "vc" to (violationCondition != null),
+      )
+    val result =
+      runWithCheckerFallback(trace) { checker ->
+        runWorkerConfig(
+            extraction.xcfa,
+            checker,
+            initialPrecision,
+            onLastPrec =
+              if (reuseBlockPrecision)
+                { precision -> ownPrecision += predicatesOfPrecision(precision) }
+              else null,
+          )
+          .also { check(it.isSafe || it.isUnsafe) { "Inconclusive block analysis result: $it" } }
+      }
     if (result.isUnsafe) return RunResult.Unsafe
     val proof = result.asSafe().proof
     val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
@@ -443,6 +445,41 @@ class PredicateBlockBehavior(
       normalize(packPostcondition(result, extraction.exitLocation)),
       predicatesOf(reached) + start.precision,
     )
+  }
+
+  /**
+   * Runs [analysis] with the roster's next checker. With [checkerFallback], an analysis whose
+   * checker throws (a solver error, an unknown result, an unsupported operation, or an inconclusive
+   * result, e.g. of a bounded checker) is repeated with the roster's following checkers (which ones
+   * is up to the roster's selection strategy, see `DssCheckerSelectionStrategy`), at most once per
+   * roster entry; if all of them throw, the first failure propagates with the others suppressed.
+   * Errors (e.g. out of memory) and interruptions are never retried.
+   */
+  private inline fun <T> runWithCheckerFallback(
+    trace: Array<Pair<String, Any?>> = emptyArray(),
+    analysis: (CheckerFactory) -> T,
+  ): T {
+    val attempts = if (checkerFallback) checkerRoster.size else 1
+    var failure: Exception? = null
+    repeat(attempts) { attempt ->
+      try {
+        return DssTrace.span(
+          "analysis",
+          *trace,
+          "attempt" to attempt,
+          outcome = { result ->
+            (result as? SafetyResult<*, *>)?.let { if (it.isSafe) "safe" else "unsafe" } ?: "ok"
+          },
+        ) {
+          analysis(checkerRoster.next(attempt))
+        }
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        failure?.addSuppressed(e) ?: run { failure = e }
+      }
+    }
+    throw checkNotNull(failure)
   }
 
   /**
@@ -464,20 +501,16 @@ class PredicateBlockBehavior(
         unique.map { it.state },
         unique.flatMapTo(linkedSetOf()) { it.precision },
         unique.any { it.nonTrivialForEachPredecessor },
-        unique.map { it.derivedFromTop },
       )
     )
   }
 
-  /**
-   * CPAchecker's `deduplicateStates`: drop every state covered by a state kept before it - except
-   * that a state derived from top never covers one that is not (it may be skipped by the receiver).
-   */
+  /** CPAchecker's `deduplicateStates`: drop every state covered by a state kept before it. */
   private fun deduplicateStates(summaries: List<Summary>): List<Summary> {
     if (summaries.size < 2) return summaries
     val kept = mutableListOf<Summary>()
-    for (summary in summaries.sortedBy { it.derivedFromTop }) {
-      if (kept.none { it.mayReplace(summary) && operators.isSubsumed(summary.state, it.state) }) {
+    for (summary in summaries) {
+      if (kept.none { operators.isSubsumed(summary.state, it.state) }) {
         kept += summary
       }
     }

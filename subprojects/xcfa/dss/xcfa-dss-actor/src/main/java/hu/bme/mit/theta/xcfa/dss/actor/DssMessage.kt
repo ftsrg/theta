@@ -81,12 +81,6 @@ data class DssPostConditionMessage(
   val postconditions: List<Expr<BoolType>> = emptyList(),
   val precision: Set<Expr<BoolType>> = emptySet(),
   val nonTrivialForEachPredecessor: Boolean = false,
-  /**
-   * For each of [postconditions], whether it was computed (transitively) from a top start state of
-   * a non-root block - Theta's extension of the SCC flag, see `PredicateBlockBehavior`. Missing
-   * entries count as `false`.
-   */
-  val derivedFromTop: List<Boolean> = emptyList(),
 ) : DssMessage() {
 
   constructor(

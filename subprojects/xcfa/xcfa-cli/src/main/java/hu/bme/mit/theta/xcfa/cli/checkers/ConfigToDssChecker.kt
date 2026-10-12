@@ -43,12 +43,14 @@ import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
 import hu.bme.mit.theta.xcfa.dss.actor.DssResult
+import hu.bme.mit.theta.xcfa.dss.actor.DssTrace
 import hu.bme.mit.theta.xcfa.dss.actor.PredicateBlockBehavior
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActors
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsSequentially
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
@@ -57,6 +59,7 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.DssBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 /**
@@ -134,6 +137,13 @@ fun getDssChecker(
     }
   val blockGraph: BlockGraph = decomposition.decompose(procedure)
   blockGraph.checkConsistency()
+  logger.write(
+    if (dssConfig.blockGraphStatsOnly) Logger.Level.RESULT else Logger.Level.INFO,
+    "DSS block graph statistics: %s\n",
+    blockGraph.statistics(),
+  )
+  if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
+  if (dssConfig.trace) DssTrace.enable { logger.write(Logger.Level.RESULT, "%s\n", it) }
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
@@ -177,6 +187,7 @@ fun getDssChecker(
   val selectionStrategy: DssCheckerSelectionStrategy =
     when (dssConfig.checkerSelection) {
       DssCheckerSelectionMethod.ROUND_ROBIN -> RoundRobinCheckerSelectionStrategy()
+      DssCheckerSelectionMethod.PRIORITY -> PriorityCheckerSelectionStrategy()
     }
   // Built once, here - not inside behaviorFor - so it's the one shared instance every block's
   // PredicateBlockBehavior gets, per DssCheckerRoster's own contract (a fresh roster per block
@@ -193,14 +204,20 @@ fun getDssChecker(
       checkerRoster,
       useGlobalPredicatePool = dssConfig.globalPredicatePool,
       resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
+      reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+      checkerFallback = dssConfig.checkerFallback,
       solverFactory = dssSolverFactory,
     )
   }
 
   val dssResult =
-    when (dssConfig.executor) {
-      DssExecutor.CONCURRENT -> runDssActors(blockGraph, behaviorFor = behaviorFor)
-      DssExecutor.SEQUENTIAL -> runDssActorsSequentially(blockGraph, behaviorFor = behaviorFor)
+    try {
+      when (dssConfig.executor) {
+        DssExecutor.CONCURRENT -> runDssActors(blockGraph, behaviorFor = behaviorFor)
+        DssExecutor.SEQUENTIAL -> runDssActorsSequentially(blockGraph, behaviorFor = behaviorFor)
+      }
+    } finally {
+      DssTrace.disable()
     }
 
   when (dssResult) {

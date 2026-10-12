@@ -70,7 +70,17 @@ abstract class DssWorker(override val id: String) : DssActor {
   fun processOneMessage(message: DssMessage): Boolean {
     connection.active.add(id)
     try {
-      broadcast(processMessage(message))
+      broadcast(
+        DssTrace.span(
+          "msg",
+          "actor" to id,
+          "type" to message.type,
+          "from" to message.senderId,
+          outcome = { "out${it.size}" },
+        ) {
+          processMessage(message)
+        }
+      )
       return true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
       connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))

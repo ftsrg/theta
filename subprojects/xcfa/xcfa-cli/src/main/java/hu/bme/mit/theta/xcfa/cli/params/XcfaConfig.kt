@@ -370,6 +370,36 @@ data class DssConfig(
   )
   var resetPrecisionForEveryRun: Boolean = false,
   @Parameter(
+    names = ["--dss-block-graph-stats-only"],
+    description =
+      "Only decompose the program, log the block graph's statistics (blocks, edges, self loops, " +
+        "back-and-forth pairs, cyclic SCCs, ...) and stop with an unknown result (Theta-specific)",
+  )
+  var blockGraphStatsOnly: Boolean = false,
+  @Parameter(
+    names = ["--dss-trace"],
+    description =
+      "Log a DSS-TRACE line at the start and end of every processed message and block analysis " +
+        "try (diagnostics, e.g. what a run was doing when it timed out; Theta-specific)",
+  )
+  var trace: Boolean = false,
+  @Parameter(
+    names = ["--dss-reuse-block-precision"],
+    description =
+      "Start every CEGAR block analysis with the predicates the same block's earlier CEGAR " +
+        "analyses ended with, in addition to its usual initial precision (Theta-specific; no " +
+        "effect on the bounded checkers of --dss-checker-backends)",
+  )
+  var reuseBlockPrecision: Boolean = false,
+  @Parameter(
+    names = ["--dss-checker-fallback"],
+    description =
+      "If a block analysis's checker throws (solver error, unknown result, unsupported " +
+        "operation, ...), repeat it with the next checker of --dss-checker-backends, at most once " +
+        "per entry (Theta-specific)",
+  )
+  var checkerFallback: Boolean = false,
+  @Parameter(
     names = ["--dss-solver"],
     description =
       "Solver of the CEGAR block checkers (abstraction and refinement) and of DSS's own coverage " +
@@ -412,7 +442,10 @@ data class DssConfig(
   var checkerBackends: List<DssCheckerBackend> = listOf(DssCheckerBackend.CEGAR_PRED_CART),
   @Parameter(
     names = ["--dss-checker-selection"],
-    description = "Policy DssCheckerRoster uses to pick a checker factory on each recheck",
+    description =
+      "Policy DssCheckerRoster uses to pick a checker factory on each recheck: ROUND_ROBIN " +
+        "cycles the list; PRIORITY always uses the first entry and the others only as " +
+        "--dss-checker-fallback fallbacks, in order",
   )
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.ROUND_ROBIN,
 ) : SpecBackendConfig

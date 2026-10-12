@@ -97,6 +97,13 @@ fun combinePredicatePrecisions(precisions: Collection<Set<Expr<BoolType>>>): Set
     .toSet()
 }
 
+/**
+ * The predicates of a predicate-abstraction precision ([predicatePrecision]'s shape), filtered like
+ * [predicatesOf]; empty for any other precision.
+ */
+fun predicatesOfPrecision(precision: XcfaPrec<*>): Set<Expr<BoolType>> =
+  ((precision.p as? PtrPrec<*>)?.innerPrec as? PredPrec)?.preds?.let(::predicatesOf) ?: emptySet()
+
 /** The initial precision a predicate-abstraction checker is started with for [predicates]. */
 fun predicatePrecision(predicates: Set<Expr<BoolType>>): XcfaPrec<PtrPrec<PredPrec>> =
   XcfaPrec(PtrPrec(PredPrec.of(predicates), emptySet()))

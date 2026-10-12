@@ -32,6 +32,13 @@ import java.util.concurrent.atomic.AtomicInteger
 interface DssCheckerSelectionStrategy {
 
   fun select(checkers: List<CheckerFactory>): CheckerFactory
+
+  /**
+   * Chooses the checker for the [attempt]th try of one analysis (0 = first try; later tries happen
+   * only under `--dss-checker-fallback`, after the previous checker failed). By default, every try
+   * is just another [select] call.
+   */
+  fun select(checkers: List<CheckerFactory>, attempt: Int): CheckerFactory = select(checkers)
 }
 
 /**
@@ -62,6 +69,20 @@ class RoundRobinCheckerSelectionStrategy : DssCheckerSelectionStrategy {
     val index = cursor.getAndIncrement().mod(checkers.size)
     return checkers[index]
   }
+}
+
+/**
+ * A fixed-priority [DssCheckerSelectionStrategy]: every analysis first runs with `checkers[0]`; the
+ * following entries are used only as fallbacks, in list order (the [attempt]th try takes
+ * `checkers[attempt]`). Without `--dss-checker-fallback`, only the first checker is ever used.
+ * Stateless, so one instance can be shared freely.
+ */
+class PriorityCheckerSelectionStrategy : DssCheckerSelectionStrategy {
+
+  override fun select(checkers: List<CheckerFactory>): CheckerFactory = checkers.first()
+
+  override fun select(checkers: List<CheckerFactory>, attempt: Int): CheckerFactory =
+    checkers[attempt.coerceIn(0, checkers.size - 1)]
 }
 
 /**
@@ -98,8 +119,13 @@ class DssCheckerRoster(
     require(checkers.isNotEmpty()) { "DSS needs at least one checker to run blocks with" }
   }
 
-  fun next(): CheckerFactory {
-    val selected = strategy.select(checkers)
+  /** The number of checkers in the roster (repeated entries counted separately). */
+  val size: Int
+    get() = checkers.size
+
+  /** The checker for the [attempt]th try of one analysis (see [DssCheckerSelectionStrategy]). */
+  fun next(attempt: Int = 0): CheckerFactory {
+    val selected = strategy.select(checkers, attempt)
     require(selected in checkers) {
       "DssCheckerSelectionStrategy.select returned a checker not present in this roster"
     }

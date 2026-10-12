@@ -215,6 +215,50 @@ class XcfaCliDssTest {
     )
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
+  fun `--dss-reuse-block-precision parses and runs to completion`(input: String) {
+    // Which precision each run starts with is covered by xcfa-dss-actor's ReuseBlockPrecisionTest.
+    main(
+      arrayOf(
+        "--backend",
+        "DSS",
+        "--dss-reuse-block-precision",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(input)!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    )
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
+  fun `--dss-checker-selection PRIORITY with fallback parses and runs to completion`(
+    input: String
+  ) {
+    // Which checker each try uses is covered by xcfa-dss-actor's CheckerFallbackTest.
+    main(
+      arrayOf(
+        "--backend",
+        "DSS",
+        "--dss-checker-backends",
+        "CEGAR_PRED_CART,KIND",
+        "--dss-checker-selection",
+        "PRIORITY",
+        "--dss-checker-fallback",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(input)!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    )
+  }
+
   @Test
   fun `--dss-global-predicate-pool false parses and runs to completion`() {
     // Verdict correctness without the pool is covered at the xcfa-dss-actor level - see

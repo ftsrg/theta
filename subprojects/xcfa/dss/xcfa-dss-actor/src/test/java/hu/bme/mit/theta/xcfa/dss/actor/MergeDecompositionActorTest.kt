@@ -268,4 +268,102 @@ class MergeDecompositionActorTest {
       checkDecomposed(unsafeProgram, mergedBlockGraph(unsafeProgram, 2), sequentially),
     )
   }
+
+  /**
+   * SV-COMP's `LIN_INT/stateful_check`: a driver loop that has to step `s` through 0 -> 1 -> 2 -> 3
+   * in four separate iterations before the release handler runs, which locks twice (an error) if
+   * the open in the first iteration failed. Regression test for a wrong SAFE verdict: with the
+   * global predicate pool, Theta's former skipping of non-top states derived from top made the
+   * block after the loop keep only the states of the first iterations, so it refuted the violation
+   * condition from them.
+   */
+  private fun statefulCheckXcfa(): XCFA =
+    xcfa("stateful-check") {
+      val main =
+        procedure("main") {
+          "m" type Int()
+          "oc" type Int()
+          "s" type Int()
+          "c" type Int()
+          "r" type Int()
+          (init to "loop") {
+            "m" assign "1"
+            "oc" assign "0"
+            "s" assign "0"
+          }
+          ("loop" to "pick") { havoc("c") }
+          ("loop" to "end") { nop() }
+          ("pick" to "loop") {
+            assume(
+              "(not (or (and (= c 0) (= s 0)) (and (= c 1) (= s 1)) (and (= c 2) (= s 2)) " +
+                "(and (= c 3) (= s 3))))"
+            )
+          }
+          ("pick" to "open") {
+            assume("(and (= c 0) (= s 0))")
+            havoc("r")
+          }
+          ("open" to "loop") {
+            assume("(= r 0)")
+            "oc" assign "1"
+            "s" assign "(+ s 1)"
+          }
+          ("open" to "loop") {
+            assume("(not (= r 0))")
+            "s" assign "(+ s 1)"
+          }
+          ("pick" to "loop") {
+            assume("(and (= c 1) (= s 1))")
+            "s" assign "(+ s 1)"
+          }
+          ("pick" to "loop") {
+            assume("(and (= c 2) (= s 2))")
+            "s" assign "(+ s 1)"
+          }
+          ("pick" to "release") { assume("(and (= c 3) (= s 3))") }
+          // opened: lock, unlock
+          ("release" to "lockA") { assume("(not (= oc 0))") }
+          ("lockA" to err) { assume("(not (= m 1))") }
+          ("lockA" to "unlockA") {
+            assume("(= m 1)")
+            "m" assign "2"
+          }
+          ("unlockA" to err) { assume("(not (= m 2))") }
+          ("unlockA" to "loop") {
+            assume("(= m 2)")
+            "m" assign "1"
+            "oc" assign "0"
+            "s" assign "0"
+          }
+          // not opened: lock twice
+          ("release" to "lockB") { assume("(= oc 0)") }
+          ("lockB" to err) { assume("(not (= m 1))") }
+          ("lockB" to "lockB2") {
+            assume("(= m 1)")
+            "m" assign "2"
+          }
+          ("lockB2" to err) { assume("(not (= m 1))") }
+          ("lockB2" to "loop") {
+            assume("(= m 1)")
+            "m" assign "2"
+            "s" assign "0"
+          }
+          ("end" to err) { assume("(not (= m 1))") }
+          ("end" to final) { assume("(= m 1)") }
+        }
+      main.start()
+    }
+
+  @Test
+  fun `a violation four loop iterations deep is UNSAFE with the global predicate pool`() {
+    val wholeProgram = statefulCheckXcfa()
+    val sequentially: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
+      runDssActorsSequentially(bg, bf)
+    }
+    assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
+    assertEquals(
+      DssResult.UNSAFE,
+      checkDecomposed(wholeProgram, mergedBlockGraph(wholeProgram, 2), sequentially),
+    )
+  }
 }

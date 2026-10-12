@@ -99,7 +99,11 @@ class DssBlockActor(
    */
   fun start(): Boolean =
     try {
-      broadcast(behavior.initialMessages())
+      broadcast(
+        DssTrace.span("init", "actor" to id, outcome = { "out${it.size}" }) {
+          behavior.initialMessages()
+        }
+      )
       true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
       connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))
