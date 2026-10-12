@@ -161,7 +161,7 @@ class XcfaCoiMultiThread(xcfa: XCFA, random: Random) : XcfaCoi(xcfa, random) {
   private fun findInterProcessObservers(edge: XcfaEdge, prec: Prec) {
     val precVars = prec.usedVars
     val writtenVars =
-      edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
+      edge.collectVarsWithAccessType(xcfa).filter { it.value.isWritten && it.key in precVars }
     if (writtenVars.isEmpty()) return
     val writtenMemLocs = writtenVars.pointsTo(xcfa)
 

@@ -415,7 +415,7 @@ infix fun Valuation?.union(other: Valuation?): Valuation {
   return ImmutableValuation.from(map1 + map2)
 }
 
-fun mergeIncomingValuations(
+fun XcfaProcedureBuilder.mergeIncomingValuations(
   loc: XcfaLocation,
   valuations: Map<XcfaEdge, Valuation>,
   initLoops: Map<XcfaLocation, Set<XcfaEdge>>,
@@ -431,7 +431,7 @@ fun mergeIncomingValuations(
         val previousNonLoopEdge = loc.incomingEdges.first { it !in loopEdges }
         ImmutableValuation.from(
           valuations[previousNonLoopEdge]?.toMap()?.filter { (v, _) ->
-            loopEdges.none { e -> e.collectVarsWithAccessType()[v]?.isWritten == true }
+            loopEdges.none { e -> e.collectVarsWithAccessType(this)[v]?.isWritten == true }
           }
         )
       } else {

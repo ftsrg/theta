@@ -167,7 +167,7 @@ class DataRaceToReachabilityPass(
       if (branching && !initialPhase) {
         loc.outgoingEdges.forEach { edge ->
           edge.getFlatLabels().firstOrNull()?.let { label ->
-            allVarsToCheck.addAll(racingVars(label, potentialRacingVars).keys)
+            allVarsToCheck.addAll(builder.racingVars(label, potentialRacingVars).keys)
             allDereferencesToCheck.addAll(racingDereferences(label, builder).keys)
           }
         }
@@ -191,7 +191,7 @@ class DataRaceToReachabilityPass(
             if (label is AtomicBeginLabel) atomic = true
             if (label is AtomicEndLabel) atomic = false
 
-            val vars = racingVars(label, potentialRacingVars)
+            val vars = builder.racingVars(label, potentialRacingVars)
             val dereferences = racingDereferences(label, builder)
 
             if (branching && firstLabel) {
@@ -254,8 +254,8 @@ class DataRaceToReachabilityPass(
     return builder
   }
 
-  private fun racingVars(label: XcfaLabel, potentialRacingVars: Set<VarDecl<*>>): VarAccessMap =
-    label.collectVarsWithAccessType().filter { it.key in potentialRacingVars }
+  private fun XcfaProcedureBuilder.racingVars(label: XcfaLabel, potentialRacingVars: Set<VarDecl<*>>): VarAccessMap =
+    label.collectVarsWithAccessType(this).filter { it.key in potentialRacingVars }
 
   /**
    * `_Atomic` data cannot be raced on, so an access through a pointer that addresses it is not a

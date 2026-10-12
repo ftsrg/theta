@@ -177,7 +177,7 @@ class DataRaceUtilTest {
                     else ->
                       it.errorLoc.get().incomingEdges.isNotEmpty() &&
                         it.errorLoc.get().incomingEdges.all { e ->
-                          "_write_flag_x" in e.collectVarsWithAccessType().map { a -> a.key.name }
+                          "_write_flag_x" in e.collectVarsWithAccessType(transformed).map { a -> a.key.name }
                         }
                   }
                 }

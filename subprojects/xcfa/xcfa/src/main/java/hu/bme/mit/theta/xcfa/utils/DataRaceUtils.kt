@@ -150,7 +150,7 @@ private fun getPotentialRacingVars(
       for (l in e.getFlatLabels()) {
         if (l is AtomicBeginLabel) atomic = true
         if (l is AtomicEndLabel) atomic = false
-        val accesses = l.collectVarsWithAccessType()
+        val accesses = l.collectVarsWithAccessType(builder)
         accesses.forEach { (v, access) ->
           if (v in nonAtomicGlobalVars) {
             currentVarAccesses.add(v)

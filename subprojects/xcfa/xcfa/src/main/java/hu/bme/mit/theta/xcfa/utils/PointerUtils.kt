@@ -249,7 +249,7 @@ private fun getValuationAfterInitPhase(
     toVisit.remove(edge)
     visited.add(edge)
     val valuation =
-      MutableValuation.copyOf(mergeIncomingValuations(edge.source, valuations, initLoops))
+      MutableValuation.copyOf(builder.mergeIncomingValuations(edge.source, valuations, initLoops))
     edge.getFlatLabels().filterIsInstance<StmtLabel>().forEach {
       // update valuation
       it.stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation)

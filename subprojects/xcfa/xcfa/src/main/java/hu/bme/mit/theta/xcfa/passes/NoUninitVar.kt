@@ -36,7 +36,7 @@ class NoUninitVar : ProcedurePass {
         var uninitVars = mayUninitVarsPerLoc[loc]!!
         val newLabels = mutableListOf<XcfaLabel>()
         for (flatLabel in outgoingEdge.getFlatLabels()) {
-          val varsWithAccessType = flatLabel.collectVarsWithAccessType()
+          val varsWithAccessType = flatLabel.collectVarsWithAccessType(builder)
           val reads = varsWithAccessType.filter { it.value.isRead }.keys
           val needHavoc = reads intersect uninitVars
           newLabels.addAll(needHavoc.map { StmtLabel(Havoc(it)) })

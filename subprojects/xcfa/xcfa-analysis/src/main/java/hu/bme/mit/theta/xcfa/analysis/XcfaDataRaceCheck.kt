@@ -258,7 +258,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
       acquiredMutexes.addAll(label.acquiredMutexes(state))
       blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
-      label.collectGlobalVars(globalVars).forEach { (v, access) ->
+      label.collectGlobalVars(xcfa).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
           accesses.add(
             GlobalVarAccessWithMutexes(
@@ -329,7 +329,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
       }
     }
     ((label as? StmtLabel)?.stmt as? AssumeStmt)?.let(precedingAssumes::add)
-    label.collectVarsWithAccessType().forEach { (v, access) ->
+    label.collectVarsWithAccessType(xcfa).forEach { (v, access) ->
       if (access.isWritten) changedVars.add(v)
     }
   }

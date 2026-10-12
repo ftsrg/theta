@@ -66,7 +66,7 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger, val property: XcfaP
       )
       edges.forEach { edge ->
         usedVars.addAll(
-          edge.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key }
+          edge.label.collectVarsWithAccessType(builder).filter { it.value.isRead }.map { it.key }
         )
         if (isOverflow) {
           for (label in edge.getFlatLabels()) {

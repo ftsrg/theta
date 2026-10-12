@@ -69,7 +69,6 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val constValuation = MutableValuation()
-    val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
     val modifiedGlobalVars =
       builder.parent
@@ -91,7 +90,7 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
             ?: toVisit.first()
         toVisit.remove(edge)
         visited.add(edge)
-        val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
+        val incomingValuations = builder.mergeIncomingValuations(edge.source, valuations, initLoops)
         val localValuation = MutableValuation.copyOf(incomingValuations)
         localValuation.putAll(constValuation)
 
@@ -99,7 +98,7 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
         val newLabels =
           oldLabels.map { old ->
             val new = old.simplify(localValuation, parseContext)
-            if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, globalVars)) {
+            if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, builder)) {
               old
             } else {
               new
@@ -155,10 +154,11 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
   private fun dropsSharedAccess(
     old: XcfaLabel,
     new: XcfaLabel,
-    globalVars: Set<VarDecl<*>>,
+    builder: XcfaProcedureBuilder,
   ): Boolean {
+    val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
     fun globals(label: XcfaLabel) =
-      label.collectVarsWithAccessType().filterKeys { it in globalVars }
+      label.collectVarsWithAccessType(builder).filterKeys { it in globalVars }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
 
@@ -189,7 +189,7 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
         val loc = toVisit.removeFirst()
         if (!visited.add(loc)) continue
         loc.outgoingEdges.forEach { edge ->
-          edge.collectVarsWithAccessType().forEach { (v, access) ->
+          edge.collectVarsWithAccessType(proc).forEach { (v, access) ->
             if (v in writes) {
               if (
                 access.isWritten ||

@@ -267,7 +267,7 @@ public class XcfaTraceConcretizer {
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
-                    var accesses = collectVarsWithAccessType(flatLabel);
+                    var accesses = collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
                     final var written =
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))

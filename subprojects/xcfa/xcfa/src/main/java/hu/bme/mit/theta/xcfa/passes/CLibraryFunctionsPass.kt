@@ -300,7 +300,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val writes =
       builder.parent.getProcedures().sumOf { proc ->
         proc.getEdges().count { edge ->
-          edge.collectVarsWithAccessType().any { (v, access) -> v == mutex && access.isWritten }
+          edge.collectVarsWithAccessType(builder).any { (v, access) -> v == mutex && access.isWritten }
         }
       }
     check(writes <= 1) {

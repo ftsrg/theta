@@ -508,7 +508,7 @@ class UnrollPass(
     val loopVar =
       loopCondStart.outgoingEdges
         .map {
-          val vars = it.label.collectVarsWithAccessType()
+          val vars = it.label.collectVarsWithAccessType(builder)
           if (vars.size != 1) {
             null // multiple variables in the loop condition not supported
           } else {
@@ -548,7 +548,7 @@ class UnrollPass(
         // find edges that modify the loop variable
         val loopVarModifiers =
           loopEdges.filter {
-            val vars = it.label.collectVarsWithAccessType()
+            val vars = it.label.collectVarsWithAccessType(builder)
             if (vars[loopVar].isWritten) {
               if (it !in necessaryLoopEdges || vars.size > 1)
                 return@run null // loop variable modification cannot be determined statically
@@ -565,7 +565,7 @@ class UnrollPass(
           val inEdges = loc.incomingEdges.filter { it.source !in loopLocations }
           if (inEdges.size != 1) return@run null
           val inEdge = inEdges.first()
-          val vars = inEdge.label.collectVarsWithAccessType()
+          val vars = inEdge.label.collectVarsWithAccessType(builder)
           if (vars[loopVar].isWritten) {
             if (vars.size > 1) return@run null
             loopVarInit = inEdge

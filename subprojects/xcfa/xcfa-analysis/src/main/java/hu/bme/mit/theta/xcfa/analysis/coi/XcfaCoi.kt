@@ -112,7 +112,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
   protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
     val precVars = prec.usedVars
     val writtenVars =
-      edge.collectVarsWithAccessType().filter {
+      edge.collectVarsWithAccessType(xcfa).filter {
         it.value.isWritten && it.key in precVars
       } // TODO deref it.key in prec?
     if (writtenVars.isEmpty()) return
@@ -123,7 +123,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
     while (toVisit.isNotEmpty()) {
       val visiting = toVisit.removeAt(0)
       visited.add(visiting)
-      val currentVars = visiting.collectVarsWithAccessType()
+      val currentVars = visiting.collectVarsWithAccessType(xcfa)
       addEdgeIfObserved(
         edge,
         visiting,
@@ -155,7 +155,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
     writtenMemLocs: Set<LitExpr<*>>,
     precVars: Collection<VarDecl<*>>,
     relation: MutableMap<XcfaEdge, Set<XcfaEdge>>,
-    vars: VarAccessMap = target.collectVarsWithAccessType(),
+    vars: VarAccessMap = target.collectVarsWithAccessType(xcfa),
   ) {
     var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
     if (!relevantAction) {
