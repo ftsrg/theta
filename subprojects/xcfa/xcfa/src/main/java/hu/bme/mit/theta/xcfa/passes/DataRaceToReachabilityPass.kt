@@ -369,9 +369,20 @@ class DataRaceToReachabilityPass(
     edgeIndex: Int,
     newLabels: List<Pair<List<XcfaLabel>, StmtLabel?>>,
   ) {
+    val collapsedNewLabels =
+      newLabels.fold(mutableListOf<Pair<List<XcfaLabel>, StmtLabel?>>()) { acc, (labels, stmt) ->
+        if (stmt == null && acc.isNotEmpty() && acc.last().second == null) {
+          val (prevLabels, _) = acc.removeAt(acc.lastIndex)
+          acc.add(listOf(SequenceLabel(prevLabels + labels)) to null)
+        } else {
+          acc.add(labels to stmt)
+        }
+        acc
+      }
+
     builder.removeEdge(edge)
     var source = location
-    newLabels.forEachIndexed { index1, (labels, errorLabel) ->
+    collapsedNewLabels.forEachIndexed { index1, (labels, errorLabel) ->
       if (errorLabel != null) {
         builder.createErrorLoc()
         val errorEdge =
@@ -388,7 +399,7 @@ class DataRaceToReachabilityPass(
         .filter { !(it is SequenceLabel && it.labels.isEmpty()) }
         .forEachIndexed { index2, label ->
           val target =
-            if (index1 == newLabels.size - 1 && index2 == labels.size - 1) edge.target
+            if (index1 == collapsedNewLabels.size - 1 && index2 == labels.size - 1) edge.target
             else
               XcfaLocation(
                 "${edge.source.name}_dr_${edgeIndex}_${index1}_${index2}",
