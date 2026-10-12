@@ -125,6 +125,7 @@ final class Z3ExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                         // Bitvectors
 
@@ -564,6 +565,12 @@ final class Z3ExprTransformer {
         final com.microsoft.z3legacy.IntExpr opTerm =
                 (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
         return context.mkInt2Real(opTerm);
+    }
+
+    private com.microsoft.z3legacy.Expr transformIntToBv(final IntToBvExpr expr) {
+        final com.microsoft.z3legacy.IntExpr opTerm =
+            (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
+        return context.mkInt2BV(expr.getSize(), opTerm);
     }
 
     private com.microsoft.z3legacy.Expr transformBvLit(final BvLitExpr expr) {

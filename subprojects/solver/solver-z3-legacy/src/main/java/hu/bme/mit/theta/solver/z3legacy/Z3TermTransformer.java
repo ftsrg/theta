@@ -84,6 +84,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -275,6 +276,13 @@ final class Z3TermTransformer {
                             op,
                             FpType.of(type.getExponent(), type.getSignificand()),
                             true);
+                });
+        this.environment.put(
+                Tuple2.of("int_to_bv", 1),
+                (term, model, vars) -> {
+                    BvType type = (BvType) transformSort(term.getSort());
+                    Expr<IntType> op = (Expr<IntType>) this.transform(term.getArgs()[0], model, vars);
+                    return IntToBvExpr.of(op, type.getSize());
                 });
         this.environment.put(
                 Tuple2.of("extract", 1),

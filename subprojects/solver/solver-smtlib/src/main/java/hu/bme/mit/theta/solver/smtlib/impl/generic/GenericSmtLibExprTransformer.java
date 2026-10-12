@@ -102,6 +102,7 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -206,6 +207,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(IntLeqExpr.class, this::transformIntLeq)
                 .addCase(IntLtExpr.class, this::transformIntLt)
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
+                .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                 // Enums
 
@@ -625,6 +627,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformIntToRat(final IntToRatExpr expr) {
         return String.format("(to_real %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformIntToBv(final IntToBvExpr expr) {
+        return String.format("(int_to_bv %s)", toTerm(expr.getOp()));
     }
 
     /*

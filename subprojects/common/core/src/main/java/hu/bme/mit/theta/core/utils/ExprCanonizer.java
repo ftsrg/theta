@@ -34,22 +34,8 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
-import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -102,6 +88,7 @@ public final class ExprCanonizer {
                     // Integer
 
                     .addCase(IntToRatExpr.class, ExprCanonizer::canonizeIntToRat)
+                    .addCase(IntToBvExpr.class, ExprCanonizer::canonizeIntToBv)
                     .addCase(IntAddExpr.class, ExprCanonizer::canonizeIntAdd)
                     .addCase(IntSubExpr.class, ExprCanonizer::canonizeIntSub)
                     .addCase(IntPosExpr.class, ExprCanonizer::canonizeIntPos)
@@ -331,6 +318,12 @@ public final class ExprCanonizer {
      */
 
     private static Expr<RatType> canonizeIntToRat(final IntToRatExpr expr) {
+        final Expr<IntType> op = canonize(expr.getOp());
+
+        return expr.with(op);
+    }
+
+    private static Expr<BvType> canonizeIntToBv(final IntToBvExpr expr) {
         final Expr<IntType> op = canonize(expr.getOp());
 
         return expr.with(op);

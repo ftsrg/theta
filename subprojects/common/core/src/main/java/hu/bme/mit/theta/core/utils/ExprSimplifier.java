@@ -105,6 +105,7 @@ public final class ExprSimplifier {
                     // Integer
 
                     .addCase(IntToRatExpr.class, this::simplifyIntToRat)
+                    .addCase(IntToBvExpr.class, this::simplifyIntToBv)
                     .addCase(IntAddExpr.class, this::simplifyIntAdd)
                     .addCase(IntSubExpr.class, this::simplifyIntSub)
                     .addCase(IntPosExpr.class, this::simplifyIntPos)
@@ -1116,6 +1117,17 @@ public final class ExprSimplifier {
         }
 
         return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyIntToBv(final IntToBvExpr expr, final Valuation val) {
+        final Expr<IntType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof IntLitExpr) {
+            final IntLitExpr litOp = (IntLitExpr) op;
+            return expr.with(op).eval(val);
+        }
+
+        return expr.with(op);
     }
 
     private Expr<BoolType> simplifyEnumEqExpr(final EnumEqExpr expr, final Valuation val) {

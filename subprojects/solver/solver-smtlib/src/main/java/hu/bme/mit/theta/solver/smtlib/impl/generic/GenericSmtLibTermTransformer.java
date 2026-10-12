@@ -117,6 +117,8 @@ import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
@@ -192,6 +194,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
                         // Integer
                         put("to_real", exprUnaryOperator(IntToRatExpr::create));
+                        put("int_to_bv", exprIntToBv());
 
                         // Rational
                         put("to_int", exprUnaryOperator(RatToIntExpr::create));
@@ -229,6 +232,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         // Floating point
 
                         put("fp", exprFpLit());
+                        put("to_fp", exprToFp());
                         put("fp.add", exprFpMultiaryOperator(FpAddExpr::create));
                         put("fp.sub", exprFpBinaryOperator(FpSubExpr::create));
                         put("fp.neg", exprUnaryOperator(FpNegExpr::create));
@@ -664,7 +668,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var value = encodeSymbol(getSymbol(ctx));
+        final var value = ctx.getText();
         switch (value) {
             case "true":
                 return BoolExprs.True();
@@ -842,6 +846,17 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         };
     }
 
+    private OperatorCreatorFunction exprIntToBv() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var size = Integer.parseInt(params.get(0).numeral().getText());
+            final var expr = transformTerm(ops.get(0), model, vars);
+            return IntExprs.ToBv(cast(expr, Int()), size);
+        };
+    }
+
     private OperatorCreatorFunction exprBinaryOperator(final BinaryOperator<Expr<?>> function) {
         return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
@@ -988,17 +1003,53 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         };
     }
 
+    private OperatorCreatorFunction exprToFp() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 2, "Two parameters expected");
+            checkArgument(ops.size() == 1 || ops.size() == 2, "One or two operators expected");
+
+            final var exponent = Integer.parseInt(params.get(0).numeral().getText());
+            final var significand = Integer.parseInt(params.get(1).numeral().getText());
+
+            if (ops.size() == 1) {
+                final var expr = transformTerm(ops.get(0), model, vars);
+
+                if (expr.getType() instanceof BvType type) {
+                    return FpExprs.FromIeeeBv(cast(expr, type), FpExprs.FpType(exponent, significand));
+                }
+
+                throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
+            } else {
+                final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+                final var expr = transformTerm(ops.get(1), model, vars);
+
+                if (expr.getType() instanceof FpType type) {
+                    return FpExprs.ToFp(roundingMode, cast(expr, type), exponent, significand);
+                } else if (expr.getType() instanceof BvType type) {
+                    return FpExprs.FromBv(roundingMode, cast(expr, type), FpExprs.FpType(exponent, significand), type.getSigned());
+                }
+
+                throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
+            }
+        };
+    }
+
     private FpRoundingMode fpOperatorRoundingMode(final TermContext term) {
         switch (term.getText()) {
             case "RNE":
+            case "roundNearestTiesToEven":
                 return FpRoundingMode.RNE;
             case "RNA":
+            case "roundNearestTiesToAway":
                 return FpRoundingMode.RNA;
             case "RTP":
+            case "roundTowardPositive":
                 return FpRoundingMode.RTP;
             case "RTN":
+            case "roundTowardNegative":
                 return FpRoundingMode.RTN;
             case "RTZ":
+            case "roundTowardZero":
                 return FpRoundingMode.RTZ;
             default:
                 throw new SmtLibSolverException("");
@@ -1007,11 +1058,6 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     static String getSymbol(SymbolContext symbol) {
         final var str = symbol.getText();
-        if (symbol.quotedSymbol() != null) {
-            assert str.charAt(0) == '|' && str.charAt(str.length() - 1) == '|'
-                    : "Quoted symbol not quoted.";
-            return str.substring(1, str.length() - 1);
-        }
         return str;
     }
 

@@ -39,5 +39,6 @@
  * hu.bme.mit.theta.core.type.inttype.IntLeqExpr}: less or equal
  *
  * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntToRatExpr}: cast to rational
+ * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntToBvExpr}: cast to bitvector
  */
 package hu.bme.mit.theta.core.type.inttype;

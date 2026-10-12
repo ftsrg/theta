@@ -101,6 +101,7 @@ import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
@@ -231,6 +232,7 @@ final class JavaSMTExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                         // Bitvectors
 
@@ -643,6 +645,10 @@ final class JavaSMTExprTransformer {
 
     private Formula transformIntToRat(final IntToRatExpr expr) {
         return rationalFormulaManager.sum(List.of((IntegerFormula) toTerm(expr.getOp())));
+    }
+
+    private Formula transformIntToBv(final IntToBvExpr expr) {
+        return bitvectorFormulaManager.makeBitvector(expr.getSize(), (IntegerFormula) toTerm(expr.getOp()));
     }
 
     private Formula transformBvLit(final BvLitExpr expr) {
