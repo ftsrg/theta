@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,16 +19,11 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -59,8 +54,8 @@ public class ExplStmtTransFuncTest {
         final List<Stmt> stmts = new ArrayList<>();
         stmts.add(Havoc(x));
         stmts.add(Assign(x, Int(0)));
-        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
-        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
+        stmts.add(Assign(x, Inc(x.getRef())));
+        stmts.add(Assign(x, Inc(x.getRef())));
         stmts.add(Assume(Leq(x.getRef(), Int(100))));
 
         final Collection<? extends ExplState> succStates =
@@ -132,7 +127,7 @@ public class ExplStmtTransFuncTest {
         final List<Stmt> stmts = new ArrayList<>();
         stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
 
-        final Map<Integer, Integer> solverCallsToExpectedStates = Containers.createMap();
+        final Map<Integer, Integer> solverCallsToExpectedStates = CollectionUtil.createMap();
         solverCallsToExpectedStates.put(1, 1);
         solverCallsToExpectedStates.put(2, 1);
         solverCallsToExpectedStates.put(3, 3);

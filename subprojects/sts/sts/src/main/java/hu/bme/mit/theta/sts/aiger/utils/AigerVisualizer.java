@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.sts.aiger.utils;
 
 import static java.lang.System.lineSeparator;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
@@ -73,7 +73,7 @@ public final class AigerVisualizer {
     }
 
     private static void appendWires(final AigerSystem system, final StringBuilder sb) {
-        final Set<AigerWire> wires = Containers.createSet();
+        final Set<AigerWire> wires = CollectionUtil.createSet();
         system.getNodes().forEach(n -> wires.addAll(n.getInWires()));
         system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
         wires.addAll(system.getOutput().getInWires());

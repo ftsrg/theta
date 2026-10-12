@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.analysis.expr.refinement.autoexpl;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class NewOperandsAutoExpl implements AutoExpl {
 
-    private final Set<VarDecl<?>> explVars = Containers.createSet();
+    private final Set<VarDecl<?>> explVars = CollectionUtil.createSet();
     private final Map<Decl<?>, Set<Expr<?>>> modelOperands;
     private final Map<Decl<?>, Set<Expr<?>>> newOperands;
     private final int newOperandsLimit;
@@ -48,8 +48,8 @@ public class NewOperandsAutoExpl implements AutoExpl {
         this.newOperandsLimit = newOperandsLimit;
         this.modelOperands = modelOperands;
 
-        this.newOperands = Containers.createMap();
-        this.cache = Containers.createSet();
+        this.newOperands = CollectionUtil.createMap();
+        this.cache = CollectionUtil.createSet();
     }
 
     @Override
@@ -87,14 +87,14 @@ public class NewOperandsAutoExpl implements AutoExpl {
                                                                                 .computeIfAbsent(
                                                                                         decl,
                                                                                         k ->
-                                                                                                Containers
+                                                                                                CollectionUtil
                                                                                                         .createSet())
                                                                                 .contains(op)) {
                                                                             newOperands
                                                                                     .computeIfAbsent(
                                                                                             decl,
                                                                                             k ->
-                                                                                                    Containers
+                                                                                                    CollectionUtil
                                                                                                             .createSet())
                                                                                     .add(op);
                                                                         }

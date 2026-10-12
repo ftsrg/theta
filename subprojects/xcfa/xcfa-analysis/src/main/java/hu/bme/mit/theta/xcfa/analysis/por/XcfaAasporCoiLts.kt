@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import kotlin.random.Random
 
 class XcfaAasporCoiLts(
   xcfa: XCFA,
   ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>,
   coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
-) : XcfaAasporLts(xcfa, ignoredVarRegistry) {
+  random: Random,
+) : XcfaAasporLts(xcfa, ignoredVarRegistry, random) {
 
   init {
     simpleXcfaLts = coiLTS

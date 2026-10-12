@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,7 +55,14 @@ class XcfaCli(private val args: Array<String>) {
       JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(*args)
       val configFile = this.configFile
       if (configFile != null) {
-        config = getGson().fromJson(FileReader(configFile), XcfaConfig::class.java)
+        try {
+          config = getGson().fromJson(FileReader(configFile), XcfaConfig::class.java)
+        } catch (_: Exception) {
+          val fileContents = configFile.readText()
+          val fileArgs = fileContents.split(Regex("\\s+")).filter { it.isNotBlank() }
+          remainingFlags.addAll(fileArgs)
+          config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
+        }
       } else {
         config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
       }

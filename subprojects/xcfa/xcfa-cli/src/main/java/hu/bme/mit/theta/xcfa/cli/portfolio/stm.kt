@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,6 +42,21 @@ ${innerSTM.visualize()}
       .trimIndent()
 }
 
+/**
+ * A portfolio nested in another one. Its STM is built only when the node runs, as a portfolio can
+ * nest itself (e.g., COMPLEX falls back to COMPLEX). Like [HierarchicalNode], it returns the inner
+ * config that succeeded.
+ */
+class NestedPortfolioNode(name: String, portfolio: () -> STM) : Node(name) {
+
+  val innerSTM: STM by lazy(portfolio)
+
+  override fun execute(logger: Logger): Pair<Any, Any> = innerSTM.execute(logger)
+
+  override fun visualize(): String =
+    "state ${name.replace(Regex("[:\\.-]+"), "_")}: nested portfolio"
+}
+
 fun XcfaConfig<*, *>.visualize(): String =
   if (backendConfig.backend == Backend.BOUNDED) {
     val specConfig = backendConfig.specConfig as BoundedConfig
@@ -67,8 +82,8 @@ class ConfigNode(
 ) : Node(name) {
 
   override fun execute(logger: Logger): Pair<Any, Any> {
-    logger.result("Current configuration: $name")
-    logger.benchmark("Current configuration: $config")
+    logger.result("%s", "Current configuration: $name")
+    logger.benchmark("%s", "Current configuration: $config")
     return Pair(Pair(name, config), check(config))
   }
 
@@ -155,16 +170,17 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
       try {
         return currentNode.execute(logger)
       } catch (e: Throwable) {
-        logger.benchmark("Caught exception: $e")
+        logger.benchmark("%s", "Caught exception: $e")
         val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
         if (edge != null) {
-          logger.benchmark("Handling exception as ${edge.trigger}")
+          logger.benchmark("%s", "Handling exception as ${edge.trigger}")
           currentNode = edge.target
         } else {
           logger.benchmark(
+            "%s",
             "Could not handle trigger $e (Available triggers: ${
                         currentNode.outEdges.map { it.trigger }.toList()
-                    })"
+                    })",
           )
           throw e
         }

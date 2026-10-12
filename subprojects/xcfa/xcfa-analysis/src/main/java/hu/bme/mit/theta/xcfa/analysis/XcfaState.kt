@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -41,10 +42,10 @@ constructor(
   val xcfa: XCFA?,
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
-  val mutexes: Map<String, Set<Int>> = mapOf(),
+  val mutexes: Map<MutexLock, Set<Int>> = emptyMap(),
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
-) : ExprState {
+) : ExprState, WrapperState {
 
   constructor(
     xcfa: XCFA,
@@ -55,12 +56,11 @@ constructor(
     processes =
       mapOf(0 to XcfaProcessState(locs = LinkedList(listOf(loc)), varLookup = LinkedList())),
     sGlobal = state,
-    mutexes = emptyMap(),
   )
 
   init {
-    check((mutexes[ATOMIC_MUTEX.name]?.size ?: 0) <= 1) {
-      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX.name]} hold it."
+    check((mutexes[ATOMIC_MUTEX]?.size ?: 0) <= 1) {
+      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX]} hold it."
     }
     check(mutexes.values.all { it.isNotEmpty() }) {
       "No mutex can be held by an empty set of processes, but $mutexes contains empty mutexes."
@@ -75,10 +75,12 @@ constructor(
     return sGlobal.toExpr()
   }
 
-  fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
+  override fun getWrappedState(): S = sGlobal
+
+  internal fun apply(a: XcfaAction): XcfaState<S> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[ATOMIC_MUTEX.name]?.any { it != a.pid } == true) {
-      return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
+    if (mutexes[ATOMIC_MUTEX]?.any { it != a.pid } == true) {
+      return copy(bottom = true)
     }
 
     val processState = processes[a.pid]
@@ -90,85 +92,78 @@ constructor(
       changes.add { state -> state.withProcesses(newProcesses) }
     }
 
-    val newLabels: List<XcfaLabel> =
-      a.edge.getFlatLabels().mapNotNull { label ->
-        when (label) {
-          is FenceLabel -> {
-            when (label) {
-              is AtomicBeginLabel,
-              is MutexLockLabel,
-              is RWLockReadLockLabel,
-              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
+    a.edge.getFlatLabels().forEach { label ->
+      when (label) {
+        is FenceLabel -> {
+          when (label) {
+            is AtomicBeginLabel,
+            is MutexLockLabel,
+            is RWLockReadLockLabel,
+            is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
-              is AtomicEndLabel,
-              is MutexUnlockLabel,
-              is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
+            is AtomicEndLabel,
+            is MutexUnlockLabel,
+            is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
 
-              is MutexTryLockLabel -> {
-                var success = false
-                changes.add { state ->
-                  val newState = state.enterMutex(label, a.pid)
-                  success = !newState.isBottom
-                  if (newState.isBottom) state else newState
-                }
-                AssignStmtLabel(
-                  label.successVar.ref,
-                  Int(if (success) 1 else 0),
-                  metadata = label.metadata,
-                )
+            is MutexTryLockLabel -> {
+              check(label.successful != null) {
+                "MutexTryLockLabel success must be encoded by the LTS."
               }
-            }.let { it as? XcfaLabel }
-          }
-
-          is InvokeLabel -> {
-            val proc =
-              xcfa?.procedures?.find { proc -> proc.name == label.name }
-                ?: error("No such method ${label.name}.")
-            val returnStmt =
-              SequenceLabel(
-                proc.params
-                  .withIndex()
-                  .filter { it.value.second != ParamDirection.IN }
-                  .map { iVal ->
-                    AssignStmtLabel(
-                      label.params[iVal.index] as RefExpr<*>,
-                      cast(iVal.value.first.ref, iVal.value.first.type),
-                      metadata = label.metadata,
-                    )
-                  }
-              )
-            changes.add { state ->
-              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
+              changes.add { state ->
+                val newState = state.enterMutex(label, a.pid)
+                when {
+                  newState.isBottom == label.successful -> state.copy(bottom = true) // disabled
+                  newState.isBottom -> state // mutex lock did not succeed
+                  else -> newState // mutex lock succeeded
+                }
+              }
             }
-            null
           }
-
-          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
-
-          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
-          is JoinLabel -> {
-            changes.add { state ->
-              val joinedPid = state.threadLookup[label.pidVar] ?: error("No such thread.")
-              if (joinedPid in state.processes) copy(bottom = true) else state
-            }
-            null
-          }
-
-          is SequenceLabel -> label
-          is NondetLabel -> label
-          is StmtLabel -> label
-          NopLabel -> null
         }
+
+        is InvokeLabel -> {
+          val proc =
+            xcfa?.procedures?.find { proc -> proc.name == label.name }
+              ?: error("No such method ${label.name}.")
+          val returnStmt =
+            SequenceLabel(
+              proc.params
+                .withIndex()
+                .filter { it.value.second != ParamDirection.IN }
+                .map { iVal ->
+                  AssignStmtLabel(
+                    label.params[iVal.index] as RefExpr<*>,
+                    cast(iVal.value.first.ref, iVal.value.first.type),
+                    metadata = label.metadata,
+                  )
+                }
+            )
+          changes.add { state ->
+            state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
+          }
+        }
+
+        is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }
+
+        is StartLabel -> changes.add { state -> state.start(label, a.pid) }
+        is JoinLabel -> {
+          changes.add { state ->
+            // joining a thread that was never started is a no-op (there is nothing to wait
+            // for); only block while a started thread is still running
+            val joinedPid = state.threadLookup[label.pidVar]
+            if (joinedPid != null && joinedPid in state.processes) copy(bottom = true) else state
+          }
+        }
+
+        else -> {}
       }
+    }
 
     changes.add { state ->
       if (state.processes[a.pid]!!.locs.isEmpty()) state.endProcess(a.pid) else state
     }
 
-    return Pair(
-      changes.fold(this) { current, change -> change(current) },
-      a.withLabel(SequenceLabel(newLabels)),
-    )
+    return changes.fold(this) { current, change -> change(current) }
   }
 
   private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {
@@ -269,25 +264,51 @@ constructor(
   }
 
   private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
-    if (label.blockingMutexes.any { it.name in mutexes && pid !in mutexes[it.name]!! }) {
+    val blockingMutexes = label.blockingMutexes(sGlobal)
+    if (blockingMutexes.known().any { it in mutexes && pid !in mutexes[it]!! }) {
       return copy(bottom = true)
     }
 
     val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes.forEach { newMutexes[it.name] = (newMutexes[it.name] ?: setOf()) + pid }
+    label.acquiredMutexes(sGlobal).forEach {
+      if (!it.isKnown()) {
+        throw UnsupportedOperationException("Ambiguous mutex lock is not supported.")
+      }
+      newMutexes[it] = (newMutexes[it] ?: setOf()) + pid
+    }
+
     return copy(mutexes = newMutexes)
   }
 
   private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> {
     val newMutexes = LinkedHashMap(mutexes)
-    label.releasedMutexes.forEach {
-      val holders = newMutexes[it.name]
+    val releasedMutexes = label.releasedMutexes(sGlobal)
+
+    releasedMutexes.known().forEach {
+      if (!it.isKnown()) {
+        // we do not know which mutex to release: this case is rather complicated...
+        // ideas:
+        // - use an SMT array as part of the expression state to track mutex lock sets
+        //   (drawback: we need a two-dimensional array as some mutexes may be locked by several
+        //   threads, and SMT solver reasoning power might not be very strong on these with unknown
+        //   indices)
+        // - release all mutexes of the current thread that is possibly the released one, and store
+        //   the ambiguously released mutexes in the successor states: later mutex locks should
+        //   check and add an assume label to ensure that only allowed lock is performed (either it
+        //   was the actually unlocked mutex in the ambiguous case, or it was not locked at all)
+        //   that the refiner also sees when checking the counterexample
+        //   (drawback: these assumptions get increasingly more complicated as a trace gets longer)
+        // currently, we have AmbiguousMutexPass to account for many cases
+        throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
+      }
+      val holders = newMutexes[it]
       when {
         holders == null || pid !in holders -> {}
-        holders.size == 1 -> newMutexes.remove(it.name)
-        else -> newMutexes[it.name] = holders - pid
+        holders.size == 1 -> newMutexes.remove(it)
+        else -> newMutexes[it] = holders - pid
       }
     }
+
     return copy(mutexes = newMutexes)
   }
 
@@ -308,6 +329,10 @@ constructor(
 
   override fun toString(): String {
     return "$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
+  }
+
+  companion object {
+    private var unknownMutexLockCnt = 0
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedLtsChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
@@ -35,10 +36,10 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredAbstractors
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredDedicatedTransFunc
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.Prod2ExplPredStmtTransFunc
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
-import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
+import hu.bme.mit.theta.analysis.ptr.*
+import hu.bme.mit.theta.analysis.unit.UnitAnalysis
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -47,13 +48,16 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoi
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
+import kotlin.random.Random
 
 open class XcfaAnalysis<S : ExprState, P : Prec>(
   private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
@@ -87,10 +91,10 @@ private fun getTmpVar(originalVar: VarDecl<*>, tmpCnt: Int) =
     Var("tmp${tmpCnt}_" + originalVar.name, originalVar.type)
   }
 
-fun getCoreXcfaLts() =
+fun getCoreXcfaLts(random: Random) =
   LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
     s.processes
-      .map { proc ->
+      .flatMap { proc ->
         if (proc.value.locs.peek().final) {
           listOf(
             XcfaAction(
@@ -199,14 +203,41 @@ fun getCoreXcfaLts() =
           }
         }
       }
-      .flatten()
+      .let { actions ->
+        if (actions.any { a -> a.label.getFlatLabels().any { it is MutexTryLockLabel } }) {
+          // flatMap could go outer, but we should execute the slow flatMap only if we have
+          // a MutexTryLockLabel in the actions which is rare
+          actions.flatMap { action ->
+            action.label
+              .getFlatLabels()
+              .fold<XcfaLabel, List<List<XcfaLabel>>>(listOf(emptyList())) { combinations, label ->
+                if (label is MutexTryLockLabel) {
+                  combinations.flatMap { combination ->
+                    // we need to hard-code a successful and an unsuccessful try-lock to see the
+                    // correct return status var assignment in the trace
+                    listOf(
+                      combination + label.copy(successful = true),
+                      combination + label.copy(successful = false),
+                    )
+                  }
+                } else {
+                  combinations.map { combination -> combination + label }
+                }
+              }
+              .map { action.withLabel(SequenceLabel(it)) }
+          }
+        } else {
+          actions
+        }
+      }
+      .shuffled(random)
       .toSet()
   }
 
-fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
-  val lts = getCoreXcfaLts()
+fun getXcfaLts(random: Random): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
+  val lts = getCoreXcfaLts(random)
   return LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
-    lts.getEnabledActionsFor(s).filter { !s.apply(it).first.bottom }.toSet()
+    lts.getEnabledActionsFor(s).filter { !s.apply(it).bottom }.toSet()
   }
 }
 
@@ -297,11 +328,11 @@ private fun getExplXcfaTransFunc(
     (ExplStmtTransFunc.create(solver, maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     explTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(
           listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label)))
             .flatten()
@@ -364,11 +395,11 @@ private fun getPredXcfaTransFunc(
     (PredTransFunc.create<StmtAction>(predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     predTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -437,11 +468,11 @@ fun getExplPredStmtXcfaTransFunc(
         as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     combinedTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -461,11 +492,11 @@ fun getExplPredSplitXcfaTransFunc(
         as TransFunc<Prod2State<ExplState, PredState>, ExprAction, Prod2Prec<ExplPrec, PredPrec>>)
       .getPtrTransFunc(isHavoc)
   return { s, a, p ->
-    val (newSt, newAct) = s.apply(a)
+    val newSt = s.apply(a)
     combinedTransFunc
       .getSuccStates(
         newSt.sGlobal,
-        newAct,
+        a,
         p.p.addVars(s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }),
       )
       .map { newSt.withState(it) }
@@ -491,3 +522,95 @@ class ExplPredCombinedXcfaAnalysis(
     coreTransFunc = prod2ExplPredTransFunc,
     coneOfInfluence = coi,
   )
+
+private fun getUnitXcfaPartialOrd(xcfa: XCFA): PartialOrd<XcfaState<PtrState<UnitState>>> {
+  val ptrPartialOrd = UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd()
+  return if (xcfa.isInlined) {
+    getPartialOrder(ptrPartialOrd)
+  } else {
+    getStackPartialOrder(ptrPartialOrd)
+  }
+}
+
+private fun getUnitXcfaInitFunc(
+  xcfa: XCFA
+): (XcfaPrec<PtrPrec<UnitPrec>>) -> List<XcfaState<PtrState<UnitState>>> {
+  val processInitState =
+    xcfa.initProcedures
+      .mapIndexed { i, it ->
+        val initLocStack: LinkedList<XcfaLocation> = LinkedList()
+        initLocStack.add(it.first.initLoc)
+        Pair(
+          i,
+          XcfaProcessState(
+            initLocStack,
+            prefix = "T$i",
+            varLookup = LinkedList(listOf(it.first.createLookup("T$i", ""))),
+          ),
+        )
+      }
+      .toMap()
+  return { p ->
+    InitFunc<UnitState, UnitPrec> { _ -> listOf(UnitState.getInstance()) }
+      .getPtrInitFunc()
+      .getInitStates(p.p)
+      .map { XcfaState(xcfa, processInitState, it) }
+  }
+}
+
+private fun getUnitXcfaTransFunc(
+  isHavoc: Boolean
+): (XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>) -> List<
+    XcfaState<PtrState<UnitState>>
+  > {
+  val unitTransFunc =
+    TransFunc<UnitState, ExprAction, UnitPrec> { s, _, _ -> listOf(s) }.getPtrTransFunc(isHavoc)
+  return { s, a, p ->
+    val newSt = s.apply(a)
+    unitTransFunc.getSuccStates(s.sGlobal, a, p.p).map { newSt.withState(it) }
+  }
+}
+
+class UnitXcfaAnalysis(xcfa: XCFA, isHavoc: Boolean) :
+  XcfaAnalysis<UnitState, PtrPrec<UnitPrec>>(
+    corePartialOrd = getUnitXcfaPartialOrd(xcfa),
+    coreInitFunc = getUnitXcfaInitFunc(xcfa),
+    coreTransFunc = getUnitXcfaTransFunc(isHavoc),
+  )
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val lts = getXcfaLts(Random(-1))
+  return getBoundedXcfaChecker(xcfa, lts, errorDetection, bound, solver, isHavoc)
+}
+
+fun getBoundedXcfaChecker(
+  xcfa: XCFA,
+  lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  errorDetection: ErrorDetection,
+  bound: Int,
+  solver: Solver,
+  isHavoc: Boolean = false,
+  parseContext: ParseContext = ParseContext(),
+): BoundedLtsChecker<XcfaState<PtrState<UnitState>>, XcfaAction, XcfaPrec<PtrPrec<UnitPrec>>> {
+  val analysis = UnitXcfaAnalysis(xcfa, isHavoc)
+  val target = getXcfaErrorDetector(errorDetection, parseContext)
+  val prec = XcfaPrec(PtrPrec(UnitPrec.getInstance()))
+  // Mirror the refiner's write-triple accumulation: the last enriched action's nextWriteTriples()
+  // already carries the full accumulated write history up to that point, so we only need the
+  // last entry to seed the next action — identical to how XcfaSingleExprTraceRefiner chains them.
+  val actionEnricher =
+    java.util.function.BiFunction<XcfaAction, List<XcfaAction>, XcfaAction> { action, path ->
+      val last = path.lastOrNull()
+      action.withLastWrites(
+        last?.nextWriteTriples() ?: emptyMap(),
+        last?.let { it.cnts.values.maxOrNull() ?: it.inCnt } ?: 0,
+      )
+    }
+  return BoundedLtsChecker(lts, analysis, target, bound, prec, solver, actionEnricher)
+}

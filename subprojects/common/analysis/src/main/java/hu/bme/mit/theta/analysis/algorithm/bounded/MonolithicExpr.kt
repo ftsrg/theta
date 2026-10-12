@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ constructor(
   val ctrlVars: Collection<VarDecl<*>> = listOf(),
   val events: List<Event<VarDecl<*>>> =
     splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) },
+  val explicitSplit: List<Expr<BoolType>>? = null,
 ) {
-  val split: List<Expr<BoolType>> by lazy { splitTransExpr(transExpr) }
+  val split: List<Expr<BoolType>> by lazy { explicitSplit ?: splitTransExpr(transExpr) }
 }
 
 fun MonolithicExpr.action() =
@@ -48,6 +49,22 @@ fun MonolithicExpr.action() =
 
     override fun nextIndexing(): VarIndexing = transOffsetIndex
   }
+
+/** The action of the [index]th disjunct of [MonolithicExpr.split] alone. */
+class MonolithicExprSplitAction(
+  val index: Int,
+  private val expr: Expr<BoolType>,
+  private val indexing: VarIndexing,
+) : ExprAction {
+  override fun toExpr(): Expr<BoolType> = expr
+
+  override fun nextIndexing(): VarIndexing = indexing
+
+  override fun toString(): String = "SplitAction($index)"
+}
+
+fun MonolithicExpr.splitAction(index: Int): ExprAction =
+  MonolithicExprSplitAction(index, split[index], transOffsetIndex)
 
 // TODO: not this simple, can mess up STS with or
 private fun splitTransExpr(expr: Expr<BoolType>): List<Expr<BoolType>> {

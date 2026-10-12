@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.ParseException;
@@ -49,7 +49,7 @@ public class XstsSpecification implements DynamicScope {
         this.context = checkNotNull(context);
         this.symbolTable = new SymbolTable();
         this.typeTable = new SymbolTable();
-        customTypeShortNames = Containers.createSet();
+        customTypeShortNames = CollectionUtil.createSet();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class XstsSpecification implements DynamicScope {
     public XSTS instantiate() {
         final Env env = new Env();
 
-        final Set<VarDecl<?>> ctrlVars = Containers.createSet();
+        final Set<VarDecl<?>> ctrlVars = CollectionUtil.createSet();
         final List<Expr<BoolType>> initExprs = new ArrayList<>();
 
         for (var typeDeclContext : context.typeDeclarations) {
@@ -89,7 +89,7 @@ public class XstsSpecification implements DynamicScope {
         }
 
         final Set<VarDecl<?>> stateVars =
-                Containers.createSet(
+                CollectionUtil.createSet(
                         context.variableDeclarations.stream()
                                 .map(
                                         varDeclContext -> {
@@ -136,7 +136,7 @@ public class XstsSpecification implements DynamicScope {
                                                                         if (fullNameSymbol
                                                                                 instanceof
                                                                                 XstsCustomLiteralSymbol
-                                                                                                fNameCustLitSymbol) {
+                                                                                        fNameCustLitSymbol) {
                                                                             var customSymbol =
                                                                                     XstsCustomLiteralSymbol
                                                                                             .copyWithName(
@@ -193,7 +193,7 @@ public class XstsSpecification implements DynamicScope {
         final Expr<BoolType> prop =
                 cast(new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
 
-        final Set<VarDecl<?>> localVars = Containers.createSet();
+        final Set<VarDecl<?>> localVars = CollectionUtil.createSet();
         localVars.addAll(StmtUtils.getVars(tranSet));
         localVars.addAll(StmtUtils.getVars(envSet));
         localVars.addAll(StmtUtils.getVars(initSet));

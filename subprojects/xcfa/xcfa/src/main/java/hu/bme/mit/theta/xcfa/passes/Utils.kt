@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,21 +31,35 @@ import java.util.*
 
 /** XcfaEdge must be in a `deterministic` ProcedureBuilder */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
-  check(label is SequenceLabel)
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()
-  for (label in label.labels) {
+
+  val singleMetadata = {
+    var metadata: MetaData = EmptyMetaData
+    current.forEach { c ->
+      if (c.metadata != EmptyMetaData) {
+        if (metadata != EmptyMetaData && metadata != c.metadata) {
+          metadata = EmptyMetaData
+          return@forEach
+        }
+        metadata = c.metadata
+      }
+    }
+    metadata
+  }
+
+  for (label in label.getFlatLabels()) {
     if (function(label)) {
       if (current.isNotEmpty()) {
-        newLabels.add(SequenceLabel(current))
+        newLabels.add(SequenceLabel(current, singleMetadata()))
         current = ArrayList()
       }
-      newLabels.add(SequenceLabel(listOf(label)))
+      newLabels.add(SequenceLabel(listOf(label), label.metadata))
     } else {
       current.add(label)
     }
   }
-  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current))
+  if (current.isNotEmpty()) newLabels.add(SequenceLabel(current, singleMetadata()))
 
   val locations = ArrayList<XcfaLocation>()
   locations.add(source)
@@ -112,14 +126,14 @@ fun XcfaLabel.changeVars(
 
       is FenceLabel -> {
         when (this) {
-          is MutexLockLabel -> MutexLockLabel(handle.changeVars(varLut), metadata)
+          is AtomicFenceLabel,
+          is MutexLockLabel,
+          is MutexUnlockLabel,
+          is RWLockReadLockLabel,
+          is RWLockWriteLockLabel,
+          is RWLockUnlockLabel -> withLock(lock.changeVars(varLut))
           is MutexTryLockLabel ->
-            MutexTryLockLabel(handle.changeVars(varLut), successVar.changeVars(varLut), metadata)
-          is MutexUnlockLabel -> MutexUnlockLabel(handle.changeVars(varLut), metadata)
-          is RWLockReadLockLabel -> RWLockReadLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockWriteLockLabel -> RWLockWriteLockLabel(handle.changeVars(varLut), metadata)
-          is RWLockUnlockLabel -> RWLockUnlockLabel(handle.changeVars(varLut), metadata)
-          else -> this
+            MutexTryLockLabel(lock.changeVars(varLut), successVar.changeVars(varLut), metadata)
         }
       }
 
@@ -268,3 +282,9 @@ val XcfaProcedureBuilder.loopEdges: Set<XcfaEdge>
 
 val XcfaProcedure.loopEdges: Set<XcfaEdge>
   get() = getLoopEdges(initLoc)
+
+/** A memory assignment of [expr], cast to the type of [deref]. */
+fun <P : Type, O : Type, D : Type> buildMemoryAssign(
+  deref: Dereference<P, O, D>,
+  expr: Expr<*>,
+): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))

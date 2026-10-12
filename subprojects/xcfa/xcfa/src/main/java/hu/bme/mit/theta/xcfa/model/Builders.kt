@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 
@@ -78,7 +79,6 @@ constructor(
   val manager: ProcedurePassManager,
   private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
   private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
-  private val atomicVars: MutableSet<VarDecl<*>> = LinkedHashSet(),
   private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
   private val edges: MutableSet<XcfaEdge> = LinkedHashSet(),
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
@@ -118,15 +118,6 @@ constructor(
       else -> vars
     }
 
-  fun VarDecl<*>.isAtomic() =
-    when {
-      this@XcfaProcedureBuilder::optimized.isInitialized -> optimized.atomicVars.contains(this)
-      this@XcfaProcedureBuilder::partlyOptimized.isInitialized ->
-        partlyOptimized.vars.contains(this)
-
-      else -> atomicVars.contains(this)
-    }
-
   fun getLocs(): Set<XcfaLocation> =
     when {
       this::optimized.isInitialized -> optimized.locs
@@ -145,22 +136,21 @@ constructor(
     if (!this::optimized.isInitialized) {
       var that = this
       for (pass in manager.passes.flatten()) {
-        that = pass.run(that)
+        that = pass.runChecked(that)
       }
       optimized = that
     }
   }
 
-  fun optimize(
-    phase: Int
-  ): Boolean { // true, if optimization is finished (no more phases to execute)
+  /** Returns true, if optimization is finished (no more phases to execute) */
+  fun optimize(phase: Int): Boolean {
     if (this::optimized.isInitialized || phase >= manager.passes.size) return true
     if (phase <= lastOptimized) return lastOptimized >= manager.passes.size - 1
     check(phase == lastOptimized + 1) { "Wrong optimization phase!" }
 
     var that = if (this::partlyOptimized.isInitialized) partlyOptimized else this
     for (pass in manager.passes[phase]) {
-      that = pass.run(that)
+      that = pass.runChecked(that)
     }
 
     partlyOptimized = that
@@ -201,13 +191,6 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     vars.add(toAdd)
-  }
-
-  fun setAtomic(v: VarDecl<*>) {
-    check(!this::optimized.isInitialized) {
-      "Cannot add/remove/modify elements after optimization passes!"
-    }
-    atomicVars.add(v)
   }
 
   fun removeVar(toRemove: VarDecl<*>) {
@@ -269,6 +252,15 @@ constructor(
     }
     addLoc(toAdd.source)
     addLoc(toAdd.target)
+    // addLoc is a no-op for a location that is already known, and refuses to (re-)add an error,
+    // initial or final one -- so an edge can still end up attached to a location this procedure
+    // does not list, which every consumer that maps edges through `locs` (XcfaProcedure.deepCopy,
+    // most directly) will then fail on with a bare NullPointerException far from the cause.
+    check(toAdd.source in locs && toAdd.target in locs) {
+      "Edge ${toAdd.source.name} -> ${toAdd.target.name} added to procedure $name with" +
+        " an endpoint that is not one of its locations" +
+        " (source present: ${toAdd.source in locs}, target present: ${toAdd.target in locs})"
+    }
     edges.add(toAdd)
     toAdd.source.outgoingEdges.add(toAdd)
     toAdd.target.incomingEdges.add(toAdd)
@@ -283,6 +275,28 @@ constructor(
       check(!toAdd.initial)
       check(!toAdd.final)
       locs.add(toAdd)
+    }
+  }
+
+  /**
+   * Asserts the basic well-formedness every consumer assumes: each edge runs between two locations
+   * this procedure actually lists. Called by [ProcedurePass.runChecked] after every pass, so a pass
+   * that breaks it is named instead of surfacing much later as a `!!` in `XcfaProcedure.deepCopy`.
+   */
+  internal fun checkEdgesHaveLocations(pass: ProcedurePass) {
+    // Identity, not equality: XcfaLocation is a data class, so a different instance with the same
+    // name and flags compares equal and satisfies `in locs`, while owning its own (empty) adjacency
+    // sets. Edges attached to such a twin are invisible to every traversal that walks adjacency.
+    val registered = Collections.newSetFromMap(IdentityHashMap<XcfaLocation, Boolean>())
+    registered.addAll(locs)
+    val dangling = edges.filter { it.source !in registered || it.target !in registered }
+    check(dangling.isEmpty()) {
+      "${pass::class.simpleName} left ${dangling.size} edge(s) of procedure $name attached to" +
+        " locations it no longer contains: " +
+        dangling.take(5).joinToString {
+          "${it.source.name}${if (it.source in locs) "" else "(missing)"} ->" +
+            " ${it.target.name}${if (it.target in locs) "" else "(missing)"}"
+        }
     }
   }
 
@@ -307,18 +321,30 @@ constructor(
       "Cannot add/remove new elements after optimization passes!"
     }
     locs.remove(toRemove)
+    if (toRemove.error) {
+      errorLoc = Optional.empty()
+    }
   }
 
   fun removeLocs(pred: (XcfaLocation) -> Boolean) {
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    while (locs.any(pred)) {
-      locs.removeIf(pred)
-      edges.removeIf {
-        pred(it.source).also { removing ->
+    while (true) {
+      // Snapshot the matches instead of re-evaluating `pred` while edges are being unhooked: the
+      // usual predicate asks whether a location has incoming edges, so removing edges underneath it
+      // changes the answer mid-pass. That is how a location could leave `locs` while an edge still
+      // pointed at it, leaving the builder with an edge attached to a location it no longer holds.
+      val toRemove = locs.filterTo(LinkedHashSet(), pred)
+      if (toRemove.isEmpty()) break
+      locs.removeAll(toRemove)
+      // An edge whose *target* vanished is just as orphaned as one whose source did, so drop
+      // everything incident to a removed location and unhook it from the endpoint that survives.
+      edges.removeIf { edge ->
+        (edge.source in toRemove || edge.target in toRemove).also { removing ->
           if (removing) {
-            it.target.incomingEdges.remove(it)
+            edge.source.outgoingEdges.remove(edge)
+            edge.target.incomingEdges.remove(edge)
           }
         }
       }
@@ -340,4 +366,42 @@ constructor(
   fun setUnsafeUnroll() {
     unsafeUnrollUsed = true
   }
+
+  fun deepCopy(identifier: String = ""): XcfaProcedureBuilder {
+    val newLocs =
+      locs.associateWith {
+        if (identifier.isEmpty()) it.copy() else it.copy(name = "${it.name}_$identifier")
+      }
+    return XcfaProcedureBuilder(
+        name = name,
+        manager = manager,
+        params = getParams().toMutableList(),
+        vars = getVars().toMutableSet(),
+        locs = getLocs().map { newLocs[it]!! }.toMutableSet(),
+        edges =
+          getEdges()
+            .map {
+              val source = newLocs[it.source]!!
+              val target = newLocs[it.target]!!
+              val edge = it.withSource(source).withTarget(target)
+              source.outgoingEdges.add(edge)
+              target.incomingEdges.add(edge)
+              edge
+            }
+            .toMutableSet(),
+        metaData = metaData.toMutableMap(),
+        unsafeUnrollUsed = unsafeUnrollUsed,
+        prop = prop,
+      )
+      .also { proc ->
+        proc.lastOptimized = lastOptimized
+        proc.copyMetaLocs(
+          newLocs[initLoc]!!,
+          finalLoc.map { newLocs[it] },
+          errorLoc.map { newLocs[it] },
+        )
+      }
+  }
+
+  override fun toString(): String = name
 }

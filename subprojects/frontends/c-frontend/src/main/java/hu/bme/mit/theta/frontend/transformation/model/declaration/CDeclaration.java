@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +34,51 @@ public class CDeclaration {
     private final String name;
     private final List<VarDecl<?>> varDecls;
     private boolean isFunc;
+    private boolean isFuncPointer;
+
+    /**
+     * An `_Atomic` written after a `*` inside the declarator, as in the atomic function pointer
+     * `void (* _Atomic fp)(void)`. Unlike `int * _Atomic p`, whose star is at the type-specifier
+     * level ({@link hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor}), this star
+     * is parenthesized into the declarator, so its atomicity is carried here and applied to the
+     * pointer the declarator builds (see {@link #getActualType()}).
+     */
+    private boolean atomicPointer = false;
+
+    public boolean isAtomicPointer() {
+        return atomicPointer;
+    }
+
+    public void setAtomicPointer(boolean atomicPointer) {
+        this.atomicPointer = atomicPointer;
+    }
+
     private int derefCounter = 0;
     private final List<CStatement> arrayDimensions = new ArrayList<>();
     private final List<CDeclaration> functionParams = new ArrayList<>();
     private CStatement initExpr;
+
+    /** Bit width for bitfield struct members (`unsigned lo : 4;`); -1 for ordinary members. */
+    private int bitfieldWidth = -1;
+
+    public int getBitfieldWidth() {
+        return bitfieldWidth;
+    }
+
+    public void setBitfieldWidth(int bitfieldWidth) {
+        this.bitfieldWidth = bitfieldWidth;
+    }
+
+    /** `packed` / `aligned(n)` on this member; `aligned` on a member wins over a packed struct. */
+    private ObjectLayout.Attributes layoutAttributes = ObjectLayout.Attributes.NONE;
+
+    public ObjectLayout.Attributes getLayoutAttributes() {
+        return layoutAttributes;
+    }
+
+    public void setLayoutAttributes(ObjectLayout.Attributes layoutAttributes) {
+        this.layoutAttributes = layoutAttributes;
+    }
 
     public CDeclaration(CSimpleType cSimpleType) {
         this.name = checkNotNull(cSimpleType).getAssociatedName();
@@ -60,8 +104,29 @@ public class CDeclaration {
         derefCounter += amount;
     }
 
+    /**
+     * Stars written in the declarator itself, split by where they bind relative to the array
+     * dimensions. The declarator is walked outwards from the identifier, so a star seen while no
+     * dimension has been recorded yet sits *inside* the parentheses and binds outside the array (`T
+     * (*p)[N]`, a pointer to an array); a star seen after a dimension binds to the element (`T
+     * *p[N]`, an array of pointers). Both end up with the same star and dimension counts, so the
+     * order they arrived in is the only thing that tells them apart.
+     */
+    private int pointerAroundArray = 0;
+
+    private int pointerInsideArray = 0;
+
     public void addArrayDimension(CStatement expr) {
         arrayDimensions.add(expr);
+    }
+
+    /** Records [count] stars written in the declarator (not in the declaration specifiers). */
+    public void addDeclaratorPointer(int count) {
+        if (arrayDimensions.isEmpty()) {
+            pointerAroundArray += count;
+        } else {
+            pointerInsideArray += count;
+        }
     }
 
     public List<CStatement> getArrayDimensions() {
@@ -82,7 +147,51 @@ public class CDeclaration {
 
     public CComplexType getActualType() {
         CComplexType actualType = type.getActualType();
-        for (CStatement arrayDimension : arrayDimensions) {
+        if (isFuncPointer || type.isFunctionPointer()) {
+            // In `int (*fp)(int)` the star sits inside the declarator, so (unlike `int *p`) it
+            // never
+            // reaches the type specifier: wrap it here. The pointer holds a function id, which
+            // FunctionPointerCallsPass dispatches on.
+            CSimpleType pointerType = type.copyOf();
+            pointerType.incrementPointer();
+            // The pointee of a function pointer is never dereferenced as data, so a
+            // `void`-returning
+            // one (`void (*f)(void*)`) uses a benign stand-in: CVoid has no value representation.
+            CComplexType pointeeType =
+                    actualType instanceof CVoid
+                            ? CComplexType.getSignedInt(actualType.getParseContext())
+                            : actualType;
+            CPointer functionPointer =
+                    new CPointer(pointerType, pointeeType, actualType.getParseContext());
+            functionPointer.setFunctionPointer(true);
+            // `void (* _Atomic fp)(void)`: the `_Atomic` after the star makes the pointer variable
+            // itself atomic (writing `fp` is race-free), exactly as `int * _Atomic p` does.
+            if (atomicPointer) {
+                functionPointer.setAtomic();
+            }
+            actualType = functionPointer;
+        }
+        // `T *p[N]`: the star belongs to the element type, so it goes on before the dimensions.
+        //
+        // ⚠️ In `T (*name[N])(args)` -- an ARRAY OF FUNCTION POINTERS -- that same star is the
+        // function pointer's own, and it has already been consumed above. It is nevertheless
+        // recorded here too, because `addDeclaratorPointer` files any declarator star into
+        // `pointerInsideArray` once a dimension exists. Counting it twice gave the element two
+        // pointer levels instead of one, and the outer level carried no function-pointer flag -- so
+        // `tbl[0](x)` saw a plain `CPointer` and was refused with "Only variable-backed functions
+        // are callable" -- e.g. `void *(*__CS_thread[3])(void *)`.
+        int extraInsideArray =
+                pointerInsideArray - ((isFuncPointer && pointerInsideArray > 0) ? 1 : 0);
+        for (int i = 0; i < extraInsideArray; i++) {
+            CSimpleType simpleType = type.copyOf();
+            simpleType.incrementPointer();
+            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
+        }
+        // The declarator is walked outwards from the identifier, so `int a[3][4]` records [3, 4] --
+        // but it means an array of 3 arrays of 4, so the *last* dimension is the innermost one and
+        // they have to be applied back to front. (A single dimension is unaffected, and
+        // multi-dimensional arrays were rejected outright before, so nothing working changes.)
+        for (int i = arrayDimensions.size() - 1; i >= 0; i--) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
             actualType =
@@ -90,15 +199,18 @@ public class CDeclaration {
                             simpleType,
                             actualType,
                             actualType.getParseContext(),
-                            arrayDimension); // some day change this back to arrays, when simple &
-            // complex types are better synchronized...
+                            arrayDimensions.get(i)); // some day change this back to arrays, when
+            // simple & complex types are better synchronized...
         }
-        //        for (int i = 0; i < derefCounter; i++) {
-        //            CSimpleType simpleType = type.copyOf();
-        //            simpleType.incrementPointer();
-        //            actualType = new CPointer(simpleType, actualType,
-        // actualType.getParseContext());
-        //        }
+        // `T (*p)[N]`: the star was written inside the parentheses, so it wraps the whole array --
+        // p is a pointer *to* an array. Without this the pointer level was dropped and `(*p)[i]`
+        // had no array to subscript ("Non-array expression used as array"). A declaration with no
+        // dimensions has no declarator star to place here either, so this leaves it untouched.
+        for (int i = 0; i < pointerAroundArray && !arrayDimensions.isEmpty(); i++) {
+            CSimpleType simpleType = type.copyOf();
+            simpleType.incrementPointer();
+            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
+        }
 
         return actualType;
     }
@@ -137,6 +249,18 @@ public class CDeclaration {
             stringBuilder.append(" = ").append(initExpr);
         }
         return stringBuilder.toString();
+    }
+
+    /**
+     * True for a function POINTER variable (e.g. `int (*fp)(int)`), which is a variable, not a
+     * function. Its value is a function id; calls through it are dispatched over a candidate set.
+     */
+    public boolean isFuncPointer() {
+        return isFuncPointer;
+    }
+
+    public void setFuncPointer(boolean funcPointer) {
+        isFuncPointer = funcPointer;
     }
 
     public boolean isFunc() {

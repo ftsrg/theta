@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -51,13 +52,18 @@ data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> 
 fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, Set<LitExpr<*>>> {
   val attempt =
     Try.attempt {
-      fun unboxMod(e: Expr<*>): Expr<*> = if (e is ModExpr<*>) unboxMod(e.ops[0]) else e
+      fun unbox(e: Expr<*>): Expr<*> =
+        when (e) {
+          is PosExpr<*> -> unbox(e.op)
+          is ModExpr<*> -> unbox(e.ops[0])
+          else -> e
+        }
 
       val bases =
         this.procedures
           .flatMap { proc ->
             (proc.edges - initEdges).flatMap { edge ->
-              edge.label.dereferences.map { unboxMod(it.array) }
+              edge.label.dereferences.map { unbox(it.array) }
             }
           }
           .filter { it !is LitExpr<*> && it !is Dereference<*, *, *> }
@@ -112,13 +118,19 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
               val calledProc = this.procedures.find { proc -> proc.name == it.name }
               calledProc?.let { calledProc ->
                 calledProc.params
-                  .filter { it.second != ParamDirection.OUT }
-                  .mapIndexed { i, (param, _) ->
+                  .withIndex()
+                  .filter { (_, it) -> it.second != ParamDirection.OUT }
+                  .map { (i, pair) ->
+                    val (param, _) = pair
                     Assign(cast(param, param.type), cast(it.params[i], param.type))
                   } +
                   calledProc.params
-                    .filter { it.second != ParamDirection.IN }
-                    .mapIndexed { i, (param, _) ->
+                    .withIndex()
+                    .filter { (i, pair) ->
+                      pair.second != ParamDirection.IN && it.params[i] is RefExpr<*>
+                    }
+                    .map { (i, pair) ->
+                      val (param, _) = pair
                       Assign(
                         cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
                         cast(param.ref, param.type),
@@ -145,7 +157,7 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
 
       while (ptrVars != lastPtrVars) {
         lastPtrVars = ptrVars.toSet()
-        val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unboxMod(it.expr) }
+        val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unbox(it.expr) }
         ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
       }
 
@@ -154,19 +166,19 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
 
       val litAssignments =
         allAssignments
-          .filter { ptrVars.contains(it.varDecl) && unboxMod(it.expr) is LitExpr<*> }
-          .map { Pair(it.varDecl, unboxMod(it.expr) as LitExpr<*>) } +
+          .filter { ptrVars.contains(it.varDecl) && unbox(it.expr) is LitExpr<*> }
+          .map { Pair(it.varDecl, unbox(it.expr) as LitExpr<*>) } +
           allAssignments
             .filter {
               ptrVars.contains(it.varDecl) &&
-                (unboxMod(it.expr) !is LitExpr<*> && unboxMod(it.expr) !is RefExpr<*>)
+                (unbox(it.expr) !is LitExpr<*> && unbox(it.expr) !is RefExpr<*>)
             }
             .map { Pair(it.varDecl, MallocLitExpr(it.varDecl.type)) }
       litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
       val varAssignments =
         allAssignments
-          .filter { ptrVars.contains(it.varDecl) && unboxMod(it.expr) is RefExpr<*> }
-          .map { Pair(it.varDecl, (unboxMod(it.expr) as RefExpr<*>).decl as VarDecl<*>) }
+          .filter { ptrVars.contains(it.varDecl) && unbox(it.expr) is RefExpr<*> }
+          .map { Pair(it.varDecl, (unbox(it.expr) as RefExpr<*>).decl as VarDecl<*>) }
       varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
       varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
 
@@ -200,6 +212,9 @@ fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
  * with their points-to sets, and taking their Cartesian product.
  */
 fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
+  val simplified = ExprUtils.simplify(this) as? LitExpr<*>
+  if (simplified != null) return setOf(simplified)
+
   val results = mutableSetOf<LitExpr<*>>()
   var values = listOf<Map<Decl<*>, LitExpr<*>>>()
   val vars = ExprUtils.getVars(this)

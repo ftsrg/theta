@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
@@ -562,23 +563,9 @@ public class XstsTest {
     @BeforeAll
     public static void installSolver() {
         if (SOLVER_STRING.contains("Z3") || SOLVER_STRING.contains("JavaSMT")) {
-            return;
+            return; // bundled, nothing to install
         }
-        try (final var solverManager =
-                SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
-            String solverVersion = SmtLibSolverManager.getSolverVersion(SOLVER_STRING);
-            String solverName = SmtLibSolverManager.getSolverName(SOLVER_STRING);
-            if (solverManager.managesSolver(SOLVER_STRING)
-                    && !solverManager
-                            .getInstalledVersions(solverName)
-                            .contains(
-                                    solverManager.getVersionString(
-                                            solverName, solverVersion, false))) {
-                solverManager.install(solverName, solverVersion, solverVersion, null, false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        SolverInstallations.installOrSkip(SOLVER_STRING);
     }
 
     @MethodSource("data")

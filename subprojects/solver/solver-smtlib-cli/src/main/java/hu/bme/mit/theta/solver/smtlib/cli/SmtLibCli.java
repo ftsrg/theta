@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -276,8 +276,7 @@ public class SmtLibCli {
             final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
 
             if (print) {
-                logger.write(
-                        Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath()));
+                logger.write(Logger.Level.RESULT, "%s\n", argsFilePath.toAbsolutePath());
             } else if (Desktop.isDesktopSupported()
                     && Desktop.getDesktop().isSupported(Desktop.Action.EDIT)) {
                 try {
@@ -290,8 +289,7 @@ public class SmtLibCli {
                         Logger.Level.MAINSTEP,
                         "Open the following text file in your favourite editor, and edit the"
                                 + " content:\n");
-                logger.write(
-                        Logger.Level.RESULT, String.format("%s\n", argsFilePath.toAbsolutePath()));
+                logger.write(Logger.Level.RESULT, "%s\n", argsFilePath.toAbsolutePath());
             }
         }
     }

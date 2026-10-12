@@ -24,6 +24,8 @@ import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec
 import hu.bme.mit.theta.analysis.prod2.Prod2State
+import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -213,6 +215,7 @@ fun <S : ExprState> S.patch(writeTriples: WriteTriples): S =
     is Prod2State<*, *> ->
       this.with1((this.state1 as ExprState).patch(writeTriples))
         .with2((this.state2 as ExprState).patch(writeTriples)) as S
+    is UnitState -> this
     is PtrState<*> ->
       (this as PtrState<ExprState>).copy(innerState = innerState.patch(writeTriples)) as S
     else -> error("State $this is not supported")
@@ -224,6 +227,7 @@ fun <P : Prec> P.patch(writeTriples: WriteTriples): P =
     is ExplPrec -> this
     is Prod2Prec<*, *> ->
       Prod2Prec.of(this.prec1.patch(writeTriples), this.prec2.patch(writeTriples)) as P
+    is UnitPrec -> this
     else -> error("Prec $this is not supported")
   }
 
@@ -239,6 +243,7 @@ fun <P : Prec> P.repatch(): P =
     is PredPrec -> PredPrec.of(preds.map { it.repatch() }) as P
     is ExplPrec -> this
     is Prod2Prec<*, *> -> Prod2Prec.of(this.prec1.repatch(), this.prec2.repatch()) as P
+    is UnitPrec -> this
     else -> error("Prec $this is not supported")
   }
 
@@ -254,6 +259,7 @@ fun <S : ExprState> S.repatch(): S =
       } else
         this.with1((this.state1 as ExprState).repatch()).with2((this.state2 as ExprState).repatch())
           as S
+    is UnitState -> this
     else -> error("State $this is not supported")
   }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
@@ -154,7 +154,7 @@ public class XstsMddStructuralSymbolicComparisonTest {
             MddHandle node,
             int level,
             Map<MddHandle, Long> cache,
-            RecursiveIntObjCursor<? extends MddHandle> cursor) {
+            RecursiveIntObjCursor<? extends hu.bme.mit.delta.mdd.MddHandle> cursor) {
         Long cached = (Long) cache.getOrDefault(node, null);
         if (cached != null) {
             return cached;
@@ -169,7 +169,9 @@ public class XstsMddStructuralSymbolicComparisonTest {
 
             while (cursor.moveNext()) {
                 try (var valueCursor = cursor.valueCursor()) {
-                    Long res = calculateNonzeroCount(cursor.value(), level - 1, cache, valueCursor);
+                    Long res =
+                            calculateNonzeroCount(
+                                    (MddHandle) cursor.value(), level - 1, cache, valueCursor);
                     if (res == null) {
                         return null;
                     }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.common.table.BasicTableWriter
 
 class XstsCliHeader : CliktCommand(name = "header") {
@@ -37,10 +37,10 @@ class XstsCliHeader : CliktCommand(name = "header") {
 
   private val algorithm: Algorithm by
     option(help = "The algorithm to print the header for").enum<Algorithm>().required()
-  private val iterationStrategy: MddChecker.IterationStrategy by
+  private val iterationStrategy: IterationStrategy by
     option(help = "The state space generation algorithm for symbolic checking")
-      .enum<MddChecker.IterationStrategy>()
-      .default(MddChecker.IterationStrategy.GSAT)
+      .enum<IterationStrategy>()
+      .default(IterationStrategy.GSAT)
 
   override fun run() {
     when (algorithm) {
@@ -104,17 +104,11 @@ class XstsCliHeader : CliktCommand(name = "header") {
         "unionHitCount",
       )
       .forEach(writer::cell)
-    if (
-      iterationStrategy in
-        setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-    ) {
+    if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
       listOf("saturateCacheSize", "saturateQueryCount", "saturateHitCount").forEach(writer::cell)
     }
     listOf("relProdCacheSize", "relProdQueryCount", "relProdHitCount").forEach(writer::cell)
-    if (
-      iterationStrategy in
-        setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)
-    ) {
+    if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
       listOf("saturatedNodeCount").forEach(writer::cell)
     }
   }

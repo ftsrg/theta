@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,8 +102,12 @@ class DataRaceUtilTest {
                 main.start()
               },
             check = { transformed ->
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_write_flag_x" })
-              assertTrue(transformed.globalVars.none { it.wrappedVar.name == "_read_flag_x" })
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_write_counter_x" }
+              )
+              assertTrue(
+                transformed.globalVars.none { it.wrappedVar.name == "_theta_dr_read_counter_x" }
+              )
               assertTrue(
                 transformed.procedures.all {
                   it.errorLoc.isEmpty || it.errorLoc.get().incomingEdges.isEmpty()
@@ -168,8 +172,12 @@ class DataRaceUtilTest {
                 main.start()
               },
             check = { transformed ->
-              assertNotNull(transformed.globalVars.find { it.wrappedVar.name == "_write_flag_x" })
-              assertNotNull(transformed.globalVars.find { it.wrappedVar.name == "_read_flag_x" })
+              assertNotNull(
+                transformed.globalVars.find { it.wrappedVar.name == "__theta_dr_write_counter_x" }
+              )
+              assertNotNull(
+                transformed.globalVars.find { it.wrappedVar.name == "__theta_dr_read_counter_x" }
+              )
               assertTrue(
                 transformed.procedures.all {
                   when (it.name) {
@@ -177,7 +185,8 @@ class DataRaceUtilTest {
                     else ->
                       it.errorLoc.get().incomingEdges.isNotEmpty() &&
                         it.errorLoc.get().incomingEdges.all { e ->
-                          "_write_flag_x" in e.collectVarsWithAccessType().map { a -> a.key.name }
+                          "__theta_dr_write_counter_x" in
+                            e.collectVarsWithAccessType().map { a -> a.key.name }
                         }
                   }
                 }
@@ -200,7 +209,7 @@ class DataRaceUtilTest {
       xcfa.optimizeFurther(
         ProcedurePassManager(
           listOf(
-            DataRaceToReachabilityPass(property, true),
+            DataRaceToReachabilityPass(property, enabled = true),
             UnusedLocRemovalPass(),
             NormalizePass(),
             DeterministicPass(),

@@ -79,8 +79,8 @@ fun XcfaLabel.collectVars(): Collection<VarDecl<*>> =
     is FenceLabel ->
       when (this) {
         is AtomicFenceLabel -> setOf()
-        is MutexTryLockLabel -> setOf(handle, successVar)
-        else -> setOf(handle)
+        is MutexTryLockLabel -> ExprUtils.getVars(lock) + setOf(successVar)
+        else -> ExprUtils.getVars(lock)
       }
     else -> emptySet()
   }
@@ -100,22 +100,24 @@ val AccessType?.isRead
 val AccessType?.isWritten
   get() = this?.second == true
 
-fun AccessType?.merge(other: AccessType?) =
-  Pair(this?.first == true || other?.first == true, this?.second == true || other?.second == true)
-
 val WRITE: AccessType
   get() = Pair(false, true)
 val READ: AccessType
   get() = Pair(true, false)
 
+infix fun AccessType?.merge(other: AccessType?) =
+  Pair(this?.first == true || other?.first == true, this?.second == true || other?.second == true)
+
+infix fun VarAccessMap.merge(other: VarAccessMap) = listOf(this, other).mergeVarAccesses()
+
 private fun List<VarAccessMap>.mergeVarAccesses(): VarAccessMap =
   this.fold(mapOf()) { acc, next ->
-    (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
+    (acc.keys + next.keys).associateWith { acc[it] merge next[it] }
   }
 
 private fun List<DereferenceAccessMap>.mergeDerefs(): DereferenceAccessMap =
   this.fold(mapOf()) { acc, next ->
-    (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
+    (acc.keys + next.keys).associateWith { acc[it] merge next[it] }
   }
 
 /** Returns the list of accessed variables by the edge associated with an AccessType object. */
@@ -131,7 +133,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
       when (stmt) {
         is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
         is AssignStmt<*> ->
-          ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+          ExprUtils.getVars(stmt.expr).associateWith { READ } merge mapOf(stmt.varDecl to WRITE)
 
         else -> StmtUtils.getVars(stmt).associateWith { READ }
       }
@@ -139,17 +141,17 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
-    is InvokeLabel ->
-      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } // TODO is it read?
+    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }.associateWith { READ }
     is StartLabel ->
-      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } + mapOf(pidVar to WRITE)
+      params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } merge mapOf(pidVar to WRITE)
 
     is JoinLabel -> mapOf(pidVar to READ)
     is FenceLabel -> {
       when (this) {
         is AtomicFenceLabel -> mapOf()
-        is MutexTryLockLabel -> mapOf(handle to READ) + mapOf(successVar to WRITE)
-        else -> mapOf(handle to READ)
+        is MutexTryLockLabel ->
+          ExprUtils.getVars(lock).associateWith { READ } merge mapOf(successVar to WRITE)
+        else -> ExprUtils.getVars(lock).associateWith { READ }
       }
     }
     else -> emptyMap()
@@ -200,7 +202,7 @@ private fun XcfaEdge.collectGlobalVarsWithTraversal(
   while (edgesToExplore.isNotEmpty()) {
     val exploring = edgesToExplore.removeFirst()
     exploring.label.collectGlobalVars(globalVars).forEach { (varDecl, access) ->
-      vars[varDecl] = vars[varDecl].merge(access)
+      vars[varDecl] = vars[varDecl] merge access
     }
     if (goFurther.test(exploring)) {
       for (newEdge in exploring.target.outgoingEdges) {
@@ -231,6 +233,7 @@ val XcfaLabel.references: List<Reference<*, *>>
       is NondetLabel -> labels.flatMap { it.references }
       is SequenceLabel -> labels.flatMap { it.references }
       is StartLabel -> params.flatMap { it.references }
+      is FenceLabel -> lock.references
       else -> emptyList()
     }
 
@@ -250,6 +253,7 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
       is NondetLabel -> labels.flatMap { it.dereferences }
       is SequenceLabel -> labels.flatMap { it.dereferences }
       is StartLabel -> params.flatMap { it.dereferences }
+      is FenceLabel -> lock.dereferences
       else -> emptyList()
     }
 
@@ -278,6 +282,7 @@ val XcfaLabel.dereferencesWithAccessType: DereferenceAccessMap
       is InvokeLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StartLabel -> params.map { it.dereferences.associateWith { READ } }.mergeDerefs()
       is StmtLabel -> stmt.dereferencesWithAccessType
+      is FenceLabel -> lock.dereferences.associateWith { READ }
       else -> mapOf()
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -317,6 +318,11 @@ public class ExprSimplifierTest {
         assertEquals(False(), simplify(Eq(Int(2), Int(-2))));
         assertEquals(True(), simplify(Eq(a, a)));
         assertEquals(Eq(a, b), simplify(Eq(a, b)));
+        assertEquals(x, simplify(Eq(Ite(x, Int(1), Int(0)), Int(1))));
+        assertEquals(Not(x), simplify(Eq(Ite(x, Int(1), Int(0)), Int(0))));
+        assertEquals(x, simplify(Eq(Int(1), Ite(x, Int(1), Int(0)))));
+        assertEquals(Not(x), simplify(Eq(Int(0), Ite(x, Int(1), Int(0)))));
+        assertEquals(x, simplify(Eq(Ite(x, Int(123), Int(321)), Int(123))));
     }
 
     @Test
@@ -325,6 +331,11 @@ public class ExprSimplifierTest {
         assertEquals(True(), simplify(Neq(Int(2), Int(-2))));
         assertEquals(False(), simplify(Neq(a, a)));
         assertEquals(Neq(a, b), simplify(Neq(a, b)));
+        assertEquals(x, simplify(Neq(Ite(x, Int(1), Int(0)), Int(0))));
+        assertEquals(Not(x), simplify(Neq(Ite(x, Int(1), Int(0)), Int(1))));
+        assertEquals(x, simplify(Neq(Int(0), Ite(x, Int(1), Int(0)))));
+        assertEquals(Not(x), simplify(Neq(Int(1), Ite(x, Int(1), Int(0)))));
+        assertEquals(Not(x), simplify(Neq(Ite(x, Int(123), Int(321)), Int(123))));
     }
 
     @Test
@@ -576,6 +587,23 @@ public class ExprSimplifierTest {
                         BvExprs.Eq(
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, true, false, true}))));
+
+        BvLitExpr zero = Bv(new boolean[] {false, false, false, false});
+        BvLitExpr one = Bv(new boolean[] {false, false, false, true});
+
+        assertEquals(x, simplify(BvExprs.Eq(Ite(x, one, zero), one)));
+        assertEquals(Not(x), simplify(BvExprs.Eq(Ite(x, one, zero), zero)));
+        assertEquals(x, simplify(BvExprs.Eq(one, Ite(x, one, zero))));
+        assertEquals(Not(x), simplify(BvExprs.Eq(zero, Ite(x, one, zero))));
+        assertEquals(
+                x,
+                simplify(
+                        BvExprs.Eq(
+                                Ite(
+                                        x,
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, false, false})),
+                                Bv(new boolean[] {false, true, false, true}))));
     }
 
     @Test
@@ -591,6 +619,23 @@ public class ExprSimplifierTest {
                 simplify(
                         BvExprs.Neq(
                                 Bv(new boolean[] {false, true, false, false}),
+                                Bv(new boolean[] {false, true, false, true}))));
+
+        BvLitExpr zero = Bv(new boolean[] {false, false, false, false});
+        BvLitExpr one = Bv(new boolean[] {false, false, false, true});
+
+        assertEquals(x, simplify(BvExprs.Neq(Ite(x, one, zero), zero)));
+        assertEquals(Not(x), simplify(BvExprs.Neq(Ite(x, one, zero), one)));
+        assertEquals(x, simplify(BvExprs.Neq(zero, Ite(x, one, zero))));
+        assertEquals(Not(x), simplify(BvExprs.Neq(one, Ite(x, one, zero))));
+        assertEquals(
+                Not(x),
+                simplify(
+                        BvExprs.Neq(
+                                Ite(
+                                        x,
+                                        Bv(new boolean[] {false, true, false, true}),
+                                        Bv(new boolean[] {false, true, false, false})),
                                 Bv(new boolean[] {false, true, false, true}))));
     }
 

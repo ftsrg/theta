@@ -13,6 +13,7 @@ dest/
 .classpath
 
 # Intellij
+.run/**
 .idea/**
 *.iml
 *.iws
@@ -23,6 +24,12 @@ dest/
 !.idea/codeStyles
 !.idea/codeStyles/codeStyleConfig.xml
 !.idea/codeStyles/Project.xml
+
+# Python (doc/wiki build hooks and local preview environments)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
 
 # Other
 wdl-output.json
@@ -38,3 +45,7 @@ xcfa-*.smt2
 witness.yml
 invariants.txt
 *.salive
+
+__pycache__/
+*.pyc
+.vscode/

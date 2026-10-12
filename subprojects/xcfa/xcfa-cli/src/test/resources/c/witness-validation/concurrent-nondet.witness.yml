@@ -1,0 +1,69 @@
+# Violation witness (format 2.2) for concurrent-nondet.i. The spawned writer
+# thread reads a nondeterministic value into x; the assumption is guarded by the
+# writer's logical thread id (1), so the value 1 is only injected when the
+# writer thread is in the right epoch, and the write is ordered before main's
+# read so reach_error() is reachable. Expected verdict: Unsafe.
+
+- entry_type: violation_sequence
+  metadata:
+    format_version: "2.2"
+    uuid: "f6a7b8c9-d0e1-4234-efab-234567890123"
+    creation_time: "2026-06-20T12:00:00Z"
+    producer:
+      name: "Handcrafted"
+      version: "1.0"
+    task:
+      input_files:
+        - "concurrent-nondet.i"
+      input_file_hashes:
+        "concurrent-nondet.i": "0000000000000000000000000000000000000000000000000000000000000000"
+      specification: "G ! call(reach_error())"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        # registers writer as thread 1 (1st function_enter'd pthread_create)
+        type: function_enter
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 23
+          function: "main"
+  - segment:
+    - waypoint:
+        # the writer's nondet write to x is pinned to 1; guarded by the writer's
+        # logical thread id (1)
+        type: assumption
+        action: follow
+        thread_id: 1
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 18
+          function: "writer"
+  - segment:
+    - waypoint:
+        # main observes x == 1, so the branch is taken
+        type: assumption
+        action: follow
+        thread_id: 0
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 24
+          function: "main"
+  - segment:
+    - waypoint:
+        type: target
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-nondet.i"
+          line: 25
+          function: "main"

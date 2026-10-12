@@ -99,7 +99,7 @@ The primary CI/CD workflow orchestrates the entire build, test, and deployment p
    - Depends on: test-linux, create-archives
 
 8. **deploy-maven** job: Publishes to Maven Central
-   - Requires: `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `OSSRH_TOKEN_USERNAME`, `OSSRH_TOKEN_PASSWORD`, `PGP_KEY`, `PGP_PWD`
+   - Requires: `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `PGP_KEY`, `PGP_PWD`
 
 9. **test-docker** job: Builds and tests Docker images (dry-run by default)
    - Projects: theta-cfa-cli, theta-sts-cli, theta-xsts-cli, theta-xta-cli, theta-xcfa-cli
@@ -150,7 +150,7 @@ Create a BenchExec XML configuration in `integration-tests/<category>/theta.xml`
 ```xml
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">
+<benchmark tool="theta" walltimelimit="60 s">
 
 <!-- config -->
 

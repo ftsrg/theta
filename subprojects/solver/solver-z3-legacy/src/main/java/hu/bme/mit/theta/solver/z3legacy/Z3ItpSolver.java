@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -114,7 +114,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
             itpList.add(itpExpr);
         }
 
-        final Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
+        final Map<ItpMarker, Expr<BoolType>> itpMap = CollectionUtil.createMap();
         buildItpMapFormList(z3ItpPattern.getRoot(), itpList, itpMap);
 
         return new Z3Interpolant(itpMap);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,9 +24,13 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import kotlin.random.Random
 
-class XcfaSporCoiLts(xcfa: XCFA, coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>) :
-  XcfaSporLts(xcfa) {
+class XcfaSporCoiLts(
+  xcfa: XCFA,
+  coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+  random: Random,
+) : XcfaSporLts(xcfa, random) {
 
   init {
     simpleXcfaLts = coiLTS

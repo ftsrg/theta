@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,12 +45,18 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
           ?.name
 
       locName?.let {
-        when (it) {
-          "__THETA_bad_free" ->
+        // Matched by *prefix*: a copied procedure has its locations suffixed to tell the copies
+        // apart
+        // (the OC checker makes one per thread, keyed by pid), so the very location that names the
+        // subproperty arrives as `__THETA_bad_deref_0`. Demanding the bare name made every
+        // memsafety
+        // violation in a multi-threaded program throw instead of reporting its subproperty.
+        when {
+          it.startsWith("__THETA_bad_free") ->
             LtlProperty("valid-free", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_FREE))
-          "__THETA_bad_deref" ->
+          it.startsWith("__THETA_bad_deref") ->
             LtlProperty("valid-deref", MEMSAFETY.ltl(Companion.MemSafetyType.VALID_DEREF))
-          "__THETA_lost" ->
+          it.startsWith("__THETA_lost") ->
             if (this.inputProperty == MEMCLEANUP) {
               LtlProperty("valid-memcleanup", MEMCLEANUP.ltl(Unit))
             } else {
@@ -66,5 +72,7 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
     OVERFLOW -> LtlProperty("no-overflow", OVERFLOW.ltl(Unit))
     NO_ERROR -> LtlProperty("no-error", NO_ERROR.ltl(Unit))
     TERMINATION -> LtlProperty("termination", TERMINATION.ltl(Unit))
+    NO_ASSERTION_VIOLATION ->
+      LtlProperty("no-assertion-violation", NO_ASSERTION_VIOLATION.ltl(Unit))
   }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,45 +15,62 @@
  */
 package hu.bme.mit.theta.xcfa.cli.utils
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlList
-import com.charleskorn.kaml.YamlMap
-import com.charleskorn.kaml.YamlNode
-import com.charleskorn.kaml.YamlScalar
+import com.charleskorn.kaml.*
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
+import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
+import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.params.exitProcess
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import kotlin.io.path.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
+import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 
+/**
+ * Builds the XCFA for the configured input.
+ *
+ * Failures here do not propagate: they are logged and the process exits, so a caller cannot simply
+ * wrap this in a `try`. The two failure modes a caller CAN recover from are therefore handed back
+ * untouched when it asks for them, and only then:
+ * - [rethrowPointerSplitLimitation]: the base/offset pointer splitting of `--memory-model multi`
+ *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat`.
+ * - [rethrowByteGranularityLimitation]: a construct that needs byte granularity
+ *   ([RequiresByteAddressedMemoryException]), recoverable under `--memory-model bytes`.
+ *
+ * Every other failure is reported and exits as before.
+ */
 fun getXcfa(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
+  rethrowPointerSplitLimitation: Boolean = false,
+  rethrowByteGranularityLimitation: Boolean = false,
 ) =
   try {
     when (config.frontendConfig.inputType) {
@@ -70,6 +87,7 @@ fun getXcfa(
 
       InputType.C -> {
         parseC(
+          config.frontendConfig.specConfig as CFrontendConfig,
           config.inputConfig.input!!,
           config.inputConfig.property,
           parseContext,
@@ -101,14 +119,63 @@ fun getXcfa(
           }
         }
       }
+
+      InputType.BTOR2 -> {
+        val btor2Frontend = config.frontendConfig.specConfig as BTOR2FrontendConfig
+        parseBTOR2(
+          config.inputConfig.input!!,
+          btor2Frontend.btor2Passes,
+          parseContext,
+          logger,
+          uniqueWarningLogger,
+        )
+      }
     }
   } catch (e: Exception) {
+    // Give the caller its chance to retry under a memory model that has no pointer splitting at
+    // all, before anything is logged as a failure -- this build attempt is not the last word.
+    if (rethrowPointerSplitLimitation) {
+      e.pointerSplitLimitation()?.let { throw it }
+    }
+    if (rethrowByteGranularityLimitation) {
+      e.byteGranularityLimitation()?.let { throw it }
+    }
     if (config.debugConfig.stacktrace) e.printStackTrace()
     val location =
       e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
-    logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
+    logger.write(Logger.Level.RESULT, "%s", "Frontend failed! ($location, $e)\n")
     exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
   }
+
+/**
+ * The [UnsupportedPointerSplitException] in this throwable's cause chain, or null if the failure is
+ * something else entirely. The chain has to be walked because the frontend wraps failures on its
+ * way out (e.g. the retry-with-bitvector-arithmetic path in [parseC]).
+ */
+private fun Throwable.pointerSplitLimitation(): UnsupportedPointerSplitException? {
+  val seen = mutableSetOf<Throwable>()
+  var current: Throwable? = this
+  while (current != null && seen.add(current)) {
+    if (current is UnsupportedPointerSplitException) return current
+    current = current.cause
+  }
+  return null
+}
+
+/**
+ * The [RequiresByteAddressedMemoryException] in this throwable's cause chain, or null if the
+ * failure is something else. Walked for the same reason as [pointerSplitLimitation]: the frontend
+ * wraps failures on their way out.
+ */
+private fun Throwable.byteGranularityLimitation(): RequiresByteAddressedMemoryException? {
+  val seen = mutableSetOf<Throwable>()
+  var current: Throwable? = this
+  while (current != null && seen.add(current)) {
+    if (current is RequiresByteAddressedMemoryException) return current
+    current = current.cause
+  }
+  return null
+}
 
 private fun CFA.toXcfa(): XCFA {
   val xcfaBuilder = XcfaBuilder("chc")
@@ -148,13 +215,14 @@ private fun CFA.toXcfa(): XCFA {
 }
 
 private fun parseC(
+  frontendConfig: CFrontendConfig,
   input: File,
   property: XcfaProperty,
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
-  val input =
+  var input =
     if (input.name.endsWith(".yml")) {
       try {
         val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
@@ -162,36 +230,76 @@ private fun parseC(
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
               val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             is YamlScalar -> {
               val inputFile = Path(input.parent).resolve(files.content).toFile()
-              logger.result("Parsing ${inputFile.name} instead of ${input.name}")
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               inputFile
             }
             else -> {
-              logger.info("Unexpected yml content: $files")
+              logger.info("%s", "Unexpected yml content: $files")
               input
             }
           }
         } else {
-          logger.info("Unexpected yml content: $parsedYaml")
+          logger.info("%s", "Unexpected yml content: $parsedYaml")
           input
         }
       } catch (ex: Exception) {
-        logger.info("Could not parse YAML data: ${ex.message}")
+        logger.info("%s", "Could not parse YAML data: ${ex.message}")
         input
       }
     } else {
       input
     }
+
+  input =
+    if (frontendConfig.useCir2c) {
+      val temp = createTempDirectory()
+      val copied = temp.resolve("input.${input.extension}").toFile()
+      var curlyBraceCount = 0
+      input.readLines().forEach { line ->
+        line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
+        val newLine =
+          if (curlyBraceCount == 0 && '{' !in line) {
+            "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
+          } else {
+            line
+          }
+        copied.appendText(newLine)
+        copied.appendText(System.lineSeparator())
+      }
+      val transformed = temp.resolve("input-transformed.c").toFile()
+
+      // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
+      // cir2c) and finds its own toolchain relative to the script, so we only pass the
+      // source and the desired C output path.
+      "./run-cir2c.sh ${copied.absolutePath} ${transformed.absolutePath}"
+        .runCommand(frontendConfig.cir2cDir, logger)
+      transformed
+    } else {
+      input
+    }
+
   val xcfaFromC =
     try {
       val stream = FileInputStream(input)
       getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
     } catch (e: Throwable) {
-      if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+      // The retry used to require `efficient`, which it never saw: FunctionVisitor resolves
+      // `efficient` into integer or bitvector before the parse gets far enough to fail, so by the
+      // time an exception arrives the arithmetic always reads as an explicit choice. The fallback
+      // was therefore dead for exactly the programs it was written for -- one whose bit
+      // manipulation the checker missed would fail with "only modelled over bitvectors" and never
+      // be retried. An automatically chosen encoding may be revised; an explicitly requested one
+      // may not.
+      val revisable =
+        parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient ||
+          (parseContext.isArithmeticAutoSelected &&
+            parseContext.arithmetic != ArchitectureConfig.ArithmeticType.bitvector)
+      if (revisable) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
         val stream = FileInputStream(input)
@@ -203,7 +311,7 @@ private fun parseC(
         throw e
       }
     }
-  logger.benchmark("Arithmetic: ${parseContext.arithmeticTraits}\n")
+  logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfaFromC
 }
 
@@ -244,4 +352,37 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun parseBTOR2(
+  input: File,
+  btor2Passes: Boolean,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueLogger: Logger,
+): XCFA {
+  val visitor = Btor2Visitor(logger)
+
+  val inputBTOR2 = input.readLines().joinToString("\n")
+  val cinput = CharStreams.fromString(inputBTOR2)
+  val lexer = Btor2Lexer(cinput)
+  val tokens = CommonTokenStream(lexer)
+  val parser = Btor2Parser(tokens)
+  parser.errorHandler = BailErrorStrategy()
+  val context = parser.btor2()
+
+  context.accept(visitor)
+
+  val xcfa = Btor2XcfaBuilder().btor2xcfa(visitor.circuit, btor2Passes, parseContext, uniqueLogger)
+  logger.write(Logger.Level.VERBOSE, "%s", xcfa.toDot())
+  return xcfa
+}
+
+private fun String.runCommand(wd: File, logger: Logger, level: Logger.Level = Logger.Level.INFO) {
+  val process =
+    ProcessBuilder(*split(" ").toTypedArray()).directory(wd).redirectErrorStream(true).start()
+  process.inputStream.bufferedReader().useLines { lines ->
+    lines.forEach { logger.write(level, "%s%n", it) }
+  }
+  process.waitFor(15, TimeUnit.MINUTES)
 }

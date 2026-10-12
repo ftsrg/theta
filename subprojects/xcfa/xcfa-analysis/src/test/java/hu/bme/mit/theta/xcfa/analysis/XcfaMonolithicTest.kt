@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -127,6 +127,11 @@ class XcfaMonolithicTest {
         "/10ptr.c",
       )
     }
+
+    @JvmStatic
+    private fun assertionData(): Collection<String> {
+      return listOf("/08assert.c", "/09assert_safe.c")
+    }
   }
 
   @ParameterizedTest
@@ -148,6 +153,32 @@ class XcfaMonolithicTest {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, true)
       } else {
         XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, true)
+      }
+    val monolithic = adapter.monolithicExpr
+
+    genericTest(xcfa, parseContext, monolithic)
+  }
+
+  @ParameterizedTest
+  @MethodSource("assertionData")
+  fun testMonolithicExprTransformationAssertion(program: String) {
+    println("Testing $program for XCFA to monolithic expression transformation (assertion).")
+    val stream = javaClass.getResourceAsStream(program)
+    val assertionProperty = XcfaProperty(ErrorDetection.NO_ASSERTION_VIOLATION)
+    val xcfa =
+      getXcfaFromC(stream!!, ParseContext(), false, assertionProperty, NullLogger.getInstance())
+        .first
+    val multithread =
+      xcfa.procedures.any { p ->
+        p.edges.any { e -> e.getFlatLabels().filterIsInstance<StartLabel>().isNotEmpty() }
+      }
+    val parseContext = ParseContext().apply { this.multiThreading = multithread }
+
+    val adapter =
+      if (multithread) {
+        XcfaMultiThreadToMonolithicAdapter(xcfa, assertionProperty, parseContext, true)
+      } else {
+        XcfaSingleThreadToMonolithicAdapter(xcfa, assertionProperty, parseContext, true)
       }
     val monolithic = adapter.monolithicExpr
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.pointsTo
 import java.util.*
 import kotlin.math.min
+import kotlin.random.Random
 
 internal typealias S = XcfaState<out PtrState<out ExprState>>
 
@@ -46,9 +47,9 @@ internal typealias A = XcfaAction
 
 internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
 
-abstract class XcfaCoi(protected val xcfa: XCFA) {
+abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
 
-  var coreLts: LTS<S, A> = getXcfaLts()
+  var coreLts: LTS<S, A> = getXcfaLts(random)
   lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
   protected var lastPrec: Prec? = null
@@ -120,7 +121,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
     val toVisit = edge.target.outgoingEdges.toMutableList()
     val visited = mutableSetOf<XcfaEdge>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       visited.add(visiting)
       val currentVars = visiting.collectVarsWithAccessType()
       addEdgeIfObserved(

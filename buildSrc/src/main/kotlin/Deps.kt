@@ -107,5 +107,6 @@ object Deps {
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
 
-  val hawtjni = "org.fusesource.hawtjni:hawtjni-runtime:${Versions.hawtjni}"
+    val hawtjni = "org.fusesource.hawtjni:hawtjni-runtime:${Versions.hawtjni}"
+    val fastutil = "it.unimi.dsi:fastutil:${Versions.fastutil}"
 }

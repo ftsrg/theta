@@ -1,0 +1,69 @@
+# Violation witness (format 2.2) for concurrent-multi-start.i. The loop visits
+# the same pthread_create twice, but the witness registers a logical thread only
+# once (segment 0). The writer assumption is then guarded by that logical id (1),
+# so only the registered thread instance may pass it -- the second, unregistered
+# spawn (logical id -1) cannot -- which orders the registered writer's write
+# before main's read so reach_error() is reachable. Expected verdict: Unsafe.
+
+- entry_type: violation_sequence
+  metadata:
+    format_version: "2.2"
+    uuid: "b2c3d4e5-f6a7-4890-bcde-123456789abc"
+    creation_time: "2026-06-20T12:00:00Z"
+    producer:
+      name: "Handcrafted"
+      version: "1.0"
+    task:
+      input_files:
+        - "concurrent-multi-start.i"
+      input_file_hashes:
+        "concurrent-multi-start.i": "0000000000000000000000000000000000000000000000000000000000000000"
+      specification: "G ! call(reach_error())"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        # registers the writer spawned on this visit as thread 1; the loop's
+        # other visit to the same call leaves its thread unregistered
+        type: function_enter
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-multi-start.i"
+          line: 24
+          function: "main"
+  - segment:
+    - waypoint:
+        # only the registered writer (logical id 1) may pass this
+        type: assumption
+        action: follow
+        thread_id: 1
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-multi-start.i"
+          line: 18
+          function: "writer"
+  - segment:
+    - waypoint:
+        type: assumption
+        action: follow
+        thread_id: 0
+        constraint:
+          value: "x == 1"
+          format: c_expression
+        location:
+          file_name: "concurrent-multi-start.i"
+          line: 26
+          function: "main"
+  - segment:
+    - waypoint:
+        type: target
+        action: follow
+        thread_id: 0
+        location:
+          file_name: "concurrent-multi-start.i"
+          line: 27
+          function: "main"

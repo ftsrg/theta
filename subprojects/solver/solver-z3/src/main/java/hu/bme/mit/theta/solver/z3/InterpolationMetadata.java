@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,20 +55,20 @@ record InterpolationMetadata(
         FuncDecl<BoolSort> itp = ctx.mkFuncDecl("itp", exprsToSorts(cSym), ctx.getBoolSort());
 
         // Rule 1: a => A(sA)
-        BoolExpr rule1 = forall(ctx, aSym, ctx.mkImplies(a, A.apply(aSym)));
+        BoolExpr rule1 = forallOrBody(ctx, aSym, ctx.mkImplies(a, A.apply(aSym)));
         hornSolver.add(rule1);
 
         // Rule 2: b => B(sB)
-        BoolExpr rule2 = forall(ctx, bSym, ctx.mkImplies(b, B.apply(bSym)));
+        BoolExpr rule2 = forallOrBody(ctx, bSym, ctx.mkImplies(b, B.apply(bSym)));
         hornSolver.add(rule2);
 
         // Rule 3: A(sA) => itp(sC)
-        BoolExpr rule3 = forall(ctx, aSym, ctx.mkImplies(A.apply(aSym), itp.apply(cSym)));
+        BoolExpr rule3 = forallOrBody(ctx, aSym, ctx.mkImplies(A.apply(aSym), itp.apply(cSym)));
         hornSolver.add(rule3);
 
         // Rule 4: itp(sC) ∧ B(sB) => false
         BoolExpr rule4 =
-                forall(
+                forallOrBody(
                         ctx,
                         bSym,
                         ctx.mkImplies(ctx.mkAnd(itp.apply(cSym), B.apply(bSym)), ctx.mkFalse()));
@@ -102,15 +102,13 @@ record InterpolationMetadata(
     }
 
     /**
-     * A universally quantified Horn rule. Z3 rejects quantifiers without bound variables ("number
-     * of bound variables is 0"), which happens when a partition is ground, so such a rule is the
-     * body itself.
+     * {@code ctx.mkForall} over zero bound variables throws ("number of bound variables is 0")
+     * rather than treating it as the vacuous, semantically equivalent case: a universal quantifier
+     * over no variables is just its body. Hit when {@code a} or {@code b} (the CEGAR path segment
+     * being interpolated) has no free constants -- e.g. a closed/literal-only conjunct.
      */
-    private static BoolExpr forall(
-            final Context ctx, final com.microsoft.z3.Expr<?>[] bound, final BoolExpr body) {
-        if (bound.length == 0) {
-            return body;
-        }
-        return ctx.mkForall(bound, body, 1, null, null, null, null);
+    private static BoolExpr forallOrBody(
+            Context ctx, com.microsoft.z3.Expr<?>[] vars, BoolExpr body) {
+        return vars.length == 0 ? body : ctx.mkForall(vars, body, 1, null, null, null, null);
     }
 }

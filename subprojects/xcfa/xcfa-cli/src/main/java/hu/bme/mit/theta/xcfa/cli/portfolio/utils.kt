@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.FULL
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy.LAZY
 import hu.bme.mit.theta.frontend.ParseContext
@@ -44,7 +44,7 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.DFS
 import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 
 fun baseCegarConfig(
   xcfa: XCFA,
@@ -69,7 +69,7 @@ fun baseCegarConfig(
         if (serialize)
           FrontendConfig(
             lbeLevel = LbePass.defaultLevel,
-            loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+            loopUnroll = UnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = efficient),
           )
@@ -84,7 +84,6 @@ fun baseCegarConfig(
             CegarConfig(
               initPrec = EMPTY,
               por = NOPOR,
-              porSeed = -1,
               coi = NO_COI,
               cexMonitor = CHECK,
               abstractorConfig =
@@ -165,6 +164,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
   validateRefinementSolver: Boolean =
     this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
   coi: ConeOfInfluenceMode = this.backendConfig.specConfig!!.coi,
+  search: Search = this.backendConfig.specConfig!!.abstractorConfig.search,
   inProcess: Boolean = this.backendConfig.inProcess,
 ): XcfaConfig<*, CegarConfig> {
   return copy(
@@ -183,6 +183,7 @@ fun XcfaConfig<*, CegarConfig>.adaptConfig(
                   abstractionSolver = abstractionSolver,
                   validateAbstractionSolver = validateAbstractionSolver,
                   domain = domain,
+                  search = search,
                 ),
             refinerConfig =
               backendConfig.specConfig!!
@@ -219,7 +220,7 @@ fun baseAsgCegarConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -320,7 +321,7 @@ fun baseBoundedConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -364,7 +365,7 @@ fun baseMddConfig(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )
@@ -380,7 +381,7 @@ fun baseMddConfig(
           MddConfig(
             solver = "Z3",
             validateSolver = false,
-            iterationStrategy = MddChecker.IterationStrategy.GSAT,
+            iterationStrategy = IterationStrategy.GSAT,
             reversed = false,
             cegar = false,
             initPrec = EMPTY,
@@ -450,7 +451,7 @@ fun baseIc3Config(
       if (serialize)
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
-          loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
           inputType = InputType.C,
           specConfig = CFrontendConfig(arithmetic = efficient),
         )

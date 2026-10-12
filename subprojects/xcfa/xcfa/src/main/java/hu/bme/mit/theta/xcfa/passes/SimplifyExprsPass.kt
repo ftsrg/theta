@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
@@ -28,9 +29,12 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.getInitLoops
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
@@ -66,13 +70,15 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val constValuation = MutableValuation()
-    val modifiedGlobalVars =
-      builder.parent
-        .getVars()
-        .map { it.wrappedVar }
-        .separateConstAndModifiedVars(builder.parent.getProcedures(), constValuation)
+    val globalVars = builder.parent.getVars()
+    val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
+    val modifiedGlobals = mutableListOf<VarDecl<*>>()
+    builder.parent
+      .getVars()
+      .map { it.wrappedVar }
+      .getConstAndModifiedVars(builder.parent.getProcedures(), constValuation, modifiedGlobals)
 
-    builder.getVars().separateConstAndModifiedVars(setOf(builder), constValuation)
+    builder.getVars().getConstAndModifiedVars(setOf(builder), constValuation)
 
     lateinit var lastEdges: LinkedHashSet<XcfaEdge>
     do {
@@ -91,12 +97,20 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         localValuation.putAll(constValuation)
 
         val oldLabels = edge.getFlatLabels()
-        val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
+        val newLabels =
+          oldLabels.map { old ->
+            val new = old.simplify(localValuation, parseContext)
+            if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, globalVars)) {
+              old
+            } else {
+              new
+            }
+          }
 
         if (edge !in initEdges || newLabels.any { it is InvokeLabel || it is StartLabel }) {
           // note that global variable values are still propagated within an edge (XcfaEdge is
           // considered atomic)
-          modifiedGlobalVars.forEach { localValuation.remove(it) }
+          modifiedGlobals.forEach { localValuation.remove(it) }
         }
 
         if (newLabels != oldLabels) {
@@ -114,7 +128,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
         toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
       }
-      unusedLocRemovalPass.run(builder)
+      unusedLocRemovalPass.runChecked(builder)
 
       edges = LinkedHashSet(builder.getEdges())
     } while (lastEdges != edges)
@@ -122,16 +136,56 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     return builder
   }
 
+  private val XcfaLabel.isAssume: Boolean
+    get() = this is StmtLabel && stmt is AssumeStmt
+
+  /**
+   * Whether simplifying the assume [old] into [new] would erase an access to shared memory.
+   *
+   * Folding a branch condition drops whole subexpressions -- `(a == 0 && b == 0) || 1` becomes
+   * `true` -- and with them the reads they contained. That is sound for reachability, but for a
+   * data race those erased reads are exactly the accesses that would have raced: the conflicting
+   * access simply stops existing, so the race is reported as absent (`reorder_c11_good-*`).
+   *
+   * Only assumes are guarded. Simplification also *rewrites* the address expression of a
+   * dereference -- folding `base + offset` to a constant -- and an assignment relies on that, since
+   * it is what lets the atomic-cell check resolve the object base (`09atomicfield_norace`). Such a
+   * rewrite drops the global var and the original dereference from the label without dropping the
+   * access, so a plain access comparison cannot tell the two apart.
+   */
+  private fun dropsSharedAccess(
+    old: XcfaLabel,
+    new: XcfaLabel,
+    globalVars: Set<XcfaGlobalVar>,
+  ): Boolean {
+    fun nonAtomicGlobals(label: XcfaLabel) =
+      label.collectVarsWithAccessType().filterKeys {
+        globalVars.any { v -> v.wrappedVar == it && !v.atomic }
+      }
+
+    fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
+
+    val oldGlobals = nonAtomicGlobals(old)
+    val newGlobals = nonAtomicGlobals(new)
+    val lostGlobal =
+      oldGlobals.any { (v, access) ->
+        val kept = newGlobals[v]
+        (access.isRead && !kept.isRead) || (access.isWritten && !kept.isWritten)
+      }
+    return lostGlobal || derefCount(new) < derefCount(old)
+  }
+
   /**
    * Separates the variables in this collection. The constant variables are added to the given
    * valuation with their values. Modified variables are returned as a list.
    */
-  private fun Collection<VarDecl<*>>.separateConstAndModifiedVars(
+  private fun Collection<VarDecl<*>>.getConstAndModifiedVars(
     accessingProcedures: Set<XcfaProcedureBuilder>,
     constValuation: MutableValuation,
-  ): List<VarDecl<*>> {
-    val writes = associateWith { 0 }.toMutableMap()
-    val firstWrites = mutableMapOf<VarDecl<*>, XcfaEdge>()
+    modifiedVariables: MutableList<VarDecl<*>> = mutableListOf(),
+  ) {
+    val writeCounts = associateWith { 0 }.toMutableMap()
+    val writes = mutableMapOf<VarDecl<*>, XcfaLabel>()
     accessingProcedures.forEach { proc ->
       val toVisit = mutableListOf(proc.initLoc)
       val visited = mutableSetOf<XcfaLocation>()
@@ -139,14 +193,17 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         val loc = toVisit.removeFirst()
         if (!visited.add(loc)) continue
         loc.outgoingEdges.forEach { edge ->
-          edge.collectVarsWithAccessType().forEach { (v, access) ->
-            if (v in writes) {
-              if (
-                access.isWritten ||
-                  (access.isRead && accessingProcedures.size == 1 && writes[v] == 0)
-              ) {
-                writes[v] = writes[v]!! + 1
-                firstWrites.putIfAbsent(v, edge)
+          edge.getFlatLabels().forEach { label ->
+            label.collectVarsWithAccessType().forEach { (v, access) ->
+              if (v in writeCounts) {
+                // explicit write or range assume for uninitialized local vars
+                if (
+                  access.isWritten ||
+                    (access.isRead && accessingProcedures.size == 1 && writeCounts[v] == 0)
+                ) {
+                  writeCounts[v] = writeCounts[v]!! + 1
+                  writes.putIfAbsent(v, label)
+                }
               }
             }
           }
@@ -155,16 +212,32 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
       }
     }
 
-    return filter { v ->
-      if (writes[v]!! > 1) {
-        return@filter true
+    val potentialConsts =
+      filter { v ->
+          if (writeCounts[v]!! > 1) {
+            modifiedVariables.add(v)
+            false
+          } else {
+            true
+          }
+        }
+        .toMutableSet()
+
+    do {
+      var changed = false
+      potentialConsts.removeIf { v ->
+        writes[v]?.let { write ->
+          val valuation = MutableValuation.copyOf(constValuation)
+          write.simplify(valuation, parseContext)
+          valuation.toMap()[v]?.let {
+            if (v !in constValuation.decls) {
+              constValuation.put(v, it)
+              changed = true
+            }
+            true // remove if we have a constant value for it
+          } ?: false // we may have a chance later: e.g., x := y if y gets a value
+        } ?: true // no writing label found for v -> remove
       }
-      firstWrites[v]?.let { firstWrite ->
-        val valuation = MutableValuation()
-        firstWrite.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
-        valuation.toMap()[v]?.let { constValuation.put(v, it) }
-      }
-      false
-    }
+    } while (changed) // no change, no point in iterating further
   }
 }

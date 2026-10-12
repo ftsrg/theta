@@ -1,0 +1,12 @@
+format_version: '2.0'
+
+input_files: 'models/13-privatized_01-priv_nr_true.c'
+
+properties:
+  - property_file: ../properties/no-data-race.prp
+    expected_verdict: true
+
+
+options:
+  language: C
+  data_model: ILP32

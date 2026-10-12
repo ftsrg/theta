@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
+import kotlin.random.Random
 
 fun getTracegenChecker(
   xcfa: XCFA,
@@ -48,8 +49,9 @@ fun getTracegenChecker(
   val tracegenConfig = config.backendConfig.specConfig as TracegenConfig
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
+  val random = Random.Default
   val (coi, lts) =
-    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry)
+    ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       tracegenConfig.abstractorConfig.abstractionSolver,
@@ -68,7 +70,8 @@ fun getTracegenChecker(
   val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
     if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
     else getStackPartialOrder(globalStatePartialOrd)
-  val errorDetector = getXcfaErrorDetector(config.inputConfig.property.verifiedProperty)
+  val errorDetector =
+    getXcfaErrorDetector(config.inputConfig.property.verifiedProperty, parseContext)
   val abstractor: BasicArgAbstractor<ExprState, ExprAction, Prec> =
     tracegenConfig.abstractorConfig.domain.abstractor(
       xcfa,

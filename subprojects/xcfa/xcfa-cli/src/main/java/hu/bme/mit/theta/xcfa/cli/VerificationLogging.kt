@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ internal fun postVerificationLogging(
   uniqueLogger: Logger,
 ) {
   val forceEnabledOutput = config.outputConfig.enabled == OutputLevel.ALL
-
   val ltlSpecification =
     if (safetyResult.isUnsafe) {
       (safetyResult.asUnsafe().cex as? Trace<XcfaState<*>, XcfaAction>).let {
@@ -181,6 +180,10 @@ internal fun postVerificationLogging(
         }
 
         else -> {}
+      }
+
+      if (config.outputConfig.precOutputConfig.serializationMode != PrecSerializationMode.NEVER) {
+        PrecReuse.write(resultFolder, config, parseContext, logger)
       }
     } catch (e: Throwable) {
       logger.info("Could not output files: ${e.stackTraceToString()}")

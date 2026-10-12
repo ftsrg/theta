@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ plugins {
     id("java-common")
     id("kotlin-common")
     id("antlr-grammar")
+    id("java-test-fixtures")
 }
 
 dependencies {
@@ -26,4 +27,9 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.20")
     implementation("com.zaxxer:nuprocess:2.0.2")
     testImplementation(testFixtures(project(":theta-core")))
+
+    // Shared solver-installation helper for every subproject whose tests need an SMT-LIB solver.
+    testFixturesApi(project(":theta-solver"))
+    testFixturesImplementation(project(":theta-common"))
+    testFixturesImplementation(Deps.junit5)
 }

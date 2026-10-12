@@ -1,0 +1,71 @@
+name: 'Check release'
+description: 'Determine whether the current trigger should produce a release, and compute the release message'
+inputs:
+  workflow-message:
+    required: false
+    description: 'Message supplied via workflow_dispatch input'
+  pr-title:
+    required: false
+    description: 'Title of the pull request that triggered this run (pull_request event)'
+  pr-body:
+    required: false
+    description: 'Body of the pull request that triggered this run (pull_request event)'
+outputs:
+  is-release:
+    value: ${{ steps.check.outputs.is-release }}
+  message:
+    value: ${{ steps.check.outputs.message }}
+runs:
+  using: "composite"
+  steps:
+    - name: Determine if this is a release trigger
+      id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        WORKFLOW_MESSAGE: ${{ inputs.workflow-message }}
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_BODY: ${{ inputs.pr-body }}
+      run: |
+        IS_RELEASE="false"
+        MSG=""
+
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "$WORKFLOW_MESSAGE" && "${{ github.ref }}" == "refs/heads/master" ]]; then
+          IS_RELEASE="true"
+          MSG="$WORKFLOW_MESSAGE"
+
+        elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/master" ]]; then
+          PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+            -H "Accept: application/vnd.github+json" --jq '.[0] // empty')
+          if [ -z "$PR_JSON" ]; then
+            # The commit/pulls association can lag right after a squash/rebase merge.
+            # Fall back to looking up the merge_commit_sha directly on recently closed PRs.
+            PR_JSON=$(gh api "repos/${{ github.repository }}/pulls?state=closed&base=master&sort=updated&direction=desc&per_page=10" \
+              -H "Accept: application/vnd.github+json" \
+              --jq '[.[] | select(.merge_commit_sha == "${{ github.sha }}")][0] // empty')
+          fi
+          if [ -n "$PR_JSON" ]; then
+            IS_RELEASE="true"
+            TITLE=$(echo "$PR_JSON" | jq -r '.title')
+            BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
+            MSG="${TITLE}"$'\n\n'"${BODY}"
+          fi
+
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          MSG="${PR_TITLE}"$'\n\n'"${PR_BODY}"
+
+        elif [[ "${{ github.event_name }}" == "push" ]]; then
+          PR_JSON=$(gh pr list --repo "${{ github.repository }}" --head "${{ github.ref_name }}" --state open --json title,body --limit 1 --jq '.[0] // empty')
+          if [ -n "$PR_JSON" ]; then
+            TITLE=$(echo "$PR_JSON" | jq -r '.title')
+            BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
+            MSG="${TITLE}"$'\n\n'"${BODY}"
+          fi
+        fi
+
+        echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "message<<$EOF" >> $GITHUB_OUTPUT
+        printf '%s' "$MSG" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "$EOF" >> $GITHUB_OUTPUT

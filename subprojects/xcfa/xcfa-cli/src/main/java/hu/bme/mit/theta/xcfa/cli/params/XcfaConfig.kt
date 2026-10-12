@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,11 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy
-import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.cegar.LiteralPlacement
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
+import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -31,11 +35,13 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
+import hu.bme.mit.theta.xcfa.cli.utils.PrecReuseFormat
+import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
@@ -127,13 +133,25 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
   )
-  var loopUnroll: Int = LoopUnrollPass.UNROLL_LIMIT,
+  var loopUnroll: Int = UnrollPass.UNROLL_LIMIT,
+  @Parameter(
+    names = ["--memory-init"],
+    description =
+      "Initial value of the dereference memory arrays: ZERO, UNCONSTRAINED or AUTO (ZERO for the MDD backend, whose fixpoint needs a finite set of initial states)",
+  )
+  var memoryInit: MemoryInit = MemoryInit.AUTO,
   @Parameter(
     names = ["--force-unroll"],
     description =
       "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)",
   )
   var forceUnroll: Int = -1,
+  @Parameter(
+    names = ["--force-unroll-recursion"],
+    description =
+      "Number of times a recursive procedure call left over after inlining is expanded; calls still recursive at that depth are cut, so as with force unrolling the safety result cannot be safe (use -1 to disable). Lets backends that need a call-free CFA (e.g. OC) handle programs whose recursion depth is bounded.",
+  )
+  var forceUnrollRecursion: Int = -1,
   @Parameter(
     names = ["--datarace-to-reachability"],
     description =
@@ -146,6 +164,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses",
   )
   var enableFew: Boolean = false,
+  @Parameter(
+    names = ["--disable-spin-loop-effects"],
+    description = "Disable the pruning of loop iterations that change nothing (spinning)",
+  )
+  var disableSpinLoopEffects: Boolean = false,
   @Parameter(names = ["--input-type"], description = "Format of the input")
   var inputType: InputType = InputType.C,
   override var specConfig: T? = null,
@@ -161,6 +184,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.LITMUS -> null
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
+        InputType.BTOR2 -> BTOR2FrontendConfig() as T
       }
   }
 }
@@ -176,7 +200,55 @@ data class CFrontendConfig(
     description = "Architecture (see https://unix.org/whitepapers/64bit.html)",
   )
   var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
-) : SpecFrontendConfig
+  @Parameter(
+    names = ["--memory-model"],
+    description =
+      "Pointer memory model: multi = 2-D arrays[base][offset] (default), flat = one flat address" +
+        " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
+        " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
+        " requires bitvector arithmetic. Left unset, the model is multi, but the frontend may" +
+        " fall back to flat for programs multi cannot represent; passing this flag explicitly" +
+        " disables that fallback.",
+  )
+  var memoryModel: ArchitectureConfig.MemoryModelType? = null,
+  @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
+  var useCir2c: Boolean = false,
+  @Parameter(
+    names = ["--cir2c-dir", "--cir2c-directory"],
+    description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
+  )
+  var cir2cDir: File = File("./cir2c"),
+  @Parameter(
+    names = ["--enable-signed-wraparound"],
+    description =
+      "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
+        " undefined behavior before C23, so this is off by default; it is incompatible with" +
+        " overflow detection (no-overflow).",
+  )
+  var enableSignedWraparound: Boolean = false,
+) : SpecFrontendConfig {
+
+  /**
+   * The memory model actually in effect. [memoryModel] is null exactly when the user did not pass
+   * `--memory-model` at all, which is the only case in which the frontend is allowed to swap the
+   * model on its own (see the flat fallback in `frontend()`); an explicitly requested model -- even
+   * if it is the default `multi` -- is always honoured as given.
+   */
+  val effectiveMemoryModel: ArchitectureConfig.MemoryModelType
+    get() = memoryModel ?: ArchitectureConfig.MemoryModelType.multi
+}
+
+/** CHC-COMP benchmark categories. AUTO = infer from variable types (legacy behaviour). */
+enum class ChcCategory {
+  AUTO,
+  BV,
+  BV_LIN,
+  LIA,
+  LIA_ARRAYS,
+  LIA_LIN,
+  LIA_LIN_ARRAYS,
+  LRA_LIN,
+}
 
 data class CHCFrontendConfig(
   @Parameter(
@@ -186,6 +258,19 @@ data class CHCFrontendConfig(
   var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO,
   @Parameter(names = ["--print-model"], description = "Print model to file, not only binary output")
   var model: Boolean = false,
+  @Parameter(
+    names = ["--chc-category"],
+    description =
+      "CHC-COMP category hint for portfolio selection " +
+        "(AUTO, BV, BV_LIN, LIA, LIA_ARRAYS, LIA_LIN, LIA_LIN_ARRAYS, LRA_LIN). " +
+        "AUTO infers the category from variable types.",
+  )
+  var category: ChcCategory = ChcCategory.AUTO,
+) : SpecFrontendConfig
+
+data class BTOR2FrontendConfig(
+  @Parameter(names = ["--no-optimization"], description = "Runs frontend without XCFA passes")
+  var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
 interface SpecBackendConfig : Config
@@ -235,12 +320,14 @@ data class BackendConfig<T : SpecBackendConfig>(
             as T
         Backend.KINDIMC -> BoundedConfig() as T
         Backend.BOUNDED -> BoundedConfig() as T
+        Backend.PATH_ENUMERATION -> PathEnumerationConfig() as T
         Backend.CHC -> HornConfig() as T
         Backend.OC -> OcConfig() as T
         Backend.LAZY -> null
         Backend.PORTFOLIO -> PortfolioConfig() as T
         Backend.TRACEGEN -> TracegenConfig() as T
         Backend.MDD -> MddConfig() as T
+        Backend.MDD_CEGAR -> MddCegarConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
         Backend.DSS -> DssConfig() as T
@@ -333,12 +420,9 @@ data class DssConfig(
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--prec-file"], description = "File of precision to reuse")
+  var precFile: String? = null,
   @Parameter(names = ["--por"], description = "POR algorithm type") var por: POR = POR.NOPOR,
-  @Parameter(
-    names = ["--por-seed"],
-    description = "Random seed used by POR algorithms for testing purposes",
-  )
-  var porSeed: Int = -1,
   @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
   var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
   @Parameter(
@@ -581,9 +665,7 @@ data class OcConfig(
     names = ["--oc-decision-procedure"],
     description = "Decision procedure for ordering-consistency check",
   )
-  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
-  @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
-  var inputConflictClauseFile: String? = null,
+  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.BASIC,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(
@@ -591,11 +673,6 @@ data class OcConfig(
     description = "Output file to write conflict clauses",
   )
   var inputConflictDecisionProcedure: String = "",
-  @Parameter(
-    names = ["--non-permissive-validation"],
-    description = "Output file to write conflict clauses",
-  )
-  var nonPermissiveValidation: Boolean = false,
   @Parameter(
     names = ["--auto-conflict"],
     description = "Level of manual conflict detection before verification",
@@ -610,6 +687,33 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--oc-unroll-start"],
+    description = "First force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStart: Int = 2,
+  @Parameter(
+    names = ["--oc-unroll-end"],
+    description = "Upper force loop unrolling bound for OC checker (-1 for no limit)",
+  )
+  var forceUnrollBoundEnd: Int = -1,
+  @Parameter(
+    names = ["--oc-unroll-step"],
+    description = "Step size for force loop unrolling bound for OC checker",
+  )
+  var forceUnrollBoundStep: Int = 1,
+  @Parameter(
+    names = ["--oc-max-exit-queries"],
+    description =
+      "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
+  )
+  var maxExitQueries: Int = -1,
+  @Parameter(
+    names = ["--oc-witness-optimizations"],
+    description =
+      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
+  )
+  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
@@ -631,12 +735,109 @@ data class MddConfig(
     description = "Iteration strategy for the MDD checker",
   )
   var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--look-ahead-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(
+    names = ["--proof-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
+  var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Counterexample search over the state space: DFS (backward, one predecessor per step), BFS (forward layers, shortest counterexample) or BFS_BACKWARD (backward layers from all violating states)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.DFS,
+  @Parameter(
+    names = ["--solver-measurements"],
+    description = "Perform a structural rerun to estimate solver time overhead",
+  )
+  var solverMeasurements: Boolean = false,
+  @Parameter(
+    names = ["--edge-cap-strategy"],
+    description =
+      "What to do with a decision diagram node that exceeds --edge-limit: NONE gives up (verification stuck), UNDER keeps the edges found so far and keeps only an unsafe verdict",
+  )
+  var edgeCapStrategy: MddApproximation.Strategy = MddApproximation.Strategy.UNDER,
+  @Parameter(
+    names = ["--edge-limit"],
+    description =
+      "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
+  )
+  var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+) : SpecBackendConfig
+
+enum class MddCegarRefinement {
+  SEQ_ITP,
+  FW_BIN_ITP,
+  BW_BIN_ITP,
+}
+
+data class MddCegarConfig(
+  @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
+  var solver: String = "Z3",
+  @Parameter(
+    names = ["--refinement-solver"],
+    description = "Solver for the trace check / interpolation (defaults to --solver)",
+  )
+  var refinementSolver: String = "",
+  @Parameter(names = ["--refinement"], description = "Trace checker used for refinement")
+  var refinement: MddCegarRefinement = MddCegarRefinement.SEQ_ITP,
+  @Parameter(
+    names = ["--validate-solver", "--validate-mdd-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--iteration-strategy"],
+    description = "Iteration strategy for the MDD checker",
+  )
+  var iterationStrategy: IterationStrategy = IterationStrategy.GSAT,
+  @Parameter(
+    names = ["--look-ahead-strategy"],
+    description = "MDD to expression conversion strategy",
+  )
+  var lookAheadStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NONE,
+  @Parameter(
+    names = ["--proof-strategy"],
+    description = "MDD to expression conversion strategy for the proof invariant",
+  )
+  var proofStrategy: MddExpressionRepresentation.MddToExprStrategy =
+    MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL,
+  @Parameter(names = ["--trace-timeout"], description = "Timeout for trace generation")
+  var traceTimeout: Long = 10,
+  @Parameter(
+    names = ["--on-the-fly-reachability"],
+    description = "Terminate saturation as soon as a violating state is reached",
+  )
+  var onTheFlyReachability: Boolean = false,
+  @Parameter(
+    names = ["--literal-placement"],
+    description =
+      "Where the literal levels go in the MDD orders: FORCE (the FORCE ordering of ctrl vars and literals, rebuilt every iteration) or TOP (each new literal on top of the existing levels)",
+  )
+  var literalPlacement: LiteralPlacement = LiteralPlacement.FORCE,
+  @Parameter(
+    names = ["--trace-search"],
+    description =
+      "Search for the abstract counterexample: BFS (forward layers then one backward step per layer: shortest counterexample), BFS_BACKWARD (backward layers from all violating states) or DFS (backward, one predecessor per step, order-dependent length)",
+  )
+  var traceSearch: TraceSearch = TraceSearch.BFS,
 ) : SpecBackendConfig
 
 data class Ic3Config(
@@ -674,6 +875,7 @@ data class OutputConfig(
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
+  val precOutputConfig: PrecOutputConfig = PrecOutputConfig(),
   val witnessConfig: WitnessConfig = WitnessConfig(),
   val argConfig: ArgConfig = ArgConfig(),
 ) : Config {
@@ -683,12 +885,20 @@ data class OutputConfig(
       cOutputConfig.getObjects() union
       xcfaOutputConfig.getObjects() union
       chcOutputConfig.getObjects() union
+      precOutputConfig.getObjects() union
       witnessConfig.getObjects() union
       argConfig.getObjects()
   }
 
   override fun update(): Boolean =
-    listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, witnessConfig, argConfig)
+    listOf(
+        cOutputConfig,
+        xcfaOutputConfig,
+        chcOutputConfig,
+        precOutputConfig,
+        witnessConfig,
+        argConfig,
+      )
       .map { it.update() }
       .any { it }
 }
@@ -699,6 +909,13 @@ data class XcfaOutputConfig(
 
 data class ChcOutputConfig(
   @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
+) : Config
+
+data class PrecOutputConfig(
+  @Parameter(names = ["--prec-serialization-format"], variableArity = true)
+  var format: List<PrecReuseFormat> = PrecReuseFormat.entries,
+  @Parameter(names = ["--prec-serialization-mode"])
+  var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER,
 ) : Config
 
 data class COutputConfig(
@@ -746,3 +963,42 @@ data class DebugConfig(
   )
   var argToFile: Boolean = false,
 ) : Config
+
+data class PathEnumerationConfig(
+  @Parameter(names = ["--path-enumeration-solver"], description = "Path enumeration solver name")
+  var pathEnumerationSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-path-enumeration-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validatePathEnumerationSolver: Boolean = false,
+  @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
+  var maxBound: Int = 0,
+  @Parameter(names = ["--prec"], description = "Precision") var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(names = ["--por-level"], description = "POR dependency level")
+  var porLevel: POR = POR.NOPOR,
+  @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
+  var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
+  @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
+  var abstractionSolver: String = "Z3",
+  @Parameter(
+    names = ["--validate-abstraction-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateAbstractionSolver: Boolean = false,
+  @Parameter(names = ["--domain"], description = "Abstraction domain")
+  var domain: Domain = Domain.UNIT,
+  @Parameter(
+    names = ["--maxenum"],
+    description =
+      "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.",
+  )
+  var maxEnum: Int = 1,
+  @Parameter(
+    names = ["--havoc-memory"],
+    description = "HAVOC memory model (do not track pointers in transition function)",
+  )
+  var havocMemory: Boolean = false,
+) : SpecBackendConfig

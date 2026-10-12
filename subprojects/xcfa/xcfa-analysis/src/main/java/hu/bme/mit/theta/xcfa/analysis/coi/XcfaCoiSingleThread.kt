@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import kotlin.random.Random
 
-class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
+class XcfaCoiSingleThread(xcfa: XCFA, random: Random) : XcfaCoi(xcfa, random) {
 
   private var observed: Set<Pair<XcfaLocation, XcfaLocation>> = setOf()
 
@@ -80,7 +81,7 @@ class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     val toVisit = realObservers.toMutableList()
     val visited = mutableSetOf<XcfaEdge>()
     while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeFirst()
+      val visiting = toVisit.removeAt(0)
       visited.add(visiting)
       val toAdd = directObservers[visiting] ?: emptySet()
       toVisit.addAll(toAdd.filter { it !in visited })

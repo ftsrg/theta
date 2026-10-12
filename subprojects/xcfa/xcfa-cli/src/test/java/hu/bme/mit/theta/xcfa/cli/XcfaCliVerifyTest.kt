@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.common.OsHelper
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
-import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
@@ -34,36 +31,13 @@ import org.junit.jupiter.params.provider.MethodSource
 class XcfaCliVerifyTest {
   companion object {
 
-    private val SMTLIB_HOME: Path = SmtLibSolverManager.HOME
     private val solvers =
       listOf("z3:4.13.0", "eldarica:2.1", "golem:0.5.0", "mathsat:5.6.10", "cvc5:1.0.8")
-
-    private fun installSolver(name: String) {
-      try {
-        SmtLibSolverManager.create(SMTLIB_HOME, ConsoleLogger(Logger.Level.DETAIL)).use {
-          solverManager ->
-          val solverVersion = SmtLibSolverManager.getSolverVersion(name)
-          val solverName = SmtLibSolverManager.getSolverName(name)
-          if (
-            solverManager.managesSolver(name) &&
-              !solverManager
-                .getInstalledVersions(solverName)
-                .contains(solverManager.getVersionString(solverName, solverVersion, false))
-          ) {
-            solverManager.install(solverName, solverVersion, solverVersion, null, false)
-          }
-        }
-      } catch (e: Exception) {
-        e.printStackTrace() // best effort
-      }
-    }
 
     @BeforeAll
     @JvmStatic
     fun installSolvers() {
-      if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-        solvers.forEach(this::installSolver)
-      }
+      solvers.forEach(SolverInstallations::installOrSkip)
     }
 
     @JvmStatic
@@ -90,6 +64,10 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/31structaccess.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/32refvar.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/33refarraystruct.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/34nestedmallocderef.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/35nestedderef.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }
@@ -109,6 +87,10 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
         Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/32refvar.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/33refarraystruct.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/34nestedmallocderef.c", "--domain PRED_CART"),
+        Arguments.of("/c/litmustest/singlethread/35nestedderef.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/23overflow.c", "--property no-overflow.prp"),
       )
     }

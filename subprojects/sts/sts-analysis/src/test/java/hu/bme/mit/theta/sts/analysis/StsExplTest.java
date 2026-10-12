@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class StsExplTest {
         builder.addInit(Eq(y, Int(0)));
         builder.addTrans(
                 And(
-                        Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+                        Imply(Lt(x, Int(mod)), Eq(Prime(x), Inc(x))),
                         Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
         builder.addTrans(Eq(Prime(y), Int(0)));
         builder.setProp(Not(Eq(x, Int(mod))));

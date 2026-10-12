@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xsts.analysis.autoexpl;
 
 import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.AutoExpl;
 import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewAtomsAutoExpl;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -30,7 +30,7 @@ public class XstsNewAtomsAutoExpl implements XstsAutoExpl {
 
     @Override
     public AutoExpl create(XSTS xsts) {
-        final Set<Expr<BoolType>> atoms = Containers.createSet();
+        final Set<Expr<BoolType>> atoms = CollectionUtil.createSet();
         atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getEnv()));
         atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getInit()));
         atoms.addAll(StmtAtomCollector.collectAtoms(xsts.getTran()));

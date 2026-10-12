@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,6 +70,11 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   init {
+    addHandler(arrayOf("abs", "labs", "llabs", "imaxabs")) {
+      builder: XcfaProcedureBuilder,
+      callStmt: InvokeLabel ->
+      handleAbs(builder, callStmt)
+    }
     addHandler(arrayOf("fabs", "fabsf", "fabsl")) {
       builder: XcfaProcedureBuilder,
       callStmt: InvokeLabel ->
@@ -151,6 +156,68 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       callStmt: InvokeLabel ->
       handleFpclassify(builder, callStmt)
     }
+    // The C comparison macros (and their GCC builtins) never raise on NaN and yield 0 when an
+    // operand is NaN -- which is exactly the IEEE-754 semantics of the SMT FP comparison operators.
+    addHandler(arrayOf("isgreater", "__builtin_isgreater")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> FpExprs.Gt(l, r) }
+    }
+    addHandler(arrayOf("isgreaterequal", "__builtin_isgreaterequal")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> FpExprs.Geq(l, r) }
+    }
+    addHandler(arrayOf("isless", "__builtin_isless")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> FpExprs.Lt(l, r) }
+    }
+    addHandler(arrayOf("islessequal", "__builtin_islessequal")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> FpExprs.Leq(l, r) }
+    }
+    addHandler(arrayOf("islessgreater", "__builtin_islessgreater")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> Or(FpExprs.Lt(l, r), FpExprs.Gt(l, r)) }
+    }
+    addHandler(arrayOf("isunordered", "__builtin_isunordered")) { _, callStmt ->
+      handleFpPredicate(callStmt) { l, r -> Or(FpIsNanExpr.of(l), FpIsNanExpr.of(r)) }
+    }
+  }
+
+  /**
+   * Models a binary floating-point predicate (the C `isgreater`/`isless`/... comparison-macro
+   * family) whose result is an int (1 if the predicate holds, 0 otherwise). Both operands are
+   * promoted to their smallest common type before comparing.
+   */
+  private fun handleFpPredicate(
+    callStmt: InvokeLabel,
+    cmp: (Expr<FpType>, Expr<FpType>) -> Expr<hu.bme.mit.theta.core.type.booltype.BoolType>,
+  ): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val expr = callStmt.params[0]
+    Preconditions.checkState(expr is RefExpr<*>)
+    if (!parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+      throw UnsupportedOperationException("Not yet supported without cType")
+    }
+    val resultType = CComplexType.getType(expr, parseContext)
+    val operandType =
+      CComplexType.getSmallestCommonType(
+        listOf(
+          CComplexType.getType(callStmt.params[1], parseContext),
+          CComplexType.getType(callStmt.params[2], parseContext),
+        ),
+        parseContext,
+      )
+    @Suppress("UNCHECKED_CAST")
+    val left =
+      TypeUtils.cast(operandType.castTo(callStmt.params[1]), operandType.smtType) as Expr<FpType>
+    @Suppress("UNCHECKED_CAST")
+    val right =
+      TypeUtils.cast(operandType.castTo(callStmt.params[2]), operandType.smtType) as Expr<FpType>
+    val assign: AssignStmt<*> =
+      Stmts.Assign(
+        TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, resultType.smtType),
+        TypeUtils.cast(
+          AbstractExprs.Ite<Type>(cmp(left, right), resultType.unitValue, resultType.nullValue),
+          resultType.smtType,
+        ),
+      )
+    parseContext.metadata.create(assign.expr, "cType", resultType)
+    return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
   private fun handleTrunc(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -385,6 +452,34 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
       parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
     }
+    return StmtLabel(assign, metadata = callStmt.metadata)
+  }
+
+  /**
+   * The integer `abs` family, which is `x < 0 ? -x : x` exactly.
+   *
+   * Leaving it unmodelled is not neutral: the call would be havoced, and a guard written in terms
+   * of it (`if (abs(x) < K)`) then constrains nothing -- which shows up as a *false* overflow
+   * report on code that is careful precisely because it uses `abs` to bound its input.
+   *
+   * `abs(INT_MIN)` has no representable result, and this model says so: the negation it expands to
+   * is exactly the case [bvOverflowCondition] and the integer limit check flag as an overflow.
+   */
+  private fun handleAbs(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val ret = callStmt.params[0]
+    Preconditions.checkState(ret is RefExpr<*>)
+    val type = CComplexType.getType(ret, parseContext)
+    val arg = type.castTo(callStmt.params[1])
+    val negated = AbstractExprs.Neg(arg)
+    parseContext.metadata.create(negated, "cType", type)
+    val abs = AbstractExprs.Ite<Type>(AbstractExprs.Lt(arg, type.nullValue), negated, arg)
+    parseContext.metadata.create(abs, "cType", type)
+    val assign =
+      Stmts.Assign(
+        TypeUtils.cast((ret as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+        TypeUtils.cast(abs, type.smtType),
+      )
     return StmtLabel(assign, metadata = callStmt.metadata)
   }
 

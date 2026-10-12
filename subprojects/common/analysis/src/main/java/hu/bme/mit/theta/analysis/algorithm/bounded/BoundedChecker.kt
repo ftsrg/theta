@@ -29,7 +29,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
@@ -136,7 +135,7 @@ constructor(
         }
       }
     }
-    return SafetyResult.unknown(BoundedStatistics(iteration))
+    return SafetyResult.unknown(PredState.of(extractProof()), BoundedStatistics(iteration))
   }
 
   private fun bmc(): SafetyResult<PredState, Trace<ExplState, ExprAction>>? {
@@ -153,7 +152,11 @@ constructor(
             Logger.Level.MAINSTEP,
             "CeX found in the initial state (length ${trace.length()})\n",
           )
-          return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+          return SafetyResult.unsafe(
+            trace,
+            PredState.of(extractProof()),
+            BoundedStatistics(iteration),
+          )
         }
       }
     }
@@ -177,19 +180,7 @@ constructor(
 
       if (bmcSolver.check().isUnsat) {
         logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
-        val proof =
-          if (needProof) {
-            // we enumerate all states explored by previous iteration of BMC
-            val expr =
-              And(
-                exprs.subList(0, exprs.size - 1) +
-                  //                  loopfree.subList(0, loopfree.size - 1) +
-                  unfoldedInitExpr
-              )
-            extractModel(expr, indices.subList(0, indices.size - 1))
-          } else {
-            True()
-          }
+        val proof = extractProof()
         return SafetyResult.safe(PredState.of(proof), BoundedStatistics(iteration))
       }
     }
@@ -200,7 +191,7 @@ constructor(
       if (bmcSolver.check().isSat) {
         val trace = getTrace(bmcSolver.model)
         logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
-        SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+        SafetyResult.unsafe(trace, PredState.of(extractProof()), BoundedStatistics(iteration))
       } else null
     }
   }
@@ -266,7 +257,11 @@ constructor(
             Logger.Level.MAINSTEP,
             "CeX found in the initial state (length ${trace.length()})\n",
           )
-          return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+          return SafetyResult.unsafe(
+            trace,
+            PredState.of(extractProof()),
+            BoundedStatistics(iteration),
+          )
         }
       }
     }
@@ -297,19 +292,7 @@ constructor(
         itpSolver.pop()
         itpSolver.pop()
         logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
-        val proof =
-          if (needProof) {
-            // we enumerate all states explored by previous iteration of BMC
-            val expr =
-              SmartBoolExprs.And(
-                exprs.subList(0, exprs.size - 1) +
-                  //                  loopfree.subList(0, loopfree.size - 1) +
-                  unfoldedInitExpr
-              )
-            extractModel(expr, indices.subList(0, indices.size - 1))
-          } else {
-            True()
-          }
+        val proof = extractProof()
         return SafetyResult.safe(PredState.of(proof), BoundedStatistics(iteration))
       }
       itpSolver.pop()
@@ -324,7 +307,7 @@ constructor(
       logger.write(Logger.Level.MAINSTEP, "CeX found in IMC/BMC step (length ${trace.length()})\n")
       itpSolver.pop()
       itpSolver.pop()
-      return SafetyResult.unsafe(trace, PredState.of(), BoundedStatistics(iteration))
+      return SafetyResult.unsafe(trace, PredState.of(extractProof()), BoundedStatistics(iteration))
     }
 
     var img = unfoldedInitExpr
@@ -361,6 +344,20 @@ constructor(
     itpSolver.pop()
     return null
   }
+
+  private fun extractProof(): Expr<BoolType>? =
+    if (needProof) {
+      // we enumerate all states explored by previous iteration of BMC
+      val expr =
+        And(
+          exprs.subList(0, exprs.size - 1) +
+            //                  loopfree.subList(0, loopfree.size - 1) +
+            unfoldedInitExpr
+        )
+      extractModel(expr, indices.subList(0, indices.size - 1))
+    } else {
+      True()
+    }
 
   private fun getTrace(model: Valuation): Trace<ExplState, ExprAction> {
     val stateList = LinkedList<ExplState>()

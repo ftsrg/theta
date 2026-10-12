@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xsts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -90,14 +90,14 @@ public final class XSTS {
         this.prop = checkNotNull(prop);
         this.ctrlVars = checkNotNull(ctrlVars);
 
-        this.vars = Containers.createSet();
+        this.vars = CollectionUtil.createSet();
         vars.addAll(StmtUtils.getVars(tran));
         vars.addAll(StmtUtils.getVars(env));
         vars.addAll(StmtUtils.getVars(init));
         vars.addAll(ExprUtils.getVars(initFormula));
         vars.addAll(ExprUtils.getVars(prop));
         this.stateVars = this.vars;
-        this.localVars = Containers.createSet();
+        this.localVars = CollectionUtil.createSet();
     }
 
     public XSTS(
@@ -116,7 +116,7 @@ public final class XSTS {
         this.prop = checkNotNull(prop);
         this.ctrlVars = checkNotNull(ctrlVars);
 
-        this.vars = Containers.createSet();
+        this.vars = CollectionUtil.createSet();
         this.vars.addAll(checkNotNull(stateVars));
         this.vars.addAll(checkNotNull(localVars));
         this.stateVars = stateVars;

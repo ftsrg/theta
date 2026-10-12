@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":theta-solver-z3"))
     implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-solver-smtlib"))
+    testImplementation(testFixtures(project(":theta-solver-smtlib")))
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
@@ -52,6 +53,8 @@ dependencies {
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
+    implementation(project(":theta-btor2-frontend"))
+    implementation(project(":theta-btor2xcfa"))
     testImplementation(kotlin("script-runtime"))
 }
 
@@ -99,5 +102,126 @@ archivePackaging {
         inputFlags = "--backend PORTFOLIO \\ \n--input-type CHC \\ \n--portfolio CHC-COMP \\ \n--print-model"
         solvers = listOf("cvc5:1.0.8", "mathsat:5.6.10")
         readmeTemplate = file("src/main/resources/archive-packaging/README-CHCCOMP.md")
+        scriptName = "chc"
+    }
+}
+
+// The canary suite (see `canaries/README.md`) as a registered Gradle test task.
+//
+// Not part of `test`: a sweep takes ~20 minutes and needs a built Theta-svcomp distribution plus a
+// local sv-benchmarks checkout, neither of which a fresh clone has. As its own task it stays
+// discoverable and reports one JUnit result per canary instead of a single exit code; when the
+// prerequisites are missing it skips rather than fails (see CanarySuiteTest).
+val canaryTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the canary suite (real SV-COMP tasks + feature-guard fixtures) against the built " +
+            "Theta-svcomp distribution. Set -Ptheta.canary.mode=full to check verdicts rather " +
+            "than only that the frontend builds each task."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*CanarySuiteTest*") }
+
+        // The suite needs the packaged distribution, not just the classes. Referenced by name
+        // because the archive-packaging plugin registers its variants after this block is evaluated.
+        dependsOn("buildArchiveTheta-svcomp")
+        // The filter below matches a compiled class, so the test classes have to exist even when
+        // this task is invoked on its own; without it the task can fail with "No tests found".
+        dependsOn(tasks.named("testClasses"))
+
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.mode", (project.findProperty("theta.canary.mode") ?: "parse").toString())
+        // The sweep runs this many tasks at once (default 4). Lowering it trades wall time for
+        // memory headroom on a shared machine. The largest canaries need several GB each, so this
+        // is pressure relief, not a substitute for enough memory.
+        (project.findProperty("theta.canary.jobs"))?.let {
+            systemProperty("theta.canary.jobs", it.toString())
+        }
+        // Point `full` mode at a subset; the whole list is far too slow to verify end to end.
+        (project.findProperty("theta.canary.tsv"))?.let {
+            systemProperty("theta.canary.tsv", it.toString())
+        }
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // The result depends on the benchmarks and the built archive, not only on this project's
+        // inputs, so caching a green run would hide a regression in either.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// The feature-guard fixtures, which are the fast half of the canary gate: minimal programs that
+// each isolate one change, so reverting that change flips the fixture. Separate from `canaryTest`
+// because it needs no sv-benchmarks *tasks*, only the property files, and runs in a couple of
+// minutes rather than twenty.
+val fixtureTest by
+    tasks.registering(Test::class) {
+        group = "verification"
+        description =
+            "Runs the feature-guard fixtures against the built Theta-svcomp distribution. Needs a " +
+            "local sv-benchmarks checkout for the property files; it never downloads one."
+
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        filter { includeTestsMatching("*FixtureSuiteTest*") }
+
+        dependsOn("buildArchiveTheta-svcomp")
+        dependsOn(tasks.named("testClasses"))
+
+        systemProperty(
+            "theta.canary.home",
+            layout.projectDirectory
+                .dir("canaries")
+                .asFile.absolutePath,
+        )
+        systemProperty("theta.canary.repoRoot", rootDir.absolutePath)
+        systemProperty(
+            "theta.canary.dist",
+            layout.buildDirectory
+                .dir("distributions/Theta-svcomp")
+                .get()
+                .asFile.absolutePath,
+        )
+        (project.findProperty("theta.canary.svBenchmarks"))?.let {
+            systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+
+        // Depends on the benchmarks and the built archive, not only on this project's inputs.
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events("failed", "skipped")
+            showStandardStreams = false
+        }
+    }
+
+// The fixtures are part of the canary gate, so one command still runs both.
+canaryTest { dependsOn(fixtureTest) }
+
+// Keep the long sweeps out of the ordinary test task.
+tasks.named<Test>("test") {
+    filter {
+        excludeTestsMatching("*CanarySuiteTest*")
+        excludeTestsMatching("*FixtureSuiteTest*")
     }
 }

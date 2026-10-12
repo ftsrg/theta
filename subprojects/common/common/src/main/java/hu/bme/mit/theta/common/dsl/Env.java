@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.*;
 import static java.util.stream.Collectors.toList;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -89,7 +89,7 @@ public final class Env {
 
         private Frame(final Frame parent) {
             this.parent = parent;
-            symbolToValue = Containers.createMap();
+            symbolToValue = CollectionUtil.createMap();
         }
 
         public void define(final Symbol symbol, final Object value) {

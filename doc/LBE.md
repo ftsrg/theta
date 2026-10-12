@@ -174,3 +174,7 @@ The repeated checking and collapsing happens in functions _removeAllMiddleLocati
 - A location had a part of a snake outgoing from it, which has been collapsed.
 
 This reduces the amount of unnecessary checking done on parts of the CFA that didn't change.
+
+## Further reading
+
+* [Towards Evaluating Size Reduction Techniques for Software Model Checking](https://doi.org/10.4204/EPTCS.253.7) (VPT 2017) — evaluates and compares size-reduction optimizations, and their effect on both model size and verification efficiency.

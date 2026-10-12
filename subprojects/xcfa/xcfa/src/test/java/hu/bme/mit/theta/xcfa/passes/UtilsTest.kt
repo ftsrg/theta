@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class UtilsTest {
           SequenceLabel(listOf(NopLabel), EmptyMetaData),
         ),
         Arguments.of(AtomicBeginLabel(), AtomicBeginLabel()),
-        Arguments.of(MutexLockLabel(x), MutexLockLabel(xPrime)),
+        Arguments.of(MutexLockLabel(x.ref), MutexLockLabel(xPrime.ref)),
         Arguments.of(
           StartLabel("", listOf(x.ref), y, EmptyMetaData),
           StartLabel("", listOf(xPrime.ref), y, EmptyMetaData),
