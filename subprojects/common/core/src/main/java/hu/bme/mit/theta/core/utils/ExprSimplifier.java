@@ -196,6 +196,8 @@ public final class ExprSimplifier {
                     .addCase(FpMinExpr.class, this::simplifyFpMin)
                     .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
+                    .addCase(FpIsInfiniteExpr.class, this::simplifyFpIsInfinite)
+                    .addCase(FpIsZeroExpr.class, this::simplifyFpIsZero)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
                     .addCase(FpFromIeeeBvExpr.class, this::simplifyFpFromIeeeBv)
@@ -1998,6 +2000,16 @@ public final class ExprSimplifier {
             return Bool(
                     (((FpLitExpr) op).isNegativeInfinity()
                             || ((FpLitExpr) op).isPositiveInfinity()));
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BoolType> simplifyFpIsZero(final FpIsZeroExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr litExpr) {
+            return Bool((litExpr.isNegativeZero() || litExpr.isPositiveZero()));
         }
 
         return expr.with(op);

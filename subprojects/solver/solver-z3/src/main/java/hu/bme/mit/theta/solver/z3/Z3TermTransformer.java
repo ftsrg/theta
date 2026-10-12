@@ -161,6 +161,7 @@ final class Z3TermTransformer {
         this.addFunc("fp.isNaN", this.exprUnaryOperator(FpIsNanExpr::create));
         this.addFunc("isinfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
         this.addFunc("fp.isInfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
+        this.addFunc("fp.isZero", this.exprUnaryOperator(FpIsZeroExpr::create));
         this.addFunc("fp.roundtoint", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.roundToIntegral", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.sqrt", this.exprFpUnaryOperator(FpSqrtExpr::create));

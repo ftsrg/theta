@@ -61,6 +61,7 @@ import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
@@ -174,6 +175,7 @@ final class Z3TermTransformer {
         this.addFunc("fp.isNaN", this.exprUnaryOperator(FpIsNanExpr::create));
         this.addFunc("isinfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
         this.addFunc("fp.isInfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
+        this.addFunc("fp.isZero", this.exprUnaryOperator(FpIsZeroExpr::create));
         this.addFunc("fp.roundtoint", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.roundToIntegral", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.sqrt", this.exprFpUnaryOperator(FpSqrtExpr::create));

@@ -243,6 +243,9 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.FP_IS_INF,
                 exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        addEnvFunc(
+                FunctionDeclarationKind.FP_IS_ZERO,
+                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr::create));
         //        addEnvFunc("fp.isInfinite",
         // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
         addEnvFunc(

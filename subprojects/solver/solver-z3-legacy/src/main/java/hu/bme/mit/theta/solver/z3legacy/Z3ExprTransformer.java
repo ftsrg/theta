@@ -190,6 +190,7 @@ final class Z3ExprTransformer {
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                        .addCase(FpIsZeroExpr.class, this::transformFpIsZero)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
                         .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
@@ -864,6 +865,11 @@ final class Z3ExprTransformer {
     private com.microsoft.z3legacy.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPIsInfinite(opTerm);
+    }
+
+    private com.microsoft.z3legacy.Expr transformFpIsZero(final FpIsZeroExpr expr) {
+        final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+        return context.mkFPIsZero(opTerm);
     }
 
     private com.microsoft.z3legacy.Expr transformFpSqrt(final FpSqrtExpr expr) {

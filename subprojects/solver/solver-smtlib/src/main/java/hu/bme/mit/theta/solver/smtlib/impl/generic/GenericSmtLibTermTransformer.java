@@ -30,6 +30,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Exists_termContext;
@@ -104,6 +105,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
@@ -118,7 +120,6 @@ import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
@@ -228,6 +229,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("bvsgt", exprBinaryOperator(BvSGtExpr::create));
                         put("bvuge", exprBinaryOperator(BvUGeqExpr::create));
                         put("bvsge", exprBinaryOperator(BvSGeqExpr::create));
+                        put("sbv_to_int", exprBvToInt(true));
+                        put("ubv_to_int", exprBvToInt(false));
 
                         // Floating point
 
@@ -252,6 +255,10 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("fp.sqrt", exprFpUnaryOperator(FpSqrtExpr::create));
                         put("fp.rem", exprBinaryOperator(FpRemExpr::create));
                         put("fp.isNaN", exprUnaryOperator(FpIsNanExpr::create));
+                        put("fp.isInfinite", exprUnaryOperator(FpIsInfiniteExpr::create));
+                        put("fp.isZero", exprUnaryOperator(FpIsZeroExpr::create));
+                        put("fp.to_sbv", exprFpToBv(true));
+                        put("fp.to_ubv", exprFpToBv(false));
 
                         // Array
                         put("select", exprArrayReadOperator());
@@ -846,6 +853,16 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         };
     }
 
+    private OperatorCreatorFunction exprBvToInt(boolean signed) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var expr = transformTerm(ops.get(0), model, vars);
+            return BvToIntExpr.of(castBv(expr), signed);
+        };
+    }
+
     private OperatorCreatorFunction exprIntToBv() {
         return (params, ops, model, vars) -> {
             checkArgument(params.size() == 1, "One parameters expected");
@@ -1031,6 +1048,19 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
                 throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
             }
+        };
+    }
+
+    private OperatorCreatorFunction exprFpToBv(boolean signed) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameter expected");
+            checkArgument(ops.size() == 2, "Unary operator expected");
+
+            final var size = Integer.parseInt(params.get(0).numeral().getText());
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var expr = transformTerm(ops.get(1), model, vars);
+
+            return FpToBvExpr.of(roundingMode, castFp(expr), size, signed);
         };
     }
 
