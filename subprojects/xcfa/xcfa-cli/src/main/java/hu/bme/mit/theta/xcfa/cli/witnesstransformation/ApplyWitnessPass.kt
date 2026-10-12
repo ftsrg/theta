@@ -405,10 +405,11 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .filter { oldLabels[it] in matchedLabels }
               .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
-          for (index in annotatedIndices) {
+          for ((i, index) in annotatedIndices.withIndex()) {
+            val flagUpdate = if (i == 0) segmentFlagUpdate else null
             modifications
               .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, index, assumption, segmentUpdate, segmentFlagUpdate))
+              .add(Annotation(edge, index, assumption, segmentUpdate, flagUpdate))
           }
         }
       }
