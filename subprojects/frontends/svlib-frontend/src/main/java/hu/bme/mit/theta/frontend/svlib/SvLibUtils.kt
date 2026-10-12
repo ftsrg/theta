@@ -21,14 +21,9 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
-import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
@@ -57,25 +52,6 @@ internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition:
 
   return nextLoc
 }
-
-internal fun sortOf(sort: SortContext): Type =
-  when (sort) {
-    is SimpleSortContext -> when (sort.identifier().text) {
-      "Int" -> IntExprs.Int()
-      "Bool" -> BoolExprs.Bool()
-      else -> throw sort.unsupported("sort '${sort.text}'")
-    }
-    is ParametricSortContext -> when (sort.identifier().text) {
-      "Array" -> {
-        val indexType: Type = sortOf(sort.sort(0))
-        val elementType: Type = sortOf(sort.sort(1))
-        ArrayExprs.Array(indexType, elementType)
-      }
-
-      else -> throw sort.unsupported("sort '${sort.text}'")
-    }
-    else -> throw sort.unsupported("sort '${sort.text}'")
-  }
 
 internal fun ParserRuleContext.unsupported(message: String) =
   UnsupportedOperationException("Unsupported SV-LIB element (${start.line}:${start.charPositionInLine}): $message")

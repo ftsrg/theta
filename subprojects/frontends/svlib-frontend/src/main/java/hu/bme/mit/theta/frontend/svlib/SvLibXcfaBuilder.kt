@@ -18,7 +18,13 @@ package hu.bme.mit.theta.frontend.svlib
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.bvtype.BvExprs
+import hu.bme.mit.theta.core.type.fptype.FpExprs
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.rattype.RatExprs
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
@@ -155,6 +161,36 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
 
     taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
   }
+
+  private fun sortOf(sort: SortContext): Type =
+    when (sort) {
+      is SimpleSortContext -> when (sort.identifier().symbol().original) {
+        "Int" -> IntExprs.Int()
+        "Bool" -> Bool()
+        "Real" -> RatExprs.Rat()
+        "FloatingPoint" -> {
+          if (sort.identifier().index().size != 2) throw sort.unsupported("sort '${sort.original}'")
+          val exponent = sort.identifier().index(0).original.toInt()
+          val significand = sort.identifier().index(1).original.toInt()
+          FpExprs.FpType(exponent, significand)
+        }
+        "BitVec" -> {
+          if (sort.identifier().index().size != 1) throw sort.unsupported("sort '${sort.original}'")
+          val size = sort.identifier().index(0).original.toInt()
+          BvExprs.BvType(size)
+        }
+        else -> throw sort.unsupported("sort '${sort.original}'")
+      }
+      is ParametricSortContext -> when (sort.identifier().original) {
+        "Array" -> {
+          val indexType: Type = sortOf(sort.sort(0))
+          val elementType: Type = sortOf(sort.sort(1))
+          ArrayExprs.Array(indexType, elementType)
+        }
+        else -> throw sort.unsupported("sort '${sort.original}'")
+      }
+      else -> throw sort.unsupported("sort '${sort.original}'")
+    }
 
   private fun createGlobalVar(name: String, type: Type) = Decls.Var(name, type).also {
     xcfaBuilder.addVar(XcfaGlobalVar(it))
