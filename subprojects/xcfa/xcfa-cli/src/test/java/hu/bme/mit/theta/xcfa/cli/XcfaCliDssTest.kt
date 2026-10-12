@@ -47,7 +47,7 @@ class XcfaCliDssTest {
     // it as-is for the existing single-axis tests;
     // randomCheckerBackendsAndDecompositionAndExecutor()
     // crosses it against every random backend combination, so both method sources stay in sync with
-    // one definition instead of two copies of the same ten pairs drifting apart.
+    // one definition instead of two copies of the same sixteen pairs drifting apart.
     private val decompositionExecutorPairs: List<Pair<String, String>> =
       listOf(
         "LINEAR" to "CONCURRENT",
@@ -58,6 +58,12 @@ class XcfaCliDssTest {
         "MERGE_ABSORB_SELF_LOOPS" to "SEQUENTIAL",
         "MERGE_ACYCLIC" to "CONCURRENT",
         "MERGE_ACYCLIC" to "SEQUENTIAL",
+        "MIN_CUT" to "CONCURRENT",
+        "MIN_CUT" to "SEQUENTIAL",
+        "MIN_CUT_ABSORB_SELF_LOOPS" to "CONCURRENT",
+        "MIN_CUT_ABSORB_SELF_LOOPS" to "SEQUENTIAL",
+        "MIN_CUT_ACYCLIC" to "CONCURRENT",
+        "MIN_CUT_ACYCLIC" to "SEQUENTIAL",
         "NONE" to "CONCURRENT",
         "NONE" to "SEQUENTIAL",
       )
@@ -101,7 +107,8 @@ class XcfaCliDssTest {
       }
 
     // The cross product: every one of the five randomCheckerBackendCombinations against every one
-    // of the ten decompositionExecutorPairs - 50 argument sets, so each random combination really
+    // of the sixteen decompositionExecutorPairs - 80 argument sets, so each random combination
+    // really
     // does get "run on every testcase," not just the default decomposition/executor.
     @JvmStatic
     fun randomCheckerBackendsAndDecompositionAndExecutor(): Stream<Arguments> =
@@ -112,6 +119,29 @@ class XcfaCliDssTest {
           }
         }
         .stream()
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["2", "3"])
+  fun `--dss-decomposition MIN_CUT_ACYCLIC with --dss-cut-block-count runs to completion on a loop`(
+    blocks: String
+  ) {
+    main(
+      arrayOf(
+        "--backend",
+        "DSS",
+        "--dss-decomposition",
+        "MIN_CUT_ACYCLIC",
+        "--dss-cut-block-count",
+        blocks,
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource("/c/dss/loop.c")!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    )
   }
 
   @Test

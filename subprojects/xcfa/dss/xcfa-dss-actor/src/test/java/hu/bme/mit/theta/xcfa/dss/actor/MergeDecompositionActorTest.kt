@@ -27,8 +27,10 @@ import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.horizontalMergePass
 import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
@@ -494,6 +496,34 @@ class MergeDecompositionActorTest {
           runDssActorsSequentially(bg, bf)
         },
       )
+    }
+  }
+
+  @Test
+  fun `every min-cut version keeps the verdicts of the loop fixtures`() {
+    val cases =
+      listOf(
+        xyLoopXcfa(incrementY = true) to DssResult.SAFE,
+        xyLoopXcfa(incrementY = false) to DssResult.UNSAFE,
+        guardedLoopXcfa(unsafe = false) to DssResult.SAFE,
+        guardedLoopXcfa(unsafe = true) to DssResult.UNSAFE,
+        errorInGuardedLoopXcfa("(- 0 1)") to DssResult.SAFE,
+        errorInGuardedLoopXcfa("3") to DssResult.UNSAFE,
+        statefulCheckXcfa() to DssResult.UNSAFE,
+      )
+    for (handling in CutLoopHandling.entries) {
+      for ((wholeProgram, expected) in cases) {
+        val cut = MinCutDecomposition(loopHandling = handling).cut(wholeProgram.procedures.single())
+        cut.blockGraph.checkConsistency()
+        assertEquals(
+          expected,
+          checkDecomposed(wholeProgram, cut.blockGraph) { bg, bf ->
+            runDssActorsSequentially(bg, bf)
+          },
+        ) {
+          "$handling on ${wholeProgram.name}: ${cut.describe().first()}"
+        }
+      }
     }
   }
 

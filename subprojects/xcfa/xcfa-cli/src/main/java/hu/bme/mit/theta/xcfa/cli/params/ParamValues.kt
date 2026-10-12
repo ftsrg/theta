@@ -131,6 +131,15 @@ enum class DssDecomposition {
    * collapsed into one block, so the block graph is acyclic (`AcyclicMergeDecomposition`).
    */
   MERGE_ACYCLIC,
+  /**
+   * Theta-only: a cut into [DssConfig.cutBlockCount] blocks with the fewest edges between blocks,
+   * then the most equal block sizes (`MinCutDecomposition`); cycles between blocks are allowed.
+   */
+  MIN_CUT,
+  /** `MIN_CUT`, then every self-loop block is collapsed as in `MERGE_ACYCLIC`. */
+  MIN_CUT_ABSORB_SELF_LOOPS,
+  /** `MIN_CUT` among cuts with an acyclic block graph of at least two blocks only. */
+  MIN_CUT_ACYCLIC,
   /** CPAchecker's `NO_DECOMPOSITION`: the whole procedure as a single block. */
   NONE,
 }

@@ -56,9 +56,11 @@ import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.dss.decomposition.DssBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
@@ -147,15 +149,23 @@ fun getDssChecker(
           largestHorizontalMerge = dssConfig.largestHorizontalMerge,
           allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
         )
+      DssDecomposition.MIN_CUT ->
+        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.ALLOW)
+      DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS ->
+        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.ABSORB_SELF_LOOPS)
+      DssDecomposition.MIN_CUT_ACYCLIC ->
+        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.FORBID)
       DssDecomposition.NONE -> SingleBlockDecomposition
     }
-  val blockGraph: BlockGraph = decomposition.decompose(procedure)
+  val statsLevel = if (dssConfig.blockGraphStatsOnly) Logger.Level.RESULT else Logger.Level.INFO
+  val blockGraph: BlockGraph =
+    if (decomposition is MinCutDecomposition) {
+      val cut = decomposition.cut(procedure)
+      cut.describe().forEach { logger.write(statsLevel, "%s\n", it) }
+      cut.blockGraph
+    } else decomposition.decompose(procedure)
   blockGraph.checkConsistency()
-  logger.write(
-    if (dssConfig.blockGraphStatsOnly) Logger.Level.RESULT else Logger.Level.INFO,
-    "DSS block graph statistics: %s\n",
-    blockGraph.statistics(),
-  )
+  logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.statistics())
   if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
   if (dssConfig.trace) DssTrace.enable { logger.write(Logger.Level.RESULT, "%s\n", it) }
 

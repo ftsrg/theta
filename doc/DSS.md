@@ -61,9 +61,10 @@ DSS works on programs with a single XCFA procedure (the CLI rejects others).
 
 | Option | Default | Meaning | CPAchecker counterpart |
 |---|---|---|---|
-| `--dss-decomposition {LINEAR,MERGE,MERGE_ABSORB_SELF_LOOPS,MERGE_ACYCLIC,NONE}` | `MERGE` | How the procedure is cut into blocks (`MERGE_ABSORB_SELF_LOOPS`: 5.4, `MERGE_ACYCLIC`: 5.5) | `decompositionType` (`MERGE_DECOMPOSITION` by default); the two Theta-only ones have none |
+| `--dss-decomposition {LINEAR,MERGE,MERGE_ABSORB_SELF_LOOPS,MERGE_ACYCLIC,MIN_CUT,MIN_CUT_ABSORB_SELF_LOOPS,MIN_CUT_ACYCLIC,NONE}` | `MERGE` | How the procedure is cut into blocks (`MERGE_ABSORB_SELF_LOOPS`: 5.4, `MERGE_ACYCLIC`: 5.5, `MIN_CUT*`: 5.6) | `decompositionType` (`MERGE_DECOMPOSITION` by default); the Theta-only ones have none |
 | `--dss-target-block-count N` | `2` | Target block count of `MERGE`, `MERGE_ABSORB_SELF_LOOPS` and `MERGE_ACYCLIC` | hardcoded `2` in `DssDecompositionOptions` |
 | `--dss-largest-horizontal-merge N` | `-1` | Skip a horizontal merge if more than one of its blocks has more than `N` locations (`-1`: no limit) | `largestHorizontalMerge` |
+| `--dss-cut-block-count N` | `2` | Number of blocks of the `MIN_CUT*` decompositions (fewer if no valid cut has `N`) | none |
 | `--dss-allow-single-block-decomposition` | off | With `MERGE` and a target of at most 1, use a single block | `allowSingleBlockDecompositionWhenMerging` |
 | `--dss-reset-precision` | off | Analyze every start state with the initial precision | `resetPrecisionForEveryRun` |
 | `--dss-reuse-block-precision` | off | Add the predicates a block's earlier CEGAR runs ended with to the initial precision of its next runs (11.2) | none |
@@ -230,19 +231,54 @@ merging a region can close a new cycle through outside blocks, which a later rou
 (a loop with an error inside takes its exits along), and the strongly-connected-component rule of
 the analysis (7.7) never applies.
 
-### 5.6 `SingleBlockDecomposition` (`NONE`)
+### 5.6 `MinCutDecomposition` (`MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC`, Theta-only)
+
+Cuts the procedure directly (no `LINEAR`/`MERGE` first) into `--dss-cut-block-count` blocks (default
+2) with as few edges between blocks as possible and, second, block sizes as equal as possible.
+
+* A cut is a set of **cut locations**. Each of them, and the procedure entry, starts one block:
+  everything reachable from it without passing another cut location. A cut is valid if no edge falls
+  into two blocks and every block reaches at most one cut location, its exit (a block reaching none
+  ends at one of its dead ends, preferably not an error location). A block that returns to its own
+  start therefore ends there: a self loop.
+* **Cut edges** are the edges entering a cut location - control passes into another block (or a new
+  run of the same block) along each of them - so their number is the cut locations' summed
+  in-degree, known before the blocks are built.
+* **Balance:** the smallest difference between the largest and the smallest block (in locations),
+  then the smallest summed deviation from the mean.
+* **Search:** branch and bound over location sets, cheapest locations first; a set is only built
+  if it can still be at most as cheap as the best valid cut. It stops after
+  `DEFAULT_CUT_SEARCH_BUDGET` edge visits and keeps the best cut so far (logged as "stopped at the
+  budget"). If no valid cut has the requested number of blocks, fewer are tried.
+* **Versions** (`CutLoopHandling`): `MIN_CUT` takes any valid cut; `MIN_CUT_ABSORB_SELF_LOOPS` takes
+  the same cut, then collapses its self-loop blocks as `MERGE_ACYCLIC` does (`collapseCycles(...,
+  onlySelfLoops = true)`, which can lower the block count); `MIN_CUT_ACYCLIC` only accepts cuts with an
+  acyclic block graph. If no valid cut into at least two blocks exists, `MIN_CUT` returns a single
+  block - e.g. on a straight-line program, which after the frontend's large-block encoding has no
+  location to cut at.
+* **Fallback:** when the cut of `MIN_CUT_ABSORB_SELF_LOOPS` or `MIN_CUT_ACYCLIC` is not possible (no
+  acyclic cut into at least two blocks; collapsing the self loops leaves a single block) or
+  computing it throws, the decomposition falls back to the `MIN_CUT` cut and logs why, so neither
+  fails where `MIN_CUT` succeeds.
+* The CLI logs the chosen cut (INFO, RESULT with `--dss-block-graph-stats-only`): a summary line, one
+  line per cut edge, and one per block with its location count and names (the first 40); with two
+  blocks they are marked "before the cut" and "after the cut".
+
+Blocks with a whole loop inside get per-path violation conditions (6.3).
+
+### 5.7 `SingleBlockDecomposition` (`NONE`)
 
 One block `SB1` from the entry to the last location without outgoing edges that a breadth-first
 traversal finds, as in CPAchecker.
 
-### 5.7 `BlockGraphInstrumentation`
+### 5.8 `BlockGraphInstrumentation`
 
 CPAchecker's `BlockGraphModification.instrumentCFA`: every block end with outgoing edges gets a
 "ghost" `NopLabel` edge (marked with `GhostEdgeMetadata`) to a fresh location, which becomes the
 block's `violationConditionLocation`; a single-block graph is left unchanged. The CLI does **not**
 run it - see 11.1.
 
-### 5.8 `BlockGraph.toDot()`
+### 5.9 `BlockGraph.toDot()`
 
 Graphviz rendering for debugging: the root has a double border, blocks with a dedicated
 violation-condition location a dashed one.
@@ -266,7 +302,7 @@ If the block starts and ends at the same location (a loop body), that location g
 the entry clone keeps the outgoing body edges, the exit clone the incoming ones. This is
 CPAchecker's `INITIAL` vs. `FINAL` block state: the block end is not reachable before the first
 edge, and one analysis covers exactly one iteration. A block of `MERGE_ABSORB_SELF_LOOPS` (5.4) or
-`MERGE_ACYCLIC` (5.5) may instead contain a whole loop, possibly through its exit; it is extracted as it is, so one analysis
+`MERGE_ACYCLIC` (5.5) or `MIN_CUT*` (5.6) may instead contain a whole loop, possibly through its exit; it is extracted as it is, so one analysis
 covers every iteration.
 
 The result also returns the two synthetic edges (`preconditionEdge`, `violationConditionEdge`),
@@ -295,7 +331,7 @@ computed over the block's paths by memoized recursion:
 
 * From the exit, only a ghost edge is followed; a loop-body block is entered from its head exactly
   once, so blocks are acyclic for this purpose (a real cycle is reported as an error).
-* **Blocks with an internal cycle** (`hasInternalCycle`, only from `MERGE_ABSORB_SELF_LOOPS` and `MERGE_ACYCLIC`) have
+* **Blocks with an internal cycle** (`hasInternalCycle`, only from the Theta-only decompositions, 5.4-5.6) have
   infinitely many paths, so they get **per-path** violation conditions instead (Theta-only):
   `computePathViolationCondition` is the weakest precondition along the counterexample of the run,
   after the synthetic precondition edge. CEGAR's counterexamples use per-process copies of the
@@ -622,9 +658,9 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
 * **Checker roster** (`--dss-checker-backends`, `--dss-checker-selection`): block analyses can use
   predicate CEGAR with the cartesian, boolean or split domain, or bounded model checkers (which
   ignore precisions and may miss targets).
-* **Self-loop absorbing and acyclic decompositions** (`--dss-decomposition MERGE_ABSORB_SELF_LOOPS`,
-  `MERGE_ACYCLIC`, 5.4-5.5): blocks that contain a whole loop, with per-path violation conditions
-  (6.3). CPAchecker's blocks never
+* **Self-loop absorbing, acyclic and min-cut decompositions** (`--dss-decomposition
+  MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT*`, 5.4-5.6): blocks that contain a whole loop,
+  with per-path violation conditions (6.3). CPAchecker's blocks never
   contain a cycle besides the split loop head.
 
 ### 11.5 Deviations in the analysis logic
@@ -731,6 +767,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `BlockGraphMergingTest` | horizontal/vertical passes, ids, single-pass and early-stop semantics, cycles |
 | | `MergeBlockDecompositionTest` | target counts, merge size limit |
 | | `SelfLoopAbsorbingDecompositionTest` | absorbing into the entering or the leaving block, nested loops, loop heads left alone, coverage |
+| | `MinCutDecompositionTest` | cut at the loop exit, balance, more blocks than possible, the three loop handlings, fallback to `MIN_CUT`, report, search budget |
 | | `AcyclicMergeDecompositionTest` | multi-block cycles with several exits (`break`, error inside the loop), nested cycles, growth over predecessors, no split-head blocks |
 | | `SingleBlockDecompositionTest` | `SB1`, single-block merging, default target, instrumentation no-op |
 | | `BlockGraphInstrumentationTest`, `BlockGraphDotTest` | ghost edges, DOT |
@@ -739,7 +776,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `ViolationConditionTest` | path conditions, canonical auxiliary variables, one loop iteration per analysis, violation-condition targets, precision combination, internal cycles, per-path conditions |
 | | `PostconditionPackingTest`, `WorkerConfigDelegatorTest`, `DssCheckerRosterTest` | packing, checker delegation, rosters |
 | actor | `PredicateBlockBehaviorStepTest` | every step of the block analysis: initial analysis, precondition coverage, storing violation conditions, laziness, refutation vs. propagation at the root and inside, the lost-violation-condition regression |
-| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check, self-loop-absorbed and acyclic graphs with per-path violation conditions (root and non-root loop blocks) |
+| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check, self-loop-absorbed, acyclic and min-cut graphs with per-path violation conditions (root and non-root loop blocks) |
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
 | solver | `SolverScopeTest` | solver scopes own, close and nest |
 | solver-z3 | `Z3ItpSolverTest.testInterpolationWithAGroundPartition` | the interpolation fix |

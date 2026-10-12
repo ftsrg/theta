@@ -55,9 +55,10 @@ class AcyclicMergeDecomposition(
  * always grow to the whole procedure, which is a valid single block. Collapsing can close a new
  * cycle through blocks outside the region, which a later round collapses.
  *
- * Returns [blockGraph] itself when it is acyclic already.
+ * With [onlySelfLoops], only self loops are collapsed (`MinCutDecomposition`). Returns [blockGraph]
+ * itself when there is nothing to collapse.
  */
-fun collapseCycles(blockGraph: BlockGraph): BlockGraph {
+fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): BlockGraph {
   var nextId =
     blockGraph.blocks
       .mapNotNull { it.id.removePrefix(COLLAPSED_PREFIX).toIntOrNull() }
@@ -68,7 +69,10 @@ fun collapseCycles(blockGraph: BlockGraph): BlockGraph {
     val successors = current.blocks.associate { it.id to it.successorIds }
     val cycle =
       stronglyConnectedComponents(successors)
-        .filter { scc -> scc.size > 1 || scc.single().let { it in successors.getValue(it) } }
+        .filter { scc ->
+          (scc.size > 1 && !onlySelfLoops) ||
+            scc.size == 1 && scc.single().let { it in successors.getValue(it) }
+        }
         .minWithOrNull(compareBy<Set<String>> { it.size }.thenBy { it.min() }) ?: return current
     current = collapseRegion(current, cycle, "$COLLAPSED_PREFIX${nextId++}")
   }

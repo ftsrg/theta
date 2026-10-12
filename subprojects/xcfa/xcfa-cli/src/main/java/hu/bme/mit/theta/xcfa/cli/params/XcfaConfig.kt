@@ -363,6 +363,13 @@ data class DssConfig(
   )
   var allowSingleBlockDecomposition: Boolean = false,
   @Parameter(
+    names = ["--dss-cut-block-count"],
+    description =
+      "Number of blocks for --dss-decomposition MIN_CUT(_ABSORB_SELF_LOOPS, _ACYCLIC); fewer if " +
+        "no valid cut has that many",
+  )
+  var cutBlockCount: Int = 2,
+  @Parameter(
     names = ["--dss-reset-precision"],
     description =
       "Start every block analysis with the initial precision instead of the precision received " +
