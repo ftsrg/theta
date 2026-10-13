@@ -163,6 +163,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses",
   )
   var enableFew: Boolean = false,
+  @Parameter(
+    names = ["--disable-spin-loop-effects"],
+    description = "Disable the pruning of loop iterations that change nothing (spinning)",
+  )
+  var disableSpinLoopEffects: Boolean = false,
   @Parameter(names = ["--input-type"], description = "Format of the input")
   var inputType: InputType = InputType.C,
   override var specConfig: T? = null,
@@ -576,7 +581,7 @@ data class OcConfig(
     names = ["--oc-decision-procedure"],
     description = "Decision procedure for ordering-consistency check",
   )
-  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.BASIC,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(
@@ -619,12 +624,6 @@ data class OcConfig(
       "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
   )
   var maxExitQueries: Int = -1,
-  @Parameter(
-    names = ["--oc-witness-optimizations"],
-    description =
-      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
-  )
-  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

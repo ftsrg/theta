@@ -21,15 +21,21 @@ import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LAST_SEGMENT_PASSED
@@ -81,12 +87,20 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
   private data class Instrumentation(
     val segmentCounter: VarDecl<IntType>,
-    val segmentFlag: VarDecl<BoolType>,
+    val lastSegmentManager: LastSegmentManager<*>,
     /** thread_id (0 = entry procedure) -> name of the procedure the thread executes */
     val threadProcedures: Map<Int, String>,
     /** the thread-creating `function_enter` waypoints, in registration (witness) order */
     val registrations: List<ThreadRegistration>,
   )
+
+  private interface LastSegmentManager<T : Type> {
+    val type: T
+    val varDecl: VarDecl<T>
+    val passLastSegmentNewValue: Expr<T>
+    val initValue: LitExpr<T>
+    val target: Expr<BoolType>
+  }
 
   /**
    * A single thread registration: the k-th thread-creating `function_enter` waypoint of the witness
@@ -220,7 +234,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val instrumentation =
       instrumentations.computeIfAbsent(builder.parent) { createInstrumentation(it) }
     val segmentCounter = instrumentation.segmentCounter
-    val segmentFlag = instrumentation.segmentFlag
+    val lastSegment = instrumentation.lastSegmentManager
 
     val segments = witness.content.mapNotNull { c -> c.segment }
     val segmentCount = segments.size
@@ -277,7 +291,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         val initLabels =
           mutableListOf<XcfaLabel>(
             AssignStmtLabel(segmentCounter, Int(0)),
-            AssignStmtLabel(segmentFlag, False()),
+            AssignStmtLabel(lastSegment.varDecl, lastSegment.initValue),
           )
         if (logicalThreadId != null) initLabels.add(AssignStmtLabel(logicalThreadId, Int(0)))
         builder.addEdge(
@@ -301,6 +315,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val modifications = LinkedHashMap<XcfaEdge, MutableList<Annotation>>()
 
     val statementToEdge = getStatementToEdge(builder)
+    val threadCreatingCalls =
+      statementToEdge.filter { it.second is StartLabel }.map { it.first }.toSet()
     segments.forEachIndexed { segmentIndex, segment ->
       val currentSegmentPred = Eq(segmentCounter.ref, Int(segmentIndex))
       // All (non-avoid) waypoints of the segment share the segment index: in a multi-follow
@@ -335,7 +351,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           }
         val segmentFlagUpdate =
           if (isLastSegment) {
-            AssignStmtLabel(segmentFlag, Ite(guardPred, True(), segmentFlag.ref))
+            AssignStmtLabel(
+              lastSegment.varDecl,
+              Ite(
+                guardPred,
+                cast(lastSegment.passLastSegmentNewValue, lastSegment.type),
+                cast(lastSegment.varDecl.ref, lastSegment.type),
+              ),
+            )
           } else null
 
         val labelsOnEdges =
@@ -350,7 +373,13 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   label.stmt is HavocStmt<*>
               } else {
                 (wp.waypoint.type != WaypointType.ASSUMPTION ||
-                  edge.getCMetaData()?.notStatementStart == false) &&
+                  (edge.getCMetaData()?.notStatementStart == false &&
+                    // A modelled pthread_create's return assignment is after the call, even
+                    // though it inherits the same statement-start metadata as the StartLabel.
+                    !(statement in threadCreatingCalls &&
+                      statement is CCall &&
+                      label is StmtLabel &&
+                      (label.stmt as? AssignStmt<*>)?.varDecl == statement.ret))) &&
                   statement.lineNumberStart == loc.line &&
                   (loc.column == null || statement.colNumberStart + 1 == loc.column)
               }
@@ -385,10 +414,11 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .filter { oldLabels[it] in matchedLabels }
               .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
-          for (index in annotatedIndices) {
+          for ((i, index) in annotatedIndices.withIndex()) {
+            val flagUpdate = if (i == 0) segmentFlagUpdate else null
             modifications
               .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, index, assumption, segmentUpdate, segmentFlagUpdate))
+              .add(Annotation(edge, index, assumption, segmentUpdate, flagUpdate))
           }
         }
       }
@@ -484,7 +514,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         builder.addEdge(
           it.withLabel(
             SequenceLabel(
-              it.getFlatLabels() + StmtLabel(AssumeStmt.of(segmentFlag.ref)),
+              it.getFlatLabels() + StmtLabel(AssumeStmt.of(lastSegment.target)),
               metadata = it.label.metadata,
             )
           )
@@ -497,7 +527,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     // ConfigToOcChecker. Unrolling here as well would only duplicate that work -- and, for loops
     // containing an atomic block, produce ill-formed multi-instance atomic merges.
 
-    builder.prop = segmentFlag.ref
+    builder.prop = lastSegment.target
     return builder
   }
 
@@ -677,7 +707,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     firstCycle: Int,
   ) {
     val segmentCounter = instrumentation.segmentCounter
-    val segmentFlag = instrumentation.segmentFlag
+    val lastSegment = instrumentation.lastSegmentManager
     val registeredRoots = instrumentation.threadProcedures.filterKeys { it != 0 }.values.toSet()
     if (registeredRoots.isEmpty()) return
 
@@ -729,19 +759,24 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           cut()
           if (regs.isNotEmpty()) {
             var counterExpr = segmentCounter.ref as Expr<IntType>
-            var flagExpr = segmentFlag.ref as Expr<BoolType>
+            var flagExpr = lastSegment.varDecl.ref as Expr<*>
             var anyFlag = false
             for (reg in regs) {
               val guard = parentGuard(reg)
               if (reg.segmentIndex == segmentCount - 1) {
                 if (firstCycle > -1) counterExpr = Ite(guard, Int(firstCycle), counterExpr)
-                flagExpr = Ite(guard, True(), flagExpr)
+                flagExpr =
+                  Ite(
+                    guard,
+                    cast(lastSegment.passLastSegmentNewValue, lastSegment.type),
+                    cast(flagExpr, lastSegment.type),
+                  )
                 anyFlag = true
               } else {
                 counterExpr = Ite(guard, Int(reg.segmentIndex + 1), counterExpr)
               }
             }
-            if (anyFlag) collector.add(AssignStmtLabel(segmentFlag, flagExpr))
+            if (anyFlag) collector.add(AssignStmtLabel(lastSegment.varDecl, flagExpr))
             collector.add(AssignStmtLabel(segmentCounter, counterExpr))
             cut()
           }
@@ -757,15 +792,30 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
   private fun createInstrumentation(parent: XcfaBuilder): Instrumentation {
     val segmentCounter = Var(SEGMENT_COUNTER, Int())
-    val segmentFlag = Var(LAST_SEGMENT_PASSED, Bool())
-    // Global: waypoints of different threads must see the same segment progression.
-    // Atomic: the instrumentation itself must never introduce a data race -- a non-atomic
-    // counter would make every pair of instrumented edges a (spurious) race, breaking the
-    // validation of no-data-race witnesses.
-    parent.addVar(XcfaGlobalVar(segmentCounter, Int(0), atomic = true))
-    parent.addVar(XcfaGlobalVar(segmentFlag, False(), atomic = true))
     val (threadProcedures, registrations) = mapThreads(parent)
-    return Instrumentation(segmentCounter, segmentFlag, threadProcedures, registrations)
+    val targetCount = witness.targetCount
+    val lastSegmentManager =
+      if (targetCount > 1) {
+        object : LastSegmentManager<IntType> {
+          override val type: IntType = Int()
+          override val varDecl: VarDecl<IntType> = Var(LAST_SEGMENT_PASSED, Int())
+          override val passLastSegmentNewValue: Expr<IntType> = Inc(varDecl.ref)
+          override val initValue: LitExpr<IntType> = Int(0)
+          override val target: Expr<BoolType> = Eq(varDecl.ref, Int(targetCount))
+        }
+      } else {
+        object : LastSegmentManager<BoolType> {
+          override val type: BoolType = Bool()
+          override val varDecl: VarDecl<BoolType> = Var(LAST_SEGMENT_PASSED, Bool())
+          override val passLastSegmentNewValue: Expr<BoolType> = True()
+          override val initValue: LitExpr<BoolType> = False()
+          override val target: Expr<BoolType> = varDecl.ref
+        }
+      }
+    // Global: waypoints of different threads must see the same segment progression.
+    parent.addVar(XcfaGlobalVar(segmentCounter, Int(0), atomic = true))
+    parent.addVar(XcfaGlobalVar(lastSegmentManager.varDecl, Int(0), atomic = true))
+    return Instrumentation(segmentCounter, lastSegmentManager, threadProcedures, registrations)
   }
 
   /**
@@ -865,3 +915,9 @@ private data class Annotation(
   val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
 )
+
+private val YamlWitness.targetCount: Int
+  get() =
+    content.lastOrNull()?.segment?.count {
+      it.waypoint.type == WaypointType.TARGET && it.waypoint.action == Action.FOLLOW
+    } ?: 1

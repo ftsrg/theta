@@ -202,6 +202,8 @@ internal class XcfaToEventGraph(
         exit("variable $v is not initialized")
       for ((pid1, list1) in map) for ((pid2, list2) in map) if (pid1 != pid2)
         for (e1 in list1.filter { it.type == WRITE }) for (e2 in list2) {
+          // statically different addresses never alias: no relation between them
+          if (!e1.potentialSameMemory(e2)) continue
           if (e2.type == READ) rfs.add(RelationType.RF, e1, e2)
           if (e2.type == WRITE) wss.add(RelationType.WS, e1, e2)
         }
@@ -300,7 +302,10 @@ internal class XcfaToEventGraph(
       inEdge = true
       when (type) {
         // only same-partition writes can be observed (see MemoryTypeKey)
-        READ -> memoryWrites[key]?.forEach { rfs.add(RelationType.RF, it, e) }
+        READ ->
+          memoryWrites[key]?.forEach {
+            if (it.potentialSameMemory(e)) rfs.add(RelationType.RF, it, e)
+          }
         WRITE -> memoryWrites.getOrPut(key) { mutableSetOf() }.add(e)
       }
       events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)

@@ -145,6 +145,7 @@ fun multithreadPortfolio(
                   decisionProcedure = OcDecisionProcedureType.BASIC,
                   autoConflict = AutoConflictFinderConfig.GENERIC,
                   autoConflictBound = 3,
+                  forceUnrollBoundStart = 1,
                 ),
             )
         ),

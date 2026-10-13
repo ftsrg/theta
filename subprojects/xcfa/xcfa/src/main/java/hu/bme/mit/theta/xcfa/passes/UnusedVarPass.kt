@@ -86,9 +86,12 @@ class UnusedVarPass(
         }
       )
       edges.forEach { edge ->
-        usedVars.addAll(
-          edge.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key }
-        )
+        edge.getFlatLabels().forEach { label ->
+          val reads = label.collectVarsWithAccessType().filter { it.value.isRead }.keys
+          // a variable read only to compute its own new value is not used
+          val stmt = (label as? StmtLabel)?.stmt
+          usedVars.addAll(if (stmt is AssignStmt<*>) reads - stmt.varDecl else reads)
+        }
         if (isOverflow) {
           for (label in edge.getFlatLabels()) {
             if (label is StmtLabel && label.stmt is AssignStmt<*> && label.stmt.expr !is RefExpr) {

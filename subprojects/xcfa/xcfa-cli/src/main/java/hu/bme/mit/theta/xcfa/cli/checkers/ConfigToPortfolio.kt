@@ -83,6 +83,8 @@ fun getPortfolioChecker(
 
       "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "SYMBOLIC" -> symbolicPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
       else -> {
         if (File(portfolioName).exists()) {
           val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")

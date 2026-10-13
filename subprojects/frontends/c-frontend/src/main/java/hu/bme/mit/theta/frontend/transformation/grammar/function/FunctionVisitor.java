@@ -1517,18 +1517,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return compound;
     }
 
-    public CDeclaration declareStringLiteral(
-            CParser.PrimaryExpressionStringsContext ctx, CCompound preStatement) {
+    public CDeclaration declareStringLiteral(CParser.PrimaryExpressionStringsContext ctx) {
         final String name = "__theta_str" + anonCnt++;
         final CDeclaration declaration = declarationVisitor.stringLiteralDeclaration(ctx, name);
-        createVars(declaration);
-
-        final var preCompound = new CCompound(parseContext);
-        final var postCompound = new CCompound(parseContext);
-        preStatement.setPreStatements(preCompound);
-        preStatement.setPostStatements(postCompound);
-
-        visitDeclaration(declaration, preStatement, preCompound, postCompound, ctx);
+        // A string literal has static storage duration: one object, initialized once, not a fresh
+        // allocation every time the expression is evaluated.
+        declaration.getType().setStaticStorage(true);
+        promoteStaticLocal(declaration);
         return declaration;
     }
 

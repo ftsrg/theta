@@ -43,6 +43,9 @@ sealed interface MutexLock {
   val blockingMutexLocks: Set<MutexLock>
     get() = setOf(this)
 
+  val uniqueId: String
+    get() = lock.toString()
+
   fun isKnown(): Boolean = lock is LitExpr<*>
 
   fun simplify(s: State): MutexLock
@@ -78,6 +81,9 @@ data class ReadWriteMutexLock(override val lock: Expr<*>, val type: ReadWriteMut
         READ -> setOf(copy(type = WRITE))
         WRITE -> setOf(this, copy(type = READ))
       }
+
+  override val uniqueId: String
+    get() = "${lock}_${type}"
 
   override fun isEqual(other: MutexLock): Expr<BoolType>? {
     if (other !is ReadWriteMutexLock) return null

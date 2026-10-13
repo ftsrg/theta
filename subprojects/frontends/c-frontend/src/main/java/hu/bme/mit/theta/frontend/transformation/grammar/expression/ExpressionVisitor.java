@@ -3622,9 +3622,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
-        CCompound compound = new CCompound(parseContext);
-        CDeclaration ret = functionVisitor.declareStringLiteral(ctx, compound);
-        preStatements.add(compound);
+        CDeclaration ret = functionVisitor.declareStringLiteral(ctx);
         return ret.getVarDecls().getFirst().getRef();
     }
 
