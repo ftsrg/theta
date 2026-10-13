@@ -45,6 +45,8 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.UnrollPass
+import java.nio.file.Files
+import java.nio.file.Path
 
 fun baseCegarConfig(
   xcfa: XCFA,
@@ -150,6 +152,15 @@ val anythingButServerError =
 val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label = "SolverError")
 
 val anyError = ExceptionTrigger(label = "Anything")
+
+/**
+ * [solver] at [version] if that version is installed in the solver home, otherwise its latest
+ * installed version. Lets a portfolio keep the versions it was tuned with without failing on a
+ * distribution that only ships newer ones.
+ */
+fun XcfaConfig<*, *>.solverVersionOrLatestFallback(solver: String, version: String): String =
+  if (Files.isDirectory(Path.of(backendConfig.solverHome, solver, version))) "$solver:$version"
+  else "$solver:latest"
 
 fun XcfaConfig<*, CegarConfig>.adaptConfig(
   initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
@@ -397,7 +408,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
   itpEnabled: Boolean = false,
   bmcSolver: String = "Z3",
   indSolver: String = "Z3",
-  itpSolver: String = "cvc5:1.3.4",
+  itpSolver: String = solverVersionOrLatestFallback("cvc5", "1.0.8"),
   timeoutMs: Long = 0,
   inProcess: Boolean = this.backendConfig.inProcess,
   reversed: Boolean = false,

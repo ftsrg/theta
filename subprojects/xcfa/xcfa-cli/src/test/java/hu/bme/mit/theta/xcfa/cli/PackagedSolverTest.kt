@@ -15,10 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
+import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.portfolio.solverVersionOrLatestFallback
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 /**
  * A portfolio that names a solver the archive does not ship fails at run time with no useful
@@ -63,5 +70,16 @@ class PackagedSolverTest {
       }
     }
     assertTrue(missing.isEmpty(), "not in the Theta-svcomp archive: $missing")
+  }
+
+  @Test
+  fun `a pinned version falls back to the latest when it is not installed`(@TempDir home: Path) {
+    Files.createDirectories(home.resolve("cvc5/1.3.4"))
+    val config =
+      XcfaConfig<SpecFrontendConfig, SpecBackendConfig>().apply {
+        backendConfig.solverHome = home.toString()
+      }
+    assertEquals("cvc5:1.3.4", config.solverVersionOrLatestFallback("cvc5", "1.3.4"))
+    assertEquals("cvc5:latest", config.solverVersionOrLatestFallback("cvc5", "1.2.0"))
   }
 }
