@@ -164,8 +164,8 @@ class XcfaStateLtsTest {
       val varLookUp = state.processes[action.pid]!!.varLookup.peek()
       val newAction = action.withLabel(SequenceLabel(listOf(action.label.changeVars(varLookUp))))
       val newState = state.apply(newAction)
-      assertTrue(expectations[index].test(newState.first))
-      state = newState.first
+      assertTrue(expectations[index].test(newState))
+      state = newState
       println("Test $index OK")
     }
   }

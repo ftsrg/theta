@@ -44,6 +44,7 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
           propertyFile.name.endsWith("valid-memcleanup.prp") -> MEMCLEANUP
           propertyFile.name.endsWith("termination.prp") -> TERMINATION
           propertyFile.name.endsWith("no-assertion-violation.prp") -> NO_ASSERTION_VIOLATION
+          propertyFile.name.endsWith("check-sat.prp") -> ERROR_LOCATION
 
           else -> {
             logger.write(

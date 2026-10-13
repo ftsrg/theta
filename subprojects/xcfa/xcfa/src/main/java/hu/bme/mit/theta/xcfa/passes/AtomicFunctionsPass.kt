@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
@@ -188,6 +190,17 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
   }
 
+  /**
+   * If [ptr] is the address of a plain variable (`&x`), returns a ref expression to `x` itself, so
+   * it can be read/assigned directly. Returns null otherwise (e.g. `&a->f`, `&a[i]`).
+   */
+  private fun directVar(ptr: Expr<*>): Expr<*>? =
+    if (ptr is Reference<*, *>) ptr.expr as? RefExpr<*> else null
+
+  /** The cell `*ptr`: the variable itself when `ptr` is the address of one, else a dereference. */
+  private fun cell(ptr: Expr<*>, pointee: CComplexType = pointeeOf(ptr)): Expr<*> =
+    directVar(ptr) ?: deref(ptr, pointee)
+
   @Suppress("UNCHECKED_CAST")
   private fun bitwise(op: BitOp, old: Expr<*>, operand: Expr<*>, pointee: CComplexType): Expr<*> {
     val a = pointee.castTo(old)
@@ -238,7 +251,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     if (name in loadNames) {
       // ret = *p  -- a single memory read, already atomic; the block keeps it uniform.
       val p = args[0]
-      return atomic(listOf(AssignStmtLabel(ret, deref(p, pointeeOf(p)))))
+      return atomic(listOf(AssignStmtLabel(ret, cell(p))))
     }
 
     if (name in storeNames) {
@@ -246,8 +259,8 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       // value.
       val p = args[0]
       val pointee = pointeeOf(p)
-      val value = if (name == "__atomic_store") deref(args[1], pointeeOf(args[1])) else args[1]
-      return atomic(listOf(AssignStmtLabel(deref(p, pointee), pointee.castTo(value))))
+      val value = if (name == "__atomic_store") cell(args[1]) else args[1]
+      return atomic(listOf(AssignStmtLabel(cell(p, pointee), pointee.castTo(value))))
     }
 
     if (name in exchangeNames) {
@@ -260,15 +273,15 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
         val retPtr = args[2]
         atomic(
           listOf(
-            AssignStmtLabel(deref(retPtr, pointeeOf(retPtr)), deref(p, pointee)),
-            AssignStmtLabel(deref(p, pointee), pointee.castTo(deref(valPtr, pointeeOf(valPtr)))),
+            AssignStmtLabel(cell(retPtr), cell(p, pointee)),
+            AssignStmtLabel(cell(p, pointee), pointee.castTo(cell(valPtr))),
           )
         )
       } else {
         atomic(
           listOf(
-            AssignStmtLabel(ret, deref(p, pointee)),
-            AssignStmtLabel(deref(p, pointee), pointee.castTo(args[1])),
+            AssignStmtLabel(ret, cell(p, pointee)),
+            AssignStmtLabel(cell(p, pointee), pointee.castTo(args[1])),
           )
         )
       }
@@ -280,8 +293,8 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       val pointee = pointeeOf(p)
       return atomic(
         listOf(
-          AssignStmtLabel(ret, deref(p, pointee)),
-          AssignStmtLabel(deref(p, pointee), pointee.castTo(bitwise(op, ret, args[1], pointee))),
+          AssignStmtLabel(ret, cell(p, pointee)),
+          AssignStmtLabel(cell(p, pointee), pointee.castTo(bitwise(op, ret, args[1], pointee))),
         )
       )
     }
@@ -290,12 +303,9 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       // *p = *p <op> v ; ret = the new value.
       val p = args[0]
       val pointee = pointeeOf(p)
-      val newValue = pointee.castTo(bitwise(op, deref(p, pointee), args[1], pointee))
+      val newValue = pointee.castTo(bitwise(op, cell(p, pointee), args[1], pointee))
       return atomic(
-        listOf(
-          AssignStmtLabel(deref(p, pointee), newValue),
-          AssignStmtLabel(ret, deref(p, pointee)),
-        )
+        listOf(AssignStmtLabel(cell(p, pointee), newValue), AssignStmtLabel(ret, cell(p, pointee)))
       )
     }
 
@@ -339,7 +349,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val old: Expr<*> = oldVar.ref
     val exp: Expr<*> = expVar.ref
 
-    val desired = if (desiredIsValue) args[2] else deref(args[2], pointeeOf(args[2]))
+    val desired = if (desiredIsValue) args[2] else cell(args[2])
     val success =
       cast(Eq(cast(old, pointee.smtType), cast(exp, pointee.smtType)), BoolType.getInstance())
 
@@ -356,10 +366,10 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
     return atomic(
       listOf(
-        AssignStmtLabel(oldVar, deref(p, pointee)),
-        AssignStmtLabel(expVar, deref(expectedPtr, expPointee)),
-        AssignStmtLabel(deref(p, pointee), pointee.castTo(newAtP)),
-        AssignStmtLabel(deref(expectedPtr, expPointee), expPointee.castTo(newAtExpected)),
+        AssignStmtLabel(oldVar, cell(p, pointee)),
+        AssignStmtLabel(expVar, cell(expectedPtr, expPointee)),
+        AssignStmtLabel(cell(p, pointee), pointee.castTo(newAtP)),
+        AssignStmtLabel(cell(expectedPtr, expPointee), expPointee.castTo(newAtExpected)),
         AssignStmtLabel(ret, retSuccess),
       )
     )

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,17 @@ class XcfaCliPortfolioTest {
           logger: Logger,
           uniqueLogger: Logger ->
           complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+        }
+
+      val complex27Portfolio =
+        {
+          xcfa: XCFA,
+          mcm: MCM,
+          parseContext: ParseContext,
+          portfolioConfig: XcfaConfig<*, *>,
+          logger: Logger,
+          uniqueLogger: Logger ->
+          complex27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
         }
 
       val emergentPortfolio =
@@ -114,7 +125,18 @@ class XcfaCliPortfolioTest {
       val vis = stm!!.visualize()
       System.err.println(vis)
       Assertions.assertTrue(vis.isNotEmpty())
+      // nested portfolios are built lazily: build them (one level) to check them too
+      nestedPortfolios(stm).forEach { Assertions.assertTrue(it.innerSTM.visualize().isNotEmpty()) }
     }
+
+    private fun nestedPortfolios(stm: STM): List<NestedPortfolioNode> =
+      (stm.edges.flatMap { listOf(it.source, it.target) } + stm.initNode).distinct().flatMap {
+        when (it) {
+          is NestedPortfolioNode -> listOf(it)
+          is HierarchicalNode -> nestedPortfolios(it.innerSTM)
+          else -> emptyList()
+        }
+      }
 
     private val unsupportedCheck = { stm: STM?, e: Exception? ->
       Assertions.assertNull(stm)
@@ -132,6 +154,13 @@ class XcfaCliPortfolioTest {
         arrayOf(Portfolios.complexPortfolio, Programs.arr, defaultCheck),
         arrayOf(Portfolios.complexPortfolio, Programs.bitwise, defaultCheck),
         arrayOf(Portfolios.complexPortfolio, Programs.nonlin, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.basic, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.multithread, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.pointer, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.float, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.arr, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.bitwise, defaultCheck),
+        arrayOf(Portfolios.complex27Portfolio, Programs.nonlin, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.basic, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.multithread, defaultCheck),
         arrayOf(Portfolios.emergentPortfolio, Programs.pointer, defaultCheck),

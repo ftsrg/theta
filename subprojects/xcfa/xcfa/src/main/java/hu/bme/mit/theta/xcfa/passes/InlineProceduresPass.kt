@@ -59,6 +59,9 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                 parseContext = parseContext,
                 metadata = e.metadata,
               )
+              if (procedure.unsafeUnrollUsed) {
+                builder.setUnsafeUnroll()
+              }
             } else {
               builder.addEdge(e)
             }

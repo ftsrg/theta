@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package hu.bme.mit.theta.analysis.expr;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -68,7 +65,7 @@ public final class ExprTraceCheckersTest {
     public void testFeasable() {
         // Arrange
         final Expr<IntType> x = Var("x", Int()).getRef();
-        final Expr<BoolType> trans = Eq(Prime(x), Add(x, Int(1)));
+        final Expr<BoolType> trans = Eq(Prime(x), Inc(x));
 
         final ExprAction actionMock = mock(ExprAction.class);
         doReturn(trans).when(actionMock).toExpr();

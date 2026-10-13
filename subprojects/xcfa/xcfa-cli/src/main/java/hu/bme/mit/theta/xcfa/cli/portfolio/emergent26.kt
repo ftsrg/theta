@@ -192,59 +192,23 @@ fun emergent26(
     }
 
     val complex =
-      ConfigNode(
-        "Complex-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Complex-$inProcess") {
+        complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val termination =
-      ConfigNode(
-        "Termination-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("TERMINATION")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Termination-$inProcess") {
+        termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val types = xcfa.collectVars().map { it.type }.toSet()
 
-    infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
+    infix fun Node.then(node: Node): Node {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
       return node
     }
 
-    infix fun ConfigNode.onSolverError(node: ConfigNode): ConfigNode {
+    infix fun Node.onSolverError(node: Node): Node {
       edges.add(Edge(this, node, solverError))
       return node
     }
