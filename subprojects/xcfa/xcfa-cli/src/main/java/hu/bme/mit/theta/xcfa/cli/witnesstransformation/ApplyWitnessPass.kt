@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.fullExpressionCol
+import hu.bme.mit.theta.c2xcfa.fullExpressionLine
 import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.NullLogger
@@ -373,6 +375,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                     statement.colNumberStop + 1 == loc.column) &&
                   label is StmtLabel &&
                   label.stmt is HavocStmt<*>
+              } else if (wp.waypoint.type == WaypointType.TARGET) {
+                // a target is located by the full expression of the violating access
+                statement.fullExpressionLine == loc.line &&
+                  (loc.column == null || statement.fullExpressionCol + 1 == loc.column)
               } else {
                 (wp.waypoint.type != WaypointType.ASSUMPTION ||
                   (edge.getCMetaData()?.notStatementStart == false &&

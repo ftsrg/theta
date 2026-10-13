@@ -108,6 +108,14 @@ data class CMetaData(
   val asExportableCMetadata: CMetaData? = if (notStatementStart) null else this
 }
 
+/** Line of the innermost full expression this node is part of (its statement's, if unrecorded). */
+val CStatement.fullExpressionLine: Int
+  get() = if (fullExpressionLineStart >= 0) fullExpressionLineStart else lineNumberStart
+
+/** 0-based column of the innermost full expression this node is part of. */
+val CStatement.fullExpressionCol: Int
+  get() = if (fullExpressionLineStart >= 0) fullExpressionColStart else colNumberStart
+
 fun XcfaLabel.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
 
 fun XcfaLocation.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata
