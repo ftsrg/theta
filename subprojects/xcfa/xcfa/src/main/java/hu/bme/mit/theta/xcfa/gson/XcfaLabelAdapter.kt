@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
+import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
@@ -50,6 +51,7 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
       writer.endArray()
     } else {
       writer.name("content").value(value.toString())
+      if (value is InvokeLabel) writer.name("isLibraryFunction").value(value.isLibraryFunction)
     }
     writer.endObject()
   }
@@ -93,6 +95,10 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
           throw e
         }
       check(obj is XcfaLabel)
+      if (obj is InvokeLabel && reader.peek() == JsonToken.NAME) {
+        check(reader.nextName() == "isLibraryFunction")
+        obj.isLibraryFunction = reader.nextBoolean()
+      }
       reader.endObject()
       return obj
     }
