@@ -45,6 +45,8 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.ERR
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.UnrollPass
+import java.nio.file.Files
+import java.nio.file.Path
 
 fun baseCegarConfig(
   xcfa: XCFA,
@@ -150,6 +152,47 @@ val anythingButServerError =
 val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label = "SolverError")
 
 val anyError = ExceptionTrigger(label = "Anything")
+
+/**
+ * One step of a portfolio chain: the configuration built by [make] on [solver], paired with the
+ * same configuration on [alt], its twin that takes over when the solver fails. When [alt] is
+ * [solver] there is nothing to retry on, and the step is paired with itself.
+ */
+fun <N : Node> step(make: (Long, String) -> N, timeoutMs: Long, solver: String, alt: String) =
+  make(timeoutMs, solver).let { it to if (alt == solver) it else make(timeoutMs, alt) }
+
+/**
+ * The edges that chain [steps] one after the other and end in [last]. A solver error moves a step
+ * to its twin, and any failure of the twin moves on, so a solver failure costs no other step its
+ * slice. Other failures move on to the next step; when [inProcess], only timeouts and unsolvable
+ * tasks do.
+ */
+fun chainEdges(steps: List<Pair<Node, Node>>, last: Node, inProcess: Boolean): Set<Edge> {
+  val next = if (inProcess) timeoutOrNotSolvableError else anyError
+  val nextOrSolverError = if (inProcess) anythingButServerError else anyError
+  val targets = steps.drop(1).map { it.first } + last
+  return buildSet {
+    steps.zip(targets).forEach { (step, target) ->
+      val (primary, twin) = step
+      if (twin === primary) {
+        add(Edge(primary, target, nextOrSolverError))
+      } else {
+        add(Edge(primary, twin, solverError))
+        add(Edge(primary, target, next))
+        add(Edge(twin, target, nextOrSolverError))
+      }
+    }
+  }
+}
+
+/**
+ * [solver] at [version] if that version is installed in the solver home, otherwise its latest
+ * installed version. Lets a portfolio keep the versions it was tuned with without failing on a
+ * distribution that only ships newer ones.
+ */
+fun XcfaConfig<*, *>.solverVersionOrLatestFallback(solver: String, version: String): String =
+  if (Files.isDirectory(Path.of(backendConfig.solverHome, solver, version))) "$solver:$version"
+  else "$solver:latest"
 
 fun XcfaConfig<*, CegarConfig>.adaptConfig(
   initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
@@ -397,7 +440,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
   itpEnabled: Boolean = false,
   bmcSolver: String = "Z3",
   indSolver: String = "Z3",
-  itpSolver: String = "cvc5:1.0.8",
+  itpSolver: String = solverVersionOrLatestFallback("cvc5", "1.0.8"),
   timeoutMs: Long = 0,
   inProcess: Boolean = this.backendConfig.inProcess,
   reversed: Boolean = false,

@@ -69,6 +69,10 @@ public class ParseContext {
     // the
     // frontend builder, address-taken objects in ReferenceElimination) and looked up by value here.
     private final Set<BigInteger> fullyAtomicObjects = new LinkedHashSet<>();
+    // Which C constructs the program's own code uses, collected once by SourceTraitCollector.
+    // Diagnostics only: nothing downstream reads it, it is emitted for offline study.
+    private Map<String, Integer> sourceTraits = new LinkedHashMap<>();
+
     private final Map<BigInteger, Set<Integer>> atomicObjectCells = new LinkedHashMap<>();
 
     // A struct-typed field is a subobject with a base id of its own, kept in the parent's cell. So
@@ -85,6 +89,14 @@ public class ParseContext {
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
     private boolean everyMemberAccessed = false;
+
+    public Map<String, Integer> getSourceTraits() {
+        return sourceTraits;
+    }
+
+    public void setSourceTraits(Map<String, Integer> sourceTraits) {
+        this.sourceTraits = sourceTraits;
+    }
 
     public boolean isCheckMemsafety() {
         return checkMemsafety;
