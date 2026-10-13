@@ -67,8 +67,6 @@ fun complex27(
   val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
 
   fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
-    val edges = LinkedHashSet<Edge>()
-
     fun cegar(
       timeout: Long,
       solver: String,
@@ -255,47 +253,6 @@ fun complex27(
       )
     }
 
-    val complex =
-      NestedPortfolioNode("Complex-$inProcess") {
-        complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-      }
-
-    val termination =
-      NestedPortfolioNode("Termination-$inProcess") {
-        termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-      }
-
-    val multithread =
-      NestedPortfolioNode("MultiThread-$inProcess") {
-        multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-      }
-
-    infix fun Node.then(node: Node): Node {
-      edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
-      return node
-    }
-
-    infix fun Node.onSolverError(node: Node): Node {
-      edges.add(Edge(this, node, solverError))
-      return node
-    }
-
-    /**
-     * One step of the chain: a configuration and the same configuration on a different solver.
-     *
-     * A solver failure says nothing about whether the *next algorithm* would work -- it is a
-     * property of the solver, not of the program -- so it must not consume the next step's slice.
-     * The twin absorbs it and rejoins the chain where the primary left off.
-     */
-    fun step(make: (Long, String) -> ConfigNode, ms: Long, solver: String, alt: String) =
-      make(ms, solver) to make(ms, alt)
-
-    fun wire(steps: List<Pair<ConfigNode, ConfigNode>>) {
-      steps.zipWithNext { (primary, _), (next, _) -> primary then next }
-      steps.forEach { (primary, twin) -> primary onSolverError twin }
-      steps.zipWithNext { (_, twin), (next, _) -> twin then next }
-    }
-
     // Which solver each kind of configuration runs on, and what it falls back to.
     //
     // This is decided by the theories the program actually contains, not by which chain it takes.
@@ -348,90 +305,71 @@ fun complex27(
     val explSeq = { ms: Long, solver: String -> cegar(ms, solver, EXPL, Refinement.SEQ_ITP) }
     val predSeq = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.SEQ_ITP) }
 
-    val (startingConfig, endConfig) =
+    val (steps, lastResort) =
       if (xcfa.isInlined) {
-        when (mainTrait) {
-          MULTITHREAD -> multithread to multithread
-          TERMINATION -> termination to termination
-          else -> {
-            // Budgets go by position, not by algorithm: whatever leads gets the lead slice.
-            val predCartBw = { ms: Long -> step(lead, ms, itpSolver, itpAlt) }
-            val boundedBmc = { ms: Long -> step(bmc, ms, bmcSolver, bmcAlt) }
-            val explicitSeq = { ms: Long -> step(explSeq, ms, itpSolver, itpAlt) }
-            val boundedKind = { ms: Long -> step(kind, ms, bmcSolver, bmcAlt) }
-            val predCartSeq = { ms: Long -> step(predSeq, ms, itpSolver, itpAlt) }
+        // Budgets go by position, not by algorithm: whatever leads gets the lead slice.
+        val predCartBw = { ms: Long -> step(lead, ms, itpSolver, itpAlt) }
+        val boundedBmc = { ms: Long -> step(bmc, ms, bmcSolver, bmcAlt) }
+        val explicitSeq = { ms: Long -> step(explSeq, ms, itpSolver, itpAlt) }
+        val boundedKind = { ms: Long -> step(kind, ms, bmcSolver, bmcAlt) }
+        val predCartSeq = { ms: Long -> step(predSeq, ms, itpSolver, itpAlt) }
 
-            // What the program is being checked *for* turns out to separate the algorithms better
-            // than anything about its syntax: measured over the whole suite, choosing per property
-            // is worth roughly twice what choosing per benchmark family is worth, with a fraction
-            // of the freedom to overfit.
-            //
-            // Size says the same thing from the other direction: past a McCabe complexity of about
-            // sixteen the explicit domain overtakes the predicate ones and keeps widening the gap,
-            // because predicate abstraction pays per predicate it has to discover and that cost
-            // tracks the branching structure.
-            //
-            // Memory safety is where it pays. The explicit domain solves nearly twice what the
-            // strongest predicate configuration does there -- a memory-safety proof turns on the
-            // concrete cells an access can reach, which explicit tracking represents directly and
-            // predicate abstraction has to rediscover one predicate at a time.
-            //
-            // Loop-freeness still outranks it: a bounded engine that can reach the longest path
-            // does not merely do well, it *finishes*. Non-linear arithmetic leads with the bounded
-            // engines for the opposite reason -- interpolation over non-linear terms is where the
-            // refinement loop stalls.
-            val order =
-              when {
-                loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
-                // Floats invert the usual order: measured over the float tasks, k-induction solves
-                // roughly three times what the predicate lead does, and the predicate
-                // configurations add nothing on top of it.
-                hasFloats -> listOf(boundedKind, explicitSeq, boundedBmc, predCartBw, predCartSeq)
-                isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
-                  listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
-                mainTrait == NONLIN_INT ->
-                  listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
-                else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
-              }
-
-            val steps =
-              order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
-
-            wire(steps)
-
-            // The last slice changes the encoding rather than the algorithm. Past this point
-            // another algorithm is worth tens of tasks, while the encoding the frontend did not
-            // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
-            // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
-            // reproduce the same XCFA, and a float program has no bitvector encoding at all.
-            val lastResort =
-              if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
-              else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
-            steps.last().first then lastResort
-            steps.last().second then lastResort
-
-            steps.first().first to lastResort
+        // What the program is being checked *for* turns out to separate the algorithms better
+        // than anything about its syntax: measured over the whole suite, choosing per property
+        // is worth roughly twice what choosing per benchmark family is worth, with a fraction
+        // of the freedom to overfit.
+        //
+        // Size says the same thing from the other direction: past a McCabe complexity of about
+        // sixteen the explicit domain overtakes the predicate ones and keeps widening the gap,
+        // because predicate abstraction pays per predicate it has to discover and that cost
+        // tracks the branching structure.
+        //
+        // Memory safety is where it pays. The explicit domain solves nearly twice what the
+        // strongest predicate configuration does there -- a memory-safety proof turns on the
+        // concrete cells an access can reach, which explicit tracking represents directly and
+        // predicate abstraction has to rediscover one predicate at a time.
+        //
+        // Loop-freeness still outranks it: a bounded engine that can reach the longest path
+        // does not merely do well, it *finishes*. Non-linear arithmetic leads with the bounded
+        // engines for the opposite reason -- interpolation over non-linear terms is where the
+        // refinement loop stalls.
+        val order =
+          when {
+            loopFree -> listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+            // Floats invert the usual order: measured over the float tasks, k-induction solves
+            // roughly three times what the predicate lead does, and the predicate
+            // configurations add nothing on top of it.
+            hasFloats -> listOf(boundedKind, explicitSeq, boundedBmc, predCartBw, predCartSeq)
+            isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
+              listOf(explicitSeq, boundedBmc, predCartBw, boundedKind, predCartSeq)
+            mainTrait == NONLIN_INT ->
+              listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
+            else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
           }
-        }
+
+        val steps =
+          order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
+
+        // The last slice changes the encoding rather than the algorithm. Past this point
+        // another algorithm is worth tens of tasks, while the encoding the frontend did not
+        // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
+        // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
+        // reproduce the same XCFA, and a float program has no bitvector encoding at all.
+        val lastResort =
+          if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
+          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
+        steps to lastResort
       } else {
         // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
         // CEGAR configurations are applicable.
-        val steps =
-          listOf(
-            step(lead, LEAD_SLICE_MS, itpSolver, itpAlt),
-            step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
-            step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
-          )
-        wire(steps)
-        val lastResort = lead(RETRY_SLICE_MS, itpAlt)
-        steps.last().first then lastResort
-        steps.last().second then lastResort
-        steps.first().first to lastResort
+        listOf(
+          step(lead, LEAD_SLICE_MS, itpSolver, itpAlt),
+          step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+          step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+        ) to lead(RETRY_SLICE_MS, itpAlt)
       }
 
-    endConfig then complex
-
-    return STM(startingConfig, edges)
+    return STM(steps.first().first, chainEdges(steps, lastResort, inProcess))
   }
 
   // Only three of these values still change what the portfolio does: TERMINATION and MULTITHREAD
@@ -458,6 +396,12 @@ fun complex27(
     }
 
   logger.benchmark("Using portfolio: $mainTrait\n")
+
+  // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
+  if (xcfa.isInlined && mainTrait == MULTITHREAD)
+    return multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+  if (xcfa.isInlined && mainTrait == TERMINATION)
+    return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
   val loopFree = xcfa.boundedIsComplete
   logger.benchmark("Bounded engines complete: $loopFree\n")

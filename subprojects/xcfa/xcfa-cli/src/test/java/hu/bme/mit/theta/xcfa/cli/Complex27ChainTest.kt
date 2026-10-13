@@ -119,7 +119,7 @@ class Complex27ChainTest {
       nodesOf(stm).firstOrNull { it.name == name }?.config?.backendConfig?.timeoutMs
     }
 
-  private fun nodesOf(stm: STM): Set<ConfigNode> {
+  private fun reachable(stm: STM): Set<Node> {
     val all = mutableSetOf<Node>()
     val queue = ArrayDeque(listOf(stm.initNode))
     while (queue.isNotEmpty()) {
@@ -127,8 +127,11 @@ class Complex27ChainTest {
       if (!all.add(n)) continue
       n.outEdges.forEach { queue.addLast(it.target) }
     }
-    return all.filterIsInstance<ConfigNode>().toSet()
+    return all
   }
+
+  private fun nodesOf(stm: STM): Set<ConfigNode> =
+    reachable(stm).filterIsInstance<ConfigNode>().toSet()
 
   @Test
   fun aFloatProgramLeadsWithKInduction() {
@@ -282,13 +285,22 @@ class Complex27ChainTest {
     // decides several hundred per algorithm that integer cannot, so the final slice re-reads the
     // program under it rather than spending the budget on a sixth algorithm.
     val stm = stmFor(looping())
-    // The COMPLEX portfolio is appended after the chain as a catch-all; the encoding retry is the
-    // last configuration this portfolio chooses itself.
-    val lastOwn = chain(stm).last { !it.startsWith("Complex") }
-    val last = nodesOf(stm).first { it.name == lastOwn }
+    val last = nodesOf(stm).first { it.name == chain(stm).last() }
     assertEquals(ArithmeticType.bitvector, arithmeticOf(last), "last slice was ${last.name}")
     assertTrue(last.config.inputConfig.xcfaWCtx == null, "the retry must re-parse, not reuse")
     assertTrue(last.name.contains("mathsat"), "bitvector interpolation needs MathSAT: ${last.name}")
+  }
+
+  @Test
+  fun theChainDoesNotHandOverToAnotherPortfolio() {
+    // Once every configuration has failed, another portfolio would only repeat them.
+    listOf(looping(), loopFree()).forEach { program ->
+      val nodes = reachable(stmFor(program))
+      assertTrue(
+        nodes.all { it is ConfigNode },
+        "the chain continues into ${nodes - nodesOf(stmFor(program))}",
+      )
+    }
   }
 
   @Test
