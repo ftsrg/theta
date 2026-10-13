@@ -361,8 +361,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
             )
           } else null
 
+        val isBranching = wp.waypoint.type == WaypointType.BRANCHING
         val labelsOnEdges =
           statementToEdge
+            .filter { (_, label, _) -> !isBranching || label.isBranchGuard() }
             .filter { (statement, label, edge) ->
               if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) {
                 statement.lineNumberStart == loc.line &&
@@ -391,8 +393,26 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           continue
         }
 
-        val expr = Imply(guardPred, waypointConstraint(wp.waypoint, statementToEdge, builder))
-        val assumption = StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
+        val assumption =
+          if (isBranching) null
+          else {
+            val expr = Imply(guardPred, waypointConstraint(wp.waypoint, statementToEdge, builder))
+            StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
+          }
+        val branchTaken =
+          if (isBranching)
+            when (wp.waypoint.constraint?.value) {
+              "true" -> true
+              "false" -> false
+              else -> error("Unknown value for branching: ${wp.waypoint.constraint?.value}")
+            }
+          else null
+        val phase =
+          when (wp.waypoint.type) {
+            WaypointType.FUNCTION_RETURN -> 0
+            WaypointType.TARGET -> 2
+            else -> 1
+          }
 
         val edgeLabels = LinkedHashMap<XcfaEdge, MutableSet<XcfaLabel>>()
         for ((label, edge) in labelsOnEdges) {
@@ -416,9 +436,25 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .sorted()
           for ((i, index) in annotatedIndices.withIndex()) {
             val flagUpdate = if (i == 0) segmentFlagUpdate else null
-            modifications
-              .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, index, assumption, segmentUpdate, flagUpdate))
+            // A branching waypoint is decided by the guard of each (e.g., inlined) copy itself:
+            // taking the other direction while on its segment contradicts the witness.
+            val annotation =
+              if (
+                branchTaken == null ||
+                  ((oldLabels[index] as StmtLabel).choiceType == ChoiceType.MAIN_PATH) ==
+                    branchTaken
+              )
+                Annotation(edge, index, assumption, segmentUpdate, flagUpdate, phase)
+              else
+                Annotation(
+                  edge,
+                  index,
+                  StmtLabel(AssumeStmt.of(Not(guardPred)), ChoiceType.NONE, EmptyMetaData),
+                  null,
+                  null,
+                  phase,
+                )
+            modifications.computeIfAbsent(edge) { LinkedList() }.add(annotation)
           }
         }
       }
@@ -482,22 +518,30 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         }
         flushLabelsIntermediate()
 
-        newLabels.addAll(
-          annots.mapNotNull { if (it.assumption == AssumeStmt.of(True())) null else it.assumption }
-        )
-        newLabels.addAll(annots.mapNotNull { it.flagUpdate })
-        // Apply the segment-counter advances of this group sequentially, in segment order. When
-        // several waypoints fall on the same edge position (e.g. a function_return immediately
-        // followed by the next segment's assumption), each advance must see the counter value left
-        // by the previous one, so the counter can step e.g. 1 -> 2 -> 3 within a single edge
-        // traversal. Folding them into one nested-ite assignment instead lets only the first
-        // matching guard fire (every guard is evaluated against the same pre-advance value), which
-        // stalls the segment sequence and gates off the violation.
-        for ((cond, then) in annots.mapNotNull { it.segmentUpdate }) {
-          newLabels.add(AssignStmtLabel(segmentCounter, Ite(cond, then, segmentCounter.ref)))
+        // Each program event (returning from a call, reaching the statement, executing it) is a
+        // step of its own, so other threads may run in between, and it passes at most one waypoint:
+        // all of its checks see the counter value the previous event left.
+        for ((_, event) in annots.groupBy { it.phase }.toSortedMap()) {
+          newLabels.addAll(event.mapNotNull { it.assumption })
+          newLabels.addAll(event.mapNotNull { it.flagUpdate })
+          val updates = event.mapNotNull { it.segmentUpdate }
+          if (updates.isNotEmpty()) {
+            val advance =
+              updates.foldRight(segmentCounter.ref as Expr<IntType>) { (cond, next), acc ->
+                Ite(cond, next, acc)
+              }
+            newLabels.add(AssignStmtLabel(segmentCounter, advance))
+          }
+          if (newLabels.size > lastNewLabelsSize) {
+            flushLabels(
+              XcfaLocation(
+                "__loc_witness_" + XcfaLocation.uniqueCounter(),
+                metadata = edge.label.metadata,
+              ),
+              true,
+            )
+          }
         }
-
-        flushLabelsIntermediate()
       }
       while (i < oldLabels.size) {
         newLabels.add(oldLabels[i++])
@@ -597,54 +641,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         }
       }
 
-      WaypointType.BRANCHING -> {
-        val branching =
-          statementToEdge
-            .mapNotNull { (statement, _, _) ->
-              if (
-                statement.lineNumberStart == loc.line &&
-                  (loc.column == null || statement.colNumberStart + 1 == loc.column)
-              )
-                statement
-              else null
-            }
-            .firstOrNull {
-              it is CWhile || it is CFor || it is CIf || it is CDoWhile
-            } // we hope it's a single ast node..
-          ?: error("Branching not on iteration/branching statement.")
-
-        val guardAssume =
-          statementToEdge.mapNotNull {
-            if (
-              it.first == branching &&
-                it.second is StmtLabel &&
-                (it.second as StmtLabel).stmt is AssumeStmt &&
-                (it.second as StmtLabel).choiceType != ChoiceType.NONE
-            )
-              Pair((it.second as StmtLabel).choiceType, (it.second as StmtLabel).stmt as AssumeStmt)
-            else null
-          }
-
-        when (wp.constraint?.value) {
-          "true" -> {
-            guardAssume.first { it.first == ChoiceType.MAIN_PATH }.second.cond
-          }
-
-          "false" -> {
-            guardAssume.first { it.first == ChoiceType.ALTERNATIVE_PATH }.second.cond
-          }
-
-          else -> {
-            error("Unknown value for branching: ${wp.constraint?.value}")
-          }
-        }
-      }
-
+      WaypointType.BRANCHING,
       WaypointType.FUNCTION_ENTER,
-      WaypointType.TARGET -> {
-        // no-op now
-        True()
-      }
+      WaypointType.TARGET -> True()
     }
   }
 
@@ -911,10 +910,15 @@ private data class Annotation(
    * identical inlined occurrences of the same statement stay distinct.
    */
   val beforeIndex: Int,
-  val assumption: XcfaLabel,
+  val assumption: XcfaLabel?,
   val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
+  /** The program event passing the waypoint: 0 = return from a call, 1 = reach, 2 = execute. */
+  val phase: Int,
 )
+
+private fun XcfaLabel.isBranchGuard() =
+  this is StmtLabel && stmt is AssumeStmt && choiceType != ChoiceType.NONE
 
 private val YamlWitness.targetCount: Int
   get() =
