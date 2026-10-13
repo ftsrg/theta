@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Dec
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Inc
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -362,6 +363,18 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               ),
             )
           } else null
+        // A race is only witnessed while both racing accesses are in progress: a target of a
+        // data race counts as passed until its access is done.
+        val segmentFlagRelease =
+          if (
+            isLastSegment &&
+              firstCycle == -1 &&
+              wp.waypoint.type == WaypointType.TARGET &&
+              witness.targetCount > 1
+          ) {
+            val counter = cast(lastSegment.varDecl, Int())
+            AssignStmtLabel(counter, Ite(guardPred, Dec(counter.ref), counter.ref))
+          } else null
 
         val isBranching = wp.waypoint.type == WaypointType.BRANCHING
         val labelsOnEdges =
@@ -425,6 +438,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           edgeLabels.computeIfAbsent(edge) { LinkedHashSet() }.add(label)
         }
 
+        val guardSources = mutableSetOf<XcfaLocation>()
         for ((edge, matchedLabels) in edgeLabels) {
           val oldLabels = edge.getFlatLabels()
           // Instrument *every* occurrence of a matched label on the edge. Inlining places several
@@ -440,6 +454,37 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .filter { oldLabels[it] in matchedLabels }
               .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
+          if (
+            wp.waypoint.type == WaypointType.TARGET &&
+              annotatedIndices.firstOrNull() == 0 &&
+              oldLabels[0].isBranchGuard() &&
+              edge.source.incomingEdges.isNotEmpty()
+          ) {
+            // A branch condition is evaluated before the branch is taken (its guard has to stay
+            // first on the edge), so the target is passed on the way into the branching location.
+            if (guardSources.add(edge.source)) {
+              for (incoming in edge.source.incomingEdges) {
+                modifications
+                  .computeIfAbsent(incoming) { LinkedList() }
+                  .add(
+                    Annotation(
+                      incoming,
+                      incoming.getFlatLabels().size,
+                      assumption,
+                      segmentUpdate,
+                      segmentFlagUpdate,
+                      phase,
+                    )
+                  )
+              }
+            }
+            segmentFlagRelease?.let {
+              modifications
+                .computeIfAbsent(edge) { LinkedList() }
+                .add(Annotation(edge, 1, null, null, it, -1))
+            }
+            continue
+          }
           for ((i, index) in annotatedIndices.withIndex()) {
             val flagUpdate = if (i == 0) segmentFlagUpdate else null
             // A branching waypoint is decided by the guard of each (e.g., inlined) copy itself:
@@ -461,6 +506,13 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   phase,
                 )
             modifications.computeIfAbsent(edge) { LinkedList() }.add(annotation)
+          }
+          if (segmentFlagRelease != null && annotatedIndices.isNotEmpty()) {
+            modifications
+              .computeIfAbsent(edge) { LinkedList() }
+              .add(
+                Annotation(edge, annotatedIndices.last() + 1, null, null, segmentFlagRelease, -1)
+              )
           }
         }
       }
@@ -919,7 +971,10 @@ private data class Annotation(
   val assumption: XcfaLabel?,
   val segmentUpdate: Pair<Expr<BoolType>, Expr<IntType>>?,
   val flagUpdate: XcfaLabel?,
-  /** The program event passing the waypoint: 0 = return from a call, 1 = reach, 2 = execute. */
+  /**
+   * The program event of the annotation: -1 = end of the previous access, 0 = return from a call, 1
+   * = reach, 2 = execute.
+   */
   val phase: Int,
 )
 
