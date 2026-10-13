@@ -236,6 +236,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
                         put("fp", exprFpLit());
                         put("to_fp", exprToFp());
+                        put("to_fp_unsigned", exprToFpUnsigned());
                         put("fp.add", exprFpMultiaryOperator(FpAddExpr::create));
                         put("fp.sub", exprFpBinaryOperator(FpSubExpr::create));
                         put("fp.neg", exprUnaryOperator(FpNegExpr::create));
@@ -1048,6 +1049,21 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
                 throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
             }
+        };
+    }
+
+    private OperatorCreatorFunction exprToFpUnsigned() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 2, "Two parameters expected");
+            checkArgument(ops.size() == 2, "Two operators expected");
+
+            final var exponent = Integer.parseInt(params.get(0).numeral().getText());
+            final var significand = Integer.parseInt(params.get(1).numeral().getText());
+
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var expr = transformTerm(ops.get(1), model, vars);
+
+            return FpExprs.FromBv(roundingMode, castBv(expr), FpExprs.FpType(exponent, significand), false);
         };
     }
 
