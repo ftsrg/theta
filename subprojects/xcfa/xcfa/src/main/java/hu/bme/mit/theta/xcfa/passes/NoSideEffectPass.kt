@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -34,9 +35,15 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (predicate((it.label as SequenceLabel).labels[0])) {
+          val call = (it.label as SequenceLabel).labels[0]
+          if (predicate(call)) {
             builder.addEdge(
-              XcfaEdge(it.source, it.target, SequenceLabel(listOf(NopLabel)), it.metadata)
+              XcfaEdge(
+                it.source,
+                it.target,
+                SequenceLabel(listOf(StmtLabel(SkipStmt.getInstance(), metadata = call.metadata))),
+                it.metadata,
+              )
             )
           } else {
             builder.addEdge(it)
