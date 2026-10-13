@@ -62,8 +62,14 @@ class NormalizePass : ProcedurePass {
       }
 
       is NopLabel -> {}
+      // a folded branch guard is kept: it is the only label locating its branch (e.g., for
+      // witnesses)
       is StmtLabel ->
-        if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(True())))
+        if (
+          !(label.stmt is AssumeStmt &&
+            label.stmt.cond.equals(True()) &&
+            label.choiceType == ChoiceType.NONE)
+        )
           collector.forEach { it.add(label) }
 
       else -> collector.forEach { it.add(label) }
