@@ -32,6 +32,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.Backend
+import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
@@ -50,9 +51,13 @@ import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsSequentially
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.dss.analysis.DssSolverStatistics
+import hu.bme.mit.theta.xcfa.dss.analysis.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
+import hu.bme.mit.theta.xcfa.dss.analysis.withCheckerSolverFallback
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
@@ -167,7 +172,9 @@ fun getDssChecker(
   blockGraph.checkConsistency()
   logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.statistics())
   if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
-  if (dssConfig.trace) DssTrace.enable { logger.write(Logger.Level.RESULT, "%s\n", it) }
+  if (dssConfig.trace || dssConfig.traceExpressions) {
+    DssTrace.enable(dssConfig.traceExpressions) { logger.write(Logger.Level.RESULT, "%s\n", it) }
+  }
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
@@ -178,40 +185,55 @@ fun getDssChecker(
   // --dss-checker-backends CEGAR_PRED_CART (the default, a one-element list) is therefore still
   // byte-for-byte the original single-checker behavior.
   val blockLogger = BlockAnalysisLogger(logger)
-  val checkers: List<CheckerFactory> =
-    dssConfig.checkerBackends.map { backend ->
-      when (backend) {
-        DssCheckerBackend.CEGAR_PRED_CART,
-        DssCheckerBackend.CEGAR_PRED_BOOL,
-        DssCheckerBackend.CEGAR_PRED_SPLIT -> { blockXcfa: XCFA ->
-            getCegarChecker(
+  // solver == null keeps the backend's own default solvers (Z3 for the bounded family)
+  fun checkerFor(backend: DssCheckerBackend, solver: String?): CheckerFactory =
+    when (backend) {
+      DssCheckerBackend.CEGAR_PRED_CART,
+      DssCheckerBackend.CEGAR_PRED_BOOL,
+      DssCheckerBackend.CEGAR_PRED_SPLIT -> { blockXcfa: XCFA ->
+          getCegarChecker(
+            blockXcfa,
+            mcm,
+            parseContext,
+            defaultPredicateCegarConfig(backend.toCegarDomain(), solver ?: dssConfig.solver),
+            blockLogger,
+          )
+        }
+      DssCheckerBackend.BMC,
+      DssCheckerBackend.KIND,
+      DssCheckerBackend.IMC,
+      DssCheckerBackend.KINDIMC,
+      DssCheckerBackend.BOUNDED -> { blockXcfa: XCFA ->
+          adaptBoundedChecker(
+            getBoundedChecker(
               blockXcfa,
-              mcm,
               parseContext,
-              defaultPredicateCegarConfig(backend.toCegarDomain(), dssConfig.solver),
+              defaultBoundedConfigFor(backend.toBoundedBackend(), solver),
               blockLogger,
             )
-          }
-        DssCheckerBackend.BMC,
-        DssCheckerBackend.KIND,
-        DssCheckerBackend.IMC,
-        DssCheckerBackend.KINDIMC,
-        DssCheckerBackend.BOUNDED -> { blockXcfa: XCFA ->
-            adaptBoundedChecker(
-              getBoundedChecker(
-                blockXcfa,
-                parseContext,
-                defaultBoundedConfigFor(backend.toBoundedBackend()),
-                blockLogger,
-              )
-            )
-          }
-      }
+          )
+        }
+    }
+  val solverStatistics = DssSolverStatistics { stats ->
+    logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", stats)
+  }
+  // An unknown fallback solver name fails here, at startup, not at the first failed block check
+  if (dssConfig.checkerSolverFallback) SolverManager.resolveSolverFactory(dssConfig.fallbackSolver)
+  val checkers: List<CheckerFactory> =
+    dssConfig.checkerBackends.map { backend ->
+      if (dssConfig.checkerSolverFallback)
+        withCheckerSolverFallback(
+          checkerFor(backend, null),
+          checkerFor(backend, dssConfig.fallbackSolver),
+          solverStatistics,
+        )
+      else checkerFor(backend, null)
     }
   val selectionStrategy: DssCheckerSelectionStrategy =
     when (dssConfig.checkerSelection) {
       DssCheckerSelectionMethod.ROUND_ROBIN -> RoundRobinCheckerSelectionStrategy()
       DssCheckerSelectionMethod.PRIORITY -> PriorityCheckerSelectionStrategy()
+      DssCheckerSelectionMethod.FASTEST -> FastestCheckerSelectionStrategy()
     }
   // Built once, here - not inside behaviorFor - so it's the one shared instance every block's
   // PredicateBlockBehavior gets, per DssCheckerRoster's own contract (a fresh roster per block
@@ -220,6 +242,9 @@ fun getDssChecker(
   // across the whole run).
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
   val dssSolverFactory = SolverManager.resolveSolverFactory(dssConfig.solver)
+  val dssFallbackSolverFactory =
+    if (dssConfig.solverFallback) SolverManager.resolveSolverFactory(dssConfig.fallbackSolver)
+    else null
   val behaviorFor = { block: Block ->
     PredicateBlockBehavior(
       xcfa,
@@ -231,6 +256,8 @@ fun getDssChecker(
       reuseBlockPrecision = dssConfig.reuseBlockPrecision,
       checkerFallback = dssConfig.checkerFallback,
       solverFactory = dssSolverFactory,
+      fallbackSolverFactory = dssFallbackSolverFactory,
+      solverStatistics = solverStatistics,
     )
   }
 
@@ -240,8 +267,16 @@ fun getDssChecker(
         DssExecutor.CONCURRENT -> runDssActors(blockGraph, behaviorFor = behaviorFor)
         DssExecutor.SEQUENTIAL -> runDssActorsSequentially(blockGraph, behaviorFor = behaviorFor)
       }
+    } catch (e: RuntimeException) {
+      // Usually wrapped: the observer rethrows a block's failure, see DssObserverActor.verdict
+      val undecided =
+        generateSequence<Throwable>(e) { it.cause }.firstOrNull { it is DssUndecidedQueryException }
+          ?: throw e
+      logger.write(Logger.Level.RESULT, "%s\n", undecided.message)
+      return@SafetyChecker SafetyResult.unknown()
     } finally {
       DssTrace.disable()
+      logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", solverStatistics)
     }
 
   when (dssResult) {
@@ -255,12 +290,19 @@ fun getDssChecker(
  * ([Backend.BMC]/[Backend.KIND]/[Backend.IMC]/[Backend.KINDIMC]/[Backend.BOUNDED]) - reuses
  * `BackendConfig.createSpecConfig`'s own dispatch, the exact same switch a real `--backend BMC`
  * (etc.) invocation goes through, so this can never drift from what that flag actually means. Not
- * meant for [Backend.CEGAR] - see [defaultPredicateCegarConfig] for that one instead.
+ * meant for [Backend.CEGAR] - see [defaultPredicateCegarConfig] for that one instead. A non-null
+ * [solver] replaces the BMC, induction and interpolation solvers.
  */
-private fun defaultBoundedConfigFor(backend: Backend): XcfaConfig<*, *> {
+private fun defaultBoundedConfigFor(backend: Backend, solver: String? = null): XcfaConfig<*, *> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
   config.backendConfig.backend = backend
   config.backendConfig.createSpecConfig()
+  if (solver != null) {
+    val bounded = config.backendConfig.specConfig as BoundedConfig
+    bounded.bmcConfig.bmcSolver = solver
+    bounded.indConfig.indSolver = solver
+    bounded.itpConfig.itpSolver = solver
+  }
   return config
 }
 

@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssPredicateOperators
+import hu.bme.mit.theta.xcfa.dss.analysis.DssSolverStatistics
 import hu.bme.mit.theta.xcfa.dss.analysis.combinePredicatePrecisions
 import hu.bme.mit.theta.xcfa.dss.analysis.computePathViolationCondition
 import hu.bme.mit.theta.xcfa.dss.analysis.computeViolationCondition
@@ -62,6 +63,9 @@ import hu.bme.mit.theta.xcfa.passes.changeVars
  * See `doc/DSS.md`.
  */
 const val DEFAULT_DSS_SOLVER = "Z3"
+
+/** MathSAT through JavaSMT: needs only the bundled native library, no SMT-LIB installation. */
+const val DEFAULT_DSS_FALLBACK_SOLVER = "JavaSMT:MATHSAT5"
 
 /**
  * The block analysis of DSS with predicate abstraction: a port of CPAchecker's `DssBlockAnalysis`
@@ -109,11 +113,14 @@ const val DEFAULT_DSS_SOLVER = "Z3"
  * not have. Also Theta-specific: with [reuseBlockPrecision], every run additionally starts with the
  * predicates the block's earlier CEGAR runs ended with ([ownPrecision]); checkers that report no
  * precision (the bounded ones) neither add to nor use it. With [checkerFallback], a run whose
- * checker throws is repeated with the roster's next checkers (see `runWithCheckerFallback`).
+ * checker throws is repeated with the roster's next checkers (see `runWithCheckerFallback`); a
+ * roster that ranks per block makes every block pick its fastest checker on its first analysis.
  *
  * [checkerRoster] supplies the checker of every single analysis run (default: round-robin over the
  * configured checkers). [solverFactory] is used for the coverage and satisfiability checks of the
- * predicate operators; `null` resolves [DEFAULT_DSS_SOLVER].
+ * predicate operators; `null` resolves [DEFAULT_DSS_SOLVER]. [fallbackSolverFactory] repeats the
+ * checks [solverFactory]'s solver fails on; without it, such a check ends DSS with an unknown
+ * verdict.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
@@ -125,6 +132,8 @@ class PredicateBlockBehavior(
   private val reuseBlockPrecision: Boolean = false,
   private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
+  private val fallbackSolverFactory: SolverFactory? = null,
+  private val solverStatistics: DssSolverStatistics = DssSolverStatistics(),
 ) : DssBlockBehavior {
 
   /** CPAchecker's `StateAndPrecision`, plus the flag CPAchecker keeps in the `BlockState`. */
@@ -167,12 +176,19 @@ class PredicateBlockBehavior(
   )
 
   private val operators by lazy {
-    DssPredicateOperators(solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER))
+    DssPredicateOperators(
+      solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
+      fallbackSolverFactory,
+      solverStatistics,
+    )
   }
 
   private val startPrecision: Set<Expr<BoolType>> by lazy {
     if (useGlobalPredicatePool) globalAssumePredicates(wholeProgram) else emptySet()
   }
+
+  /** The roster index of this block's fastest checker, if the roster ranks per block. */
+  private var fastestChecker: Int? = null
 
   /** With [reuseBlockPrecision]: the predicates this block's CEGAR analyses ended with so far. */
   private val ownPrecision = linkedSetOf<Expr<BoolType>>()
@@ -238,13 +254,16 @@ class PredicateBlockBehavior(
       preconditions[sender] = received.toMutableList()
       relevant.addAll(received)
       appendTopToRelevantIfNecessary(sender)
+      tracePrecondition(message, received.size, evicted = 0)
       return true
     }
+    var evicted = 0
     for (new in received) {
       var isRelevant = true
       for (old in stored.toList()) {
         if (operators.isSubsumed(new.state, old.state)) {
           stored.remove(old)
+          evicted++
         }
         if (isRelevant && operators.isSubsumed(old.state, new.state)) {
           isRelevant = false
@@ -253,9 +272,27 @@ class PredicateBlockBehavior(
       if (isRelevant) relevant.add(new)
       stored.add(new)
     }
-    if (relevant.isEmpty()) return false
-    appendTopToRelevantIfNecessary(sender)
-    return true
+    val newStates = relevant.size
+    if (relevant.isNotEmpty()) appendTopToRelevantIfNecessary(sender)
+    tracePrecondition(message, newStates, evicted)
+    return relevant.isNotEmpty()
+  }
+
+  /** [newStates] of the message's states were not covered; the others were. */
+  private fun tracePrecondition(message: DssPostConditionMessage, newStates: Int, evicted: Int) {
+    if (!DssTrace.enabled) return
+    DssTrace.event(
+      "pc-in",
+      "actor" to block.id,
+      "from" to message.senderId,
+      "states" to message.postconditions.size,
+      "new" to newStates,
+      "covered" to message.postconditions.size - newStates,
+      "evicted" to evicted,
+      "withTop" to (relevant.size > newStates),
+      "prec" to message.precision.size,
+      *traceContent(message.postcondition),
+    )
   }
 
   private fun appendTopToRelevantIfNecessary(sender: String) {
@@ -284,9 +321,24 @@ class PredicateBlockBehavior(
       requireNotNull(message.violationCondition) { "Expected a violation condition in $message" }
     val sender = message.senderId
     val old = violationConditions.remove(sender).orEmpty().toSet()
-    if (operators.isUnsat(condition)) return false
+    if (operators.isKnownUnsat(condition)) {
+      traceViolationCondition(message, "unsat")
+      return false
+    }
     violationConditions[sender] = mutableListOf(condition)
+    traceViolationCondition(message, if (condition in old) "repeated" else "new")
     return condition !in old
+  }
+
+  private fun traceViolationCondition(message: DssViolationConditionMessage, outcome: String) {
+    if (!DssTrace.enabled) return
+    DssTrace.event(
+      "vc-in",
+      "actor" to block.id,
+      "from" to message.senderId,
+      "outcome" to outcome,
+      *traceContent(message.violationCondition),
+    )
   }
 
   fun analyzePrecondition(): Collection<DssMessage> {
@@ -530,7 +582,15 @@ class PredicateBlockBehavior(
    */
   private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): Expr<BoolType>? {
     if (new.isEmpty()) return null
+    val before = pathViolationsSoFar.size
     pathViolationsSoFar += new
+    DssTrace.event(
+      "path-vcs",
+      "actor" to block.id,
+      "found" to new.size,
+      "added" to pathViolationsSoFar.size - before,
+      "total" to pathViolationsSoFar.size,
+    )
     return or(pathViolationsSoFar.toList())
   }
 
@@ -545,24 +605,24 @@ class PredicateBlockBehavior(
    * is up to the roster's selection strategy, see `DssCheckerSelectionStrategy`), at most once per
    * roster entry; if all of them throw, the first failure propagates with the others suppressed.
    * Errors (e.g. out of memory) and interruptions are never retried.
+   *
+   * If the roster ranks per block, the block's first successful analysis runs every checker (see
+   * [runEveryChecker]); later ones try the fastest checker first, then the others in roster order.
    */
   private inline fun <T> runWithCheckerFallback(
     trace: Array<Pair<String, Any?>> = emptyArray(),
     analysis: (CheckerFactory) -> T,
   ): T {
-    val attempts = if (checkerFallback) checkerRoster.size else 1
+    val leader = fastestChecker
+    if (checkerRoster.ranksPerBlock && leader == null) return runEveryChecker(trace, analysis)
+    val order = leader?.let { listOf(it) + (0 until checkerRoster.size).filter { i -> i != it } }
+    val attempts = order?.size ?: if (checkerFallback) checkerRoster.size else 1
     var failure: Exception? = null
     repeat(attempts) { attempt ->
+      val index = order?.get(attempt)
       try {
-        return DssTrace.span(
-          "analysis",
-          *trace,
-          "attempt" to attempt,
-          outcome = { result ->
-            (result as? SafetyResult<*, *>)?.let { if (it.isSafe) "safe" else "unsafe" } ?: "ok"
-          },
-        ) {
-          analysis(checkerRoster.next(attempt))
+        return traceAnalysis(trace, attempt, index) {
+          analysis(if (index != null) checkerRoster[index] else checkerRoster.next(attempt))
         }
       } catch (e: InterruptedException) {
         throw e
@@ -574,13 +634,74 @@ class PredicateBlockBehavior(
   }
 
   /**
+   * Runs [analysis] with every checker of the roster in turn and returns the result of the one that
+   * finished fastest, which becomes [fastestChecker]. If every checker throws, the first failure
+   * propagates and the next analysis tries all of them again.
+   */
+  private inline fun <T> runEveryChecker(
+    trace: Array<Pair<String, Any?>>,
+    analysis: (CheckerFactory) -> T,
+  ): T {
+    var failure: Exception? = null
+    var fastest = -1
+    var fastestNanos = Long.MAX_VALUE
+    var fastestResult: T? = null
+    val millis = arrayOfNulls<Long>(checkerRoster.size)
+    repeat(checkerRoster.size) { index ->
+      val start = System.nanoTime()
+      try {
+        val result = traceAnalysis(trace, index, index) { analysis(checkerRoster[index]) }
+        val nanos = System.nanoTime() - start
+        millis[index] = nanos / 1_000_000
+        if (nanos < fastestNanos) {
+          fastest = index
+          fastestNanos = nanos
+          fastestResult = result
+        }
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        failure?.addSuppressed(e) ?: run { failure = e }
+      }
+    }
+    if (fastest < 0) throw checkNotNull(failure)
+    fastestChecker = fastest
+    DssTrace.event(
+      "fastest-checker",
+      "actor" to block.id,
+      "checker" to fastest,
+      "ms" to millis.joinToString(",") { it?.toString() ?: "failed" },
+    )
+    @Suppress("UNCHECKED_CAST") return fastestResult as T
+  }
+
+  /** One try of an analysis; [checker] is the roster index, if the roster ranks per block. */
+  private inline fun <T> traceAnalysis(
+    trace: Array<Pair<String, Any?>>,
+    attempt: Int,
+    checker: Int?,
+    analysis: () -> T,
+  ): T =
+    DssTrace.span(
+      "analysis",
+      *trace,
+      "attempt" to attempt,
+      *(if (checker != null) arrayOf("checker" to checker) else emptyArray()),
+      outcome = { result ->
+        (result as? SafetyResult<*, *>)?.let { if (it.isSafe) "safe" else "unsafe" } ?: "ok"
+      },
+      action = analysis,
+    )
+
+  /**
    * CPAchecker's abstraction formulas are canonical (BDD-based), so a valid abstraction is
    * literally `true`, which is what `isMostGeneralBlockEntryState` checks for. Theta's packed
    * states are disjunctions of predicate cubes, so validity is checked explicitly.
    */
   private fun normalize(state: Expr<BoolType>): Expr<BoolType> {
     val simplified = ExprUtils.simplify(state)
-    return if (simplified != False() && operators.isUnsat(Not(simplified))) True() else simplified
+    return if (simplified != False() && operators.isKnownUnsat(Not(simplified))) True()
+    else simplified
   }
 
   private fun reportPostconditions(summaries: List<Summary>): Collection<DssMessage> {
@@ -605,6 +726,7 @@ class PredicateBlockBehavior(
         kept += summary
       }
     }
+    DssTrace.event("pc-dedup", "actor" to block.id, "states" to summaries.size, "kept" to kept.size)
     return kept
   }
 

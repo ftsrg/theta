@@ -163,10 +163,10 @@ enum class DssExecutor {
 /**
  * Which `DssCheckerSelectionStrategy` (`xcfa-dss-analysis`) a `DssCheckerRoster` uses to pick one
  * of [DssConfig.checkerBackends]'s checker factories on each recheck - see `doc/DSS.md`'s
- * `DssCheckerRoster` section. `ROUND_ROBIN` and `PRIORITY` are the built-in strategies; this enum
- * exists so *which* strategy is used is itself a CLI-exposed, parametrised choice rather than a
- * hardcoded one - a future strategy (e.g. least-used/weighted) only needs a new case here plus a
- * branch where `--dss-checker-selection` is translated into a `DssCheckerSelectionStrategy`
+ * `DssCheckerRoster` section. `ROUND_ROBIN`, `PRIORITY` and `FASTEST` are the built-in strategies;
+ * this enum exists so *which* strategy is used is itself a CLI-exposed, parametrised choice rather
+ * than a hardcoded one - a future strategy (e.g. least-used/weighted) only needs a new case here
+ * plus a branch where `--dss-checker-selection` is translated into a `DssCheckerSelectionStrategy`
  * instance.
  */
 enum class DssCheckerSelectionMethod {
@@ -178,6 +178,12 @@ enum class DssCheckerSelectionMethod {
    * `--dss-checker-fallback` fallbacks, in list order.
    */
   PRIORITY,
+
+  /**
+   * `FastestCheckerSelectionStrategy`: a block's first analysis runs every checker, later ones
+   * start with the one that finished it fastest, the others following as fallbacks in list order.
+   */
+  FASTEST,
 }
 
 /**

@@ -70,10 +70,15 @@ DSS works on programs with a single XCFA procedure (the CLI rejects others).
 | `--dss-reuse-block-precision` | off | Add the predicates a block's earlier CEGAR runs ended with to the initial precision of its next runs (11.2) | none |
 | `--dss-executor {SEQUENTIAL,CONCURRENT}` | `SEQUENTIAL` | Actor driver | `executorType` (`DSS`, i.e. concurrent, by default) |
 | `--dss-solver NAME` | `Z3` | Solver of the block checkers and of DSS's own SMT checks | the solver of the PredicateCPA (MathSAT5) |
+| `--dss-solver-fallback` | off | Repeat a DSS coverage/satisfiability check that `--dss-solver` fails on (unknown result or crash) with `--dss-fallback-solver` (11.3); without it, such a failure gives an unknown verdict | none |
+| `--dss-checker-solver-fallback` | off | Repeat a block checker's check that throws (e.g. Z3 `unknown` on nonlinear arithmetic) with the same checker over `--dss-fallback-solver`, before `--dss-checker-fallback` moves on (11.3) | none |
+| `--dss-fallback-solver NAME` | `JavaSMT:MATHSAT5` | Solver of `--dss-solver-fallback` and `--dss-checker-solver-fallback` | none |
 | `--dss-global-predicate-pool BOOL` | `true` | Seed every block's precision with all assume conditions of the program | none (similar in effect to `performInitialStaticRefinement`, see 11.4) |
 | `--dss-checker-backends LIST` | `CEGAR_PRED_CART` | Checkers used for block analyses (CEGAR with a predicate domain, or bounded model checkers) | none (always the predicate CPA) |
-| `--dss-checker-selection {ROUND_ROBIN,PRIORITY}` | `ROUND_ROBIN` | How a checker is picked from that list for every block analysis: `ROUND_ROBIN` cycles the list; `PRIORITY` always starts with the first entry and uses the others only as fallbacks, in order | none |
+| `--dss-checker-selection {ROUND_ROBIN,PRIORITY,FASTEST}` | `ROUND_ROBIN` | How a checker is picked from that list for every block analysis: `ROUND_ROBIN` cycles the list; `PRIORITY` always starts with the first entry and uses the others only as fallbacks, in order; `FASTEST` runs every entry on a block's first analysis, then starts that block's later analyses with the entry that finished fastest there, the others following as fallbacks in order (even without `--dss-checker-fallback`) | none |
 | `--dss-checker-fallback` | off | If a block analysis's checker throws or is inconclusive, repeat the analysis with the next checker (chosen by the selection policy), at most once per list entry | none |
+| `--dss-trace` | off | Log a `DSS-TRACE` line per processed message, block analysis try, and sent or received postcondition/violation condition (`pc-in`, `pc-out`, `vc-in`, `vc-out` with the formula's disjuncts, nodes, atoms and variables; `pc-dedup`, `path-vcs`; `fastest-checker` with `FASTEST` selection) | none |
+| `--dss-trace-expressions` | off | `--dss-trace`, with the formula itself at the end of the `pc-*`/`vc-*` lines (`expr=...`) | none |
 
 **Why the executor defaults to `SEQUENTIAL`.** Theta's default solver binding (`Z3`, the "legacy"
 Z3 binding) crashes inside its native library when several threads use it at the same time, even
@@ -386,6 +391,12 @@ A list of interchangeable checker factories plus a selection strategy (round-rob
 thread-safe). One roster is shared by all blocks of a run; every block analysis asks it for a
 checker.
 
+With `FASTEST`, the ranking is per block and kept by the block analysis: its first successful
+analysis runs every checker in list order and continues with the result of the fastest one (wall
+clock time). Later analyses try that checker first and the others in list order. If every checker
+fails, the next analysis runs all of them again. The trace logs the choice as `fastest-checker`
+(`checker=<index>`, `ms=<time per checker>`), and every `analysis` line gets `checker=<index>`.
+
 ## 7. The block analysis (`PredicateBlockBehavior`)
 
 A port of CPAchecker's `DssBlockAnalysis`, driven like `DssAnalysisWorker.processMessage`. The
@@ -642,6 +653,23 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
   checks use one solver per block.
 * CPAchecker uses MathSAT5. Theta uses `--dss-solver` (legacy `Z3` by default) and therefore the
   sequential executor by default (section 2).
+* Z3 cannot decide some of DSS's own checks on nonlinear arithmetic (`unknown`). Without
+  `--dss-solver-fallback` such a check ends DSS with an unknown verdict. With it, the check is
+  repeated with `--dss-fallback-solver`; if that fails too, a coverage check counts as not covered
+  and a dropped violation condition is kept (both only cost work), but the root's check of its
+  violation condition, which decides the verdict, still gives an unknown verdict. The default
+  fallback, `JavaSMT:MATHSAT5`, is not safe for the concurrent executor (section 2).
+* Most such failures are in the block checkers themselves (CEGAR's abstraction, BMC/k-induction),
+  not in DSS's own checks. `--dss-checker-solver-fallback` repeats a check that throws with the same
+  checker over `--dss-fallback-solver` (CEGAR: abstraction and refinement solver; bounded family:
+  BMC, induction and interpolation solver); if that throws too, `--dss-checker-fallback` moves on
+  to the next backend. With the Z3 -> `JavaSMT:MATHSAT5` fallback, MathSAT crashes natively
+  (access violation in `msat_solve`) on some nonlinear programs after a few fallback checks; MathSAT
+  alone does not crash on them. `Z3:new` as fallback does not crash there.
+* `DSS solver statistics: queries=… solverFailed=… fallbackDecided=… fallbackFailed=…
+  checkerFailed=… checkerFallbackDecided=… checkerFallbackFailed=…` (RESULT level) counts both
+  kinds over all blocks: logged after every failure of the first solver (so a run killed by a
+  timeout keeps its last counts) and once when DSS ends.
 * The newer Z3 binding's Horn-based interpolation had two bugs that DSS exposed, fixed in
   `solver-z3` (`InterpolationMetadata`): a partition without constants was encoded as a quantifier
   without bound variables (rejected by Z3), and a nullary interpolant was read as a function
@@ -775,8 +803,11 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `BlockAnalysisPrimitivesTest` | WP rules (assume, assign, sequence, nondet, havoc), unsupported labels, linear growth, preconditions, cleared targets, havoc of auxiliary variables, predicate operators, `predicatesOf` |
 | | `ViolationConditionTest` | path conditions, canonical auxiliary variables, one loop iteration per analysis, violation-condition targets, precision combination, internal cycles, per-path conditions |
 | | `PostconditionPackingTest`, `WorkerConfigDelegatorTest`, `DssCheckerRosterTest` | packing, checker delegation, rosters |
+| | `UndecidedQueryTest`, `CheckerSolverFallbackTest` | undecided operator queries with and without the fallback solver, checker solver fallback |
 | actor | `PredicateBlockBehaviorStepTest` | every step of the block analysis: initial analysis, precondition coverage, storing violation conditions, laziness, refutation vs. propagation at the root and inside, the lost-violation-condition regression |
 | | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check, self-loop-absorbed, acyclic and min-cut graphs with per-path violation conditions (root and non-root loop blocks) |
+| | `CheckerFallbackTest`, `ReuseBlockPrecisionTest` | `--dss-checker-fallback`, `--dss-reuse-block-precision` |
+| | `DssTraceContentTest` | content fields of the trace, `expr=` last |
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
 | solver | `SolverScopeTest` | solver scopes own, close and nest |
 | solver-z3 | `Z3ItpSolverTest.testInterpolationWithAGroundPartition` | the interpolation fix |

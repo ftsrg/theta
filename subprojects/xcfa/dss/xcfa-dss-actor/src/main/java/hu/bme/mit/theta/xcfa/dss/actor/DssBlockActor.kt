@@ -63,6 +63,7 @@ class DssBlockActor(
   override fun broadcast(messages: Collection<DssMessage>) {
     val broadcaster = connection.broadcaster
     for (message in messages) {
+      traceOutgoing(message)
       when (message.type) {
         DssMessageType.POST_CONDITION -> {
           broadcaster.broadcastToObserver(message)
@@ -87,6 +88,29 @@ class DssBlockActor(
           shutdown = true
         }
       }
+    }
+  }
+
+  private fun traceOutgoing(message: DssMessage) {
+    if (!DssTrace.enabled) return
+    when (message) {
+      is DssPostConditionMessage ->
+        DssTrace.event(
+          "pc-out",
+          "actor" to id,
+          "to" to block.successorIds.size,
+          "states" to message.postconditions.size,
+          "prec" to message.precision.size,
+          *traceContent(message.postcondition),
+        )
+      is DssViolationConditionMessage ->
+        DssTrace.event(
+          "vc-out",
+          "actor" to id,
+          "root" to block.isRoot,
+          *traceContent(message.violationCondition),
+        )
+      else -> {}
     }
   }
 

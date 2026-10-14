@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.cli.utils.PrecReuseFormat
 import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
+import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_FALLBACK_SOLVER
 import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -391,6 +392,13 @@ data class DssConfig(
   )
   var trace: Boolean = false,
   @Parameter(
+    names = ["--dss-trace-expressions"],
+    description =
+      "Implies --dss-trace; the trace lines of sent and received postconditions and violation " +
+        "conditions also contain the formula itself (expr=..., last on the line; Theta-specific)",
+  )
+  var traceExpressions: Boolean = false,
+  @Parameter(
     names = ["--dss-reuse-block-precision"],
     description =
       "Start every CEGAR block analysis with the predicates the same block's earlier CEGAR " +
@@ -414,6 +422,31 @@ data class DssConfig(
         "CONCURRENT; Z3:new is, but its interpolation fails on some C arithmetic - see doc/DSS.md",
   )
   var solver: String = DEFAULT_DSS_SOLVER,
+  @Parameter(
+    names = ["--dss-solver-fallback"],
+    description =
+      "If a coverage or satisfiability check of DSS itself fails with --dss-solver (unknown " +
+        "result or crash, e.g. Z3 on nonlinear arithmetic), repeat it with " +
+        "--dss-fallback-solver. Without this flag, such a failure ends DSS with an unknown " +
+        "verdict; with it, only a failure of the fallback solver does - or, where that is " +
+        "sound, the check counts as not unsat (Theta-specific)",
+  )
+  var solverFallback: Boolean = false,
+  @Parameter(
+    names = ["--dss-checker-solver-fallback"],
+    description =
+      "If a block checker's check fails (an exception, e.g. Z3's unknown result on nonlinear " +
+        "arithmetic or an interpolation it does not support), repeat it with the same checker " +
+        "over --dss-fallback-solver (as abstraction, refinement, BMC, induction and " +
+        "interpolation solver) before --dss-checker-fallback moves on to the next backend " +
+        "(Theta-specific)",
+  )
+  var checkerSolverFallback: Boolean = false,
+  @Parameter(
+    names = ["--dss-fallback-solver"],
+    description = "Solver of --dss-solver-fallback and --dss-checker-solver-fallback",
+  )
+  var fallbackSolver: String = DEFAULT_DSS_FALLBACK_SOLVER,
   @Parameter(
     names = ["--dss-executor"],
     description =
@@ -452,7 +485,10 @@ data class DssConfig(
     description =
       "Policy DssCheckerRoster uses to pick a checker factory on each recheck: ROUND_ROBIN " +
         "cycles the list; PRIORITY always uses the first entry and the others only as " +
-        "--dss-checker-fallback fallbacks, in order",
+        "--dss-checker-fallback fallbacks, in order; FASTEST runs every entry on a block's " +
+        "first analysis and from then on starts that block's analyses with the entry that " +
+        "finished fastest there, the others following as fallbacks in order (even without " +
+        "--dss-checker-fallback)",
   )
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.ROUND_ROBIN,
 ) : SpecBackendConfig

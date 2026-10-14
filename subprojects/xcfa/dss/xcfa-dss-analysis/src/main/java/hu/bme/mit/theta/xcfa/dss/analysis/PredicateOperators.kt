@@ -28,38 +28,133 @@ import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The solver-backed operators of CPAchecker's distributed predicate CPA, over plain Theta
  * expressions:
- * - [isUnsat]: `ProceedPredicateStateOperator.processBackward` (an unsatisfiable violation
- *   condition is dropped) and the `hasRootAsPredecessor` check of
- *   `PredicateViolationConditionOperator`;
+ * - [isUnsat]: the `hasRootAsPredecessor` check of `PredicateViolationConditionOperator`, where a
+ *   condition that is not unsat decides the verdict, so an undecided query must fail;
+ * - [isKnownUnsat]: `ProceedPredicateStateOperator.processBackward` (an unsatisfiable violation
+ *   condition is dropped);
  * - [isSubsumed]: `PredicateStateCoverageOperator.isSubsumed` (state 1 implies state 2).
  *
- * The solver is created lazily, on the thread of the first query, under the same lock that guards
+ * A query the solver fails on (unknown result or crash, e.g. Z3 on nonlinear arithmetic) is
+ * repeated with the fallback solver if there is one, otherwise it fails with
+ * [DssUndecidedQueryException]. Only queries the fallback solver fails on, too, are undecided.
+ *
+ * Solvers are created lazily, on the thread of the first query, under the same lock that guards
  * checker construction (see [runWorkerConfig]): constructing native solver contexts concurrently is
- * what has crashed Z3 before. A block worker is confined to one thread, so after creation the
- * solver is only ever touched by that thread.
+ * what has crashed Z3 before. A block worker is confined to one thread, so after creation a solver
+ * is only ever touched by that thread.
  */
-class DssPredicateOperators(private val solverFactory: SolverFactory) {
+class DssPredicateOperators(
+  solverFactory: SolverFactory,
+  fallbackSolverFactory: SolverFactory? = null,
+  private val statistics: DssSolverStatistics = DssSolverStatistics(),
+) {
 
-  private val solver: Solver by lazy { withSolverConstructionLock { solverFactory.createSolver() } }
+  private val solver = OperatorSolver(solverFactory)
+  private val fallbackSolver = fallbackSolverFactory?.let(::OperatorSolver)
 
-  fun isUnsat(expr: Expr<BoolType>): Boolean {
+  /**
+   * Throws [DssUndecidedQueryException] if neither the solver nor the fallback solver decides
+   * [expr]: here an undecided query must not be taken as satisfiable.
+   */
+  fun isUnsat(expr: Expr<BoolType>): Boolean =
+    decide(expr) { failure -> throw DssUndecidedQueryException(failure) }
+
+  /**
+   * [isUnsat], but `false` if the fallback solver cannot decide [expr] either. Only for callers
+   * where a missed unsat result merely skips a pruning or simplification step.
+   */
+  fun isKnownUnsat(expr: Expr<BoolType>): Boolean = decide(expr) { false }
+
+  /** Whether state 1 implies state 2 per [isKnownUnsat]. */
+  fun isSubsumed(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
+    state2 == True() || state1 == state2 || isKnownUnsat(And(state1, Not(state2)))
+
+  /** Without a fallback solver, a failure of the solver is never [undecided] but an exception. */
+  private inline fun decide(expr: Expr<BoolType>, undecided: (Exception) -> Boolean): Boolean {
     if (expr == False()) return true
     if (expr == True()) return false
-    solver.push()
-    try {
-      solver.add(PathUtils.unfold(expr, 0))
-      return solver.check().isUnsat
-    } finally {
-      solver.pop()
+    statistics.queries.incrementAndGet()
+    val failure =
+      try {
+        return solver.isUnsat(expr)
+      } catch (e: Exception) {
+        e
+      }
+    statistics.solverFailed.incrementAndGet()
+    val fallback =
+      fallbackSolver ?: throw DssUndecidedQueryException(failure).also { statistics.report() }
+    return try {
+      fallback.isUnsat(expr).also {
+        statistics.fallbackDecided.incrementAndGet()
+        statistics.report()
+      }
+    } catch (e: Exception) {
+      statistics.fallbackFailed.incrementAndGet()
+      statistics.report()
+      e.addSuppressed(failure)
+      undecided(e)
     }
   }
+}
 
-  fun isSubsumed(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
-    state2 == True() || state1 == state2 || isUnsat(And(state1, Not(state2)))
+/**
+ * Solver queries of [DssPredicateOperators], summed over all blocks that share this instance:
+ * [solverFailed] of the [queries] went to the fallback solver, which decided [fallbackDecided].
+ * Likewise for the block checkers of [withCheckerSolverFallback]: [checkerFailed] checks were
+ * repeated with the fallback solver, and [checkerFallbackDecided] of them returned a result.
+ */
+class DssSolverStatistics(private val onSolverFailure: (DssSolverStatistics) -> Unit = {}) {
+  val queries = AtomicInteger()
+  val solverFailed = AtomicInteger()
+  val fallbackDecided = AtomicInteger()
+  val fallbackFailed = AtomicInteger()
+  val checkerFailed = AtomicInteger()
+  val checkerFallbackDecided = AtomicInteger()
+  val checkerFallbackFailed = AtomicInteger()
+
+  /** Called after every failure of the solver, so a run killed later still logged its counts. */
+  fun report() = onSolverFailure(this)
+
+  override fun toString() =
+    "queries=$queries solverFailed=$solverFailed fallbackDecided=$fallbackDecided " +
+      "fallbackFailed=$fallbackFailed checkerFailed=$checkerFailed " +
+      "checkerFallbackDecided=$checkerFallbackDecided checkerFallbackFailed=$checkerFallbackFailed"
+}
+
+/**
+ * A coverage or satisfiability query of [DssPredicateOperators] that the solver (and its fallback,
+ * if any) failed on: an unknown result or a crash. DSS reports an unknown verdict for it.
+ */
+class DssUndecidedQueryException(cause: Throwable) :
+  RuntimeException("DSS solver query undecided: $cause", cause)
+
+/** One solver of [DssPredicateOperators]; a solver that threw is replaced by a fresh one. */
+private class OperatorSolver(private val factory: SolverFactory) {
+
+  private var solver: Solver? = null
+
+  fun isUnsat(expr: Expr<BoolType>): Boolean {
+    val current =
+      solver ?: withSolverConstructionLock { factory.createSolver() }.also { solver = it }
+    try {
+      current.push()
+      try {
+        current.add(PathUtils.unfold(expr, 0))
+        return current.check().isUnsat
+      } finally {
+        current.pop()
+      }
+    } catch (e: Exception) {
+      solver = null
+      runCatching { current.close() }
+      throw e
+    }
+  }
 }
 
 /**

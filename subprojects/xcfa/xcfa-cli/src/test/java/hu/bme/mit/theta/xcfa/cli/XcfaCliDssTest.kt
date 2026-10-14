@@ -293,6 +293,28 @@ class XcfaCliDssTest {
     )
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
+  fun `--dss-checker-selection FASTEST parses and runs to completion`(input: String) {
+    // Which checker each try uses is covered by xcfa-dss-actor's CheckerFallbackTest.
+    main(
+      arrayOf(
+        "--backend",
+        "DSS",
+        "--dss-checker-backends",
+        "CEGAR_PRED_CART,KIND",
+        "--dss-checker-selection",
+        "FASTEST",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource(input)!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    )
+  }
+
   @Test
   fun `--dss-global-predicate-pool false parses and runs to completion`() {
     // Verdict correctness without the pool is covered at the xcfa-dss-actor level - see

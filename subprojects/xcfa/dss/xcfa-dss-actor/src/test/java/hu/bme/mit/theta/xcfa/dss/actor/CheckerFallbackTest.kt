@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
@@ -72,21 +73,37 @@ class CheckerFallbackTest {
     )
   }
 
-  private fun initialMessages(
+  private fun behavior(
     checkers: List<CheckerFactory>,
     checkerFallback: Boolean,
     roster: DssCheckerRoster = DssCheckerRoster(checkers),
   ) =
     program.procedures.single().let { procedure ->
       PredicateBlockBehavior(
-          program,
-          procedure,
-          SingleBlockDecomposition.decompose(procedure).blocks.single(),
-          roster,
-          checkerFallback = checkerFallback,
-        )
-        .initialMessages()
+        program,
+        procedure,
+        SingleBlockDecomposition.decompose(procedure).blocks.single(),
+        roster,
+        checkerFallback = checkerFallback,
+      )
     }
+
+  private fun initialMessages(
+    checkers: List<CheckerFactory>,
+    checkerFallback: Boolean,
+    roster: DssCheckerRoster = DssCheckerRoster(checkers),
+  ) = behavior(checkers, checkerFallback, roster).initialMessages()
+
+  private fun recording(name: String, used: MutableList<String>, checker: CheckerFactory) =
+    { x: XCFA ->
+      used += name
+      checker(x)
+    }
+
+  private val slowCegar: CheckerFactory = { x ->
+    Thread.sleep(300)
+    cegar(x)
+  }
 
   @Test
   fun `a crashing checker is replaced by the next one`() {
@@ -132,6 +149,47 @@ class CheckerFallbackTest {
       assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
     }
     assertEquals(listOf("first", "second", "first", "second"), used)
+  }
+
+  @Test
+  fun `with fastest selection the first analysis runs every checker and later ones the fastest`() {
+    val used = mutableListOf<String>()
+    val checkers = listOf(recording("slow", used, slowCegar), recording("fast", used, cegar))
+    val roster = DssCheckerRoster(checkers, FastestCheckerSelectionStrategy())
+    val block = behavior(checkers, checkerFallback = false, roster = roster)
+    repeat(3) {
+      val messages = block.runInitialAnalysis()
+      assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+    }
+    assertEquals(listOf("slow", "fast", "fast", "fast"), used)
+  }
+
+  @Test
+  fun `with fastest selection the others are fallbacks even without the flag`() {
+    val used = mutableListOf<String>()
+    var calls = 0
+    val flaky: CheckerFactory = { x -> if (calls++ == 0) cegar(x) else crashing(x) }
+    val checkers = listOf(recording("flaky", used, flaky), recording("slow", used, slowCegar))
+    val roster = DssCheckerRoster(checkers, FastestCheckerSelectionStrategy())
+    val block = behavior(checkers, checkerFallback = false, roster = roster)
+    repeat(2) {
+      val messages = block.runInitialAnalysis()
+      assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+    }
+    assertEquals(listOf("flaky", "slow", "flaky", "slow"), used)
+  }
+
+  @Test
+  fun `with fastest selection a block whose checkers all crash tries all of them again`() {
+    val used = mutableListOf<String>()
+    val checkers = listOf(recording("a", used, crashing), recording("b", used, crashing))
+    val roster = DssCheckerRoster(checkers, FastestCheckerSelectionStrategy())
+    val block = behavior(checkers, checkerFallback = false, roster = roster)
+    repeat(2) {
+      val e = assertThrows(SolverBroke::class.java) { block.runInitialAnalysis() }
+      assertEquals(1, e.suppressed.size)
+    }
+    assertEquals(listOf("a", "b", "a", "b"), used)
   }
 
   @Test

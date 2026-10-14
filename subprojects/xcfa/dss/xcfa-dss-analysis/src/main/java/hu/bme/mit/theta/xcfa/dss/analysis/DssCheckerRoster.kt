@@ -39,6 +39,13 @@ interface DssCheckerSelectionStrategy {
    * is just another [select] call.
    */
   fun select(checkers: List<CheckerFactory>, attempt: Int): CheckerFactory = select(checkers)
+
+  /**
+   * Whether each block ranks the checkers itself: its first analysis runs every checker, and the
+   * fastest one leads its later analyses (see [FastestCheckerSelectionStrategy]).
+   */
+  val ranksPerBlock: Boolean
+    get() = false
 }
 
 /**
@@ -86,6 +93,20 @@ class PriorityCheckerSelectionStrategy : DssCheckerSelectionStrategy {
 }
 
 /**
+ * Per-block fastest checker: a block's first analysis runs with every checker in list order, and
+ * the one that finished it fastest leads every later analysis of that block, followed by the others
+ * as fallbacks in list order (with or without `--dss-checker-fallback`). The ranking is state of
+ * each block analysis, which [ranksPerBlock] tells to keep it; outside of that, the order is
+ * [PriorityCheckerSelectionStrategy]'s.
+ */
+class FastestCheckerSelectionStrategy :
+  DssCheckerSelectionStrategy by PriorityCheckerSelectionStrategy() {
+
+  override val ranksPerBlock: Boolean
+    get() = true
+}
+
+/**
  * A list of interchangeable [CheckerFactory]s DSS can run a block's analysis with, plus the
  * (pluggable) policy for which one to hand out on any given call to [next].
  * [PredicateBlockBehavior] calls [next] fresh on every recheck - not once per block - so
@@ -122,6 +143,13 @@ class DssCheckerRoster(
   /** The number of checkers in the roster (repeated entries counted separately). */
   val size: Int
     get() = checkers.size
+
+  /** See [DssCheckerSelectionStrategy.ranksPerBlock]. */
+  val ranksPerBlock: Boolean
+    get() = strategy.ranksPerBlock
+
+  /** The [index]th checker of the roster, for strategies that rank per block. */
+  operator fun get(index: Int): CheckerFactory = checkers[index]
 
   /** The checker for the [attempt]th try of one analysis (see [DssCheckerSelectionStrategy]). */
   fun next(attempt: Int = 0): CheckerFactory {
