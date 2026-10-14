@@ -48,6 +48,7 @@ Each formalism family tends to follow a `<name>` (model) + `<name>-analysis` (al
 - `xsts/` — eXtended symbolic transition systems. Commonly used for statecharts.
 - `sts/` — symbolic transition systems. The AIGER frontend is STS-based; like `cfa`, older and stable — occasionally extended, but not a focus.
 - `xta/` — timed automata.
+- `vmt/` — VMT-LIB transition systems kept as JavaSMT terms (no Theta `Expr`): `vmt` (s-expression reader + `VmtParser` → `VmtModel`) and `vmt-analysis` (`VmtMddChecker`, a JavaSMT copy of the expression-backed MDD saturation nodes).
 
 ## Documentation map
 

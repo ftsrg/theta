@@ -1,0 +1,8 @@
+; an integer counter that stops at 5
+(declare-fun x () Int)
+(declare-fun x.next () Int)
+(define-fun .x () Int (! x :next x.next))
+(define-fun .init () Bool (! (= x 0) :init true))
+(define-fun .trans () Bool (! (= x.next (ite (< x 5) (+ x 1) x)) :trans true))
+(define-fun .safe () Bool (! (<= x 5) :invar-property 0))
+(define-fun .unsafe () Bool (! (< x 5) :invar-property 1))

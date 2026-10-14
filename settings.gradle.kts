@@ -68,6 +68,9 @@ include(
     "xta/xta-analysis",
     "xta/xta-cli",
 
+    "vmt/vmt",
+    "vmt/vmt-analysis",
+
     "xsts/xsts",
     "xsts/xsts-analysis",
     "xsts/xsts-cli",

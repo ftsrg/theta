@@ -1,0 +1,6 @@
+; x above b in the order: b.n = (xor b (> x 3)) simplifies to a negated identity atom
+(declare-fun x () Int)(declare-fun x.n () Int)(declare-fun b () Bool)(declare-fun b.n () Bool)
+(define-fun .x () Int (! x :next x.n))
+(define-fun .b () Bool (! b :next b.n))
+(define-fun .init () Bool (! (and (= x 0) (not b)) :init true))
+(define-fun .trans () Bool (! (and (=> (< x 6) (or (= x.n (+ x 1)) (= x.n (+ x 2)))) (=> (>= x 6) (= x.n x)) (= b.n (xor b (> x 3)))) :trans true))
