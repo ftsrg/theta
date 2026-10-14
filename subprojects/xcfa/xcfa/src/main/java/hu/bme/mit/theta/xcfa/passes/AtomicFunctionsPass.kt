@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -37,8 +38,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.xcfa.model.AtomicBeginLabel
 import hu.bme.mit.theta.xcfa.model.AtomicEndLabel
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
-import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
@@ -246,7 +247,8 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invoke.params[0] // params[0] is the (possibly unused, for void ops) return variable
     val args = invoke.params.drop(1)
 
-    if (name in fenceNames) return listOf(NopLabel)
+    if (name in fenceNames)
+      return listOf(StmtLabel(SkipStmt.getInstance(), metadata = invoke.metadata))
 
     if (name in loadNames) {
       // ret = *p  -- a single memory read, already atomic; the block keeps it uniform.
