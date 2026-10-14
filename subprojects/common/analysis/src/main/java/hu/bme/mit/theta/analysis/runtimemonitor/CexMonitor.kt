@@ -48,7 +48,8 @@ constructor(private val logger: Logger, private val arg: ARG<S, A>) : Monitor {
 
   fun addNewCounterexample() {
     val newCexs: List<ArgTrace<S, A>> = arg.cexs.filter { !cexHashStorage.contains(it) }.toList()
-    assert(newCexs.size == 1, { "Found ${newCexs.size} new cex instead of one" })
+    // several error locations (e.g., one per racing thread) can yield several new cexs at once
+    assert(newCexs.isNotEmpty(), { "Found no new cex" })
 
     lastCex = newCexs.get(0)
     cexHashStorage.addData(lastCex)
