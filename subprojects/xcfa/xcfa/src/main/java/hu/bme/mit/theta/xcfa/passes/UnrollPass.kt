@@ -24,8 +24,10 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.*
@@ -454,7 +456,12 @@ class UnrollPass(
           it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty()
         }
       return when {
-        this == stmtToRemove -> NopLabel
+        // a folded branch guard still locates its branch (e.g., for witnesses)
+        this == stmtToRemove ->
+          (this as StmtLabel).let {
+            if (it.choiceType == ChoiceType.NONE) NopLabel
+            else StmtLabel(Assume(True()), it.choiceType, it.metadata)
+          }
         this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
         else -> this
       }
