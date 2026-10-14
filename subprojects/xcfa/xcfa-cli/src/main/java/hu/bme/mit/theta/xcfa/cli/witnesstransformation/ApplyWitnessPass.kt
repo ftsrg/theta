@@ -47,6 +47,8 @@ import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.THREAD_ID_PARAM
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.ReferenceElimination
+import hu.bme.mit.theta.xcfa.passes.WitnessOptimizer
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
@@ -239,6 +241,21 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val segmentCounter = instrumentation.segmentCounter
     val lastSegment = instrumentation.lastSegmentManager
 
+    // the labels passing the waypoints of one program event; each of its checks and advances sees
+    // the counter value the previous event left
+    fun eventLabels(event: List<Annotation>): List<XcfaLabel> = buildList {
+      addAll(event.mapNotNull { it.assumption })
+      addAll(event.mapNotNull { it.flagUpdate })
+      val updates = event.mapNotNull { it.segmentUpdate }
+      if (updates.isNotEmpty()) {
+        val advance =
+          updates.foldRight(segmentCounter.ref as Expr<IntType>) { (cond, next), acc ->
+            Ite(cond, next, acc)
+          }
+        add(AssignStmtLabel(segmentCounter, advance))
+      }
+    }
+
     val segments = witness.content.mapNotNull { c -> c.segment }
     val segmentCount = segments.size
     // The first segment that carries a `cycle` waypoint; -1 if the witness is acyclic. Used both
@@ -316,6 +333,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     }
 
     val modifications = LinkedHashMap<XcfaEdge, MutableList<Annotation>>()
+    // waypoints passed on the way into a branching location, before its condition is evaluated
+    val preBranchEvents = LinkedHashMap<XcfaLocation, MutableList<Annotation>>()
 
     val statementToEdge = getStatementToEdge(builder)
     val threadCreatingCalls =
@@ -455,28 +474,17 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
           if (
-            wp.waypoint.type == WaypointType.TARGET &&
+            branchTaken == null &&
               annotatedIndices.firstOrNull() == 0 &&
               oldLabels[0].isBranchGuard() &&
               edge.source.incomingEdges.isNotEmpty()
           ) {
-            // A branch condition is evaluated before the branch is taken (its guard has to stay
-            // first on the edge), so the target is passed on the way into the branching location.
+            // A branch condition is evaluated before the branch is taken, and the guards have to
+            // stay first on their edges: the waypoint is passed on a step into the branch.
             if (guardSources.add(edge.source)) {
-              for (incoming in edge.source.incomingEdges) {
-                modifications
-                  .computeIfAbsent(incoming) { LinkedList() }
-                  .add(
-                    Annotation(
-                      incoming,
-                      incoming.getFlatLabels().size,
-                      assumption,
-                      segmentUpdate,
-                      segmentFlagUpdate,
-                      phase,
-                    )
-                  )
-              }
+              preBranchEvents
+                .getOrPut(edge.source) { mutableListOf() }
+                .add(Annotation(edge, 0, assumption, segmentUpdate, segmentFlagUpdate, phase))
             }
             segmentFlagRelease?.let {
               modifications
@@ -580,16 +588,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
         // step of its own, so other threads may run in between, and it passes at most one waypoint:
         // all of its checks see the counter value the previous event left.
         for ((_, event) in annots.groupBy { it.phase }.toSortedMap()) {
-          newLabels.addAll(event.mapNotNull { it.assumption })
-          newLabels.addAll(event.mapNotNull { it.flagUpdate })
-          val updates = event.mapNotNull { it.segmentUpdate }
-          if (updates.isNotEmpty()) {
-            val advance =
-              updates.foldRight(segmentCounter.ref as Expr<IntType>) { (cond, next), acc ->
-                Ite(cond, next, acc)
-              }
-            newLabels.add(AssignStmtLabel(segmentCounter, advance))
-          }
+          newLabels.addAll(eventLabels(event))
           if (newLabels.size > lastNewLabelsSize) {
             flushLabels(
               XcfaLocation(
@@ -606,6 +605,25 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
 
       flushLabels(edge.target, true)
+    }
+
+    for ((loc, annots) in preBranchEvents) {
+      val entry =
+        XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = loc.metadata)
+      loc.incomingEdges.toSet().forEach {
+        builder.removeEdge(it)
+        builder.addEdge(it.withTarget(entry))
+      }
+      val events = annots.groupBy { it.phase }.toSortedMap().values.toList()
+      var source = entry
+      events.forEachIndexed { i, event ->
+        val target =
+          if (i == events.size - 1) loc
+          else
+            XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = loc.metadata)
+        builder.addEdge(XcfaEdge(source, target, SequenceLabel(eventLabels(event)), EmptyMetaData))
+        source = target
+      }
     }
 
     if (firstCycle == -1) { // we are checking reachability, TODO refactor
@@ -650,13 +668,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           "Not handled: $constraint"
         }
         getBoolExpressionFromC(
-          constraint.value,
-          parseContext,
-          false,
-          false,
-          NullLogger.getInstance(),
-          builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
-        )
+            constraint.value,
+            parseContext,
+            false,
+            false,
+            NullLogger.getInstance(),
+            builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+          )
+          .inProgramMemory(builder)
       }
 
       WaypointType.FUNCTION_RETURN -> {
@@ -686,13 +705,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               "Not handled: $constraint"
             }
             getBoolExpressionFromC(
-              constraint.value.replace("\\result", cNameOpt.get() as String),
-              parseContext,
-              false,
-              false,
-              NullLogger.getInstance(),
-              builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
-            )
+                constraint.value.replace("\\result", cNameOpt.get() as String),
+                parseContext,
+                false,
+                false,
+                NullLogger.getInstance(),
+                builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+              )
+              .inProgramMemory(builder)
           } else {
             True() // no cname
           }
@@ -703,6 +723,15 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       WaypointType.FUNCTION_ENTER,
       WaypointType.TARGET -> True()
     }
+  }
+
+  /** Address-taken globals live in memory by now, so the constraint has to read them there too. */
+  private fun Expr<BoolType>.inProgramMemory(builder: XcfaProcedureBuilder): Expr<BoolType> {
+    @Suppress("UNCHECKED_CAST")
+    val references =
+      builder.parent.metaData["references"] as? Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+    if (references.isNullOrEmpty()) return this
+    return with(ReferenceElimination(parseContext)) { changeReferredVars(references, parseContext) }
   }
 
   /**
@@ -869,6 +898,23 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           override val target: Expr<BoolType> = varDecl.ref
         }
       }
+    val segments = witness.content.mapNotNull { it.segment }
+    WitnessOptimizer.exclusiveSegments =
+      if (
+        threadProcedures.isEmpty() ||
+          segments.any { seg -> seg.any { it.waypoint.action == Action.CYCLE } }
+      )
+        emptySet()
+      else
+        segments.indices
+          .filter { i ->
+            segments[i]
+              .filter { it.waypoint.action != Action.AVOID }
+              .singleOrNull()
+              ?.waypoint
+              ?.threadId != null
+          }
+          .toSet()
     // Global: waypoints of different threads must see the same segment progression.
     parent.addVar(XcfaGlobalVar(segmentCounter, Int(0), atomic = true))
     parent.addVar(XcfaGlobalVar(lastSegmentManager.varDecl, Int(0), atomic = true))
