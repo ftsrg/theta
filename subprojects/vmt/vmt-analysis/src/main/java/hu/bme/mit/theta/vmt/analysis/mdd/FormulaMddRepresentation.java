@@ -64,6 +64,18 @@ public final class FormulaMddRepresentation implements RecursiveIntObjMapView<Md
             public BooleanFormula toConstraint(MddHandle handle, FormulaMddContext ctx) {
                 return FormulaBoundsConstraint.of(handle, ctx);
             }
+        },
+        NODE_LEVEL {
+            @Override
+            public BooleanFormula toConstraint(MddHandle handle, FormulaMddContext ctx) {
+                return ctx.getEncoder().nodeLevel(handle);
+            }
+        },
+        VECTOR_LEVEL {
+            @Override
+            public BooleanFormula toConstraint(MddHandle handle, FormulaMddContext ctx) {
+                return ctx.getEncoder().vectorLevel(handle);
+            }
         };
 
         public abstract BooleanFormula toConstraint(MddHandle handle, FormulaMddContext ctx);

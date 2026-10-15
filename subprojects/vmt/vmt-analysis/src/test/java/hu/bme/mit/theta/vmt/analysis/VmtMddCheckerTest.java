@@ -25,8 +25,11 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.vmt.VmtModel;
 import hu.bme.mit.theta.vmt.VmtParser;
+import hu.bme.mit.theta.vmt.analysis.mdd.FormulaMddContext;
+import hu.bme.mit.theta.vmt.analysis.mdd.FormulaMddEncoder;
 import hu.bme.mit.theta.vmt.analysis.mdd.FormulaMddRepresentation;
 import hu.bme.mit.theta.vmt.analysis.mdd.FormulaProverPool;
+import hu.bme.mit.theta.vmt.analysis.mdd.FormulaVar;
 import hu.bme.mit.theta.vmt.analysis.mdd.VmtMddChecker;
 import hu.bme.mit.theta.vmt.analysis.mdd.VmtMddProof;
 import hu.bme.mit.theta.vmt.analysis.mdd.VmtTrace;
@@ -256,6 +259,25 @@ public class VmtMddCheckerTest {
             }
         }
         return result;
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("models")
+    public void testEncodingsAreExact(String file) throws Exception {
+        final VmtModel model = load(file);
+        final var result =
+                new VmtMddChecker(model, pool, NullLogger.getInstance(), null)
+                        .check(UnitPrec.getInstance());
+        final List<FormulaVar> vars = new ArrayList<>();
+        for (var v : model.getStateVars()) {
+            vars.add(new FormulaVar(v.name(), v.current(), v.type(), false));
+        }
+        final FormulaMddEncoder encoder =
+                new FormulaMddContext(model.getFormulaManager(), pool, vars).getEncoder();
+        final var stateSpace = result.getProof().getMdd();
+        final long expected = result.getProof().size();
+        assertEquals(expected, allSat(model, encoder.nodeLevel(stateSpace), false).size());
+        assertEquals(expected, allSat(model, encoder.vectorLevel(stateSpace), false).size());
     }
 
     @Test

@@ -48,6 +48,7 @@ public final class FormulaMddContext {
     private final FormulaProverPool proverPool;
     private final List<FormulaVar> modelVars;
     private final int edgeLimit;
+    private FormulaMddEncoder encoder;
 
     // free variables of a formula object; identity keys, so a miss only costs a recomputation
     private final ConcurrentMap<Formula, Set<String>> variableCache =
@@ -85,6 +86,11 @@ public final class FormulaMddContext {
 
     public FormulaProverPool getProverPool() {
         return proverPool;
+    }
+
+    public FormulaMddEncoder getEncoder() {
+        if (encoder == null) encoder = new FormulaMddEncoder(this);
+        return encoder;
     }
 
     /** The values of the MDD level variables in the prover's current model. */
