@@ -61,9 +61,9 @@ fun getPortfolioChecker(
 
   val portfolioStm =
     when (portfolioName) {
-      "STABLE",
       "COMPLEX" -> complex26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
+      "STABLE",
       "COMPLEX27" -> complex27(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "EMERGENT" -> emergent26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
@@ -82,6 +82,8 @@ fun getPortfolioChecker(
       "TERMINATION" -> termination(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "MULTITHREAD" -> multithreadPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "SYMBOLIC" -> symbolicPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       else -> {
         if (File(portfolioName).exists()) {

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
@@ -314,6 +315,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val modifications = LinkedHashMap<XcfaEdge, MutableList<Annotation>>()
 
     val statementToEdge = getStatementToEdge(builder)
+    val threadCreatingCalls =
+      statementToEdge.filter { it.second is StartLabel }.map { it.first }.toSet()
     segments.forEachIndexed { segmentIndex, segment ->
       val currentSegmentPred = Eq(segmentCounter.ref, Int(segmentIndex))
       // All (non-avoid) waypoints of the segment share the segment index: in a multi-follow
@@ -370,7 +373,13 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   label.stmt is HavocStmt<*>
               } else {
                 (wp.waypoint.type != WaypointType.ASSUMPTION ||
-                  edge.getCMetaData()?.notStatementStart == false) &&
+                  (edge.getCMetaData()?.notStatementStart == false &&
+                    // A modelled pthread_create's return assignment is after the call, even
+                    // though it inherits the same statement-start metadata as the StartLabel.
+                    !(statement in threadCreatingCalls &&
+                      statement is CCall &&
+                      label is StmtLabel &&
+                      (label.stmt as? AssignStmt<*>)?.varDecl == statement.ret))) &&
                   statement.lineNumberStart == loc.line &&
                   (loc.column == null || statement.colNumberStart + 1 == loc.column)
               }
@@ -405,10 +414,11 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               .filter { oldLabels[it] in matchedLabels }
               .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
               .sorted()
-          for (index in annotatedIndices) {
+          for ((i, index) in annotatedIndices.withIndex()) {
+            val flagUpdate = if (i == 0) segmentFlagUpdate else null
             modifications
               .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, index, assumption, segmentUpdate, segmentFlagUpdate))
+              .add(Annotation(edge, index, assumption, segmentUpdate, flagUpdate))
           }
         }
       }
