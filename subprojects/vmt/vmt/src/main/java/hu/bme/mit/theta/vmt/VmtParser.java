@@ -129,7 +129,22 @@ public final class VmtParser {
             }
         }
 
-        final String declarations = prefix.toString();
+        // a next-state symbol may be left undeclared; it takes the sort of its state variable,
+        // and is declared up front, as definitions may use it
+        final StringBuilder implicit = new StringBuilder();
+        for (NextLink link : nextLinks) {
+            final SExpr sort = constSorts.get(link.current());
+            if (sort != null && !constSorts.containsKey(link.next())) {
+                constSorts.put(link.next(), sort);
+                implicit.append("(declare-fun |")
+                        .append(link.next())
+                        .append("| () ")
+                        .append(sort)
+                        .append(")\n");
+            }
+        }
+
+        final String declarations = implicit + prefix.toString();
         final BooleanFormulaManager bmgr = fmgr.getBooleanFormulaManager();
 
         final List<VmtStateVar> stateVars = new ArrayList<>();

@@ -129,6 +129,21 @@ public class VmtParserTest {
     }
 
     @Test
+    public void testUndeclaredNextSymbol() {
+        final VmtModel model =
+                VmtParser.parse(
+                        """
+                        (declare-fun x () Int)
+                        (define-fun .x () Int (! x :next x.n))
+                        (define-fun .t () Bool (! (= x.n (+ x 1)) :trans true))
+                        """,
+                        fmgr);
+        final VmtStateVar x = model.getStateVar("x").orElseThrow();
+        assertEquals(FormulaType.IntegerType, x.type());
+        assertEquals(fmgr.makeVariable(FormulaType.IntegerType, "x.n"), x.next());
+    }
+
+    @Test
     public void testErrors() {
         assertThrows(VmtParseException.class, () -> VmtParser.parse("(declare-fun x () Int", fmgr));
         assertThrows(
