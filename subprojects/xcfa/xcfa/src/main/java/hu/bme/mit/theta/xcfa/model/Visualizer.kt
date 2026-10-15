@@ -79,7 +79,10 @@ private fun xcfaProcedureToDot(
   builder.appendLine("label=\"$name\";")
   locs.forEach { builder.appendLine("${it.name}[];") }
   edges.forEach {
-    val label = it.getFlatLabels().joinToString("\\n") { l -> l.toString().replace("\n", "\\n") }
+    val label =
+      it.getFlatLabels().joinToString("\\n") { l ->
+        l.toString().replace("\n", "\\n").replace("\r\\n", "\\n")
+      }
     val customLabel = edgeLabelCustomizer?.invoke(name, it) ?: ""
     builder.appendLine("${it.source.name} -> ${it.target.name} [label=\"$label $customLabel\"];")
   }

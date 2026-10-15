@@ -581,7 +581,7 @@ data class OcConfig(
     names = ["--oc-decision-procedure"],
     description = "Decision procedure for ordering-consistency check",
   )
-  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+  var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.BASIC,
   @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
   var outputConflictClauses: Boolean = false,
   @Parameter(
@@ -624,12 +624,6 @@ data class OcConfig(
       "Unroll exit reachability queries per round of the OC checker, which pick the loops to unroll deeper (0: none, every loop is unrolled deeper; -1: no limit)",
   )
   var maxExitQueries: Int = -1,
-  @Parameter(
-    names = ["--oc-witness-optimizations"],
-    description =
-      "Enable witness-specific optimizations in the OC checker (e.g. segment-counter ordering constraints introduced by the witness instrumentation)",
-  )
-  var witnessOptimizations: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

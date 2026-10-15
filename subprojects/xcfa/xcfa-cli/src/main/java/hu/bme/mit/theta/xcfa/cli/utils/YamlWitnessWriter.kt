@@ -973,6 +973,7 @@ private fun WitnessNode.toSegment(
       // program the violating process is not necessarily the first one)
       val locLoc =
         xcfaLocations.values.flatten().firstOrNull { it.error }
+          ?: outgoingEdge?.threadId?.toIntOrNull()?.let { xcfaLocations[it]?.first() }
           ?: xcfaLocations.values.first().first()
       loc =
         getLocation(inputFile, locLoc.metadata)

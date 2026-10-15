@@ -179,7 +179,7 @@ internal fun inlineCallSite(
         inStmts.add(
           StmtLabel(
             AssignStmt.of(cast(v, v.type), cast(v.type.defaultValue, v.type)),
-            metadata = EmptyMetaData,
+            metadata = invokeLabel.metadata,
           )
         )
       }
@@ -242,7 +242,7 @@ internal fun inlineCallSite(
             param.first.type,
           ),
         )
-      inStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
+      inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
     }
 
     if (param.second != ParamDirection.IN) {

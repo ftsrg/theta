@@ -228,9 +228,16 @@ fun emergent26(
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3Cegar = ic3Cegar(50_000, "cvc5:1.2.0")
-            val mddCegar = mddCegar(50_000, "cvc5:1.2.0")
+              cegar(
+                200_000,
+                portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"),
+                Domain.EXPL_PRED_STMT,
+                Refinement.SEQ_ITP,
+              )
+            val ic3Cegar =
+              ic3Cegar(50_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
+            val mddCegar =
+              mddCegar(50_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
 
             expl_pred_nwtMS then expl_pred_seqMS then ic3CegarMS then mddCegarMS
 
@@ -247,11 +254,22 @@ fun emergent26(
             // CVC by default, Z3 fallback
 
             val expl_pred_nwtCVC =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
+              cegar(
+                200_000,
+                portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"),
+                Domain.EXPL_PRED_STMT,
+                Refinement.NWT_IT_WP,
+              )
             val expl_pred_seqCVC =
-              cegar(200_000, "cvc5:1.2.0", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3CVC = ic3(50_000, "cvc5:1.2.0")
-            val ic3CegarCVC = ic3Cegar(50_000, "cvc5:1.2.0")
+              cegar(
+                200_000,
+                portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"),
+                Domain.EXPL_PRED_STMT,
+                Refinement.SEQ_ITP,
+              )
+            val ic3CVC = ic3(50_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
+            val ic3CegarCVC =
+              ic3Cegar(50_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
