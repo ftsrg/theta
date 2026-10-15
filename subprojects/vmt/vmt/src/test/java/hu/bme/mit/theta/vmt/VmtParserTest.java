@@ -72,6 +72,7 @@ public class VmtParserTest {
             (define-fun trans () Bool (! (and (= |x next| (inc (+ x in))) (= b.n (not b))) :trans true))
             (define-fun p () Bool (! (>= x 0) :invar-property 0))
             (define-fun q () Bool (! b :live-property 1))
+            (assert true)
             (check-sat)
             """;
 

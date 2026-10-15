@@ -117,9 +117,14 @@ public final class VmtParser {
                                 propertyBodies);
                     }
                 }
-                case "assert" ->
+                case "assert" -> {
+                    // VMT files conventionally end with (assert true); anything else has no
+                    // transition-system meaning
+                    if (list.size() != 2 || !isTrue(list.get(1))) {
                         throw new VmtParseException(
                                 "Plain assert commands are not part of VMT: " + list);
+                    }
+                }
                 default -> throw new VmtParseException("Unsupported command: " + head.text());
             }
         }

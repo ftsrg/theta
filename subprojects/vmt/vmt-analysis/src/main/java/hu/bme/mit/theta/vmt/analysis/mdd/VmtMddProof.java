@@ -24,6 +24,7 @@ public final class VmtMddProof implements Proof {
 
     private final MddHandle stateSpace;
     private Long size = null;
+    private boolean sizeComputed = false;
 
     public VmtMddProof(MddHandle stateSpace) {
         this.stateSpace = stateSpace;
@@ -33,9 +34,11 @@ public final class VmtMddProof implements Proof {
         return stateSpace;
     }
 
-    public long size() {
-        if (size == null) {
+    /** The number of reachable states, or null if it is infinite. */
+    public Long size() {
+        if (!sizeComputed) {
             size = MddInterpreter.calculateNonzeroCount(stateSpace);
+            sizeComputed = true;
         }
         return size;
     }
