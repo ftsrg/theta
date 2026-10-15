@@ -184,6 +184,9 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr udiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
+        if (unsignedBvLitExprToBigInteger(that).signum() == 0) {
+            return sameSignedness(BigInteger.TWO.pow(getType().getSize()).subtract(BigInteger.ONE));
+        }
         BigInteger div =
                 unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that));
         div = fitBigIntegerIntoUnsignedDomain(div, getType().getSize());
@@ -192,6 +195,12 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr sdiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
+        if (signedBvLitExprToBigInteger(that).signum() == 0) {
+            return sameSignedness(
+                    signedBvLitExprToBigInteger(this).signum() < 0
+                            ? BigInteger.ONE
+                            : BigInteger.TWO.pow(getType().getSize()).subtract(BigInteger.ONE));
+        }
         BigInteger div =
                 signedBvLitExprToBigInteger(this).divide(signedBvLitExprToBigInteger(that));
         div = fitBigIntegerIntoSignedDomain(div, getType().getSize());
@@ -302,26 +311,32 @@ public final class BvLitExpr extends NullaryExpr<BvType>
 
     public BvLitExpr smod(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        // Always positive semantics:
+        // Semantics:
         // 5 mod 3 = 2
-        // 5 mod -3 = 2
+        // 5 mod -3 = -1
         // -5 mod 3 = 1
-        // -5 mod -3 = 1
-        BigInteger result =
-                signedBvLitExprToBigInteger(this).mod(signedBvLitExprToBigInteger(that));
-        if (result.compareTo(BigInteger.ZERO) < 0) {
-            result = result.add(signedBvLitExprToBigInteger(that).abs());
+        // -5 mod -3 = -2
+        // x mod 0 = x
+        final BigInteger divisor = signedBvLitExprToBigInteger(that);
+        if (divisor.signum() == 0) {
+            return this;
         }
-        assert result.compareTo(BigInteger.ZERO) >= 0;
+        BigInteger result = signedBvLitExprToBigInteger(this).mod(divisor.abs());
+        if (divisor.signum() < 0 && result.signum() != 0) {
+            result = result.add(divisor);
+        }
         return bigIntegerToSignedBvLitExpr(result, getType().getSize());
     }
 
     public BvLitExpr urem(final BvLitExpr that) {
         // Semantics:
         // 5 rem 3 = 2
-        BigInteger thisInt = signedBvLitExprToBigInteger(this);
-        BigInteger thatInt = signedBvLitExprToBigInteger(that);
-        return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
+        BigInteger thisInt = unsignedBvLitExprToBigInteger(this);
+        BigInteger thatInt = unsignedBvLitExprToBigInteger(that);
+        if (thatInt.signum() == 0) {
+            return this;
+        }
+        return sameSignedness(thisInt.mod(thatInt));
     }
 
     public BvLitExpr srem(final BvLitExpr that) {
@@ -332,6 +347,9 @@ public final class BvLitExpr extends NullaryExpr<BvType>
         // -5 rem -3 = -1
         BigInteger thisInt = BvUtils.signedBvLitExprToBigInteger(this);
         BigInteger thatInt = BvUtils.signedBvLitExprToBigInteger(that);
+        if (thatInt.signum() == 0) {
+            return this;
+        }
         BigInteger thisAbs = thisInt.abs();
         BigInteger thatAbs = thatInt.abs();
         if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
