@@ -1,0 +1,12 @@
+; g(0) is one fixed Bool, so a and b can never both be true
+(declare-fun g (Int) Bool)
+(declare-fun a () Bool)
+(declare-fun a.n () Bool)
+(declare-fun b () Bool)
+(declare-fun b.n () Bool)
+(define-fun .a () Bool (! a :next a.n))
+(define-fun .b () Bool (! b :next b.n))
+(define-fun .init () Bool (! (and (not a) (not b)) :init true))
+(define-fun .trans () Bool (! (and (= a.n (or a (g 0))) (= b.n (or b (not (g 0))))) :trans true))
+(define-fun .p0 () Bool (! (not (and a b)) :invar-property 0))
+(define-fun .p1 () Bool (! (not a) :invar-property 1))

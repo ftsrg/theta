@@ -192,7 +192,8 @@ public final class VmtParser {
                     new VmtProperty(
                             p.kind(), p.index(), p.name(), parseTerm(declarations, p.body())));
         }
-        return new VmtModel(fmgr, stateVars, inputVars, init, trans, properties);
+        return UfElimination.apply(
+                new VmtModel(fmgr, stateVars, inputVars, init, trans, properties));
     }
 
     private void readAnnotations(

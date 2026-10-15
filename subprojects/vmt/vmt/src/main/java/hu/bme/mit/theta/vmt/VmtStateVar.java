@@ -20,7 +20,18 @@ import org.sosy_lab.java_smt.api.FormulaType;
 
 /**
  * A state variable: the current-state symbol and the next-state symbol linked to it by {@code
- * :next}.
+ * :next}. A frozen variable never changes; it holds a value of an uninterpreted function.
  */
 public record VmtStateVar(
-        String name, Formula current, String nextName, Formula next, FormulaType<?> type) {}
+        String name,
+        Formula current,
+        String nextName,
+        Formula next,
+        FormulaType<?> type,
+        boolean frozen) {
+
+    public VmtStateVar(
+            String name, Formula current, String nextName, Formula next, FormulaType<?> type) {
+        this(name, current, nextName, next, type, false);
+    }
+}

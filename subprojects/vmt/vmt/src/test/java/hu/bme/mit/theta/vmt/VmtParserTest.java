@@ -144,6 +144,37 @@ public class VmtParserTest {
     }
 
     @Test
+    public void testUninterpretedFunctionsBecomeFrozen() {
+        final VmtModel model =
+                VmtParser.parse(
+                        """
+                        (declare-fun g (Bool Int) Bool)
+                        (declare-fun b () Bool)
+                        (define-fun .b () Bool (! b :next b.n))
+                        (define-fun .t () Bool (! (= b.n (g b 3)) :trans true))
+                        (define-fun .p () Bool (! (g true 3) :invar-property 0))
+                        """,
+                        fmgr);
+        // b, the ready flag and g at (false, 3) and (true, 3)
+        assertEquals(4, model.getStateVars().size());
+        assertEquals(2, model.getStateVars().stream().filter(VmtStateVar::frozen).count());
+        assertTrue(
+                fmgr.extractVariablesAndUFs(model.getTrans()).keySet().stream()
+                        .noneMatch("g"::equals));
+        assertThrows(
+                VmtParseException.class,
+                () ->
+                        VmtParser.parse(
+                                """
+                                (declare-fun f (Int) Int)
+                                (declare-fun x () Int)
+                                (define-fun .x () Int (! x :next x.n))
+                                (define-fun .t () Bool (! (= x.n (f x)) :trans true))
+                                """,
+                                fmgr));
+    }
+
+    @Test
     public void testErrors() {
         assertThrows(VmtParseException.class, () -> VmtParser.parse("(declare-fun x () Int", fmgr));
         assertThrows(
