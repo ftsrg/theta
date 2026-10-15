@@ -23,6 +23,10 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-common"))
     implementation(project(":theta-vmt"))
+    implementation(project(":theta-core"))
+    implementation(project(":theta-solver"))
+    implementation(project(":theta-solver-javasmt"))
+    testImplementation(project(":theta-solver-z3-legacy"))
     implementation(Deps.javasmt)
     Deps.javasmtDeps.keys.forEach(this@dependencies::implementation)
 }

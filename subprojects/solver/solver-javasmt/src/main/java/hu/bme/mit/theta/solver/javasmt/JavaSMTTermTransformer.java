@@ -66,6 +66,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -108,7 +109,16 @@ final class JavaSMTTermTransformer {
                     QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>>
             otherFuncs;
 
+    // null unless enabled: a long-lived solver would otherwise keep every converted term
+    private final Map<Formula, Expr<?>> transformCache;
+
     public JavaSMTTermTransformer(final JavaSMTSymbolTable symbolTable, SolverContext context) {
+        this(symbolTable, context, false);
+    }
+
+    JavaSMTTermTransformer(
+            final JavaSMTSymbolTable symbolTable, SolverContext context, boolean cacheTerms) {
+        this.transformCache = cacheTerms ? new HashMap<>() : null;
         this.symbolTable = symbolTable;
         this.context = context;
 
@@ -548,6 +558,19 @@ final class JavaSMTTermTransformer {
     ////////
 
     private Expr<?> transform(final Formula term, final Model model, final List<Decl<?>> vars) {
+        // terms are DAGs: without memoization a shared subterm is transformed once per use
+        final boolean cacheable = transformCache != null && model == null && vars.isEmpty();
+        if (cacheable) {
+            final Expr<?> cached = transformCache.get(term);
+            if (cached != null) return cached;
+        }
+        final Expr<?> result = transformUncached(term, model, vars);
+        if (cacheable) transformCache.put(term, result);
+        return result;
+    }
+
+    private Expr<?> transformUncached(
+            final Formula term, final Model model, final List<Decl<?>> vars) {
 
         try {
             return context.getFormulaManager()
