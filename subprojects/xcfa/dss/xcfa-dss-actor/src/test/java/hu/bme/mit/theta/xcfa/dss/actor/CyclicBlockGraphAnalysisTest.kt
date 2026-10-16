@@ -24,7 +24,6 @@ import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
-import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeAll
@@ -62,7 +61,7 @@ class CyclicBlockGraphAnalysisTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
     // Sequential only: the default (legacy) Z3 is not thread-safe
-    return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
+    return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
         behaviorFor = { block ->

@@ -18,6 +18,10 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import java.time.Duration
+
+/** Time limit of an end-to-end case: the sequential executor analyzes one block at a time. */
+val END_TO_END_TIMEOUT: Duration = Duration.ofSeconds(240)
 
 private var defaultSolversRegistered = false
 

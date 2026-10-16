@@ -33,7 +33,6 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.dss.decomposition.horizontalMergePass
 import hu.bme.mit.theta.xcfa.model.*
-import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -67,15 +66,11 @@ class MergeDecompositionActorTest {
   private fun checkDirectly(xcfa: XCFA) =
     runWorkerConfig(xcfa, checkerFactory = { x -> cegarChecker(x) })
 
-  private fun checkDecomposed(
-    wholeProgram: XCFA,
-    blockGraph: BlockGraph,
-    timeout: Duration = Duration.ofSeconds(60),
-  ): DssResult {
+  private fun checkDecomposed(wholeProgram: XCFA, blockGraph: BlockGraph): DssResult {
     val procedure = wholeProgram.procedures.single()
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
     // Sequential only: the default (legacy) Z3 is not thread-safe
-    return assertTimeoutPreemptively<DssResult>(timeout) {
+    return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
         behaviorFor = { block ->
@@ -218,11 +213,7 @@ class MergeDecompositionActorTest {
   fun `a merged cyclic block graph reproduces the UNSAFE verdict`() {
     val wholeProgram = xyLoopXcfa(incrementY = false)
     val blockGraph = mergedBlockGraph(wholeProgram, targetBlockCount = 2)
-    // The slowest case on the sequential executor, which analyzes its blocks one at a time
-    assertEquals(
-      DssResult.UNSAFE,
-      checkDecomposed(wholeProgram, blockGraph, timeout = Duration.ofSeconds(240)),
-    )
+    assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram, blockGraph))
     assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
