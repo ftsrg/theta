@@ -35,11 +35,24 @@ object DssTrace {
   var expressions = false
     private set
 
-  fun enable(expressions: Boolean = false, sink: (String) -> Unit) {
-    startNanos = System.nanoTime()
+  /**
+   * Starts tracing. [originEpochMillis] puts time 0 at that wall-clock instant instead of now, so
+   * that the traces of DSS worker processes share the time axis of the process that started them.
+   */
+  fun enable(
+    expressions: Boolean = false,
+    originEpochMillis: Long? = null,
+    sink: (String) -> Unit,
+  ) {
+    val sinceOrigin = originEpochMillis?.let { System.currentTimeMillis() - it } ?: 0L
+    startNanos = System.nanoTime() - sinceOrigin * 1_000_000
     this.expressions = expressions
     this.sink = sink
   }
+
+  /** The wall-clock instant of time 0 of the current trace. */
+  fun originEpochMillis(): Long =
+    System.currentTimeMillis() - (System.nanoTime() - startNanos) / 1_000_000
 
   fun disable() {
     sink = null

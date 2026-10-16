@@ -68,7 +68,9 @@ DSS works on programs with a single XCFA procedure (the CLI rejects others).
 | `--dss-allow-single-block-decomposition` | off | With `MERGE` and a target of at most 1, use a single block | `allowSingleBlockDecompositionWhenMerging` |
 | `--dss-reset-precision` | off | Analyze every start state with the initial precision | `resetPrecisionForEveryRun` |
 | `--dss-reuse-block-precision` | off | Add the predicates a block's earlier CEGAR runs ended with to the initial precision of its next runs (11.2) | none |
-| `--dss-executor {SEQUENTIAL,CONCURRENT}` | `SEQUENTIAL` | Actor driver | `executorType` (`DSS`, i.e. concurrent, by default) |
+| `--dss-executor {SEQUENTIAL,CONCURRENT,PROCESS}` | `SEQUENTIAL` | Actor driver; `PROCESS` analyzes every block in a worker process of its own (8.4) | `executorType` (`DSS`, i.e. concurrent, by default) |
+| `--dss-max-processes N` | `0` | `PROCESS`: at most `N` worker processes (`0`: one per block); a worker serving several blocks analyzes them one at a time | none |
+| `--dss-worker-heap SIZE` | same as this JVM | `PROCESS`: `-Xmx` of every worker process | none |
 | `--dss-solver NAME` | `Z3` | Solver of the block checkers and of DSS's own SMT checks | the solver of the PredicateCPA (MathSAT5) |
 | `--dss-solver-fallback` | off | Repeat a DSS coverage/satisfiability check that `--dss-solver` fails on (unknown result or crash) with `--dss-fallback-solver` (11.3); without it, such a failure gives an unknown verdict | none |
 | `--dss-checker-solver-fallback` | off | Repeat a block checker's check that throws (e.g. Z3 `unknown` on nonlinear arithmetic) with the same checker over `--dss-fallback-solver`, before `--dss-checker-fallback` moves on (11.3) | none |
@@ -90,7 +92,9 @@ goes through a Horn query, fails on some C arithmetic ("cannot process EXISTS qu
 robust default is sequential with the legacy binding, and
 `--dss-executor CONCURRENT --dss-solver Z3:new` gives CPAchecker's concurrent execution wherever
 that solver works. `JavaSMT:MATHSAT5` (CPAchecker's solver) also crashed natively under
-concurrency on Windows; `JavaSMT:Z3` has no interpolation.
+concurrency on Windows; `JavaSMT:Z3` has no interpolation. `--dss-executor PROCESS` runs the
+blocks in parallel with any of these solvers, legacy Z3 included: every block analysis runs in a
+worker process of its own, so no native solver is ever used by two threads of one process (8.4).
 
 ## 3. Concepts
 
@@ -536,6 +540,16 @@ before the final messages end its run.
 * `runDssActorsSequentially` (`SEQUENTIAL`, CPAchecker's `SequentialDssExecutor`): one thread,
   round-robin, one message per actor per round; quiescence is "all queues empty". Actors that shut
   down discard their remaining messages.
+* `runDssActorsInProcesses` (`PROCESS`, Theta-only): `runDssActors`, but every block's behavior is a
+  proxy for a worker process that holds the real `PredicateBlockBehavior` and answers one request
+  at a time over a loopback socket (`DssProcessExecutor.kt`). xcfa-cli starts the workers as the
+  same JVM and command line plus hidden `--dss-worker-*` options; each parses the program, checks
+  that its block graph has the same fingerprint, and serves its blocks. Messages travel as text
+  (`DssExprCodec`: program variables by name, `DssAuxVars` as `(index, type)`), so they must not
+  refer to other declarations. A worker that dies (e.g. a native solver crash) fails its block with
+  a `DssWorkerException` instead of the whole JVM. Each worker has its own checker roster, so
+  `ROUND_ROBIN` cycles per worker instead of across all blocks, and its own solver statistics,
+  which the main process does not collect.
 
 ## 9. Soundness and termination
 

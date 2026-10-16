@@ -11,7 +11,8 @@ relevant section before changing behavior.
   need the native libraries. They are timing-sensitive: on a loaded machine, a timeout of
   `NestedLoopActorTest` is not necessarily a regression; rerun it on its own before concluding.
 - Run every new end-to-end case with both executors (`runDssActors` and
-  `runDssActorsSequentially`), as the existing tests do.
+  `runDssActorsSequentially`), as the existing tests do. `DssProcessExecutorTest` starts real
+  worker JVMs (`DssProcessTestWorker`, the test classpath) and rebuilds its fixture there.
 
 ## Invariants
 - **No dependency on `xcfa-cli`** in production code (same reason as in `xcfa-dss-analysis`);
@@ -29,7 +30,11 @@ relevant section before changing behavior.
   (`doc/DSS.md` section 9).
 - **Repeated violation conditions** are detected by structural equality, which relies on
   `DssAuxVars.canonicalize` in `xcfa-dss-analysis`.
-- Legacy Z3 is not thread-safe; the concurrent executor needs a thread-safe solver (`Z3:new`).
+- Legacy Z3 is not thread-safe; the concurrent executor needs a thread-safe solver (`Z3:new`). The
+  process executor (`runDssActorsInProcesses`) runs any solver in parallel.
+- **Message expressions must survive `DssExprCodec`** (process executor): only program variables
+  and `DssAuxVars`, no quantifiers if equality matters. A new message field needs a matching
+  change in `DssProcessExecutor.kt`'s `writeMessage`/`readMessage`.
 
 ## Trace (`--dss-trace`, `--dss-trace-expressions`)
 - `DssTrace` is process-wide and off by default; emit through `DssTrace` only, never through
@@ -39,7 +44,8 @@ relevant section before changing behavior.
 - New events or fields belong in the `--dss-trace` row of the option table in `doc/DSS.md`.
 
 ## Integration points
-- Entry points `runDssActors` / `runDssActorsSequentially`, called by `xcfa-cli`
-  (`ConfigToDssChecker.kt`, `--dss-executor`).
+- Entry points `runDssActors` / `runDssActorsSequentially` / `runDssActorsInProcesses`, called by
+  `xcfa-cli` (`ConfigToDssChecker.kt`, `--dss-executor`); xcfa-cli also starts the worker
+  processes and runs `serveDssBlocks` in them (hidden `--dss-worker-*` options).
 - Consumes `xcfa-dss-analysis` (block-analysis primitives) and `xcfa-dss-decomposition` (block
   graph).

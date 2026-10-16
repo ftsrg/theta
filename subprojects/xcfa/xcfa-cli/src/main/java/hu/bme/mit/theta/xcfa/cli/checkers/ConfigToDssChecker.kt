@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.Domain
@@ -43,11 +44,16 @@ import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
 import hu.bme.mit.theta.xcfa.dss.actor.DssResult
 import hu.bme.mit.theta.xcfa.dss.actor.DssTrace
+import hu.bme.mit.theta.xcfa.dss.actor.DssWorkerLauncher
 import hu.bme.mit.theta.xcfa.dss.actor.PredicateBlockBehavior
+import hu.bme.mit.theta.xcfa.dss.actor.fingerprint
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActors
+import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsInProcesses
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsSequentially
+import hu.bme.mit.theta.xcfa.dss.actor.serveDssBlocks
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
@@ -70,6 +76,9 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.lang.management.ManagementFactory
+import java.nio.file.Paths
+import kotlin.concurrent.thread
 
 /**
  * `--backend DSS`: runs Distributed Summary Synthesis instead of an ordinary, monolithic checker -
@@ -173,7 +182,9 @@ fun getDssChecker(
   logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.statistics())
   if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
   if (dssConfig.trace || dssConfig.traceExpressions) {
-    DssTrace.enable(dssConfig.traceExpressions) { logger.write(Logger.Level.RESULT, "%s\n", it) }
+    DssTrace.enable(dssConfig.traceExpressions, dssConfig.workerTraceOrigin) {
+      logger.write(Logger.Level.RESULT, "%s\n", it)
+    }
   }
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
@@ -261,11 +272,31 @@ fun getDssChecker(
     )
   }
 
+  if (dssConfig.workerPort != 0) {
+    // A worker process of --dss-executor PROCESS: answers for its blocks, never reports a verdict
+    val blocks = blockGraph.blocks.associateBy { it.id }
+    serveDssBlocks(
+      dssConfig.workerPort,
+      dssConfig.workerIndex,
+      blockGraph.fingerprint(),
+      dssConfig.workerBlocks.associateWith { behaviorFor(blocks.getValue(it)) },
+      DssExprCodec(xcfa),
+    )
+    kotlin.system.exitProcess(0)
+  }
+
   val dssResult =
     try {
       when (dssConfig.executor) {
         DssExecutor.CONCURRENT -> runDssActors(blockGraph, behaviorFor = behaviorFor)
         DssExecutor.SEQUENTIAL -> runDssActorsSequentially(blockGraph, behaviorFor = behaviorFor)
+        DssExecutor.PROCESS ->
+          runDssActorsInProcesses(
+            blockGraph,
+            dssWorkerLauncher(dssConfig),
+            DssExprCodec(xcfa),
+            dssConfig.maxProcesses,
+          )
       }
     } catch (e: RuntimeException) {
       // Usually wrapped: the observer rethrows a block's failure, see DssObserverActor.verdict
@@ -282,6 +313,45 @@ fun getDssChecker(
   when (dssResult) {
     DssResult.SAFE -> SafetyResult.safe(EmptyProof.getInstance())
     DssResult.UNSAFE -> SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+  }
+}
+
+/**
+ * Starts DSS worker processes as this JVM with the command line of this run, so that each parses
+ * the program and decomposes it the same way. Workers write no output files; their trace lines are
+ * copied to this process's output, everything else they print is dropped.
+ */
+private fun dssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
+  val args =
+    XcfaCli.launchArgs ?: error("--dss-executor PROCESS needs xcfa-cli's own main (XcfaCli.main)")
+  val java =
+    ProcessHandle.current()
+      .info()
+      .command()
+      .orElse(Paths.get(System.getProperty("java.home"), "bin", "java").toString())
+  val heap = dssConfig.workerHeap
+  val jvmArgs =
+    ManagementFactory.getRuntimeMXBean().inputArguments.filterNot {
+      it.startsWith("-agentlib:jdwp") || (heap != null && it.startsWith("-Xmx"))
+    } + listOfNotNull(heap?.let { "-Xmx$it" })
+  val traceOrigin = if (DssTrace.enabled) DssTrace.originEpochMillis() else null
+  return DssWorkerLauncher { index, blockIds, port ->
+    val command =
+      listOf(java) +
+        jvmArgs +
+        listOf("-cp", System.getProperty("java.class.path"), XcfaCli::class.java.name) +
+        args +
+        listOf("--output", "NONE", "--witness-generation", "NONE") +
+        listOf("--dss-worker-port", "$port", "--dss-worker-index", "$index") +
+        listOf("--dss-worker-blocks", blockIds.joinToString(",")) +
+        (traceOrigin?.let { listOf("--dss-worker-trace-origin", "$it") } ?: emptyList())
+    val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.INHERIT).start()
+    thread(isDaemon = true, name = "dss-worker-$index-output") {
+      process.inputStream.bufferedReader().forEachLine {
+        if (it.startsWith("DSS-TRACE ")) println(it)
+      }
+    }
+    process
   }
 }
 

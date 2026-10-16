@@ -139,8 +139,13 @@ class XcfaCli(private val args: Array<String>) {
 
     private const val JAR_NAME = "theta-xcfa-cli.jar"
 
+    /** The arguments of [main], which DSS worker processes are started with again. */
+    var launchArgs: Array<String>? = null
+      private set
+
     @JvmStatic
     fun main(args: Array<String>) {
+      launchArgs = args
       val mainApp = XcfaCli(args)
       mainApp.run()
     }

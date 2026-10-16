@@ -452,9 +452,30 @@ data class DssConfig(
     description =
       "Which DSS actor-runtime driver to use. SEQUENTIAL by default (CPAchecker's default is " +
         "concurrent): the default solver (Z3) crashes when used by several threads; use " +
-        "CONCURRENT together with --dss-solver Z3:new",
+        "CONCURRENT together with --dss-solver Z3:new, or PROCESS, which analyzes every block " +
+        "in a worker process of its own and so runs any solver in parallel",
   )
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
+  @Parameter(
+    names = ["--dss-max-processes"],
+    description =
+      "--dss-executor PROCESS: at most this many worker processes (0: one per block); a worker " +
+        "serving several blocks analyzes them one at a time",
+  )
+  var maxProcesses: Int = 0,
+  @Parameter(
+    names = ["--dss-worker-heap"],
+    description =
+      "--dss-executor PROCESS: maximum heap of each worker process (e.g. 2g); by default the " +
+        "workers get the same JVM options as this process",
+  )
+  var workerHeap: String? = null,
+  @Parameter(names = ["--dss-worker-port"], hidden = true) var workerPort: Int = 0,
+  @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
+  @Parameter(names = ["--dss-worker-blocks"], hidden = true)
+  var workerBlocks: List<String> = emptyList(),
+  @Parameter(names = ["--dss-worker-trace-origin"], hidden = true)
+  var workerTraceOrigin: Long? = null,
   @Parameter(
     names = ["--dss-global-predicate-pool"],
     description =

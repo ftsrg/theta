@@ -81,6 +81,15 @@ object DssAuxVars {
 
   fun isAux(decl: VarDecl<*>): Boolean = keyOf.containsKey(decl)
 
+  /**
+   * The interning index of an auxiliary variable, or null for any other variable. Together with the
+   * type it identifies the variable across processes, where the names differ.
+   */
+  fun indexOf(decl: VarDecl<*>): Int? = keyOf[decl]?.index
+
+  /** The auxiliary variable of [index] and [type] in this process. */
+  fun of(index: Int, type: Type): VarDecl<*> = get(index, type)
+
   /** The auxiliary variables of [expr], in order of first occurrence. */
   fun varsOf(expr: Expr<*>): List<VarDecl<*>> {
     val result = linkedSetOf<VarDecl<*>>()

@@ -158,6 +158,11 @@ enum class DssExecutor {
    * `SEQUENTIAL`.
    */
   SEQUENTIAL,
+  /**
+   * Like [CONCURRENT], but every block's analysis runs in a worker process of its own
+   * (`runDssActorsInProcesses`), so solvers that are not thread-safe can run in parallel.
+   */
+  PROCESS,
 }
 
 /**

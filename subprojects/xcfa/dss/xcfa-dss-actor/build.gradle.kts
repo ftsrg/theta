@@ -28,8 +28,9 @@ dependencies {
     implementation(project(":theta-xcfa-dss-decomposition"))
     implementation(project(":theta-xcfa-dss-analysis"))
     implementation(project(":theta-solver"))
+    // Expressions of the messages exchanged with DSS worker processes travel as parsed text
+    implementation(project(":theta-grammar"))
 
-    testImplementation(project(":theta-grammar"))
     testImplementation(project(":theta-solver-z3"))
     // Only tests need a real checker (PredicateBlockBehavior takes one as an injected factory in
     // production - see PredicateBlockBehavior.kt) - not depending on xcfa-cli here is what lets
