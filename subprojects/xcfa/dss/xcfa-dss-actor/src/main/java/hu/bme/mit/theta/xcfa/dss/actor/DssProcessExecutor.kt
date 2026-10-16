@@ -30,6 +30,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 private const val HELLO = "dss-worker-1"
 private const val REQUEST_INIT = 1
@@ -39,6 +40,8 @@ private const val REPLY_OK = 0
 private const val REPLY_ERROR = 1
 private const val INTERRUPT_POLL_MILLIS = 100
 private const val WORKER_EXIT_WAIT_SECONDS = 5L
+private const val PARENT_POLL_MILLIS = 500L
+private const val WORKER_ORPHANED_EXIT_CODE = 3
 
 /**
  * Starts the worker process [index] serving [blockIds], which connects back to `localhost:[port]`
@@ -225,6 +228,14 @@ fun serveDssBlocks(
   behaviors: Map<String, DssBlockBehavior>,
   codec: DssExprCodec,
 ) {
+  // A killed main process cannot stop its workers, and one busy in a solver call would notice the
+  // closed connection only after the call returns
+  ProcessHandle.current().parent().ifPresent { parent ->
+    thread(isDaemon = true, name = "dss-worker-$index-parent-watch") {
+      while (parent.isAlive) Thread.sleep(PARENT_POLL_MILLIS)
+      Runtime.getRuntime().halt(WORKER_ORPHANED_EXIT_CODE)
+    }
+  }
   Socket(InetAddress.getLoopbackAddress(), port).use { socket ->
     socket.tcpNoDelay = true
     val input = DataInputStream(BufferedInputStream(socket.getInputStream()))
