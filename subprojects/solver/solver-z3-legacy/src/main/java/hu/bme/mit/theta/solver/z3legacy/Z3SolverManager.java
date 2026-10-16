@@ -20,16 +20,14 @@ import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.solver.*;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
 
 public final class Z3SolverManager extends SolverManager {
 
     private static final String NAME = "Z3";
 
     private boolean closed = false;
-    // Concurrent set, not a plain HashSet: DSS's block actors create solvers from several threads
-    // at once through this one shared manager.
-    private final Set<SolverBase> instantiatedSolvers = ConcurrentHashMap.newKeySet();
+    private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
 
     private Z3SolverManager() {}
 

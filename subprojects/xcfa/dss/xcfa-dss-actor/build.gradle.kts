@@ -37,3 +37,9 @@ dependencies {
     // xcfa-cli depend on this module for --algorithm DSS without a circular project dependency.
     testImplementation(project(":theta-xcfa-cli"))
 }
+
+tasks.withType<Test> {
+    // XcfaCliDssTest runs the concurrent executor with multi-threaded Z3, which can leave native
+    // solver state that breaks later test classes in the same JVM; a JVM per class avoids it.
+    forkEvery = 1
+}

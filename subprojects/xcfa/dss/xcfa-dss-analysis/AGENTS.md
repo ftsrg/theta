@@ -2,7 +2,7 @@
 
 Building blocks of one DSS block analysis: extracting a block as a standalone XCFA, violation
 conditions, postconditions, solver-backed operators, precisions, and running an injected checker.
-The design and its CPAchecker counterparts are in `doc/DSS.md` (sections 6, 9, 11); read the
+The design and its CPAchecker counterparts are in `dss/DSS.md` (sections 6, 9, 11); read the
 relevant section before changing behavior.
 
 ## Build and test
@@ -19,7 +19,7 @@ relevant section before changing behavior.
   them afterwards. Solvers created outside a scope stay referenced until `SolverManager.closeAll()`,
   which exhausts the heap after a few thousand block analyses.
 - **Violation conditions are exact** (weakest preconditions, no abstraction); a per-path condition
-  may under-approximate but must never over-approximate (`doc/DSS.md` section 9).
+  may under-approximate but must never over-approximate (`dss/DSS.md` section 9).
 - **Auxiliary variables are canonical**: every violation condition goes through
   `DssAuxVars.canonicalize`. The actor module recognizes repeated conditions by structural
   equality, so a new way to build a condition that skips it breaks deduplication silently.
@@ -35,7 +35,7 @@ relevant section before changing behavior.
 - **New solver fallback or operator**: keep the statistics in `DssSolverStatistics` in sync, as
   the CLI prints them (`DSS solver statistics:`).
 - **New `--dss-*` option**: the flag lives in `xcfa-cli` (`XcfaConfig.kt`, wired in
-  `ConfigToDssChecker.kt`); add it to the option table of `doc/DSS.md` and to `XcfaCliDssTest`.
+  `ConfigToDssChecker.kt`); add it to the option table of `dss/DSS.md` and to `XcfaCliDssTest`.
 
 ## Integration points
 - Used by `xcfa-dss-actor` (`PredicateBlockBehavior`) and wired by `xcfa-cli`

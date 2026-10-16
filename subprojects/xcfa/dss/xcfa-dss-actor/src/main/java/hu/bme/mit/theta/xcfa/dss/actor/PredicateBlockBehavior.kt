@@ -56,7 +56,7 @@ import hu.bme.mit.theta.xcfa.passes.changeVars
 
 /**
  * The default DSS solver: legacy Z3. Its interpolation handles C integer arithmetic, but it crashes
- * when used by several threads, so the concurrent executor needs `Z3:new` (see `doc/DSS.md`).
+ * when used by several threads, so the concurrent executor needs `Z3:new` (see `dss/DSS.md`).
  */
 const val DEFAULT_DSS_SOLVER = "Z3"
 

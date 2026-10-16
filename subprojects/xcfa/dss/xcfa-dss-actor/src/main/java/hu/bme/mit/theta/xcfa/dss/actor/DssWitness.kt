@@ -156,14 +156,14 @@ private fun stepThrough(
   }
 }
 
-/** [path] as a trace of [xcfa]'s only process; the states only fix the [initial] values. */
+/** [path] from [start] as a trace of [xcfa]'s only process; the states only fix [initial]. */
 fun violationTrace(
   xcfa: XCFA,
+  start: XcfaLocation,
   path: List<XcfaEdge>,
   initial: Valuation,
 ): Trace<XcfaState<PtrState<*>>, XcfaAction> {
-  val start: XcfaState<PtrState<*>> =
-    XcfaState(xcfa, path.first().source, PtrState(ExplState.of(initial)))
+  val first: XcfaState<PtrState<*>> = XcfaState(xcfa, start, PtrState(ExplState.of(initial)))
   val states = path.map { XcfaState<PtrState<*>>(xcfa, it.target, PtrState(ExplState.top())) }
-  return Trace.of(listOf(start) + states, path.map { XcfaAction(0, it) })
+  return Trace.of(listOf(first) + states, path.map { XcfaAction(0, it) })
 }

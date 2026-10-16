@@ -112,24 +112,16 @@ internal fun postVerificationLogging(
         forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
           if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
             val trace = retrieveTrace(safetyResult)
-            // Not every UNSAFE result carries a Trace: e.g. DSS reports an EmptyCex, which
-            // concretizeTrace's unchecked cast would fail on, skipping the witness writers below.
-            if (trace is Trace<*, *>) {
-              val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-                concretizeTrace(trace, config, parseContext)
+            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+              concretizeTrace(trace, config, parseContext)
 
-              writeTraceAsDot(resultFolder, concrTrace, logger)
+            writeTraceAsDot(resultFolder, concrTrace, logger)
 
-              writeTraceAsPlantuml(resultFolder, trace, logger)
+            writeTraceAsPlantuml(resultFolder, trace, logger)
 
-              writeTraceAsOptimizedPlantuml(resultFolder, concrTrace, logger)
+            writeTraceAsOptimizedPlantuml(resultFolder, concrTrace, logger)
 
-              writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
-            } else {
-              logger.info(
-                "No concrete counterexample trace available for this backend's UNSAFE result; skipping trace/plantuml output."
-              )
-            }
+            writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
           }
 
           try {

@@ -24,17 +24,14 @@ package hu.bme.mit.theta.analysis.runtimemonitor
  */
 class MonitorCheckpoint internal constructor(private val name: String) {
 
-  // Per thread, not shared: DSS builds and runs checkers on several threads at once, and a shared
-  // set let one block's checker construction swap out another's monitor mid-check (spurious
-  // NotSolvableExceptions). Each monitor is registered and executed on the same thread.
-  private val registeredMonitors = ThreadLocal.withInitial { mutableSetOf<Monitor>() }
+  private val registeredMonitors: HashSet<Monitor> = HashSet()
 
   fun registerMonitor(m: Monitor) {
-    registeredMonitors.get().add(m)
+    registeredMonitors.add(m)
   }
 
   fun executeCheckpoint() {
-    registeredMonitors.get().forEach { monitor: Monitor -> monitor.execute(name) }
+    registeredMonitors.forEach { monitor: Monitor -> monitor.execute(name) }
   }
 
   companion object Checkpoints {
@@ -70,6 +67,6 @@ class MonitorCheckpoint internal constructor(private val name: String) {
   }
 
   private fun reset() {
-    registeredMonitors.get().clear()
+    registeredMonitors.clear()
   }
 }

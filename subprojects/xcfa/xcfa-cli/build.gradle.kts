@@ -62,13 +62,6 @@ application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
 
-tasks.withType<Test> {
-    // DSS's concurrent executor runs multi-threaded Z3, which has intermittently broken solver
-    // calls in later test classes of the same JVM (flaky NotSolvableException); a fresh JVM per
-    // test class avoids that shared native state.
-    forkEvery = 1
-}
-
 archivePackaging {
     variant {
         toolName = "Theta-svcomp"

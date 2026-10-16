@@ -27,7 +27,6 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
-import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.model.*

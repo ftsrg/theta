@@ -536,15 +536,17 @@ before the final messages end its run.
 ### 8.4 Executors
 
 * `runDssActors` (`CONCURRENT`, CPAchecker's `MultithreadingDssExecutor`): one platform thread per
-  block, plus the monitor.
+  block, plus the monitor. Its CEGAR block checkers run without CEGAR's counterexample monitor,
+  whose registry (`MonitorCheckpoint`) is global and would mix up concurrent checkers.
 * `runDssActorsSequentially` (`SEQUENTIAL`, CPAchecker's `SequentialDssExecutor`): one thread,
   round-robin, one message per actor per round; quiescence is "all queues empty". Actors that shut
   down discard their remaining messages.
 * `runDssActorsInProcesses` (`PROCESS`, Theta-only): `runDssActors`, but every block's behavior is a
   proxy for a worker process that holds the real `PredicateBlockBehavior` and answers one request
   at a time over a loopback socket (`DssProcessExecutor.kt`). xcfa-cli starts the workers as the
-  same JVM and command line plus hidden `--dss-worker-*` options; each parses the program, checks
-  that its block graph has the same fingerprint, and serves its blocks. Messages travel as text
+  same JVM with this run's config (`-c`, like `InProcessChecker`), with the hidden
+  `--dss-worker-*` settings filled in; each parses the program, checks that its block graph has the
+  same fingerprint, and serves its blocks. Messages travel as text
   (`DssExprCodec`: program variables by name, `DssAuxVars` as `(index, type)`), so they must not
   refer to other declarations. A worker that dies (e.g. a native solver crash) fails its block with
   a `DssWorkerException` instead of the whole JVM. Each worker has its own checker roster, so
@@ -575,7 +577,7 @@ After the run, `getDssChecker` asks every block for its `DssBlockWitness` (`DssW
   conditions (`findBlockRun`), a cyclic one along a saved path whose condition holds
   (`followPath`); the state reached satisfies one successor's condition, where the next block
   continues. The path becomes a trace, which the YAML writer concretizes as for any other
-  backend. Without complete records, DSS falls back to `EmptyCex` (no trace).
+  backend. Without complete records, the trace is empty: UNSAFE, but without steps to show.
 
 ## 9. Soundness and termination
 
@@ -851,8 +853,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `DssTraceContentTest` | content fields of the trace, `expr=` last |
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
 | solver | `SolverScopeTest` | solver scopes own, close and nest |
-| solver-z3 | `Z3ItpSolverTest.testInterpolationWithAGroundPartition` | the interpolation fix |
-| cli | `XcfaCliDssTest` | every option, the decomposition x executor grid, checker rosters, witnesses (validated with Theta's `--witness`) |
+| cli (in `xcfa-dss-actor`'s tests) | `XcfaCliDssTest`, `DefaultConfigsTest` | every option, the decomposition x executor grid, checker rosters, witnesses (validated with Theta's `--witness`) |
 
 ## 15. Known limitations
 

@@ -2,7 +2,7 @@
 
 The DSS actor network: one `DssBlockActor` per block running `PredicateBlockBehavior` (the block
 analysis), the observer, the quiescence monitor, the two executors, and the diagnostic trace. The
-design and its CPAchecker counterparts are in `doc/DSS.md` (sections 7, 8, 9, 11); read the
+design and its CPAchecker counterparts are in `dss/DSS.md` (sections 7, 8, 9, 11); read the
 relevant section before changing behavior.
 
 ## Build and test
@@ -27,7 +27,7 @@ relevant section before changing behavior.
   for all of them, in any arrival order.
 - **Stored preconditions must keep covering the entry states**: a state may only be replaced by a
   stronger one from the same sender (`storePrecondition`). Weakening this rule makes SAFE unsound
-  (`doc/DSS.md` section 9).
+  (`dss/DSS.md` section 9).
 - **Repeated violation conditions** are detected by structural equality, which relies on
   `DssAuxVars.canonicalize` in `xcfa-dss-analysis`.
 - Legacy Z3 is not thread-safe; the concurrent executor needs a thread-safe solver (`Z3:new`). The
@@ -37,7 +37,7 @@ relevant section before changing behavior.
   change in `DssProcessExecutor.kt`'s `writeMessage`/`readMessage`, a new witness field in
   `writeWitness`/`readWitness`. Locations travel by their index in the program, never by name:
   `__loc_N` names come from a JVM-wide counter and differ between processes.
-- **Witness records must stay exact** (`DssWitness.kt`, `doc/DSS.md` 8.5): invariants only from
+- **Witness records must stay exact** (`DssWitness.kt`, `dss/DSS.md` 8.5): invariants only from
   safe analyses of start states that cover the block's entries, and every violation condition
   with the targets or saved path it was computed from; stitching relies on both.
 
@@ -46,7 +46,7 @@ relevant section before changing behavior.
   `println`, as the CLI routes it to the logger.
 - Line format: `DSS-TRACE <ms> <event> key=value...`. Values must not contain spaces; the only
   exception is `expr=`, which must stay the last field (`traceContent` guarantees it).
-- New events or fields belong in the `--dss-trace` row of the option table in `doc/DSS.md`.
+- New events or fields belong in the `--dss-trace` row of the option table in `dss/DSS.md`.
 
 ## Integration points
 - Entry points `runDssActors` / `runDssActorsSequentially` / `runDssActorsInProcesses`, called by

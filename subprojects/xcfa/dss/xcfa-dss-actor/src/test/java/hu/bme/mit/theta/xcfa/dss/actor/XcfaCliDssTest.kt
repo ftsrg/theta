@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.dss.actor
 
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend

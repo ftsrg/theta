@@ -39,7 +39,7 @@ typealias CheckerFactory = (XCFA) -> XcfaChecker
 
 /**
  * Serializes checker construction only: concurrent Z3 `Context` creation crashed natively, while
- * checks themselves run in parallel, each on its own fresh solver (see `doc/DSS.md`).
+ * checks themselves run in parallel, each on its own fresh solver (see `dss/DSS.md`).
  */
 private val solverConstructionLock = Any()
 

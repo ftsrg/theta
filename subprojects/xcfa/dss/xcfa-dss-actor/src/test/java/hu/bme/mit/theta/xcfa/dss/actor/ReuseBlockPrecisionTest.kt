@@ -24,7 +24,6 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaLastPrecProvider
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
-import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.dss.analysis.collectPreds

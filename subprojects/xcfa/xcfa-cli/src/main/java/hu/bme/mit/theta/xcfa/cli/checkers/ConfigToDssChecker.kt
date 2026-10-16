@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Cex
-import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.Proof
@@ -38,16 +37,20 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
+import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions
 import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
 import hu.bme.mit.theta.xcfa.cli.params.DssConfig
 import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
 import hu.bme.mit.theta.xcfa.cli.params.DssExecutor
+import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
+import hu.bme.mit.theta.xcfa.cli.utils.getGson
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
@@ -86,13 +89,15 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import java.lang.management.ManagementFactory
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 /**
- * `--backend DSS`: Distributed Summary Synthesis (`doc/DSS.md`) as a [SafetyChecker], with block
+ * `--backend DSS`: Distributed Summary Synthesis (`dss/DSS.md`) as a [SafetyChecker], with block
  * checkers from [DssConfig.checkerBackends]. Single-procedure only; yields no cex or proof.
  */
 fun getDssChecker(
@@ -107,7 +112,7 @@ fun getDssChecker(
     xcfa.procedures.singleOrNull()
       ?: error(
         "DSS only supports single-procedure programs so far (found ${xcfa.procedures.size} " +
-          "procedures) - see doc/DSS.md's Known Limitations."
+          "procedures) - see dss/DSS.md's Known Limitations."
       )
 
   // No BlockGraphInstrumentation (CPAchecker's instrumentCFA): every block is extracted into an
@@ -164,6 +169,10 @@ fun getDssChecker(
   // DssCheckerRoster's index-based bookkeeping); the default list keeps single-checker behavior.
   val blockLogger = BlockAnalysisLogger(logger)
   // solver == null keeps the backend's own default solvers (Z3 for the bounded family)
+  // The counterexample monitor's registry is global: only concurrent block checkers go without it
+  val cexMonitor =
+    if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE
+    else CexMonitorOptions.CHECK
   fun checkerFor(backend: DssCheckerBackend, solver: String?): CheckerFactory =
     when (backend) {
       DssCheckerBackend.CEGAR_PRED_CART,
@@ -173,7 +182,11 @@ fun getDssChecker(
             blockXcfa,
             mcm,
             parseContext,
-            getDefaultPredCegarConfig(backend.toCegarDomain(), solver ?: dssConfig.solver),
+            getDefaultPredCegarConfig(
+              backend.toCegarDomain(),
+              solver ?: dssConfig.solver,
+              cexMonitor,
+            ),
             blockLogger,
           )
         }
@@ -260,7 +273,7 @@ fun getDssChecker(
         DssExecutor.PROCESS ->
           runDssActorsInProcesses(
             blockGraph,
-            getDssWorkerLauncher(dssConfig),
+            getDssWorkerLauncher(config, dssConfig),
             DssExprCodec(xcfa),
             dssConfig.maxProcesses,
             witnesses = processWitnesses,
@@ -289,31 +302,31 @@ fun getDssChecker(
   when (dssResult) {
     DssResult.SAFE -> SafetyResult.safe(combineInvariants(procedure, blockGraph, witnesses))
     DssResult.UNSAFE -> {
-      val trace = reconstructViolationTrace(xcfa, blockGraph, witnesses, dssSolverFactory, logger)
-      if (trace != null) SafetyResult.unsafe(trace, EmptyProof.getInstance())
-      else SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+      val initial =
+        ImmutableValuation.from(
+          xcfa.globalVars
+            .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
+            .toMap()
+        )
+      // Without a stitched path, the trace is empty: UNSAFE, but no steps to show
+      val path = stitchViolationPath(blockGraph, witnesses, initial, dssSolverFactory, logger)
+      val trace = violationTrace(xcfa, procedure.initLoc, path.orEmpty(), initial)
+      SafetyResult.unsafe(trace, EmptyProof.getInstance())
     }
   }
 }
 
-/** The error path stitched from the blocks' violation records, from the globals' initial values. */
-private fun reconstructViolationTrace(
-  xcfa: XCFA,
+/** The error path stitched from the blocks' violation records, starting in [initial]. */
+private fun stitchViolationPath(
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
+  initial: ImmutableValuation,
   solverFactory: SolverFactory,
   logger: Logger,
-): Trace<XcfaState<PtrState<*>>, XcfaAction>? =
+): List<XcfaEdge>? =
   try {
-    val initial =
-      ImmutableValuation.from(
-        xcfa.globalVars
-          .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
-          .toMap()
-      )
     withSolverConstructionLock { solverFactory.createSolver() }
       .use { solver -> stitchViolationPath(blockGraph, witnesses, initial, solver) }
-      ?.let { path -> violationTrace(xcfa, path, initial) }
       .also {
         if (it == null) logger.write(Logger.Level.INFO, "DSS: no violation path to stitch\n")
       }
@@ -323,25 +336,14 @@ private fun reconstructViolationTrace(
   }
 
 /**
- * Starts DSS worker processes as this JVM with this run's command line, so they decompose the same
- * way; only their trace lines are copied to this process's output.
+ * Starts DSS worker processes as this JVM with this run's config (`-c`, as `InProcessChecker`), so
+ * they decompose the same way; only their trace lines are copied to this process's output.
  */
-private fun getDssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
-  val launchArgs =
-    XcfaCli.launchArgs ?: error("--dss-executor PROCESS needs xcfa-cli's own main (XcfaCli.main)")
-  // Workers write no output: the run's own output options (--svcomp adds --witness-generation)
-  // would be given twice, which the option parser rejects
-  val args = buildList {
-    var i = 0
-    while (i < launchArgs.size) {
-      when (launchArgs[i]) {
-        "--svcomp" -> i += 1
-        "--output",
-        "--witness-generation" -> i += 2
-        else -> add(launchArgs[i++])
-      }
-    }
-  }
+private fun getDssWorkerLauncher(
+  config: XcfaConfig<*, *>,
+  dssConfig: DssConfig,
+): DssWorkerLauncher {
+  @Suppress("UNCHECKED_CAST") val dssRun = config as XcfaConfig<SpecFrontendConfig, DssConfig>
   val java =
     ProcessHandle.current()
       .info()
@@ -354,15 +356,37 @@ private fun getDssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
     } + listOfNotNull(heap?.let { "-Xmx$it" })
   val traceOrigin = if (DssTrace.enabled) DssTrace.originEpochMillis() else null
   return DssWorkerLauncher { index, blockIds, port ->
+    val workerConfig =
+      dssRun.copy(
+        inputConfig = dssRun.inputConfig.copy(xcfaWCtx = null),
+        outputConfig =
+          dssRun.outputConfig.copy(
+            enabled = OutputLevel.NONE,
+            witnessConfig = dssRun.outputConfig.witnessConfig.copy(enabled = WitnessLevel.NONE),
+          ),
+        backendConfig =
+          dssRun.backendConfig.copy(
+            inProcess = false,
+            timeoutMs = 0,
+            specConfig =
+              dssConfig.copy(
+                workerPort = port,
+                workerIndex = index,
+                workerBlocks = blockIds,
+                workerTraceOrigin = traceOrigin,
+              ),
+          ),
+      )
+    val configFile =
+      Files.createTempFile("dss-worker-$index-", ".json").toFile().apply {
+        deleteOnExit()
+        writeText(getGson().toJson(workerConfig))
+      }
     val command =
       listOf(java) +
         jvmArgs +
         listOf("-cp", System.getProperty("java.class.path"), XcfaCli::class.java.name) +
-        args +
-        listOf("--output", "NONE", "--witness-generation", "NONE") +
-        listOf("--dss-worker-port", "$port", "--dss-worker-index", "$index") +
-        listOf("--dss-worker-blocks", blockIds.joinToString(",")) +
-        (traceOrigin?.let { listOf("--dss-worker-trace-origin", "$it") } ?: emptyList())
+        listOf("-c", configFile.absolutePath)
     val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.INHERIT).start()
     thread(isDaemon = true, name = "dss-worker-$index-output") {
       process.inputStream.bufferedReader().forEachLine {

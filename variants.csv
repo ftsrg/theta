@@ -1,2 +1,0 @@
-input,dss_pred_cart,dss_pred_bool,kind,imc,cegar_pred_bool,cegar_pred_cart
-software,--backend DSS --dss-executor SEQUENTIAL --dss-checker-backends CEGAR_PRED_CART --dss-solver Z3,--backend DSS --dss-executor SEQUENTIAL --dss-checker-backends CEGAR_PRED_BOOL --dss-solver Z3,--backend KIND --bmc-solver Z3 --induction-solver Z3,--backend IMC --bmc-solver Z3 --interpolation-solver Z3,--backend CEGAR --domain PRED_BOOL --abstraction-solver Z3 --refinement-solver Z3,--backend CEGAR --domain PRED_CART --abstraction-solver Z3 --refinement-solver Z3

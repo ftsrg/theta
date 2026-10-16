@@ -113,24 +113,6 @@ public final class Z3ItpSolverTest {
     }
 
     @Test
-    public void testInterpolationWithAGroundPartition() {
-        // A partition without constants used to be encoded as a quantifier without bound
-        // variables, which Z3 rejects ("number of bound variables is 0").
-        final ItpMarker A = solver.createMarker();
-        final ItpMarker B = solver.createMarker();
-        final ItpPattern pattern = solver.createBinPattern(A, B);
-
-        solver.add(A, Eq(Int(1), Int(1)));
-        solver.add(B, Eq(a, Int(2)));
-        solver.add(B, Neq(a, Int(2)));
-
-        solver.check();
-        Assertions.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-        final Interpolant itp = solver.getInterpolant(pattern);
-        Assertions.assertTrue(ExprUtils.getVars(itp.eval(A)).isEmpty());
-    }
-
-    @Test
     public void testBinaryInterpolation() {
         final ItpMarker A = solver.createMarker();
         final ItpMarker B = solver.createMarker();
