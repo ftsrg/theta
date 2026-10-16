@@ -21,7 +21,11 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.xcfa.model.MutexLock
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.xcfa.model.MutexAttribute
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock
+import hu.bme.mit.theta.xcfa.model.SimpleMutexLock
 import java.lang.reflect.Type
 
 class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) :
@@ -37,8 +41,17 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
     gson.toJson(gson.toJsonTree(value.processes), writer)
     writer.name("sGlobal")
     gson.toJson(gson.toJsonTree(value.sGlobal), writer)
-    writer.name("mutexes")
-    gson.toJson(gson.toJsonTree(value.mutexes), writer)
+    writer.name("mutexState")
+    val mutexState =
+      SerializedMutexState(
+        value.mutexes.map { (mutex, owners) ->
+          SerializedMutex(mutex.lock, owners, (mutex as? ReadWriteMutexLock)?.type)
+        },
+        value.mutexState.mutexAttributes.map { (address, attribute) ->
+          SerializedAttribute(address, attribute)
+        },
+      )
+    gson.toJson(gson.toJsonTree(mutexState), writer)
     writer.name("threadLookup")
     gson.toJson(gson.toJsonTree(value.threadLookup), writer)
     writer.name("bottom")
@@ -54,8 +67,18 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
     val processes: Map<Int, XcfaProcessState> = gson.fromJson(reader, Map::class.java)
     check(reader.nextName() == "sGlobal")
     val sGlobal: ExprState = gson.fromJson(reader, stateType)
-    check(reader.nextName() == "mutexes")
-    val mutexes: Map<MutexLock, Set<Int>> = gson.fromJson(reader, Map::class.java)
+    check(reader.nextName() == "mutexState")
+    val serialized = gson.fromJson<SerializedMutexState>(reader, SerializedMutexState::class.java)
+    val mutexState =
+      MutexState(
+        serialized.mutexes.associate {
+          val mutex =
+            it.readWriteType?.let { type -> ReadWriteMutexLock(it.lock, type) }
+              ?: SimpleMutexLock(it.lock)
+          mutex to it.owners
+        },
+        serialized.mutexAttributes.associate { it.address to it.attribute },
+      )
     check(reader.nextName() == "threadLookup")
     val threadLookup: Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
     check(reader.nextName() == "bottom")
@@ -66,7 +89,7 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
       xcfa = null,
       processes = processes,
       sGlobal = sGlobal,
-      mutexes = mutexes,
+      mutexState = mutexState,
       threadLookup = threadLookup,
       bottom = bottom,
     )
@@ -75,4 +98,17 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
   private fun initGson() {
     if (!this::gson.isInitialized) gson = gsonSupplier()
   }
+
+  private data class SerializedMutexState(
+    val mutexes: List<SerializedMutex>,
+    val mutexAttributes: List<SerializedAttribute>,
+  )
+
+  private data class SerializedMutex(
+    val lock: Expr<*>,
+    val owners: Map<Int, Int>,
+    val readWriteType: ReadWriteMutexLock.ReadWriteMutexLockType?,
+  )
+
+  private data class SerializedAttribute(val address: LitExpr<*>, val attribute: MutexAttribute)
 }

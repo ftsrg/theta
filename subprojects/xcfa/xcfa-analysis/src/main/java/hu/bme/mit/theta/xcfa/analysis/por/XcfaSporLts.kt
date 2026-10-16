@@ -157,14 +157,17 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
         fence.blockingMutexes(state).forEach { mutex ->
           if (!mutex.isKnown() || state.mutexes.keys.any { !it.isKnown() }) {
-            state.mutexes.values.flatten().toSet().forEach { pid2 ->
-              if (pid2 !in firstProcesses) {
-                firstProcesses.add(pid2)
-                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+            state.mutexes.values
+              .flatMap { it.keys }
+              .toSet()
+              .forEach { pid2 ->
+                if (pid2 !in firstProcesses) {
+                  firstProcesses.add(pid2)
+                  checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+                }
               }
-            }
           } else {
-            state.mutexes[mutex]?.forEach { pid2 ->
+            state.mutexes[mutex]?.keys?.forEach { pid2 ->
               if (pid2 !in firstProcesses) {
                 firstProcesses.add(pid2)
                 checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)

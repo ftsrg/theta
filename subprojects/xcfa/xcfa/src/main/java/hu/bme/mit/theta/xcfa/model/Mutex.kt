@@ -26,10 +26,24 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
+import java.math.BigInteger
+
+enum class MutexType(val constant: Int) {
+  NORMAL(0),
+  RECURSIVE(1);
+
+  companion object {
+    fun fromConstant(constant: BigInteger): MutexType =
+      entries.find { it.constant.toBigInteger() == constant }
+        ?: error("Unsupported mutex type: $constant")
+  }
+}
+
+data class MutexAttribute(val type: MutexType = MutexType.NORMAL)
 
 fun Collection<MutexLock>.known(): Set<MutexLock> = filter { it.isKnown() }.toSet()
 
-internal fun Expr<*>.simplify(s: State): LitExpr<*>? =
+fun Expr<*>.simplify(s: State): LitExpr<*>? =
   this as? LitExpr<*>
     ?: when (s) {
       is WrapperState -> simplify(s.wrappedState)

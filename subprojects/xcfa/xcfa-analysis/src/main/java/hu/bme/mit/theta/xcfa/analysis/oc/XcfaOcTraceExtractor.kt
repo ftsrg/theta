@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.xcfa.analysis.MutexState
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -164,7 +165,7 @@ internal class XcfaOcTraceExtractor(
                 )
               },
             sGlobal = explState,
-            mutexes = state.mutexes.update(edge, event.pid),
+            mutexState = state.mutexState.update(edge, event.pid),
           )
         )
         lastEdge = nextEdge ?: break
@@ -266,10 +267,10 @@ internal class XcfaOcTraceExtractor(
     // extend the trace until the target location is reached
     while (
       currentState.processes[pid]!!.locs.peek() != to ||
-        (currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid) != pid
+        (currentState.mutexes[ATOMIC_MUTEX]?.keys?.first() ?: pid) != pid
     ) {
       // finish atomic block first
-      val stepPid = currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid
+      val stepPid = currentState.mutexes[ATOMIC_MUTEX]?.keys?.first() ?: pid
       val edge =
         currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
       check(stepPid == pid || edge.label.collectVars().isEmpty()) {
@@ -286,7 +287,7 @@ internal class XcfaOcTraceExtractor(
               )
             },
           sGlobal = PtrState(explState),
-          mutexes = currentState.mutexes.update(edge, stepPid),
+          mutexState = currentState.mutexState.update(edge, stepPid),
         )
       states.add(currentState)
     }
@@ -296,12 +297,12 @@ internal class XcfaOcTraceExtractor(
   // the labels are already thread-specific, but findDataRace (witness writer) peeks a frame
   private fun noLookup() = LinkedList(listOf(mapOf<VarDecl<*>, VarDecl<*>>()))
 
-  private fun Map<MutexLock, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<MutexLock, Set<Int>> {
-    val map = this.toMutableMap()
+  private fun MutexState.update(edge: XcfaEdge, pid: Int): MutexState {
+    val map = mutexes.toMutableMap()
     edge.getFlatLabels().forEach {
-      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX] = setOf(pid)
+      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX] = mapOf(pid to 1)
       if (it is AtomicEndLabel) map.remove(ATOMIC_MUTEX)
     }
-    return map
+    return copy(mutexes = map)
   }
 }
