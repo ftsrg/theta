@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.ImmutableValuation
@@ -288,6 +289,9 @@ fun getDssChecker(
       return@SafetyChecker SafetyResult.unknown()
     } finally {
       DssTrace.disable()
+      // Block checkers register counterexample monitors in the global registry; without this,
+      // later CEGAR runs in this JVM (e.g. LIVENESS_CEGAR) would run these stale monitors
+      MonitorCheckpoint.reset()
       logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", solverStatistics)
     }
 
