@@ -18,12 +18,12 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Eq as BvEq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*

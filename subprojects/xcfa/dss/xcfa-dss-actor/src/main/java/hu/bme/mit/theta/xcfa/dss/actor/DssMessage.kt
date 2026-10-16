@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import java.util.concurrent.atomic.AtomicLong
 
 private val sequence = AtomicLong()
@@ -82,12 +82,7 @@ data class DssPostConditionMessage(
 
   /** The disjunction of [postconditions], or `null` for a bare (stub) message. */
   val postcondition: Expr<BoolType>?
-    get() =
-      when (postconditions.size) {
-        0 -> null
-        1 -> postconditions.single()
-        else -> Or(postconditions)
-      }
+    get() = postconditions.takeIf { it.isNotEmpty() }?.let { Or(it) }
 }
 
 /**

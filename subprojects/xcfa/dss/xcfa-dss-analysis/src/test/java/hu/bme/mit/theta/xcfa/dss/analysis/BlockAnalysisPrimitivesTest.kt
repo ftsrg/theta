@@ -22,10 +22,10 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils

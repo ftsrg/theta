@@ -16,11 +16,11 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 import hu.bme.mit.theta.core.decl.Decls.Var
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Gt
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Lt

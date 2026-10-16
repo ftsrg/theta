@@ -18,15 +18,16 @@ package hu.bme.mit.theta.xcfa.dss.analysis
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -126,12 +127,9 @@ private class OperatorSolver(private val factory: SolverFactory) {
     val current =
       solver ?: withSolverConstructionLock { factory.createSolver() }.also { solver = it }
     try {
-      current.push()
-      try {
+      WithPushPop(current).use {
         current.add(PathUtils.unfold(expr, 0))
         return current.check().isUnsat
-      } finally {
-        current.pop()
       }
     } catch (e: Exception) {
       solver = null

@@ -20,12 +20,11 @@ import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
-import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import hu.bme.mit.theta.xcfa.XcfaScope
@@ -34,7 +33,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.util.IdentityHashMap
 
 private const val TRANSPORT_PREFIX = "__dss_transport_"
 
@@ -55,7 +53,7 @@ class DssExprCodec(xcfa: XCFA) {
 
   fun write(out: DataOutputStream, expr: Expr<BoolType>) {
     val aux = mutableListOf<VarDecl<*>>()
-    for (decl in freeDecls(expr)) {
+    for (decl in ExprUtils.getVars(expr) + ExprUtils.getConstants(expr)) {
       when {
         decl is VarDecl<*> && DssAuxVars.isAux(decl) -> aux += decl
         decl is VarDecl<*> && programVars[decl.name] === decl -> {}
@@ -92,19 +90,6 @@ class DssExprCodec(xcfa: XCFA) {
     }
     return ExpressionWrapper(XcfaScope(symbols), readString(input)).instantiate(env)
       as Expr<BoolType>
-  }
-
-  /** The declarations [expr] refers to that no quantifier of [expr] binds. */
-  private fun freeDecls(expr: Expr<*>): Set<Decl<*>> {
-    val result = linkedSetOf<Decl<*>>()
-    val visited = IdentityHashMap<Expr<*>, Unit>()
-    fun visit(e: Expr<*>) {
-      if (visited.put(e, Unit) != null) return
-      if (e is RefExpr<*> && e.decl !is ParamDecl<*>) result += e.decl
-      e.ops.forEach(::visit)
-    }
-    visit(expr)
-    return result
   }
 }
 

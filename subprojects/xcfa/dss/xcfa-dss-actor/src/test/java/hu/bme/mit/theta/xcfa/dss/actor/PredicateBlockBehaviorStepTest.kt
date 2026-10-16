@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext

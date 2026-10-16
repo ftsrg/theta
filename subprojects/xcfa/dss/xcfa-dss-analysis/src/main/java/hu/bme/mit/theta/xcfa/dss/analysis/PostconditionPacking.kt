@@ -17,9 +17,8 @@ package hu.bme.mit.theta.xcfa.dss.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
@@ -33,6 +32,5 @@ fun packPostcondition(
 ): Expr<BoolType> {
   check(result.isSafe) { "Can only pack a postcondition out of a safe result, but got: $result" }
   val states = result.asSafe().proof.getPartitions()[location].orEmpty()
-  val reachableExprs = states.map { it.toExpr() }.filterNot { it == False() }
-  return if (reachableExprs.isEmpty()) False() else Or(reachableExprs)
+  return Or(states.map { it.toExpr() })
 }

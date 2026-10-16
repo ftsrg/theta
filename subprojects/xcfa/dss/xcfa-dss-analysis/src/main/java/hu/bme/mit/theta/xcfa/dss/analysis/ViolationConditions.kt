@@ -27,14 +27,14 @@ import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.WpState
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.GhostEdgeMetadata
 import hu.bme.mit.theta.xcfa.model.NondetLabel
@@ -43,7 +43,6 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -78,20 +77,8 @@ object DssAuxVars {
   fun of(index: Int, type: Type): VarDecl<*> = get(index, type)
 
   /** The auxiliary variables of [expr], in order of first occurrence. */
-  fun collectVars(expr: Expr<*>): List<VarDecl<*>> {
-    val result = linkedSetOf<VarDecl<*>>()
-    val visited = IdentityHashMap<Expr<*>, Unit>()
-    fun visit(e: Expr<*>) {
-      if (visited.put(e, Unit) != null) return
-      if (e is RefExpr<*>) {
-        val decl = e.decl
-        if (decl is VarDecl<*> && isAux(decl)) result += decl
-      }
-      e.ops.forEach(::visit)
-    }
-    visit(expr)
-    return result.toList()
-  }
+  fun collectVars(expr: Expr<*>): List<VarDecl<*>> =
+    linkedSetOf<VarDecl<*>>().also { ExprUtils.collectVars(expr, it) }.filter(::isAux)
 
   /** An auxiliary variable of [type] that does not occur in [expr]. */
   fun freshFor(expr: Expr<*>, type: Type): VarDecl<*> {
@@ -208,11 +195,16 @@ private fun wep(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType> =
   if (post == False()) False()
   else
     when (stmt) {
-      is SkipStmt -> post
-      is AssumeStmt -> and(stmt.cond, post)
-      is AssignStmt<*> -> substitute(post, stmt.varDecl, stmt.expr)
+      is SkipStmt,
+      is AssumeStmt,
+      is AssignStmt<*> -> WpState.of(post).wep(stmt).expr
+      // WpState havocs to a fresh constant; DSS needs an auxiliary variable instead, which the
+      // predecessor block can havoc and other processes can intern (see DssAuxVars).
       is HavocStmt<*> ->
-        substitute(post, stmt.varDecl, DssAuxVars.freshFor(post, stmt.varDecl.type).ref)
+        BasicSubstitution.builder()
+          .put(stmt.varDecl, DssAuxVars.freshFor(post, stmt.varDecl.type).ref)
+          .build()
+          .apply(post)
       is SequenceStmt -> stmt.stmts.foldRight(post) { s, acc -> wep(s, acc) }
       is NonDetStmt -> or(stmt.stmts.map { wep(it, post) })
       else ->
@@ -221,25 +213,13 @@ private fun wep(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType> =
         )
     }
 
-private fun substitute(post: Expr<BoolType>, decl: VarDecl<*>, value: Expr<*>): Expr<BoolType> =
-  BasicSubstitution.builder().put(decl, value).build().apply(post)
-
-private fun and(cond: Expr<BoolType>, post: Expr<BoolType>): Expr<BoolType> =
-  when {
-    cond == True() -> post
-    post == True() -> cond
-    cond == False() -> False()
-    else -> And(cond, post)
-  }
-
 /**
- * Disjunction that factors `(c1 && φ) || (c2 && φ)` into `(c1 || c2) && φ`, so conditions don't
- * double at every branch point.
+ * [Or] that factors `(c1 && φ) || (c2 && φ)` into `(c1 || c2) && φ`, so conditions don't double at
+ * every branch point.
  */
 private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
   val relevant = disjuncts.filter { it != False() }.distinct()
-  if (relevant.any { it == True() }) return True()
-  if (relevant.size <= 1) return relevant.singleOrNull() ?: False()
+  if (relevant.size <= 1 || True() in relevant) return Or(relevant)
   val byContinuation = LinkedHashMap<Expr<BoolType>?, MutableList<Expr<BoolType>>>()
   for (disjunct in relevant) {
     if (disjunct is AndExpr && disjunct.ops.size == 2) {
@@ -253,8 +233,8 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
       when {
         continuation == null -> heads
         heads.size == 1 -> listOf(And(heads.single(), continuation))
-        else -> listOf(and(or(heads), continuation))
+        else -> listOf(And(or(heads), continuation))
       }
     }
-  return if (factored.size == 1) factored.single() else Or(factored)
+  return Or(factored)
 }

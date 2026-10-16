@@ -19,8 +19,8 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext

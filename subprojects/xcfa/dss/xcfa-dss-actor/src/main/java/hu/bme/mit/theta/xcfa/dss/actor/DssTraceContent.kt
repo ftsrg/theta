@@ -15,20 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
-import hu.bme.mit.theta.core.type.booltype.IffExpr
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr
-import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
-import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
-import hu.bme.mit.theta.core.type.booltype.XorExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import java.util.IdentityHashMap
 
@@ -38,31 +31,14 @@ import java.util.IdentityHashMap
  */
 internal fun traceContent(expr: Expr<BoolType>?): Array<Pair<String, Any?>> {
   if (expr == null) return arrayOf("disj" to 0, "stub" to true)
-  val visited = IdentityHashMap<Expr<*>, Unit>()
-  val atoms = HashSet<Expr<*>>()
-  val vars = HashSet<VarDecl<*>>()
+  // Distinct expression objects, so shared subterms count once (ExprUtils counts tree nodes).
+  val nodes = IdentityHashMap<Expr<*>, Unit>()
   fun visit(e: Expr<*>) {
-    if (visited.put(e, Unit) != null) return
-    if (e is RefExpr<*>) (e.decl as? VarDecl<*>)?.let { vars += it }
-    e.ops.forEach(::visit)
-  }
-  val seen = IdentityHashMap<Expr<*>, Unit>()
-  fun collectAtoms(e: Expr<*>) {
-    if (seen.put(e, Unit) != null) return
-    when (e) {
-      is AndExpr,
-      is OrExpr,
-      is NotExpr,
-      is ImplyExpr,
-      is IffExpr,
-      is XorExpr,
-      is QuantifiedExpr -> e.ops.forEach(::collectAtoms)
-      is BoolLitExpr -> {}
-      else -> atoms += e
-    }
+    if (nodes.put(e, Unit) == null) e.ops.forEach(::visit)
   }
   visit(expr)
-  collectAtoms(expr)
+  val atoms = ExprUtils.getAtoms(expr).count { it !is BoolLitExpr }
+  val vars = ExprUtils.getVars(expr)
   val aux = vars.count(DssAuxVars::isAux)
   val disj =
     when (expr) {
@@ -73,8 +49,8 @@ internal fun traceContent(expr: Expr<BoolType>?): Array<Pair<String, Any?>> {
   val fields =
     arrayOf<Pair<String, Any?>>(
       "disj" to disj,
-      "nodes" to visited.size,
-      "atoms" to atoms.size,
+      "nodes" to nodes.size,
+      "atoms" to atoms,
       "vars" to vars.size - aux,
       "aux" to aux,
       "top" to (expr is TrueExpr),

@@ -21,10 +21,10 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
@@ -342,7 +342,7 @@ class PredicateBlockBehavior(
     // keeps the first of two covering states, and a top summary first would swallow the others,
     // so a loop block's SCC rule would never apply and its violation conditions unroll forever.
     val orderedStartStates = startStates.sortedBy { it.isTop }
-    val violationCondition = if (violations.isEmpty()) null else or(violations)
+    val violationCondition = if (violations.isEmpty()) null else Or(violations)
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
@@ -524,7 +524,7 @@ class PredicateBlockBehavior(
       "added" to pathViolationsSoFar.size - before,
       "total" to pathViolationsSoFar.size,
     )
-    return or(pathViolationsSoFar.toList())
+    return Or(pathViolationsSoFar)
   }
 
   private val programVars: Set<VarDecl<*>> by lazy {
@@ -665,11 +665,4 @@ class PredicateBlockBehavior(
     if (block.isRoot && operators.isUnsat(condition)) return emptyList()
     return listOf(DssViolationConditionMessage(block.id, condition))
   }
-
-  private fun or(exprs: List<Expr<BoolType>>): Expr<BoolType> =
-    when (exprs.size) {
-      0 -> False()
-      1 -> exprs.single()
-      else -> Or(exprs)
-    }
 }
