@@ -859,7 +859,8 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 
 * Single procedure only; labels without a weakest-precondition rule (function calls, memory
   operations, fences) make the block analysis fail.
-* Termination is not guaranteed (section 9).
+* Termination is not guaranteed (section 9); the SAFE cases of `NestedLoopActorTest` are disabled
+  because DSS does not terminate on them.
 * Concurrent execution needs a thread-safe solver (`Z3:new`), whose interpolation does not support
   all C arithmetic.
 * Block analyses abstract at every location (11.1) and rebuild their checker every time (11.3).
