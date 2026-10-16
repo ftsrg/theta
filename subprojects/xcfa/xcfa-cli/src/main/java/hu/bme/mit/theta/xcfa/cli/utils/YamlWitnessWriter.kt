@@ -56,6 +56,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
+import hu.bme.mit.theta.xcfa.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
@@ -1271,5 +1272,6 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
         }
     return invs
   }
+  if (this is DssInvariants) return toContent(inputFile, parseContext)
   return listOf()
 }

@@ -513,6 +513,44 @@ fun baseIc3Config(
     debugConfig = portfolioConfig.debugConfig,
   )
 
+fun baseDssConfig(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  serialize: Boolean,
+): XcfaConfig<*, DssConfig> =
+  XcfaConfig(
+    inputConfig =
+      if (serialize)
+        portfolioConfig.inputConfig.copy(
+          xcfaWCtx = Triple(xcfa, mcm, parseContext),
+          propertyFile = null,
+          property = portfolioConfig.inputConfig.property,
+        )
+      else portfolioConfig.inputConfig,
+    frontendConfig =
+      if (serialize)
+        FrontendConfig(
+          lbeLevel = LbePass.defaultLevel,
+          loopUnroll = UnrollPass.UNROLL_LIMIT,
+          inputType = InputType.C,
+          specConfig = CFrontendConfig(arithmetic = efficient),
+        )
+      else (portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>),
+    backendConfig =
+      BackendConfig(
+        backend = Backend.DSS,
+        memlimit = portfolioConfig.backendConfig.memlimit,
+        solverHome = portfolioConfig.backendConfig.solverHome,
+        timeoutMs = 0,
+        parseInProcess = !serialize,
+        specConfig = DssConfig(),
+      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
+    debugConfig = portfolioConfig.debugConfig,
+  )
+
 fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
   OutputConfig(
     enabled = portfolioConfig.outputConfig.enabled,

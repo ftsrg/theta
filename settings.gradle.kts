@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ include(
     "xcfa/xcfa2chc",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
+    "xcfa/dss/xcfa-dss-decomposition",
+    "xcfa/dss/xcfa-dss-analysis",
+    "xcfa/dss/xcfa-dss-actor",
 
     "xta/xta",
     "xta/xta-analysis",

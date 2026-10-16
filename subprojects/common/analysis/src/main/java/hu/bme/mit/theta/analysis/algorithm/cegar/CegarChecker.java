@@ -46,6 +46,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
     private final Logger logger;
     private final Pr proof;
     private final ProofVisualizer<? super Pr> proofVisualizer;
+    private P lastPrec = null;
 
     private CegarChecker(
             final Abstractor<P, Pr> abstractor,
@@ -76,6 +77,14 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
 
     public Pr getProof() {
         return proof;
+    }
+
+    /**
+     * The precision the last {@link #check} ended with (the refined one, if it refined), or null
+     * before the first check.
+     */
+    public P getLastPrec() {
+        return lastPrec;
     }
 
     @Override
@@ -138,6 +147,7 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
 
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
+        this.lastPrec = prec;
         algorithmTime.stop();
         SafetyResult<Pr, C> cegarResult = null;
         final CegarStatistics stats =
