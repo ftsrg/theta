@@ -22,8 +22,6 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
-import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
 import java.time.Duration
@@ -34,7 +32,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * Build-order step 6: real per-block CEGAR on a cyclic block graph (the paper's `x`/`y` loop body
- * is its own successor), under both [runDssActors] and [runDssActorsSequentially].
+ * is its own successor), under [runDssActorsSequentially].
  */
 class CyclicBlockGraphAnalysisTest {
 
@@ -59,17 +57,18 @@ class CyclicBlockGraphAnalysisTest {
   private fun checkDirectly(xcfa: XCFA) =
     runWorkerConfig(xcfa, checkerFactory = { x -> cegarChecker(x) })
 
-  private fun checkDecomposed(
-    wholeProgram: XCFA,
-    executor: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult,
-  ): DssResult {
+  private fun checkDecomposed(wholeProgram: XCFA): DssResult {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-      executor(blockGraph) { block ->
-        PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
-      }
+      runDssActorsSequentially(
+        blockGraph,
+        behaviorFor = { block ->
+          PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
+        },
+      )
     }
   }
 
@@ -106,32 +105,14 @@ class CyclicBlockGraphAnalysisTest {
   @Test
   fun `sequential executor reproduces the SAFE verdict through a cyclic block graph`() {
     val wholeProgram = xyLoopXcfa(incrementY = true)
-    assertEquals(
-      DssResult.SAFE,
-      checkDecomposed(wholeProgram) { bg, bf -> runDssActorsSequentially(bg, bf) },
-    )
+    assertEquals(DssResult.SAFE, checkDecomposed(wholeProgram))
     assert(checkDirectly(wholeProgram).isSafe) { "test fixture itself should be safe" }
   }
 
   @Test
   fun `sequential executor reproduces the UNSAFE verdict through a cyclic block graph`() {
     val wholeProgram = xyLoopXcfa(incrementY = false)
-    assertEquals(
-      DssResult.UNSAFE,
-      checkDecomposed(wholeProgram) { bg, bf -> runDssActorsSequentially(bg, bf) },
-    )
+    assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram))
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
-  }
-
-  @Test
-  fun `concurrent executor reproduces the SAFE verdict through a cyclic block graph`() {
-    val wholeProgram = xyLoopXcfa(incrementY = true)
-    assertEquals(DssResult.SAFE, checkDecomposed(wholeProgram) { bg, bf -> runDssActors(bg, bf) })
-  }
-
-  @Test
-  fun `concurrent executor reproduces the UNSAFE verdict through a cyclic block graph`() {
-    val wholeProgram = xyLoopXcfa(incrementY = false)
-    assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram) { bg, bf -> runDssActors(bg, bf) })
   }
 }

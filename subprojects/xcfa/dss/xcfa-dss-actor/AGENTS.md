@@ -10,9 +10,9 @@ relevant section before changing behavior.
 - The end-to-end tests run real checkers (`xcfa-cli`, Z3) under `assertTimeoutPreemptively` and
   need the native libraries. They are timing-sensitive: on a loaded machine, a timeout of
   `NestedLoopActorTest` is not necessarily a regression; rerun it on its own before concluding.
-- Run every new end-to-end case with both executors (`runDssActors` and
-  `runDssActorsSequentially`), as the existing tests do. `DssProcessExecutorTest` starts real
-  worker JVMs (`DssProcessTestWorker`, the test classpath) and rebuilds its fixture there.
+- End-to-end cases with real checkers use `runDssActorsSequentially` only: the default legacy Z3
+  is not thread-safe, and `Z3:new`'s interpolation fails on these fixtures. `DssProcessExecutorTest`
+  starts real worker JVMs (`DssProcessTestWorker`, the test classpath) and rebuilds its fixture there.
 
 ## Invariants
 - **No dependency on `xcfa-cli`** in production code (same reason as in `xcfa-dss-analysis`);

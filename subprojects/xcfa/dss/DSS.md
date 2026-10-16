@@ -750,7 +750,7 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
    other start states are analyzed too. That loses the condition if it arrived while the block had
    no precondition yet (then `analyzeViolationCondition` returned without analyzing anything): a
    wrong SAFE verdict, observed in Theta on two sequential loops under some message orders
-   (regression tests in `PredicateBlockBehaviorStepTest` and `DiverseProgramsActorTest`). Theta
+   (regression test in `PredicateBlockBehaviorStepTest`). Theta
    records which received conditions were reported from top and only suppresses those.
 5. **Factored disjunctions** in violation conditions (6.3).
 
@@ -848,7 +848,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `PostconditionPackingTest`, `WorkerConfigDelegatorTest`, `DssCheckerRosterTest` | packing, checker delegation, rosters |
 | | `UndecidedQueryTest`, `CheckerSolverFallbackTest` | undecided operator queries with and without the fallback solver, checker solver fallback |
 | actor | `PredicateBlockBehaviorStepTest` | every step of the block analysis: initial analysis, precondition coverage, storing violation conditions, laziness, refutation vs. propagation at the root and inside, the lost-violation-condition regression |
-| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, both executors, a repeated concurrent soundness check, self-loop-absorbed, acyclic and min-cut graphs with per-path violation conditions (root and non-root loop blocks) |
+| | `PredicateBlockBehaviorTest`, `DiverseProgramsActorTest`, `CyclicBlockGraphAnalysisTest`, `NestedLoopActorTest`, `MergeDecompositionActorTest` | end-to-end verdicts with the sequential executor (legacy Z3 is not thread-safe) on branches, joins, loops, nested and sequential loops, merged and cyclic graphs, self-loop-absorbed, acyclic and min-cut graphs with per-path violation conditions (root and non-root loop blocks) |
 | | `CheckerFallbackTest`, `ReuseBlockPrecisionTest` | `--dss-checker-fallback`, `--dss-reuse-block-precision` |
 | | `DssTraceContentTest` | content fields of the trace, `expr=` last |
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
@@ -859,8 +859,8 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 
 * Single procedure only; labels without a weakest-precondition rule (function calls, memory
   operations, fences) make the block analysis fail.
-* Termination is not guaranteed (section 9); the SAFE cases of `NestedLoopActorTest` are disabled
-  because DSS does not terminate on them.
+* Termination is not guaranteed (section 9); the SAFE case of `NestedLoopActorTest` is disabled
+  because DSS does not terminate on it.
 * Concurrent execution needs a thread-safe solver (`Z3:new`), whose interpolation does not support
   all C arithmetic.
 * Block analyses abstract at every location (11.1) and rebuild their checker every time (11.3).

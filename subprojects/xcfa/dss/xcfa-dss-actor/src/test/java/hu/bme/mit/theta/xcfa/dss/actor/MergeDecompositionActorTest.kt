@@ -24,7 +24,6 @@ import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
@@ -71,16 +70,18 @@ class MergeDecompositionActorTest {
   private fun checkDecomposed(
     wholeProgram: XCFA,
     blockGraph: BlockGraph,
-    executor: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActors(bg, bf)
-    },
+    timeout: Duration = Duration.ofSeconds(60),
   ): DssResult {
     val procedure = wholeProgram.procedures.single()
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-      executor(blockGraph) { block ->
-        PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
-      }
+    // Sequential only: the default (legacy) Z3 is not thread-safe
+    return assertTimeoutPreemptively<DssResult>(timeout) {
+      runDssActorsSequentially(
+        blockGraph,
+        behaviorFor = { block ->
+          PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
+        },
+      )
     }
   }
 
@@ -217,26 +218,12 @@ class MergeDecompositionActorTest {
   fun `a merged cyclic block graph reproduces the UNSAFE verdict`() {
     val wholeProgram = xyLoopXcfa(incrementY = false)
     val blockGraph = mergedBlockGraph(wholeProgram, targetBlockCount = 2)
-    assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram, blockGraph))
-    assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
-  }
-
-  @Test
-  fun `a merged cyclic block graph agrees between the concurrent and sequential executors`() {
-    val safeProgram = xyLoopXcfa(incrementY = true)
-    val unsafeProgram = xyLoopXcfa(incrementY = false)
-    val sequentially: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActorsSequentially(bg, bf)
-    }
-
-    assertEquals(
-      DssResult.SAFE,
-      checkDecomposed(safeProgram, mergedBlockGraph(safeProgram, 2), sequentially),
-    )
+    // The slowest case on the sequential executor, which analyzes its blocks one at a time
     assertEquals(
       DssResult.UNSAFE,
-      checkDecomposed(unsafeProgram, mergedBlockGraph(unsafeProgram, 2), sequentially),
+      checkDecomposed(wholeProgram, blockGraph, timeout = Duration.ofSeconds(240)),
     )
+    assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
   /**
@@ -333,20 +320,14 @@ class MergeDecompositionActorTest {
   fun `absorbing the self loop keeps the SAFE and UNSAFE verdicts of the xy loop`() {
     val safeProgram = xyLoopXcfa(incrementY = true)
     val unsafeProgram = xyLoopXcfa(incrementY = false)
-    for (executor in
-      listOf<(BlockGraph, (Block) -> DssBlockBehavior) -> DssResult>(
-        { bg, bf -> runDssActors(bg, bf) },
-        { bg, bf -> runDssActorsSequentially(bg, bf) },
-      )) {
-      assertEquals(
-        DssResult.SAFE,
-        checkDecomposed(safeProgram, selfLoopAbsorbedBlockGraph(safeProgram), executor),
-      )
-      assertEquals(
-        DssResult.UNSAFE,
-        checkDecomposed(unsafeProgram, selfLoopAbsorbedBlockGraph(unsafeProgram), executor),
-      )
-    }
+    assertEquals(
+      DssResult.SAFE,
+      checkDecomposed(safeProgram, selfLoopAbsorbedBlockGraph(safeProgram)),
+    )
+    assertEquals(
+      DssResult.UNSAFE,
+      checkDecomposed(unsafeProgram, selfLoopAbsorbedBlockGraph(unsafeProgram)),
+    )
   }
 
   /**
@@ -386,7 +367,7 @@ class MergeDecompositionActorTest {
 
       assertEquals(
         if (unsafe) DssResult.UNSAFE else DssResult.SAFE,
-        checkDecomposed(wholeProgram, blockGraph) { bg, bf -> runDssActorsSequentially(bg, bf) },
+        checkDecomposed(wholeProgram, blockGraph),
       )
     }
   }
@@ -431,9 +412,7 @@ class MergeDecompositionActorTest {
       assertEquals(unsafe, checkDirectly(wholeProgram).isUnsafe) { "test fixture itself" }
       assertEquals(
         if (unsafe) DssResult.UNSAFE else DssResult.SAFE,
-        checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)) { bg, bf ->
-          runDssActorsSequentially(bg, bf)
-        },
+        checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)),
       )
     }
   }
@@ -449,12 +428,7 @@ class MergeDecompositionActorTest {
         statefulCheckXcfa() to DssResult.UNSAFE,
       )
     for ((wholeProgram, expected) in cases) {
-      assertEquals(
-        expected,
-        checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)) { bg, bf ->
-          runDssActorsSequentially(bg, bf)
-        },
-      )
+      assertEquals(expected, checkDecomposed(wholeProgram, acyclicBlockGraph(wholeProgram)))
     }
   }
 
@@ -474,12 +448,7 @@ class MergeDecompositionActorTest {
       for ((wholeProgram, expected) in cases) {
         val cut = MinCutDecomposition(loopHandling = handling).cut(wholeProgram.procedures.single())
         cut.blockGraph.checkConsistency()
-        assertEquals(
-          expected,
-          checkDecomposed(wholeProgram, cut.blockGraph) { bg, bf ->
-            runDssActorsSequentially(bg, bf)
-          },
-        ) {
+        assertEquals(expected, checkDecomposed(wholeProgram, cut.blockGraph)) {
           "$handling on ${wholeProgram.name}: ${cut.describe().first()}"
         }
       }
@@ -491,22 +460,14 @@ class MergeDecompositionActorTest {
     val wholeProgram = statefulCheckXcfa()
     assertEquals(
       DssResult.UNSAFE,
-      checkDecomposed(wholeProgram, selfLoopAbsorbedBlockGraph(wholeProgram)) { bg, bf ->
-        runDssActorsSequentially(bg, bf)
-      },
+      checkDecomposed(wholeProgram, selfLoopAbsorbedBlockGraph(wholeProgram)),
     )
   }
 
   @Test
   fun `a violation four loop iterations deep is UNSAFE with the global predicate pool`() {
     val wholeProgram = statefulCheckXcfa()
-    val sequentially: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActorsSequentially(bg, bf)
-    }
     assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
-    assertEquals(
-      DssResult.UNSAFE,
-      checkDecomposed(wholeProgram, mergedBlockGraph(wholeProgram, 2), sequentially),
-    )
+    assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram, mergedBlockGraph(wholeProgram, 2)))
   }
 }

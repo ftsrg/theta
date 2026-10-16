@@ -22,8 +22,6 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
-import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
 import java.time.Duration
@@ -61,19 +59,18 @@ class NestedLoopActorTest {
   private fun checkDirectly(xcfa: XCFA) =
     runWorkerConfig(xcfa, checkerFactory = { x -> cegarChecker(x) })
 
-  private fun checkDecomposed(
-    wholeProgram: XCFA,
-    executor: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActors(bg, bf)
-    },
-  ): DssResult {
+  private fun checkDecomposed(wholeProgram: XCFA): DssResult {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-      executor(blockGraph) { block ->
-        PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
-      }
+      runDssActorsSequentially(
+        blockGraph,
+        behaviorFor = { block ->
+          PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
+        },
+      )
     }
   }
 
@@ -136,37 +133,16 @@ class NestedLoopActorTest {
     "DSS does not terminate on this nested-loop SAFE program (termination is not guaranteed, see DSS.md section 9)"
   )
   @Test
-  fun `nested loops reproduce the SAFE verdict through the concurrent executor`() {
+  fun `nested loops reproduce the SAFE verdict through the sequential executor`() {
     val wholeProgram = nestedLoopXcfa(safe = true)
     assertEquals(DssResult.SAFE, checkDecomposed(wholeProgram))
     assertTrue(checkDirectly(wholeProgram).isSafe) { "test fixture itself should be safe" }
   }
 
   @Test
-  fun `nested loops reproduce the UNSAFE verdict through the concurrent executor`() {
+  fun `nested loops reproduce the UNSAFE verdict through the sequential executor`() {
     val wholeProgram = nestedLoopXcfa(safe = false)
     assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram))
     assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
-  }
-
-  @Disabled(
-    "DSS does not terminate on this nested-loop SAFE program (termination is not guaranteed, see DSS.md section 9)"
-  )
-  @Test
-  fun `nested loops reproduce the SAFE verdict through the sequential executor`() {
-    val wholeProgram = nestedLoopXcfa(safe = true)
-    assertEquals(
-      DssResult.SAFE,
-      checkDecomposed(wholeProgram) { bg, bf -> runDssActorsSequentially(bg, bf) },
-    )
-  }
-
-  @Test
-  fun `nested loops reproduce the UNSAFE verdict through the sequential executor`() {
-    val wholeProgram = nestedLoopXcfa(safe = false)
-    assertEquals(
-      DssResult.UNSAFE,
-      checkDecomposed(wholeProgram) { bg, bf -> runDssActorsSequentially(bg, bf) },
-    )
   }
 }

@@ -22,15 +22,12 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
-import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
 import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 /**
@@ -60,19 +57,18 @@ class DiverseProgramsActorTest {
   private fun checkDirectly(xcfa: XCFA) =
     runWorkerConfig(xcfa, checkerFactory = { x -> cegarChecker(x) })
 
-  private fun checkDecomposed(
-    wholeProgram: XCFA,
-    executor: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActors(bg, bf)
-    },
-  ): DssResult {
+  private fun checkDecomposed(wholeProgram: XCFA): DssResult {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-      executor(blockGraph) { block ->
-        PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
-      }
+      runDssActorsSequentially(
+        blockGraph,
+        behaviorFor = { block ->
+          PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
+        },
+      )
     }
   }
 
@@ -235,29 +231,5 @@ class DiverseProgramsActorTest {
     val wholeProgram = twoSequentialLoopsXcfa(safe = false)
     assertEquals(DssResult.UNSAFE, checkDecomposed(wholeProgram))
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
-  }
-
-  /**
-   * Regression test: some concurrent message orders reported this SAFE, as a violation condition
-   * arriving before any precondition was later suppressed as "already sent". Repeated for that.
-   */
-  @RepeatedTest(5)
-  fun `two independent sequential loops are UNSAFE under every message order`() {
-    assertEquals(DssResult.UNSAFE, checkDecomposed(twoSequentialLoopsXcfa(safe = false)))
-  }
-
-  @Test
-  fun `the sequential executor agrees with the concurrent one on both cyclic fixtures`() {
-    val sequentially: (BlockGraph, (Block) -> DssBlockBehavior) -> DssResult = { bg, bf ->
-      runDssActorsSequentially(bg, bf)
-    }
-
-    assertEquals(DssResult.SAFE, checkDecomposed(loopWithBreakXcfa(safe = true), sequentially))
-    assertEquals(DssResult.UNSAFE, checkDecomposed(loopWithBreakXcfa(safe = false), sequentially))
-    assertEquals(DssResult.SAFE, checkDecomposed(twoSequentialLoopsXcfa(safe = true), sequentially))
-    assertEquals(
-      DssResult.UNSAFE,
-      checkDecomposed(twoSequentialLoopsXcfa(safe = false), sequentially),
-    )
   }
 }

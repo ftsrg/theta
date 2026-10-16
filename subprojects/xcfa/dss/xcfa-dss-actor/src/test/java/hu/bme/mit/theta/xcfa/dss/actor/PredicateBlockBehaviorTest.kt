@@ -69,8 +69,9 @@ class PredicateBlockBehaviorTest {
     // One roster shared by all blocks, as DssCheckerRoster requires; with one checker a per-block
     // roster wouldn't show, but the round-robin distribution test below would catch it.
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-      runDssActors(
+      runDssActorsSequentially(
         blockGraph,
         behaviorFor = { block ->
           PredicateBlockBehavior(
@@ -168,7 +169,7 @@ class PredicateBlockBehaviorTest {
     val checkerRoster = DssCheckerRoster(checkers)
     val result =
       assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
-        runDssActors(
+        runDssActorsSequentially(
           blockGraph,
           behaviorFor = { block ->
             PredicateBlockBehavior(wholeProgram, procedure, block, checkerRoster)
