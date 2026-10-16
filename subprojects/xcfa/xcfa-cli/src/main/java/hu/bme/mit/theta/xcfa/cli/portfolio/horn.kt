@@ -42,9 +42,7 @@ fun hornPortfolio(
     XcfaConfig(
       inputConfig =
         portfolioConfig.inputConfig.copy(
-          xcfaWCtx =
-            if (portfolioConfig.backendConfig.parseInProcess) null
-            else Triple(xcfa, mcm, parseContext),
+          xcfaWCtx = null,
           propertyFile = null,
           property = portfolioConfig.inputConfig.property,
         ),
@@ -99,7 +97,6 @@ fun hornPortfolio(
         backendConfig.copy(
           timeoutMs = timeoutMs,
           inProcess = inProcess,
-          parseInProcess = inProcess && portfolioConfig.backendConfig.parseInProcess,
           specConfig = backendConfig.specConfig!!.copy(solver = solver),
         )
     )

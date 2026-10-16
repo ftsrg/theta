@@ -40,7 +40,7 @@ fun getSafetyChecker(
   uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(config, logger)
   } else {
     xcfa!!
     mcm!!
@@ -86,7 +86,7 @@ fun getChecker(
   uniqueLogger: Logger,
 ): Checker<*, XcfaPrec<*>> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(config, logger)
   } else {
     when (config.backendConfig.backend) {
       Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config, logger)
