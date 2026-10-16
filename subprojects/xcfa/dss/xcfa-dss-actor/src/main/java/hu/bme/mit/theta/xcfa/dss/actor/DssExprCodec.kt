@@ -39,14 +39,8 @@ import java.util.IdentityHashMap
 private const val TRANSPORT_PREFIX = "__dss_transport_"
 
 /**
- * Writes the DSS messages' expressions to another process and reads them back there, as core's
- * `toString()` text parsed by the grammar module. Every process parses the same program, so a
- * program variable is transferred by its name; the [DssAuxVars] of violation conditions are named
- * per process, so they travel as their `(index, type)` and are interned again on the receiving
- * side.
- *
- * A received expression equals the sent one unless it has quantifiers: their bound variables are
- * declared anew. DSS's own messages have none (violation conditions use auxiliary variables).
+ * Transfers DSS message expressions between processes as `toString()` text: program variables by
+ * name, [DssAuxVars] by `(index, type)`. Round trips are exact unless quantifiers are involved.
  */
 class DssExprCodec(xcfa: XCFA) {
 

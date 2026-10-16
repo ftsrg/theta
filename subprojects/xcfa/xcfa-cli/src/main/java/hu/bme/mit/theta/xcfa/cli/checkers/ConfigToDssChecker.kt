@@ -269,9 +269,8 @@ fun getDssChecker(
 }
 
 /**
- * Starts DSS worker processes as this JVM with the command line of this run, so that each parses
- * the program and decomposes it the same way. Workers write no output files; their trace lines are
- * copied to this process's output, everything else they print is dropped.
+ * Starts DSS worker processes as this JVM with this run's command line, so they decompose the same
+ * way; only their trace lines are copied to this process's output.
  */
 private fun dssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
   val args =

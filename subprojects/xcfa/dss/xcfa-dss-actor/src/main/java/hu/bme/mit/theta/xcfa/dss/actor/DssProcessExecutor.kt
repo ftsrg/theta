@@ -59,16 +59,8 @@ fun BlockGraph.fingerprint(): String =
   }
 
 /**
- * Runs DSS like [runDssActors], but every block analysis runs in a worker process of its own, so
- * that native solvers that are not thread-safe (legacy Z3, MathSAT on Windows) never run twice in
- * one process. This process keeps the actors, the routing and the quiescence detection; each
- * block's [DssBlockBehavior] is a proxy that sends the message to the worker and returns its
- * answer. Messages travel through [codec], so their expressions must be over the program's
- * variables and [hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars] only.
- *
- * At most [maxProcesses] workers are started (0: one per block); a worker serving several blocks
- * analyzes them one at a time. A worker that dies fails its blocks with a [DssWorkerException]
- * instead of taking the whole run down with it.
+ * [runDssActors], but each block analysis runs in a worker process (at most [maxProcesses], 0: one
+ * per block), so thread-unsafe native solvers never share one; a dead worker fails only its blocks.
  */
 fun runDssActorsInProcesses(
   blockGraph: BlockGraph,
@@ -223,9 +215,8 @@ private class DssWorkerConnection(
 }
 
 /**
- * The worker side of [runDssActorsInProcesses]: connects to `localhost:[port]` as worker [index]
- * and answers requests with [behaviors], one at a time, until the other side closes the connection.
- * [fingerprint] is this process's [BlockGraph.fingerprint], checked against the main process's.
+ * Worker side of [runDssActorsInProcesses]: connects to `localhost:[port]` as worker [index] and
+ * answers requests with [behaviors] one at a time; [fingerprint] must match the main process's.
  */
 fun serveDssBlocks(
   port: Int,
