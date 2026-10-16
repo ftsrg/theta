@@ -27,10 +27,8 @@ enum class DssActorRole {
 }
 
 /**
- * Fans a [DssMessage] out to one or more actor queues. Routing is always targeted - by actor id or
- * by role - never a literal "push to every actor" broadcast; see [DssBlockActor] for why (plan §2:
- * broadcasting is targeted routing, not "push to every actor including self", contrary to a literal
- * reading of the paper's Algorithm 3).
+ * Fans a [DssMessage] out to actor queues, targeted by id or by role; see [DssBlockActor] for which
+ * messages go where.
  */
 class DssMessageBroadcaster(
   connections: Map<String, Pair<DssActorRole, BlockingQueue<DssMessage>>>

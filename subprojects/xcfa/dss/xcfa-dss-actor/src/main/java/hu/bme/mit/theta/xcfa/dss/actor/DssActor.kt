@@ -16,9 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * A participant in the DSS actor network (plan §2). Every actor decides on its own how to answer a
- * received message, and how to route whatever it produces - see [DssBlockActor] and
- * [DssObserverActor] for the two confirmed roles.
+ * A participant in the DSS actor network; decides how to answer and route messages itself. See
+ * [DssBlockActor] and [DssObserverActor] for the two roles.
  */
 interface DssActor : Runnable {
 
@@ -42,30 +41,14 @@ interface DssActor : Runnable {
 }
 
 /**
- * Base [DssActor] loop: block on the next message, process it, route the response, repeat until
- * [shutdownRequested]. [connection.active] is marked around processing (not just while blocked on
- * the queue) to close the quiescence-detection race [DssThreadMonitor] guards against - a thread
- * that has just dequeued its last message but hasn't finished reacting to it yet must not be
- * mistaken for idle.
- *
- * A [processMessage]/[broadcast] failure broadcasts a [DssExceptionMessage] and ends this actor's
- * loop, rather than letting the exception kill the thread silently - not a concern with the stub
- * workers this was first validated against (plan step 4), but real analysis (build-order step 5+)
- * can genuinely fail (solver issues, unexpected states), and a silently-dead thread would otherwise
- * hang the rest of the network forever waiting on messages that will never come. Goes through
- * [DssConnection.broadcaster] directly rather than this actor's own [broadcast] override, since
- * that override may have its own constraints (e.g. [DssObserverActor] asserts it never produces a
- * response at all) that a failure path should not be tripped up by.
+ * Base [DssActor] loop: take, process, route, repeat until [shutdownRequested]. A failure
+ * broadcasts a [DssExceptionMessage] and ends the loop instead of silently hanging the network.
  */
 abstract class DssWorker(override val id: String) : DssActor {
 
   /**
-   * Processes exactly one already-received [message], routing the response and catching failures
-   * the same way [run]'s loop does. Returns `false` if [message] itself caused a failure (an
-   * [DssExceptionMessage] has already been broadcast, and this actor should stop) - `true`
-   * otherwise. Exposed separately from [run] so a non-threaded executor (build-order step 6's
-   * sequential/single-worker executor) can drive this actor message-by-message without a dedicated
-   * [Thread].
+   * Processes one received [message], marking this actor [DssConnection.active] meanwhile so
+   * [DssThreadMonitor] never sees it as idle. Returns `false` if it failed (the actor should stop).
    */
   fun processOneMessage(message: DssMessage): Boolean {
     connection.active.add(id)

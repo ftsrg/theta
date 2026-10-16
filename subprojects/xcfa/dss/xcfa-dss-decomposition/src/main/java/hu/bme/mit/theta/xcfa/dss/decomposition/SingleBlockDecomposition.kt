@@ -20,11 +20,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 /**
- * `NO_DECOMPOSITION`, mirroring CPAchecker's `SingleBlockDecomposition`: the whole procedure as one
- * block `SB1`. Its entry is the procedure's initial location; its exit is the last location without
- * outgoing edges found by a breadth-first traversal from the entry (CPAchecker's choice, kept
- * as-is). The block has no predecessors or successors, so it is the root and its exit is never used
- * for a postcondition.
+ * `NO_DECOMPOSITION` (CPAchecker's `SingleBlockDecomposition`): the whole procedure as root block
+ * `SB1`, exiting at the last dead end a BFS from the entry finds (CPAchecker's choice).
  */
 object SingleBlockDecomposition : DssBlockDecomposition {
 

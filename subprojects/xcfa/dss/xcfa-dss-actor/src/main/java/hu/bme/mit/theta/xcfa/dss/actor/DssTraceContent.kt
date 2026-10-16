@@ -33,11 +33,8 @@ import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import java.util.IdentityHashMap
 
 /**
- * The trace fields describing the content of a postcondition or violation condition: `disj` (top
- * level disjuncts, 0 for false), `nodes` (distinct expression objects, so shared subterms count
- * once), `atoms` (distinct non-Boolean-connective subformulas), `vars` (program variables), `aux`
- * (auxiliary variables of violation conditions, see [DssAuxVars]) and `top`. With
- * [DssTrace.expressions], `expr` (the formula itself) comes last, since it contains spaces.
+ * Trace fields describing a condition's content: `disj`, `nodes`, `atoms`, `vars`, `aux` (see
+ * [DssAuxVars]) and `top`; with [DssTrace.expressions], the formula itself as a final `expr` field.
  */
 internal fun traceContent(expr: Expr<BoolType>?): Array<Pair<String, Any?>> {
   if (expr == null) return arrayOf("disj" to 0, "stub" to true)

@@ -34,20 +34,15 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 
 /**
- * End-to-end tests for `--backend DSS` (build-order step 8's CLI integration,
- * [hu.bme.mit.theta.xcfa.cli.checkers.getDssChecker]) - the actual new surface here is the CLI
- * wiring itself (flag parsing, backend dispatch, result/witness reporting), not DSS's own
- * decomposition/analysis/actor logic, which already has 104 tests across the `xcfa-dss-*` modules.
+ * End-to-end tests for `--backend DSS` ([hu.bme.mit.theta.xcfa.cli.checkers.getDssChecker]),
+ * covering the CLI wiring itself; DSS's own logic is tested in the `xcfa-dss-*` modules.
  */
 class XcfaCliDssTest {
 
   companion object {
 
-    // The full decomposition x executor grid, as data - decompositionAndExecutor() (below) exposes
-    // it as-is for the existing single-axis tests;
-    // randomCheckerBackendsAndDecompositionAndExecutor()
-    // crosses it against every random backend combination, so both method sources stay in sync with
-    // one definition instead of two copies of the same sixteen pairs drifting apart.
+    // The decomposition x executor grid, defined once and shared by decompositionAndExecutor() and
+    // randomCheckerBackendsAndDecompositionAndExecutor() so the two can't drift apart.
     private val decompositionExecutorPairs: List<Pair<String, String>> =
       listOf(
         "LINEAR" to "CONCURRENT",
@@ -90,14 +85,8 @@ class XcfaCliDssTest {
         Arguments.of("CEGAR_PRED_CART,CEGAR_PRED_CART,BMC"),
       )
 
-    // Fixed-seed pseudo-randomness, mirroring this codebase's own convention for reproducible
-    // randomized coverage (see XcfaExplAnalysisTest/XcfaPredAnalysisTest's own `Random(seed)`
-    // driving XcfaDporLts) - five independent, genuinely random-looking subset/order/repeat-count
-    // draws from the full DssCheckerBackend range (2 to 4 entries each, drawn with replacement, so
-    // repeats like "BMC,BMC" are possible within one combination), all five computed once from a
-    // single seeded Random up front so a run is fully reproducible end to end - but none
-    // hand-picked/curated the way checkerBackendLists()'s entries are, and a different seed would
-    // exercise five different combinations without anyone having to think them up by hand.
+    // Five random 2-4 entry DssCheckerBackend combinations (with repeats), drawn once from a fixed
+    // seed: reproducible, yet not hand-picked like checkerBackendLists().
     private val randomCheckerBackendCombinations: List<String> =
       Random(20260824).let { rnd ->
         val allBackends = DssCheckerBackend.values()
@@ -340,15 +329,8 @@ class XcfaCliDssTest {
   @ParameterizedTest
   @MethodSource("checkerBackendLists")
   fun `--dss-checker-backends builds and runs to completion on a SAFE program`(backends: String) {
-    // Each of the three CEGAR domains (PRED_CART - the original default and only option before
-    // this, PRED_BOOL, PRED_SPLIT) individually, a list mixing all three, the bounded-model-
-    // checking-family entries (BMC/KIND/IMC/KINDIMC/BOUNDED, which go through adaptBoundedChecker),
-    // and a list mixing CEGAR and bounded are all covered, confirming DssCheckerRoster genuinely
-    // receives a heterogeneous roster and runs it to completion regardless of which Domain/backend
-    // built each entry. Correctness of checker *selection* itself (round-robin balance, a custom
-    // strategy being consulted) is already proven at the pure DssCheckerRoster level
-    // (DssCheckerRosterTest) and the solver-backed PredicateBlockBehaviorTest; this test's own job,
-    // like every other test in this file, is just the CLI wiring.
+    // Single CEGAR domains, mixed CEGAR, bounded and CEGAR+bounded rosters all run to completion;
+    // checker selection itself is tested in DssCheckerRosterTest/PredicateBlockBehaviorTest.
     main(
       arrayOf(
         "--backend",
@@ -390,13 +372,8 @@ class XcfaCliDssTest {
     decomposition: String,
     executor: String,
   ) {
-    // Crosses all five randomCheckerBackendCombinations (each a heterogeneous, possibly-repeated,
-    // possibly-CEGAR+bounded-mixed roster - see that val's own doc) against the full decomposition
-    // x
-    // executor grid `every --dss-decomposition and --dss-executor combination parses and runs`
-    // already covers with the default single-CEGAR roster - 30 combinations no fixed, hand-picked
-    // test above exercises, since checkerBackendLists()'s own tests all run with the default
-    // decomposition/executor.
+    // Every random backend combination against the full decomposition x executor grid - 30
+    // combinations the default-roster tests above never exercise.
     main(
       arrayOf(
         "--backend",
@@ -446,12 +423,8 @@ class XcfaCliDssTest {
 
   @Test
   fun `--dss-checker-backends rejects a backend outside the DSS-compatible subset`() {
-    // DssCheckerBackend deliberately excludes backends whose checker doesn't produce DSS's
-    // required LocationInvariants/Trace proof shape (OC/CHC/PORTFOLIO/...), or that do but simply
-    // aren't wired in yet (IC3/MDD). JCommander's own enum parsing is what actually rejects an
-    // out-of-subset name like OC, the same way any other misspelled/unsupported enum value on this
-    // CLI already does - this is CLI-wiring coverage that the restriction is real, not a new
-    // validation path of DSS's own.
+    // JCommander's enum parsing rejects backends outside DssCheckerBackend (e.g. OC); this covers
+    // that CLI restriction, not a DSS validation path.
     val temp = createTempDirectory()
     val captured = temp.resolve("stdout_stderr").toFile()
     PrintStream(BufferedOutputStream(FileOutputStream(captured)), true).use { ps ->
@@ -513,18 +486,9 @@ class XcfaCliDssTest {
 
   @Test
   fun `--backend DSS with --output ALL does not crash on witness writing for an UNSAFE (no-trace) verdict`() {
-    // DSS's UNSAFE verdict carries no concrete counterexample trace (doc/DSS.md's Known
-    // Limitations - packVcond/unpackVcond aren't implemented) - this is exactly the case that
-    // exposed a latent unchecked-cast crash in VerificationLogging.kt's trace-writing code, fixed
-    // alongside this backend. --output ALL is the default WitnessLevel, so this also doubles as a
-    // regression test for that fix without needing to force any extra flags.
-    //
-    // Reaching the assertion below at all is the actual regression guard: before the fix, this
-    // threw a ClassCastException (EmptyCex is not a Trace) from inside the witness-writing block,
-    // caught only by the generic "Could not output files" catch-all. There genuinely is no
-    // witness.graphml/witness.yml afterward either way - GraphmlWitnessWriter/YamlWitnessWriter
-    // both decline to write anything meaningful without a concrete trace, which is correct, not a
-    // bug (see the same Known Limitation - DSS cannot yet produce violation witnesses).
+    // Regression test: DSS's UNSAFE verdict carries no trace (EmptyCex), which used to crash
+    // VerificationLogging.kt's trace writing with a ClassCastException. No witness file is
+    // expected either way, as DSS can't produce violation witnesses yet.
     val temp = createTempDirectory()
     main(
       arrayOf(

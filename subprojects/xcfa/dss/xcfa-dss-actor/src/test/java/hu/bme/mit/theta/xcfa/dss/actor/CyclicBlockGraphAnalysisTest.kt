@@ -34,21 +34,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Build-order step 6's correctness checkpoint: [PredicateBlockBehavior], driven by real per-block
- * CEGAR, checked against a block graph that actually contains a cycle - the paper's own smallest
- * cyclic example (Fig. 1-5, Table 1: a while loop incrementing `x`/`y` in lockstep, followed by
- * `assert(x == y)`), already used as [LinearBlockDecomposition]'s own golden test
- * (`LinearBlockDecompositionTest`). Under `blk_linear`, the loop body collapses into a single block
- * that lists *itself* as both predecessor and successor (loop head == loop-body entry == loop-body
- * exit - see that test's assertions), so this block sends messages to its own inbox as part of
- * normal routing. Nothing before this step ever drove real analysis through a block graph with that
- * shape - [PredicateBlockBehavior]'s own class doc explicitly called cyclic graphs out of scope
- * until now.
- *
- * Both [runDssActors] (real concurrency) and [runDssActorsSequentially] (deterministic,
- * single-threaded) are checked against the same fixtures, since step 6 is exactly about trusting
- * the concurrent executor against cyclic cases - the sequential one is the lower-risk reference to
- * diff it against.
+ * Build-order step 6: real per-block CEGAR on a cyclic block graph (the paper's `x`/`y` loop body
+ * is its own successor), under both [runDssActors] and [runDssActorsSequentially].
  */
 class CyclicBlockGraphAnalysisTest {
 
@@ -88,9 +75,8 @@ class CyclicBlockGraphAnalysisTest {
   }
 
   /**
-   * The paper's own running example: `x`/`y` incremented in lockstep inside a while loop, then
-   * `assert(x == y)` - safe when [incrementY] mirrors the loop's `x` increment every iteration,
-   * unsafe when it doesn't (the loop still exits once `x >= 10`, but `y` is left behind).
+   * The paper's running example: `x`/`y` incremented in a while loop, then `assert(x == y)` - safe
+   * iff [incrementY] keeps `y` in lockstep with `x`.
    */
   private fun xyLoopXcfa(incrementY: Boolean): XCFA =
     xcfa("xy-loop") {

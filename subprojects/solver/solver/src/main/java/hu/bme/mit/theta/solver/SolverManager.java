@@ -53,20 +53,16 @@ public abstract class SolverManager implements AutoCloseable {
     private static final ThreadLocal<List<SolverBase>> solverScope = new ThreadLocal<>();
 
     /**
-     * Runs {@code action} in a solver scope: every solver a managed factory creates on the current
-     * thread while it runs is owned by the scope instead of its manager, and is closed when the
-     * action finishes. Managers otherwise keep every solver they ever created until {@link
-     * #closeAll()}, which is too late for analyses that build many short-lived checkers in one
-     * process (e.g. the block analyses of distributed summary synthesis).
+     * Runs {@code action} in a solver scope: solvers that managed factories create on this thread
+     * meanwhile are closed when it finishes, not kept until {@link #closeAll()}.
      */
     public static <T> T withSolverScope(final Callable<T> action) throws Exception {
         return withSolverScope(new Object(), action);
     }
 
     /**
-     * Like {@link #withSolverScope(Callable)}, but closes the solvers while holding {@code
-     * closeLock} (for solver libraries whose native contexts must not be created and destroyed
-     * concurrently).
+     * Like {@link #withSolverScope(Callable)}, but closes solvers while holding {@code closeLock}
+     * (for libraries whose native contexts must not be created and destroyed concurrently).
      */
     public static <T> T withSolverScope(final Object closeLock, final Callable<T> action)
             throws Exception {
@@ -86,10 +82,8 @@ public abstract class SolverManager implements AutoCloseable {
     }
 
     /**
-     * Hands {@code solver} over to the solver scope of the current thread, if there is one (see
-     * {@link #withSolverScope(Callable)}).
-     *
-     * @return whether the scope took ownership; if not, the manager keeps tracking the solver
+     * Hands {@code solver} to the current thread's solver scope, if any; returns whether it took
+     * ownership (otherwise the manager keeps tracking the solver).
      */
     protected static boolean adoptIntoSolverScope(final SolverBase solver) {
         final List<SolverBase> scope = solverScope.get();

@@ -18,24 +18,8 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 
 /**
- * A worker responsible for one [Block]. Delegates the actual analysis reaction to a
- * [DssBlockBehavior] (a stub for now - see [EchoBlockAnalysis]) and owns exactly the routing and
- * termination logic confirmed from CPAchecker's `DssAnalysisWorker.broadcast` (plan §2):
- * - `POST_CONDITION` goes to the observer and to [Block.successorIds] only - forward along the
- *   block graph.
- * - `VIOLATION_CONDITION`: if this block has no predecessors (it is the root), that is an
- *   immediate, local short-circuit - broadcast `RESULT(UNSAFE)` to everyone, no need to wait for
- *   [DssThreadMonitor] to notice anything. This worker does *not* shut down at that point, though:
- *   it still needs to receive its own broadcast `RESULT` back through the normal loop and answer it
- *   (see below), like every other worker does. Otherwise `VIOLATION_CONDITION` goes to the observer
- *   and to [Block.predecessorIds] only - backward along the block graph.
- * - `EXCEPTION`/`RESULT` received: this worker shuts down and answers with its own `STATISTIC`.
- * - `EXCEPTION`/`RESULT`/`STATISTIC` about to be *sent* (whether self-triggered above or in answer
- *   to one just received): goes to everyone.
- *
- * On startup, broadcasts [DssBlockBehavior.initialMessages] before entering the normal receive
- * loop - every block runs its own initial analysis, not just the root (matches CPAchecker: a block
- * with no incoming information yet still explores from its own most-general entry state).
+ * A worker for one [Block], routing as CPAchecker's `DssAnalysisWorker`: postconditions forward,
+ * violation conditions backward (UNSAFE at the root); results, exceptions and statistics to all.
  */
 class DssBlockActor(
   private val block: Block,
@@ -115,11 +99,8 @@ class DssBlockActor(
   }
 
   /**
-   * Broadcasts this block's initial analysis messages ([DssBlockBehavior.initialMessages]),
-   * catching a failure the same way normal message processing does. Returns `false` if the initial
-   * analysis itself failed (an [DssExceptionMessage] has already been broadcast). Exposed
-   * separately from [run] so a non-threaded executor (build-order step 6's sequential/single-worker
-   * executor) can drive this actor without a dedicated [Thread].
+   * Broadcasts [DssBlockBehavior.initialMessages]; returns `false` if that failed (a
+   * [DssExceptionMessage] was broadcast). Separate from [run] for the sequential executor.
    */
   fun start(): Boolean =
     try {

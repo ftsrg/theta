@@ -85,16 +85,8 @@ class LinearBlockDecompositionTest {
   }
 
   /**
-   * The paper's own running example (Beyer, Kettl & Lemberger, FSE 2024, Fig. 1-5): a while loop
-   * incrementing `x` and `y` in lockstep, followed by `assert(x == y)`. Expected decomposition,
-   * verified by hand against the fixture below rather than against the paper's published figures
-   * (which this plan could not re-derive exactly, see dss-in-theta-plan.md):
-   * - `init -> loophead` (the `x = 0; y = 0` initialization)
-   * - `loophead -> afterloop` (the loop-exit condition)
-   * - `loophead -> loophead` via `body` (the loop body: entry = exit = loop head, falling out of
-   *   the join-point rule for free, matching the paper's stated exception for loop bodies)
-   * - `afterloop -> final` (the safe path, `assert` holds)
-   * - `afterloop -> err` (the violation path, `assert` fails)
+   * The paper's running example (`x`/`y` loop, then `assert(x == y)`). Expected blocks: init ->
+   * loophead, loophead -> afterloop, loophead -> loophead (body), afterloop -> final/err.
    */
   @Test
   fun `paper's x-y while-loop example decomposes with the loop body as its own block`() {

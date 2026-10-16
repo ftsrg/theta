@@ -63,12 +63,9 @@ application {
 }
 
 tasks.withType<Test> {
-    // DSS's concurrent executor runs real, multi-threaded Z3 solving (one thread per block) - this
-    // has been observed to leave native solver state in a way that intermittently breaks unrelated,
-    // single-threaded solver calls in later test classes of the same JVM (flaky NotSolvableException
-    // failures in XcfaCliNonTerminationValidateTest/VerifyTest depending on class execution order,
-    // never reproducible with XcfaCliDssTest excluded). A fresh JVM per test class sidesteps whatever
-    // shared native state is at fault, at the cost of slightly slower test runs.
+    // DSS's concurrent executor runs multi-threaded Z3, which has intermittently broken solver
+    // calls in later test classes of the same JVM (flaky NotSolvableException); a fresh JVM per
+    // test class avoids that shared native state.
     forkEvery = 1
 }
 

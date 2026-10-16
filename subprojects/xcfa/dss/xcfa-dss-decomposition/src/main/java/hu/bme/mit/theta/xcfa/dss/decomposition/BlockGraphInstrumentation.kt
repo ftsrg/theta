@@ -21,44 +21,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 /**
- * Gives every block (that needs one) a dedicated abstraction point, distinct from the location
- * where it meets its neighbours.
- *
- * A block's [Block.finalLocation] is, for any non-root block, also some other block's
- * [Block.initialLocation] - running predicate abstraction directly there would mean abstracting a
- * location that is simultaneously "owned" by the next block too. Instead, for every block whose
- * final location has somewhere to go (see below), this appends a synthetic no-op "ghost" edge to a
- * freshly created location, and that new location becomes the block's
- * [Block.violationConditionLocation] - the point where a worker will later be told to place an
- * abstraction (the `cpa.predicate.blk.alwaysAtGivenNodes`-equivalent from the DSS plan's §3).
- * [XcfaProcedure] is copied to include the new locations/edges in [XcfaProcedure.locs]/
- * [XcfaProcedure.edges]; its internal `parent` back-reference (set only during
- * [hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder.build] and, as far as this module can tell,
- * never read afterward) is not preserved by that copy - revisit if something downstream turns out
- * to depend on it.
- *
- * The block graph's topology (which locations delimit which blocks, and how blocks connect to each
- * other) is unchanged: [Block.finalLocation] still names the original, shared location, and
- * [Block.predecessorIds]/[Block.successorIds] are untouched.
- *
- * Mirrors CPAchecker's `BlockGraphModification.instrumentCFA`, with one of its exclusions carried
- * over: a block ending in a genuine dead end (no outgoing edges at all, e.g. the procedure's
- * `final`/`error` location) gets no ghost edge, since no successor block is ever waiting on a
- * summary from there - [Block.isAbstractionPossible] is `false` for such blocks. The exclusions
- * CPAchecker applies for call-site and main-entry locations are not ported: DSS in Theta works on a
- * single procedure, where a call is one edge with an `InvokeLabel`. As in CPAchecker, a graph with
- * a single block is left unchanged.
- *
- * The DSS pipeline of `xcfa-cli` does not run this: the block analysis extracts every block into
- * its own XCFA, where the block exit is a private location already (see `doc/DSS.md`).
- *
- * Must run after decomposition, on that decomposition's own result - re-decomposing an already
- * instrumented procedure is not supported (the ghost edges would be picked up as ordinary CFG
- * structure). This mutates the given [procedure]'s existing locations in place (adding the new
- * ghost edges to [XcfaLocation.outgoingEdges]/[XcfaLocation.incomingEdges]), since that is what any
- * traversal over the procedure - including [LinearBlockDecomposition] itself - actually reads;
- * [XcfaLocation] has no usable `copy()` for this (its adjacency sets are plain, freshly-initialized
- * `val`s, not `data class` constructor parameters).
+ * Gives each non-dead-end block its own abstraction point ([Block.violationConditionLocation]) via
+ * a no-op ghost edge to a fresh location (CPAchecker's `instrumentCFA`); `xcfa-cli` doesn't run it.
  */
 object BlockGraphInstrumentation {
 
@@ -69,6 +33,8 @@ object BlockGraphInstrumentation {
     if (blockGraph.blocks.size == 1) {
       return Modification(procedure, blockGraph)
     }
+    // Mutates the existing locations in place, so this must run after decomposition and merging:
+    // re-decomposing an instrumented procedure would treat the ghost edges as real CFG structure.
     val ghostEdgeByFinalLocation = mutableMapOf<XcfaLocation, XcfaEdge>()
 
     for (finalLocation in blockGraph.blocks.map(Block::finalLocation).toSet()) {

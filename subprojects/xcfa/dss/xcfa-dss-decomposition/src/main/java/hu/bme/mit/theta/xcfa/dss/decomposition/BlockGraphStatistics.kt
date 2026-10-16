@@ -16,14 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
 /**
- * Shape of a [BlockGraph]'s block-to-block connections (`--dss-block-graph-stats-only`).
- *
- * @property edges number of (predecessor, successor) block pairs, self loops included
- * @property selfLoops blocks that are their own successor
- * @property backAndForthPairs unordered pairs of distinct blocks connected in both directions
- * @property cyclicSccs strongly connected components containing a cycle (more than one block, or
- *   one block with a self loop)
- * @property largestScc number of blocks in the largest strongly connected component
+ * Shape of a [BlockGraph]'s block connections (`--dss-block-graph-stats-only`). [edges] counts
+ * block pairs incl. self loops; [cyclicSccs] counts SCCs with a cycle; [largestScc] is in blocks.
  */
 data class BlockGraphStatistics(
   val blocks: Int,

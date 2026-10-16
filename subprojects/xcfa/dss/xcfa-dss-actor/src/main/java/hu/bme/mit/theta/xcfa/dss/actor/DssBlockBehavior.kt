@@ -16,13 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * What a [DssBlockActor] does in response to incoming analysis messages, decoupled from the
- * routing/termination machinery around it - the seam build-order step 5 will plug real per-block
- * CEGAR (CPAchecker's confirmed `DssBlockAnalysis`: `runInitialAnalysis`/`storePrecondition`/
- * `analyzePrecondition`/`storeViolationCondition`/`analyzeViolationCondition`) into, in place of
- * [EchoBlockAnalysis]. Deliberately not shaped after that two-phase store-then-analyze API yet -
- * this step only needs *a* pluggable behavior to validate the actor runtime against, not the right
- * one; guessing its final shape now would just be something to undo later.
+ * A [DssBlockActor]'s analysis reaction, decoupled from routing/termination. Implemented by
+ * [EchoBlockAnalysis] (stub) and [PredicateBlockBehavior] (real per-block CEGAR).
  */
 interface DssBlockBehavior {
 

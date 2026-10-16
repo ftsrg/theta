@@ -25,11 +25,8 @@ import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Test
 
 /**
- * The same routing/termination battery as [DssActorRuntimeTest], driven through
- * [runDssActorsSequentially] instead of [runDssActors] - the deterministic, single-threaded
- * executor should agree with the concurrent one on every case, still exercised against
- * [EchoBlockAnalysis] stub workers so this stays decoupled from real-analysis/solver timing
- * (build-order step 6).
+ * [DssActorRuntimeTest]'s routing/termination battery, driven through [runDssActorsSequentially]
+ * with [EchoBlockAnalysis] stubs; it should agree with the concurrent executor on every case.
  */
 class SequentialDssExecutorTest {
 

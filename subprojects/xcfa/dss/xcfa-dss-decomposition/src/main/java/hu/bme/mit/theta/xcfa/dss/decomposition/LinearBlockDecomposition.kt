@@ -20,26 +20,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 /**
- * `blk_linear` from the DSS paper (Beyer, Kettl & Lemberger, FSE 2024, Sect. 3): cuts a new block
- * boundary at every location that is a branch point, a join point, or a dead end. Loop bodies get
- * their own block with entry = exit = loop head, which falls out of the join-point rule for free (a
- * loop head is always the join of the loop-entry edge and the back edge).
- *
- * Verified against the real CPAchecker source, not just the paper: `LinearBlockNodeDecomposition`
- * itself delegates entirely to an injected `Predicate<CFANode>`, and the *general-purpose*
- * `BlockOperator.isBlockEnd` it's parameterized with has its own Java class defaults
- * (`alwaysAtLoops=true`, `alwaysAtFunctions=true`, join/branch both `false`) that do **not** match
- * this join-or-branch rule at all. What DSS actually runs with instead comes from CPAchecker's
- * `config/dss.properties`, which overrides those defaults to `alwaysAtJoin=true`,
- * `alwaysAtBranch=true`, `alwaysAtProgramExit=true` (plus function-specific flags irrelevant to
- * Theta's current single-procedure-only scope) - i.e. join-or-branch-or-program-exit, matching this
- * rule exactly once the right config layer is the reference point, not the class defaults.
- *
- * [isBlockEnd] defaults to "not exactly one incoming and exactly one outgoing edge" - the same
- * notion of a non-collapsible location used by the existing large-block-encoding pass
- * ([hu.bme.mit.theta.xcfa.passes.LbePass]): everything else (unique in-edge, unique out-edge) is a
- * "snake" location that a full LBE pass would collapse away, and is exactly what should stay inside
- * a block rather than start a new one.
+ * `blk_linear` from the DSS paper: by default ([isBlockEnd]) a block ends at every branch, join or
+ * dead end, so each loop body gets its own block (matches CPAchecker's `config/dss.properties`).
  */
 class LinearBlockDecomposition(
   private val isBlockEnd: (XcfaLocation) -> Boolean = ::defaultIsBlockEnd

@@ -16,15 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * Diagnostic trace of a DSS run (`--dss-trace`): one line per processed message and per block
- * analysis try, each written when it starts and when it ends, so the last lines of a run killed by
- * a timeout show what it was doing. Off ([sink] `null`) unless the CLI sets it; process-wide, as
- * there is one DSS run per process.
- *
- * Line format: `DSS-TRACE <ms since enable> <event> key=value...`. The `pc-in`, `pc-out`, `vc-in`
- * and `vc-out` events describe the content of each postcondition and violation condition (see
- * [traceContent]); with [expressions], they end with the formula itself (`expr=`, which contains
- * spaces).
+ * Diagnostic trace (`--dss-trace`): a `DSS-TRACE <ms> <event> key=value...` line at the start and
+ * end of every message and analysis try, so a timed-out run shows what it was doing.
  */
 object DssTrace {
 

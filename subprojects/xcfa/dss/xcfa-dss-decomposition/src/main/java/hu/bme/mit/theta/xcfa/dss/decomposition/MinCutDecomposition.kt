@@ -35,25 +35,8 @@ enum class CutLoopHandling(val decompositionName: String) {
 }
 
 /**
- * Theta-only decomposition (no CPAchecker counterpart): cuts the procedure at a set of **cut
- * locations** so that as few edges as possible cross between blocks, and, second, the blocks have
- * as equal location counts as possible.
- *
- * Every cut location, and the procedure entry, starts one block: everything reachable from it
- * without passing another cut location. A cut is valid if no edge falls into two blocks and every
- * block reaches at most one cut location, which becomes its exit (a block reaching none ends at one
- * of its dead ends). The **cut edges** are the edges entering a cut location - control passes into
- * another block along each of them - so their number is the cut locations' summed in-degree.
- *
- * The search ([cut]) is a branch and bound over location sets in increasing cut-edge order; it
- * stops after [searchBudget] edge visits and then keeps the best cut found ([MinCut.exhaustive]
- * `false`). If no valid cut yields [blockCount] blocks, fewer are tried, down to a single block
- * ([SingleBlockDecomposition]).
- *
- * `ABSORB_SELF_LOOPS` and `FORBID` fall back to the `ALLOW` cut ([MinCut.fallbackReason]) when
- * their own cut is not possible - no acyclic cut into at least two blocks, or collapsing the self
- * loops leaves a single block - and when computing it throws, so they never fail where `ALLOW`
- * succeeds.
+ * Theta-only: cuts the procedure at cut locations (each starts a block) minimizing crossing edges,
+ * then balancing block sizes, by budgeted branch and bound ([cut]), falling back to fewer blocks.
  */
 class MinCutDecomposition(
   private val blockCount: Int = DEFAULT_CUT_BLOCK_COUNT,
@@ -121,9 +104,8 @@ class MinCutDecomposition(
 }
 
 /**
- * The result of [MinCutDecomposition.cut]: the cut ([candidate], `null` if the procedure could not
- * be cut and is a single block) and the final [blockGraph], which differs from the cut's own blocks
- * if self loops were collapsed afterwards.
+ * Result of [MinCutDecomposition.cut]: the cut [candidate] (`null` for a single block) and the
+ * final [blockGraph], which differs from the cut's blocks if self loops were collapsed afterwards.
  */
 class MinCut
 internal constructor(

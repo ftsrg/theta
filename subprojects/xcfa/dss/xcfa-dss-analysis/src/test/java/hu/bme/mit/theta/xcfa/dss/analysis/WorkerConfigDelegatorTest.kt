@@ -28,9 +28,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Build-order step 3's correctness checkpoint: with `NO_DECOMPOSITION` (the whole program is one
- * block), a DSS worker degenerates to a plain call into Theta's existing config-driven CEGAR entry
- * point - so it must reproduce exactly what running that entry point directly would report.
+ * Build-order step 3: with `NO_DECOMPOSITION`, a DSS worker is a plain call into Theta's
+ * config-driven CEGAR, so it must report exactly what calling that entry point directly would.
  */
 class WorkerConfigDelegatorTest {
 

@@ -18,11 +18,8 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 /**
- * Theta-only decomposition (no CPAchecker counterpart): [MergeBlockDecomposition], then every
- * self-loop block is absorbed into a neighbour ([absorbSelfLoops]) so that the loop runs inside one
- * block analysis instead of as messages a block keeps sending to itself. Absorbing an inner loop
- * can make an outer loop a self loop, so merging and absorbing alternate until neither changes the
- * graph.
+ * Theta-only: [MergeBlockDecomposition], then self-loop blocks are absorbed into neighbours
+ * ([absorbSelfLoops]) so loops run inside one block analysis; both alternate to a fixpoint.
  */
 class SelfLoopAbsorbingDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
@@ -49,14 +46,8 @@ class SelfLoopAbsorbingDecomposition(
 }
 
 /**
- * Absorbs the self-loop blocks of [blockGraph] (blocks whose entry and exit are the same loop head
- * `h`) into a neighbouring block `ML<n>`, until no self loop can be absorbed. All self loops at `h`
- * go into the single other block ending at `h` (the loop is entered from it, and its exit `h` then
- * yields the loop invariant as postcondition), or else into the single other block starting at `h`.
- * A loop head with several of both is left alone, since absorbing would have to duplicate the loop.
- *
- * Returns [blockGraph] itself when nothing was absorbed. Blocks are wired by location, as in
- * [BlockGraph.fromBlocksWithoutEdges], so merging keeps every other block's connections.
+ * Absorbs self-loop blocks at a head `h` into the one other block ending (else starting) at `h`, as
+ * `ML<n>`; heads with several of both are left alone. Returns [blockGraph] if nothing changed.
  */
 fun absorbSelfLoops(blockGraph: BlockGraph): BlockGraph {
   var nextId =

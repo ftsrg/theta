@@ -43,21 +43,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 
 /**
- * Checks whether MathSAT5 through JavaSMT (`JavaSMT:MATHSAT5`) survives several threads that each use their own solvers
- * (own native contexts, nothing shared on the Java side) at the same time - the setup of DSS's
- * concurrent executor, minus DSS. Every thread repeatedly runs satisfiability checks with models
- * and (except in the SAT-only test) binary interpolation queries over the same variable names. The
- * tests differ in whether the solvers are also created in parallel, or one after the other under a
- * lock (as DSS's `WorkerConfigDelegator` does) so that only the solving runs in parallel, and in
- * whether interpolation is used. The threads share one {@link JavaSMTSolverFactory}, like the
- * solver manager does (every solver still gets its own JavaSMT context and MathSAT environment),
- * except in the per-thread-factory test, where nothing JavaSMT-side is shared either. The
- * same scenarios as {@code Z3ConcurrencyStressTest} of the legacy Z3 binding.
- *
- * <p>A native crash (`EXCEPTION_ACCESS_VIOLATION`) takes down the test JVM instead of failing the
- * test, so the test is opt-in: run it with the environment variable `Z3_STRESS=true`, e.g.
- * `Z3_STRESS=true ./gradlew :theta-solver-javasmt:test --tests '*MathSatConcurrencyStressTest*'`.
- * `Z3_STRESS_THREADS` and `Z3_STRESS_ITERATIONS` override the defaults (8 and 2000).
+ * Opt-in (`Z3_STRESS=true`; a native crash kills the JVM): whether MathSAT5 via JavaSMT survives
+ * many threads using their own solvers at once, as in DSS; see {@code Z3ConcurrencyStressTest}.
  */
 @EnabledIfEnvironmentVariable(named = "Z3_STRESS", matches = "true")
 public final class MathSatConcurrencyStressTest {

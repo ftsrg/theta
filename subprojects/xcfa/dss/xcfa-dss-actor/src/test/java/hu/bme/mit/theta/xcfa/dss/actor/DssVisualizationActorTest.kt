@@ -27,18 +27,12 @@ import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * The literal ASCII escape byte ANSI color codes start with (``), spelled out via a Kotlin unicode
- * escape rather than a raw control character, so it survives round-tripping through source
- * files/editors unambiguously.
- */
+/** The ASCII escape byte (0x1B) that ANSI color codes start with. */
 private const val ANSI_ESCAPE_BYTE = ""
 
 /**
- * Build-order step 7's correctness checkpoint: with `visualizationLog` given, both executors
- * capture the same run's message traffic a [DssVisualizationActor] would - without changing the
- * verdict, and without requiring it (both executors' default, `null` behavior, already covered by
- * every other test in this module, is unaffected - this is purely additive wiring).
+ * Build-order step 7: given a `visualizationLog`, both executors record the run's message traffic
+ * without changing the verdict.
  */
 class DssVisualizationActorTest {
 

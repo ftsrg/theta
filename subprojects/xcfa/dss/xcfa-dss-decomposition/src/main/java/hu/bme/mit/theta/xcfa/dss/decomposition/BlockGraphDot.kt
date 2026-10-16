@@ -16,17 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
 /**
- * Renders this [BlockGraph] as Graphviz DOT source, for visual debugging (plan §5 - CPAchecker's
- * `DssVisualizationWorker` does the same, via its own block-graph renderer). Purely structural:
- * reads only [Block] ids, endpoint location names, and topology - no analysis, no actor runtime
- * involved, so this can be called on a [BlockGraph] straight out of a [DssBlockDecomposition],
- * before any worker ever runs.
- *
- * The root block ([Block.isRoot]) gets a double border - it's where DSS's "no predecessor found a
- * violation ⇒ report UNSAFE immediately" short-circuit rule applies. A block with a dedicated
- * abstraction point ([Block.isAbstractionPossible]) gets a dashed border, since that is the
- * location a worker for this block actually places its postcondition/violation-condition check,
- * distinct from where the block topologically ends.
+ * Renders this [BlockGraph] as Graphviz DOT for visual debugging (purely structural). The root
+ * block gets a double border; blocks with a dedicated abstraction point get a dashed one.
  */
 fun BlockGraph.toDot(): String {
   val sb = StringBuilder()

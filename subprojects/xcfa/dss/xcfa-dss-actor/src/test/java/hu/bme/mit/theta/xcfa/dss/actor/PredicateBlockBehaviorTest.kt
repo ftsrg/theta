@@ -35,10 +35,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Build-order step 5's actual correctness checkpoint: a real, multi-block, `LINEAR_DECOMPOSITION`
- * program checked through the full actor runtime (routing, quiescence, [PredicateBlockBehavior]
- * driving real per-block CEGAR) reproduces the same verdict as checking the un-decomposed program
- * directly.
+ * Build-order step 5: a multi-block `LINEAR_DECOMPOSITION` program checked through the full actor
+ * runtime with [PredicateBlockBehavior] gives the same verdict as the undecomposed program.
  */
 class PredicateBlockBehaviorTest {
 
@@ -69,12 +67,8 @@ class PredicateBlockBehaviorTest {
   ): DssResult {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
-    // One roster, built here and shared by every block via behaviorFor below - not one per block -
-    // per DssCheckerRoster's own contract (a fresh-per-block roster would still trivially "balance"
-    // its own single checker against itself, so this distinction wouldn't even show up as a bug in
-    // a
-    // single-checker test like this one; see `checkerRoster distributes...` below for a test that
-    // would actually catch getting this wrong).
+    // One roster shared by all blocks, as DssCheckerRoster requires; with one checker a per-block
+    // roster wouldn't show, but the round-robin distribution test below would catch it.
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
     return assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(60)) {
       runDssActors(
@@ -122,10 +116,8 @@ class PredicateBlockBehaviorTest {
   }
 
   /**
-   * Two branches join back together before the safety check, so the join block has two predecessors
-   * and must accumulate both of their postconditions before it can precisely tell whether the join
-   * point's own successors (`checkD`/`err` here) are reachable - one path alone (x == 3) would say
-   * no, but the other (x == 15) does reach it.
+   * Two branches join before the check, so the join block must accumulate both postconditions:
+   * `checkD`/`err` are unreachable from x == 3 alone, but reachable from x == 15.
    */
   private fun joinXcfa(): XCFA =
     xcfa("predicate-block-behavior-join") {
@@ -154,14 +146,8 @@ class PredicateBlockBehaviorTest {
   }
 
   /**
-   * [DssCheckerRoster]'s own default (round-robin) proven against a real, multi-recheck run, not
-   * just the pure unit tests in `DssCheckerRosterTest` - the join fixture's own doc explains why
-   * its join block rechecks more than once (it has two predecessors, each arriving separately), so
-   * a single-checker roster couldn't tell this test apart from the join test above. Both checkers
-   * below are the *same* config (only which counter they bump differs) - proving
-   * distribution/selection, not that differing checkers still converge to the same verdict (see
-   * [DssCheckerRoster]'s own doc for why mixing genuinely different strategies is a separate,
-   * unproven concern this test doesn't cover).
+   * The default round-robin roster spreads a real multi-recheck run (the join block) across two
+   * copies of the same config - testing distribution, not convergence of different checkers.
    */
   @Test
   fun `the default round-robin roster distributes real checks across every checker it's given`() {
@@ -201,11 +187,8 @@ class PredicateBlockBehaviorTest {
   }
 
   /**
-   * Without the (Theta-only) global predicate pool, the blocks start with an empty precision like
-   * CPAchecker's. The root block (`init->branch`, `x := 5`) then packs a trivial postcondition, and
-   * the block ending in `err` (`assume(x >= 10)`) finds its error reachable from it - but, as in
-   * CPAchecker, that only produces a violation condition (`x >= 10`), which the root refutes by
-   * refinement. No false alarm: the pool only saves rounds, it is not needed for precision.
+   * Without the global predicate pool (empty precision, like CPAchecker), the spurious `err` only
+   * yields a violation condition the root refutes by refinement - the pool just saves rounds.
    */
   @Test
   fun `without the global predicate pool, violation conditions still refute the spurious error`() {

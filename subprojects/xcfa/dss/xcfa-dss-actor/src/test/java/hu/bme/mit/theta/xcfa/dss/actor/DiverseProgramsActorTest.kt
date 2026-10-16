@@ -35,13 +35,8 @@ import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 /**
- * Broadens `PredicateBlockBehaviorTest`/`CyclicBlockGraphAnalysisTest`'s coverage with more
- * structurally diverse example programs run end to end through real per-block CEGAR - a three-way
- * join (more than two predecessors accumulating into one block), a nested branch (a block graph
- * more than one level deep), a loop with a mid-loop break (a two-block cycle, not just a single
- * self-referencing block), and two independent sequential loops (two separate cyclic components in
- * one graph). Every fixture is checked against the non-decomposed baseline, the same way as the
- * existing tests.
+ * More diverse programs through real per-block CEGAR, each checked against the undecomposed
+ * baseline: a three-way join, nested branches, a loop with a break, and two sequential loops.
  */
 class DiverseProgramsActorTest {
 
@@ -83,9 +78,8 @@ class DiverseProgramsActorTest {
   }
 
   /**
-   * `branch` splits three ways (`y < 0`, `y == 5`, `y > 100`), each arm assigning a distinct value
-   * to `x` before rejoining at `join` - three predecessors accumulating into one block, which
-   * `PredicateBlockBehaviorTest`'s two-predecessor `joinXcfa` never exercises.
+   * `branch` splits three ways, each arm assigning a distinct `x` before rejoining at `join` -
+   * three predecessors accumulating into one block.
    */
   private fun threeWayJoinXcfa(errorValue: Int?): XCFA =
     xcfa("three-way-join") {
@@ -123,9 +117,7 @@ class DiverseProgramsActorTest {
   }
 
   /**
-   * A branch inside a branch: `outer` splits on `x`, and its `inner` arm splits again before both
-   * inner arms rejoin `elseOuter`'s arm at `join` - a block graph more than one hop deep, unlike
-   * the single-level branch/join fixtures used elsewhere.
+   * A branch inside a branch, all arms rejoining at `join` - a block graph more than one hop deep.
    */
   private fun nestedBranchXcfa(errorValue: Int?): XCFA =
     xcfa("nested-branch") {
@@ -164,11 +156,8 @@ class DiverseProgramsActorTest {
   }
 
   /**
-   * A loop whose body itself branches, either breaking out early (`x >= 5`) or looping back (`x <
-   * 5`) - under `blk_linear` this decomposes into a genuine *two*-block cycle (loop-head-side block
-   * <-> break-check-side block), not the single self-referencing block the paper's own `x`/`y`
-   * example produces (see `CyclicBlockGraphAnalysisTest`). Every path into `afterloop` (direct exit
-   * at `x >= 10`, or the break at `x >= 5`) guarantees `x >= 5`.
+   * A loop that breaks early at `x >= 5` or loops back - a two-block cycle under `blk_linear`, not
+   * a single self-loop. Every path to `afterloop` guarantees `x >= 5`.
    */
   private fun loopWithBreakXcfa(safe: Boolean): XCFA =
     xcfa("loop-with-break") {
@@ -207,23 +196,8 @@ class DiverseProgramsActorTest {
   }
 
   /**
-   * Two independent loops in sequence, each its own self-referencing block, connected by a plain
-   * straight-line block ("mid") - two separate cyclic components in one block graph, rather than
-   * one loop or one loop nested inside another. `x`, fixed by the first loop, has to survive
-   * correctly all the way through the second loop's own accumulation (which never touches `x` at
-   * all) for the final check to be decided correctly.
-   *
-   * The final check deliberately reuses loop 1's own guard predicate (`x >= 5`/`x < 5`) rather than
-   * asking a fresh question like "is `x` exactly `5`": Cartesian predicate abstraction
-   * (`Domain.PRED_CART`,
-   * [`WorkerConfigDelegator`](#workerconfigdelegator-the-thin-orchestration-layer-literally)'s
-   * default) tracks each predicate's truth value independently and cannot always correlate a
-   * predicate against exactly how many times a loop has iterated unless that predicate is already
-   * the loop's own guard - checking `x == 5` here (provably true, since `x` only ever exits loop 1
-   * at exactly `5`) made a single block's own postcondition collapse to an unconstrained `True()`
-   * even for a single, self-contained loop with no second loop involved at all. Not a DSS-layer bug
-   * - a precision limitation of the underlying single-block CEGAR check itself - so the fixture
-   *   sidesteps it rather than working around Theta's abstraction domain.
+   * Two loops in sequence joined by a straight-line "mid" block - two cyclic components. The final
+   * check reuses loop 1's guard (`x >= 5`): Cartesian abstraction can't prove `x == 5` here.
    */
   private fun twoSequentialLoopsXcfa(safe: Boolean): XCFA =
     xcfa("two-sequential-loops") {
@@ -265,10 +239,8 @@ class DiverseProgramsActorTest {
   }
 
   /**
-   * Regression test: depending on the message order of the concurrent executor, this program used
-   * to be reported SAFE, because a violation condition that reached a block before any of its
-   * preconditions was later suppressed as "already sent" (see `PredicateBlockBehaviorStepTest`).
-   * Repeated, since only some interleavings exposed it.
+   * Regression test: some concurrent message orders reported this SAFE, as a violation condition
+   * arriving before any precondition was later suppressed as "already sent". Repeated for that.
    */
   @RepeatedTest(5)
   fun `two independent sequential loops are UNSAFE under every message order`() {

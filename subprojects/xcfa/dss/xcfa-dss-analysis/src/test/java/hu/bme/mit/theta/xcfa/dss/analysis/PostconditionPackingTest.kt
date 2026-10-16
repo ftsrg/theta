@@ -35,18 +35,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * The real payoff of build-order step 5: propagating a genuine, precise postcondition between
- * blocks - not just a boolean marker - is what makes decomposed checking actually reproduce the
- * non-decomposed baseline. A block checked from its own most-general entry state (top) alone can be
- * spuriously imprecise; feeding it the real packed postcondition from its predecessor fixes that,
- * without needing the full actor runtime yet (that remains the following increment - this wires
- * `extractBlockXcfa`'s precondition support together with [packPostcondition] directly, block by
- * block, by hand).
- *
- * All of these check with [globalAssumePredicatePrecision] as the initial precision - without it,
- * `root` (which has no branch of its own) never refines past an empty predicate set and packs a
- * useless `True()` postcondition regardless of what precondition it's fed; see that function's doc
- * for why.
+ * Build-order step 5: feeding a block its predecessor's packed postcondition, by hand, makes
+ * decomposed checking match the baseline. Uses [globalAssumePredicatePrecision] (see its doc).
  */
 class PostconditionPackingTest {
 
@@ -60,9 +50,8 @@ class PostconditionPackingTest {
   }
 
   /**
-   * init->branch assigns x := 5 unconditionally, so `checkB` (guarded by x >= 10) is genuinely
-   * unreachable in the real program - but that is only knowable from the precondition x == 5, which
-   * a block checked in isolation from top does not have.
+   * init->branch sets x := 5, so `checkB` (guarded by x >= 10) is unreachable - but only knowably
+   * so from the precondition x == 5, which an isolated block checked from top lacks.
    */
   private fun xcfa5Xcfa(): XCFA =
     xcfa("postcondition-packing") {

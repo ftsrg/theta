@@ -31,22 +31,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * The solver-backed operators of CPAchecker's distributed predicate CPA, over plain Theta
- * expressions:
- * - [isUnsat]: the `hasRootAsPredecessor` check of `PredicateViolationConditionOperator`, where a
- *   condition that is not unsat decides the verdict, so an undecided query must fail;
- * - [isKnownUnsat]: `ProceedPredicateStateOperator.processBackward` (an unsatisfiable violation
- *   condition is dropped);
- * - [isSubsumed]: `PredicateStateCoverageOperator.isSubsumed` (state 1 implies state 2).
- *
- * A query the solver fails on (unknown result or crash, e.g. Z3 on nonlinear arithmetic) is
- * repeated with the fallback solver if there is one, otherwise it fails with
- * [DssUndecidedQueryException]. Only queries the fallback solver fails on, too, are undecided.
- *
- * Solvers are created lazily, on the thread of the first query, under the same lock that guards
- * checker construction (see [runWorkerConfig]): constructing native solver contexts concurrently is
- * what has crashed Z3 before. A block worker is confined to one thread, so after creation a solver
- * is only ever touched by that thread.
+ * Solver-backed operators of CPAchecker's distributed predicate CPA ([isUnsat], [isKnownUnsat],
+ * [isSubsumed]). Failed queries go to the fallback solver, then [DssUndecidedQueryException].
  */
 class DssPredicateOperators(
   solverFactory: SolverFactory,
@@ -103,10 +89,8 @@ class DssPredicateOperators(
 }
 
 /**
- * Solver queries of [DssPredicateOperators], summed over all blocks that share this instance:
- * [solverFailed] of the [queries] went to the fallback solver, which decided [fallbackDecided].
- * Likewise for the block checkers of [withCheckerSolverFallback]: [checkerFailed] checks were
- * repeated with the fallback solver, and [checkerFallbackDecided] of them returned a result.
+ * Solver statistics shared by all blocks: [solverFailed] of [queries] went to the fallback solver,
+ * which decided [fallbackDecided]; [checkerFailed]/[checkerFallbackDecided] likewise for checkers.
  */
 class DssSolverStatistics(private val onSolverFailure: (DssSolverStatistics) -> Unit = {}) {
   val queries = AtomicInteger()
@@ -158,12 +142,8 @@ private class OperatorSolver(private val factory: SolverFactory) {
 }
 
 /**
- * The predicates a block transmits as its precision, extracted from the expressions of a safe
- * result (CPAchecker transmits the `PredicatePrecision` of the analysis alongside every state;
- * Theta's checkers do not return their final precision, but every reached predicate state is a
- * boolean combination of the predicates of that precision, so the atoms of the reached states are
- * the part of the precision that actually mattered). Auxiliary violation-condition variables
- * ([DssAuxVars]) are filtered out, they are meaningless outside of the condition they belong to.
+ * The predicates a block transmits as its precision: the atoms of a safe result's reached states
+ * (Theta's checkers don't return their precision), without [DssAuxVars] variables.
  */
 fun predicatesOf(exprs: Iterable<Expr<BoolType>>): Set<Expr<BoolType>> =
   exprs
@@ -174,8 +154,7 @@ fun predicatesOf(exprs: Iterable<Expr<BoolType>>): Set<Expr<BoolType>> =
 
 /**
  * CPAchecker's `CombinePredicatePrecisionOperator`: the union of [precisions], restricted to
- * predicates over variables that occur in every one of them - if at least one variable does, and
- * otherwise to predicates over any variable of any of them (i.e., the plain union).
+ * predicates over variables common to all of them, if there are any.
  */
 fun combinePredicatePrecisions(precisions: Collection<Set<Expr<BoolType>>>): Set<Expr<BoolType>> {
   if (precisions.isEmpty()) return emptySet()

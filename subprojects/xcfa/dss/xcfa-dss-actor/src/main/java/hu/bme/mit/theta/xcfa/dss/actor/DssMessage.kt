@@ -40,11 +40,8 @@ enum class DssResult {
 }
 
 /**
- * A message exchanged between [DssActor]s. Mirrors CPAchecker's `DssMessage` hierarchy, which has
- * five subtypes (the paper only describes the two analysis messages, `post` and `vcond`).
- *
- * The analysis payloads are optional so the stub behaviors this runtime was validated against
- * (`EchoBlockAnalysis`) can send bare messages; [PredicateBlockBehavior] always fills them in.
+ * A message between [DssActor]s, mirroring CPAchecker's five-subtype `DssMessage`. Analysis
+ * payloads are optional so stubs like `EchoBlockAnalysis` can omit them.
  */
 sealed class DssMessage {
 
@@ -67,14 +64,8 @@ sealed class DssMessage {
 }
 
 /**
- * A postcondition, CPAchecker's `DssPostConditionMessage`. Like CPAchecker, one message can carry
- * several abstract states ([postconditions], each a formula over the program variables at the
- * sender's block exit; their disjunction is the postcondition), the precision the sender used
- * ([precision], CPAchecker serializes the `PredicatePrecision` with every state), and whether the
- * states were computed while the sender had a non-trivial precondition from each of its own
- * predecessors ([nonTrivialForEachPredecessor], CPAchecker's
- * `BlockState.hasNonTrivialSummaryForEachPredecessor`, used for the strongly-connected-component
- * handling of the paper).
+ * A postcondition (CPAchecker's `DssPostConditionMessage`): the disjunction of [postconditions] at
+ * the sender's exit, its [precision], and [nonTrivialForEachPredecessor] for the SCC handling.
  */
 data class DssPostConditionMessage(
   override val senderId: String,
@@ -99,11 +90,8 @@ data class DssPostConditionMessage(
 }
 
 /**
- * A violation condition, CPAchecker's `DssViolationConditionMessage`: a formula over the program
- * variables at the entry of the sender's block (plus existentially quantified auxiliary variables,
- * see `DssAuxVars`) from which a specification violation is reachable. CPAchecker combines the
- * conditions of one block at the same program location into one state (`combineVcsByHash`), so a
- * message carries a single, possibly disjunctive, condition.
+ * A violation condition (CPAchecker's `DssViolationConditionMessage`): one possibly disjunctive
+ * formula at the sender's block entry from which a violation is reachable (see `DssAuxVars`).
  */
 data class DssViolationConditionMessage(
   override val senderId: String,

@@ -16,19 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * Passively listens for the final verdict, mirroring CPAchecker's confirmed `DssObserverWorker`.
- * Does no routing of its own - it never has to, since it never produces a response. Shuts down once
- * a `RESULT` (or `EXCEPTION`) has arrived *and* every block has reported its own `STATISTIC`
- * message, which every block sends exactly once, right after receiving the `RESULT`/`EXCEPTION`
- * that was broadcast to everyone (see [DssBlockActor]).
- *
- * Both conditions are checked independently of arrival order: `broadcastToAll` is not atomic across
- * the queues it fans out to, so a block's own `STATISTIC` response (itself broadcast to everyone,
- * including the observer) can genuinely reach the observer's queue before the observer's own copy
- * of the `RESULT` that triggered it - a race this stub-worker setup hits often enough in practice
- * to have surfaced it directly (fast, do-nothing workers barely give the original broadcast time to
- * reach every queue before a recipient reacts and re-broadcasts). Requiring both, checked after
- * either arrives, is enough on its own - no message ordering needs to be enforced.
+ * Passively collects the verdict (CPAchecker's `DssObserverWorker`); stops once a `RESULT` and all
+ * blocks' `STATISTIC`s arrived, in any order, since `broadcastToAll` isn't atomic across queues.
  */
 class DssObserverActor(
   id: String,
@@ -71,10 +60,8 @@ class DssObserverActor(
   }
 
   /**
-   * Returns the verdict accumulated so far, throwing the same way [observe] does if no
-   * `RESULT`/`EXCEPTION` has been seen yet. Exposed separately from [observe] so a non-threaded
-   * executor that drives this actor's [processMessage] directly (without [run]) can retrieve the
-   * same verdict once it has independently determined [shutdownRequested] is true.
+   * The verdict so far, throwing like [observe] if none is known yet. Separate from [observe] for
+   * executors that drive [processMessage] directly instead of [run].
    */
   fun verdict(): DssResult {
     failure?.let { throw IllegalStateException(it.message, it) }

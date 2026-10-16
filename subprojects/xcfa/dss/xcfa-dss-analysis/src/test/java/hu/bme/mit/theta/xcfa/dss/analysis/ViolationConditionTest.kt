@@ -39,9 +39,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * The CPAchecker-derived pieces of the block analysis: violation conditions (weakest preconditions
- * over a block's paths), the predicate operators (coverage/satisfiability), precision combination,
- * and the loop-head entry/exit split of [extractBlockXcfa].
+ * The CPAchecker-derived pieces of the block analysis: violation conditions, predicate operators,
+ * precision combination, and [extractBlockXcfa]'s loop-head entry/exit split.
  */
 class ViolationConditionTest {
 

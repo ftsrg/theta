@@ -18,9 +18,8 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import java.util.concurrent.BlockingQueue
 
 /**
- * An [DssActor]'s view of the shared actor network: its own inbox, the shared [broadcaster] to
- * reach everyone else, and the shared [active] marker set consulted by [DssThreadMonitor] to detect
- * quiescence (plan §2).
+ * An actor's view of the network: its own inbox, the shared [broadcaster], and the shared [active]
+ * set [DssThreadMonitor] uses to detect quiescence.
  */
 class DssConnection(
   private val inbox: BlockingQueue<DssMessage>,

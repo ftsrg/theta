@@ -24,31 +24,8 @@ private const val SEQUENTIAL_VISUALIZER_ID = "__visualizer__"
 private const val SEQUENTIAL_EXECUTOR_ID = "sequential-executor"
 
 /**
- * A deterministic, single-threaded stand-in for [runDssActors], mirroring the rationale behind
- * CPAchecker's confirmed `SINGLE_WORKER`/`SEQUENTIAL` executors (plan §2, build order step 6):
- * "deterministic, easiest to diff against Theta's existing single-threaded predicate CEGAR" before
- * trusting the concurrent one. Every [DssBlockActor]/[DssObserverActor] is built exactly as in
- * [runDssActors] - same routing, same termination rules, same [DssBlockBehavior] - so this is a
- * genuine alternative driver for the *same* actor code, not a separate reimplementation of the
- * protocol.
- *
- * The difference is entirely in how messages get delivered: no [Thread] per block, no
- * [DssThreadMonitor] polling thread state. Instead, this function itself visits the actors
- * round-robin (one pending message each per round, like CPAchecker's `SequentialDssExecutor`) and
- * calls [DssWorker.processOneMessage] directly on the calling thread. Global quiescence - the SAFE
- * case - is detected the same way [DssThreadMonitor] detects it (every queue empty), except
- * trivially rather than by polling: since nothing runs concurrently with this loop, "no queue has a
- * pending message" already *is* "nothing can happen next", with no race to guard against and no
- * need for the `active` bookkeeping [DssThreadMonitor] needs to close one. The UNSAFE case still
- * short-circuits exactly as [DssBlockActor] already implements it (a root block's own
- * [DssBlockActor.broadcast] enqueues `RESULT(UNSAFE)` to everyone); this driver only ever needs to
- * originate `RESULT(SAFE)` itself.
- *
- * Because everything happens on one thread, this executor is also incidentally free of the Z3
- * concurrency hazard [runWorkerConfig][hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig]'s global
- * lock works around (build-order step 5's finding) - useful as a lower-risk way to validate new
- * [DssBlockBehavior]s (e.g. against cyclic block graphs, step 6's actual goal) before trusting them
- * under real concurrency.
+ * Single-threaded, deterministic variant of [runDssActors] with the same actors: visits actors
+ * round-robin, one message each, and broadcasts `RESULT(SAFE)` once every queue is empty.
  */
 fun runDssActorsSequentially(
   blockGraph: BlockGraph,
@@ -104,13 +81,9 @@ fun runDssActorsSequentially(
 
   blockActors.values.forEach { it.start() }
 
-  // Round-robin like CPAchecker's SequentialDssExecutor: every actor with a pending message
-  // processes one message per round, so a block that keeps feeding itself (a loop body) cannot
-  // starve the others. Keeps draining even after the observer itself has shut down, in case the
-  // visualizer's own copy of the last STATISTIC message (or anything else) is still sitting
-  // unprocessed in its separate queue - the observer and the visualizer reach their own shutdown
-  // conditions independently, from independent queues, so one finishing first must not cut the
-  // other off.
+  // Round-robin like CPAchecker's SequentialDssExecutor, so a self-feeding loop block can't starve
+  // the others. Keeps draining after the observer shuts down, as the visualizer's queue may still
+  // hold messages.
   fun hasWorkLeft() =
     !observer.shutdownRequested() ||
       inboxes.any { (id, queue) -> !workers.getValue(id).shutdownRequested() && queue.isNotEmpty() }

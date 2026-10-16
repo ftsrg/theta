@@ -21,11 +21,8 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 const val NO_MERGE_LIMIT = -1
 
 /**
- * Hands out the ids of merged blocks, mirroring CPAchecker's naming: `MH<n>` for horizontal merges
- * and `MV<n>` for vertical merges, each with its own counter that keeps counting across passes (in
- * CPAchecker the counter is a field of the long-lived `HorizontalMergeDecomposition`/
- * `VerticalMergeDecomposition` instance). [startingAfter] continues the numbering of a graph that
- * may already contain merged blocks, so independent calls never produce colliding ids.
+ * Merged-block ids as in CPAchecker: `MH<n>` (horizontal) and `MV<n>` (vertical), counting across
+ * passes. [startingAfter] continues an existing graph's numbering so ids never collide.
  */
 class MergeIdGenerator(private var horizontal: Int = 0, private var vertical: Int = 0) {
 
@@ -53,25 +50,8 @@ class MergeIdGenerator(private var horizontal: Int = 0, private var vertical: In
 private fun Collection<Block>.sortedById(): List<Block> = sortedBy { it.id }
 
 /**
- * One horizontal-merge pass, mirroring CPAchecker's
- * `HorizontalMergeDecomposition.mergeHorizontally`: groups blocks that have the exact same
- * `(predecessorIds, successorIds, finalLocation)` scope (for example the two arms of an `if`/`else`
- * that rejoin at the same location) and merges each group of more than one block into a single
- * block `MH<n>` covering all of their locations and edges.
- *
- * As in CPAchecker:
- * - groups are visited in the order of their (id-sorted) members, and the pass stops as soon as the
- *   graph has at most [targetBlockCount] blocks;
- * - [largestHorizontalMerge] limits merging by block *size*: a group is skipped when more than one
- *   of its blocks has more than [largestHorizontalMerge] locations ([NO_MERGE_LIMIT] disables the
- *   limit).
- *
- * All members of such a group necessarily share [Block.initialLocation] too: for a non-root block,
- * equal [Block.predecessorIds] force it, and a [BlockGraph] has only one root.
- *
- * Merged blocks default [Block.violationConditionLocation] back to their own [Block.finalLocation],
- * so [BlockGraphInstrumentation] has to run after merging (CPAchecker's own order: decompose,
- * merge, instrument).
+ * Horizontal merge (CPAchecker's `mergeHorizontally`): merges blocks with the same predecessors,
+ * successors and final location into `MH<n>`, honoring [targetBlockCount]/[largestHorizontalMerge].
  */
 fun horizontalMergePass(
   blockGraph: BlockGraph,
@@ -125,16 +105,8 @@ private fun mergeHorizontally(group: List<Block>, id: String): Block {
 }
 
 /**
- * One vertical-merge pass, mirroring CPAchecker's `VerticalMergeDecomposition.mergeVertically`:
- * walks the (id-sorted) blocks once, and merges a block `X` with its successor `Y` into a new block
- * `MV<n>` whenever `X` has exactly one successor and `Y` has exactly one predecessor (necessarily
- * `X`). Each block takes part in at most one merge per pass, and the pass stops as soon as the
- * graph has at most [targetBlockCount] blocks. Predecessor/successor ids of every other block are
- * rewritten to the new ids (CPAchecker's `MergeIDTracker`), including the merged block's own ids
- * when `X` and `Y` also form a cycle.
- *
- * A block that is its own only successor is never merged with itself (CPAchecker would assert here;
- * such a block is unreachable in a valid block graph anyway).
+ * Vertical merge (CPAchecker's `mergeVertically`): merges `X` and its only successor `Y` into
+ * `MV<n>` if `X` is `Y`'s only predecessor, each block at most once per pass.
  */
 fun verticalMergePass(
   blockGraph: BlockGraph,
@@ -238,11 +210,8 @@ private fun remapBlockIds(block: Block, idRemap: Map<String, String>): Block =
   )
 
 /**
- * Alternates [horizontalMergePass] and [verticalMergePass] exactly like CPAchecker's
- * `MergeBlockNodesDecomposition.decompose`: a horizontal pass, stop if at most [targetBlockCount]
- * blocks remain, a vertical pass, stop if the round did not reduce the block count, repeat.
- * [targetBlockCount] is not always reachable (a graph with real, non-rejoining branching cannot be
- * merged below the number of its divergent paths).
+ * Alternates both passes (CPAchecker's `MergeBlockNodesDecomposition`) until at most
+ * [targetBlockCount] blocks remain or a round makes no progress, as the target may be unreachable.
  */
 fun mergeToTargetBlockCount(
   blockGraph: BlockGraph,

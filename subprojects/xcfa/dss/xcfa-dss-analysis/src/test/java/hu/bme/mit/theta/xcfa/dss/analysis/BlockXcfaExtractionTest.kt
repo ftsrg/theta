@@ -30,9 +30,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Validates the narrow slice of build-order step 5: a [Block] can be extracted into a standalone
- * XCFA and checked with the real, Z3-backed CEGAR delegator from step 3, in isolation - no actor
- * wiring or cross-block state passing yet.
+ * Build-order step 5: a [Block] extracted into a standalone XCFA can be checked in isolation with
+ * the real, Z3-backed CEGAR delegator - no actor wiring or cross-block state passing yet.
  */
 class BlockXcfaExtractionTest {
 
@@ -89,13 +88,8 @@ class BlockXcfaExtractionTest {
 
   @Test
   fun `cloned locations do not carry adjacency from outside the block`() {
-    // Direct regression test for a real bug found while writing the tests above: XcfaLocation's
-    // incoming/outgoingEdges are mutable, freshly-initialized-per-instance sets, not data class
-    // constructor parameters - reusing the *original* location objects as-is (instead of cloning
-    // them) left every edge from the whole source procedure reachable, silently defeating the
-    // extraction entirely. An extracted block with no error location of its own was found "unsafe"
-    // by walking straight through "branch"'s untouched, shared adjacency into a neighbouring
-    // block's error location.
+    // Regression test: reusing the original locations (whose adjacency sets span the whole
+    // procedure) let a block with no error location of its own reach a neighbour's error location.
     val procedure = branchingProcedure()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val safeArmBlock = blockGraph.blocks.single { it.locations.any { l -> l.name == "safeArm" } }

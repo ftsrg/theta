@@ -16,9 +16,8 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 /**
- * A checker that can tell which precision its last check ended with - for CEGAR, the precision
- * after the last refinement. Checkers without a precision of their own (e.g. bounded model
- * checkers) do not implement it.
+ * A checker that reports the precision its last check ended with (for CEGAR, after the last
+ * refinement). Checkers without a precision (e.g. bounded ones) don't implement it.
  */
 interface XcfaLastPrecProvider {
   val lastPrec: XcfaPrec<*>?

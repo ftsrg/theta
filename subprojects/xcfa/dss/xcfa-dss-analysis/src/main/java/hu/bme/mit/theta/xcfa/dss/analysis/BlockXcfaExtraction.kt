@@ -32,13 +32,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import java.util.Optional
 
 /**
- * The result of [extractBlockXcfa]: the standalone [xcfa], plus [locationMapping] from the original
- * [Block]'s locations to their clones inside [xcfa] (the clones do not share identity with the
- * source procedure). [exitLocation] is the clone where the block's postcondition is read off
- * (CPAchecker's block-end abstraction point). It differs from
- * `locationMapping[block.initialLocation]` even when the block starts and ends at the same location
- * (a loop body), see [extractBlockXcfa]. [preconditionEdge] and [violationConditionEdge] are the
- * synthetic edges added for the precondition and the violation condition, if any.
+ * The result of [extractBlockXcfa]: the standalone [xcfa], [locationMapping] to the clones, the
+ * [exitLocation] the postcondition is read at, and the synthetic precondition/violation edges.
  */
 data class BlockXcfaExtraction(
   val xcfa: XCFA,
@@ -50,34 +45,8 @@ data class BlockXcfaExtraction(
 )
 
 /**
- * Extracts [block] into a standalone, checkable [XCFA] that contains only the block's own locations
- * and edges. This is the Theta counterpart of what CPAchecker's `BlockCPA` does inside one shared
- * CFA: restricting the analysis to the block's edges, starting it at the block entry, and making
- * the violation-condition location a target when violation conditions are attached.
- * - [precondition] (CPAchecker: the start state of a block analysis) becomes a synthetic
- *   `assume(precondition)` edge in front of the block entry. `null` means the most general entry
- *   state (top), which starts the analysis without any constraint.
- * - [violationCondition] (CPAchecker: the violation conditions attached to the `BlockState`, which
- *   make the violation-condition location a target) becomes an edge from [exitLocation] into an
- *   error location that havocs the auxiliary existential variables of the condition (see
- *   [DssAuxVars]) and then assumes it. Reaching the error location through that edge is exactly
- *   "reaching the block end in a state that satisfies the violation condition".
- * - [keepSpecificationTargets] decides whether the block's own error locations stay error
- *   locations. CPAchecker always checks the specification; Theta's checkers stop at the first
- *   counterexample, so the block analysis turns them off when it only wants the postcondition of a
- *   block whose targets are already known to be reachable (see `PredicateBlockBehavior`).
- *
- * The block entry and the block exit get separate clones when they are the same location (a loop
- * body that starts and ends at the loop head). This mirrors CPAchecker's `BlockStateType.INITIAL`
- * vs. `FINAL`: the block end "cannot be reached directly before processing the first edge" -
- * without the split, the entry state would immediately count as a block-end state, and the body
- * could be iterated arbitrarily often inside a single block analysis.
- *
- * Every [XcfaLocation]/[XcfaEdge] is cloned rather than reused: a location's
- * `incomingEdges`/`outgoingEdges` are mutable sets that still contain every edge of the whole
- * source procedure, so reusing them would not isolate the block. [sourceProcedure] supplies `vars`
- * (unfiltered), and [globalVars] the global variables of the extracted program (DSS passes the
- * program's real globals only for the root block, whose entry is the real program entry).
+ * Extracts [block] into a standalone [XCFA] (CPAchecker's `BlockCPA`), with [precondition] as an
+ * entry `assume` and [violationCondition] as an edge from [exitLocation] into an error location.
  */
 fun extractBlockXcfa(
   sourceProcedure: XcfaProcedure,
@@ -98,7 +67,10 @@ fun extractBlockXcfa(
       original.metadata,
     )
 
+  // Cloned, not reused: the original locations' adjacency sets hold the whole procedure's edges.
   val clonedLocations: Map<XcfaLocation, XcfaLocation> = block.locations.associateWith(::cloneOf)
+  // A loop body that starts and ends at its head gets separate entry/exit clones (CPAchecker's
+  // INITIAL vs. FINAL); otherwise the body could iterate inside a single block analysis.
   val splitEntry = block.initialLocation == block.finalLocation
   val blockEntry =
     if (splitEntry) cloneOf(block.initialLocation, "__entry")

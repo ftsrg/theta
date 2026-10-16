@@ -35,15 +35,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Closes a gap `doc/DSS.md` has flagged since build-order step 6: "larger/nested cyclic block
- * graphs (the decomposition module's own nested-loop test fixtures, for instance) have not been run
- * through real per-block CEGAR yet, only through `EchoBlockAnalysis`."
- * `CyclicBlockGraphAnalysisTest` only ever exercises a single self-referencing block (the paper's
- * own `x`/`y` loop); this file drives real [PredicateBlockBehavior] through a genuine *nested*
- * cycle instead - two distinct self/mutually referencing blocks in the same block graph, one
- * strictly inside the other's loop body, mirroring `LinearBlockDecompositionTest`'s own `an outer
- * and an inner loop each get their own loop-head block` structural fixture (which only ever checked
- * block *shape*, never ran real analysis through it).
+ * Drives real [PredicateBlockBehavior] through a *nested* cycle (an inner loop inside an outer
+ * loop's body), not just the single self-loop `CyclicBlockGraphAnalysisTest` covers.
  */
 class NestedLoopActorTest {
 
@@ -85,21 +78,8 @@ class NestedLoopActorTest {
   }
 
   /**
-   * An outer loop (`x` from 0 to 3) whose body entirely contains an inner loop (`y` reset to 0 and
-   * counted up to 2 on every outer iteration) - under `blk_linear` this decomposes into *two*
-   * distinct self/mutually-referencing blocks (the inner loop's own head-to-head cycle, plus the
-   * outer loop-head, which is itself reached both from `init` and from the inner loop's own exit
-   * edge - see `LinearBlockDecompositionTest`'s structural fixture of the same shape), a strictly
-   * more complex block-graph topology than any single self-loop.
-   *
-   * `z` mirrors `x` in lockstep on every outer iteration (when [safe]) or is never touched at all
-   * (when not [safe]) - exactly the paper's own `x == y` pattern from
-   * `CyclicBlockGraphAnalysisTest`'s `xyLoopXcfa`, chosen deliberately: that pattern is already
-   * confirmed to survive real per-block CEGAR through a single self-loop, so reusing it here
-   * isolates exactly one new variable - whether it *also* survives correctly once an unrelated,
-   * fully-nested inner loop sits in between every `x`/`z` increment. `y` itself never appears in
-   * the final check at all - it only has to be correctly summarized and threaded through without
-   * disturbing `x`/`z`'s own relationship.
+   * Outer loop (`x` to 3) containing an inner loop (`y` to 2) - two self/mutually referencing
+   * blocks. `z` mirrors `x` iff [safe], as in the paper's `x == y` check; `y` is never checked.
    */
   private fun nestedLoopXcfa(safe: Boolean): XCFA =
     xcfa("nested-loop") {

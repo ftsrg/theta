@@ -109,9 +109,7 @@ enum class Backend {
 }
 
 /**
- * Which `DssBlockDecomposition` (`xcfa-dss-decomposition`) cuts the input procedure into blocks -
- * see `doc/DSS.md`. `INLINING` (CPAchecker's call-string-sensitive decomposition) is not
- * implemented, so it isn't offered here.
+ * How DSS cuts the input procedure into blocks (see `doc/DSS.md`). `INLINING` is not implemented.
  */
 enum class DssDecomposition {
   /** CPAchecker's `LINEAR_DECOMPOSITION`: a block boundary at every branch/join point/dead end. */
@@ -145,10 +143,8 @@ enum class DssDecomposition {
 }
 
 /**
- * Which DSS actor-runtime driver runs the decomposed block graph - see `doc/DSS.md`. CPAchecker has
- * three (`DSS`/`SINGLE_WORKER`/`SEQUENTIAL`); `SINGLE_WORKER` has no counterpart here. Unlike
- * CPAchecker, the default is `SEQUENTIAL`: Theta's default (legacy) Z3 binding crashes when used
- * from several threads at once, so `CONCURRENT` needs `--dss-solver Z3:new`.
+ * Which DSS executor runs the block graph (see `doc/DSS.md`). Defaults to `SEQUENTIAL`, unlike
+ * CPAchecker: legacy Z3 crashes under threads, so `CONCURRENT` needs `--dss-solver Z3:new`.
  */
 enum class DssExecutor {
   /** One platform thread per block (`runDssActors`), CPAchecker's `DSS` executor. */
@@ -166,13 +162,8 @@ enum class DssExecutor {
 }
 
 /**
- * Which `DssCheckerSelectionStrategy` (`xcfa-dss-analysis`) a `DssCheckerRoster` uses to pick one
- * of [DssConfig.checkerBackends]'s checker factories on each recheck - see `doc/DSS.md`'s
- * `DssCheckerRoster` section. `ROUND_ROBIN`, `PRIORITY` and `FASTEST` are the built-in strategies;
- * this enum exists so *which* strategy is used is itself a CLI-exposed, parametrised choice rather
- * than a hardcoded one - a future strategy (e.g. least-used/weighted) only needs a new case here
- * plus a branch where `--dss-checker-selection` is translated into a `DssCheckerSelectionStrategy`
- * instance.
+ * Which `DssCheckerSelectionStrategy` picks one of [DssConfig.checkerBackends]' checkers on each
+ * recheck (see `doc/DSS.md`). New strategies need a case here plus its translation.
  */
 enum class DssCheckerSelectionMethod {
   /** `RoundRobinCheckerSelectionStrategy`: cycles the checker list in order, balanced usage. */
@@ -192,25 +183,8 @@ enum class DssCheckerSelectionMethod {
 }
 
 /**
- * Which backend algorithm one entry of [DssConfig.checkerBackends] builds a DSS block checker
- * factory with - see `doc/DSS.md`'s `DssCheckerRoster` section. Restricted to the subset of
- * [Backend] that produces the `LocationInvariants`/`Trace` proof shape DSS's own `XcfaChecker`
- * (`xcfa-dss-analysis`) requires: `getSafetyChecker`'s `CEGAR` and bounded-model-checking
- * (`BMC`/`KIND`/`IMC`/`KINDIMC`/`BOUNDED`) cases share it, so they're offered here; every other
- * `Backend` (`OC`, `CHC`, `PORTFOLIO`, `IC3`, `MDD`, ...) produces a genuinely incompatible
- * proof/counterexample/precision type and can't be a DSS block checker without its own dedicated
- * adapter, which doesn't exist yet.
- *
- * The three `CEGAR_*` entries are all still plain `getCegarChecker`, differing only in [Domain] -
- * DSS's own [DssConfig.globalPredicatePool] seed (`globalAssumePredicatePrecision`, a `PredPrec`)
- * is exactly the precision shape all three of
- * [Domain.PRED_CART]/[Domain.PRED_BOOL]/[Domain.PRED_SPLIT] expect, so all three keep consuming it
- * exactly like the original `CEGAR` option always did. [Domain.EXPL] and the two product domains
- * ([Domain.EXPL_PRED_SPLIT]/[Domain.EXPL_PRED_STMT]) are deliberately not offered here: their own
- * precision type is `ExplPrec`/`Prod2Prec`, not `PredPrec`, so handing them the
- * global-predicate-pool seed as-is would be a genuine type mismatch (not just a missed opportunity,
- * the way skipping the seed for the bounded-model-checking family below is) - offering them would
- * need their own `adaptBoundedChecker`-style wrapper that skips the seed, which doesn't exist yet.
+ * Backends a DSS block checker can use: those producing DSS's `LocationInvariants`/`Trace` shape,
+ * and only the `PredPrec` CEGAR domains, since others couldn't take the global pool seed.
  */
 enum class DssCheckerBackend {
   /** `getCegarChecker` with `Domain.PRED_CART` - DSS's original, only checker. */

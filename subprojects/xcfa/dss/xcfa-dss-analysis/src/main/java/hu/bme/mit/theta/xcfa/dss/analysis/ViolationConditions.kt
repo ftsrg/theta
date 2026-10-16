@@ -48,21 +48,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Existentially quantified auxiliary variables of violation conditions.
- *
- * CPAchecker represents a violation condition as a path formula in SSA form: a value that a
- * `__VERIFIER_nondet_*()` call (a havoc) produced along the path is just another SSA variable of
- * the formula, implicitly existentially quantified. Theta's violation conditions are plain
- * expressions over the procedure's variables (so that they can be put on an `assume` edge of the
- * predecessor block), so a havoc is encoded by substituting a fresh auxiliary variable instead; the
- * predecessor block havocs every auxiliary variable right before assuming the condition (see
- * [extractBlockXcfa]), which is exactly the existential quantification.
- *
- * Auxiliary variables are interned by `(index, type)` and every violation condition is renumbered
- * canonically by [canonicalize] (first occurrence gets index 0, and so on). This keeps
- * syntactically identical conditions structurally equal, which DSS relies on to recognize repeated
- * violation conditions (CPAchecker compares the `ViolationWitness`es, i.e., the edges of the paths,
- * for the same purpose).
+ * Existentially quantified auxiliary variables encoding havocs in violation conditions (CPAchecker
+ * uses SSA variables), interned by `(index, type)` and renumbered by [canonicalize] for equality.
  */
 object DssAuxVars {
 
@@ -123,28 +110,8 @@ object DssAuxVars {
 }
 
 /**
- * Computes the violation condition of [block] (CPAchecker's `ViolationConditionOperator`, paper:
- * `packVcond`): the weakest existential precondition, at the block entry, of reaching one of
- * [targets] - a location mapped to the condition that has to hold there (`True()` for the block's
- * own error locations, the received violation conditions for the violation-condition location).
- *
- * CPAchecker builds this from the paths of its ARG that end in a target state - for a block, these
- * are the block's paths, because inside a block the predicate analysis does not abstract (block
- * encoding with an abstraction only at the block end) - and conjoins the backward path formula of
- * each path with the violation condition it ended in; the conditions at the same program location
- * are then disjoined (`combineVcsByHash`). Theta's checkers return a single counterexample instead
- * of an ARG, so the paths are taken from the block itself: the result is the disjunction, over
- * every path from the block entry to a target, of the weakest existential precondition of that
- * path. As there is no abstraction inside a block either way, this is the same set of paths, except
- * that CPAchecker's ARG can already omit a path whose path formula became unsatisfiable together
- * with the start state. Since violation conditions never include the precondition, this only makes
- * the condition carry more (harmless) disjuncts.
- *
- * Blocks are acyclic apart from a loop body that starts and ends at the loop head (where, as for
- * [extractBlockXcfa], the head is the entry the first time and the exit the second time). Edge
- * labels are handled with the usual weakest-precondition rules (`assume c` -> `c && φ`, `x := e` ->
- * `φ[e/x]`, `havoc x` -> `φ[a/x]` for a fresh auxiliary variable `a`, see [DssAuxVars]); any other
- * label (function calls, memory operations, ...) is not supported yet and throws.
+ * `packVcond` (CPAchecker's `ViolationConditionOperator`): the weakest existential precondition at
+ * the block entry of reaching one of [targets], over all block paths; unsupported labels throw.
  */
 fun computeViolationCondition(
   block: Block,
@@ -185,11 +152,8 @@ fun computeViolationCondition(
 }
 
 /**
- * Whether [block] has a cycle that [computeViolationCondition] cannot handle, i.e., one other than
- * a loop body that starts and ends at the loop head. Only `SelfLoopAbsorbingDecomposition` creates
- * such blocks. Unlike there, the block's own edges leaving its final location are followed: only a
- * split loop head ([extractBlockXcfa]) stops the analysis at the final location, and such a block
- * can also end on its own loop.
+ * Whether [block] has a cycle other than a loop body from and to the loop head, which
+ * [computeViolationCondition] can't handle (only `SelfLoopAbsorbingDecomposition` makes these).
  */
 fun hasInternalCycle(block: Block): Boolean {
   val done = HashSet<XcfaLocation>()
@@ -216,12 +180,8 @@ fun hasInternalCycle(block: Block): Boolean {
 }
 
 /**
- * The violation condition of a single path ([labels], from the block entry to a target, ending with
- * the edge that enters the target): the weakest existential precondition of reaching the target
- * along exactly this path. Theta-only, for blocks with an internal cycle ([hasInternalCycle]),
- * whose paths cannot all be enumerated: each condition covers one counterexample, and a predecessor
- * that refutes it excludes it from its postcondition, so the next counterexample takes another
- * path.
+ * The violation condition of a single path [labels] to a target, for blocks with an internal cycle
+ * ([hasInternalCycle]): each refuted counterexample pushes the next one onto another path.
  */
 fun computePathViolationCondition(labels: List<XcfaLabel>): Expr<BoolType> =
   DssAuxVars.canonicalize(
@@ -275,10 +235,8 @@ private fun and(cond: Expr<BoolType>, post: Expr<BoolType>): Expr<BoolType> =
   }
 
 /**
- * Disjunction that factors out a shared continuation: the branches of a block typically end in the
- * same condition (`(c1 && φ) || (c2 && φ)`, e.g. two arms with the same update), and without
- * factoring every branch point would duplicate `φ`, doubling the condition with every loop
- * iteration it is propagated through. `(c1 || c2) && φ` keeps it linear.
+ * Disjunction that factors `(c1 && φ) || (c2 && φ)` into `(c1 || c2) && φ`, so conditions don't
+ * double at every branch point.
  */
 private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
   val relevant = disjuncts.filter { it != False() }.distinct()

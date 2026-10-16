@@ -24,19 +24,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Pure - no solver, no [XCFA] ever actually built or checked - unlike `xcfa-dss-actor`'s
- * `PredicateBlockBehaviorTest`, whose `the default round-robin roster distributes real checks
- * across every checker it's given` proves the same distribution guarantee end to end against real,
- * solver- backed rechecks. Every [CheckerFactory] here is a stub that errors if it's ever actually
- * invoked - these tests only exercise selection, never a real check.
+ * Pure selection tests with stub checkers that are never invoked; `PredicateBlockBehaviorTest`
+ * covers the same distribution guarantee end to end with real checks.
  */
 class DssCheckerRosterTest {
 
-  /**
-   * A distinct, never-actually-invoked [CheckerFactory] per index, so callers can identify which
-   * one [DssCheckerRoster.next] returned by simple reference identity (`indexOf`, which for a
-   * lambda with no custom `equals` is exactly `===`).
-   */
+  /** One distinct, never-invoked [CheckerFactory] per index, identifiable by reference identity. */
   private fun stubCheckers(count: Int): List<CheckerFactory> =
     List(count) { i -> { _: XCFA -> error("stub checker $i must never actually be invoked") } }
 
@@ -90,15 +83,8 @@ class DssCheckerRosterTest {
   }
 
   /**
-   * Doesn't need this module's usual "repeat 10-25x" stress-testing discipline (see `doc/DSS.md`'s
-   * Testing section) the way genuinely racy actor code does: [RoundRobinCheckerSelectionStrategy]'s
-   * balance guarantee follows from [java.util.concurrent.atomic.AtomicInteger.getAndIncrement]
-   * being wait-free and linearizable per the Java Memory Model, not from empirical observation of a
-   * design whose correctness was actually in question. One well-parallelized run (a
-   * [CountDownLatch] aligns every thread's start to maximize actual overlap) is enough to catch a
-   * *regression* - e.g. someone "simplifying" the cursor to a plain, non-atomic `var` - even
-   * though, unlike this module's actor tests, it could never have caught a nondeterministic bug in
-   * the current, correct design in the first place.
+   * One well-parallelized run is enough: balance follows from `AtomicInteger.getAndIncrement` being
+   * linearizable, so this only guards against regressions (e.g. a non-atomic cursor).
    */
   @Test
   fun `concurrent selection from many threads still produces an exact, race-free distribution`() {

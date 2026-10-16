@@ -16,15 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * Detects the SAFE case by quiescence polling, mirroring CPAchecker's confirmed `DssThreadMonitor`
- * (plan §2) - deliberately *not* the SCC/per-block-fixpoint bookkeeping rev. 1 of this plan
- * originally guessed at. Every [pollIntervalMillis], checks whether every thread in
- * [threadsToMonitor] is parked (`WAITING`/`TIMED_WAITING`), every queue behind [broadcaster] is
- * empty, and [active] is empty (closing the race where a thread has just dequeued its last message
- * but hasn't reacted to it yet - see [DssWorker]). When all three hold at once, the network can
- * never produce another message on its own, so it broadcasts `RESULT(SAFE)` to everyone and stops.
- * Handles cyclic block graphs (e.g. loop bodies) for free, since quiescence does not care about
- * graph structure at all.
+ * Detects SAFE by quiescence polling, as CPAchecker's `DssThreadMonitor`: once all threads are
+ * parked and all queues and [active] are empty, broadcasts `RESULT(SAFE)`. Handles cyclic graphs.
  */
 class DssThreadMonitor(
   private val threadsToMonitor: List<Thread>,

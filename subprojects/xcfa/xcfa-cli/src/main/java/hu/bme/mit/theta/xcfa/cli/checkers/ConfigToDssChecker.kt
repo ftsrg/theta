@@ -81,46 +81,8 @@ import java.nio.file.Paths
 import kotlin.concurrent.thread
 
 /**
- * `--backend DSS`: runs Distributed Summary Synthesis instead of an ordinary, monolithic checker -
- * see `doc/DSS.md` for the full design. Wrapped as an ordinary [SafetyChecker] lambda (mirroring
- * `getPortfolioChecker`, the closest existing precedent for "the algorithm isn't a single
- * `SafetyChecker.check()` call") so it flows through exactly the same result-reporting/witness
- * pipeline every other backend already uses (`ExecuteConfig.kt`'s `backend()`).
- *
- * DSS only supports a single procedure so far (`doc/DSS.md`'s Known Limitations - block
- * decomposition happens per-procedure, not yet across procedure boundaries); a multi-procedure
- * input fails fast with a clear message rather than silently checking only one procedure.
- *
- * [DssConfig.checkerBackends] lists which backend builds each of [DssCheckerRoster]'s checker
- * factories, one entry per roster slot (repeat a name for more than one of a kind) -
- * `--dss-checker-backends CEGAR_PRED_CART` (the default, a one-element list) reproduces the
- * original byte-for-byte single-checker behavior. The three `CEGAR_*` entries
- * ([DssCheckerBackend.CEGAR_PRED_CART]/[CEGAR_PRED_BOOL][DssCheckerBackend.CEGAR_PRED_BOOL]/
- * [CEGAR_PRED_SPLIT][DssCheckerBackend.CEGAR_PRED_SPLIT]) are all [getCegarChecker] with
- * [defaultPredicateCegarConfig] - the same "thin orchestration layer" every DSS test in
- * `xcfa-dss-actor` builds by hand, just assembled here instead - differing only in which [Domain]
- * gets passed through; all three still consume `--dss-global-predicate-pool`'s seed exactly like
- * the original, sole `CEGAR` option always did (see [DssCheckerBackend]'s own doc for why only
- * these three, not [Domain.EXPL]/the product domains). The bounded-model-checking family
- * (`BMC`/`KIND`/`IMC`/`KINDIMC`/`BOUNDED` - see [DssCheckerBackend]'s own doc) is built via
- * [getBoundedChecker] with the matching `--backend` preset ([defaultBoundedConfigFor] reuses
- * `BackendConfig.createSpecConfig`'s own dispatch, so it can't drift from what that flag actually
- * means) and [adaptBoundedChecker]ed into the roster's own [XcfaChecker] shape - see that
- * function's own doc for why the adaptation silently drops `--dss-global-predicate-pool`'s
- * precision seed for those entries specifically (they run on [UnitPrec], not [XcfaPrec], so there
- * is nothing to seed it into). There is currently no `--dss-worker-config` flag to substitute a
- * genuinely *different* worker configuration beyond the domain/backend choice itself (e.g. a
- * non-default solver or search strategy) - see the plan's open questions on why this is more
- * involved than it first looks. [DssConfig.checkerSelection] picks which
- * [DssCheckerSelectionStrategy] the roster uses to choose among its factories on each recheck
- * (`ROUND_ROBIN` today, matching [DssCheckerRoster]'s own default). `--dss-global-predicate-pool`
- * (default on) is otherwise pass-through to every block's own [PredicateBlockBehavior] - see that
- * class's own doc for what turning it off actually changes.
- *
- * DSS produces no concrete counterexample trace ([EmptyCex]) and no invariant proof beyond a
- * trivial one ([EmptyProof]) for either verdict - matching the paper's own stated "Verification
- * Witnesses" limitation (DSS cannot yet produce violation witnesses), and CPAchecker's own
- * implementation, which does not restore one either; it just flips the verdict.
+ * `--backend DSS`: Distributed Summary Synthesis (`doc/DSS.md`) as a [SafetyChecker], with block
+ * checkers from [DssConfig.checkerBackends]. Single-procedure only; yields no cex or proof.
  */
 fun getDssChecker(
   xcfa: XCFA,
@@ -137,11 +99,8 @@ fun getDssChecker(
           "procedures) - see doc/DSS.md's Known Limitations."
       )
 
-  // CPAchecker instruments every block end with a ghost edge to a dedicated violation-condition
-  // location after decomposing (BlockGraphModification.instrumentCFA, on a copy of the CFA). Not
-  // needed here: every block is extracted into its own XCFA, where the block exit is a private
-  // location already (see extractBlockXcfa), and BlockGraphInstrumentation would mutate the input
-  // XCFA's locations in place.
+  // No BlockGraphInstrumentation (CPAchecker's instrumentCFA): every block is extracted into an
+  // XCFA with a private exit already, and instrumenting would mutate the input XCFA in place.
   val decomposition: DssBlockDecomposition =
     when (dssConfig.decomposition) {
       DssDecomposition.LINEAR -> LinearBlockDecomposition()
@@ -190,11 +149,8 @@ fun getDssChecker(
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
   }
-  // One independent factory per dssConfig.checkerBackends entry - .map already calls its lambda
-  // fresh for every element, so the roster holds distinct instances (matters for DssCheckerRoster's
-  // index-based bookkeeping, not just its size), not shared references to one closure.
-  // --dss-checker-backends CEGAR_PRED_CART (the default, a one-element list) is therefore still
-  // byte-for-byte the original single-checker behavior.
+  // One independent factory per dssConfig.checkerBackends entry (distinct instances matter for
+  // DssCheckerRoster's index-based bookkeeping); the default list keeps single-checker behavior.
   val blockLogger = BlockAnalysisLogger(logger)
   // solver == null keeps the backend's own default solvers (Z3 for the bounded family)
   fun checkerFor(backend: DssCheckerBackend, solver: String?): CheckerFactory =
@@ -246,11 +202,7 @@ fun getDssChecker(
       DssCheckerSelectionMethod.PRIORITY -> PriorityCheckerSelectionStrategy()
       DssCheckerSelectionMethod.FASTEST -> FastestCheckerSelectionStrategy()
     }
-  // Built once, here - not inside behaviorFor - so it's the one shared instance every block's
-  // PredicateBlockBehavior gets, per DssCheckerRoster's own contract (a fresh roster per block
-  // would
-  // silently give each block its own independent selection-strategy state instead of one shared
-  // across the whole run).
+  // Built once, not in behaviorFor: DssCheckerRoster requires one instance shared by all blocks.
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
   val dssSolverFactory = SolverManager.resolveSolverFactory(dssConfig.solver)
   val dssFallbackSolverFactory =
@@ -356,12 +308,8 @@ private fun dssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
 }
 
 /**
- * Builds a default [XcfaConfig] for one of the bounded-model-checking family's `--backend` presets
- * ([Backend.BMC]/[Backend.KIND]/[Backend.IMC]/[Backend.KINDIMC]/[Backend.BOUNDED]) - reuses
- * `BackendConfig.createSpecConfig`'s own dispatch, the exact same switch a real `--backend BMC`
- * (etc.) invocation goes through, so this can never drift from what that flag actually means. Not
- * meant for [Backend.CEGAR] - see [defaultPredicateCegarConfig] for that one instead. A non-null
- * [solver] replaces the BMC, induction and interpolation solvers.
+ * A default [XcfaConfig] for a bounded-model-checking `--backend` preset, via
+ * `BackendConfig.createSpecConfig` so it can't drift from the flag. [solver] replaces its solvers.
  */
 private fun defaultBoundedConfigFor(backend: Backend, solver: String? = null): XcfaConfig<*, *> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
@@ -376,12 +324,7 @@ private fun defaultBoundedConfigFor(backend: Backend, solver: String? = null): X
   return config
 }
 
-/**
- * [DssCheckerBackend]'s own bounded-model-checking-family entries, mapped onto the real [Backend]
- * value [defaultBoundedConfigFor]/[getBoundedChecker] need - the three `CEGAR_*` entries have no
- * bounded-family shape and are handled separately in [getDssChecker] (see [toCegarDomain]), never
- * routed through here.
- */
+/** Maps a bounded-family [DssCheckerBackend] to its [Backend]; `CEGAR_*` entries never get here. */
 private fun DssCheckerBackend.toBoundedBackend(): Backend =
   when (this) {
     DssCheckerBackend.BMC -> Backend.BMC
@@ -395,12 +338,7 @@ private fun DssCheckerBackend.toBoundedBackend(): Backend =
       throw IllegalArgumentException("$this has no bounded-family Backend")
   }
 
-/**
- * [DssCheckerBackend]'s own three CEGAR entries, mapped onto the [Domain]
- * [defaultPredicateCegarConfig] needs - the bounded-model-checking-family entries have no [Domain]
- * (they aren't CEGAR at all) and are handled separately in [getDssChecker] (see
- * [toBoundedBackend]), never routed through here.
- */
+/** Maps a `CEGAR_*` [DssCheckerBackend] to its [Domain]; bounded entries never get here. */
 private fun DssCheckerBackend.toCegarDomain(): Domain =
   when (this) {
     DssCheckerBackend.CEGAR_PRED_CART -> Domain.PRED_CART
@@ -415,18 +353,8 @@ private fun DssCheckerBackend.toCegarDomain(): Domain =
   }
 
 /**
- * Adapts a [UnitPrec]-based checker ([getBoundedChecker]'s own return shape - the bounded-model-
- * checking family's own precision type, unrelated to [XcfaPrec]) into the roster's own
- * [XcfaChecker] shape. The incoming [XcfaPrec] initial precision (DSS's
- * `--dss-global-predicate-pool` seed, when [PredicateBlockBehavior] passes one) is discarded, not
- * translated - [UnitPrec] carries no information to translate it *into*, so a bounded-family roster
- * entry always runs exactly as its own [defaultBoundedConfigFor] preset would standalone, silently
- * skipping that seed (see [DssConfig.checkerBackends]'s own doc).
- *
- * The cast below is unchecked but safe: generics are erased at runtime, so a real
- * `Trace<XcfaState<PtrState<ExplState>>, XcfaAction>` value already *is* a valid value to read as
- * `Trace<XcfaState<PtrState<*>>, XcfaAction>` - nothing here writes into it under the assumed type,
- * only re-exposes what [getBoundedChecker] already produced under a wider read-only view.
+ * Adapts a [UnitPrec] bounded checker to the roster's [XcfaChecker] shape, discarding the initial
+ * [XcfaPrec] (the global pool seed). The cast is unchecked but safe: the trace is only read.
  */
 @Suppress("UNCHECKED_CAST")
 private fun adaptBoundedChecker(
@@ -437,13 +365,8 @@ private fun adaptBoundedChecker(
 }
 
 /**
- * The logger of the block analyses: forwards to [delegate] with every message demoted to at least
- * [Logger.Level.DETAIL] (finer messages to [Logger.Level.VERBOSE]). Every block analysis is an
- * ordinary checker that logs its own `SafetyResult` (at `MAINSTEP`); without the demotion, any log
- * level from `MAINSTEP` on prints one result line per block analysis before DSS's own verdict, and
- * tools that read the verdict off the output (BenchExec's `theta-xcfa` tool-info takes the last
- * `SafetyResult` line, and only reports an error when there is none) would score a crashing DSS run
- * with the last block's result.
+ * Logger for block analyses: demotes messages to at least [Logger.Level.DETAIL], so per-block
+ * `SafetyResult` lines can't be mistaken for DSS's verdict (e.g. by BenchExec's tool-info).
  */
 private class BlockAnalysisLogger(private val delegate: Logger) : Logger {
   override fun write(level: Logger.Level, pattern: String, vararg objects: Any?): Logger {

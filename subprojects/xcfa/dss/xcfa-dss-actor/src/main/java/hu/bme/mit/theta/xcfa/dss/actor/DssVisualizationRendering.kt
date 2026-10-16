@@ -43,10 +43,8 @@ private fun DssLogEntry.render(startMillis: Long): String {
 }
 
 /**
- * Renders [DssVisualizationActor.log] as one line per message, timestamped relative to the first
- * message observed (`[+123ms] senderId -> TYPE: payload`), oldest first. Plain text - see
- * [renderAnsiColoredLog] for the color-coded variant CPAchecker's `DssVisualizationWorker`
- * produces.
+ * Renders [DssVisualizationActor.log] as text, one `[+123ms] senderId -> TYPE: payload` line per
+ * message, oldest first; see [renderAnsiColoredLog] for the colored variant.
  */
 fun DssVisualizationActor.renderTextLog(): String {
   val entries = log
@@ -56,11 +54,8 @@ fun DssVisualizationActor.renderTextLog(): String {
 }
 
 /**
- * Same content as [renderTextLog], with each line wrapped in an ANSI color escape keyed by
- * [DssMessageType] - a postcondition reads differently from a violation condition or a crash at a
- * glance in a terminal, mirroring the "color-coded message log" CPAchecker's
- * `DssVisualizationWorker` renders (plan §5). Not suitable for writing to a file meant to be read
- * without ANSI support; use [renderTextLog] for that.
+ * [renderTextLog] with each line ANSI-colored by [DssMessageType], like CPAchecker's
+ * `DssVisualizationWorker`. For terminals; use [renderTextLog] for files.
  */
 fun DssVisualizationActor.renderAnsiColoredLog(): String {
   val entries = log

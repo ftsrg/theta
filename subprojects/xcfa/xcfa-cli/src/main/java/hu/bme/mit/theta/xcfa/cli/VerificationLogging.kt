@@ -112,13 +112,8 @@ internal fun postVerificationLogging(
         forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
           if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
             val trace = retrieveTrace(safetyResult)
-            // Not every checker's UNSAFE result carries a concrete counterexample trace - DSS's
-            // (build-order step 8) is a real example: `packVcond`/`unpackVcond` aren't
-            // implemented (doc/DSS.md's Known Limitations), so its UNSAFE verdict is reported via
-            // an EmptyCex, which is a real Cex but not a Trace. concretizeTrace's own unchecked
-            // cast to Trace would otherwise throw here, silently skipping the witness-writer calls
-            // below it too (an uncaught exception from this whole `when` branch would jump past
-            // them to the outer try/catch's generic "Could not output files" log line).
+            // Not every UNSAFE result carries a Trace: e.g. DSS reports an EmptyCex, which
+            // concretizeTrace's unchecked cast would fail on, skipping the witness writers below.
             if (trace is Trace<*, *>) {
               val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
                 concretizeTrace(trace, config, parseContext)

@@ -41,10 +41,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Drives the individual steps of [PredicateBlockBehavior] (CPAchecker's `DssBlockAnalysis`:
- * `runInitialAnalysis`, `storePrecondition`, `analyzePrecondition`, `storeViolationCondition`,
- * `analyzeViolationCondition`) directly, without the actor runtime, and checks the messages each
- * step produces.
+ * Drives [PredicateBlockBehavior]'s individual steps (CPAchecker's `DssBlockAnalysis` methods)
+ * directly, without the actor runtime, and checks the messages each step produces.
  */
 class PredicateBlockBehaviorStepTest {
 
@@ -239,11 +237,8 @@ class PredicateBlockBehaviorStepTest {
   }
 
   /**
-   * Regression test for a lost violation condition (it caused a wrong SAFE verdict). CPAchecker's
-   * block analysis does not analyze a violation condition that arrives before any precondition, and
-   * later does not report a violation condition reached from the top state when other start states
-   * are analyzed too ("the same vc must have been sent already"). Theta checks that instead of
-   * assuming it.
+   * Regression test (wrong SAFE): CPAchecker assumes an early violation condition is re-sent later
+   * ("the same vc must have been sent already"); Theta checks that instead.
    */
   @Test
   fun `a violation condition that arrives before any precondition is still propagated`() {

@@ -43,18 +43,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 /**
- * Closes a gap `doc/DSS.md` has flagged since build-order step 8: `MergeBlockDecomposition` is
- * exercised by its own standalone `BlockGraph -> BlockGraph` test suite
- * (`BlockGraphMergingTest`/`MergeBlockDecompositionTest`) and, end to end but only against two
- * trivial if/else fixtures, via `XcfaCliDssTest` - nothing in `xcfa-dss-actor`'s own test suite has
- * ever run a *merged* block graph through real [PredicateBlockBehavior] directly. This matters
- * specifically because merging changes what a block's own
- * `predecessorIds`/`successorIds`/`violationConditionLocation` look like (a horizontally-merged
- * block covers what used to be several independent blocks' worth of locations/edges under one id;
- * see `BlockGraphMerging.kt`'s own doc comment on why a merged block's `violationConditionLocation`
- * defaults back to its own `finalLocation`) - real per-block CEGAR and the
- * precondition-accumulation logic in [PredicateBlockBehavior] have never been driven against that
- * shape before.
+ * Runs *merged* block graphs (whose ids and abstraction points differ from linear ones) through
+ * real [PredicateBlockBehavior]; merging was otherwise only tested standalone or via the CLI.
  */
 class MergeDecompositionActorTest {
 
@@ -96,14 +86,8 @@ class MergeDecompositionActorTest {
   }
 
   /**
-   * `branch` splits three ways, each arm assigning a distinct value to `x` before rejoining at
-   * `join` - the exact same fixture `DiverseProgramsActorTest.threeWayJoinXcfa` uses, reused
-   * deliberately: all three arms share the identical `(predecessorIds={branch},
-   * successorIds={join}, finalLocation=join)` triple, precisely the condition `horizontalMergePass`
-   * groups on, so a moderate merge target reliably folds all three into one block - the single
-   * clearest case for exercising a *horizontally merged* block (one covering three
-   * structurally-parallel arms at once) through real analysis, rather than a vertically-chained
-   * one.
+   * `DiverseProgramsActorTest`'s three-way join: all three arms share the triple
+   * `horizontalMergePass` groups on, so they reliably fold into one horizontally merged block.
    */
   private fun threeWayJoinXcfa(errorValue: Int?): XCFA =
     xcfa("three-way-join-merge") {
@@ -151,13 +135,8 @@ class MergeDecompositionActorTest {
       "sanity check: three separate arm blocks before merging"
     }
 
-    // horizontalMergePass directly, not the full MergeBlockDecomposition/mergeToTargetBlockCount
-    // pipeline: the three arms merging also makes root's own successor count drop to one, which
-    // immediately unlocks a *vertical* merge of root into the same block within the same round (see
-    // doc/DSS-decomposition.md's own "can overshoot below the requested target" note) - real,
-    // correct, already-documented behavior, but it would fold more into the merged block than this
-    // test is actually about; isolating the horizontal pass alone tests the one specific claim in
-    // this test's name without conflating it with that (separately-tested) follow-on effect.
+    // Only the horizontal pass: the full pipeline would then also vertically merge the root into
+    // the same block (since its successor count drops to one), which this test isn't about.
     val merged = horizontalMergePass(linear)
     merged.checkConsistency()
 
@@ -186,22 +165,8 @@ class MergeDecompositionActorTest {
   }
 
   /**
-   * The paper's own `x`/`y` while-loop, with one deliberate addition: the loop body itself branches
-   * on a fresh nondeterministic `flag` into two structurally-parallel arms (`bodyA`/`bodyB`) that
-   * both perform the *identical* update before rejoining at `bodyJoin` - unlike the plain `x`/`y`
-   * loop (which, checked directly, has no redundant block-graph structure at all to merge away:
-   * every boundary there reflects genuine branching, so `MergeBlockDecomposition` correctly leaves
-   * it completely unchanged regardless of target count - confirmed empirically, not assumed, while
-   * building this fixture), `bodyA`/`bodyB` share the exact `(predecessorIds, successorIds,
-   * finalLocation)` triple `horizontalMergePass` groups on, so real merging happens *inside* the
-   * cyclic part of the graph. `flag`'s value never affects `x`/`y` (both arms are semantically
-   * identical), so the SAFE/UNSAFE verdict is governed purely by [incrementY], exactly as in the
-   * unmerged version - this fixture is a strict superset of complexity, not a different program.
-   *
-   * This is the single most complex combination this port's test suite exercises anywhere: a
-   * *merged* block graph that also contains a *cycle*, driven by real per-block CEGAR through the
-   * actor runtime. Neither `BlockGraphMergingTest` (which never runs real analysis) nor
-   * `CyclicBlockGraphAnalysisTest` (which never merges) covers this combination on its own.
+   * The paper's `x`/`y` loop with a body branching on `flag` into two identical arms, which merge
+   * horizontally inside the cycle; the verdict still depends only on [incrementY].
    */
   private fun xyLoopXcfa(incrementY: Boolean): XCFA =
     xcfa("xy-loop-merge") {
@@ -276,12 +241,8 @@ class MergeDecompositionActorTest {
   }
 
   /**
-   * SV-COMP's `LIN_INT/stateful_check`: a driver loop that has to step `s` through 0 -> 1 -> 2 -> 3
-   * in four separate iterations before the release handler runs, which locks twice (an error) if
-   * the open in the first iteration failed. Regression test for a wrong SAFE verdict: with the
-   * global predicate pool, Theta's former skipping of non-top states derived from top made the
-   * block after the loop keep only the states of the first iterations, so it refuted the violation
-   * condition from them.
+   * SV-COMP's `LIN_INT/stateful_check`, unsafe since a failed open makes its handler lock twice.
+   * Regression test for a wrong SAFE caused by skipping non-top states derived from top.
    */
   private fun statefulCheckXcfa(): XCFA =
     xcfa("stateful-check") {
@@ -390,9 +351,8 @@ class MergeDecompositionActorTest {
   }
 
   /**
-   * `x = 0; n = *; if (n >= 0) { while (x < n) x++; assert(...) }`: the root branches, so the loop
-   * is absorbed into a non-root block, whose per-path violation conditions go back to the root.
-   * Unsafe: the error needs exactly three iterations (`n = 3`); safe: `x == n` after the loop.
+   * `x = 0; n = *; if (n >= 0) { while (x < n) x++; assert(...) }`: the loop is absorbed into a
+   * non-root block. Unsafe needs exactly three iterations (`n = 3`); safe: `x == n` after the loop.
    */
   private fun guardedLoopXcfa(unsafe: Boolean): XCFA =
     xcfa("guarded-loop") {

@@ -56,11 +56,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
 /**
- * The solver DSS uses by default: Theta's default (legacy) Z3 binding, whose native interpolation
- * handles the integer arithmetic of C programs. It must not be used by several threads at once (it
- * crashes natively in `solverAssert`, even with one context per block analysis), so the concurrent
- * executor needs `Z3:new` - whose Horn-based interpolation, however, fails on some C arithmetic.
- * See `doc/DSS.md`.
+ * The default DSS solver: legacy Z3. Its interpolation handles C integer arithmetic, but it crashes
+ * when used by several threads, so the concurrent executor needs `Z3:new` (see `doc/DSS.md`).
  */
 const val DEFAULT_DSS_SOLVER = "Z3"
 
@@ -68,59 +65,8 @@ const val DEFAULT_DSS_SOLVER = "Z3"
 const val DEFAULT_DSS_FALLBACK_SOLVER = "JavaSMT:MATHSAT5"
 
 /**
- * The block analysis of DSS with predicate abstraction: a port of CPAchecker's `DssBlockAnalysis`
- * (driven the way CPAchecker's `DssAnalysisWorker.processMessage` drives it), on top of an ordinary
- * Theta checker that analyzes the block extracted into a standalone XCFA ([extractBlockXcfa]).
- *
- * The method names follow CPAchecker's:
- * - [runInitialAnalysis]: analyze the block from the most general entry state (top). If no target
- *   is reachable, broadcast the postcondition; otherwise remember that the block contains a
- *   violation, broadcast a top postcondition (if the block has successors) and a violation
- *   condition.
- * - On a postcondition message: [storePrecondition] (coverage check against what the sender sent
- *   before), then [analyzePrecondition] - which only re-analyzes if there is something to check (a
- *   violation inside the block or a violation condition from a successor), with only the new,
- *   relevant start states.
- * - On a violation-condition message: [storeViolationCondition] (drop unsatisfiable or repeated
- *   conditions), then [analyzeViolationCondition] - re-analyze from every stored precondition with
- *   the received condition as target. A refuted condition makes the checker refine, and the more
- *   precise postconditions are broadcast; a condition that is still reachable is propagated to the
- *   predecessors as a new violation condition (the weakest precondition through this block,
- *   [computeViolationCondition]). A violation condition of the root block means the program is
- *   unsafe (see [DssBlockActor]).
- *
- * Preconditions are kept per sender as a list of states, like CPAchecker's multimap: a new state
- * replaces the states of the same sender that it implies (a stronger, refined postcondition), and
- * is not relevant for re-analysis if an existing state of that sender implies it. Every start state
- * is analyzed separately. While some predecessor has not reported yet (or reported top), the top
- * state is analyzed too (`appendTopToRelevantIfNecessary`), so every intermediate result
- * over-approximates the reachable states. The handling of strongly connected components in the
- * paper ("prevent postconditions of predecessors in the same component from being joined unless
- * they are unequal to the initial state") is CPAchecker's: once every predecessor provided a
- * non-trivial state, top states that were themselves computed from non-trivial preconditions are
- * skipped. Only top states are skipped: Theta used to skip non-top states computed from top as
- * well, but that is unsound - such a state can be the only one that already carries entry states a
- * loop reaches in later iterations (`stateful_check`: the block after the loop only kept the states
- * of the first iteration and proved a reachable error unreachable). Without it, Cartesian
- * abstraction (and the global predicate pool) can produce coarse non-top summaries from top that
- * sustain themselves around a cycle of the block graph, so DSS may not terminate on such loops.
- *
- * Precision: like CPAchecker, the predicates a block used are transmitted with its postconditions,
- * and a block analyzes non-top start states with the combination of the precisions it received
- * (`combinePrecisionIfPossible`, unless [resetPrecisionForEveryRun]); top start states use the
- * start precision. Theta-specific: with [useGlobalPredicatePool], the start precision contains
- * every assume condition of the whole program (see `globalAssumePredicates`), which CPAchecker does
- * not have. Also Theta-specific: with [reuseBlockPrecision], every run additionally starts with the
- * predicates the block's earlier CEGAR runs ended with ([ownPrecision]); checkers that report no
- * precision (the bounded ones) neither add to nor use it. With [checkerFallback], a run whose
- * checker throws is repeated with the roster's next checkers (see `runWithCheckerFallback`); a
- * roster that ranks per block makes every block pick its fastest checker on its first analysis.
- *
- * [checkerRoster] supplies the checker of every single analysis run (default: round-robin over the
- * configured checkers). [solverFactory] is used for the coverage and satisfiability checks of the
- * predicate operators; `null` resolves [DEFAULT_DSS_SOLVER]. [fallbackSolverFactory] repeats the
- * checks [solverFactory]'s solver fails on; without it, such a check ends DSS with an unknown
- * verdict.
+ * DSS block analysis with predicate abstraction: a port of CPAchecker's `DssBlockAnalysis` over an
+ * ordinary Theta checker on the extracted block ([extractBlockXcfa]), keeping CPAchecker's names.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
@@ -311,10 +257,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * Stores the violation condition of [message]; returns whether the analysis should proceed: not
-   * if the condition is unsatisfiable (CPAchecker's
-   * `ProceedPredicateStateOperator.processBackward`) or if it is the same as the last one from the
-   * same sender.
+   * Stores [message]'s violation condition; returns whether to proceed: not if it is unsatisfiable
+   * (CPAchecker's `processBackward`) or repeats the sender's last one.
    */
   fun storeViolationCondition(message: DssViolationConditionMessage): Boolean {
     val condition =
@@ -361,9 +305,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * Runs the block analysis with [violations] attached to the violation-condition location, from
-   * the relevant start states ([checkOnlyRelevant], after a new precondition) or from all stored
-   * preconditions (after a new violation condition).
+   * Runs the block analysis with [violations] attached at the block exit, from the relevant start
+   * states ([checkOnlyRelevant]) or from all stored preconditions.
    */
   private fun analyzeViolationCondition(
     violations: List<Expr<BoolType>>,
@@ -381,6 +324,8 @@ class PredicateBlockBehavior(
       startStates.addAll(relevant)
     } else if (preconditions.isNotEmpty()) {
       for (state in preconditions.values.flatten()) {
+        // The paper's SCC rule, as in CPAchecker: skip only *top* states computed from non-trivial
+        // preconditions. Skipping non-top states computed from top too is unsound (stateful_check).
         if (
           hasNonTrivialSummariesForEachPredecessor &&
             state.nonTrivialForEachPredecessor &&
@@ -394,11 +339,9 @@ class PredicateBlockBehavior(
       startStates.add(top())
     }
 
-    // CPAchecker leaves the order of the start states unspecified (hash order of its multimap).
-    // Non-trivial states go first here: deduplication keeps the first of two states that cover
-    // each other, and a top summary first would swallow every non-trivial summary of the same
-    // analysis - then a loop block never sees a non-trivial precondition from itself, the SCC rule
-    // above never applies, and its violation conditions are unrolled forever.
+    // Non-trivial start states go first (CPAchecker leaves the order unspecified): deduplication
+    // keeps the first of two covering states, and a top summary first would swallow the others,
+    // so a loop block's SCC rule would never apply and its violation conditions unroll forever.
     val orderedStartStates = startStates.sortedBy { it.isTop }
     val violationCondition = if (violations.isEmpty()) null else or(violations)
     val summaries = mutableListOf<Summary>()
@@ -412,12 +355,9 @@ class PredicateBlockBehavior(
       val precision =
         if (resetPrecisionForEveryRun || start.isTop) startPrecision
         else combinePrecisionIfPossible() ?: start.precision
-      // A CPAchecker start state is an abstraction over the predicates of the precision it was sent
-      // with, so its own predicates are always available to the analysis. Theta's transmitted
-      // precision is only approximated (see predicatesOf), so the state's atoms are added
-      // explicitly - otherwise the block-end abstraction can forget what the precondition said
-      // (e.g. a loop counter's lower bound), and a loop block keeps re-deriving its violation
-      // conditions from its own over-approximated postconditions forever.
+      // Add the start state's own atoms to its precision: Theta's transmitted precision is only
+      // approximate, and without them the block-end abstraction can forget the precondition, so a
+      // loop block re-derives its violation conditions forever.
       val startState = start.copy(precision = precision + predicatesOf(listOf(start.state)))
 
       when (val result = run(startState, violationCondition)) {
@@ -544,10 +484,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * The violation condition of the counterexample [cex] of a run on [extraction]: the weakest
-   * precondition of the path after the synthetic precondition edge. CEGAR labels its actions with
-   * per-process copies of the variables, so they are renamed back via the states' `varLookup`; a
-   * condition over any other variable would be unconstrained in the predecessor, so it is rejected.
+   * The violation condition of [cex]'s path after the precondition edge, with CEGAR's per-process
+   * variable copies renamed back; conditions over other variables are rejected.
    */
   private fun pathViolation(
     cex: Trace<XcfaState<PtrState<*>>, XcfaAction>,
@@ -575,10 +513,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * The disjunction of [new] and every earlier path violation condition of this block. A
-   * predecessor keeps only the last condition of each sender, so sending one path at a time would
-   * let it forget the paths it already refuted; the union only grows, so a refuted union cannot
-   * recur while a target stays reachable.
+   * The disjunction of [new] and all earlier path violation conditions: predecessors keep only each
+   * sender's last condition, so the growing union keeps refuted paths from recurring.
    */
   private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): Expr<BoolType>? {
     if (new.isEmpty()) return null
@@ -599,15 +535,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * Runs [analysis] with the roster's next checker. With [checkerFallback], an analysis whose
-   * checker throws (a solver error, an unknown result, an unsupported operation, or an inconclusive
-   * result, e.g. of a bounded checker) is repeated with the roster's following checkers (which ones
-   * is up to the roster's selection strategy, see `DssCheckerSelectionStrategy`), at most once per
-   * roster entry; if all of them throw, the first failure propagates with the others suppressed.
-   * Errors (e.g. out of memory) and interruptions are never retried.
-   *
-   * If the roster ranks per block, the block's first successful analysis runs every checker (see
-   * [runEveryChecker]); later ones try the fastest checker first, then the others in roster order.
+   * Runs [analysis] with the roster's next checker. With [checkerFallback], failures are retried on
+   * the following checkers, once each (never errors or interrupts); see also [runEveryChecker].
    */
   private inline fun <T> runWithCheckerFallback(
     trace: Array<Pair<String, Any?>> = emptyArray(),
@@ -634,9 +563,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * Runs [analysis] with every checker of the roster in turn and returns the result of the one that
-   * finished fastest, which becomes [fastestChecker]. If every checker throws, the first failure
-   * propagates and the next analysis tries all of them again.
+   * Runs [analysis] with every checker and returns the fastest one's result, which sets
+   * [fastestChecker]. If all throw, the first failure propagates and the next analysis retries all.
    */
   private inline fun <T> runEveryChecker(
     trace: Array<Pair<String, Any?>>,
@@ -694,9 +622,8 @@ class PredicateBlockBehavior(
     )
 
   /**
-   * CPAchecker's abstraction formulas are canonical (BDD-based), so a valid abstraction is
-   * literally `true`, which is what `isMostGeneralBlockEntryState` checks for. Theta's packed
-   * states are disjunctions of predicate cubes, so validity is checked explicitly.
+   * Normalizes [state], detecting validity explicitly: CPAchecker's BDD abstractions are literally
+   * `true` when valid, while Theta's packed states are disjunctions of predicate cubes.
    */
   private fun normalize(state: Expr<BoolType>): Expr<BoolType> {
     val simplified = ExprUtils.simplify(state)

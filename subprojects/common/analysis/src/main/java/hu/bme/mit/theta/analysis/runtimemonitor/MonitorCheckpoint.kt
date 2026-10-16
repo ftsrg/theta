@@ -24,23 +24,9 @@ package hu.bme.mit.theta.analysis.runtimemonitor
  */
 class MonitorCheckpoint internal constructor(private val name: String) {
 
-  // Scoped per calling thread, not a single shared set: `getCegarChecker` calls reset()+register()
-  // unconditionally on every checker construction, and execute() fires during that same checker's
-  // own check() call later - always on the one thread that built it, but (once more than one
-  // checker
-  // can be alive on more than one thread at a time, as DSS's concurrent block actors do) never
-  // reliably the *only* checker alive process-wide anymore. A plain shared set - even a thread-safe
-  // one - is wrong here, not just unsafe: block A's still-running check() would have its monitor
-  // silently swapped out for block B's the moment block B's checker got constructed, so the
-  // checkpoint firing mid-A's-refinement would wrongly execute B's monitor against A's
-  // counterexample
-  // history (confirmed empirically - this is exactly what produced spurious
-  // `NotSolvableException`s in DSS's own UNSAFE-verdict tests once checker construction and
-  // solving were allowed to interleave across blocks). A `ThreadLocal` restores the single-runner
-  // assumption the rest of this class's design already relies on, per thread instead of
-  // process-wide -
-  // exactly matching how it's actually used: one thread registers a monitor and is the only thread
-  // that ever triggers its execution, for the lifetime of one checker.
+  // Per thread, not shared: DSS builds and runs checkers on several threads at once, and a shared
+  // set let one block's checker construction swap out another's monitor mid-check (spurious
+  // NotSolvableExceptions). Each monitor is registered and executed on the same thread.
   private val registeredMonitors = ThreadLocal.withInitial { mutableSetOf<Monitor>() }
 
   fun registerMonitor(m: Monitor) {

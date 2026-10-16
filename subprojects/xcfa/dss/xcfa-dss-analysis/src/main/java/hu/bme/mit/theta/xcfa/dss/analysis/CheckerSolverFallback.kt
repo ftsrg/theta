@@ -25,14 +25,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 
 /**
- * The checkers of [primary], but a check that throws (e.g. Z3's unknown result on nonlinear
- * arithmetic, or an operation its interpolation does not support) is repeated from scratch with a
- * checker of [fallback], the same analysis over another solver. If that one throws too, its failure
- * propagates with the first one suppressed, so `--dss-checker-fallback` can still move on to the
- * next roster entry.
- *
- * The fallback checker is built during the check, so under [withSolverConstructionLock] like any
- * other checker construction; [runWorkerConfig]'s solver scope closes its solvers as well.
+ * [primary]'s checkers, but a check that throws (e.g. Z3 on nonlinear arithmetic) is redone with a
+ * [fallback] checker; if that throws too, its failure propagates with the first one suppressed.
  */
 fun withCheckerSolverFallback(
   primary: CheckerFactory,

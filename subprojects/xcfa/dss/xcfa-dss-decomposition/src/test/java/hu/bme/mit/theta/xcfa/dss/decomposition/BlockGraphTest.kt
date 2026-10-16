@@ -23,11 +23,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Direct tests of [BlockGraph]'s invariants, independent of any decomposition strategy. Since
- * [BlockGraph.fromBlocksWithoutEdges] always wires predecessor/successor ids symmetrically by
- * construction, the mutual-consistency checks in [BlockGraph.checkConsistency] can never actually
- * fire on a graph built that way - these tests hand-build (possibly broken) graphs to exercise them
- * directly.
+ * Direct tests of [BlockGraph]'s invariants on hand-built (possibly broken) graphs, since
+ * [BlockGraph.fromBlocksWithoutEdges] can never violate [BlockGraph.checkConsistency].
  */
 class BlockGraphTest {
 

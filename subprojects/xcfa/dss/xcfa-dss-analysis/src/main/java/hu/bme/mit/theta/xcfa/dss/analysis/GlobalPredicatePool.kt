@@ -21,14 +21,8 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 
 /**
- * Every assume condition of [wholeProgram], used to seed the initial precision of every block.
- *
- * This has no counterpart in CPAchecker, whose blocks start with an empty precision and only gain
- * predicates through refinement (violation conditions make a block refine against them) and through
- * the precisions transmitted with postconditions. Theta's DSS does both of those too, so the pool
- * is optional (`--dss-global-predicate-pool`); it is a static, whole-program shortcut that lets a
- * block without anything to refute state its postcondition with predicates taken from the branches
- * of *other* blocks right away, which typically saves several rounds of violation conditions.
+ * Every assume condition of [wholeProgram], optionally seeding every block's precision
+ * (`--dss-global-predicate-pool`; no CPAchecker counterpart). Saves violation-condition rounds.
  */
 fun globalAssumePredicates(wholeProgram: XCFA): Set<Expr<BoolType>> =
   wholeProgram.collectAssumes().toSet()

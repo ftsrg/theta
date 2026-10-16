@@ -19,10 +19,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 /**
- * Theta-only decomposition (no CPAchecker counterpart): [MergeBlockDecomposition], then every cycle
- * of the block graph - self loops and cycles through many blocks alike - is collapsed into one
- * block ([collapseCycles]), so the block graph is acyclic and every loop runs inside one block
- * analysis. Merging and collapsing alternate until neither changes the graph.
+ * Theta-only: [MergeBlockDecomposition], then every cycle is collapsed into one block
+ * ([collapseCycles]) so the block graph is acyclic; merging and collapsing alternate to a fixpoint.
  */
 class AcyclicMergeDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
@@ -49,14 +47,8 @@ class AcyclicMergeDecomposition(
 }
 
 /**
- * Collapses every cyclic strongly connected component of [blockGraph] into one block `MC<n>`, the
- * smallest component first, until the graph is acyclic. A block needs a single entry and a single
- * exit location, so the region of a component grows until it has them ([collapseRegion]); it can
- * always grow to the whole procedure, which is a valid single block. Collapsing can close a new
- * cycle through blocks outside the region, which a later round collapses.
- *
- * With [onlySelfLoops], only self loops are collapsed (`MinCutDecomposition`). Returns [blockGraph]
- * itself when there is nothing to collapse.
+ * Collapses each cyclic SCC of [blockGraph], smallest first, into one block `MC<n>` (grown to a
+ * single entry/exit by [collapseRegion]) until acyclic. [onlySelfLoops] collapses only self loops.
  */
 fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): BlockGraph {
   var nextId =
@@ -81,10 +73,8 @@ fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): Bloc
 private const val COLLAPSED_PREFIX = "MC"
 
 /**
- * Grows [initialRegion] until it has one entry and at most one exit location, then merges it into
- * one block [id]. Several entries add the predecessors, several exits the successors; an entry that
- * is also the exit adds the predecessors (as [absorbSelfLoops] prefers), since a block starting and
- * ending at the same location is extracted with a split head and could not iterate its loop.
+ * Grows [initialRegion] to one entry and at most one exit, then merges it into block [id]. An entry
+ * that is also the exit grows backward: such a block could not iterate its loop.
  */
 private fun collapseRegion(
   blockGraph: BlockGraph,
@@ -134,9 +124,8 @@ private fun collapseRegion(
 }
 
 /**
- * The exit of a region without successors, which only has to be one of its locations: a location
- * without outgoing edges, preferably not an error location (CPAchecker's single block also ends at
- * a dead end), else any location other than [entry].
+ * Exit for a region without successors: a dead-end location, preferably not an error location (like
+ * CPAchecker's single block), else any location other than [entry].
  */
 private fun deadEndExit(members: List<Block>, entry: XcfaLocation): XcfaLocation {
   val locations = members.flatMap { it.locations }.distinct().sortedBy { it.name }

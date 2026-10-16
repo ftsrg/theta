@@ -19,11 +19,8 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.PriorityBlockingQueue
 
 /**
- * The inbox of an actor, mirroring CPAchecker's `DssDefaultQueue`: `RESULT`, `EXCEPTION` and
- * `STATISTIC` messages overtake every pending analysis message; within the same priority, messages
- * are taken in the order they were created ([DssMessage.sequenceNumber]). This makes a worker react
- * to the final verdict right away instead of first working through a backlog of
- * postconditions/violation conditions that cannot change the outcome anymore.
+ * An actor's inbox (CPAchecker's `DssDefaultQueue`): `RESULT`/`EXCEPTION`/`STATISTIC` overtake
+ * analysis messages, so workers react to the verdict at once; otherwise creation order.
  */
 fun newDssMessageQueue(): BlockingQueue<DssMessage> =
   PriorityBlockingQueue(11, compareBy<DssMessage>({ it.priority }, { it.sequenceNumber }))

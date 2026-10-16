@@ -16,20 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.actor
 
 /**
- * Stub [DssBlockBehavior] for validating the actor runtime's routing and termination detection
- * without any real analysis wired in (build-order step 4). On startup, and again the first time it
- * hears from each distinct sender, echoes exactly one message of the same kind back out; repeat
- * messages from an already-seen sender produce nothing. This is the simplest possible stand-in for
- * the real subsumption check (`CoverageOperator`/`ProceedOperator` in CPAchecker, plan §3) that
- * makes a real worker stop propagating once nothing new has arrived - without it, a block on a
- * cyclic part of the block graph (e.g. a loop body, which lists itself as both predecessor and
- * successor - see `xcfa-dss-decomposition`) would echo forever and the network would never reach
- * quiescence.
- *
- * @param originatesViolation whether this block should also emit a violation condition on startup,
- *   standing in for "this block's own analysis found a specification violation reachable from no
- *   incoming information" - a real worker only does this when its local CEGAR run actually finds
- *   one; here it is just configured per test scenario.
+ * Stub [DssBlockBehavior] for testing the actor runtime: echoes one message on startup and once per
+ * new sender (so cycles still quiesce); [originatesViolation] adds a startup violation condition.
  */
 class EchoBlockAnalysis(
   private val blockId: String,

@@ -16,11 +16,8 @@
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
 /**
- * A graph of [Block]s covering a procedure's control-flow graph, corresponding to `B, G_B` in the
- * DSS paper (Beyer, Kettl & Lemberger, FSE 2024) and to CPAchecker's `BlockGraph`.
- *
- * There is always exactly one root block (the block with no predecessors, containing the
- * procedure's initial location).
+ * A graph of [Block]s covering a procedure's CFG (`B, G_B` in the DSS paper, CPAchecker's
+ * `BlockGraph`). Always has exactly one root block, the one with no predecessors.
  */
 class BlockGraph(val blocks: Set<Block>) {
 
@@ -73,10 +70,8 @@ class BlockGraph(val blocks: Set<Block>) {
   companion object {
 
     /**
-     * Builds a [BlockGraph] from blocks that only know their own locations/edges, by wiring up
-     * predecessor/successor ids: block `Y` is a successor of block `X` exactly when `Y`'s
-     * [Block.initialLocation] equals `X`'s [Block.finalLocation] (and thus `X` is a predecessor of
-     * `Y`). Mirrors CPAchecker's `BlockGraph.fromBlockNodesWithoutGraphInformation`.
+     * Wires up predecessor/successor ids: `Y` succeeds `X` iff `Y` starts where `X` ends. Mirrors
+     * CPAchecker's `BlockGraph.fromBlockNodesWithoutGraphInformation`.
      */
     fun fromBlocksWithoutEdges(blocksWithoutEdges: Collection<Block>): BlockGraph {
       val byInitialLocation = blocksWithoutEdges.groupBy { it.initialLocation }
