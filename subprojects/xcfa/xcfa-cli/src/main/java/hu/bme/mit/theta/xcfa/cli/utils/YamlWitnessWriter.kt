@@ -29,12 +29,17 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
@@ -56,10 +61,12 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
+import hu.bme.mit.theta.xcfa.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
@@ -1271,5 +1278,68 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
         }
     return invs
   }
+  if (this is DssInvariants) return toContent(inputFile, parseContext)
   return listOf()
+}
+
+/**
+ * DSS's invariants at C statements that start an edge, where the program point is its source;
+ * positions also used inside an edge, or with unknown states, are skipped.
+ */
+private fun DssInvariants.toContent(
+  inputFile: File,
+  parseContext: ParseContext,
+): List<ContentItem> {
+  fun cNameOf(decl: VarDecl<*>) =
+    parseContext.metadata.getMetadataValue(decl.name, "cName").orElse(null) as? String
+  // A C name shared by several variables (shadowing, same-named locals) cannot be resolved
+  val edges = invariants.keys.flatMap { it.outgoingEdges }
+  val shared =
+    (edges.flatMap { it.label.collectVars() } +
+        invariants.values.filterNotNull().flatten().flatMap { ExprUtils.getVars(it) })
+      .toSet()
+      .groupBy(::cNameOf)
+      .filter { (name, vars) -> name != null && vars.size > 1 }
+      .keys
+  fun isCVar(decl: VarDecl<*>) = cNameOf(decl)?.let { it !in shared } ?: false
+  val sources = LinkedHashMap<Pair<Int, Int>, MutableSet<XcfaLocation>>()
+  val inside = HashSet<Pair<Int, Int>>()
+  for (edge in edges) {
+    edge.label.getFlatLabels().forEachIndexed { index, label ->
+      for (statement in (label.metadata as? CMetaData)?.astNodes.orEmpty()) {
+        if (statement.lineNumberStart < 0 || statement.colNumberStart < 0) continue
+        val position = statement.lineNumberStart to statement.colNumberStart + 1
+        if (index == 0) sources.getOrPut(position) { linkedSetOf() } += edge.source
+        else inside += position
+      }
+    }
+  }
+  return sources.mapNotNull { (position, locations) ->
+    if (position in inside) return@mapNotNull null
+    // Only conjuncts over C variables are kept: that weakens each state, so it stays valid
+    val states =
+      locations
+        .flatMap { invariants[it] ?: return@mapNotNull null }
+        .map { state ->
+          SmartBoolExprs.And(
+            ExprUtils.getConjuncts(state).filter { ExprUtils.getVars(it).all(::isCVar) }
+          )
+        }
+    val value = ExprUtils.simplify(SmartBoolExprs.Or(states))
+    if (value == True()) return@mapNotNull null
+    val inC =
+      BasicSubstitution.builder()
+        .apply { ExprUtils.getVars(value).forEach { put(it, Var(cNameOf(it)!!, it.type).ref) } }
+        .build()
+        .apply(value)
+    ContentItem(
+      invariant =
+        Invariant(
+          type = InvariantType.LOCATION_INVARIANT,
+          location = Location(inputFile.name, position.first, position.second),
+          value = inC.toC(parseContext),
+          format = Format.C_EXPRESSION,
+        )
+    )
+  }
 }

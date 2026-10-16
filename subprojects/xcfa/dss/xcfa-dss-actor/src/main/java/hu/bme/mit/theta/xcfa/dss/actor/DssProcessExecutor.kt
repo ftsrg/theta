@@ -36,6 +36,7 @@ private const val HELLO = "dss-worker-1"
 private const val REQUEST_INIT = 1
 private const val REQUEST_POST_CONDITION = 2
 private const val REQUEST_VIOLATION_CONDITION = 3
+private const val REQUEST_WITNESS = 4
 private const val REPLY_OK = 0
 private const val REPLY_ERROR = 1
 private const val INTERRUPT_POLL_MILLIS = 100
@@ -71,6 +72,7 @@ fun runDssActorsInProcesses(
   codec: DssExprCodec,
   maxProcesses: Int = 0,
   startupTimeoutMillis: Int = 300_000,
+  witnesses: MutableMap<String, DssBlockWitness>? = null,
 ): DssResult {
   val ids = blockGraph.blocks.map { it.id }
   val processCount = if (maxProcesses <= 0) ids.size else minOf(maxProcesses, ids.size)
@@ -116,7 +118,15 @@ fun runDssActorsInProcesses(
         workers[index] = DssWorkerConnection(groups[index], processes[index], socket, input, codec)
       }
       val workerOf = groups.indices.flatMap { i -> groups[i].map { it to workers[i]!! } }.toMap()
-      return runDssActors(blockGraph, behaviorFor = { workerOf.getValue(it.id).behavior(it.id) })
+      val result =
+        runDssActors(blockGraph, behaviorFor = { workerOf.getValue(it.id).behavior(it.id) })
+      // Before the workers are closed: a worker left unusable by the run only loses its blocks
+      witnesses?.let { collected ->
+        for ((id, worker) in workerOf) {
+          runCatching { worker.behavior(id).witness() }.getOrNull()?.let { collected[id] = it }
+        }
+      }
+      return result
     } finally {
       workers.forEach { it?.close() }
       processes.forEach { it.destroyForcibly() }
@@ -147,14 +157,24 @@ private class DssWorkerConnection(
 
       override fun onViolationCondition(message: DssViolationConditionMessage) =
         request(REQUEST_VIOLATION_CONDITION, blockId) { writeMessage(it, codec, message) }
+
+      override fun witness() = request(REQUEST_WITNESS, blockId, {}) { readWitness(it, codec) }
     }
 
-  @Synchronized
   private fun request(
     kind: Int,
     blockId: String,
     payload: (DataOutputStream) -> Unit,
-  ): List<DssMessage> {
+  ): List<DssMessage> =
+    request(kind, blockId, payload) { input -> List(input.readInt()) { readMessage(input, codec) } }
+
+  @Synchronized
+  private fun <T> request(
+    kind: Int,
+    blockId: String,
+    payload: (DataOutputStream) -> Unit,
+    reply: (DataInputStream) -> T,
+  ): T {
     if (broken) throw DssWorkerException("DSS worker of $blockIds is unusable: $exitDescription")
     try {
       output.writeByte(kind)
@@ -162,7 +182,7 @@ private class DssWorkerConnection(
       payload(output)
       output.flush()
       return when (awaitReply()) {
-        REPLY_OK -> List(input.readInt()) { readMessage(input, codec) }
+        REPLY_OK -> reply(input)
         REPLY_ERROR -> throw remoteException(blockId)
         else -> error("Unexpected DSS worker reply")
       }
@@ -257,23 +277,32 @@ fun serveDssBlocks(
       // A request that cannot be read leaves the stream out of step: answer it, then hang up
       val request = runCatching {
         val behavior = behaviors[blockId] ?: error("DSS worker $index does not serve $blockId")
-        behavior to if (kind == REQUEST_INIT) null else readMessage(input, codec)
+        behavior to
+          if (kind == REQUEST_INIT || kind == REQUEST_WITNESS) null else readMessage(input, codec)
       }
-      val answer =
+      val answer: Result<(DataOutputStream) -> Unit> =
         request.mapCatching { (behavior, message) ->
-          when (kind) {
-            REQUEST_INIT -> behavior.initialMessages()
-            REQUEST_POST_CONDITION -> behavior.onPostCondition(message as DssPostConditionMessage)
-            REQUEST_VIOLATION_CONDITION ->
-              behavior.onViolationCondition(message as DssViolationConditionMessage)
-            else -> error("Unknown DSS worker request $kind")
+          if (kind == REQUEST_WITNESS) {
+            val witness = behavior.witness()
+            return@mapCatching { out -> writeWitness(out, codec, witness) }
+          }
+          val messages =
+            when (kind) {
+              REQUEST_INIT -> behavior.initialMessages()
+              REQUEST_POST_CONDITION -> behavior.onPostCondition(message as DssPostConditionMessage)
+              REQUEST_VIOLATION_CONDITION ->
+                behavior.onViolationCondition(message as DssViolationConditionMessage)
+              else -> error("Unknown DSS worker request $kind")
+            }
+          return@mapCatching { out ->
+            out.writeInt(messages.size)
+            messages.forEach { writeMessage(out, codec, it) }
           }
         }
       answer.fold(
-        onSuccess = { messages ->
+        onSuccess = { write ->
           output.writeByte(REPLY_OK)
-          output.writeInt(messages.size)
-          messages.forEach { writeMessage(output, codec, it) }
+          write(output)
         },
         onFailure = { e ->
           output.writeByte(REPLY_ERROR)
@@ -338,3 +367,73 @@ private fun writeExprs(
 
 private fun readExprs(input: DataInputStream, codec: DssExprCodec): List<Expr<BoolType>> =
   List(input.readInt()) { codec.read(input) }
+
+private const val RECORD_ALL_PATHS = 1
+private const val RECORD_PATH = 2
+
+/** [witness] (possibly null), with locations and edges as in [DssExprCodec.writeEdge]. */
+private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: DssBlockWitness?) {
+  out.writeBoolean(witness != null)
+  if (witness == null) return
+  val invariants = witness.invariants
+  out.writeBoolean(invariants != null)
+  if (invariants != null) {
+    out.writeInt(invariants.size)
+    for ((location, states) in invariants) {
+      codec.writeLocation(out, location)
+      writeExprs(out, codec, states)
+    }
+  }
+  out.writeInt(witness.violations.size)
+  for (record in witness.violations) {
+    when (record) {
+      is DssAllPathsViolation -> {
+        out.writeByte(RECORD_ALL_PATHS)
+        out.writeInt(record.targets.size)
+        for ((location, condition) in record.targets) {
+          codec.writeLocation(out, location)
+          codec.write(out, condition)
+        }
+      }
+      is DssPathViolation -> {
+        out.writeByte(RECORD_PATH)
+        out.writeInt(record.edges.size)
+        record.edges.forEach { codec.writeEdge(out, it) }
+        out.writeBoolean(record.reachedReceived)
+      }
+    }
+    codec.write(out, record.condition)
+    out.writeInt(record.received.size)
+    for ((sender, condition) in record.received) {
+      writeString(out, sender)
+      codec.write(out, condition)
+    }
+  }
+  writeExprs(out, codec, witness.reported)
+}
+
+private fun readWitness(input: DataInputStream, codec: DssExprCodec): DssBlockWitness? {
+  if (!input.readBoolean()) return null
+  val invariants =
+    if (input.readBoolean())
+      List(input.readInt()) { codec.readLocation(input) to readExprs(input, codec) }.toMap()
+    else null
+  val violations =
+    List(input.readInt()) {
+      val kind = input.readUnsignedByte()
+      val targets =
+        if (kind == RECORD_ALL_PATHS)
+          List(input.readInt()) { codec.readLocation(input) to codec.read(input) }.toMap()
+        else null
+      val edges = if (kind == RECORD_PATH) List(input.readInt()) { codec.readEdge(input) } else null
+      val reachedReceived = kind == RECORD_PATH && input.readBoolean()
+      val condition = codec.read(input)
+      val received = List(input.readInt()) { readString(input) to codec.read(input) }
+      when (kind) {
+        RECORD_ALL_PATHS -> DssAllPathsViolation(condition, targets!!, received)
+        RECORD_PATH -> DssPathViolation(condition, edges!!, reachedReceived, received)
+        else -> error("Unknown DSS violation record kind $kind")
+      }
+    }
+  return DssBlockWitness(invariants, violations, readExprs(input, codec))
+}

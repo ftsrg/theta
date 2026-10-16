@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.dss.analysis
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.BasicSubstitution
+import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -34,13 +36,19 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.WpState
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.utils.WithPushPop
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.GhostEdgeMetadata
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.concurrent.ConcurrentHashMap
@@ -103,11 +111,34 @@ object DssAuxVars {
 fun computeViolationCondition(
   block: Block,
   targets: Map<XcfaLocation, Expr<BoolType>>,
-): Expr<BoolType> {
-  val memo = HashMap<XcfaLocation, Expr<BoolType>>()
-  val onStack = HashSet<XcfaLocation>()
+): Expr<BoolType> =
+  BackwardConditions(block, targets).let { conditions ->
+    val fromEntry = or(conditions.entryEdges.map { wep(it.label, conditions.at(it.target)) })
+    DssAuxVars.canonicalize(ExprUtils.simplify(fromEntry))
+  }
 
-  fun fromLocation(location: XcfaLocation): Expr<BoolType> {
+/** The weakest existential precondition of reaching one of [targets] from each block location. */
+private class BackwardConditions(
+  private val block: Block,
+  private val targets: Map<XcfaLocation, Expr<BoolType>>,
+) {
+
+  private val memo = HashMap<XcfaLocation, Expr<BoolType>>()
+  private val onStack = HashSet<XcfaLocation>()
+
+  /** The block's edges leaving its entry, i.e., before the first edge is processed. */
+  val entryEdges: List<XcfaEdge> =
+    block.initialLocation.outgoingEdges.filter {
+      it in block.edges && it.metadata != GhostEdgeMetadata
+    }
+
+  /** The block ends at its final location; only the ghost edge may be followed from there. */
+  fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
+    location.outgoingEdges.filter {
+      it in block.edges && (location != block.finalLocation || it.metadata == GhostEdgeMetadata)
+    }
+
+  fun at(location: XcfaLocation): Expr<BoolType> {
     memo[location]?.let {
       return it
     }
@@ -117,25 +148,73 @@ fun computeViolationCondition(
     }
     val disjuncts = mutableListOf<Expr<BoolType>>()
     targets[location]?.let(disjuncts::add)
-    // The block ends at its final location; only the ghost edge to the violation-condition
-    // location may be followed from there.
-    for (edge in location.outgoingEdges) {
-      if (edge !in block.edges) continue
-      if (location == block.finalLocation && edge.metadata != GhostEdgeMetadata) continue
-      disjuncts += wep(edge.label, fromLocation(edge.target))
-    }
+    for (edge in edgesFrom(location)) disjuncts += wep(edge.label, at(edge.target))
     onStack.remove(location)
     return or(disjuncts).also { memo[location] = it }
   }
+}
 
-  val entry = block.initialLocation
-  val fromEntry =
-    or(
-      entry.outgoingEdges
-        .filter { it in block.edges && it.metadata != GhostEdgeMetadata }
-        .map { wep(it.label, fromLocation(it.target)) }
-    )
-  return DssAuxVars.canonicalize(ExprUtils.simplify(fromEntry))
+/**
+ * A concrete run of a block: its [edges] from the entry to the target [end], and the [state] there.
+ */
+class BlockRun(val edges: List<XcfaEdge>, val end: XcfaLocation, val state: Valuation)
+
+/**
+ * A run of acyclic [block] from the concrete [entry] state to one of [targets]: at every location
+ * it takes an edge from which a target stays reachable ([computeViolationCondition]'s conditions).
+ */
+fun findBlockRun(
+  block: Block,
+  targets: Map<XcfaLocation, Expr<BoolType>>,
+  entry: Valuation,
+  solver: Solver,
+): BlockRun? {
+  val conditions = BackwardConditions(block, targets)
+  val edges = mutableListOf<XcfaEdge>()
+  var location = block.initialLocation
+  var state = entry
+  var candidates = conditions.entryEdges
+  while (true) {
+    val target = targets[location]
+    if (
+      edges.isNotEmpty() && target != null && followPath(solver, state, emptyList(), target) != null
+    ) {
+      return BlockRun(edges, location, state)
+    }
+    val (edge, next) =
+      candidates.firstNotNullOfOrNull { edge ->
+        followPath(solver, state, listOf(edge), conditions.at(edge.target))?.let { edge to it }
+      } ?: return null
+    edges += edge
+    state = next
+    location = edge.target
+    candidates = conditions.edgesFrom(location)
+  }
+}
+
+/**
+ * The state reached from the concrete [state] along [edges] in a run that ends in [target], or null
+ * if there is none. Auxiliary variables ([DssAuxVars]) are existential, so they are left out.
+ */
+fun followPath(
+  solver: Solver,
+  state: Valuation,
+  edges: List<XcfaEdge>,
+  target: Expr<BoolType>,
+): Valuation? {
+  var indexing = VarIndexingFactory.indexing(0)
+  WithPushPop(solver).use {
+    solver.add(PathUtils.unfold(state.toExpr(), indexing))
+    for (edge in edges) {
+      val action = XcfaAction(0, edge)
+      solver.add(PathUtils.unfold(action.toExpr(), indexing))
+      indexing = indexing.add(action.nextIndexing())
+    }
+    solver.add(PathUtils.unfold(target, indexing))
+    if (!solver.check().isSat) return null
+    val reached = PathUtils.extractValuation(solver.model, indexing).toMap()
+    return ImmutableValuation.from(reached.filterKeys { it is VarDecl<*> && !DssAuxVars.isAux(it) })
+  }
 }
 
 /**

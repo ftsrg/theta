@@ -34,7 +34,12 @@ relevant section before changing behavior.
   process executor (`runDssActorsInProcesses`) runs any solver in parallel.
 - **Message expressions must survive `DssExprCodec`** (process executor): only program variables
   and `DssAuxVars`, no quantifiers if equality matters. A new message field needs a matching
-  change in `DssProcessExecutor.kt`'s `writeMessage`/`readMessage`.
+  change in `DssProcessExecutor.kt`'s `writeMessage`/`readMessage`, a new witness field in
+  `writeWitness`/`readWitness`. Locations travel by their index in the program, never by name:
+  `__loc_N` names come from a JVM-wide counter and differ between processes.
+- **Witness records must stay exact** (`DssWitness.kt`, `doc/DSS.md` 8.5): invariants only from
+  safe analyses of start states that cover the block's entries, and every violation condition
+  with the targets or saved path it was computed from; stitching relies on both.
 
 ## Trace (`--dss-trace`, `--dss-trace-expressions`)
 - `DssTrace` is process-wide and off by default; emit through `DssTrace` only, never through

@@ -30,6 +30,8 @@ import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -40,7 +42,7 @@ private const val TRANSPORT_PREFIX = "__dss_transport_"
  * Transfers DSS message expressions between processes as `toString()` text: program variables by
  * name, [DssAuxVars] by `(index, type)`. Round trips are exact unless quantifiers are involved.
  */
-class DssExprCodec(xcfa: XCFA) {
+class DssExprCodec(private val xcfa: XCFA) {
 
   private val programVars: Map<String, VarDecl<*>>
 
@@ -90,6 +92,39 @@ class DssExprCodec(xcfa: XCFA) {
     }
     return ExpressionWrapper(XcfaScope(symbols), readString(input)).instantiate(env)
       as Expr<BoolType>
+  }
+
+  /**
+   * The program's locations in a fixed order: names come from a JVM-wide counter, so they differ
+   * between processes, but every process that parsed the program builds them in the same order.
+   */
+  private val locationList: List<XcfaLocation> by lazy { xcfa.procedures.flatMap { it.locs } }
+  private val locationIndex: Map<XcfaLocation, Int> by lazy {
+    locationList.withIndex().associate { (index, location) -> location to index }
+  }
+
+  fun writeLocation(out: DataOutputStream, location: XcfaLocation) {
+    out.writeInt(locationIndex[location] ?: error("Not a program location: ${location.name}"))
+  }
+
+  fun readLocation(input: DataInputStream): XcfaLocation =
+    input.readInt().let { locationList.getOrNull(it) ?: error("Unknown program location #$it") }
+
+  /** An edge as its ends and its position among the parallel edges with the same ends. */
+  fun writeEdge(out: DataOutputStream, edge: XcfaEdge) {
+    writeLocation(out, edge.source)
+    writeLocation(out, edge.target)
+    val index = edge.source.outgoingEdges.filter { it.target == edge.target }.indexOf(edge)
+    check(index >= 0) { "Not a program edge: $edge" }
+    out.writeInt(index)
+  }
+
+  fun readEdge(input: DataInputStream): XcfaEdge {
+    val source = readLocation(input)
+    val target = readLocation(input)
+    val index = input.readInt()
+    return source.outgoingEdges.filter { it.target == target }.getOrNull(index)
+      ?: error("Unknown program edge ${source.name} -> ${target.name} #$index")
   }
 }
 

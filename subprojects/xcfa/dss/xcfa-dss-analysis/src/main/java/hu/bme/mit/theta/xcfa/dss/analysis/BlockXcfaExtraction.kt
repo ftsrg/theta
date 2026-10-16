@@ -42,6 +42,10 @@ data class BlockXcfaExtraction(
   val exitLocation: XcfaLocation,
   val preconditionEdge: XcfaEdge? = null,
   val violationConditionEdge: XcfaEdge? = null,
+  /** The original location of every clone; a split loop head's entry clone maps to the head. */
+  val originalLocations: Map<XcfaLocation, XcfaLocation> = emptyMap(),
+  /** The original edge of every cloned edge; the synthetic edges have none. */
+  val originalEdges: Map<XcfaEdge, XcfaEdge> = emptyMap(),
 )
 
 /**
@@ -78,6 +82,7 @@ fun extractBlockXcfa(
 
   val allLocations = clonedLocations.values.toMutableSet().apply { add(blockEntry) }
   val clonedEdges = mutableSetOf<XcfaEdge>()
+  val originalEdges = mutableMapOf<XcfaEdge, XcfaEdge>()
   fun connect(source: XcfaLocation, target: XcfaLocation, edge: XcfaEdge) {
     source.outgoingEdges.add(edge)
     target.incomingEdges.add(edge)
@@ -96,7 +101,9 @@ fun extractBlockXcfa(
         blockEntry
       else clonedLocations.getValue(original.source)
     val target = clonedLocations.getValue(original.target)
-    connect(source, target, XcfaEdge(source, target, original.label, original.metadata))
+    val clone = XcfaEdge(source, target, original.label, original.metadata)
+    connect(source, target, clone)
+    originalEdges[clone] = original
   }
 
   val exitLocation = clonedLocations.getValue(block.violationConditionLocation)
@@ -153,5 +160,8 @@ fun extractBlockXcfa(
     exitLocation,
     preconditionEdge,
     violationConditionEdge,
+    clonedLocations.entries.associate { (original, clone) -> clone to original } +
+      (blockEntry to block.initialLocation),
+    originalEdges,
   )
 }

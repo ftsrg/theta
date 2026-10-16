@@ -550,4 +550,91 @@ class XcfaCliDssTest {
       "expected $expected, got: ${resultLines.single()}"
     }
   }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
+  fun `a SAFE run writes location invariants that Theta validates`(executor: String) {
+    val witness = dssWitness("loop", executor)
+    assertTrue(witness.contains("entry_type: 'invariant_set'")) { witness }
+    assertTrue(witness.contains("location_invariant")) { witness }
+    assertTrue(verdictWithWitness("loop", witness).contains("SafetyResult Safe"))
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
+  fun `an UNSAFE run writes a stitched violation witness that Theta validates`(executor: String) {
+    val witness = dssWitness("loop_unsafe", executor)
+    assertTrue(witness.contains("entry_type: 'violation_sequence'")) { witness }
+    assertTrue(witness.contains("\\result == 3")) { witness }
+    assertTrue(witness.contains("type: 'target'")) { witness }
+    assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
+  }
+
+  /** The SV-COMP witness of a DSS run on [program] with emergent27's settings. */
+  private fun dssWitness(program: String, executor: String): String {
+    val temp = createTempDirectory()
+    try {
+      main(
+        arrayOf(
+          "--svcomp",
+          "--backend",
+          "DSS",
+          "--dss-executor",
+          executor,
+          "--dss-decomposition",
+          "MIN_CUT_ABSORB_SELF_LOOPS",
+          "--dss-checker-backends",
+          "CEGAR_PRED_CART,KIND",
+          "--dss-checker-selection",
+          "PRIORITY",
+          "--dss-checker-fallback",
+          "--property",
+          javaClass.getResource("/c/dss/unreach-call.prp")!!.path,
+          "--output-directory",
+          temp.absolutePathString(),
+          "--input",
+          javaClass.getResource("/c/dss/$program.c")!!.path,
+          "--stacktrace",
+        )
+      )
+      return temp.resolve("witness.yml").toFile().readText()
+    } finally {
+      temp.toFile().deleteRecursively()
+    }
+  }
+
+  /** The verdict line of the STABLE portfolio on [program] restricted by [witness]. */
+  private fun verdictWithWitness(program: String, witness: String): String {
+    val temp = createTempDirectory()
+    val witnessFile = temp.resolve("witness.yml").toFile().apply { writeText(witness) }
+    val captured = temp.resolve("stdout_stderr").toFile()
+    try {
+      PrintStream(BufferedOutputStream(FileOutputStream(captured)), true).use { ps ->
+        val savedOut = System.out
+        System.setOut(ps)
+        try {
+          main(
+            arrayOf(
+              "--svcomp",
+              "--portfolio",
+              "STABLE",
+              "--property",
+              javaClass.getResource("/c/dss/unreach-call.prp")!!.path,
+              "--witness",
+              witnessFile.absolutePath,
+              "--output-directory",
+              temp.resolve("validation").absolutePathString(),
+              "--input",
+              javaClass.getResource("/c/dss/$program.c")!!.path,
+            )
+          )
+        } finally {
+          System.setOut(savedOut)
+        }
+      }
+      return captured.readLines().lastOrNull { it.contains("SafetyResult") }.orEmpty()
+    } finally {
+      temp.toFile().deleteRecursively()
+    }
+  }
 }

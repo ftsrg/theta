@@ -101,12 +101,13 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * The violation condition of one counterexample, and whether it reached the received violation
-   * condition (instead of one of the block's own targets).
+   * The violation condition of one counterexample along the original [edges], and whether it
+   * reached the received violation condition (instead of one of the block's own targets).
    */
   private data class PathViolation(
     val condition: Expr<BoolType>,
     val reachedReceivedViolation: Boolean,
+    val edges: List<XcfaEdge>,
   )
 
   /** Theta-only: such blocks get violation conditions per counterexample path. */
@@ -148,6 +149,11 @@ class PredicateBlockBehavior(
   /** The block's own error locations: targets of the specification, CPAchecker's target states. */
   private val ownTargets: List<XcfaLocation> = block.locations.filter { it.error }
 
+  /** Per start state, the states its latest safe analysis reached at each original location. */
+  private val invariantsByStart = HashMap<Expr<BoolType>, Map<XcfaLocation, List<Expr<BoolType>>>>()
+  private val violationRecords = mutableListOf<DssViolationRecord>()
+  private val reportedViolationConditions = mutableListOf<Expr<BoolType>>()
+
   override fun initialMessages(): Collection<DssMessage> = runInitialAnalysis()
 
   override fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage> =
@@ -175,6 +181,7 @@ class PredicateBlockBehavior(
           }
           addAll(
             result.path?.let {
+              violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
               reportViolationCondition(accumulatePathViolations(listOf(it.condition)))
             } ?: reportViolationConditions(targetsOfOwnViolations())
           )
@@ -288,8 +295,9 @@ class PredicateBlockBehavior(
     if (!containsViolationInsideBlock && violationConditions.isEmpty()) {
       return emptyList()
     }
-    val result =
-      analyzeViolationCondition(violationConditions.values.flatten(), checkOnlyRelevant = true)
+    val received =
+      violationConditions.flatMap { (sender, conditions) -> conditions.map { sender to it } }
+    val result = analyzeViolationCondition(received, checkOnlyRelevant = true)
     return reportViolationCondition(result.violationCondition) +
       reportPostconditions(result.summaries)
   }
@@ -298,7 +306,8 @@ class PredicateBlockBehavior(
     relevant.clear()
     val violations = violationConditions[sender]
     require(!violations.isNullOrEmpty()) { "No violation condition found for sender ID: $sender" }
-    val result = analyzeViolationCondition(violations, checkOnlyRelevant = false)
+    val result =
+      analyzeViolationCondition(violations.map { sender to it }, checkOnlyRelevant = false)
     return reportPostconditions(result.summaries) +
       reportViolationCondition(result.violationCondition)
   }
@@ -308,9 +317,10 @@ class PredicateBlockBehavior(
    * states ([checkOnlyRelevant]) or from all stored preconditions.
    */
   private fun analyzeViolationCondition(
-    violations: List<Expr<BoolType>>,
+    received: List<Pair<String, Expr<BoolType>>>,
     checkOnlyRelevant: Boolean,
   ): AnalysisResult {
+    val violations = received.map { it.second }
     if (preconditions.isEmpty() && !block.isRoot) {
       return AnalysisResult(emptyList(), null)
     }
@@ -399,7 +409,16 @@ class PredicateBlockBehavior(
           }
           result.path
             ?.takeIf { !it.reachedReceivedViolation || reportReceived }
-            ?.let { pathViolations += it.condition }
+            ?.let {
+              pathViolations += it.condition
+              violationRecords +=
+                DssPathViolation(
+                  it.condition,
+                  it.edges,
+                  it.reachedReceivedViolation,
+                  if (it.reachedReceivedViolation) received else emptyList(),
+                )
+            }
         }
       }
     }
@@ -419,7 +438,13 @@ class PredicateBlockBehavior(
       }
     }
     val newViolationCondition =
-      targets.takeIf { it.isNotEmpty() }?.let { computeViolationCondition(block, it) }
+      targets
+        .takeIf { it.isNotEmpty() }
+        ?.let { computeViolationCondition(block, it) }
+        ?.also { condition ->
+          val used = if (reportReceivedViolations) received else emptyList()
+          violationRecords += DssAllPathsViolation(condition, targets, used)
+        }
     return AnalysisResult(summaries, newViolationCondition)
   }
 
@@ -473,6 +498,13 @@ class PredicateBlockBehavior(
       )
     }
     val proof = result.asSafe().proof
+    invariantsByStart[start.state] =
+      proof
+        .getPartitions()
+        .entries
+        .mapNotNull { (clone, states) -> extraction.originalLocations[clone]?.let { it to states } }
+        .groupBy({ it.first }, { it.second })
+        .mapValues { (_, states) -> states.flatten().map { it.toExpr() }.distinct() }
     val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
     return RunResult.Safe(
       normalize(packPostcondition(result, extraction.exitLocation)),
@@ -506,7 +538,17 @@ class PredicateBlockBehavior(
     check(unknown.isEmpty()) {
       "Block ${block.id}: path violation condition over unknown variables $unknown: $condition"
     }
-    return PathViolation(condition, actions.last().isOn(extraction.violationConditionEdge))
+    // Parallel edges with the same ends are told apart by their label, renamed back
+    val clonesByEnds = extraction.originalEdges.keys.groupBy { it.source to it.target }
+    val edges =
+      path.mapNotNull { action ->
+        val clones = clonesByEnds[action.source to action.target].orEmpty()
+        val clone =
+          clones.singleOrNull()
+            ?: clones.firstOrNull { it.label == action.label.changeVars(originalOf) }
+        clone?.let(extraction.originalEdges::get)
+      }
+    return PathViolation(condition, actions.last().isOn(extraction.violationConditionEdge), edges)
   }
 
   /**
@@ -656,13 +698,42 @@ class PredicateBlockBehavior(
 
   private fun reportViolationConditions(
     targets: Map<XcfaLocation, Expr<BoolType>>
-  ): Collection<DssMessage> = reportViolationCondition(computeViolationCondition(block, targets))
+  ): Collection<DssMessage> {
+    val condition = computeViolationCondition(block, targets)
+    violationRecords += DssAllPathsViolation(condition, targets, emptyList())
+    return reportViolationCondition(condition)
+  }
 
   private fun reportViolationCondition(condition: Expr<BoolType>?): Collection<DssMessage> {
     if (condition == null || condition == False()) return emptyList()
     // PredicateViolationConditionOperator: the root block only reports satisfiable conditions,
     // since its violation condition decides the verdict.
     if (block.isRoot && operators.isUnsat(condition)) return emptyList()
+    reportedViolationConditions += condition
     return listOf(DssViolationConditionMessage(block.id, condition))
+  }
+
+  override fun witness(): DssBlockWitness =
+    DssBlockWitness(invariants(), violationRecords.toList(), reportedViolationConditions.toList())
+
+  /**
+   * The states reached at each location from start states that cover the block's real entries: the
+   * stored preconditions once every predecessor sent one (DSS's SAFE argument), else top.
+   */
+  private fun invariants(): Map<XcfaLocation, List<Expr<BoolType>>>? {
+    val stored = preconditions.values.flatten().map { it.state }.distinct()
+    val cover =
+      when {
+        !block.isRoot &&
+          preconditions.keys.containsAll(block.predecessorIds) &&
+          stored.isNotEmpty() &&
+          stored.all { it in invariantsByStart } -> stored
+        True() in invariantsByStart -> listOf(True())
+        else -> return null
+      }
+    return cover
+      .flatMap { invariantsByStart.getValue(it).entries }
+      .groupBy({ it.key }, { it.value })
+      .mapValues { (_, states) -> states.flatten().distinct() }
   }
 }

@@ -15,17 +15,21 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
+import hu.bme.mit.theta.analysis.algorithm.Proof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
@@ -44,16 +48,21 @@ import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
+import hu.bme.mit.theta.xcfa.dss.actor.DssBlockBehavior
+import hu.bme.mit.theta.xcfa.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
 import hu.bme.mit.theta.xcfa.dss.actor.DssResult
 import hu.bme.mit.theta.xcfa.dss.actor.DssTrace
 import hu.bme.mit.theta.xcfa.dss.actor.DssWorkerLauncher
 import hu.bme.mit.theta.xcfa.dss.actor.PredicateBlockBehavior
+import hu.bme.mit.theta.xcfa.dss.actor.combineInvariants
 import hu.bme.mit.theta.xcfa.dss.actor.fingerprint
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActors
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsInProcesses
 import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsSequentially
 import hu.bme.mit.theta.xcfa.dss.actor.serveDssBlocks
+import hu.bme.mit.theta.xcfa.dss.actor.stitchViolationPath
+import hu.bme.mit.theta.xcfa.dss.actor.violationTrace
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
@@ -64,6 +73,7 @@ import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.dss.analysis.withCheckerSolverFallback
+import hu.bme.mit.theta.xcfa.dss.analysis.withSolverConstructionLock
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
@@ -78,6 +88,7 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.lang.management.ManagementFactory
 import java.nio.file.Paths
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 /**
@@ -90,7 +101,7 @@ fun getDssChecker(
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
-): SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> = SafetyChecker { _ ->
+): SafetyChecker<Proof, Cex, XcfaPrec<*>> = SafetyChecker { _ ->
   val dssConfig = config.backendConfig.specConfig as DssConfig
   val procedure =
     xcfa.procedures.singleOrNull()
@@ -208,20 +219,23 @@ fun getDssChecker(
   val dssFallbackSolverFactory =
     if (dssConfig.solverFallback) SolverManager.resolveSolverFactory(dssConfig.fallbackSolver)
     else null
+  // Kept so the in-process executors' blocks can be asked for their witness data afterwards
+  val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val behaviorFor = { block: Block ->
     PredicateBlockBehavior(
-      xcfa,
-      procedure,
-      block,
-      checkerRoster,
-      useGlobalPredicatePool = dssConfig.globalPredicatePool,
-      resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
-      reuseBlockPrecision = dssConfig.reuseBlockPrecision,
-      checkerFallback = dssConfig.checkerFallback,
-      solverFactory = dssSolverFactory,
-      fallbackSolverFactory = dssFallbackSolverFactory,
-      solverStatistics = solverStatistics,
-    )
+        xcfa,
+        procedure,
+        block,
+        checkerRoster,
+        useGlobalPredicatePool = dssConfig.globalPredicatePool,
+        resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
+        reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+        checkerFallback = dssConfig.checkerFallback,
+        solverFactory = dssSolverFactory,
+        fallbackSolverFactory = dssFallbackSolverFactory,
+        solverStatistics = solverStatistics,
+      )
+      .also { behaviors[block.id] = it }
   }
 
   if (dssConfig.workerPort != 0) {
@@ -237,6 +251,7 @@ fun getDssChecker(
     kotlin.system.exitProcess(0)
   }
 
+  val processWitnesses = ConcurrentHashMap<String, DssBlockWitness>()
   val dssResult =
     try {
       when (dssConfig.executor) {
@@ -248,6 +263,7 @@ fun getDssChecker(
             getDssWorkerLauncher(dssConfig),
             DssExprCodec(xcfa),
             dssConfig.maxProcesses,
+            witnesses = processWitnesses,
           )
       }
     } catch (e: RuntimeException) {
@@ -262,19 +278,70 @@ fun getDssChecker(
       logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", solverStatistics)
     }
 
+  val witnesses =
+    if (dssConfig.executor == DssExecutor.PROCESS) processWitnesses
+    else
+      behaviors.entries
+        .mapNotNull { (id, behavior) ->
+          runCatching { behavior.witness() }.getOrNull()?.let { id to it }
+        }
+        .toMap()
   when (dssResult) {
-    DssResult.SAFE -> SafetyResult.safe(EmptyProof.getInstance())
-    DssResult.UNSAFE -> SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+    DssResult.SAFE -> SafetyResult.safe(combineInvariants(procedure, blockGraph, witnesses))
+    DssResult.UNSAFE -> {
+      val trace = reconstructViolationTrace(xcfa, blockGraph, witnesses, dssSolverFactory, logger)
+      if (trace != null) SafetyResult.unsafe(trace, EmptyProof.getInstance())
+      else SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
+    }
   }
 }
+
+/** The error path stitched from the blocks' violation records, from the globals' initial values. */
+private fun reconstructViolationTrace(
+  xcfa: XCFA,
+  blockGraph: BlockGraph,
+  witnesses: Map<String, DssBlockWitness>,
+  solverFactory: SolverFactory,
+  logger: Logger,
+): Trace<XcfaState<PtrState<*>>, XcfaAction>? =
+  try {
+    val initial =
+      ImmutableValuation.from(
+        xcfa.globalVars
+          .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
+          .toMap()
+      )
+    withSolverConstructionLock { solverFactory.createSolver() }
+      .use { solver -> stitchViolationPath(blockGraph, witnesses, initial, solver) }
+      ?.let { path -> violationTrace(xcfa, path, initial) }
+      .also {
+        if (it == null) logger.write(Logger.Level.INFO, "DSS: no violation path to stitch\n")
+      }
+  } catch (e: Exception) {
+    logger.write(Logger.Level.INFO, "DSS: stitching the violation path failed: %s\n", e)
+    null
+  }
 
 /**
  * Starts DSS worker processes as this JVM with this run's command line, so they decompose the same
  * way; only their trace lines are copied to this process's output.
  */
 private fun getDssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
-  val args =
+  val launchArgs =
     XcfaCli.launchArgs ?: error("--dss-executor PROCESS needs xcfa-cli's own main (XcfaCli.main)")
+  // Workers write no output: the run's own output options (--svcomp adds --witness-generation)
+  // would be given twice, which the option parser rejects
+  val args = buildList {
+    var i = 0
+    while (i < launchArgs.size) {
+      when (launchArgs[i]) {
+        "--svcomp" -> i += 1
+        "--output",
+        "--witness-generation" -> i += 2
+        else -> add(launchArgs[i++])
+      }
+    }
+  }
   val java =
     ProcessHandle.current()
       .info()

@@ -551,6 +551,32 @@ before the final messages end its run.
   `ROUND_ROBIN` cycles per worker instead of across all blocks, and its own solver statistics,
   which the main process does not collect.
 
+### 8.5 Witnesses (Theta-only)
+
+After the run, `getDssChecker` asks every block for its `DssBlockWitness` (`DssWitness.kt`;
+`PredicateBlockBehavior.witness`, over the worker protocol for `PROCESS`, see
+`DssExprCodec.writeLocation`):
+
+* **SAFE - correctness witness.** Every safe block analysis records the states it reached at each
+  original location (`extraction.originalLocations`), per start state. A block's invariants come
+  from start states that cover its real entries: its stored preconditions once every predecessor
+  sent one (the argument behind DSS's SAFE verdict, section 9), else its analysis from top; null
+  if neither was analyzed safely. `combineInvariants` joins the blocks of each location and leaves
+  a location unknown if any of them is. The result is the `DssInvariants` proof, which the YAML
+  writer turns into `location_invariant`s at the C statements that start an edge (there the
+  program point is the edge's source), skipping positions that also start a label inside an edge
+  or whose states are unknown. Only conjuncts over variables with an unambiguous C name are kept,
+  which weakens each state, so the invariants stay valid.
+* **UNSAFE - violation witness.** Every block records how it computed each violation condition
+  (`DssViolationRecord`): the targets and received conditions of an all-paths condition, or the
+  original edges of the counterexample behind a per-path condition, saved when it is found.
+  `stitchViolationPath` starts at the root's reported condition in the program's initial state
+  and goes block by block: an acyclic block is followed edge by edge along its exact backward
+  conditions (`findBlockRun`), a cyclic one along a saved path whose condition holds
+  (`followPath`); the state reached satisfies one successor's condition, where the next block
+  continues. The path becomes a trace, which the YAML writer concretizes as for any other
+  backend. Without complete records, DSS falls back to `EmptyCex` (no trace).
+
 ## 9. Soundness and termination
 
 **UNSAFE.** Violation conditions are exact: the weakest precondition through every path of the
@@ -704,6 +730,8 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
   MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT*`, 5.4-5.6): blocks that contain a whole loop,
   with per-path violation conditions (6.3). CPAchecker's blocks never
   contain a cycle besides the split loop head.
+* **Witnesses** (8.5): correctness witnesses from the block analyses' invariants, violation
+  witnesses from a path stitched along the violation conditions. CPAchecker's DSS reports none.
 
 ### 11.5 Deviations in the analysis logic
 
@@ -733,8 +761,7 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
 * The default executor is `SEQUENTIAL` instead of CPAchecker's concurrent one (section 2).
 * The visualization actor reads its inbox in arrival order (8.2); it is not wired into the CLI.
 * Not ported: `AlgorithmStatus` tracking, statistics contents, block graph JSON export/import
-  (`ImportDecomposition`; Theta has DOT export), witnesses (DSS reports `EmptyCex`/`EmptyProof`;
-  CPAchecker reports none either), `INLINING_DECOMPOSITION` and the function-call handling
+  (`ImportDecomposition`; Theta has DOT export), `INLINING_DECOMPOSITION` and the function-call handling
   (`CallstackCPA`, `FunctionPointerCPA`, `mergeFunctionCalls`) - Theta's DSS is single-procedure.
 
 ## 12. Empirical comparison
@@ -825,7 +852,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `DssActorRuntimeTest`, `SequentialDssExecutorTest`, `DssMessageBroadcasterTest`, `DssMessageQueueTest`, `DssVisualizationActorTest` | routing, termination, priorities, visualization |
 | solver | `SolverScopeTest` | solver scopes own, close and nest |
 | solver-z3 | `Z3ItpSolverTest.testInterpolationWithAGroundPartition` | the interpolation fix |
-| cli | `XcfaCliDssTest` | every option, the decomposition x executor grid, checker rosters |
+| cli | `XcfaCliDssTest` | every option, the decomposition x executor grid, checker rosters, witnesses (validated with Theta's `--witness`) |
 
 ## 15. Known limitations
 
@@ -835,3 +862,6 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 * Concurrent execution needs a thread-safe solver (`Z3:new`), whose interpolation does not support
   all C arithmetic.
 * Block analyses abstract at every location (11.1) and rebuild their checker every time (11.3).
+* Witness invariants appear only at C statements that start an XCFA edge (8.5); after large-block
+  encoding, many locations have none. A violation witness needs every block's records; without
+  them DSS reports UNSAFE without a trace.

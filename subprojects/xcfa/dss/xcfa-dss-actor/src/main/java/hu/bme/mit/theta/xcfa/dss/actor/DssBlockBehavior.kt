@@ -30,4 +30,7 @@ interface DssBlockBehavior {
   fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage>
 
   fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage>
+
+  /** What this block contributes to a verification witness, or null if it records nothing. */
+  fun witness(): DssBlockWitness? = null
 }
