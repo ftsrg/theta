@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * Build-order step 5: feeding a block its predecessor's packed postcondition, by hand, makes
- * decomposed checking match the baseline. Uses [globalAssumePredicatePrecision] (see its doc).
+ * decomposed checking match the baseline. Uses [getAssumePredPrec] (see its doc).
  */
 class PostconditionPackingTest {
 
@@ -45,7 +45,7 @@ class PostconditionPackingTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -77,7 +77,7 @@ class PostconditionPackingTest {
       xcfa,
       emptySet(),
       ParseContext(),
-      defaultPredicateCegarConfig(),
+      getDefaultPredCegarConfig(),
       NullLogger.getInstance(),
     )
 
@@ -89,7 +89,7 @@ class PostconditionPackingTest {
     precondition: Expr<BoolType>? = null,
   ): Expr<BoolType> {
     val extraction = extractBlockXcfa(procedure, block, precondition = precondition)
-    val result = check(extraction.xcfa, globalAssumePredicatePrecision(wholeProgram))
+    val result = check(extraction.xcfa, getAssumePredPrec(wholeProgram))
     check(result.isSafe) { "Expected $block to check as safe, but got: $result" }
     return packPostcondition(result, extraction.locationMapping.getValue(block.finalLocation))
   }
@@ -126,7 +126,7 @@ class PostconditionPackingTest {
     assertTrue(postcondition != True())
 
     val checkBExtraction = extractBlockXcfa(procedure, checkBBlock, precondition = postcondition)
-    val checkBResult = check(checkBExtraction.xcfa, globalAssumePredicatePrecision(wholeProgram))
+    val checkBResult = check(checkBExtraction.xcfa, getAssumePredPrec(wholeProgram))
 
     assertTrue(checkBResult.isSafe)
   }
@@ -142,7 +142,7 @@ class PostconditionPackingTest {
     // Fed x == 5, "checkB" (guarded by x >= 10) is never reached at all, not merely error-free.
     val postcondition = postconditionAtExit(wholeProgram, procedure, root)
     val checkBExtraction = extractBlockXcfa(procedure, checkBBlock, precondition = postcondition)
-    val checkBResult = check(checkBExtraction.xcfa, globalAssumePredicatePrecision(wholeProgram))
+    val checkBResult = check(checkBExtraction.xcfa, getAssumePredPrec(wholeProgram))
     assertTrue(checkBResult.isSafe)
     val checkBLocation =
       checkBExtraction.locationMapping.getValue(

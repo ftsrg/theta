@@ -23,11 +23,11 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaLastPrecProvider
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
-import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOfPrecision
+import hu.bme.mit.theta.xcfa.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -43,7 +43,7 @@ class ReuseBlockPrecisionTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -79,19 +79,19 @@ class ReuseBlockPrecisionTest {
             x,
             emptySet(),
             ParseContext(),
-            defaultPredicateCegarConfig(),
+            getDefaultPredCegarConfig(),
             NullLogger.getInstance(),
           )
         object : XcfaChecker by inner, XcfaLastPrecProvider {
           override fun check(input: XcfaPrec<*>?) =
-            inner.check(input).also { record(input?.let(::predicatesOfPrecision).orEmpty()) }
+            inner.check(input).also { record(input?.collectPreds().orEmpty()) }
 
           // the checker's own default initial precision
           override fun check() = inner.check().also { record(emptySet()) }
 
           private fun record(initial: Set<Expr<BoolType>>) {
             recorded.initial += initial
-            recorded.last += lastPrec?.let(::predicatesOfPrecision).orEmpty()
+            recorded.last += lastPrec?.collectPreds().orEmpty()
           }
 
           override val lastPrec: XcfaPrec<*>?

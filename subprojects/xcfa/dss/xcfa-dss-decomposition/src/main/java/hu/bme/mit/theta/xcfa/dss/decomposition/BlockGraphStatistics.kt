@@ -37,9 +37,9 @@ data class BlockGraphStatistics(
       "maxBlockLocations=$maxBlockLocations"
 }
 
-fun BlockGraph.statistics(): BlockGraphStatistics {
+fun BlockGraph.getStatistics(): BlockGraphStatistics {
   val successors = blocks.associate { it.id to it.successorIds }
-  val sccs = stronglyConnectedComponents(successors)
+  val sccs = getSCCs(successors)
   return BlockGraphStatistics(
     blocks = blocks.size,
     edges = blocks.sumOf { it.successorIds.size },
@@ -55,7 +55,7 @@ fun BlockGraph.statistics(): BlockGraphStatistics {
 }
 
 /** Tarjan's algorithm, iterative so that long block chains cannot overflow the stack. */
-internal fun stronglyConnectedComponents(successors: Map<String, Set<String>>): List<Set<String>> {
+internal fun getSCCs(successors: Map<String, Set<String>>): List<Set<String>> {
   val index = mutableMapOf<String, Int>()
   val lowLink = mutableMapOf<String, Int>()
   val onStack = mutableSetOf<String>()

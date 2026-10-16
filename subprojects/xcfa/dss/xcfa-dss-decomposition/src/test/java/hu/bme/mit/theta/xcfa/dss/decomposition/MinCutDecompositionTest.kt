@@ -156,19 +156,19 @@ class MinCutDecompositionTest {
     val allow = MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).cut(procedure)
     allow.assertCovers(procedure)
     assertEquals(listOf("h"), allow.cutLocations.map { it.name })
-    assertEquals(1, allow.blockGraph.statistics().selfLoops)
+    assertEquals(1, allow.blockGraph.getStatistics().selfLoops)
 
     val absorb =
       MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS).cut(procedure)
     absorb.assertCovers(procedure)
     assertEquals(listOf("h"), absorb.cutLocations.map { it.name })
-    assertEquals(0, absorb.blockGraph.statistics().cyclicSccs)
+    assertEquals(0, absorb.blockGraph.getStatistics().cyclicSccs)
 
     val acyclic = MinCutDecomposition(loopHandling = CutLoopHandling.FORBID).cut(procedure)
     acyclic.assertCovers(procedure)
     assertEquals(listOf("j"), acyclic.cutLocations.map { it.name })
     assertEquals(3, acyclic.cutEdges.size)
-    assertEquals(0, acyclic.blockGraph.statistics().cyclicSccs)
+    assertEquals(0, acyclic.blockGraph.getStatistics().cyclicSccs)
     assertEquals(2, acyclic.blockGraph.blocks.size)
   }
 
@@ -182,7 +182,7 @@ class MinCutDecompositionTest {
     assertEquals(listOf("h"), plain.cutLocations.map { it.name })
     assertEquals(null, plain.fallbackReason)
     assertEquals(plain.cutLocations, acyclic.cutLocations)
-    assertEquals(1, acyclic.blockGraph.statistics().selfLoops)
+    assertEquals(1, acyclic.blockGraph.getStatistics().selfLoops)
     assertTrue(acyclic.fallbackReason!!.contains("acyclic"), acyclic.fallbackReason)
     assertTrue(acyclic.describe()[0].contains("fell back to MIN_CUT"), acyclic.describe()[0])
   }

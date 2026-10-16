@@ -48,7 +48,8 @@ sealed class DssMessage {
   abstract val senderId: String
 
   /**
-   * Creation order of messages, used by [newDssMessageQueue] to keep equal-priority messages FIFO.
+   * Creation order of messages, used by [createDssMessageQueue] to keep equal-priority messages
+   * FIFO.
    */
   val sequenceNumber: Long = sequence.getAndIncrement()
 

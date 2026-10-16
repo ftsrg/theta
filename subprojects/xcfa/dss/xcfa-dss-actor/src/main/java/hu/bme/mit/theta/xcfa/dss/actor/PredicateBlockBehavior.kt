@@ -37,16 +37,15 @@ import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.dss.analysis.DssSolverStatistics
-import hu.bme.mit.theta.xcfa.dss.analysis.combinePredicatePrecisions
+import hu.bme.mit.theta.xcfa.dss.analysis.collectAssumePreds
+import hu.bme.mit.theta.xcfa.dss.analysis.collectPreds
+import hu.bme.mit.theta.xcfa.dss.analysis.combinePredPrecs
 import hu.bme.mit.theta.xcfa.dss.analysis.computePathViolationCondition
 import hu.bme.mit.theta.xcfa.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.dss.analysis.extractBlockXcfa
-import hu.bme.mit.theta.xcfa.dss.analysis.globalAssumePredicates
+import hu.bme.mit.theta.xcfa.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.dss.analysis.packPostcondition
-import hu.bme.mit.theta.xcfa.dss.analysis.predicatePrecision
-import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOf
-import hu.bme.mit.theta.xcfa.dss.analysis.predicatesOfPrecision
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -130,7 +129,7 @@ class PredicateBlockBehavior(
   }
 
   private val startPrecision: Set<Expr<BoolType>> by lazy {
-    if (useGlobalPredicatePool) globalAssumePredicates(wholeProgram) else emptySet()
+    if (useGlobalPredicatePool) wholeProgram.collectAssumePreds() else emptySet()
   }
 
   /** The roster index of this block's fastest checker, if the roster ranks per block. */
@@ -207,11 +206,11 @@ class PredicateBlockBehavior(
     for (new in received) {
       var isRelevant = true
       for (old in stored.toList()) {
-        if (operators.isSubsumed(new.state, old.state)) {
+        if (operators.isLeq(new.state, old.state)) {
           stored.remove(old)
           evicted++
         }
-        if (isRelevant && operators.isSubsumed(old.state, new.state)) {
+        if (isRelevant && operators.isLeq(old.state, new.state)) {
           isRelevant = false
         }
       }
@@ -358,7 +357,7 @@ class PredicateBlockBehavior(
       // Add the start state's own atoms to its precision: Theta's transmitted precision is only
       // approximate, and without them the block-end abstraction can forget the precondition, so a
       // loop block re-derives its violation conditions forever.
-      val startState = start.copy(precision = precision + predicatesOf(listOf(start.state)))
+      val startState = start.copy(precision = precision + listOf(start.state).collectPreds())
 
       when (val result = run(startState, violationCondition)) {
         is RunResult.Safe -> {
@@ -429,8 +428,7 @@ class PredicateBlockBehavior(
 
   private fun combinePrecisionIfPossible(): Set<Expr<BoolType>>? {
     if (preconditions.isEmpty()) return null
-    return combinePredicatePrecisions(preconditions.values.flatten().map { it.precision }) +
-      startPrecision
+    return combinePredPrecs(preconditions.values.flatten().map { it.precision }) + startPrecision
   }
 
   /** One analysis of the block with an ordinary Theta checker. */
@@ -449,7 +447,7 @@ class PredicateBlockBehavior(
       )
     val initialPredicates =
       if (reuseBlockPrecision) start.precision + ownPrecision else start.precision
-    val initialPrecision = initialPredicates.takeIf { it.isNotEmpty() }?.let(::predicatePrecision)
+    val initialPrecision = initialPredicates.takeIf { it.isNotEmpty() }?.let(::getPredPrec)
     val trace =
       arrayOf<Pair<String, Any?>>(
         "block" to block.id,
@@ -464,8 +462,7 @@ class PredicateBlockBehavior(
             checker,
             initialPrecision,
             onLastPrec =
-              if (reuseBlockPrecision)
-                { precision -> ownPrecision += predicatesOfPrecision(precision) }
+              if (reuseBlockPrecision) { precision -> ownPrecision += precision.collectPreds() }
               else null,
           )
           .also { check(it.isSafe || it.isUnsafe) { "Inconclusive block analysis result: $it" } }
@@ -479,7 +476,7 @@ class PredicateBlockBehavior(
     val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
     return RunResult.Safe(
       normalize(packPostcondition(result, extraction.exitLocation)),
-      predicatesOf(reached) + start.precision,
+      reached.collectPreds() + start.precision,
     )
   }
 
@@ -649,7 +646,7 @@ class PredicateBlockBehavior(
     if (summaries.size < 2) return summaries
     val kept = mutableListOf<Summary>()
     for (summary in summaries) {
-      if (kept.none { operators.isSubsumed(summary.state, it.state) }) {
+      if (kept.none { operators.isLeq(summary.state, it.state) }) {
         kept += summary
       }
     }

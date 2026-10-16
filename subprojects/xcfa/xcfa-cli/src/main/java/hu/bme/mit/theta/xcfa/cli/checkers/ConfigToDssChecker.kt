@@ -43,7 +43,7 @@ import hu.bme.mit.theta.xcfa.cli.params.DssExecutor
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
 import hu.bme.mit.theta.xcfa.dss.actor.DssResult
 import hu.bme.mit.theta.xcfa.dss.actor.DssTrace
@@ -74,7 +74,7 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
+import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.lang.management.ManagementFactory
 import java.nio.file.Paths
@@ -138,7 +138,7 @@ fun getDssChecker(
       cut.blockGraph
     } else decomposition.decompose(procedure)
   blockGraph.checkConsistency()
-  logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.statistics())
+  logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.getStatistics())
   if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
   if (dssConfig.trace || dssConfig.traceExpressions) {
     DssTrace.enable(dssConfig.traceExpressions, dssConfig.workerTraceOrigin) {
@@ -162,7 +162,7 @@ fun getDssChecker(
             blockXcfa,
             mcm,
             parseContext,
-            defaultPredicateCegarConfig(backend.toCegarDomain(), solver ?: dssConfig.solver),
+            getDefaultPredCegarConfig(backend.toCegarDomain(), solver ?: dssConfig.solver),
             blockLogger,
           )
         }
@@ -175,7 +175,7 @@ fun getDssChecker(
             getBoundedChecker(
               blockXcfa,
               parseContext,
-              defaultBoundedConfigFor(backend.toBoundedBackend(), solver),
+              getDefaultBoundedConfig(backend.toBoundedBackend(), solver),
               blockLogger,
             )
           )
@@ -245,7 +245,7 @@ fun getDssChecker(
         DssExecutor.PROCESS ->
           runDssActorsInProcesses(
             blockGraph,
-            dssWorkerLauncher(dssConfig),
+            getDssWorkerLauncher(dssConfig),
             DssExprCodec(xcfa),
             dssConfig.maxProcesses,
           )
@@ -272,7 +272,7 @@ fun getDssChecker(
  * Starts DSS worker processes as this JVM with this run's command line, so they decompose the same
  * way; only their trace lines are copied to this process's output.
  */
-private fun dssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
+private fun getDssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
   val args =
     XcfaCli.launchArgs ?: error("--dss-executor PROCESS needs xcfa-cli's own main (XcfaCli.main)")
   val java =
@@ -310,7 +310,7 @@ private fun dssWorkerLauncher(dssConfig: DssConfig): DssWorkerLauncher {
  * A default [XcfaConfig] for a bounded-model-checking `--backend` preset, via
  * `BackendConfig.createSpecConfig` so it can't drift from the flag. [solver] replaces its solvers.
  */
-private fun defaultBoundedConfigFor(backend: Backend, solver: String? = null): XcfaConfig<*, *> {
+private fun getDefaultBoundedConfig(backend: Backend, solver: String? = null): XcfaConfig<*, *> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
   config.backendConfig.backend = backend
   config.backendConfig.createSpecConfig()

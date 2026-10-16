@@ -19,7 +19,7 @@ package hu.bme.mit.theta.xcfa.cli.params
  * Builds a predicate-abstraction CEGAR [XcfaConfig] over [domain], all else at defaults, for
  * callers building a config by hand rather than loading one from a file (e.g. DSS).
  */
-fun defaultPredicateCegarConfig(
+fun getDefaultPredCegarConfig(
   domain: Domain = Domain.PRED_CART,
   solver: String? = null,
 ): XcfaConfig<SpecFrontendConfig, SpecBackendConfig> {

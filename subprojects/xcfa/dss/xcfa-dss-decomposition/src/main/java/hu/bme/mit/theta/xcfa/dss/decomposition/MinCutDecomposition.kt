@@ -279,7 +279,7 @@ private class CutSearch(
       blocks += Block("K$index", start, final, locations, edges)
     }
     val graph = BlockGraph.fromBlocksWithoutEdges(blocks)
-    if (acyclicOnly && graph.statistics().cyclicSccs > 0) return null
+    if (acyclicOnly && graph.getStatistics().cyclicSccs > 0) return null
     val wired = blocks.map { block -> graph.blocks.single { it.id == block.id } }
     val sizes = wired.map { it.locations.size }
     return CutCandidate(

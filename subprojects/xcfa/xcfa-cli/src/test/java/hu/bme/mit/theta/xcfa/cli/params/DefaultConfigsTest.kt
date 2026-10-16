@@ -23,7 +23,7 @@ class DefaultConfigsTest {
 
   @Test
   fun `default config is a predicate-domain CEGAR config`() {
-    val config = defaultPredicateCegarConfig()
+    val config = getDefaultPredCegarConfig()
 
     assertEquals(Backend.CEGAR, config.backendConfig.backend)
     val cegarConfig = assertInstanceOf(CegarConfig::class.java, config.backendConfig.specConfig)
@@ -32,8 +32,8 @@ class DefaultConfigsTest {
 
   @Test
   fun `building the default config twice does not share mutable state`() {
-    val first = defaultPredicateCegarConfig()
-    val second = defaultPredicateCegarConfig()
+    val first = getDefaultPredCegarConfig()
+    val second = getDefaultPredCegarConfig()
 
     (first.backendConfig.specConfig as CegarConfig).abstractorConfig.domain = Domain.PRED_SPLIT
 

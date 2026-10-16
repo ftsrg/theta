@@ -69,7 +69,7 @@ class UndecidedQueryTest {
     assertThrows(DssUndecidedQueryException::class.java) { operators.isUnsat(nonlinear) }
     assertThrows(DssUndecidedQueryException::class.java) { operators.isKnownUnsat(nonlinear) }
     assertThrows(DssUndecidedQueryException::class.java) {
-      operators.isSubsumed(nonlinear, Lt(x, Int(3)))
+      operators.isLeq(nonlinear, Lt(x, Int(3)))
     }
   }
 
@@ -78,7 +78,7 @@ class UndecidedQueryTest {
     assertTrue(DssPredicateOperators(unknown.factory, unsat.factory).isUnsat(nonlinear))
     assertFalse(DssPredicateOperators(crashing.factory, sat.factory).isUnsat(nonlinear))
     assertTrue(
-      DssPredicateOperators(unknown.factory, unsat.factory).isSubsumed(nonlinear, Eq(x, Int(0)))
+      DssPredicateOperators(unknown.factory, unsat.factory).isLeq(nonlinear, Eq(x, Int(0)))
     )
   }
 
@@ -87,7 +87,7 @@ class UndecidedQueryTest {
     val operators = DssPredicateOperators(unknown.factory, crashing.factory)
     assertThrows(DssUndecidedQueryException::class.java) { operators.isUnsat(nonlinear) }
     assertFalse(operators.isKnownUnsat(nonlinear))
-    assertFalse(operators.isSubsumed(nonlinear, Lt(x, Int(3))))
+    assertFalse(operators.isLeq(nonlinear, Lt(x, Int(3))))
   }
 
   @Test
@@ -107,7 +107,7 @@ class UndecidedQueryTest {
     decided.isKnownUnsat(nonlinear)
     undecided.isKnownUnsat(nonlinear)
     direct.isUnsat(nonlinear)
-    direct.isSubsumed(nonlinear, True())
+    direct.isLeq(nonlinear, True())
     assertEquals(
       "queries=3 solverFailed=2 fallbackDecided=1 fallbackFailed=1 checkerFailed=0 " +
         "checkerFallbackDecided=0 checkerFallbackFailed=0",
@@ -118,8 +118,8 @@ class UndecidedQueryTest {
   @Test
   fun `trivial cases need no solver`() {
     val operators = DssPredicateOperators(unknown.factory)
-    assertTrue(operators.isSubsumed(nonlinear, True()))
-    assertTrue(operators.isSubsumed(nonlinear, nonlinear))
+    assertTrue(operators.isLeq(nonlinear, True()))
+    assertTrue(operators.isLeq(nonlinear, nonlinear))
     assertEquals(0, unknown.created)
   }
 }

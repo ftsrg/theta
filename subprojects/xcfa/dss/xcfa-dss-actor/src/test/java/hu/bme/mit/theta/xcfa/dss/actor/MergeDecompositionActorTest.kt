@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.hasInternalCycle
@@ -32,8 +32,8 @@ import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
+import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.dss.decomposition.horizontalMergePass
-import hu.bme.mit.theta.xcfa.dss.decomposition.statistics
 import hu.bme.mit.theta.xcfa.model.*
 import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,7 +53,7 @@ class MergeDecompositionActorTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -62,7 +62,7 @@ class MergeDecompositionActorTest {
       xcfa,
       emptySet(),
       ParseContext(),
-      defaultPredicateCegarConfig(),
+      getDefaultPredCegarConfig(),
       NullLogger.getInstance(),
     )
 
@@ -395,7 +395,7 @@ class MergeDecompositionActorTest {
   private fun acyclicBlockGraph(wholeProgram: XCFA): BlockGraph =
     AcyclicMergeDecomposition().decompose(wholeProgram.procedures.single()).also {
       it.checkConsistency()
-      assertEquals(0, it.statistics().cyclicSccs) { "acyclic block graph expected" }
+      assertEquals(0, it.getStatistics().cyclicSccs) { "acyclic block graph expected" }
     }
 
   /**

@@ -78,7 +78,7 @@ object DssAuxVars {
   fun of(index: Int, type: Type): VarDecl<*> = get(index, type)
 
   /** The auxiliary variables of [expr], in order of first occurrence. */
-  fun varsOf(expr: Expr<*>): List<VarDecl<*>> {
+  fun collectVars(expr: Expr<*>): List<VarDecl<*>> {
     val result = linkedSetOf<VarDecl<*>>()
     val visited = IdentityHashMap<Expr<*>, Unit>()
     fun visit(e: Expr<*>) {
@@ -95,13 +95,13 @@ object DssAuxVars {
 
   /** An auxiliary variable of [type] that does not occur in [expr]. */
   fun freshFor(expr: Expr<*>, type: Type): VarDecl<*> {
-    val next = varsOf(expr).maxOfOrNull { keyOf.getValue(it).index }?.plus(1) ?: 0
+    val next = collectVars(expr).maxOfOrNull { keyOf.getValue(it).index }?.plus(1) ?: 0
     return get(next, type)
   }
 
   /** Renumbers the auxiliary variables of [expr] by first occurrence. */
   fun <T : Type> canonicalize(expr: Expr<T>): Expr<T> {
-    val vars = varsOf(expr)
+    val vars = collectVars(expr)
     if (vars.isEmpty()) return expr
     val substitution = BasicSubstitution.builder()
     vars.forEachIndexed { index, decl -> substitution.put(decl, get(index, decl.type).ref) }
@@ -135,7 +135,7 @@ fun computeViolationCondition(
     for (edge in location.outgoingEdges) {
       if (edge !in block.edges) continue
       if (location == block.finalLocation && edge.metadata != GhostEdgeMetadata) continue
-      disjuncts += weakestPrecondition(edge.label, fromLocation(edge.target))
+      disjuncts += wep(edge.label, fromLocation(edge.target))
     }
     onStack.remove(location)
     return or(disjuncts).also { memo[location] = it }
@@ -146,7 +146,7 @@ fun computeViolationCondition(
     or(
       entry.outgoingEdges
         .filter { it in block.edges && it.metadata != GhostEdgeMetadata }
-        .map { weakestPrecondition(it.label, fromLocation(it.target)) }
+        .map { wep(it.label, fromLocation(it.target)) }
     )
   return DssAuxVars.canonicalize(ExprUtils.simplify(fromEntry))
 }
@@ -186,27 +186,25 @@ fun hasInternalCycle(block: Block): Boolean {
 fun computePathViolationCondition(labels: List<XcfaLabel>): Expr<BoolType> =
   DssAuxVars.canonicalize(
     ExprUtils.simplify(
-      labels.foldRight<XcfaLabel, Expr<BoolType>>(True()) { label, post ->
-        weakestPrecondition(label, post)
-      }
+      labels.foldRight<XcfaLabel, Expr<BoolType>>(True()) { label, post -> wep(label, post) }
     )
   )
 
-private fun weakestPrecondition(label: XcfaLabel, post: Expr<BoolType>): Expr<BoolType> =
+private fun wep(label: XcfaLabel, post: Expr<BoolType>): Expr<BoolType> =
   if (post == False()) False()
   else
     when (label) {
       is NopLabel -> post
-      is StmtLabel -> weakestPrecondition(label.stmt, post)
-      is SequenceLabel -> label.labels.foldRight(post) { l, acc -> weakestPrecondition(l, acc) }
-      is NondetLabel -> or(label.labels.map { weakestPrecondition(it, post) })
+      is StmtLabel -> wep(label.stmt, post)
+      is SequenceLabel -> label.labels.foldRight(post) { l, acc -> wep(l, acc) }
+      is NondetLabel -> or(label.labels.map { wep(it, post) })
       else ->
         throw UnsupportedOperationException(
           "DSS cannot compute violation conditions over $label (${label.javaClass.simpleName})"
         )
     }
 
-private fun weakestPrecondition(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType> =
+private fun wep(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType> =
   if (post == False()) False()
   else
     when (stmt) {
@@ -215,8 +213,8 @@ private fun weakestPrecondition(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType
       is AssignStmt<*> -> substitute(post, stmt.varDecl, stmt.expr)
       is HavocStmt<*> ->
         substitute(post, stmt.varDecl, DssAuxVars.freshFor(post, stmt.varDecl.type).ref)
-      is SequenceStmt -> stmt.stmts.foldRight(post) { s, acc -> weakestPrecondition(s, acc) }
-      is NonDetStmt -> or(stmt.stmts.map { weakestPrecondition(it, post) })
+      is SequenceStmt -> stmt.stmts.foldRight(post) { s, acc -> wep(s, acc) }
+      is NonDetStmt -> or(stmt.stmts.map { wep(it, post) })
       else ->
         throw UnsupportedOperationException(
           "DSS cannot compute violation conditions over $stmt (${stmt.javaClass.simpleName})"

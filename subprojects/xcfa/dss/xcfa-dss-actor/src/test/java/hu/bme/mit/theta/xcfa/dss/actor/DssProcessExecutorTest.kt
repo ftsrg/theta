@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
@@ -87,7 +87,7 @@ private fun cegarChecker(xcfa: XCFA) =
     xcfa,
     emptySet(),
     ParseContext(),
-    defaultPredicateCegarConfig(),
+    getDefaultPredCegarConfig(),
     NullLogger.getInstance(),
   )
 
@@ -100,7 +100,7 @@ object DssProcessTestWorker {
   @JvmStatic
   fun main(args: Array<String>) {
     val crash = args[0] == "crash"
-    ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+    ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     val xcfa = processFixtureXcfa(incrementY = args[0] == "safe")
     val procedure = xcfa.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)

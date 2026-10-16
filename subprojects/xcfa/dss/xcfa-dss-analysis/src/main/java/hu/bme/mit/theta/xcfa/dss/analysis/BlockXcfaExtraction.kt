@@ -111,7 +111,7 @@ fun extractBlockXcfa(
           allLocations.add(it)
           errorLocation = it
         }
-    val auxVars = DssAuxVars.varsOf(violationCondition)
+    val auxVars = DssAuxVars.collectVars(violationCondition)
     procedureVars.addAll(auxVars)
     val label =
       SequenceLabel(auxVars.map { StmtLabel(Havoc(it)) } + StmtLabel(Assume(violationCondition)))

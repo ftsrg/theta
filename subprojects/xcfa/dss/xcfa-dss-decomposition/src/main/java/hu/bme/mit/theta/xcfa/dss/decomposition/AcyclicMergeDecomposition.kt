@@ -60,7 +60,7 @@ fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): Bloc
   while (true) {
     val successors = current.blocks.associate { it.id to it.successorIds }
     val cycle =
-      stronglyConnectedComponents(successors)
+      getSCCs(successors)
         .filter { scc ->
           (scc.size > 1 && !onlySelfLoops) ||
             scc.size == 1 && scc.single().let { it in successors.getValue(it) }

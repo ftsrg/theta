@@ -21,11 +21,9 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 
 /**
- * Every assume condition of [wholeProgram], optionally seeding every block's precision
+ * Every assume condition of this XCFA, optionally seeding every block's precision
  * (`--dss-global-predicate-pool`; no CPAchecker counterpart). Saves violation-condition rounds.
  */
-fun globalAssumePredicates(wholeProgram: XCFA): Set<Expr<BoolType>> =
-  wholeProgram.collectAssumes().toSet()
+fun XCFA.collectAssumePreds(): Set<Expr<BoolType>> = collectAssumes().toSet()
 
-fun globalAssumePredicatePrecision(wholeProgram: XCFA) =
-  predicatePrecision(globalAssumePredicates(wholeProgram))
+fun getAssumePredPrec(wholeProgram: XCFA) = getPredPrec(wholeProgram.collectAssumePreds())

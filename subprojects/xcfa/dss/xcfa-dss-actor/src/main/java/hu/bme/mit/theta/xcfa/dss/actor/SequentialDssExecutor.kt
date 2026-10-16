@@ -39,7 +39,7 @@ fun runDssActorsSequentially(
       // The visualizer must log every message, so it reads in plain arrival order instead of
       // letting the final RESULT/STATISTIC messages overtake (and end its run before) the rest.
       if (it == SEQUENTIAL_VISUALIZER_ID) LinkedBlockingQueue<DssMessage>()
-      else newDssMessageQueue()
+      else createDssMessageQueue()
     }
   val connectionsForBroadcaster =
     inboxes.mapValues { (id, queue) ->

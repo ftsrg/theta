@@ -30,7 +30,7 @@ relevant section before changing behavior.
   structural equality), and must be thread-safe: one roster is shared by all blocks of a run.
 
 ## Change recipes
-- **New label kind in a block**: add its `weakestPrecondition` rule in `ViolationConditions.kt`
+- **New label kind in a block**: add its `wep` rule in `ViolationConditions.kt`
   and a case in `BlockAnalysisPrimitivesTest`; labels without a rule must keep failing explicitly.
 - **New solver fallback or operator**: keep the statistics in `DssSolverStatistics` in sync, as
   the CLI prints them (`DSS solver statistics:`).

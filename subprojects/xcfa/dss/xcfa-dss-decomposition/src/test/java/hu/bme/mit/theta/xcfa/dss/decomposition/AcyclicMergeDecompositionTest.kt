@@ -28,7 +28,7 @@ class AcyclicMergeDecompositionTest {
 
   private fun BlockGraph.assertAcyclicCover(procedure: XcfaProcedure) {
     checkConsistency()
-    assertEquals(0, statistics().cyclicSccs, "cyclic block graph: ${blocks.map { it.id }}")
+    assertEquals(0, getStatistics().cyclicSccs, "cyclic block graph: ${blocks.map { it.id }}")
     assertEquals(procedure.edges, blocks.flatMap { it.edges }.toSet())
   }
 
@@ -110,7 +110,7 @@ class AcyclicMergeDecompositionTest {
   fun `a cycle through two blocks with an exit in the middle becomes one block`() {
     val procedure = errorInLoopProcedure()
     val selfLoopsOnly = procedure.decomposedWith(SelfLoopAbsorbingDecomposition())
-    assertTrue(selfLoopsOnly.statistics().cyclicSccs > 0, "sanity check: not a self loop")
+    assertTrue(selfLoopsOnly.getStatistics().cyclicSccs > 0, "sanity check: not a self loop")
 
     val acyclic = procedure.decomposedWith(AcyclicMergeDecomposition())
 
@@ -122,7 +122,7 @@ class AcyclicMergeDecompositionTest {
   @Test
   fun `a loop with a break grows to the location where both exits rejoin`() {
     val procedure = breakProcedure()
-    assertTrue(procedure.decomposedWith(MergeBlockDecomposition()).statistics().cyclicSccs > 0)
+    assertTrue(procedure.decomposedWith(MergeBlockDecomposition()).getStatistics().cyclicSccs > 0)
 
     val acyclic = procedure.decomposedWith(AcyclicMergeDecomposition())
 
@@ -133,7 +133,7 @@ class AcyclicMergeDecompositionTest {
   @Test
   fun `nested cycles collapse until the graph is acyclic`() {
     val procedure = nestedProcedure()
-    assertTrue(procedure.decomposedWith(MergeBlockDecomposition()).statistics().cyclicSccs > 0)
+    assertTrue(procedure.decomposedWith(MergeBlockDecomposition()).getStatistics().cyclicSccs > 0)
 
     procedure.decomposedWith(AcyclicMergeDecomposition()).assertAcyclicCover(procedure)
   }
@@ -178,7 +178,7 @@ class AcyclicMergeDecompositionTest {
 
     // entry = exit = C adds p and w, whose two entries B and D add r and z
     acyclic.checkConsistency()
-    assertEquals(0, acyclic.statistics().cyclicSccs)
+    assertEquals(0, acyclic.getStatistics().cyclicSccs)
     assertEquals(setOf("MC0", "x"), acyclic.blocks.map { it.id }.toSet())
     val merged = acyclic.blocks.single { it.id == "MC0" }
     assertEquals(listOf("A", "C"), listOf(merged.initialLocation.name, merged.finalLocation.name))

@@ -22,7 +22,7 @@ class DssMessageQueueTest {
 
   @Test
   fun `control messages overtake analysis messages, which stay in arrival order`() {
-    val queue = newDssMessageQueue()
+    val queue = createDssMessageQueue()
     val post1 = DssPostConditionMessage("a")
     val vc = DssViolationConditionMessage("b")
     val post2 = DssPostConditionMessage("c")

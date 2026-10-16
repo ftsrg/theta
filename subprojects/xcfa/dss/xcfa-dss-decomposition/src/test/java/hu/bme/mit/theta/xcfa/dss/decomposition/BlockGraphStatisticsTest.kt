@@ -34,7 +34,7 @@ class BlockGraphStatisticsTest {
           Block("second", b, c, setOf(b, c), emptySet()),
         )
       )
-    assertEquals(BlockGraphStatistics(2, 1, 0, 0, 0, 1, 1, 1, 2), graph.statistics())
+    assertEquals(BlockGraphStatistics(2, 1, 0, 0, 0, 1, 1, 1, 2), graph.getStatistics())
   }
 
   @Test
@@ -65,7 +65,7 @@ class BlockGraphStatisticsTest {
         maxInDegree = 3,
         maxBlockLocations = 2,
       ),
-      graph.statistics(),
+      graph.getStatistics(),
     )
   }
 }

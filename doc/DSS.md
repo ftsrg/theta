@@ -143,7 +143,7 @@ decomposition (Theta's block ids):
    v
  xcfa-dss-analysis     block-analysis building blocks
    extractBlockXcfa, computeViolationCondition / DssAuxVars, packPostcondition,
-   DssPredicateOperators, predicatesOf / combinePredicatePrecisions, globalAssumePredicates,
+   DssPredicateOperators, collectPreds / combinePredPrecs, collectAssumePreds,
    runWorkerConfig (solver lock and scopes), DssCheckerRoster
    |
    v
@@ -360,21 +360,21 @@ computed over the block's paths by memoized recursion:
 
 The solver-backed operators of CPAchecker's distributed predicate CPA: `isUnsat(e)`
 (`ProceedPredicateStateOperator.processBackward`; the root's check in
-`PredicateViolationConditionOperator`) and `isSubsumed(a, b)`, i.e. `a => b`
+`PredicateViolationConditionOperator`) and `isLeq(a, b)`, i.e. `a => b`
 (`PredicateStateCoverageOperator`). The solver is created lazily on the worker's thread, under the
 same lock as checker construction.
 
-### 6.5 Precision: `predicatesOf`, `combinePredicatePrecisions`, `predicatePrecision`
+### 6.5 Precision: `collectPreds`, `combinePredPrecs`, `getPredPrec`
 
-* `predicatesOf(exprs)` - the atoms of the expressions, without `true`/`false` and auxiliary
+* `exprs.collectPreds()` - the atoms of the expressions, without `true`/`false` and auxiliary
   variables; approximates a block's final precision (11.2).
-* `combinePredicatePrecisions(precisions)` - CPAchecker's `CombinePredicatePrecisionOperator`: the
+* `combinePredPrecs(precisions)` - CPAchecker's `CombinePredicatePrecisionOperator`: the
   union, restricted to predicates over variables that occur in every precision if such a variable
   exists, otherwise the plain union.
-* `predicatePrecision(predicates)` - the `XcfaPrec(PtrPrec(PredPrec))` a predicate checker starts
+* `getPredPrec(predicates)` - the `XcfaPrec(PtrPrec(PredPrec))` a predicate checker starts
   with.
 
-### 6.6 `globalAssumePredicates` (optional, Theta-only)
+### 6.6 `collectAssumePreds` (optional, Theta-only)
 
 Every assume condition of the whole program; the start precision with
 `--dss-global-predicate-pool`.
@@ -513,7 +513,7 @@ objects.
 
 ### 8.2 Inboxes
 
-`newDssMessageQueue()` is CPAchecker's `DssDefaultQueue`: `RESULT`/`EXCEPTION`/`STATISTIC` first,
+`createDssMessageQueue()` is CPAchecker's `DssDefaultQueue`: `RESULT`/`EXCEPTION`/`STATISTIC` first,
 otherwise creation order. The visualization actor uses a plain FIFO queue so that it logs everything
 before the final messages end its run.
 
@@ -598,11 +598,11 @@ condition, which can grow exponentially; `MERGE` folds such branches into one bl
 | `block_analysis.DssBlockAnalyses.runAlgorithm` | `PredicateBlockBehavior.run`, `runWorkerConfig` |
 | `distributed_cpa.predicate.PredicateViolationConditionOperator`, `distributed_block_cpa.BlockViolationConditionOperator` | `computeViolationCondition`, `DssAuxVars` |
 | `PredicateStateCoverageOperator`, `ProceedPredicateStateOperator` | `DssPredicateOperators` |
-| `CombinePredicatePrecisionOperator` | `combinePredicatePrecisions` |
+| `CombinePredicatePrecisionOperator` | `combinePredPrecs` |
 | `PredicateStateCombineViolationConditionOperator` (`combineVcsByHash`) | one disjunctive condition per message |
 | `Serialize*` / `Deserialize*` operators, `ContentBuilder` / `ContentReader` | none (in-memory messages) |
 | `communication.messages.*` | `DssMessage` and its subclasses |
-| `communication.DssDefaultQueue` | `newDssMessageQueue` |
+| `communication.DssDefaultQueue` | `createDssMessageQueue` |
 | `communication.infrastructure.DssMessageBroadcaster`, `DssConnection` | `DssMessageBroadcaster`, `DssConnection` |
 | `worker.DssAnalysisWorker` | `DssBlockActor` + `PredicateBlockBehavior` |
 | `worker.DssObserverWorker`, `DssVisualizationWorker`, `DssThreadMonitor` | `DssObserverActor`, `DssVisualizationActor`, `DssThreadMonitor` |
@@ -814,7 +814,7 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 | | `SingleBlockDecompositionTest` | `SB1`, single-block merging, default target, instrumentation no-op |
 | | `BlockGraphInstrumentationTest`, `BlockGraphDotTest` | ghost edges, DOT |
 | analysis | `BlockXcfaExtractionTest` | isolation of extracted blocks |
-| | `BlockAnalysisPrimitivesTest` | WP rules (assume, assign, sequence, nondet, havoc), unsupported labels, linear growth, preconditions, cleared targets, havoc of auxiliary variables, predicate operators, `predicatesOf` |
+| | `BlockAnalysisPrimitivesTest` | WP rules (assume, assign, sequence, nondet, havoc), unsupported labels, linear growth, preconditions, cleared targets, havoc of auxiliary variables, predicate operators, `collectPreds` |
 | | `ViolationConditionTest` | path conditions, canonical auxiliary variables, one loop iteration per analysis, violation-condition targets, precision combination, internal cycles, per-path conditions |
 | | `PostconditionPackingTest`, `WorkerConfigDelegatorTest`, `DssCheckerRosterTest` | packing, checker delegation, rosters |
 | | `UndecidedQueryTest`, `CheckerSolverFallbackTest` | undecided operator queries with and without the fallback solver, checker solver fallback |

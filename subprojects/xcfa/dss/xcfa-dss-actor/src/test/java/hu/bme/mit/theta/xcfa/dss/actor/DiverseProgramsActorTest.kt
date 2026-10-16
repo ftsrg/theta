@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.runWorkerConfig
@@ -45,7 +45,7 @@ class DiverseProgramsActorTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -54,7 +54,7 @@ class DiverseProgramsActorTest {
       xcfa,
       emptySet(),
       ParseContext(),
-      defaultPredicateCegarConfig(),
+      getDefaultPredCegarConfig(),
       NullLogger.getInstance(),
     )
 

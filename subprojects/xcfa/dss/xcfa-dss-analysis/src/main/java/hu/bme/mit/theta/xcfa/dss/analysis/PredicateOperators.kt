@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Solver-backed operators of CPAchecker's distributed predicate CPA ([isUnsat], [isKnownUnsat],
- * [isSubsumed]). Failed queries go to the fallback solver, then [DssUndecidedQueryException].
+ * [isLeq]). Failed queries go to the fallback solver, then [DssUndecidedQueryException].
  */
 class DssPredicateOperators(
   solverFactory: SolverFactory,
@@ -57,7 +57,7 @@ class DssPredicateOperators(
   fun isKnownUnsat(expr: Expr<BoolType>): Boolean = decide(expr) { false }
 
   /** Whether state 1 implies state 2 per [isKnownUnsat]. */
-  fun isSubsumed(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
+  fun isLeq(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
     state2 == True() || state1 == state2 || isKnownUnsat(And(state1, Not(state2)))
 
   /** Without a fallback solver, a failure of the solver is never [undecided] but an exception. */
@@ -145,9 +145,8 @@ private class OperatorSolver(private val factory: SolverFactory) {
  * The predicates a block transmits as its precision: the atoms of a safe result's reached states
  * (Theta's checkers don't return their precision), without [DssAuxVars] variables.
  */
-fun predicatesOf(exprs: Iterable<Expr<BoolType>>): Set<Expr<BoolType>> =
-  exprs
-    .flatMap(ExprUtils::getAtoms)
+fun Iterable<Expr<BoolType>>.collectPreds(): Set<Expr<BoolType>> =
+  flatMap(ExprUtils::getAtoms)
     .filter { it != True() && it != False() }
     .filter { atom -> ExprUtils.getVars(atom).none(DssAuxVars::isAux) }
     .toSet()
@@ -156,7 +155,7 @@ fun predicatesOf(exprs: Iterable<Expr<BoolType>>): Set<Expr<BoolType>> =
  * CPAchecker's `CombinePredicatePrecisionOperator`: the union of [precisions], restricted to
  * predicates over variables common to all of them, if there are any.
  */
-fun combinePredicatePrecisions(precisions: Collection<Set<Expr<BoolType>>>): Set<Expr<BoolType>> {
+fun combinePredPrecs(precisions: Collection<Set<Expr<BoolType>>>): Set<Expr<BoolType>> {
   if (precisions.isEmpty()) return emptySet()
   if (precisions.size == 1) return precisions.single()
   val count = HashMap<Any, Int>()
@@ -172,12 +171,12 @@ fun combinePredicatePrecisions(precisions: Collection<Set<Expr<BoolType>>>): Set
 }
 
 /**
- * The predicates of a predicate-abstraction precision ([predicatePrecision]'s shape), filtered like
- * [predicatesOf]; empty for any other precision.
+ * The predicates of a predicate-abstraction precision ([getPredPrec]'s shape), filtered like
+ * [collectPreds]; empty for any other precision.
  */
-fun predicatesOfPrecision(precision: XcfaPrec<*>): Set<Expr<BoolType>> =
-  ((precision.p as? PtrPrec<*>)?.innerPrec as? PredPrec)?.preds?.let(::predicatesOf) ?: emptySet()
+fun XcfaPrec<*>.collectPreds(): Set<Expr<BoolType>> =
+  ((p as? PtrPrec<*>)?.innerPrec as? PredPrec)?.preds?.collectPreds() ?: emptySet()
 
 /** The initial precision a predicate-abstraction checker is started with for [predicates]. */
-fun predicatePrecision(predicates: Set<Expr<BoolType>>): XcfaPrec<PtrPrec<PredPrec>> =
+fun getPredPrec(predicates: Set<Expr<BoolType>>): XcfaPrec<PtrPrec<PredPrec>> =
   XcfaPrec(PtrPrec(PredPrec.of(predicates), emptySet()))

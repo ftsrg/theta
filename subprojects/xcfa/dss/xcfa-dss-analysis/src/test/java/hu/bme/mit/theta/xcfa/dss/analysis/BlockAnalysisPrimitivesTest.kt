@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
@@ -55,7 +55,7 @@ class BlockAnalysisPrimitivesTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -65,7 +65,7 @@ class BlockAnalysisPrimitivesTest {
   private val y = Var("y", Int())
 
   private fun equivalent(a: Expr<BoolType>, b: Expr<BoolType>) =
-    operators.isSubsumed(a, b) && operators.isSubsumed(b, a)
+    operators.isLeq(a, b) && operators.isLeq(b, a)
 
   private fun check(xcfa: XCFA) =
     runWorkerConfig(
@@ -75,7 +75,7 @@ class BlockAnalysisPrimitivesTest {
           p,
           emptySet(),
           ParseContext(),
-          defaultPredicateCegarConfig(),
+          getDefaultPredCegarConfig(),
           NullLogger.getInstance(),
         )
       },
@@ -129,7 +129,7 @@ class BlockAnalysisPrimitivesTest {
     val vc = computeViolationCondition(block, mapOf(block.finalLocation to Gt(x.ref, y.ref)))
 
     // exists a. a > y - satisfiable for every y, and x no longer occurs
-    assertEquals(1, DssAuxVars.varsOf(vc).size)
+    assertEquals(1, DssAuxVars.collectVars(vc).size)
     assertFalse(x in ExprUtils.getVars(vc))
     assertFalse(operators.isUnsat(And(Eq(y.ref, Int(100)), vc)))
   }
@@ -247,7 +247,7 @@ class BlockAnalysisPrimitivesTest {
     val havocY = chain(StmtLabel(Havoc(y)))
     val vc =
       computeViolationCondition(havocY, mapOf(havocY.finalLocation to Eq(px, Add(y.ref, Int(3)))))
-    val auxVar = DssAuxVars.varsOf(vc).single()
+    val auxVar = DssAuxVars.collectVars(vc).single()
 
     val extraction = extractBlockXcfa(procedure, root, violationCondition = vc)
 
@@ -264,17 +264,17 @@ class BlockAnalysisPrimitivesTest {
   fun `predicate operators decide satisfiability and implication`() {
     assertTrue(operators.isUnsat(And(Lt(x.ref, Int(0)), Gt(x.ref, Int(0)))))
     assertFalse(operators.isUnsat(Lt(x.ref, Int(0))))
-    assertTrue(operators.isSubsumed(Lt(x.ref, Int(0)), Lt(x.ref, Int(5))))
-    assertFalse(operators.isSubsumed(Lt(x.ref, Int(5)), Lt(x.ref, Int(0))))
-    assertTrue(operators.isSubsumed(Lt(x.ref, Int(0)), True()))
+    assertTrue(operators.isLeq(Lt(x.ref, Int(0)), Lt(x.ref, Int(5))))
+    assertFalse(operators.isLeq(Lt(x.ref, Int(5)), Lt(x.ref, Int(0))))
+    assertTrue(operators.isLeq(Lt(x.ref, Int(0)), True()))
   }
 
   @Test
-  fun `predicatesOf keeps the atoms over program variables only`() {
+  fun `collectPreds keeps the atoms over program variables only`() {
     val block = chain(StmtLabel(Havoc(x)))
     val vc = computeViolationCondition(block, mapOf(block.finalLocation to Gt(x.ref, y.ref)))
 
-    val predicates = predicatesOf(listOf(And(Lt(y.ref, Int(3)), vc)))
+    val predicates = listOf(And(Lt(y.ref, Int(3)), vc)).collectPreds()
 
     assertEquals(setOf(Lt(y.ref, Int(3))), predicates)
   }

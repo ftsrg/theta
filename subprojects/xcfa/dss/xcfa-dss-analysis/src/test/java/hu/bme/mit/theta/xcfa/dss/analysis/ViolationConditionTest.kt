@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
@@ -49,7 +49,7 @@ class ViolationConditionTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -63,7 +63,7 @@ class ViolationConditionTest {
           x,
           emptySet(),
           ParseContext(),
-          defaultPredicateCegarConfig(),
+          getDefaultPredCegarConfig(),
           NullLogger.getInstance(),
         )
       },
@@ -108,8 +108,8 @@ class ViolationConditionTest {
 
     val x = procedure.intVar("x").ref
     val y = procedure.intVar("y").ref
-    assertTrue(operators.isSubsumed(vc, And(Geq(x, Int(10)), Gt(y, x))))
-    assertTrue(operators.isSubsumed(And(Geq(x, Int(10)), Gt(y, x)), vc))
+    assertTrue(operators.isLeq(vc, And(Geq(x, Int(10)), Gt(y, x))))
+    assertTrue(operators.isLeq(And(Geq(x, Int(10)), Gt(y, x)), vc))
   }
 
   @Test
@@ -125,14 +125,14 @@ class ViolationConditionTest {
     val vc2 = computeViolationCondition(body, mapOf(body.finalLocation to received))
 
     // wp(x < 10; x := x + 1; havoc y, y > x) = x < 10 && exists a. a > x + 1
-    assertEquals(1, DssAuxVars.varsOf(vc1).size)
+    assertEquals(1, DssAuxVars.collectVars(vc1).size)
     assertFalse(operators.isUnsat(vc1))
     assertTrue(operators.isUnsat(And(vc1, Geq(x, Int(10)))))
     // repeated computations are structurally equal, so DSS can recognize repeated conditions
     assertEquals(vc1, vc2)
     // and passing it through the loop body again does not capture the existing variable
     val vc3 = computeViolationCondition(body, mapOf(body.finalLocation to And(vc1, Gt(y, x))))
-    assertEquals(2, DssAuxVars.varsOf(vc3).size)
+    assertEquals(2, DssAuxVars.collectVars(vc3).size)
     assertNotEquals(vc1, vc3)
   }
 
@@ -158,8 +158,8 @@ class ViolationConditionTest {
     val vc = computePathViolationCondition(path)
 
     // x < 2 && x + 1 < 2 && x + 2 >= 2, i.e., exactly two iterations from x = 0
-    assertTrue(operators.isSubsumed(vc, Eq(x.ref, Int(0))))
-    assertTrue(operators.isSubsumed(Eq(x.ref, Int(0)), vc))
+    assertTrue(operators.isLeq(vc, Eq(x.ref, Int(0))))
+    assertTrue(operators.isLeq(Eq(x.ref, Int(0)), vc))
   }
 
   @Test
@@ -209,9 +209,9 @@ class ViolationConditionTest {
     val p2 = setOf(Geq(x, Int(3)))
 
     // x occurs in both precisions, so only predicates over x are kept
-    assertEquals(setOf(Lt(x, Int(10)), Geq(x, Int(3))), combinePredicatePrecisions(listOf(p1, p2)))
+    assertEquals(setOf(Lt(x, Int(10)), Geq(x, Int(3))), combinePredPrecs(listOf(p1, p2)))
     // no common variable: plain union
     val p3 = setOf(Gt(y, Int(1)))
-    assertEquals(p2 + p3, combinePredicatePrecisions(listOf(p2, p3)))
+    assertEquals(p2 + p3, combinePredPrecs(listOf(p2, p3)))
   }
 }

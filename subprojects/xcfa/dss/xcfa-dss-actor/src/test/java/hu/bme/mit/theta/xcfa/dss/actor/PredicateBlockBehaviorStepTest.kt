@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.params.defaultPredicateCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssPredicateOperators
@@ -51,7 +51,7 @@ class PredicateBlockBehaviorStepTest {
     @JvmStatic
     @BeforeAll
     fun registerSolvers() {
-      ensureDefaultSolversRegistered(defaultPredicateCegarConfig(), NullLogger.getInstance())
+      ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     }
   }
 
@@ -64,14 +64,14 @@ class PredicateBlockBehaviorStepTest {
           x,
           emptySet(),
           ParseContext(),
-          defaultPredicateCegarConfig(),
+          getDefaultPredCegarConfig(),
           NullLogger.getInstance(),
         )
       }
     )
 
   private fun equivalent(a: Expr<BoolType>, b: Expr<BoolType>) =
-    operators.isSubsumed(a, b) && operators.isSubsumed(b, a)
+    operators.isLeq(a, b) && operators.isLeq(b, a)
 
   @Suppress("UNCHECKED_CAST")
   private fun XCFA.intVar(name: String) =
@@ -151,7 +151,7 @@ class PredicateBlockBehaviorStepTest {
     val messages = f.behavior(f.graph.root).runInitialAnalysis()
 
     val post = messages.filterIsInstance<DssPostConditionMessage>().single().postcondition!!
-    assertTrue(operators.isSubsumed(post, Lt(x, Int(10))), "$post")
+    assertTrue(operators.isLeq(post, Lt(x, Int(10))), "$post")
     assertTrue(messages.none { it is DssViolationConditionMessage })
   }
 

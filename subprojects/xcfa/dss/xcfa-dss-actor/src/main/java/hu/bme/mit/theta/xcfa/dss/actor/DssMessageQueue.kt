@@ -22,7 +22,7 @@ import java.util.concurrent.PriorityBlockingQueue
  * An actor's inbox (CPAchecker's `DssDefaultQueue`): `RESULT`/`EXCEPTION`/`STATISTIC` overtake
  * analysis messages, so workers react to the verdict at once; otherwise creation order.
  */
-fun newDssMessageQueue(): BlockingQueue<DssMessage> =
+fun createDssMessageQueue(): BlockingQueue<DssMessage> =
   PriorityBlockingQueue(11, compareBy<DssMessage>({ it.priority }, { it.sequenceNumber }))
 
 private val DssMessage.priority: Int
