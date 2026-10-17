@@ -39,9 +39,9 @@ fun chcCompPortfolio25(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -143,11 +143,7 @@ fun chcCompPortfolio25(
         "MDD-$inProcess",
         baseMddConfig.copy(
           backendConfig =
-            baseMddConfig.backendConfig.copy(
-              timeoutMs = timeout,
-              inProcess = inProcess,
-              parseInProcess = true,
-            )
+            baseMddConfig.backendConfig.copy(timeoutMs = timeout, inProcess = inProcess)
         ),
         checker,
       )
@@ -161,7 +157,6 @@ fun chcCompPortfolio25(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = baseMddConfig.backendConfig.specConfig!!.copy(cegar = true),
             )
         ),
