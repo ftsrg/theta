@@ -34,7 +34,7 @@ fun symbolicPortfolio(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -47,7 +47,6 @@ fun symbolicPortfolio(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig =
                 baseMddConfig.backendConfig.specConfig!!.copy(
                   solver = solver,
@@ -72,7 +71,6 @@ fun symbolicPortfolio(
               solverHome = baseMddConfig.backendConfig.solverHome,
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = MddCegarConfig(solver = solver, iterationStrategy = GSAT),
             ),
           outputConfig = baseMddConfig.outputConfig,

@@ -204,7 +204,7 @@ private fun parseInputFiles(
   logger: Logger,
   uniqueLogger: Logger,
 ): Triple<XCFA?, MCM?, ParseContext?> =
-  if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+  if (config.backendConfig.inProcess) {
     logger.info("Not parsing input because a worker process will handle it later.")
     Triple(null, null, null)
   } else {
