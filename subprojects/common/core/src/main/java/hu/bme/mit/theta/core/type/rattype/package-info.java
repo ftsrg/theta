@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,20 +19,18 @@
  *
  * <p>- {@link hu.bme.mit.theta.core.type.rattype.RatType}: the actual rational type
  *
- * <p>- {@link hu.bme.mit.theta.core.type.rattype.RatLitExpr}: rational literal, e.g., 1%2 is 0.5
+ * <p>- {@link hu.bme.mit.theta.core.type.RatLitExpr}: rational literal, e.g., 1%2 is 0.5
  *
- * <p>- {@link hu.bme.mit.theta.core.type.rattype.RatNegExpr}: unary minus - {@link
- * hu.bme.mit.theta.core.type.rattype.RatPosExpr}: unary plus - {@link
- * hu.bme.mit.theta.core.type.rattype.RatAddExpr}: addition - {@link
- * hu.bme.mit.theta.core.type.rattype.RatSubExpr}: subtraction - {@link
- * hu.bme.mit.theta.core.type.rattype.RatMulExpr}: multiplication - {@link
- * hu.bme.mit.theta.core.type.rattype.RatDivExpr}: rational division
+ * <p>- {@link hu.bme.mit.theta.core.type.RatNegExpr}: unary minus - {@link
+ * hu.bme.mit.theta.core.type.RatPosExpr}: unary plus - {@link
+ * hu.bme.mit.theta.core.type.RatAddExpr}: addition - {@link hu.bme.mit.theta.core.type.RatSubExpr}:
+ * subtraction - {@link hu.bme.mit.theta.core.type.RatMulExpr}: multiplication - {@link
+ * hu.bme.mit.theta.core.type.RatDivExpr}: rational division
  *
- * <p>- {@link hu.bme.mit.theta.core.type.rattype.RatEqExpr}: equal - {@link
- * hu.bme.mit.theta.core.type.rattype.RatNeqExpr}: not equal - {@link
- * hu.bme.mit.theta.core.type.rattype.RatGtExpr}: greater - {@link
- * hu.bme.mit.theta.core.type.rattype.RatLtExpr}: less - {@link
- * hu.bme.mit.theta.core.type.rattype.RatGeqExpr}: greater or equal - {@link
- * hu.bme.mit.theta.core.type.rattype.RatLeqExpr}: less or equal
+ * <p>- {@link hu.bme.mit.theta.core.type.RatEqExpr}: equal - {@link
+ * hu.bme.mit.theta.core.type.RatNeqExpr}: not equal - {@link hu.bme.mit.theta.core.type.RatGtExpr}:
+ * greater - {@link hu.bme.mit.theta.core.type.RatLtExpr}: less - {@link
+ * hu.bme.mit.theta.core.type.RatGeqExpr}: greater or equal - {@link
+ * hu.bme.mit.theta.core.type.RatLeqExpr}: less or equal
  */
 package hu.bme.mit.theta.core.type.rattype;

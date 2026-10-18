@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,34 @@
  */
 package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.ForeignExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import java.util.List;
 
-public class UnsupportedInitializer extends NullaryExpr<IntType> {
+public class UnsupportedInitializer extends ForeignExpr<IntType> {
+
+    @Override
+    public int getArity() {
+        return 0;
+    }
+
+    @Override
+    public List<? extends Expr<?>> getOps() {
+        return List.of();
+    }
+
+    @Override
+    public UnsupportedInitializer withOps(final List<? extends Expr<?>> ops) {
+        checkArgument(ops.isEmpty());
+        return this;
+    }
 
     @Override
     public IntType getType() {

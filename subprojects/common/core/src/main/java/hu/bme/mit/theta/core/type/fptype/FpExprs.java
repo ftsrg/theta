@@ -15,8 +15,35 @@
  */
 package hu.bme.mit.theta.core.type.fptype;
 
+import hu.bme.mit.theta.core.type.BvLitExpr;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.FpAbsExpr;
+import hu.bme.mit.theta.core.type.FpAddExpr;
+import hu.bme.mit.theta.core.type.FpAssignExpr;
+import hu.bme.mit.theta.core.type.FpDivExpr;
+import hu.bme.mit.theta.core.type.FpEqExpr;
+import hu.bme.mit.theta.core.type.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.FpFromIeeeBvExpr;
+import hu.bme.mit.theta.core.type.FpGeqExpr;
+import hu.bme.mit.theta.core.type.FpGtExpr;
+import hu.bme.mit.theta.core.type.FpIsInfiniteExpr;
+import hu.bme.mit.theta.core.type.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.FpLeqExpr;
+import hu.bme.mit.theta.core.type.FpLitExpr;
+import hu.bme.mit.theta.core.type.FpLtExpr;
+import hu.bme.mit.theta.core.type.FpMaxExpr;
+import hu.bme.mit.theta.core.type.FpMinExpr;
+import hu.bme.mit.theta.core.type.FpMulExpr;
+import hu.bme.mit.theta.core.type.FpNegExpr;
+import hu.bme.mit.theta.core.type.FpNeqExpr;
+import hu.bme.mit.theta.core.type.FpPosExpr;
+import hu.bme.mit.theta.core.type.FpRemExpr;
+import hu.bme.mit.theta.core.type.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.FpSubExpr;
+import hu.bme.mit.theta.core.type.FpToBvExpr;
+import hu.bme.mit.theta.core.type.FpToFpExpr;
+import hu.bme.mit.theta.core.type.FpToIeeeBvExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import java.util.Arrays;
 

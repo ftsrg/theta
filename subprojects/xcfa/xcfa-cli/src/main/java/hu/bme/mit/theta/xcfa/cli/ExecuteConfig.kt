@@ -82,6 +82,16 @@ fun runConfig(
   return result
 }
 
+/** Experiment hook: builds the XCFA exactly as [runConfig] would, without running a backend. */
+fun buildXcfaForExperiment(
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+): Triple<XCFA, MCM, ParseContext> {
+  propagateInputOptions(config, logger, uniqueLogger)
+  return frontend(config, logger, uniqueLogger)
+}
+
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
   config.inputConfig.property = determineProperty(config, logger)
   LbePass.defaultLevel = config.frontendConfig.lbeLevel

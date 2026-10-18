@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.BvLitExpr
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder

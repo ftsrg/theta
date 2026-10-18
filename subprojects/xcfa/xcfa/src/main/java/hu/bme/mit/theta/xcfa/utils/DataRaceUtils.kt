@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
 import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 

@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.type.BvLitExpr
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -122,9 +122,9 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   /** Whether the frontend metadata gives this pointer a pointee we can lay out into cells. */
   private fun pointeeIsTyped(pointer: Expr<*>): Boolean =
     when (val type = CComplexType.getType(pointer, parseContext)) {
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct -> true
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray -> true
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer ->
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct -> true
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray -> true
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer ->
         type.embeddedType !is hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
       else -> false
     }

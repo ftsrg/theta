@@ -17,9 +17,9 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware

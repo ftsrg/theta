@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,14 +46,14 @@ fun generateXsts(
         return param
       }
 
-      override fun <DeclType : Type?> visit(
+      override fun <DeclType : Type> visit(
         stmt: AssignStmt<DeclType>,
         param: Set<VarDecl<*>>,
       ): Set<VarDecl<*>> {
         return setOf(stmt.varDecl) + param
       }
 
-      override fun <DeclType : Type?> visit(
+      override fun <DeclType : Type> visit(
         stmt: HavocStmt<DeclType>,
         param: Set<VarDecl<*>>,
       ): Set<VarDecl<*>> {
@@ -88,7 +88,7 @@ fun generateXsts(
         return stmt.then.accept(this, stmt.elze.accept(this, param))
       }
 
-      override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
+      override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
         stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
         param: Set<VarDecl<*>>?,
       ): Set<VarDecl<*>> {

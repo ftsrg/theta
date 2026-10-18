@@ -49,6 +49,8 @@ dependencies {
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation(Deps.kotlinxSerializationJson)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${Versions.kotlinxSerializationJson}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Versions.kotlinxSerializationJson}")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
     implementation(project(":theta-btor2-frontend"))
     implementation(project(":theta-btor2xcfa"))

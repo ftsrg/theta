@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,17 +19,16 @@
  *
  * <p>- {@link hu.bme.mit.theta.core.type.booltype.BoolType}: the actual Boolean type
  *
- * <p>- {@link hu.bme.mit.theta.core.type.booltype.TrueExpr}: true literal - {@link
- * hu.bme.mit.theta.core.type.booltype.FalseExpr}: false literal
+ * <p>- {@link hu.bme.mit.theta.core.type.TrueExpr}: true literal - {@link
+ * hu.bme.mit.theta.core.type.FalseExpr}: false literal
  *
- * <p>- {@link hu.bme.mit.theta.core.type.booltype.NotExpr}: negation - {@link
- * hu.bme.mit.theta.core.type.booltype.AndExpr}: and (conjunction) - {@link
- * hu.bme.mit.theta.core.type.booltype.OrExpr}: or (disjunction) - {@link
- * hu.bme.mit.theta.core.type.booltype.ImplyExpr}: implication - {@link
- * hu.bme.mit.theta.core.type.booltype.XorExpr}: exclusive or (xor) - {@link
- * hu.bme.mit.theta.core.type.booltype.IffExpr}: equivalence (if and only if)
+ * <p>- {@link hu.bme.mit.theta.core.type.NotExpr}: negation - {@link
+ * hu.bme.mit.theta.core.type.AndExpr}: and (conjunction) - {@link
+ * hu.bme.mit.theta.core.type.OrExpr}: or (disjunction) - {@link
+ * hu.bme.mit.theta.core.type.ImplyExpr}: implication - {@link hu.bme.mit.theta.core.type.XorExpr}:
+ * exclusive or (xor) - {@link hu.bme.mit.theta.core.type.IffExpr}: equivalence (if and only if)
  *
- * <p>- {@link hu.bme.mit.theta.core.type.booltype.ExistsExpr}: existential quantifier - {@link
- * hu.bme.mit.theta.core.type.booltype.ForallExpr}: universal quantifier
+ * <p>- {@link hu.bme.mit.theta.core.type.ExistsExpr}: existential quantifier - {@link
+ * hu.bme.mit.theta.core.type.ForallExpr}: universal quantifier
  */
 package hu.bme.mit.theta.core.type.booltype;

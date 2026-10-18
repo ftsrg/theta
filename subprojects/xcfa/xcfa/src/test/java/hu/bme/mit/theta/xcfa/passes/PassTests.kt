@@ -27,8 +27,8 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CFloat
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*

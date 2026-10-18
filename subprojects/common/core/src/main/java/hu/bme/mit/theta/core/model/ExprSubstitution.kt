@@ -108,7 +108,7 @@ class BasicExprSubstitution private constructor(builder: Builder) : ExprSubstitu
 
     fun put(key: Expr<*>, value: Expr<*>): Builder {
       Preconditions.checkState(!built, "Builder was already built.")
-      Preconditions.checkArgument(value.getType() == key.getType(), "Type mismatch.")
+      Preconditions.checkArgument(value.type == key.type, "Type mismatch.")
       exprToExpr[key] = value
       return this
     }

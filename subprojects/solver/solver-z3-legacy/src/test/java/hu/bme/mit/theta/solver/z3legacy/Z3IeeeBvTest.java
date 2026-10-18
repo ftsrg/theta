@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.type.BvLitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -91,7 +91,7 @@ public class Z3IeeeBvTest {
         assertEquals(SolverStatus.UNSAT, solver.check());
     }
 
-    private hu.bme.mit.theta.core.type.fptype.FpLitExpr oneDouble() {
+    private hu.bme.mit.theta.core.type.FpLitExpr oneDouble() {
         return hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr(
                 new org.kframework.mpfr.BigFloat(
                         1.0, new org.kframework.mpfr.BinaryMathContext(53, 11)),

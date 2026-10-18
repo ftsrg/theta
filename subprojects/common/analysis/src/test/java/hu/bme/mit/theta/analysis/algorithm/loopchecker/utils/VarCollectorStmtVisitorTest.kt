@@ -41,9 +41,9 @@ class VarCollectorStmtVisitorTest {
 
   companion object {
 
-    private val VA: VarDecl<BoolType?> = Decls.Var("a", BoolExprs.Bool())
-    private val VB: VarDecl<IntType?> = Decls.Var("b", IntExprs.Int())
-    private val VC: VarDecl<IntType?> = Decls.Var("d", IntExprs.Int())
+    private val VA: VarDecl<BoolType> = Decls.Var("a", BoolExprs.Bool())
+    private val VB: VarDecl<IntType> = Decls.Var("b", IntExprs.Int())
+    private val VC: VarDecl<IntType> = Decls.Var("d", IntExprs.Int())
 
     @JvmStatic
     fun data(): Collection<Array<Any>> {

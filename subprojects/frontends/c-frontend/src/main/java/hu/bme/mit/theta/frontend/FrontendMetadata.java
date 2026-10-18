@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,22 +21,29 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
 public class FrontendMetadata {
     private final Map<Integer, Map<String, Object>> lookupKeyValue;
     private final Map<Tuple2<Expr<?>, Integer>, CComplexType> types;
 
+    // Keys of String owners: unlike identity hashes, these mean the same in another process.
+    private final Set<Integer> stringKeys;
+
     public FrontendMetadata() {
         this.lookupKeyValue = new LinkedHashMap<>();
         this.types = new LinkedHashMap<>();
+        this.stringKeys = new LinkedHashSet<>();
     }
 
     public FrontendMetadata(@NotNull Map<Integer, Map<String, Object>> lookupKeyValue) {
         this.lookupKeyValue = new LinkedHashMap<>(lookupKeyValue);
         this.types = new LinkedHashMap<>();
+        this.stringKeys = new LinkedHashSet<>();
     }
 
     public <X> Map<String, ?> lookupMetadata(X owner) {
@@ -69,6 +76,9 @@ public class FrontendMetadata {
                     lookupKeyValue.getOrDefault(getHashCode(owner), new LinkedHashMap<>());
             keyvalues.put(key, value);
             lookupKeyValue.put(getHashCode(owner), keyvalues);
+            if (owner instanceof String) {
+                stringKeys.add(getHashCode(owner));
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IffExpr;
+import hu.bme.mit.theta.core.type.NeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
 public final class BoolType implements Equational<BoolType> {
 

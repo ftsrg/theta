@@ -149,25 +149,25 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   // signed and unsigned char / short / int
   SCHAR_MAX(
     "SCHAR_MAX",
-    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedchar", it))) },
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedchar", it)!!)) },
   ),
   SCHAR_MIN(
     "SCHAR_MIN",
-    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedchar", it))) },
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedchar", it)!!)) },
   ),
   SHRT_MAX(
     "SHRT_MAX",
-    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedshort", it))) },
+    { CComplexType.getSignedInt(it).getValue(signedMax(CComplexType.getType("signedshort", it)!!)) },
   ),
   SHRT_MIN(
     "SHRT_MIN",
-    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedshort", it))) },
+    { CComplexType.getSignedInt(it).getValue(signedMin(CComplexType.getType("signedshort", it)!!)) },
   ),
   UCHAR_MAX(
     "UCHAR_MAX",
     {
       CComplexType.getUnsignedInt(it)
-        .getValue(unsignedMax(CComplexType.getType("unsignedchar", it)))
+        .getValue(unsignedMax(CComplexType.getType("unsignedchar", it)!!))
     },
   ),
   UINT_MAX("UINT_MAX", { CComplexType.getUnsignedInt(it).let { t -> t.getValue(unsignedMax(t)) } }),
@@ -183,7 +183,7 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
     "USHRT_MAX",
     {
       CComplexType.getUnsignedInt(it)
-        .getValue(unsignedMax(CComplexType.getType("unsignedshort", it)))
+        .getValue(unsignedMax(CComplexType.getType("unsignedshort", it)!!))
     },
   ),
 }

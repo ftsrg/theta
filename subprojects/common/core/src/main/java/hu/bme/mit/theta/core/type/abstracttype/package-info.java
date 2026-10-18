@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,18 +19,16 @@
  * abstract classes, and the corresponding expression for a given type will be created (e.g.,
  * integer addition).
  *
- * <p>Arithmetic: - {@link hu.bme.mit.theta.core.type.abstracttype.AddExpr}: addition - {@link
- * hu.bme.mit.theta.core.type.abstracttype.DivExpr}: division - {@link
- * hu.bme.mit.theta.core.type.abstracttype.MulExpr}: multiplication - {@link
- * hu.bme.mit.theta.core.type.abstracttype.SubExpr}: subtraction
+ * <p>Arithmetic: - {@link hu.bme.mit.theta.core.type.AddExpr}: addition - {@link
+ * hu.bme.mit.theta.core.type.DivExpr}: division - {@link hu.bme.mit.theta.core.type.MulExpr}:
+ * multiplication - {@link hu.bme.mit.theta.core.type.SubExpr}: subtraction
  *
- * <p>Comparison: - {@link hu.bme.mit.theta.core.type.abstracttype.EqExpr}: equal - {@link
- * hu.bme.mit.theta.core.type.abstracttype.GeqExpr}: greater or equal - {@link
- * hu.bme.mit.theta.core.type.abstracttype.GtExpr}: greater - {@link
- * hu.bme.mit.theta.core.type.abstracttype.LeqExpr}: less or equal - {@link
- * hu.bme.mit.theta.core.type.abstracttype.LtExpr}: less - {@link
- * hu.bme.mit.theta.core.type.abstracttype.NeqExpr}: not equal
+ * <p>Comparison: - {@link hu.bme.mit.theta.core.type.EqExpr}: equal - {@link
+ * hu.bme.mit.theta.core.type.GeqExpr}: greater or equal - {@link
+ * hu.bme.mit.theta.core.type.GtExpr}: greater - {@link hu.bme.mit.theta.core.type.LeqExpr}: less or
+ * equal - {@link hu.bme.mit.theta.core.type.LtExpr}: less - {@link
+ * hu.bme.mit.theta.core.type.NeqExpr}: not equal
  *
- * <p>Other - {@link hu.bme.mit.theta.core.type.abstracttype.CastExpr}: cast
+ * <p>Other - {@link hu.bme.mit.theta.core.type.CastExpr}: cast
  */
 package hu.bme.mit.theta.core.type.abstracttype;

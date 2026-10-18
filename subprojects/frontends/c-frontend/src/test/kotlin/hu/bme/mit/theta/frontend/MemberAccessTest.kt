@@ -19,8 +19,8 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

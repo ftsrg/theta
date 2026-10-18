@@ -24,22 +24,34 @@ import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.ForeignLitExpr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.ModExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 
-data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
+data class MallocLitExpr<T : Type>(val kType: T) : ForeignLitExpr<T>() {
 
-  override fun getType(): T = kType
+  override val type: T
+    get() = kType
+
+  override val arity: Int
+    get() = 0
+
+  override val ops: List<Expr<*>>
+    get() = listOf()
+
+  override fun withOps(ops: List<Expr<*>>): MallocLitExpr<T> {
+    check(ops.isEmpty())
+    return this
+  }
 
   override fun eval(valuation: Valuation): LitExpr<T> = this
 }

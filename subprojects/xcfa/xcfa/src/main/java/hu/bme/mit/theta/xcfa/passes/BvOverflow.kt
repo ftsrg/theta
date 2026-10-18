@@ -15,20 +15,20 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.type.AddExpr
+import hu.bme.mit.theta.core.type.BvShiftLeftExpr
+import hu.bme.mit.theta.core.type.DivExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IteExpr
+import hu.bme.mit.theta.core.type.MulExpr
+import hu.bme.mit.theta.core.type.NegExpr
+import hu.bme.mit.theta.core.type.SubExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr
-import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.BvUtils
 import java.math.BigInteger

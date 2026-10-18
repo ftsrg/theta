@@ -19,10 +19,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;

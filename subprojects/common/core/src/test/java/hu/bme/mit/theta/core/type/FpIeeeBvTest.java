@@ -18,9 +18,7 @@ package hu.bme.mit.theta.core.type;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;

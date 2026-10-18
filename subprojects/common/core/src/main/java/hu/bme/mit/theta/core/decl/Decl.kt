@@ -1,0 +1,52 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.core.decl
+
+import com.google.common.base.Preconditions.checkArgument
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.Type
+
+/**
+ * A named, typed declaration. Declarations are identities, not values: a declaration is equal only
+ * to itself. Create them through [Decls].
+ */
+sealed class Decl<DeclType : Type>(val name: String, val type: DeclType) {
+
+  @Suppress("LeakingThis") val ref: RefExpr<DeclType> = RefExpr.of(this)
+
+  @Volatile private var hashCode = 0
+
+  init {
+    checkArgument(name.isNotEmpty())
+  }
+
+  final override fun hashCode(): Int {
+    var result = hashCode
+    if (result == 0) {
+      result = HASH_SEED
+      result = 31 * result + name.hashCode()
+      result = 31 * result + type.hashCode()
+      hashCode = result
+    }
+    return result
+  }
+
+  final override fun equals(other: Any?): Boolean = this === other
+
+  private companion object {
+    const val HASH_SEED = 5351
+  }
+}

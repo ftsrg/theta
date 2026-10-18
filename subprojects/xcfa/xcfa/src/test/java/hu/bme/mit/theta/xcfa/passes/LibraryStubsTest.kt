@@ -21,8 +21,8 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals

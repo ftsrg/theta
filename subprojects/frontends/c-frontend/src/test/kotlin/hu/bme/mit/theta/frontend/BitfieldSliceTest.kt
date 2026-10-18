@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.frontend
 
+import hu.bme.mit.theta.core.type.BvLitExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils

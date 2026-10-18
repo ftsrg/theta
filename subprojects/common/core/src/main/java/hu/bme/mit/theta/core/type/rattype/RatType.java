@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,18 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.RatAddExpr;
+import hu.bme.mit.theta.core.type.RatDivExpr;
+import hu.bme.mit.theta.core.type.RatEqExpr;
+import hu.bme.mit.theta.core.type.RatGeqExpr;
+import hu.bme.mit.theta.core.type.RatGtExpr;
+import hu.bme.mit.theta.core.type.RatLeqExpr;
+import hu.bme.mit.theta.core.type.RatLtExpr;
+import hu.bme.mit.theta.core.type.RatMulExpr;
+import hu.bme.mit.theta.core.type.RatNegExpr;
+import hu.bme.mit.theta.core.type.RatNeqExpr;
+import hu.bme.mit.theta.core.type.RatPosExpr;
+import hu.bme.mit.theta.core.type.RatSubExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;

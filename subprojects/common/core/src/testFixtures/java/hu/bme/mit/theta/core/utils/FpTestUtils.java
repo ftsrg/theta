@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,31 +47,31 @@ import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RTZ;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.FpAbsExpr;
+import hu.bme.mit.theta.core.type.FpAddExpr;
+import hu.bme.mit.theta.core.type.FpAssignExpr;
+import hu.bme.mit.theta.core.type.FpDivExpr;
+import hu.bme.mit.theta.core.type.FpEqExpr;
+import hu.bme.mit.theta.core.type.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.FpGeqExpr;
+import hu.bme.mit.theta.core.type.FpGtExpr;
+import hu.bme.mit.theta.core.type.FpIsInfiniteExpr;
+import hu.bme.mit.theta.core.type.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.FpLeqExpr;
+import hu.bme.mit.theta.core.type.FpLitExpr;
+import hu.bme.mit.theta.core.type.FpLtExpr;
+import hu.bme.mit.theta.core.type.FpMaxExpr;
+import hu.bme.mit.theta.core.type.FpMinExpr;
+import hu.bme.mit.theta.core.type.FpMulExpr;
+import hu.bme.mit.theta.core.type.FpNegExpr;
+import hu.bme.mit.theta.core.type.FpNeqExpr;
+import hu.bme.mit.theta.core.type.FpPosExpr;
+import hu.bme.mit.theta.core.type.FpRemExpr;
+import hu.bme.mit.theta.core.type.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.FpSubExpr;
+import hu.bme.mit.theta.core.type.FpToBvExpr;
+import hu.bme.mit.theta.core.type.FpToFpExpr;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;

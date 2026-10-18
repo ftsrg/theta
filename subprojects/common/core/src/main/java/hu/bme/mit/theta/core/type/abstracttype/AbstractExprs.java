@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,10 +21,24 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Try;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.DivExpr;
+import hu.bme.mit.theta.core.type.EqExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.GeqExpr;
+import hu.bme.mit.theta.core.type.GtExpr;
+import hu.bme.mit.theta.core.type.IteExpr;
+import hu.bme.mit.theta.core.type.LeqExpr;
+import hu.bme.mit.theta.core.type.LtExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.MulExpr;
+import hu.bme.mit.theta.core.type.NegExpr;
+import hu.bme.mit.theta.core.type.NeqExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.RemExpr;
+import hu.bme.mit.theta.core.type.SubExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.List;
 

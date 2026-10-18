@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.BoolLitExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
@@ -51,8 +51,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
   private lateinit var savedVar: VarDecl<BoolType>
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
-    if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
-    else Eq(e1, e2)
+    if (e1.type is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>) else Eq(e1, e2)
 
   override fun forward(monolithicExpr: MonolithicExpr): MonolithicExprPassResult<Pr> {
     savedVar = Decls.Var("__saved_", BoolType.getInstance())

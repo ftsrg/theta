@@ -27,30 +27,34 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.AddExpr
+import hu.bme.mit.theta.core.type.ArrayLitExpr
+import hu.bme.mit.theta.core.type.BvConcatExpr
+import hu.bme.mit.theta.core.type.BvExtractExpr
+import hu.bme.mit.theta.core.type.BvLitExpr
+import hu.bme.mit.theta.core.type.BvSExtExpr
+import hu.bme.mit.theta.core.type.BvZExtExpr
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.DivExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.MulExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.SubExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -61,17 +65,17 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedIn
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -293,7 +297,7 @@ class FrontendXcfaBuilder(
     when (t) {
       is CStruct ->
         (if (t.isUnion) "union" else "struct") + t.fields.joinToString(",", "{", "}") { it.get1() }
-      is CPointer -> "ptr -> " + describe(t.embeddedType)
+      is CPointer -> "ptr -> " + describe(t.embeddedType!!)
       is CArray -> "array of " + describe(t.embeddedType)
       else -> t.javaClass.simpleName
     }
@@ -316,7 +320,7 @@ class FrontendXcfaBuilder(
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
     if (MemsafetyPass.enabled) {
-      val fitsall = Fitsall.getFitsall(parseContext)
+      val fitsall = CComplexType.getFitsall(parseContext)
       val ptrType = CPointer(null, null, parseContext)
       val ptrSize =
         XcfaGlobalVar(
@@ -450,7 +454,7 @@ class FrontendXcfaBuilder(
       // TODO we assume later that there is always a ret var, but this should change
       val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
       val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext, uniqueWarningLogger)
-      signedIntType.setSigned(true)
+      signedIntType.isSigned = true
       parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
       builder.addParam(toAdd, ParamDirection.OUT)
     }
@@ -1284,7 +1288,7 @@ class FrontendXcfaBuilder(
       // CInitializerList for its single .expression throws.
       val scalarInit = unwrapScalarInitializer(initExpr)
       if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
-        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression!!)))
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }
@@ -1415,7 +1419,7 @@ class FrontendXcfaBuilder(
       initStmtList.add(
         AssignStmtLabel(
           cell,
-          if (value == null) cellType.nullValue else cellType.castTo(value.expression),
+          if (value == null) cellType.nullValue else cellType.castTo(value.expression!!),
         )
       )
     }
@@ -1554,7 +1558,7 @@ class FrontendXcfaBuilder(
         value =
           BitfieldSlice.write(
             value,
-            cellType.castTo(element.expression),
+            cellType.castTo(element.expression!!),
             slot.bitOffset(),
             slot.width(),
           )
@@ -1602,7 +1606,7 @@ class FrontendXcfaBuilder(
     // No castTo here: only the literal's value is needed, and the dimension expression may be
     // typed for the wrong arithmetic (types registered by the early typedef pass carry
     // default-arithmetic literals; casting one with the bitvector visitor throws).
-    val bounds = ExprUtils.simplify(type.arrayDimension.expression)
+    val bounds = ExprUtils.simplify(type.arrayDimension!!.expression)
     checkState(
       bounds is IntLitExpr || bounds is BvLitExpr,
       "Only IntLit and BvLit expression expected here.",
@@ -1728,7 +1732,7 @@ class FrontendXcfaBuilder(
             // back wrong from exactly this. Force NaN to a canonical quiet-NaN encoding so no
             // ToIeeeBv is ever applied to a NaN; the from-bits direction is total and needs no
             // guard, and canonical NaN bits still classify as NaN in the program's own bit checks.
-            hu.bme.mit.theta.core.type.anytype.IteExpr.of(
+            hu.bme.mit.theta.core.type.IteExpr.of(
               FpExprs.IsNan(fpExpr),
               canonicalNaNBits(fpExpr.type),
               FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
@@ -1810,7 +1814,7 @@ class FrontendXcfaBuilder(
               )
             } else if (
               (lhsType is CPointer || lhsType is CArray || lhsType is CStruct) &&
-                rExpression !is hu.bme.mit.theta.core.type.anytype.Reference<*, *> &&
+                rExpression !is hu.bme.mit.theta.core.type.Reference<*, *> &&
                 rExpression.hasArithmetic()
             ) {
               // A pointer *value* is an object id: memory is `arrays[base][offset]`, so the offset
@@ -1993,7 +1997,7 @@ class FrontendXcfaBuilder(
     }
     val prepLabels: MutableList<XcfaLabel> = ArrayList()
     for (cStatement in myParams) {
-      val argExpr = cStatement.expression
+      val argExpr = cStatement.expression!!
       val argType = CComplexType.getType(argExpr, parseContext)
       if (argType is CStruct && !argType.isUnion) {
         val (byValue, prep) = copyStructArgument(builder, argExpr, argType, getMetadata(statement))
@@ -2137,7 +2141,7 @@ class FrontendXcfaBuilder(
         Stmts.Assume(
           AbstractExprs.Neq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
@@ -2150,7 +2154,7 @@ class FrontendXcfaBuilder(
         Stmts.Assume(
           AbstractExprs.Eq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
@@ -2217,7 +2221,7 @@ class FrontendXcfaBuilder(
           else
             AbstractExprs.Neq(
               guard.expression,
-              CComplexType.getType(guard.expression, parseContext).nullValue,
+              CComplexType.getType(guard.expression!!, parseContext).nullValue,
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
@@ -2233,7 +2237,7 @@ class FrontendXcfaBuilder(
           else
             AbstractExprs.Eq(
               guard.expression,
-              CComplexType.getType(guard.expression, parseContext).nullValue,
+              CComplexType.getType(guard.expression!!, parseContext).nullValue,
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
@@ -2323,7 +2327,7 @@ class FrontendXcfaBuilder(
         Stmts.Assume(
           AbstractExprs.Neq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
@@ -2336,7 +2340,7 @@ class FrontendXcfaBuilder(
         Stmts.Assume(
           AbstractExprs.Eq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
@@ -2457,13 +2461,13 @@ class FrontendXcfaBuilder(
         ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc),
       )
     Preconditions.checkState(body is CCompound, "Switch body has to be a CompoundStatement!")
-    var defaultExpr: Expr<BoolType?>? = True()
+    var defaultExpr: Expr<BoolType>? = True()
     for (cStatement in (body as CCompound).getcStatementList()) {
       if (cStatement is CCase) {
         defaultExpr =
           BoolExprs.And(
             defaultExpr,
-            BoolExprs.Not(switchTestEq(testValue.expression, cStatement.expr.expression)),
+            BoolExprs.Not(switchTestEq(testValue.expression!!, cStatement.expr.expression!!)),
           )
       }
     }
@@ -2484,7 +2488,7 @@ class FrontendXcfaBuilder(
           )
         val assume =
           StmtLabel(
-            Stmts.Assume(switchTestEq(testValue.expression, cStatement.expr.expression)),
+            Stmts.Assume(switchTestEq(testValue.expression!!, cStatement.expr.expression!!)),
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(cStatement),
           )
@@ -2546,7 +2550,7 @@ class FrontendXcfaBuilder(
         Assume(
           AbstractExprs.Neq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
@@ -2559,7 +2563,7 @@ class FrontendXcfaBuilder(
         Assume(
           AbstractExprs.Eq(
             guard.expression,
-            CComplexType.getType(guard.expression, parseContext).nullValue,
+            CComplexType.getType(guard.expression!!, parseContext).nullValue,
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
@@ -2739,7 +2743,7 @@ private fun Expr<*>.asPointerArithReference(
   val zeroedBase = CComplexType.getType(base, parseContext).nullValue
   val offset = (this as Expr<Type>).replaceExpr(base, zeroedBase)
   val index = CComplexType.getSignedLong(parseContext).castTo(offset)
-  val deref = Dereference(base as Expr<Type>, index as Expr<Type>, elemType.smtType)
+  val deref = Dereference(base as Expr<Type>, index as Expr<Type>, elemType!!.smtType)
   parseContext.metadata.create(deref, "cType", CPointer(null, elemType, parseContext))
   val ref = Reference(deref, ptrType.smtType)
   parseContext.metadata.create(ref, "cType", ptrType)

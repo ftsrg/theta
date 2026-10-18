@@ -20,15 +20,22 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.FpAbsExpr
+import hu.bme.mit.theta.core.type.FpIsInfiniteExpr
+import hu.bme.mit.theta.core.type.FpIsNanExpr
+import hu.bme.mit.theta.core.type.FpMaxExpr
+import hu.bme.mit.theta.core.type.FpMinExpr
+import hu.bme.mit.theta.core.type.FpRoundToIntegralExpr
+import hu.bme.mit.theta.core.type.FpSqrtExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.BiFunction
 
@@ -232,7 +239,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -253,7 +260,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -272,7 +279,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
         TypeUtils.cast(
           AbstractExprs.Ite<Type>(
-            FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>),
+            FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType>),
             type.unitValue,
             type.nullValue,
           ),
@@ -294,8 +301,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         TypeUtils.cast(
           AbstractExprs.Ite<Type>(
             Or(
-              FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>),
-              FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
+              FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType>),
+              FpIsNanExpr.of(callStmt.params[1] as Expr<FpType>),
             ),
             type.nullValue,
             type.unitValue,
@@ -326,7 +333,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
           TypeUtils.cast(
             AbstractExprs.Ite<Type>(
-              FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
+              FpIsNanExpr.of(callStmt.params[1] as Expr<FpType>),
               type.unitValue,
               type.nullValue,
             ),
@@ -352,7 +359,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -373,7 +380,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -397,11 +404,11 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -421,11 +428,11 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -446,7 +453,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>,
+          ) as Expr<FpType>,
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
@@ -494,7 +501,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
           TypeUtils.cast(
             CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
             CComplexType.getType(expr, parseContext).smtType,
-          ) as Expr<FpType?>
+          ) as Expr<FpType>
         ),
       )
     if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {

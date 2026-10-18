@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
         .map { state ->
           val filtVars =
             usedVariablesPrecision.vars.filter(ExprUtils.getVars(state.toExpr())::contains)
-          val types = filtVars.map(VarDecl<*>::getType)
+          val types = filtVars.map(VarDecl<*>::type)
           val sizes = types.map(Type::getDomainSize)
           val res = sizes.fold(DomainSize.ONE, DomainSize::multiply)
           res

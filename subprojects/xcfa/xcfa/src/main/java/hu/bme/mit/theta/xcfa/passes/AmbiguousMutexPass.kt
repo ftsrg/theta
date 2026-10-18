@@ -23,17 +23,26 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.AndExpr
 import hu.bme.mit.theta.core.type.BinaryExpr
+import hu.bme.mit.theta.core.type.EqExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.GeqExpr
+import hu.bme.mit.theta.core.type.GtExpr
+import hu.bme.mit.theta.core.type.IteExpr
+import hu.bme.mit.theta.core.type.LeqExpr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.LtExpr
+import hu.bme.mit.theta.core.type.ModExpr
+import hu.bme.mit.theta.core.type.NegExpr
+import hu.bme.mit.theta.core.type.NeqExpr
+import hu.bme.mit.theta.core.type.NotExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.anytype.IteExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -98,7 +107,7 @@ class AmbiguousMutexPass : ProcedurePass {
                   .flatMap { (guard, simplifiedLock) ->
                     val newLabels: List<XcfaLabel> =
                       if (simplifiedLock != label.lock) {
-                        listOf(StmtLabel(AssumeStmt.of(guard)), label.withLock(simplifiedLock))
+                        listOf(StmtLabel(AssumeStmt.of(guard!!)), label.withLock(simplifiedLock))
                       } else {
                         listOf(StmtLabel(AssumeStmt.of(elseGuard)), label)
                       }
@@ -205,6 +214,8 @@ class AmbiguousMutexPass : ProcedurePass {
                       }
                     }
                   }
+
+                  else -> {}
                 }
               } else if (label is FenceLabel) {
                 interestingToProcess.addAll(ExprUtils.getVars(label.lock))
