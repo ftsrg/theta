@@ -81,6 +81,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private final LinkedList<Tuple2<ParserRuleContext, Optional<CCompound>>>
             currentStatementContext = new LinkedList<>();
 
+    /** Start (line, column) of the full expressions being visited, innermost first. */
+    private final LinkedList<int[]> fullExpressionContext = new LinkedList<>();
+
     public void clear() {
         variables.clear();
         scopedAllocas.clear();
@@ -90,6 +93,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         functions.clear();
         staticLocals.clear();
         currentStatementContext.clear();
+        fullExpressionContext.clear();
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
@@ -693,6 +697,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // with the statement's ctx
         }
         recordMetadataCommon(ctx, statement);
+        recordFullExpression(statement);
     }
 
     public void recordMetadata(ParserRuleContext ctx, CFunction statement) {
@@ -711,6 +716,49 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public void recordMetadata(ParserRuleContext ctx, CCall statement) {
         ctx = (ParserRuleContext) ctx.parent.parent;
         recordMetadataCommon(ctx, statement);
+        recordFullExpression(statement);
+    }
+
+    private void recordFullExpression(CStatement statement) {
+        // nested full expressions are recorded first: the innermost one wins
+        if (!fullExpressionContext.isEmpty() && statement.getFullExpressionLineStart() < 0) {
+            int[] start = fullExpressionContext.peek();
+            statement.setFullExpressionStart(start[0], start[1]);
+        }
+    }
+
+    public static void setFullExpression(CStatement statement, ParserRuleContext expression) {
+        if (statement != null
+                && expression != null
+                && expression.getStart() != null
+                && statement.getFullExpressionLineStart() < 0) {
+            statement.setFullExpressionStart(
+                    expression.getStart().getLine(), expression.getStart().getCharPositionInLine());
+        }
+    }
+
+    /** Visits a full expression, so that the nodes built for it are located by its start. */
+    public CStatement visitFullExpression(ParserRuleContext expression) {
+        if (expression == null) return null;
+        fullExpressionContext.push(
+                new int[] {
+                    expression.getStart().getLine(), expression.getStart().getCharPositionInLine()
+                });
+        try {
+            return expression.accept(this);
+        } finally {
+            fullExpressionContext.pop();
+        }
+    }
+
+    /**
+     * Whether {@code ctx} matched some tokens (e.g., the omitted condition of a {@code for} matches
+     * none).
+     */
+    private static boolean isPresent(ParserRuleContext ctx) {
+        return ctx != null
+                && ctx.getStop() != null
+                && ctx.getStart().getTokenIndex() <= ctx.getStop().getTokenIndex();
     }
 
     private void propagateFunctionName(CStatement stmt, String name) {
@@ -893,7 +941,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         CStatement statement =
                 ctx.expression() == null
                         ? new CNullStatement(parseContext)
-                        : ctx.expression().accept(this);
+                        : visitFullExpression(ctx.expression());
         recordMetadata(ctx, statement);
         return statement;
     }
@@ -902,7 +950,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitIfStatement(CParser.IfStatementContext ctx) {
         parseContext.getCStmtCounter().incrementBranches();
         pushScope(Tuple2.of("if" + anonCnt++, new LinkedHashMap<>()));
-        CStatement condition = ctx.expression().accept(this);
+        CStatement condition = visitFullExpression(ctx.expression());
         // Each arm is a scope of its own. A brace-enclosed arm does not open one itself --
         // `visitBlockItemList` only does that for a block nested directly in another block -- so
         // without this both arms share the `if` scope, and a name declared in both is one variable
@@ -917,6 +965,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 ctx.statement().size() > 1 ? inOwnScope("else", ctx.statement(1)) : null;
         CIf cIf = new CIf(condition, thenArm, elseArm, parseContext);
         recordMetadata(ctx, cIf);
+        setFullExpression(cIf, ctx.expression());
         popScope();
         return cIf;
     }
@@ -939,8 +988,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         pushScope(Tuple2.of("switch" + anonCnt++, new LinkedHashMap<>()));
         CSwitch cSwitch =
                 new CSwitch(
-                        ctx.expression().accept(this), ctx.statement().accept(this), parseContext);
+                        visitFullExpression(ctx.expression()),
+                        ctx.statement().accept(this),
+                        parseContext);
         recordMetadata(ctx, cSwitch);
+        setFullExpression(cSwitch, ctx.expression());
         popScope();
         return cSwitch;
     }
@@ -953,9 +1005,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         CWhile cWhile =
                 new CWhile(
                         withScopeReleases(ctx.statement().accept(this), whileMark),
-                        ctx.expression().accept(this),
+                        visitFullExpression(ctx.expression()),
                         parseContext);
         recordMetadata(ctx, cWhile);
+        setFullExpression(cWhile, ctx.expression());
         popScope();
         return cWhile;
     }
@@ -967,9 +1020,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         CDoWhile cDoWhile =
                 new CDoWhile(
                         withScopeReleases(ctx.statement().accept(this), doWhileMark),
-                        ctx.expression().accept(this),
+                        visitFullExpression(ctx.expression()),
                         parseContext);
         recordMetadata(ctx, cDoWhile);
+        setFullExpression(cDoWhile, ctx.expression());
         popScope();
         return cDoWhile;
     }
@@ -978,8 +1032,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitForStatement(CParser.ForStatementContext ctx) {
         parseContext.getCStmtCounter().incrementForLoops();
         pushScope(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
-        CStatement init = ctx.forCondition().forInit().accept(this);
-        CStatement test = ctx.forCondition().forTest().accept(this);
+        CStatement init = visitFullExpression(ctx.forCondition().forInit());
+        CStatement test = visitFullExpression(ctx.forCondition().forTest());
         if (test == null) {
             CCompound newCCompound1 = new CCompound(parseContext);
             CCompound newCCompound2 = new CCompound(parseContext);
@@ -996,7 +1050,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             test = newCCompound1;
             recordMetadata(ctx.forCondition(), test);
         }
-        CStatement incr = ctx.forCondition().forIncr().accept(this);
+        CStatement incr = visitFullExpression(ctx.forCondition().forIncr());
         final int forMark = scopeMark();
         CFor cFor =
                 new CFor(
@@ -1006,6 +1060,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         incr,
                         parseContext);
         recordMetadata(ctx, cFor);
+        if (isPresent(ctx.forCondition().forTest())) {
+            setFullExpression(cFor, ctx.forCondition().forTest());
+        }
         popScope();
         return cFor;
     }
@@ -1035,9 +1092,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public CStatement visitReturnStatement(CParser.ReturnStatementContext ctx) {
         CRet cRet =
                 new CRet(
-                        ctx.expression() == null ? null : ctx.expression().accept(this),
+                        ctx.expression() == null ? null : visitFullExpression(ctx.expression()),
                         parseContext);
         recordMetadata(ctx, cRet);
+        if (ctx.expression() != null) setFullExpression(cRet, ctx.expression());
         return cRet;
     }
 
@@ -1606,6 +1664,28 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             compound.addCStatement(cAssignment);
             registerScoped(declaration.getVarDecls().get(0));
         }
+        final CStatement initExpr = declaration.getInitExpr();
+        final boolean initIsFullExpression =
+                initExpr != null && initExpr.getFullExpressionLineStart() >= 0;
+        if (initIsFullExpression) {
+            fullExpressionContext.push(
+                    new int[] {
+                        initExpr.getFullExpressionLineStart(), initExpr.getFullExpressionColStart()
+                    });
+        }
+        try {
+            initializeDeclared(declaration, compound, preCompound, postCompound, ctx);
+        } finally {
+            if (initIsFullExpression) fullExpressionContext.pop();
+        }
+    }
+
+    private void initializeDeclared(
+            CDeclaration declaration,
+            CCompound compound,
+            CCompound preCompound,
+            CCompound postCompound,
+            ParserRuleContext ctx) {
         if (declaration.getInitExpr() != null) {
             if (declaration.getActualType() instanceof CStruct) {
                 if (declaration.getInitExpr() instanceof CInitializerList initializerList) {

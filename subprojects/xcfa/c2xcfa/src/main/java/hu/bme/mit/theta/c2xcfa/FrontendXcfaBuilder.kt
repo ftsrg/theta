@@ -298,6 +298,17 @@ class FrontendXcfaBuilder(
       else -> t.javaClass.simpleName
     }
 
+  /**
+   * A loop's entry guard keeps the position of [location] (cycle waypoints are placed by it), but
+   * also names the [loop], whose condition it evaluates (e.g., for witness waypoints on it).
+   */
+  private fun loopGuardMetadata(location: MetaData, loop: CStatement): MetaData =
+    (location as? CMetaData)?.let { it.copy(astNodes = listOf(loop) + it.astNodes) } ?: location
+
+  /** A loop's exit guard is never exported, but it evaluates the [loop]'s condition as well. */
+  private fun loopExitMetadata(loop: CStatement): MetaData =
+    (getMetadata(loop) as CMetaData).copy(notStatementStart = true)
+
   private fun getMetadata(source: CStatement): MetaData =
     CMetaData(
       lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
@@ -2141,7 +2152,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = loopGuardMetadata(getMetadata(body), statement),
       )
     xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2154,7 +2165,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = loopExitMetadata(statement),
       )
     xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2221,7 +2232,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = bodyMetadata,
+        metadata = loopGuardMetadata(bodyMetadata, statement),
       )
     check(lastTest != null)
     xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = bodyMetadata)
@@ -2237,7 +2248,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = loopExitMetadata(statement),
       )
     xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = bodyMetadata)
     builder.addEdge(xcfaEdge)
@@ -2550,7 +2561,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = loopGuardMetadata(getMetadata(body), statement),
       )
     xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2563,7 +2574,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = loopExitMetadata(statement),
       )
     xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)

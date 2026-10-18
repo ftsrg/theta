@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
@@ -258,7 +259,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               "pthread_cond_init" -> {
                 // the mutex/condition object (non-scalar source type)
                 invokeLabel.markSyncParam(1)
-                addSingle(NopLabel)
+                addSingle(StmtLabel(SkipStmt.getInstance(), metadata = metadata))
               }
 
               "pthread_exit" -> {
@@ -272,7 +273,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   }
                 }
 
-                addSingle(NopLabel)
+                addSingle(StmtLabel(SkipStmt.getInstance(), metadata = metadata))
               }
 
               "pthread_key_create",

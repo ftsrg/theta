@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -34,9 +35,15 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
       ) {
         builder.removeEdge(edge)
         edges.forEach {
-          if (predicate((it.label as SequenceLabel).labels[0])) {
+          val call = (it.label as SequenceLabel).labels[0]
+          if (predicate(call)) {
             builder.addEdge(
-              XcfaEdge(it.source, it.target, SequenceLabel(listOf(NopLabel)), it.metadata)
+              XcfaEdge(
+                it.source,
+                it.target,
+                SequenceLabel(listOf(StmtLabel(SkipStmt.getInstance(), metadata = call.metadata))),
+                it.metadata,
+              )
             )
           } else {
             builder.addEdge(it)
