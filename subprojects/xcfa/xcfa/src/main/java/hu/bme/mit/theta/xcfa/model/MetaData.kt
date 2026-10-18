@@ -22,8 +22,7 @@ abstract class MetaData {
   abstract fun isSubstantial(): Boolean
 }
 
-object EmptyMetaData : MetaData() {
-  private val hash = 123123
+data object EmptyMetaData : MetaData() {
 
   override fun combine(other: MetaData): MetaData {
     return other
@@ -32,8 +31,4 @@ object EmptyMetaData : MetaData() {
   override fun isSubstantial(): Boolean {
     return false
   }
-
-  override fun equals(other: Any?): Boolean = other is EmptyMetaData
-
-  override fun hashCode(): Int = hash
 }
