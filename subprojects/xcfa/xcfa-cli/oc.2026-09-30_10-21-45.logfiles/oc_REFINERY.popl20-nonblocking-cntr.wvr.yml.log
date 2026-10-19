@@ -1,0 +1,1088 @@
+tools/theta/theta-start.sh sv-benchmarks/c/weaver/popl20-nonblocking-cntr.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_787171b3-5741-4774-8fc8-a9443a517f3317130276503709744925/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_787171b3-5741-4774-8fc8-a9443a517f3317130276503709744925/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/popl20-nonblocking-cntr.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_787171b3-5741-4774-8fc8-a9443a517f3317130276503709744925/tools/theta/solvers
+--- REFINERY CODE ---
+import builtin::strategy.
+import builtin::theory::ibex.
+
+abstract class Event {
+    int value
+}
+
+pred guard(Event e).
+
+class Read extends Event.
+class Write extends Event.
+
+!exists(Read::new).
+!exists(Write::new).
+
+@decide(false)
+pred hb(Event a, Event b).
+
+pred po(Event a, Event b).
+default !po(*, *). 
+
+pred rf(Write w, Read r).
+default !rf(*, *).
+
+pred ws(Write w1, Write w2).
+default !ws(*, *).
+
+propagation rule rfIsHb(Write w, Read r) <->
+    rf(w, r) ==> hb(w, r).
+propagation rule notHbIsNotRf(Write w, Read r) <->
+    !hb(w, r) ==> !rf(w, r).
+    
+propagation rule poIsHb(Event a, Event b) <->
+    po(a, b) ==> hb(a, b).
+propagation rule notHbIsNotPo(Event a, Event b) <->
+    !hb(a, b) ==> !po(a, b).
+    
+propagation rule wsIsHb(Write w1, Write w2) <->
+    ws(w1, w2) ==> hb(w1, w2).
+propagation rule notHbIsNotWs(Write w1, Write w2) <->
+    !hb(w1, w2) ==> !ws(w1, w2).
+    
+propagation rule hbAntySymmetric(Event a, Event b) <->
+    hb(a, b) ==> !hb(b, a).
+
+error pred cycle(Event e) <-> hb(e, e).
+
+propagation rule hbNotReflexive(Event e)
+    ==> !hb(e, e).
+
+propagation rule hbTransitive(Event a, Event c) <->
+    hb(a, b), hb(b, c) ==> hb(a, c).
+    
+pred wsInactive(Write w1, Write w2) <->
+    !guard(w1) ; !guard(w2).
+
+error pred wsViolation(Write w1, Write w2) <->
+    ws(w1, w2),
+    wsInactive(w1, w2).
+
+pred rfDisabledOrNotEqual(Write w, Read r) <->
+    value(w) != value(r) ;
+    !guard(w) ; 
+    !guard(r).
+
+error pred rfViolation(Write w, Read r) <->
+    rf(w, r), 
+    rfDisabledOrNotEqual(w, r).
+
+propagation rule rfVal(Write w, Read r) <->
+    rf(w, r)
+==>
+    guard(w), guard(r),
+    value(w): value(r), value(r): value(w),
+    assert value(w) == value(r).
+
+propagation rule notRf1(Write w, Read r) <->
+    !guard(w) ==> !rf(w, r).
+
+propagation rule notRf2(Write w, Read r) <->
+    !guard(r) ==> !rf(w, r).
+
+propagation rule notRf3(Write w, Read r) <->
+    value(w) != value(r) ==> !rf(w, r).
+
+error pred readFromSeveralWriters(Read r, Write w1, Write w2) <->
+    rf(w1, r), rf(w2, r), w1 != w2.
+
+propagation rule readFromSeveralWritesProp(Read r, Write w2) <->
+    rf(w1, r), w1 != w2 ==> !rf(w2, r).
+    
+error pred rfSome(Read r) <->
+    guard(r), !rf(_, r).
+
+error pred fromReadViolation(Write w1, Write w2, Read r) <->
+    rf(w1, r), ws(w1, w2), hb(w2, r).
+
+propagation rule fromReadPropagation1(Write w2, Read r) <->
+    rf(w1, r), ws(w1, w2) ==> hb(r, w2).
+
+propagation rule fromReadPropagation2(Write w1, Write w2) <->
+    rf(w1, r), hb(w2, r) ==> !ws(w1, w2).
+
+propagation rule fromReadPropagation3(Write w1, Read r) <->
+    ws(w1, w2), hb(w2, r) ==> !rf(w1, r).
+% Events
+Write(W____oc_memory_declaration___0).
+atom W____oc_memory_declaration___0.
+guard(W____oc_memory_declaration___0).
+value(W__M_0): 0.
+Write(W__M_0).
+atom W__M_0.
+guard(W__M_0).
+error pred W__M_1ValueError() <->
+	!(value(W__M_1) == value(R__t0__call___VERIFIER_nondet_int_ret6_2)).
+
+propagation rule W__M_1ValueRule() <->
+	true
+==>
+	assert value(W__M_1) == value(R__t0__call___VERIFIER_nondet_int_ret6_2).
+Write(W__M_1).
+atom W__M_1.
+error pred guardW__M_1() <->
+	!guard(W__M_1) , ((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647));
+	guard(W__M_1) , !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+propagation rule guardW__M_1_pos() <->
+	guard(W__M_1) ==> assert (value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647).
+propagation rule guardW__M_1_neg() <->
+	!guard(W__M_1) ==> assert !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+Read(R__M_2).
+atom R__M_2.
+error pred guardR__M_2() <->
+	!guard(R__M_2) , ((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647));
+	guard(R__M_2) , !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+propagation rule guardR__M_2_pos() <->
+	guard(R__M_2) ==> assert (value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647).
+propagation rule guardR__M_2_neg() <->
+	!guard(R__M_2) ==> assert !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+Read(R__M_3).
+atom R__M_3.
+pred R__M_3_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3).
+error pred guardR__M_3() <->
+	!guard(R__M_3) , (R__M_3_guard_helper());
+	guard(R__M_3) , !(R__M_3_guard_helper()).
+propagation rule guardR__M_3_pos() <->
+	guard(R__M_3) ==> R__M_3_guard_helper().
+propagation rule guardR__M_3_neg() <->
+	!guard(R__M_3) ==> !R__M_3_guard_helper().
+Read(R__M_4).
+atom R__M_4.
+pred R__M_4_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	!(0<value(R__M_4)).
+error pred guardR__M_4() <->
+	!guard(R__M_4) , (R__M_4_guard_helper());
+	guard(R__M_4) , !(R__M_4_guard_helper()).
+propagation rule guardR__M_4_pos() <->
+	guard(R__M_4) ==> R__M_4_guard_helper().
+propagation rule guardR__M_4_neg() <->
+	!guard(R__M_4) ==> !R__M_4_guard_helper().
+Read(R__M_5).
+atom R__M_5.
+pred R__M_5_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3) ,
+	1<value(R__M_5).
+error pred guardR__M_5() <->
+	!guard(R__M_5) , (R__M_5_guard_helper());
+	guard(R__M_5) , !(R__M_5_guard_helper()).
+propagation rule guardR__M_5_pos() <->
+	guard(R__M_5) ==> R__M_5_guard_helper().
+propagation rule guardR__M_5_neg() <->
+	!guard(R__M_5) ==> !R__M_5_guard_helper().
+Read(R__M_6).
+atom R__M_6.
+pred R__M_6_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3) ,
+	!(1<value(R__M_6)).
+error pred guardR__M_6() <->
+	!guard(R__M_6) , (R__M_6_guard_helper());
+	guard(R__M_6) , !(R__M_6_guard_helper()).
+propagation rule guardR__M_6_pos() <->
+	guard(R__M_6) ==> R__M_6_guard_helper().
+propagation rule guardR__M_6_neg() <->
+	!guard(R__M_6) ==> !R__M_6_guard_helper().
+Read(R__M_7).
+atom R__M_7.
+pred R__M_7_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3) ,
+	1<value(R__M_5) ,
+	!(2<value(R__M_7)).
+error pred guardR__M_7() <->
+	!guard(R__M_7) , (R__M_7_guard_helper());
+	guard(R__M_7) , !(R__M_7_guard_helper()).
+propagation rule guardR__M_7_pos() <->
+	guard(R__M_7) ==> R__M_7_guard_helper().
+propagation rule guardR__M_7_neg() <->
+	!guard(R__M_7) ==> !R__M_7_guard_helper().
+Read(R__M_8).
+atom R__M_8.
+pred R__M_8_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8).
+error pred guardR__M_8() <->
+	!guard(R__M_8) , (R__M_8_guard_helper());
+	guard(R__M_8) , !(R__M_8_guard_helper()).
+propagation rule guardR__M_8_pos() <->
+	guard(R__M_8) ==> R__M_8_guard_helper().
+propagation rule guardR__M_8_neg() <->
+	!guard(R__M_8) ==> !R__M_8_guard_helper().
+Read(R__M_9).
+atom R__M_9.
+pred R__M_9_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	!(0<value(R__M_9)).
+error pred guardR__M_9() <->
+	!guard(R__M_9) , (R__M_9_guard_helper());
+	guard(R__M_9) , !(R__M_9_guard_helper()).
+propagation rule guardR__M_9_pos() <->
+	guard(R__M_9) ==> R__M_9_guard_helper().
+propagation rule guardR__M_9_neg() <->
+	!guard(R__M_9) ==> !R__M_9_guard_helper().
+Read(R__M_10).
+atom R__M_10.
+pred R__M_10_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10).
+error pred guardR__M_10() <->
+	!guard(R__M_10) , (R__M_10_guard_helper());
+	guard(R__M_10) , !(R__M_10_guard_helper()).
+propagation rule guardR__M_10_pos() <->
+	guard(R__M_10) ==> R__M_10_guard_helper().
+propagation rule guardR__M_10_neg() <->
+	!guard(R__M_10) ==> !R__M_10_guard_helper().
+Read(R__M_11).
+atom R__M_11.
+pred R__M_11_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	!(value(R__t2__thread2__i_3)<value(R__M_11)).
+error pred guardR__M_11() <->
+	!guard(R__M_11) , (R__M_11_guard_helper());
+	guard(R__M_11) , !(R__M_11_guard_helper()).
+propagation rule guardR__M_11_pos() <->
+	guard(R__M_11) ==> R__M_11_guard_helper().
+propagation rule guardR__M_11_neg() <->
+	!guard(R__M_11) ==> !R__M_11_guard_helper().
+Read(R__M_12).
+atom R__M_12.
+pred R__M_12_guard_helper() <->
+	(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)) ,
+	!(value(R__t2__thread2__i_6)<value(R__M_12)).
+error pred guardR__M_12() <->
+	!guard(R__M_12) , (R__M_12_guard_helper());
+	guard(R__M_12) , !(R__M_12_guard_helper()).
+propagation rule guardR__M_12_pos() <->
+	guard(R__M_12) ==> R__M_12_guard_helper().
+propagation rule guardR__M_12_neg() <->
+	!guard(R__M_12) ==> !R__M_12_guard_helper().
+value(W__counter_0): 0.
+Write(W__counter_0).
+atom W__counter_0.
+guard(W__counter_0).
+Read(R__counter_13).
+atom R__counter_13.
+pred R__counter_13_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))).
+error pred guardR__counter_13() <->
+	!guard(R__counter_13) , (R__counter_13_guard_helper());
+	guard(R__counter_13) , !(R__counter_13_guard_helper()).
+propagation rule guardR__counter_13_pos() <->
+	guard(R__counter_13) ==> R__counter_13_guard_helper().
+propagation rule guardR__counter_13_neg() <->
+	!guard(R__counter_13) ==> !R__counter_13_guard_helper().
+Read(R__counter_1).
+atom R__counter_1.
+pred R__counter_1_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3).
+error pred guardR__counter_1() <->
+	!guard(R__counter_1) , (R__counter_1_guard_helper());
+	guard(R__counter_1) , !(R__counter_1_guard_helper()).
+propagation rule guardR__counter_1_pos() <->
+	guard(R__counter_1) ==> R__counter_1_guard_helper().
+propagation rule guardR__counter_1_neg() <->
+	!guard(R__counter_1) ==> !R__counter_1_guard_helper().
+error pred W__counter_2ValueError() <->
+	!(value(W__counter_2) == (value(R__counter_1))+(1)).
+
+propagation rule W__counter_2ValueRule() <->
+	true
+==>
+	assert value(W__counter_2) == (value(R__counter_1))+(1).
+Write(W__counter_2).
+atom W__counter_2.
+pred W__counter_2_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3).
+error pred guardW__counter_2() <->
+	!guard(W__counter_2) , (W__counter_2_guard_helper());
+	guard(W__counter_2) , !(W__counter_2_guard_helper()).
+propagation rule guardW__counter_2_pos() <->
+	guard(W__counter_2) ==> W__counter_2_guard_helper().
+propagation rule guardW__counter_2_neg() <->
+	!guard(W__counter_2) ==> !W__counter_2_guard_helper().
+Read(R__counter_3).
+atom R__counter_3.
+pred R__counter_3_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3) ,
+	1<value(R__M_5).
+error pred guardR__counter_3() <->
+	!guard(R__counter_3) , (R__counter_3_guard_helper());
+	guard(R__counter_3) , !(R__counter_3_guard_helper()).
+propagation rule guardR__counter_3_pos() <->
+	guard(R__counter_3) ==> R__counter_3_guard_helper().
+propagation rule guardR__counter_3_neg() <->
+	!guard(R__counter_3) ==> !R__counter_3_guard_helper().
+error pred W__counter_4ValueError() <->
+	!(value(W__counter_4) == (value(R__counter_3))+(1)).
+
+propagation rule W__counter_4ValueRule() <->
+	true
+==>
+	assert value(W__counter_4) == (value(R__counter_3))+(1).
+Write(W__counter_4).
+atom W__counter_4.
+pred W__counter_4_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_3) ,
+	1<value(R__M_5).
+error pred guardW__counter_4() <->
+	!guard(W__counter_4) , (W__counter_4_guard_helper());
+	guard(W__counter_4) , !(W__counter_4_guard_helper()).
+propagation rule guardW__counter_4_pos() <->
+	guard(W__counter_4) ==> W__counter_4_guard_helper().
+propagation rule guardW__counter_4_neg() <->
+	!guard(W__counter_4) ==> !W__counter_4_guard_helper().
+Read(R__counter_5).
+atom R__counter_5.
+pred R__counter_5_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8) ,
+	!(value(R__counter_5)>0).
+error pred guardR__counter_5() <->
+	!guard(R__counter_5) , (R__counter_5_guard_helper());
+	guard(R__counter_5) , !(R__counter_5_guard_helper()).
+propagation rule guardR__counter_5_pos() <->
+	guard(R__counter_5) ==> R__counter_5_guard_helper().
+propagation rule guardR__counter_5_neg() <->
+	!guard(R__counter_5) ==> !R__counter_5_guard_helper().
+Read(R__counter_6).
+atom R__counter_6.
+pred R__counter_6_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8) ,
+	value(R__counter_6)>0.
+error pred guardR__counter_6() <->
+	!guard(R__counter_6) , (R__counter_6_guard_helper());
+	guard(R__counter_6) , !(R__counter_6_guard_helper()).
+propagation rule guardR__counter_6_pos() <->
+	guard(R__counter_6) ==> R__counter_6_guard_helper().
+propagation rule guardR__counter_6_neg() <->
+	!guard(R__counter_6) ==> !R__counter_6_guard_helper().
+Read(R__counter_7).
+atom R__counter_7.
+pred R__counter_7_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8) ,
+	value(R__counter_6)>0.
+error pred guardR__counter_7() <->
+	!guard(R__counter_7) , (R__counter_7_guard_helper());
+	guard(R__counter_7) , !(R__counter_7_guard_helper()).
+propagation rule guardR__counter_7_pos() <->
+	guard(R__counter_7) ==> R__counter_7_guard_helper().
+propagation rule guardR__counter_7_neg() <->
+	!guard(R__counter_7) ==> !R__counter_7_guard_helper().
+error pred W__counter_8ValueError() <->
+	!(value(W__counter_8) == (value(R__counter_7))-(1)).
+
+propagation rule W__counter_8ValueRule() <->
+	true
+==>
+	assert value(W__counter_8) == (value(R__counter_7))-(1).
+Write(W__counter_8).
+atom W__counter_8.
+pred W__counter_8_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8) ,
+	value(R__counter_6)>0.
+error pred guardW__counter_8() <->
+	!guard(W__counter_8) , (W__counter_8_guard_helper());
+	guard(W__counter_8) , !(W__counter_8_guard_helper()).
+propagation rule guardW__counter_8_pos() <->
+	guard(W__counter_8) ==> W__counter_8_guard_helper().
+propagation rule guardW__counter_8_neg() <->
+	!guard(W__counter_8) ==> !W__counter_8_guard_helper().
+Read(R__counter_9).
+atom R__counter_9.
+pred R__counter_9_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	!(value(R__counter_9)>0).
+error pred guardR__counter_9() <->
+	!guard(R__counter_9) , (R__counter_9_guard_helper());
+	guard(R__counter_9) , !(R__counter_9_guard_helper()).
+propagation rule guardR__counter_9_pos() <->
+	guard(R__counter_9) ==> R__counter_9_guard_helper().
+propagation rule guardR__counter_9_neg() <->
+	!guard(R__counter_9) ==> !R__counter_9_guard_helper().
+Read(R__counter_10).
+atom R__counter_10.
+pred R__counter_10_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	value(R__counter_10)>0.
+error pred guardR__counter_10() <->
+	!guard(R__counter_10) , (R__counter_10_guard_helper());
+	guard(R__counter_10) , !(R__counter_10_guard_helper()).
+propagation rule guardR__counter_10_pos() <->
+	guard(R__counter_10) ==> R__counter_10_guard_helper().
+propagation rule guardR__counter_10_neg() <->
+	!guard(R__counter_10) ==> !R__counter_10_guard_helper().
+Read(R__counter_11).
+atom R__counter_11.
+pred R__counter_11_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	value(R__counter_10)>0.
+error pred guardR__counter_11() <->
+	!guard(R__counter_11) , (R__counter_11_guard_helper());
+	guard(R__counter_11) , !(R__counter_11_guard_helper()).
+propagation rule guardR__counter_11_pos() <->
+	guard(R__counter_11) ==> R__counter_11_guard_helper().
+propagation rule guardR__counter_11_neg() <->
+	!guard(R__counter_11) ==> !R__counter_11_guard_helper().
+error pred W__counter_12ValueError() <->
+	!(value(W__counter_12) == (value(R__counter_11))-(1)).
+
+propagation rule W__counter_12ValueRule() <->
+	true
+==>
+	assert value(W__counter_12) == (value(R__counter_11))-(1).
+Write(W__counter_12).
+atom W__counter_12.
+pred W__counter_12_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	value(R__counter_10)>0.
+error pred guardW__counter_12() <->
+	!guard(W__counter_12) , (W__counter_12_guard_helper());
+	guard(W__counter_12) , !(W__counter_12_guard_helper()).
+propagation rule guardW__counter_12_pos() <->
+	guard(W__counter_12) ==> W__counter_12_guard_helper().
+propagation rule guardW__counter_12_neg() <->
+	!guard(W__counter_12) ==> !W__counter_12_guard_helper().
+value(W__t0__main__t1_0): 0..4294967295.
+Write(W__t0__main__t1_0).
+atom W__t0__main__t1_0.
+guard(W__t0__main__t1_0).
+value(W__t0__main__t1_1): 1.
+Write(W__t0__main__t1_1).
+atom W__t0__main__t1_1.
+pred W__t0__main__t1_1_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardW__t0__main__t1_1() <->
+	!guard(W__t0__main__t1_1) , (W__t0__main__t1_1_guard_helper());
+	guard(W__t0__main__t1_1) , !(W__t0__main__t1_1_guard_helper()).
+propagation rule guardW__t0__main__t1_1_pos() <->
+	guard(W__t0__main__t1_1) ==> W__t0__main__t1_1_guard_helper().
+propagation rule guardW__t0__main__t1_1_neg() <->
+	!guard(W__t0__main__t1_1) ==> !W__t0__main__t1_1_guard_helper().
+Read(R__t0__main__t1_2).
+atom R__t0__main__t1_2.
+pred R__t0__main__t1_2_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))).
+error pred guardR__t0__main__t1_2() <->
+	!guard(R__t0__main__t1_2) , (R__t0__main__t1_2_guard_helper());
+	guard(R__t0__main__t1_2) , !(R__t0__main__t1_2_guard_helper()).
+propagation rule guardR__t0__main__t1_2_pos() <->
+	guard(R__t0__main__t1_2) ==> R__t0__main__t1_2_guard_helper().
+propagation rule guardR__t0__main__t1_2_neg() <->
+	!guard(R__t0__main__t1_2) ==> !R__t0__main__t1_2_guard_helper().
+value(W__t0__main__t2_0): 0..4294967295.
+Write(W__t0__main__t2_0).
+atom W__t0__main__t2_0.
+guard(W__t0__main__t2_0).
+value(W__t0__main__t2_1): 2.
+Write(W__t0__main__t2_1).
+atom W__t0__main__t2_1.
+pred W__t0__main__t2_1_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardW__t0__main__t2_1() <->
+	!guard(W__t0__main__t2_1) , (W__t0__main__t2_1_guard_helper());
+	guard(W__t0__main__t2_1) , !(W__t0__main__t2_1_guard_helper()).
+propagation rule guardW__t0__main__t2_1_pos() <->
+	guard(W__t0__main__t2_1) ==> W__t0__main__t2_1_guard_helper().
+propagation rule guardW__t0__main__t2_1_neg() <->
+	!guard(W__t0__main__t2_1) ==> !W__t0__main__t2_1_guard_helper().
+Read(R__t0__main__t2_2).
+atom R__t0__main__t2_2.
+pred R__t0__main__t2_2_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))).
+error pred guardR__t0__main__t2_2() <->
+	!guard(R__t0__main__t2_2) , (R__t0__main__t2_2_guard_helper());
+	guard(R__t0__main__t2_2) , !(R__t0__main__t2_2_guard_helper()).
+propagation rule guardR__t0__main__t2_2_pos() <->
+	guard(R__t0__main__t2_2) ==> R__t0__main__t2_2_guard_helper().
+propagation rule guardR__t0__main__t2_2_neg() <->
+	!guard(R__t0__main__t2_2) ==> !R__t0__main__t2_2_guard_helper().
+Write(W__t0__call___VERIFIER_nondet_int_ret6_0).
+atom W__t0__call___VERIFIER_nondet_int_ret6_0.
+guard(W__t0__call___VERIFIER_nondet_int_ret6_0).
+Read(R__t0__call___VERIFIER_nondet_int_ret6_1).
+atom R__t0__call___VERIFIER_nondet_int_ret6_1.
+error pred guardR__t0__call___VERIFIER_nondet_int_ret6_1() <->
+	!guard(R__t0__call___VERIFIER_nondet_int_ret6_1) , ((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647));
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_1) , !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+propagation rule guardR__t0__call___VERIFIER_nondet_int_ret6_1_pos() <->
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_1) ==> assert (value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647).
+propagation rule guardR__t0__call___VERIFIER_nondet_int_ret6_1_neg() <->
+	!guard(R__t0__call___VERIFIER_nondet_int_ret6_1) ==> assert !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+Read(R__t0__call___VERIFIER_nondet_int_ret6_2).
+atom R__t0__call___VERIFIER_nondet_int_ret6_2.
+error pred guardR__t0__call___VERIFIER_nondet_int_ret6_2() <->
+	!guard(R__t0__call___VERIFIER_nondet_int_ret6_2) , ((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647));
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_2) , !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+propagation rule guardR__t0__call___VERIFIER_nondet_int_ret6_2_pos() <->
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_2) ==> assert (value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647).
+propagation rule guardR__t0__call___VERIFIER_nondet_int_ret6_2_neg() <->
+	!guard(R__t0__call___VERIFIER_nondet_int_ret6_2) ==> assert !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+error pred W__t0__assume_abort_if_not__cond_0ValueError() <->
+	!(value(W__t0__assume_abort_if_not__cond_0) == W__t0__assume_abort_if_not__cond_0_helper_1()).
+
+propagation rule W__t0__assume_abort_if_not__cond_0ValueRule() <->
+	true
+==>
+	assert value(W__t0__assume_abort_if_not__cond_0) == W__t0__assume_abort_if_not__cond_0_helper_2().
+Write(W__t0__assume_abort_if_not__cond_0).
+atom W__t0__assume_abort_if_not__cond_0.
+error pred guardW__t0__assume_abort_if_not__cond_0() <->
+	!guard(W__t0__assume_abort_if_not__cond_0) , ((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647));
+	guard(W__t0__assume_abort_if_not__cond_0) , !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+propagation rule guardW__t0__assume_abort_if_not__cond_0_pos() <->
+	guard(W__t0__assume_abort_if_not__cond_0) ==> assert (value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647).
+propagation rule guardW__t0__assume_abort_if_not__cond_0_neg() <->
+	!guard(W__t0__assume_abort_if_not__cond_0) ==> assert !((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647)).
+int W__t0__assume_abort_if_not__cond_0_helper_1() = 
+    value(R__M_2)>0 -> 1;
+    !(value(R__M_2)>0) -> 0.
+int W__t0__assume_abort_if_not__cond_0_helper_2() = 
+    value(R__M_2)>0 -> 1;
+    !(value(R__M_2)>0) -> 0.
+Read(R__t0__assume_abort_if_not__cond_1).
+atom R__t0__assume_abort_if_not__cond_1.
+pred R__t0__assume_abort_if_not__cond_1_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	value(R__t0__assume_abort_if_not__cond_1) == 0.
+error pred guardR__t0__assume_abort_if_not__cond_1() <->
+	!guard(R__t0__assume_abort_if_not__cond_1) , (R__t0__assume_abort_if_not__cond_1_guard_helper());
+	guard(R__t0__assume_abort_if_not__cond_1) , !(R__t0__assume_abort_if_not__cond_1_guard_helper()).
+propagation rule guardR__t0__assume_abort_if_not__cond_1_pos() <->
+	guard(R__t0__assume_abort_if_not__cond_1) ==> R__t0__assume_abort_if_not__cond_1_guard_helper().
+propagation rule guardR__t0__assume_abort_if_not__cond_1_neg() <->
+	!guard(R__t0__assume_abort_if_not__cond_1) ==> !R__t0__assume_abort_if_not__cond_1_guard_helper().
+Read(R__t0__assume_abort_if_not__cond_2).
+atom R__t0__assume_abort_if_not__cond_2.
+pred R__t0__assume_abort_if_not__cond_2_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardR__t0__assume_abort_if_not__cond_2() <->
+	!guard(R__t0__assume_abort_if_not__cond_2) , (R__t0__assume_abort_if_not__cond_2_guard_helper());
+	guard(R__t0__assume_abort_if_not__cond_2) , !(R__t0__assume_abort_if_not__cond_2_guard_helper()).
+propagation rule guardR__t0__assume_abort_if_not__cond_2_pos() <->
+	guard(R__t0__assume_abort_if_not__cond_2) ==> R__t0__assume_abort_if_not__cond_2_guard_helper().
+propagation rule guardR__t0__assume_abort_if_not__cond_2_neg() <->
+	!guard(R__t0__assume_abort_if_not__cond_2) ==> !R__t0__assume_abort_if_not__cond_2_guard_helper().
+error pred W__t0__assume_abort_if_not__cond_3ValueError() <->
+	!(value(W__t0__assume_abort_if_not__cond_3) == W__t0__assume_abort_if_not__cond_3_helper_3()).
+
+propagation rule W__t0__assume_abort_if_not__cond_3ValueRule() <->
+	true
+==>
+	assert value(W__t0__assume_abort_if_not__cond_3) == W__t0__assume_abort_if_not__cond_3_helper_4().
+Write(W__t0__assume_abort_if_not__cond_3).
+atom W__t0__assume_abort_if_not__cond_3.
+pred W__t0__assume_abort_if_not__cond_3_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))).
+error pred guardW__t0__assume_abort_if_not__cond_3() <->
+	!guard(W__t0__assume_abort_if_not__cond_3) , (W__t0__assume_abort_if_not__cond_3_guard_helper());
+	guard(W__t0__assume_abort_if_not__cond_3) , !(W__t0__assume_abort_if_not__cond_3_guard_helper()).
+propagation rule guardW__t0__assume_abort_if_not__cond_3_pos() <->
+	guard(W__t0__assume_abort_if_not__cond_3) ==> W__t0__assume_abort_if_not__cond_3_guard_helper().
+propagation rule guardW__t0__assume_abort_if_not__cond_3_neg() <->
+	!guard(W__t0__assume_abort_if_not__cond_3) ==> !W__t0__assume_abort_if_not__cond_3_guard_helper().
+int W__t0__assume_abort_if_not__cond_3_helper_3() = 
+    value(R__counter_13)!=0 -> 1;
+    !(value(R__counter_13)!=0) -> 0.
+int W__t0__assume_abort_if_not__cond_3_helper_4() = 
+    value(R__counter_13)!=0 -> 1;
+    !(value(R__counter_13)!=0) -> 0.
+Read(R__t0__assume_abort_if_not__cond_4).
+atom R__t0__assume_abort_if_not__cond_4.
+pred R__t0__assume_abort_if_not__cond_4_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))) ,
+	value(R__t0__assume_abort_if_not__cond_4) == 0.
+error pred guardR__t0__assume_abort_if_not__cond_4() <->
+	!guard(R__t0__assume_abort_if_not__cond_4) , (R__t0__assume_abort_if_not__cond_4_guard_helper());
+	guard(R__t0__assume_abort_if_not__cond_4) , !(R__t0__assume_abort_if_not__cond_4_guard_helper()).
+propagation rule guardR__t0__assume_abort_if_not__cond_4_pos() <->
+	guard(R__t0__assume_abort_if_not__cond_4) ==> R__t0__assume_abort_if_not__cond_4_guard_helper().
+propagation rule guardR__t0__assume_abort_if_not__cond_4_neg() <->
+	!guard(R__t0__assume_abort_if_not__cond_4) ==> !R__t0__assume_abort_if_not__cond_4_guard_helper().
+Read(R__t0__assume_abort_if_not__cond_5).
+atom R__t0__assume_abort_if_not__cond_5.
+pred R__t0__assume_abort_if_not__cond_5_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))) ,
+	!(value(R__t0__assume_abort_if_not__cond_5) == 0).
+error pred guardR__t0__assume_abort_if_not__cond_5() <->
+	!guard(R__t0__assume_abort_if_not__cond_5) , (R__t0__assume_abort_if_not__cond_5_guard_helper());
+	guard(R__t0__assume_abort_if_not__cond_5) , !(R__t0__assume_abort_if_not__cond_5_guard_helper()).
+propagation rule guardR__t0__assume_abort_if_not__cond_5_pos() <->
+	guard(R__t0__assume_abort_if_not__cond_5) ==> R__t0__assume_abort_if_not__cond_5_guard_helper().
+propagation rule guardR__t0__assume_abort_if_not__cond_5_neg() <->
+	!guard(R__t0__assume_abort_if_not__cond_5) ==> !R__t0__assume_abort_if_not__cond_5_guard_helper().
+value(W__t1__thread1___argptr_0): 0.
+Write(W__t1__thread1___argptr_0).
+atom W__t1__thread1___argptr_0.
+pred W__t1__thread1___argptr_0_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardW__t1__thread1___argptr_0() <->
+	!guard(W__t1__thread1___argptr_0) , (W__t1__thread1___argptr_0_guard_helper());
+	guard(W__t1__thread1___argptr_0) , !(W__t1__thread1___argptr_0_guard_helper()).
+propagation rule guardW__t1__thread1___argptr_0_pos() <->
+	guard(W__t1__thread1___argptr_0) ==> W__t1__thread1___argptr_0_guard_helper().
+propagation rule guardW__t1__thread1___argptr_0_neg() <->
+	!guard(W__t1__thread1___argptr_0) ==> !W__t1__thread1___argptr_0_guard_helper().
+value(W__t1__thread1_ret_0): 0.
+Write(W__t1__thread1_ret_0).
+atom W__t1__thread1_ret_0.
+error pred guardW__t1__thread1_ret_0() <->
+	!guard(W__t1__thread1_ret_0) , ((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))));
+	guard(W__t1__thread1_ret_0) , !((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7))))).
+propagation rule guardW__t1__thread1_ret_0_pos() <->
+	guard(W__t1__thread1_ret_0) ==> assert (((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))).
+propagation rule guardW__t1__thread1_ret_0_neg() <->
+	!guard(W__t1__thread1_ret_0) ==> assert !((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7))))).
+value(W__t2__thread2___argptr_0): 0.
+Write(W__t2__thread2___argptr_0).
+atom W__t2__thread2___argptr_0.
+pred W__t2__thread2___argptr_0_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardW__t2__thread2___argptr_0() <->
+	!guard(W__t2__thread2___argptr_0) , (W__t2__thread2___argptr_0_guard_helper());
+	guard(W__t2__thread2___argptr_0) , !(W__t2__thread2___argptr_0_guard_helper()).
+propagation rule guardW__t2__thread2___argptr_0_pos() <->
+	guard(W__t2__thread2___argptr_0) ==> W__t2__thread2___argptr_0_guard_helper().
+propagation rule guardW__t2__thread2___argptr_0_neg() <->
+	!guard(W__t2__thread2___argptr_0) ==> !W__t2__thread2___argptr_0_guard_helper().
+value(W__t2__thread2__i_0): 0.
+Write(W__t2__thread2__i_0).
+atom W__t2__thread2__i_0.
+pred W__t2__thread2__i_0_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0).
+error pred guardW__t2__thread2__i_0() <->
+	!guard(W__t2__thread2__i_0) , (W__t2__thread2__i_0_guard_helper());
+	guard(W__t2__thread2__i_0) , !(W__t2__thread2__i_0_guard_helper()).
+propagation rule guardW__t2__thread2__i_0_pos() <->
+	guard(W__t2__thread2__i_0) ==> W__t2__thread2__i_0_guard_helper().
+propagation rule guardW__t2__thread2__i_0_neg() <->
+	!guard(W__t2__thread2__i_0) ==> !W__t2__thread2__i_0_guard_helper().
+value(W__t2__thread2__i_1): 1.
+Write(W__t2__thread2__i_1).
+atom W__t2__thread2__i_1.
+pred W__t2__thread2__i_1_guard_helper() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	0<value(R__M_8) ,
+	value(R__counter_6)>0.
+error pred guardW__t2__thread2__i_1() <->
+	!guard(W__t2__thread2__i_1) , (W__t2__thread2__i_1_guard_helper());
+	guard(W__t2__thread2__i_1) , !(W__t2__thread2__i_1_guard_helper()).
+propagation rule guardW__t2__thread2__i_1_pos() <->
+	guard(W__t2__thread2__i_1) ==> W__t2__thread2__i_1_guard_helper().
+propagation rule guardW__t2__thread2__i_1_neg() <->
+	!guard(W__t2__thread2__i_1) ==> !W__t2__thread2__i_1_guard_helper().
+Read(R__t2__thread2__i_2).
+atom R__t2__thread2__i_2.
+pred R__t2__thread2__i_2_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10).
+error pred guardR__t2__thread2__i_2() <->
+	!guard(R__t2__thread2__i_2) , (R__t2__thread2__i_2_guard_helper());
+	guard(R__t2__thread2__i_2) , !(R__t2__thread2__i_2_guard_helper()).
+propagation rule guardR__t2__thread2__i_2_pos() <->
+	guard(R__t2__thread2__i_2) ==> R__t2__thread2__i_2_guard_helper().
+propagation rule guardR__t2__thread2__i_2_neg() <->
+	!guard(R__t2__thread2__i_2) ==> !R__t2__thread2__i_2_guard_helper().
+Read(R__t2__thread2__i_3).
+atom R__t2__thread2__i_3.
+pred R__t2__thread2__i_3_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	!(value(R__t2__thread2__i_3)<value(R__M_11)).
+error pred guardR__t2__thread2__i_3() <->
+	!guard(R__t2__thread2__i_3) , (R__t2__thread2__i_3_guard_helper());
+	guard(R__t2__thread2__i_3) , !(R__t2__thread2__i_3_guard_helper()).
+propagation rule guardR__t2__thread2__i_3_pos() <->
+	guard(R__t2__thread2__i_3) ==> R__t2__thread2__i_3_guard_helper().
+propagation rule guardR__t2__thread2__i_3_neg() <->
+	!guard(R__t2__thread2__i_3) ==> !R__t2__thread2__i_3_guard_helper().
+Read(R__t2__thread2__i_4).
+atom R__t2__thread2__i_4.
+pred R__t2__thread2__i_4_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	value(R__counter_10)>0.
+error pred guardR__t2__thread2__i_4() <->
+	!guard(R__t2__thread2__i_4) , (R__t2__thread2__i_4_guard_helper());
+	guard(R__t2__thread2__i_4) , !(R__t2__thread2__i_4_guard_helper()).
+propagation rule guardR__t2__thread2__i_4_pos() <->
+	guard(R__t2__thread2__i_4) ==> R__t2__thread2__i_4_guard_helper().
+propagation rule guardR__t2__thread2__i_4_neg() <->
+	!guard(R__t2__thread2__i_4) ==> !R__t2__thread2__i_4_guard_helper().
+error pred W__t2__thread2__i_5ValueError() <->
+	!(value(W__t2__thread2__i_5) == (value(R__t2__thread2__i_4))+(1)).
+
+propagation rule W__t2__thread2__i_5ValueRule() <->
+	true
+==>
+	assert value(W__t2__thread2__i_5) == (value(R__t2__thread2__i_4))+(1).
+Write(W__t2__thread2__i_5).
+atom W__t2__thread2__i_5.
+pred W__t2__thread2__i_5_guard_helper() <->
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)) ,
+	value(R__t2__thread2__i_2)<value(R__M_10) ,
+	value(R__counter_10)>0.
+error pred guardW__t2__thread2__i_5() <->
+	!guard(W__t2__thread2__i_5) , (W__t2__thread2__i_5_guard_helper());
+	guard(W__t2__thread2__i_5) , !(W__t2__thread2__i_5_guard_helper()).
+propagation rule guardW__t2__thread2__i_5_pos() <->
+	guard(W__t2__thread2__i_5) ==> W__t2__thread2__i_5_guard_helper().
+propagation rule guardW__t2__thread2__i_5_neg() <->
+	!guard(W__t2__thread2__i_5) ==> !W__t2__thread2__i_5_guard_helper().
+Read(R__t2__thread2__i_6).
+atom R__t2__thread2__i_6.
+pred R__t2__thread2__i_6_guard_helper() <->
+	(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)) ,
+	!(value(R__t2__thread2__i_6)<value(R__M_12)).
+error pred guardR__t2__thread2__i_6() <->
+	!guard(R__t2__thread2__i_6) , (R__t2__thread2__i_6_guard_helper());
+	guard(R__t2__thread2__i_6) , !(R__t2__thread2__i_6_guard_helper()).
+propagation rule guardR__t2__thread2__i_6_pos() <->
+	guard(R__t2__thread2__i_6) ==> R__t2__thread2__i_6_guard_helper().
+propagation rule guardR__t2__thread2__i_6_neg() <->
+	!guard(R__t2__thread2__i_6) ==> !R__t2__thread2__i_6_guard_helper().
+value(W__t2__thread2_ret_0): 0.
+Write(W__t2__thread2_ret_0).
+atom W__t2__thread2_ret_0.
+error pred guardW__t2__thread2_ret_0() <->
+	!guard(W__t2__thread2_ret_0) , ((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))));
+	guard(W__t2__thread2_ret_0) , !((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12))))).
+propagation rule guardW__t2__thread2_ret_0_pos() <->
+	guard(W__t2__thread2_ret_0) ==> assert (((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))).
+propagation rule guardW__t2__thread2_ret_0_neg() <->
+	!guard(W__t2__thread2_ret_0) ==> assert !((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12))))).
+
+% Relations
+po(W____oc_memory_declaration___0, W__M_0).
+po(W__M_0, W__counter_0).
+po(W__counter_0, W__t0__main__t1_0).
+po(W__t0__main__t1_0, W__t0__main__t2_0).
+po(W__t0__main__t2_0, W__t0__call___VERIFIER_nondet_int_ret6_0).
+po(W__t0__call___VERIFIER_nondet_int_ret6_0, R__t0__call___VERIFIER_nondet_int_ret6_1).
+po(R__t0__call___VERIFIER_nondet_int_ret6_1, R__t0__call___VERIFIER_nondet_int_ret6_2).
+po(R__t0__call___VERIFIER_nondet_int_ret6_2, W__M_1).
+po(W__M_1, R__M_2).
+po(R__M_2, W__t0__assume_abort_if_not__cond_0).
+po(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_1).
+po(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_2).
+po(R__t0__assume_abort_if_not__cond_2, W__t1__thread1___argptr_0).
+po(W__t1__thread1___argptr_0, W__t0__main__t1_1).
+po(W__t0__main__t1_1, R__M_3).
+po(W__t0__main__t1_1, R__M_4).
+po(R__M_3, R__counter_1).
+po(R__counter_1, W__counter_2).
+po(W__counter_2, R__M_5).
+po(W__counter_2, R__M_6).
+po(R__M_5, R__counter_3).
+po(R__counter_3, W__counter_4).
+po(W__counter_4, R__M_7).
+po(R__M_4, W__t1__thread1_ret_0).
+po(R__M_6, W__t1__thread1_ret_0).
+po(R__M_7, W__t1__thread1_ret_0).
+po(W__t0__main__t1_1, W__t2__thread2___argptr_0).
+po(W__t2__thread2___argptr_0, W__t0__main__t2_1).
+po(W__t0__main__t2_1, W__t2__thread2__i_0).
+po(W__t2__thread2__i_0, R__M_8).
+po(W__t2__thread2__i_0, R__M_9).
+po(R__M_8, R__counter_5).
+po(R__M_8, R__counter_6).
+po(R__counter_6, R__counter_7).
+po(R__counter_7, W__counter_8).
+po(W__counter_8, W__t2__thread2__i_1).
+po(R__counter_5, R__t2__thread2__i_2).
+po(W__t2__thread2__i_1, R__t2__thread2__i_2).
+po(R__t2__thread2__i_2, R__M_10).
+po(R__counter_5, R__t2__thread2__i_3).
+po(W__t2__thread2__i_1, R__t2__thread2__i_3).
+po(R__t2__thread2__i_3, R__M_11).
+po(R__M_10, R__counter_9).
+po(R__M_10, R__counter_10).
+po(R__counter_10, R__counter_11).
+po(R__counter_11, W__counter_12).
+po(W__counter_12, R__t2__thread2__i_4).
+po(R__t2__thread2__i_4, W__t2__thread2__i_5).
+po(R__counter_9, R__t2__thread2__i_6).
+po(W__t2__thread2__i_5, R__t2__thread2__i_6).
+po(R__t2__thread2__i_6, R__M_12).
+po(R__M_9, W__t2__thread2_ret_0).
+po(R__M_11, W__t2__thread2_ret_0).
+po(R__M_12, W__t2__thread2_ret_0).
+po(W__t0__main__t2_1, R__t0__main__t1_2).
+po(W__t1__thread1_ret_0, R__t0__main__t1_2).
+po(R__t0__main__t1_2, R__t0__main__t2_2).
+po(W__t2__thread2_ret_0, R__t0__main__t2_2).
+po(R__t0__main__t2_2, R__counter_13).
+po(R__counter_13, W__t0__assume_abort_if_not__cond_3).
+po(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_4).
+po(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_5).
+?rf(W__t0__call___VERIFIER_nondet_int_ret6_0, R__t0__call___VERIFIER_nondet_int_ret6_1).
+?rf(W__t0__call___VERIFIER_nondet_int_ret6_0, R__t0__call___VERIFIER_nondet_int_ret6_2).
+?rf(W__M_1, R__M_2).
+?rf(W__M_1, R__M_3).
+?rf(W__M_1, R__M_4).
+?rf(W__M_1, R__M_5).
+?rf(W__M_1, R__M_6).
+?rf(W__M_1, R__M_7).
+?rf(W__M_1, R__M_8).
+?rf(W__M_1, R__M_9).
+?rf(W__M_1, R__M_10).
+?rf(W__M_1, R__M_11).
+?rf(W__M_1, R__M_12).
+?rf(W__M_0, R__M_3).
+?rf(W__M_0, R__M_4).
+?rf(W__M_0, R__M_5).
+?rf(W__M_0, R__M_6).
+?rf(W__M_0, R__M_7).
+?rf(W__M_0, R__M_8).
+?rf(W__M_0, R__M_9).
+?rf(W__M_0, R__M_10).
+?rf(W__M_0, R__M_11).
+?rf(W__M_0, R__M_12).
+?rf(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_1).
+?rf(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_2).
+?rf(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_4).
+?rf(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_5).
+?rf(W__counter_0, R__counter_1).
+?rf(W__counter_2, R__counter_3).
+?rf(W__counter_0, R__counter_5).
+?rf(W__counter_0, R__counter_6).
+?rf(W__counter_0, R__counter_7).
+?rf(W__counter_0, R__counter_9).
+?rf(W__counter_8, R__counter_9).
+?rf(W__counter_0, R__counter_10).
+?rf(W__counter_8, R__counter_10).
+?rf(W__counter_0, R__counter_11).
+?rf(W__counter_8, R__counter_11).
+?rf(W__counter_0, R__counter_13).
+?rf(W__counter_0, R__counter_3).
+?rf(W__counter_2, R__counter_13).
+?rf(W__counter_4, R__counter_13).
+?rf(W__counter_2, R__counter_5).
+?rf(W__counter_2, R__counter_6).
+?rf(W__counter_2, R__counter_7).
+?rf(W__counter_2, R__counter_9).
+?rf(W__counter_2, R__counter_10).
+?rf(W__counter_2, R__counter_11).
+?rf(W__counter_4, R__counter_5).
+?rf(W__counter_4, R__counter_6).
+?rf(W__counter_4, R__counter_7).
+?rf(W__counter_4, R__counter_9).
+?rf(W__counter_4, R__counter_10).
+?rf(W__counter_4, R__counter_11).
+?rf(W__counter_8, R__counter_13).
+?rf(W__counter_12, R__counter_13).
+?rf(W__counter_8, R__counter_1).
+?rf(W__counter_8, R__counter_3).
+?rf(W__counter_12, R__counter_1).
+?rf(W__counter_12, R__counter_3).
+?rf(W__t2__thread2__i_0, R__t2__thread2__i_2).
+?rf(W__t2__thread2__i_1, R__t2__thread2__i_2).
+?rf(W__t2__thread2__i_0, R__t2__thread2__i_3).
+?rf(W__t2__thread2__i_1, R__t2__thread2__i_3).
+?rf(W__t2__thread2__i_0, R__t2__thread2__i_4).
+?rf(W__t2__thread2__i_1, R__t2__thread2__i_4).
+?rf(W__t2__thread2__i_0, R__t2__thread2__i_6).
+?rf(W__t2__thread2__i_1, R__t2__thread2__i_6).
+?rf(W__t2__thread2__i_5, R__t2__thread2__i_6).
+?rf(W__t0__main__t1_1, R__t0__main__t1_2).
+?rf(W__t0__main__t2_1, R__t0__main__t2_2).
+?ws(W__counter_0, W__counter_2).
+?ws(W__counter_0, W__counter_4).
+?ws(W__counter_0, W__counter_8).
+?ws(W__counter_0, W__counter_12).
+?ws(W__counter_2, W__counter_0).
+?ws(W__counter_4, W__counter_0).
+?ws(W__counter_2, W__counter_8).
+?ws(W__counter_2, W__counter_12).
+?ws(W__counter_4, W__counter_8).
+?ws(W__counter_4, W__counter_12).
+?ws(W__counter_8, W__counter_0).
+?ws(W__counter_12, W__counter_0).
+?ws(W__counter_8, W__counter_2).
+?ws(W__counter_8, W__counter_4).
+?ws(W__counter_12, W__counter_2).
+?ws(W__counter_12, W__counter_4).
+
+% Possible Read-From Predicates
+error pred rfSomeR__t0__call___VERIFIER_nondet_int_ret6_1() <->
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_1) , !rf(W__t0__call___VERIFIER_nondet_int_ret6_0, R__t0__call___VERIFIER_nondet_int_ret6_1).
+error pred rfSomeR__t0__call___VERIFIER_nondet_int_ret6_2() <->
+	guard(R__t0__call___VERIFIER_nondet_int_ret6_2) , !rf(W__t0__call___VERIFIER_nondet_int_ret6_0, R__t0__call___VERIFIER_nondet_int_ret6_2).
+error pred rfSomeR__M_2() <->
+	guard(R__M_2) , !rf(W__M_1, R__M_2).
+error pred rfSomeR__M_3() <->
+	guard(R__M_3) , !rf(W__M_1, R__M_3) , !rf(W__M_0, R__M_3).
+error pred rfSomeR__M_4() <->
+	guard(R__M_4) , !rf(W__M_1, R__M_4) , !rf(W__M_0, R__M_4).
+error pred rfSomeR__M_5() <->
+	guard(R__M_5) , !rf(W__M_1, R__M_5) , !rf(W__M_0, R__M_5).
+error pred rfSomeR__M_6() <->
+	guard(R__M_6) , !rf(W__M_1, R__M_6) , !rf(W__M_0, R__M_6).
+error pred rfSomeR__M_7() <->
+	guard(R__M_7) , !rf(W__M_1, R__M_7) , !rf(W__M_0, R__M_7).
+error pred rfSomeR__M_8() <->
+	guard(R__M_8) , !rf(W__M_1, R__M_8) , !rf(W__M_0, R__M_8).
+error pred rfSomeR__M_9() <->
+	guard(R__M_9) , !rf(W__M_1, R__M_9) , !rf(W__M_0, R__M_9).
+error pred rfSomeR__M_10() <->
+	guard(R__M_10) , !rf(W__M_1, R__M_10) , !rf(W__M_0, R__M_10).
+error pred rfSomeR__M_11() <->
+	guard(R__M_11) , !rf(W__M_1, R__M_11) , !rf(W__M_0, R__M_11).
+error pred rfSomeR__M_12() <->
+	guard(R__M_12) , !rf(W__M_1, R__M_12) , !rf(W__M_0, R__M_12).
+error pred rfSomeR__t0__assume_abort_if_not__cond_1() <->
+	guard(R__t0__assume_abort_if_not__cond_1) , !rf(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_1).
+error pred rfSomeR__t0__assume_abort_if_not__cond_2() <->
+	guard(R__t0__assume_abort_if_not__cond_2) , !rf(W__t0__assume_abort_if_not__cond_0, R__t0__assume_abort_if_not__cond_2).
+error pred rfSomeR__t0__assume_abort_if_not__cond_4() <->
+	guard(R__t0__assume_abort_if_not__cond_4) , !rf(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_4).
+error pred rfSomeR__t0__assume_abort_if_not__cond_5() <->
+	guard(R__t0__assume_abort_if_not__cond_5) , !rf(W__t0__assume_abort_if_not__cond_3, R__t0__assume_abort_if_not__cond_5).
+error pred rfSomeR__counter_1() <->
+	guard(R__counter_1) , !rf(W__counter_0, R__counter_1) , !rf(W__counter_8, R__counter_1) , !rf(W__counter_12, R__counter_1).
+error pred rfSomeR__counter_3() <->
+	guard(R__counter_3) , !rf(W__counter_2, R__counter_3) , !rf(W__counter_0, R__counter_3) , !rf(W__counter_8, R__counter_3) , !rf(W__counter_12, R__counter_3).
+error pred rfSomeR__counter_5() <->
+	guard(R__counter_5) , !rf(W__counter_0, R__counter_5) , !rf(W__counter_2, R__counter_5) , !rf(W__counter_4, R__counter_5).
+error pred rfSomeR__counter_6() <->
+	guard(R__counter_6) , !rf(W__counter_0, R__counter_6) , !rf(W__counter_2, R__counter_6) , !rf(W__counter_4, R__counter_6).
+error pred rfSomeR__counter_7() <->
+	guard(R__counter_7) , !rf(W__counter_0, R__counter_7) , !rf(W__counter_2, R__counter_7) , !rf(W__counter_4, R__counter_7).
+error pred rfSomeR__counter_9() <->
+	guard(R__counter_9) , !rf(W__counter_0, R__counter_9) , !rf(W__counter_8, R__counter_9) , !rf(W__counter_2, R__counter_9) , !rf(W__counter_4, R__counter_9).
+error pred rfSomeR__counter_10() <->
+	guard(R__counter_10) , !rf(W__counter_0, R__counter_10) , !rf(W__counter_8, R__counter_10) , !rf(W__counter_2, R__counter_10) , !rf(W__counter_4, R__counter_10).
+error pred rfSomeR__counter_11() <->
+	guard(R__counter_11) , !rf(W__counter_0, R__counter_11) , !rf(W__counter_8, R__counter_11) , !rf(W__counter_2, R__counter_11) , !rf(W__counter_4, R__counter_11).
+error pred rfSomeR__counter_13() <->
+	guard(R__counter_13) , !rf(W__counter_0, R__counter_13) , !rf(W__counter_2, R__counter_13) , !rf(W__counter_4, R__counter_13) , !rf(W__counter_8, R__counter_13) , !rf(W__counter_12, R__counter_13).
+error pred rfSomeR__t2__thread2__i_2() <->
+	guard(R__t2__thread2__i_2) , !rf(W__t2__thread2__i_0, R__t2__thread2__i_2) , !rf(W__t2__thread2__i_1, R__t2__thread2__i_2).
+error pred rfSomeR__t2__thread2__i_3() <->
+	guard(R__t2__thread2__i_3) , !rf(W__t2__thread2__i_0, R__t2__thread2__i_3) , !rf(W__t2__thread2__i_1, R__t2__thread2__i_3).
+error pred rfSomeR__t2__thread2__i_4() <->
+	guard(R__t2__thread2__i_4) , !rf(W__t2__thread2__i_0, R__t2__thread2__i_4) , !rf(W__t2__thread2__i_1, R__t2__thread2__i_4).
+error pred rfSomeR__t2__thread2__i_6() <->
+	guard(R__t2__thread2__i_6) , !rf(W__t2__thread2__i_0, R__t2__thread2__i_6) , !rf(W__t2__thread2__i_1, R__t2__thread2__i_6) , !rf(W__t2__thread2__i_5, R__t2__thread2__i_6).
+error pred rfSomeR__t0__main__t1_2() <->
+	guard(R__t0__main__t1_2) , !rf(W__t0__main__t1_1, R__t0__main__t1_2).
+error pred rfSomeR__t0__main__t2_2() <->
+	guard(R__t0__main__t2_2) , !rf(W__t0__main__t2_1, R__t0__main__t2_2).
+
+% Reach errors
+pred err0_pid0() <->
+	(value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647) ,
+	!(value(R__t0__assume_abort_if_not__cond_2) == 0) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_4))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(!(1<value(R__M_6))))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_3))&&(1<value(R__M_5))&&(!(2<value(R__M_7)))) ,
+	(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(!(0<value(R__M_9))))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(!(value(R__t2__thread2__i_3)<value(R__M_11))))||(((((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(!(value(R__counter_9)>0)))||(((((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(!(value(R__counter_5)>0)))||(((value(R__t0__call___VERIFIER_nondet_int_ret6_1)>=-2147483648)&&(value(R__t0__call___VERIFIER_nondet_int_ret6_1)<=2147483647))&&(!(value(R__t0__assume_abort_if_not__cond_2) == 0))&&(0<value(R__M_8))&&(value(R__counter_6)>0)))&&(value(R__t2__thread2__i_2)<value(R__M_10))&&(value(R__counter_10)>0)))&&(!(value(R__t2__thread2__i_6)<value(R__M_12)))) ,
+	!(value(R__t0__assume_abort_if_not__cond_5) == 0).
+error pred violationNotFound() <-> !err0_pid0().
+
+-------------------------------
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/tmp/vcloud_worker_meres_on_bme-233008/run_dir_787171b3-5741-4774-8fc8-a9443a517f3317130276503709744925/tools/theta/theta.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by tools.refinery.ibex.IbexSolverLoader in an unnamed module (file:/tmp/vcloud_worker_meres_on_bme-233008/run_dir_787171b3-5741-4774-8fc8-a9443a517f3317130276503709744925/tools/theta/theta.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Exception in thread "main" java.lang.UnsatisfiedLinkError: 'void com.microsoft.z3.Native.INTERNALsolverInterrupt(long, long)'
+	at com.microsoft.z3.Native.INTERNALsolverInterrupt(Native Method)
+	at com.microsoft.z3.Native.solverInterrupt(Native.java:5195)
+	at com.microsoft.z3.Solver.interrupt(Solver.java:120)
+	at tools.refinery.store.reasoning.smt.internal.solver.RuleBasedSolver.<init>(RuleBasedSolver.java:43)
+	at tools.refinery.store.reasoning.smt.internal.context.ModelContext.createSolver(ModelContext.java:103)
+	at tools.refinery.store.reasoning.smt.internal.BoundSmtPropagator.<init>(BoundSmtPropagator.java:29)
+	at tools.refinery.store.reasoning.smt.SmtPropagator.lambda$apply$0(SmtPropagator.java:69)
+	at tools.refinery.store.dse.propagation.impl.PropagationAdapterImpl.<init>(PropagationAdapterImpl.java:23)
+	at tools.refinery.store.dse.propagation.impl.PropagationStoreAdapterImpl.createModelAdapter(PropagationStoreAdapterImpl.java:36)
+	at tools.refinery.store.dse.propagation.impl.PropagationStoreAdapterImpl.createModelAdapter(PropagationStoreAdapterImpl.java:17)
+	at tools.refinery.store.model.internal.ModelStoreImpl.adaptModel(ModelStoreImpl.java:87)
+	at tools.refinery.store.model.internal.ModelStoreImpl.createEmptyModel(ModelStoreImpl.java:52)
+	at tools.refinery.store.model.internal.ModelStoreImpl.createEmptyModel(ModelStoreImpl.java:21)
+	at tools.refinery.store.reasoning.internal.ReasoningStoreAdapterImpl.tryCreateInitialModel(ReasoningStoreAdapterImpl.java:106)
+	at tools.refinery.generator.impl.ModelFacadeImpl.getPropagatedModel(ModelFacadeImpl.java:73)
+	at tools.refinery.generator.impl.ModelFacadeImpl.<init>(ModelFacadeImpl.java:54)
+	at tools.refinery.generator.impl.ConcreteModelFacade.<init>(ConcreteModelFacade.java:24)
+	at tools.refinery.generator.impl.ModelGeneratorImpl.<init>(ModelGeneratorImpl.java:36)
+	at tools.refinery.generator.ModelGeneratorFactory.tryCreateGenerator(ModelGeneratorFactory.java:86)
+	at tools.refinery.generator.ModelGeneratorFactory.createGenerator(ModelGeneratorFactory.java:90)
+	at hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker.check(XcfaRefineryOcChecker.kt:355)
+	at hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker.check(XcfaOcSafetyChecker.kt:110)
+	at hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker.check(XcfaOcSafetyChecker.kt:36)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.checkers.ConfigToOcCheckerKt.getOcChecker$lambda$0(ConfigToOcChecker.kt:51)
+	at hu.bme.mit.theta.analysis.algorithm.SafetyChecker.check(SafetyChecker.java:27)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend$lambda$1(ExecuteConfig.kt:302)
+	at hu.bme.mit.theta.xcfa.cli.params.ExitCodesKt.exitOnError(ExitCodes.kt:63)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.backend(ExecuteConfig.kt:301)
+	at hu.bme.mit.theta.xcfa.cli.ExecuteConfigKt.runConfig(ExecuteConfig.kt:79)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.run(XcfaCli.kt:128)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.access$run(XcfaCli.kt:37)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli$Companion.main(XcfaCli.kt:138)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCli.main(XcfaCli.kt)

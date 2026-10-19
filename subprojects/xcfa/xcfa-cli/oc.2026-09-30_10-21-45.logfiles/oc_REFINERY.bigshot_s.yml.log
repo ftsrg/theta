@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/pthread/bigshot_s.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_e6e727f3-a1d5-46d3-afdc-9f1a936211be149292167895746462/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_e6e727f3-a1d5-46d3-afdc-9f1a936211be149292167895746462/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread/bigshot_s.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_e6e727f3-a1d5-46d3-afdc-9f1a936211be149292167895746462/tools/theta/solvers
+Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph.exit(XcfaToEventGraph.kt:552), java.lang.IllegalStateException: Feature not supported by OC checker: Unknown function: strcpy(call_strcpy_ret3, v, 1).)
+Error: class java.lang.IllegalStateException Feature not supported by OC checker: Unknown function: strcpy(call_strcpy_ret3, v, 1). (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph#exit:552, hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph#access$exit:52)

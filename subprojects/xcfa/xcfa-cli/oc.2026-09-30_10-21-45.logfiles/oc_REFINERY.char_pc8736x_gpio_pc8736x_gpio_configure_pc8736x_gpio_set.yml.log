@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_configure_pc8736x_gpio_set.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_65e7af72-b4a6-493a-a4b3-ddda09b0c1d44606045215111163607/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_65e7af72-b4a6-493a-a4b3-ddda09b0c1d44606045215111163607/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread-driver-races/char_pc8736x_gpio_pc8736x_gpio_configure_pc8736x_gpio_set.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_65e7af72-b4a6-493a-a4b3-ddda09b0c1d44606045215111163607/tools/theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.visitPrimaryExpressionId(ExpressionVisitor.java:748), java.lang.RuntimeException: No such variable or macro: pc8736x_gpio_init)
+Error: class java.lang.RuntimeException No such variable or macro: pc8736x_gpio_init (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#visitPrimaryExpressionId:748, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#visitPrimaryExpressionId:74)

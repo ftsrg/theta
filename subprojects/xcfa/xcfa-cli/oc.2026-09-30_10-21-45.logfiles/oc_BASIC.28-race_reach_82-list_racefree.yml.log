@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/goblint-regression/28-race_reach_82-list_racefree.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_6f68c8b2-5d14-476e-9bdd-1cf03c67542116383612058957396965/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_6f68c8b2-5d14-476e-9bdd-1cf03c67542116383612058957396965/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/goblint-regression/28-race_reach_82-list_racefree.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_6f68c8b2-5d14-476e-9bdd-1cf03c67542116383612058957396965/tools/theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionPtrMemberAccess$0(ExpressionVisitor.java:1012), java.lang.IllegalStateException: Field [next] not found, available fields are: [datum])
+Error: class java.lang.IllegalStateException Field [next] not found, available fields are: [datum] (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionPtrMemberAccess$0:1012)

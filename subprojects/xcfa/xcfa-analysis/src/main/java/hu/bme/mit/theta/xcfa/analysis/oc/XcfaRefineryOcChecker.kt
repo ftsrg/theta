@@ -67,9 +67,9 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       }
     }
 
-    println("--- REFINERY CODE ---")
-    println(baseRefineryCode)
-    println("-------------------------------")
+    //println("--- REFINERY CODE ---")
+    //println(baseRefineryCode)
+    //println("-------------------------------")
   }
 
   private fun generateMetamodel(): String {
@@ -457,6 +457,21 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       "$helperName()"
     }
     is PosExpr<*> -> op.toRefineryExpr(events, helperScripts, identifier)
+    is ModExpr -> {
+      val l = leftOp
+      val r = rightOp
+
+      if (l is IntLitExpr && l.value.toString() == "0") {
+        return "0"
+      }
+
+      val leftStr = l.toRefineryExpr(events, helperScripts, identifier)
+      val rightStr = r.toRefineryExpr(events, helperScripts, identifier)
+
+      val result = "($leftStr - (($leftStr / $rightStr) * $rightStr))"
+      println("DEBUG ModExpr: $this -> converted to: $result")
+      result
+    }
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")
   }
 }

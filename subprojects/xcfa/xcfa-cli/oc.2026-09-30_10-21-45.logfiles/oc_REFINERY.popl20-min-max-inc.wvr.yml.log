@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/weaver/popl20-min-max-inc.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_a8b21d73-70cc-4275-b074-79b61f30676c7457626708754557180/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_a8b21d73-70cc-4275-b074-79b61f30676c7457626708754557180/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/popl20-min-max-inc.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_a8b21d73-70cc-4275-b074-79b61f30676c7457626708754557180/tools/theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.lambda$visitUnaryExpressionSizeOrAlignOf$3(ExpressionVisitor.java:581), java.lang.NullPointerException: Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null)
+Error: class java.lang.NullPointerException Cannot invoke "hu.bme.mit.theta.core.decl.VarDecl.getRef()" because the return value of "hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.getVar(String)" is null (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#lambda$visitUnaryExpressionSizeOrAlignOf$3:581, java.util.Optional#or:313)

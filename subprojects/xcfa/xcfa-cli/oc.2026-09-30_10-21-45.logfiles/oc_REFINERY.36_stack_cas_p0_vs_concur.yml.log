@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/pthread-ext/36_stack_cas_p0_vs_concur.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_6e29f421-03a7-4603-84a9-a43b6018d97210025008450858763984/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_6e29f421-03a7-4603-84a9-a43b6018d97210025008450858763984/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread-ext/36_stack_cas_p0_vs_concur.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_6e29f421-03a7-4603-84a9-a43b6018d97210025008450858763984/tools/theta/solvers
+Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph$ThreadProcessor.process(XcfaToEventGraph.kt:232), java.lang.IllegalStateException: Check failed.)
+Error: class java.lang.IllegalStateException Check failed. (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph$ThreadProcessor#process:232, hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph$ThreadProcessor#process:405)

@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/pthread-complex/workstealqueue_mutex-2.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_9aa6a687-dd32-470b-8c60-b8485aa619ff14135321690220337563/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_9aa6a687-dd32-470b-8c60-b8485aa619ff14135321690220337563/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread-complex/workstealqueue_mutex-2.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_9aa6a687-dd32-470b-8c60-b8485aa619ff14135321690220337563/tools/theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionMemberAccess$0(ExpressionVisitor.java:972), java.lang.IllegalStateException: Only structs expected here)
+Error: class java.lang.IllegalStateException Only structs expected here (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionMemberAccess$0:972)

@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/ldv-linux-3.14-races/linux-3.14--drivers--media--platform--marvell-ccic--cafe_ccic.ko.cil-1.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_5cf19545-3bc8-4ac6-837c-c3e4df664a5410728084480974410986/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5cf19545-3bc8-4ac6-837c-c3e4df664a5410728084480974410986/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/ldv-linux-3.14-races/linux-3.14--drivers--media--platform--marvell-ccic--cafe_ccic.ko.cil-1.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5cf19545-3bc8-4ac6-837c-c3e4df664a5410728084480974410986/tools/theta/solvers
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionPtrMemberAccess$0(ExpressionVisitor.java:1012), java.lang.IllegalStateException: Field [next] not found, available fields are: [])
+Error: class java.lang.IllegalStateException Field [next] not found, available fields are: [] (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionPtrMemberAccess$0:1012)

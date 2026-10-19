@@ -1,0 +1,9 @@
+tools/theta/theta-start.sh sv-benchmarks/c/pthread-divine/tls_destructor_worker.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_36b100b2-128e-496d-a351-9cf5b02e011a3659256025379918861/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_36b100b2-128e-496d-a351-9cf5b02e011a3659256025379918861/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread-divine/tls_destructor_worker.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_36b100b2-128e-496d-a351-9cf5b02e011a3659256025379918861/tools/theta/solvers
+Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph.exit(XcfaToEventGraph.kt:552), java.lang.IllegalStateException: Feature not supported by OC checker: pthread_key_create with non-null destructor.)
+Error: class java.lang.IllegalStateException Feature not supported by OC checker: pthread_key_create with non-null destructor. (hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph#exit:552, hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph#access$exit:52)
