@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,43 @@
  */
 package hu.bme.mit.theta.core.type.bvtype;
 
+import hu.bme.mit.theta.core.type.BvAddExpr;
+import hu.bme.mit.theta.core.type.BvAndExpr;
+import hu.bme.mit.theta.core.type.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.BvConcatExpr;
+import hu.bme.mit.theta.core.type.BvEqExpr;
+import hu.bme.mit.theta.core.type.BvExtractExpr;
+import hu.bme.mit.theta.core.type.BvLitExpr;
+import hu.bme.mit.theta.core.type.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.BvMulExpr;
+import hu.bme.mit.theta.core.type.BvNegExpr;
+import hu.bme.mit.theta.core.type.BvNeqExpr;
+import hu.bme.mit.theta.core.type.BvNotExpr;
+import hu.bme.mit.theta.core.type.BvOrExpr;
+import hu.bme.mit.theta.core.type.BvPosExpr;
+import hu.bme.mit.theta.core.type.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.BvSDivExpr;
+import hu.bme.mit.theta.core.type.BvSExtExpr;
+import hu.bme.mit.theta.core.type.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.BvSGtExpr;
+import hu.bme.mit.theta.core.type.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.BvSLtExpr;
+import hu.bme.mit.theta.core.type.BvSModExpr;
+import hu.bme.mit.theta.core.type.BvSRemExpr;
+import hu.bme.mit.theta.core.type.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.BvSubExpr;
+import hu.bme.mit.theta.core.type.BvToIntExpr;
+import hu.bme.mit.theta.core.type.BvUDivExpr;
+import hu.bme.mit.theta.core.type.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.BvUGtExpr;
+import hu.bme.mit.theta.core.type.BvULeqExpr;
+import hu.bme.mit.theta.core.type.BvULtExpr;
+import hu.bme.mit.theta.core.type.BvURemExpr;
+import hu.bme.mit.theta.core.type.BvXorExpr;
+import hu.bme.mit.theta.core.type.BvZExtExpr;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
 import java.util.List;
 
 public final class BvExprs {

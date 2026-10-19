@@ -17,8 +17,8 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.AddExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.xcfa.ErrorDetection

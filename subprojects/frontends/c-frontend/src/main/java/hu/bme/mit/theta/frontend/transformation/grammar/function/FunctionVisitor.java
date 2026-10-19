@@ -27,16 +27,16 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Dereference;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.IteExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.RefExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
@@ -50,11 +50,11 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
@@ -157,7 +157,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
     private static boolean containsDereference(Expr<?> expr) {
-        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+        if (expr instanceof hu.bme.mit.theta.core.type.Dereference<?, ?, ?>) {
             return true;
         }
         for (Expr<?> op : expr.getOps()) {

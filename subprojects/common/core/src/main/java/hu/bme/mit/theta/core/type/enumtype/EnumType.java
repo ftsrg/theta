@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package hu.bme.mit.theta.core.type.enumtype;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.core.type.DomainSize;
+import hu.bme.mit.theta.core.type.EnumEqExpr;
+import hu.bme.mit.theta.core.type.EnumLitExpr;
+import hu.bme.mit.theta.core.type.EnumNeqExpr;
+import hu.bme.mit.theta.core.type.EqExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.NeqExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;

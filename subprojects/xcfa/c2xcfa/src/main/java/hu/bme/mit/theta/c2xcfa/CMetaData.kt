@@ -19,7 +19,12 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
+@SerialName("c")
 data class CMetaData(
   val lineNumberStart: Int?,
   val colNumberStart: Int?,
@@ -28,7 +33,9 @@ data class CMetaData(
   val offsetStart: Int?,
   val offsetEnd: Int?,
   val sourceText: String?,
-  val astNodes: List<CStatement>,
+  // The C AST is not serialized; code reading it (witness writers) sees an empty list after a round
+  // trip.
+  @Transient val astNodes: List<CStatement> = emptyList(),
   val functionName: String?,
   // we only want to export metadata when we encounter the fist label for a statement
   val notStatementStart: Boolean = false,
@@ -105,7 +112,8 @@ data class CMetaData(
     return true
   }
 
-  val asExportableCMetadata: CMetaData? = if (notStatementStart) null else this
+  val asExportableCMetadata: CMetaData?
+    get() = if (notStatementStart) null else this
 }
 
 fun XcfaLabel.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata

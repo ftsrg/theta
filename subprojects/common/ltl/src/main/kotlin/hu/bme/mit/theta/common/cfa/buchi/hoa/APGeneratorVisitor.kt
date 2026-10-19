@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package hu.bme.mit.theta.common.cfa.buchi.hoa
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.EnumLitExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr
 import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -179,7 +179,7 @@ class APGeneratorVisitor(
   }
 
   override fun visitEnumLitExpr(ctx: EnumLitExprContext): Expr<*> {
-    return EnumLitExpr.of(enumTypes[ctx.type.text], ctx.lit.text)
+    return EnumLitExpr.of(enumTypes[ctx.type.text]!!, ctx.lit.text)
   }
 
   override fun visitVariable(ctx: LTLGrammarParser.VariableContext): Expr<*> {

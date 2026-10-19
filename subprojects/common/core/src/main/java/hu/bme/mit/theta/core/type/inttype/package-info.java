@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,24 +20,22 @@
  *
  * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntType}: the actual integer type.
  *
- * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntLitExpr}: integer literal
+ * <p>- {@link hu.bme.mit.theta.core.type.IntLitExpr}: integer literal
  *
- * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntNegExpr}: unary minus - {@link
- * hu.bme.mit.theta.core.type.inttype.IntPosExpr}: unary plus - {@link
- * hu.bme.mit.theta.core.type.inttype.IntAddExpr}: addition - {@link
- * hu.bme.mit.theta.core.type.inttype.IntSubExpr}: subtraction - {@link
- * hu.bme.mit.theta.core.type.inttype.IntMulExpr}: multiplication - {@link
- * hu.bme.mit.theta.core.type.inttype.IntDivExpr}: integer division - {@link
- * hu.bme.mit.theta.core.type.inttype.IntModExpr}: modulus - {@link
- * hu.bme.mit.theta.core.type.inttype.IntRemExpr}: remainder
+ * <p>- {@link hu.bme.mit.theta.core.type.IntNegExpr}: unary minus - {@link
+ * hu.bme.mit.theta.core.type.IntPosExpr}: unary plus - {@link
+ * hu.bme.mit.theta.core.type.IntAddExpr}: addition - {@link hu.bme.mit.theta.core.type.IntSubExpr}:
+ * subtraction - {@link hu.bme.mit.theta.core.type.IntMulExpr}: multiplication - {@link
+ * hu.bme.mit.theta.core.type.IntDivExpr}: integer division - {@link
+ * hu.bme.mit.theta.core.type.IntModExpr}: modulus - {@link hu.bme.mit.theta.core.type.IntRemExpr}:
+ * remainder
  *
- * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntEqExpr}: equal - {@link
- * hu.bme.mit.theta.core.type.inttype.IntNegExpr}: not equal - {@link
- * hu.bme.mit.theta.core.type.inttype.IntGtExpr}: greater - {@link
- * hu.bme.mit.theta.core.type.inttype.IntLtExpr}: less - {@link
- * hu.bme.mit.theta.core.type.inttype.IntGeqExpr}: greater or equal - {@link
- * hu.bme.mit.theta.core.type.inttype.IntLeqExpr}: less or equal
+ * <p>- {@link hu.bme.mit.theta.core.type.IntEqExpr}: equal - {@link
+ * hu.bme.mit.theta.core.type.IntNegExpr}: not equal - {@link hu.bme.mit.theta.core.type.IntGtExpr}:
+ * greater - {@link hu.bme.mit.theta.core.type.IntLtExpr}: less - {@link
+ * hu.bme.mit.theta.core.type.IntGeqExpr}: greater or equal - {@link
+ * hu.bme.mit.theta.core.type.IntLeqExpr}: less or equal
  *
- * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntToRatExpr}: cast to rational
+ * <p>- {@link hu.bme.mit.theta.core.type.IntToRatExpr}: cast to rational
  */
 package hu.bme.mit.theta.core.type.inttype;

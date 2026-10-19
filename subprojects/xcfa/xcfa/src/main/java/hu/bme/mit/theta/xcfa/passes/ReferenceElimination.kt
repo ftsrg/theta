@@ -19,8 +19,22 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.AddExpr
+import hu.bme.mit.theta.core.type.ArrayLitExpr
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.EqExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.GeqExpr
+import hu.bme.mit.theta.core.type.GtExpr
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.LeqExpr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.LtExpr
+import hu.bme.mit.theta.core.type.NegExpr
+import hu.bme.mit.theta.core.type.NeqExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
@@ -30,37 +44,23 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
@@ -189,16 +189,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               XcfaGlobalVar(
                 varDecl,
                 lit,
-                pointsToAtomic = ptrType.embeddedType.isAtomic || referredAtomic,
+                pointsToAtomic = ptrType.embeddedType!!.isAtomic || referredAtomic,
               )
             )
-            recordReferencedObjectAtomicity(objectBase, ptrType.embeddedType, referredAtomic)
+            recordReferencedObjectAtomicity(objectBase, ptrType.embeddedType!!, referredAtomic)
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
                 val assign2 =
-                  builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
+                  builder.parent.allocateReferenced(
+                    parseContext,
+                    varDecl.ref,
+                    ptrType.embeddedType!!,
+                  )
 
                 listOf(assign, assign2)
               } else {
@@ -298,7 +302,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val labels =
             if (MemsafetyPass.enabled) {
               val assign3 =
-                builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
+                builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType!!)
 
               listOf(assign1, assign2, assign3)
             } else {

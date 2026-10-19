@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType

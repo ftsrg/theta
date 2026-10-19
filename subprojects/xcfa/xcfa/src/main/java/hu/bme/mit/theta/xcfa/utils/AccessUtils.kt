@@ -17,9 +17,9 @@ package hu.bme.mit.theta.xcfa.utils
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils

@@ -18,12 +18,12 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.BoolLitExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager

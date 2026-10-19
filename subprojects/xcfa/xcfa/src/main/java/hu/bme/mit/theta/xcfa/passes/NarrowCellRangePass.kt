@@ -19,12 +19,12 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 

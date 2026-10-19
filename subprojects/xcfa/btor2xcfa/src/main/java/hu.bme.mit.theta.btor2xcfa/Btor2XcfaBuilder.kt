@@ -18,8 +18,8 @@ package hu.bme.mit.theta.btor2xcfa
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.BvLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.models.*
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
@@ -102,7 +102,7 @@ class Btor2XcfaBuilder {
                 if (it in stateInitMap.keys) {
                   stateInitMap[it]!!.getStmt()
                 } else {
-                  HavocStmt.of(it.getVar())
+                  HavocStmt.of(it.getVar()!!)
                 },
                 metadata = EmptyMetaData,
               )

@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,21 +24,21 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CSignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CSignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall;
 import java.math.BigInteger;
 
 public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,11 +75,11 @@ object XstsSerializer : StmtVisitor<Void?, String> {
     return "assume (${serializeExpr(stmt.cond)});"
   }
 
-  override fun <DeclType : Type?> visit(stmt: AssignStmt<DeclType>, param: Void?): String {
+  override fun <DeclType : Type> visit(stmt: AssignStmt<DeclType>, param: Void?): String {
     return "${stmt.varDecl.name} := (${serializeExpr(stmt.expr)});"
   }
 
-  override fun <DeclType : Type?> visit(stmt: HavocStmt<DeclType>, param: Void?): String {
+  override fun <DeclType : Type> visit(stmt: HavocStmt<DeclType>, param: Void?): String {
     return "havoc ${stmt.varDecl.name};"
   }
 
@@ -119,7 +119,7 @@ object XstsSerializer : StmtVisitor<Void?, String> {
       .trimIndent()
   }
 
-  override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
+  override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
     stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
     param: Void?,
   ): String {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.llvm2xcfa.Utils.foldExpression;
 
+import hu.bme.mit.theta.core.type.IntLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.llvm2xcfa.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.llvm2xcfa.handlers.Instruction;
 import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.Argument;

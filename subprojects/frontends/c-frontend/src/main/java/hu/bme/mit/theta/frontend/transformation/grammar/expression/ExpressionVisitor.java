@@ -32,22 +32,30 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.BvAndExpr;
+import hu.bme.mit.theta.core.type.BvLitExpr;
+import hu.bme.mit.theta.core.type.BvOrExpr;
+import hu.bme.mit.theta.core.type.BvXorExpr;
+import hu.bme.mit.theta.core.type.Dereference;
+import hu.bme.mit.theta.core.type.DivExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.FpLitExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.IteExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.Reference;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -69,14 +77,14 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -900,7 +908,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                             ctx.constantExpression().accept(this));
             if (folded instanceof IntLitExpr intLit) {
                 type = intLit.getValue().intValueExact();
-            } else if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+            } else if (folded instanceof hu.bme.mit.theta.core.type.BvLitExpr bvLit) {
                 type =
                         hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
                                 .intValueExact();
@@ -2118,7 +2126,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed =
                 declaredType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
@@ -2265,7 +2273,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (slicedUnionMember
                 && embeddedType
                         instanceof
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal
                 && embeddedType.width() == structType.unionCellWidth()) {
             // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is
             // the
@@ -2432,8 +2440,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (embeddedType instanceof CArray arrayType) {
             final CComplexType elemType = arrayType.getEmbeddedType();
             if (elemType
-                    instanceof
-                    hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                    instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal) {
                 throw unsupportedByteLaidOutMember(
                         memberName, "a floating-point element is not supported");
             }
@@ -2458,8 +2465,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return marker;
         }
         if (embeddedType
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal) {
             // The NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable path: a
             // floating-point member is refused rather than reopening the unsound round-trip.
             // Deliberately NOT the recoverable exception: the byte-addressed model refuses floats
@@ -2567,7 +2573,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private static Expr<?> wholeCellOf(Expr<?> operand) {
         Expr<?> current = operand;
         for (int depth = 0; depth < 8; depth++) {
-            if (current instanceof hu.bme.mit.theta.core.type.bvtype.BvExtractExpr extract) {
+            if (current instanceof hu.bme.mit.theta.core.type.BvExtractExpr extract) {
                 final Expr<?> inner = peelCasts(extract.getBitvec());
                 if (!(inner instanceof Dereference<?, ?, ?>)) {
                     return null;
@@ -2602,8 +2608,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /** Strips one width/signedness wrapper, or returns the expression unchanged. */
     private static Expr<?> peelOnce(Expr<?> expr) {
-        if (expr instanceof hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
-                || expr instanceof hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
+        if (expr instanceof hu.bme.mit.theta.core.type.BvZExtExpr
+                || expr instanceof hu.bme.mit.theta.core.type.BvSExtExpr
                 || expr instanceof PosExpr<?>) {
             return expr.getOps().get(0);
         }
@@ -2720,7 +2726,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed =
                 memberType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
@@ -2832,11 +2838,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private CComplexType unsignedIntegerOfWidth(int bits) {
         return switch (bits) {
             case 8 ->
-                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar
-                            .CUnsignedChar(null, parseContext);
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar(
+                            null, parseContext);
             case 16 ->
-                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort
-                            .CUnsignedShort(null, parseContext);
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort(
+                            null, parseContext);
             case 32 -> CComplexType.getUnsignedInt(parseContext);
             // `unsigned long` is 64 bits only under LP64; under ILP32 it is 32, so a 64-bit cell
             // came back HALF its width and the union's own layout then addressed past its end:
@@ -2866,7 +2872,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed =
                 memberType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
@@ -2997,10 +3003,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private static boolean isPlainInteger(CComplexType type) {
-        return type
-                        instanceof
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
-                                .CInteger
+        return type instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger
                 && !(type instanceof CStruct)
                 && !(type instanceof CArray)
                 && !(type instanceof CPointer);
@@ -3010,14 +3013,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false.
      */
     private static boolean effectivelyUnsigned(CComplexType t) {
-        if (t
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer) {
+        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer) {
             return true;
         }
-        if (t
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger ci) {
+        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger ci) {
             return !ci.isSsigned();
         }
         return false;

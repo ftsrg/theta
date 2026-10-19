@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+@file:UseContextualSerialization(Expr::class, VarDecl::class, LitExpr::class, MetaData::class)
+
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -20,11 +22,18 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.model.serialization.BoolExprReferenceSerializer
+import hu.bme.mit.theta.xcfa.model.serialization.LocationDefinitionSerializer
+import hu.bme.mit.theta.xcfa.model.serialization.LocationReferenceSerializer
+import hu.bme.mit.theta.xcfa.model.serialization.OptionalLocationReferenceSerializer
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.getPointsToGraph
 import hu.bme.mit.theta.xcfa.utils.pointerPartitions
 import java.util.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.UseContextualSerialization
 
 class XCFA(
   val name: String,
@@ -124,21 +133,27 @@ class XCFA(
   }
 }
 
+@Serializable
 data class XcfaProcedure(
   val name: String,
   val params: List<Pair<VarDecl<*>, ParamDirection>>, // procedure params
   val vars: Set<VarDecl<*>>, // local variables
-  val locs: Set<XcfaLocation>, // locations
+  val locs:
+    Set<@Serializable(with = LocationDefinitionSerializer::class) XcfaLocation>, // locations
   val edges: Set<XcfaEdge>, // edges
+  @Serializable(with = LocationReferenceSerializer::class)
   val initLoc: XcfaLocation, // initial location
+  @Serializable(with = OptionalLocationReferenceSerializer::class)
   val finalLoc: Optional<XcfaLocation>, // final location (optional)
+  @Serializable(with = OptionalLocationReferenceSerializer::class)
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
-  val prop: Expr<BoolType> = True(),
+  @Serializable(with = BoolExprReferenceSerializer::class) val prop: Expr<BoolType> = True(),
 ) {
 
-  internal lateinit var parent: XCFA
+  @Transient internal lateinit var parent: XCFA
 }
 
+@Serializable
 data class XcfaLocation
 @JvmOverloads
 constructor(
@@ -149,14 +164,16 @@ constructor(
   val metadata: MetaData,
 ) {
 
+  @Transient
   val incomingEdges: MutableSet<XcfaEdge> =
     LinkedHashSet() // all incoming edges in the current procedure
+  @Transient
   val outgoingEdges: MutableSet<XcfaEdge> =
     LinkedHashSet() // all outgoing edges in the current procedure
 
   companion object {
 
-    private var cnt: Int = 0
+    internal var cnt: Int = 0
 
     fun uniqueCounter(): Int = cnt++
   }
@@ -166,8 +183,11 @@ constructor(
   }
 }
 
+@Serializable
 data class XcfaEdge(
+  @Serializable(with = LocationReferenceSerializer::class)
   val source: XcfaLocation, // source location
+  @Serializable(with = LocationReferenceSerializer::class)
   val target: XcfaLocation, // target location
   val label: XcfaLabel = NopLabel, // edge label
   val metadata: MetaData,
@@ -182,6 +202,7 @@ data class XcfaEdge(
   fun withMetadata(metadata: MetaData): XcfaEdge = XcfaEdge(source, target, label, metadata)
 }
 
+@Serializable
 data class XcfaGlobalVar
 @JvmOverloads
 constructor(

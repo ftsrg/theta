@@ -21,8 +21,8 @@ import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IteExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
-import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.CStatistics
 import hu.bme.mit.theta.frontend.ParseContext

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.RemExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public interface Divisible<ExprType extends Divisible<ExprType>> extends Type {

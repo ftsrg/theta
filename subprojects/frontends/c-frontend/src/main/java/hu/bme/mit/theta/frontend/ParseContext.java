@@ -20,7 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

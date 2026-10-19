@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CDouble;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CFloat;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import java.math.BigInteger;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;

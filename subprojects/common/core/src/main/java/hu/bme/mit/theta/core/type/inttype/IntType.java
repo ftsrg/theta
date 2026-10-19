@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,15 +17,27 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntAddExpr;
+import hu.bme.mit.theta.core.type.IntDivExpr;
+import hu.bme.mit.theta.core.type.IntEqExpr;
+import hu.bme.mit.theta.core.type.IntGeqExpr;
+import hu.bme.mit.theta.core.type.IntGtExpr;
+import hu.bme.mit.theta.core.type.IntLeqExpr;
+import hu.bme.mit.theta.core.type.IntLtExpr;
+import hu.bme.mit.theta.core.type.IntMulExpr;
+import hu.bme.mit.theta.core.type.IntNegExpr;
+import hu.bme.mit.theta.core.type.IntNeqExpr;
+import hu.bme.mit.theta.core.type.IntPosExpr;
+import hu.bme.mit.theta.core.type.IntSubExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.RemExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.Castable;
 import hu.bme.mit.theta.core.type.abstracttype.Divisible;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType

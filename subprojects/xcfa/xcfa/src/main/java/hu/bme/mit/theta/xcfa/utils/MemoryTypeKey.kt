@@ -15,8 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.utils
 
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.anytype.Dereference
 
 /**
  * The memory partition a dereference belongs to: the (array, offset, element) type triple.

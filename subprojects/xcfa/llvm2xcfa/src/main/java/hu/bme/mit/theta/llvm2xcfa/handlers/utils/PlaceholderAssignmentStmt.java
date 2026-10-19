@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.ForeignStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.Argument;
 import java.util.Map;
 
-public class PlaceholderAssignmentStmt<T extends Type> implements Stmt {
+public class PlaceholderAssignmentStmt<T extends Type> extends ForeignStmt {
     private final VarDecl<T> lhs;
     private final Argument rhsKey;
 

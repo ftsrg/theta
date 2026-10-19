@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,22 @@ package hu.bme.mit.theta.core.type.fptype;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.DivExpr;
 import hu.bme.mit.theta.core.type.DomainSize;
+import hu.bme.mit.theta.core.type.EqExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.FpEqExpr;
+import hu.bme.mit.theta.core.type.FpNeqExpr;
+import hu.bme.mit.theta.core.type.GeqExpr;
+import hu.bme.mit.theta.core.type.GtExpr;
+import hu.bme.mit.theta.core.type.LeqExpr;
+import hu.bme.mit.theta.core.type.LtExpr;
+import hu.bme.mit.theta.core.type.MulExpr;
+import hu.bme.mit.theta.core.type.NegExpr;
+import hu.bme.mit.theta.core.type.NeqExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.SubExpr;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 import java.math.BigInteger;
 

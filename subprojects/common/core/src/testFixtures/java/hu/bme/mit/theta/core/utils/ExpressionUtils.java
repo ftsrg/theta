@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
-import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.FuncAppExpr;
+import hu.bme.mit.theta.core.type.QuantifiedExpr;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

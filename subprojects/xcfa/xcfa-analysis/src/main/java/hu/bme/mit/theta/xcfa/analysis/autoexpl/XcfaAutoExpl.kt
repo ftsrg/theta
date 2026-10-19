@@ -20,8 +20,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.autoexpl.NewOperandsAutoExpl
 import hu.bme.mit.theta.common.collection.CollectionUtil
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.NotExpr
+import hu.bme.mit.theta.core.type.NotExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
@@ -33,13 +33,13 @@ fun xcfaNewOperandsAutoExpl(xcfa: XCFA): AutoExpl {
   val declToOps = CollectionUtil.createMap<Decl<*>, MutableSet<Expr<*>>>()
   atoms
     .map { if (it is NotExpr) it.op else it }
-    .filter { it.getOps().size > 1 }
+    .filter { it.ops.size > 1 }
     .forEach { atom ->
       atom.ops.filterIsInstance<RefExpr<*>>().forEach { refExpr ->
         atom.ops
           .filterNot { refExpr == it }
           .forEach { op ->
-            declToOps.computeIfAbsent(refExpr.getDecl()) { CollectionUtil.createSet() }!!.add((op))
+            declToOps.computeIfAbsent(refExpr.decl) { CollectionUtil.createSet() }!!.add((op))
           }
       }
     }

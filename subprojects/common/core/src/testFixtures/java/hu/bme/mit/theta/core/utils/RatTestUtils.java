@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,19 +33,19 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.ToInt;
 
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
-import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
+import hu.bme.mit.theta.core.type.IntToRatExpr;
+import hu.bme.mit.theta.core.type.RatAddExpr;
+import hu.bme.mit.theta.core.type.RatDivExpr;
+import hu.bme.mit.theta.core.type.RatEqExpr;
+import hu.bme.mit.theta.core.type.RatGeqExpr;
+import hu.bme.mit.theta.core.type.RatGtExpr;
+import hu.bme.mit.theta.core.type.RatLeqExpr;
+import hu.bme.mit.theta.core.type.RatLtExpr;
+import hu.bme.mit.theta.core.type.RatMulExpr;
+import hu.bme.mit.theta.core.type.RatNegExpr;
+import hu.bme.mit.theta.core.type.RatNeqExpr;
+import hu.bme.mit.theta.core.type.RatSubExpr;
+import hu.bme.mit.theta.core.type.RatToIntExpr;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;

@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
 
@@ -101,7 +101,7 @@ data class Btor2Init(
   }
 
   override fun getStmt(): Stmt {
-    return AssignStmt.of(state.getVar(), value.getExpr() as Expr<BvType>)
+    return AssignStmt.of(state.getVar()!!, value.getExpr() as Expr<BvType>)
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {
@@ -127,7 +127,7 @@ data class Btor2Next(
   }
 
   override fun getStmt(): Stmt {
-    return AssignStmt.of(state.getVar(), getOperandRef(value, negated))
+    return AssignStmt.of(state.getVar()!!, getOperandRef(value, negated))
   }
 
   override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param: P): R {

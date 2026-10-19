@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeInfinity;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
 
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import java.math.BigInteger;

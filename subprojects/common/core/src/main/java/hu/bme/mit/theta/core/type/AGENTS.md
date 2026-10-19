@@ -4,10 +4,10 @@ Supplements [core's AGENTS.md](../../../../../../../../../AGENTS.md) with type-p
 
 ## Canonical pattern — adding to a family
 
-Each `<x>type/` family = `XType` + `XLitExpr` + one class per operator + `XExprs` static factory. To add an operator expr:
+Each `<x>type/` family = `XType` + `XExprs` static factory; its `XLitExpr` and one class per operator are Kotlin files in this package (`hu.bme.mit.theta.core.type`), because `Expr` is sealed and every subtype of a sealed type must share its package. To add an operator expr:
 
-1. Copy the nearest sibling. Keep: private ctor, `of(...)` (typed), `create(...)` (wildcard ops, re-typed via `TypeUtils.cast`), per-class `HASH_SEED`, `OPERATOR_LABEL`, lazy `volatile int hashCode`, ops-structural `equals`, `with(...)` returning `this` when ops unchanged.
-2. Extend the right arity base (`NullaryExpr`/`UnaryExpr`/`BinaryExpr`/`MultiaryExpr`) — **unless the result type depends on the ops** (see bv deviations below): the bases' `withOps` re-casts new ops to the *old* op types.
+1. Copy the nearest sibling `.kt`. Keep: private ctor, companion `@JvmStatic` `of(...)` (typed) and `create(...)` (wildcard ops, re-typed via `TypeUtils.cast`), `HASH_SEED`, `OPERATOR_LABEL`, `with(...)` returning `this` when the ops are the same objects. The arity bases supply the lazily cached `hashCode`, the ops-structural `equals` (same class, equal ops) and `withLeftOp`/`withRightOp`; override `equals` only for state beyond the ops (rounding mode, widths, ...).
+2. Extend the right arity base (`NullaryExpr`/`UnaryExpr`/`BinaryExpr`/`MultiaryExpr`) — **unless the result type depends on the ops** (see bv deviations below): the bases' `withOps` re-casts new ops to the *old* op types. The bases and the abstract operators (`AddExpr`, `EqExpr`, ...) are sealed too, so a `when` over them is exhaustive.
 3. Register a factory method in `XExprs`.
 4. Teach [utils/ExprSimplifier.java](../utils/ExprSimplifier.java): one `addCase(NewExpr.class, this::simplifyNew)` in its `DispatchTable2` + the handler (default = recurse only, no simplification).
 5. If it must reach SMT: all four solver stacks (`solver-z3`, `solver-z3-legacy`, `solver-javasmt`, `solver-smtlib`) — `ExprTransformer` at minimum.
