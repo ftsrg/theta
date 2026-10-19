@@ -18,13 +18,15 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 /**
  * Runs only DSS: min-cut blocks with self loops absorbed, each block checked by predicate CEGAR
- * (Cartesian) first and by k-induction when that fails.
+ * (Cartesian) first and by k-induction when that fails. Properties other than error-location
+ * reachability (e.g. termination) are handed to [emergent26].
  */
 fun emergent27(
   xcfa: XCFA,
@@ -34,6 +36,10 @@ fun emergent27(
   logger: Logger,
   uniqueLogger: Logger,
 ): STM {
+  // DSS only checks error-location reachability; other properties keep the previous portfolio.
+  if (portfolioConfig.inputConfig.property.verifiedProperty != ErrorDetection.ERROR_LOCATION)
+    return emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
   val baseDssConfig = baseDssConfig(xcfa, mcm, parseContext, portfolioConfig, false)

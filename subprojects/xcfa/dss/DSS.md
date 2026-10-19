@@ -857,6 +857,8 @@ Theta follows CPAchecker where it differs from Algorithm 3 of the paper:
 
 ## 15. Known limitations
 
+* Error-location reachability only (overflow, memory safety and data races too once a pass has
+  rewritten them to it); the backend rejects any other verified property, e.g. termination.
 * Single procedure only; labels without a weakest-precondition rule (function calls, memory
   operations, fences) make the block analysis fail.
 * Termination is not guaranteed (section 9); the SAFE case of `NestedLoopActorTest` is disabled

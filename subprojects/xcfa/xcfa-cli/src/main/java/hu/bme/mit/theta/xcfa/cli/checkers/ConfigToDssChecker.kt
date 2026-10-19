@@ -31,6 +31,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -109,6 +110,12 @@ fun getDssChecker(
   logger: Logger,
 ): SafetyChecker<Proof, Cex, XcfaPrec<*>> = SafetyChecker { _ ->
   val dssConfig = config.backendConfig.specConfig as DssConfig
+  val property = config.inputConfig.property
+  // Blocks only search for error locations: any other property would be reported SAFE unchecked.
+  check(property.verifiedProperty == ErrorDetection.ERROR_LOCATION) {
+    "DSS only checks error-location reachability, not ${property.verifiedProperty} " +
+      "(input property ${property.inputProperty}) - see dss/DSS.md's Known Limitations."
+  }
   val procedure =
     xcfa.procedures.singleOrNull()
       ?: error(
