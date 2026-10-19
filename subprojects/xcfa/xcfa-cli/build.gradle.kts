@@ -40,7 +40,6 @@ dependencies {
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
-    implementation(project(":theta-grammar"))
     implementation(project(":theta-llvm2xcfa"))
     implementation(project(":theta-litmus2xcfa"))
     implementation(project(":theta-graph-solver"))
@@ -49,6 +48,7 @@ dependencies {
     implementation(files(rootDir.resolve(Deps.z3legacy)))
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
+    implementation(Deps.kotlinxSerializationJson)
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
     implementation(project(":theta-btor2-frontend"))
     implementation(project(":theta-btor2xcfa"))
@@ -63,7 +63,9 @@ archivePackaging {
     variant {
         toolName = "Theta-svcomp"
         inputFlags = "--svcomp --portfolio STABLE"
-        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+        // One version per solver family: the portfolios pin the same versions, and shipping
+        // several invites the code and the archive to drift apart.
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -71,7 +73,7 @@ archivePackaging {
     variant {
         toolName = "EmergenTheta-svcomp"
         inputFlags = "--svcomp --portfolio EMERGENT"
-        solvers = listOf("cvc5:1.2.0", "cvc5:1.0.8", "mathsat:5.6.12", "mathsat:5.6.10")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -92,6 +94,10 @@ archivePackaging {
         scriptName = "chc"
     }
 }
+
+// PackagedSolverTest reads the solver lists out of this file, so it is a test input: without
+// this Gradle judges the test up to date after the list changes, which is exactly when it matters.
+tasks.test { inputs.file("build.gradle.kts") }
 
 // The canary suite (see `canaries/README.md`) as a registered Gradle test task.
 //

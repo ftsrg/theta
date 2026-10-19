@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -203,7 +204,7 @@ private fun parseInputFiles(
   logger: Logger,
   uniqueLogger: Logger,
 ): Triple<XCFA?, MCM?, ParseContext?> =
-  if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+  if (config.backendConfig.inProcess) {
     logger.info("Not parsing input because a worker process will handle it later.")
     Triple(null, null, null)
   } else {
@@ -359,6 +360,16 @@ private fun buildFrontend(
   logger.benchmark(
     "%s",
     "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}",
+  )
+  logger.benchmark(
+    "%s",
+    "XCFA-TRAITS " +
+      xcfaTraits(
+        xcfa,
+        parseContext,
+        config.inputConfig.property.verifiedProperty.name,
+        config.inputConfig.propertyFile?.name ?: "-",
+      ),
   )
 
   return Triple(xcfa, mcm, parseContext)

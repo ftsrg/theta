@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+@file:UseSerializers(FileSerializer::class)
+
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
@@ -44,6 +46,9 @@ import hu.bme.mit.theta.xcfa.passes.UnrollPass
 import hu.bme.mit.theta.xcfa2chc.RankingFunction
 import java.io.File
 import java.nio.file.Paths
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.UseSerializers
 
 interface Config {
 
@@ -64,6 +69,7 @@ interface SpecializableConfig<T : Config> : Config {
     specConfig?.update() ?: createSpecConfig().let { specConfig != null }
 }
 
+@Serializable
 data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
   val inputConfig: InputConfig = InputConfig(),
   val frontendConfig: FrontendConfig<F> = FrontendConfig(),
@@ -86,18 +92,15 @@ data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
       .any { it }
 }
 
+@Serializable
 data class InputConfig(
   @Parameter(names = ["--input"], description = "Path of the input model") var input: File? = null,
   @Parameter(names = ["--cat"], description = "Path of the cat model") var catFile: File? = null,
   @Parameter(
-    names = ["--parse-ctx"],
-    description = "Path of the parse context JSON (may contain additional metadata)",
-  )
-  var parseCtx: File? = null,
-  @Parameter(
     names = ["--xcfa-w-ctx"],
-    description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)",
+    description = "XCFA and ParseContext (will overwrite --input when given)",
   )
+  @Transient
   var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
   @Parameter(
     names = ["--property"],
@@ -111,17 +114,19 @@ data class InputConfig(
     description = "Property",
     converter = StringToXcfaPropertyConverter::class,
   )
+  @Serializable(with = XcfaPropertySerializer::class)
   var property: XcfaProperty = XcfaProperty(ErrorDetection.ERROR_LOCATION),
 ) : Config {
 
   override fun toString(): String {
-    return "InputConfig(inputFile=${input}, catFile=${catFile}, parseCtx=${parseCtx}, " +
+    return "InputConfig(inputFile=${input}, catFile=${catFile}, " +
       "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, inputProperty=${property.inputProperty}"
   }
 }
 
-interface SpecFrontendConfig : Config
+@Serializable sealed interface SpecFrontendConfig : Config
 
+@Serializable
 data class FrontendConfig<T : SpecFrontendConfig>(
   @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_SEQ, LBE_FULL, LBE_LOCAL)")
   var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
@@ -178,7 +183,6 @@ data class FrontendConfig<T : SpecFrontendConfig>(
       when (inputType) {
         InputType.C -> CFrontendConfig() as T
         InputType.LLVM -> null
-        InputType.JSON -> null
         InputType.DSL -> null
         InputType.LITMUS -> null
         InputType.CFA -> null
@@ -188,6 +192,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   }
 }
 
+@Serializable
 data class CFrontendConfig(
   @Parameter(
     names = ["--arithmetic"],
@@ -249,6 +254,7 @@ enum class ChcCategory {
   LRA_LIN,
 }
 
+@Serializable
 data class CHCFrontendConfig(
   @Parameter(
     names = ["--chc-transformation"],
@@ -267,13 +273,15 @@ data class CHCFrontendConfig(
   var category: ChcCategory = ChcCategory.AUTO,
 ) : SpecFrontendConfig
 
+@Serializable
 data class BTOR2FrontendConfig(
   @Parameter(names = ["--no-optimization"], description = "Runs frontend without XCFA passes")
   var btor2Passes: Boolean = false
 ) : SpecFrontendConfig
 
-interface SpecBackendConfig : Config
+@Serializable sealed interface SpecBackendConfig : Config
 
+@Serializable
 data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--backend"], description = "Backend analysis to use")
   var backend: Backend = Backend.CEGAR,
@@ -286,11 +294,6 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
-  @Parameter(
-    names = ["--no-parse-in-process"],
-    description = "Don't parse input in process instead of passing intermediate",
-  )
-  var parseInProcess: Boolean = true,
   @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
@@ -333,6 +336,7 @@ data class BackendConfig<T : SpecBackendConfig>(
   }
 }
 
+@Serializable
 data class CegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
@@ -358,6 +362,7 @@ data class CegarConfig(
     listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
 }
 
+@Serializable
 data class AsgCegarConfig(
   @Parameter(names = ["--initprec"], description = "Initial precision")
   var initPrec: InitPrec = InitPrec.EMPTY,
@@ -378,6 +383,7 @@ data class AsgCegarConfig(
     listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
 }
 
+@Serializable
 data class TracegenConfig(
   @Parameter(names = ["--abstraction"], description = "Abstraction to be used for trace generation")
   var abstraction: TracegenAbstraction = TracegenAbstraction.NONE,
@@ -390,6 +396,7 @@ data class TracegenConfig(
   override fun update(): Boolean = listOf(abstractorConfig).map { it.update() }.any { it }
 }
 
+@Serializable
 data class CegarAbstractorConfig(
   @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
   var abstractionSolver: String = "Z3",
@@ -415,6 +422,7 @@ data class CegarAbstractorConfig(
   var havocMemory: Boolean = false,
 ) : Config
 
+@Serializable
 data class CegarRefinerConfig(
   @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
   var refinementSolver: String = "Z3",
@@ -438,6 +446,7 @@ data class CegarRefinerConfig(
   var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
 ) : Config
 
+@Serializable
 data class AsgCegarAbstractorConfig(
   @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
   var abstractionSolver: String = "Z3",
@@ -459,6 +468,7 @@ data class AsgCegarAbstractorConfig(
   var search: LoopCheckerSearchStrategy = LoopCheckerSearchStrategy.NDFS,
 ) : Config
 
+@Serializable
 data class AsgCegarRefinerConfig(
   @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
   var refinementSolver: String = "Z3",
@@ -477,6 +487,7 @@ data class AsgCegarRefinerConfig(
   var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
 ) : Config
 
+@Serializable
 data class HornConfig(
   @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
   @Parameter(
@@ -492,6 +503,7 @@ data class HornConfig(
   var rankingFuncConstr: RankingFunction = RankingFunction.ADD,
 ) : SpecBackendConfig
 
+@Serializable
 data class LassoValidationConfig(
   @Parameter(names = ["--solver"], description = "Solver to use.") var solver: String = "Z3:new",
   @Parameter(
@@ -504,6 +516,7 @@ data class LassoValidationConfig(
   var witness: File? = null,
 ) : SpecBackendConfig
 
+@Serializable
 data class BoundedConfig(
   @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
   var maxBound: Int = 0,
@@ -529,6 +542,7 @@ data class BoundedConfig(
     listOf(bmcConfig, indConfig, itpConfig).map { it.update() }.any { it }
 }
 
+@Serializable
 data class BMCConfig(
   @Parameter(names = ["--no-bmc"], description = "Disable SAT check") var disable: Boolean = false,
   @Parameter(names = ["--non-lf-path"], description = "Disable loop-freeness check")
@@ -543,6 +557,7 @@ data class BMCConfig(
   var validateBMCSolver: Boolean = false,
 ) : Config
 
+@Serializable
 data class InductionConfig(
   @Parameter(names = ["--no-induction"], description = "Disable induction check")
   var disable: Boolean = false,
@@ -560,6 +575,7 @@ data class InductionConfig(
   var indFreq: Int = 1,
 ) : Config
 
+@Serializable
 data class InterpolationConfig(
   @Parameter(names = ["--no-interpolation"], description = "Disable interpolation check")
   var disable: Boolean = false,
@@ -576,6 +592,7 @@ data class InterpolationConfig(
   var validateItpSolver: Boolean = false,
 ) : Config
 
+@Serializable
 data class OcConfig(
   @Parameter(
     names = ["--oc-decision-procedure"],
@@ -626,11 +643,13 @@ data class OcConfig(
   var maxExitQueries: Int = -1,
 ) : SpecBackendConfig
 
+@Serializable
 data class PortfolioConfig(
   @Parameter(names = ["--portfolio"], description = "Portfolio to run")
   var portfolio: String = "COMPLEX"
 ) : SpecBackendConfig
 
+@Serializable
 data class MddConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
@@ -696,6 +715,7 @@ enum class MddCegarRefinement {
   BW_BIN_ITP,
 }
 
+@Serializable
 data class MddCegarConfig(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
@@ -750,6 +770,7 @@ data class MddCegarConfig(
   var traceSearch: TraceSearch = TraceSearch.BFS,
 ) : SpecBackendConfig
 
+@Serializable
 data class Ic3Config(
   @Parameter(names = ["--solver", "--mdd-solver"], description = "MDD solver name")
   var solver: String = "Z3",
@@ -767,6 +788,7 @@ data class Ic3Config(
   var initPrec: InitPrec = InitPrec.EMPTY,
 ) : SpecBackendConfig
 
+@Serializable
 data class OutputConfig(
   @Parameter(names = ["--version"], description = "Display version", help = true)
   var versionInfo: Boolean = false,
@@ -813,14 +835,17 @@ data class OutputConfig(
       .any { it }
 }
 
+@Serializable
 data class XcfaOutputConfig(
   @Parameter(names = ["--enable-xcfa-serialization"]) var enabled: Boolean = false
 ) : Config
 
+@Serializable
 data class ChcOutputConfig(
   @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
 ) : Config
 
+@Serializable
 data class PrecOutputConfig(
   @Parameter(names = ["--prec-serialization-format"], variableArity = true)
   var format: List<PrecReuseFormat> = PrecReuseFormat.entries,
@@ -828,6 +853,7 @@ data class PrecOutputConfig(
   var serializationMode: PrecSerializationMode = PrecSerializationMode.NEVER,
 ) : Config
 
+@Serializable
 data class COutputConfig(
   @Parameter(names = ["--enable-c-serialization"]) var enabled: Boolean = false,
   @Parameter(names = ["--to-c-use-arrays"]) var useArr: Boolean = false,
@@ -835,6 +861,7 @@ data class COutputConfig(
   @Parameter(names = ["--to-c-use-ranges"]) var useRange: Boolean = false,
 ) : Config
 
+@Serializable
 data class WitnessConfig(
   @Parameter(names = ["--witness-generation"]) var enabled: WitnessLevel = WitnessLevel.ALL,
   @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
@@ -848,9 +875,11 @@ data class WitnessConfig(
   @Parameter(names = ["--input-file-for-witness"]) var inputFileForWitness: File? = null,
 ) : Config
 
+@Serializable
 data class ArgConfig(@Parameter(names = ["--enable-arg-generation"]) var enabled: Boolean = false) :
   Config
 
+@Serializable
 data class DebugConfig(
   @Parameter(
     names = ["--debug"],
@@ -874,6 +903,7 @@ data class DebugConfig(
   var argToFile: Boolean = false,
 ) : Config
 
+@Serializable
 data class PathEnumerationConfig(
   @Parameter(names = ["--path-enumeration-solver"], description = "Path enumeration solver name")
   var pathEnumerationSolver: String = "Z3",
