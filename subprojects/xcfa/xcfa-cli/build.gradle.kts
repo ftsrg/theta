@@ -79,6 +79,14 @@ archivePackaging {
         inputSource = file("src/main/resources/archive-packaging/input.c")
     }
     variant {
+        toolName = "SymbolicTheta-svcomp"
+        inputFlags = "--svcomp --portfolio SYMBOLIC"
+        solvers = listOf("mathsat:5.6.12")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+    }
+    variant {
         toolName = "Thorn-svcomp"
         inputFlags = "--svcomp --porfolio HORN"
         solvers = listOf("z3:4.15.3", "eldarica:2.2", "golem:0.9.0")
