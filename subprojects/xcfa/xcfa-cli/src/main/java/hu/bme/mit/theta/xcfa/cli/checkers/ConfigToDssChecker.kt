@@ -52,7 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
-import hu.bme.mit.theta.xcfa.cli.utils.getGson
+import hu.bme.mit.theta.xcfa.cli.params.toJson
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
@@ -391,7 +391,7 @@ private fun getDssWorkerLauncher(
     val configFile =
       Files.createTempFile("dss-worker-$index-", ".json").toFile().apply {
         deleteOnExit()
-        writeText(getGson().toJson(workerConfig))
+        writeText(workerConfig.toJson())
       }
     val command =
       listOf(java) +

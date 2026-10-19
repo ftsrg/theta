@@ -42,7 +42,7 @@ fun emergent27(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseDssConfig = baseDssConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseDssConfig = baseDssConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val dss =
@@ -51,7 +51,6 @@ fun emergent27(
         baseDssConfig.copy(
           backendConfig =
             baseDssConfig.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = 0,
               inProcess = inProcess,
               specConfig =

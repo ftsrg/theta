@@ -58,10 +58,10 @@ fun chcCompPortfolio26(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseIc3Config = baseIc3Config(portfolioConfig)
 
   val chcFrontend = portfolioConfig.frontendConfig.specConfig as? CHCFrontendConfig
   val needsModel = chcFrontend?.model ?: false
@@ -197,11 +197,7 @@ fun chcCompPortfolio26(
         "MDD-$inProcess",
         baseMddConfig.copy(
           backendConfig =
-            baseMddConfig.backendConfig.copy(
-              timeoutMs = timeout,
-              inProcess = inProcess,
-              parseInProcess = true,
-            )
+            baseMddConfig.backendConfig.copy(timeoutMs = timeout, inProcess = inProcess)
         ),
         checker,
       )
@@ -213,7 +209,6 @@ fun chcCompPortfolio26(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =

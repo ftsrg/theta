@@ -38,8 +38,8 @@ fun termination(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseAsgCegarConfig = baseAsgCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseAsgCegarConfig = baseAsgCegarConfig(portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()

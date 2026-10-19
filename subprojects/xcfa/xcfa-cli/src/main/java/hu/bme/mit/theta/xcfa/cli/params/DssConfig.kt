@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_FALLBACK_SOLVER
 import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_SOLVER
+import kotlinx.serialization.Serializable
 
 /**
  * How DSS cuts the input procedure into blocks (see `dss/DSS.md`). `INLINING` is not implemented.
@@ -121,6 +122,7 @@ enum class DssCheckerBackend {
   BOUNDED,
 }
 
+@Serializable
 data class DssConfig(
   @Parameter(
     names = ["--dss-decomposition"],

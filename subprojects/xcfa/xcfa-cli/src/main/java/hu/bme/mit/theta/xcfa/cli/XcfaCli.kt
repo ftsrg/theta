@@ -18,8 +18,6 @@ package hu.bme.mit.theta.xcfa.cli
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
-import com.google.gson.JsonIOException
-import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
@@ -30,9 +28,10 @@ import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.exitProcess
-import hu.bme.mit.theta.xcfa.cli.utils.getGson
+import hu.bme.mit.theta.xcfa.cli.params.xcfaConfigFromJson
 import java.io.File
-import java.io.FileReader
+import java.io.IOException
+import kotlinx.serialization.SerializationException
 
 class XcfaCli(private val args: Array<String>) {
 
@@ -55,10 +54,11 @@ class XcfaCli(private val args: Array<String>) {
       JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(*args)
       val configFile = this.configFile
       if (configFile != null) {
-        try {
-          config = getGson().fromJson(FileReader(configFile), XcfaConfig::class.java)
-        } catch (_: Exception) {
-          val fileContents = configFile.readText()
+        val fileContents = configFile.readText()
+        // a config file is either a JSON-serialized XcfaConfig or a list of CLI flags
+        if (fileContents.trimStart().startsWith("{")) {
+          config = xcfaConfigFromJson(fileContents)
+        } else {
           val fileArgs = fileContents.split(Regex("\\s+")).filter { it.isNotBlank() }
           remainingFlags.addAll(fileArgs)
           config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
@@ -99,11 +99,11 @@ class XcfaCli(private val args: Array<String>) {
       ex.printStackTrace()
       ex.usage()
       exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)
-    } catch (ex: JsonIOException) {
+    } catch (ex: IOException) {
       println("There was a problem reading from ${configFile}:")
       ex.printStackTrace()
       exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)
-    } catch (ex: JsonSyntaxException) {
+    } catch (ex: SerializationException) {
       println("There was a problem parsing ${configFile}:")
       ex.printStackTrace()
       exitProcess("--debug" in args, ex, ExitCodes.INVALID_PARAM.code)

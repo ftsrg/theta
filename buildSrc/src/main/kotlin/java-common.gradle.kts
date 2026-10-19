@@ -37,7 +37,6 @@ dependencies {
 
     implementation(Deps.Kotlin.stdlib)
     implementation(Deps.guava)
-    implementation(Deps.gson)
     implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
     implementation(Deps.hawtjni)
 

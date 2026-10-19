@@ -30,7 +30,6 @@ private fun getOs(): String {
 object Deps {
 
     val guava = "com.google.guava:guava:${Versions.guava}"
-    val gson = "com.google.code.gson:gson:${Versions.gson}"
 
     object Antlr {
 
@@ -104,6 +103,9 @@ object Deps {
     val clikt = "com.github.ajalt.clikt:clikt:${Versions.clikt}"
 
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
+
+    val kotlinxSerializationJson =
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerializationJson}"
 
     val nuprocess = "com.zaxxer:nuprocess:${Versions.nuprocess}"
 

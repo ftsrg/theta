@@ -61,7 +61,7 @@ Two doc systems exist. **Prefer per-subproject `README.md` / `AGENTS.md` for edi
 - `CEGAR-algorithms.md` — CEGAR configuration options + best practices. Read before touching `common/analysis`.
 - `Portfolio.md` — portfolio mechanism: automatic algorithm/config selection.
 - `LBE.md` — Large Block Encoding design note (+ `LBE-images/`), Dec 2021.
-- `Tools.md` — the competition tool variants (Theta / EmergenTheta / Thorn / ThetaCHC).
+- `Tools.md` — the competition tool variants (Theta / EmergenTheta / SymbolicTheta / Thorn / ThetaCHC).
 - `copyright-header.txt` — header prepended to every source file.
 
 ### `doc/wiki/` — MkDocs-Material site (published wiki)
@@ -111,7 +111,7 @@ Current pointers:
 - Binding a formalism to a checking algorithm (CEGAR, BMC/k-ind/IMC, IC3, MDD, CHC, LTL): `subprojects/common/analysis/USING.md`.
 - Shared utilities (logging, DispatchTable, tuples, visualization, DSL scopes, deterministic collections): `subprojects/common/common/USING.md`.
 - Getting/driving SMT solvers (factories, managers, unsat cores, interpolation, Horn, pooling, backend choice): `subprojects/solver/solver/USING.md`.
-- Round-tripping core exprs/stmts through text (parse `toString()` back) or JSON-serializing ARG/Trace: `subprojects/common/grammar/USING.md`.
+- Round-tripping core exprs/stmts through text (parse `toString()` back): `subprojects/common/grammar/USING.md`.
 
 ## Running one module's tests
 
