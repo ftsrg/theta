@@ -15,8 +15,12 @@ from typing import Optional, Dict, Any
 import requests
 
 
+def _title(deposition: Dict[str, Any]) -> Optional[str]:
+    return deposition.get('metadata', {}).get('title', deposition.get('title'))
+
+
 class ZenodoReleaser:
-    def __init__(self, token: str, record_id: str):
+    def __init__(self, token: str, record_id: Optional[str] = None):
         self.token = token
         self.record_id = record_id
         self.base_url = "https://zenodo.org/api"
@@ -106,6 +110,33 @@ class ZenodoReleaser:
         
         return draft_data
 
+    def find_record_by_title(self, title: str) -> Optional[str]:
+        """Find the latest published deposition of this account with exactly the given title."""
+        url = f"{self.base_url}/deposit/depositions"
+        params = {"q": f'title:"{title}"', "all_versions": "true", "size": 100}
+        response = self._make_request("GET", url, headers=self.headers, params=params)
+        matches = [d for d in response.json()
+                   if d.get('submitted') and _title(d) == title]
+        if not matches:
+            return None
+        return str(max(matches, key=lambda d: d['id'])['id'])
+
+    def cleanup_unpublished_records(self, title: str) -> None:
+        """Delete never-published depositions with this title, left behind by a failed first release."""
+        url = f"{self.base_url}/deposit/depositions"
+        params = {"q": f'title:"{title}"', "status": "draft", "size": 100}
+        response = self._make_request("GET", url, headers=self.headers, params=params)
+        for draft in response.json():
+            if draft.get('submitted') is False and _title(draft) == title:
+                self.delete_draft(draft['id'])
+
+    def create_new_record(self) -> Dict[str, Any]:
+        """Create a brand-new deposition, starting a new concept record."""
+        print("Creating new record")
+        url = f"{self.base_url}/deposit/depositions"
+        response = self._make_request("POST", url, headers=self.headers, json={})
+        return response.json()
+
     def _get_existing_draft(self) -> Dict[str, Any]:
         """Retrieve an existing draft version and clear its files."""
         drafts = self.get_draft_depositions()
@@ -129,16 +160,8 @@ class ZenodoReleaser:
         deposition_id = deposition_data['id']
         print(f"Updating metadata for deposition {deposition_id}")
         
-        # Read the metadata template
-        with open(metadata_file, 'r') as f:
-            metadata_template = json.load(f)
-        
-        # Replace placeholders
         today = date.today().strftime('%Y-%m-%d')
-        metadata_json = json.dumps(metadata_template)
-        metadata_json = metadata_json.replace('__TODAY__', today)
-        metadata_json = metadata_json.replace('__TOOL__', tool_name)
-        metadata = json.loads(metadata_json)
+        metadata = load_metadata(metadata_file, tool_name, today)
         
         # Update the deposition
         url = deposition_data['links']['self']
@@ -197,10 +220,21 @@ class ZenodoReleaser:
         return data
 
 
+def load_metadata(metadata_file: Path, tool_name: str, today: str) -> Dict[str, Any]:
+    """Read the metadata template and fill in its placeholders."""
+    with open(metadata_file, 'r') as f:
+        metadata_json = json.dumps(json.load(f))
+    metadata_json = metadata_json.replace('__TODAY__', today)
+    metadata_json = metadata_json.replace('__TOOL__', tool_name)
+    return json.loads(metadata_json)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create and publish a Zenodo release')
     parser.add_argument('--token', required=True, help='Zenodo API token')
-    parser.add_argument('--record-id', required=True, help='Previous record ID')
+    parser.add_argument('--record-id', default='',
+                       help='Previous record ID; if omitted, the record is looked up by title '
+                            'and created on first release')
     parser.add_argument('--tool', required=True, help='Tool name')
     parser.add_argument('--file', required=True, help='ZIP file to upload')
     parser.add_argument('--metadata', required=True, help='Metadata JSON file')
@@ -221,14 +255,27 @@ def main():
         sys.exit(1)
     
     try:
-        releaser = ZenodoReleaser(args.token, args.record_id)
+        releaser = ZenodoReleaser(args.token, args.record_id or None)
         
-        # Optional: Clean up any existing drafts
-        if args.cleanup_drafts:
-            releaser.cleanup_existing_drafts()
+        # Without an explicit record, the title identifies the tool's record, so the first
+        # release creates it and later ones find it again.
+        if not releaser.record_id:
+            title = load_metadata(metadata_path, args.tool, '')['metadata']['title']
+            releaser.record_id = releaser.find_record_by_title(title)
+            if releaser.record_id:
+                print(f"Found existing record {releaser.record_id} titled '{title}'")
         
-        # Create new version
-        deposition = releaser.create_new_version()
+        if releaser.record_id:
+            # Optional: Clean up any existing drafts
+            if args.cleanup_drafts:
+                releaser.cleanup_existing_drafts()
+            
+            # Create new version
+            deposition = releaser.create_new_version()
+        else:
+            if args.cleanup_drafts:
+                releaser.cleanup_unpublished_records(title)
+            deposition = releaser.create_new_record()
         
         # Update metadata
         deposition = releaser.update_metadata(deposition, args.tool, metadata_path)
