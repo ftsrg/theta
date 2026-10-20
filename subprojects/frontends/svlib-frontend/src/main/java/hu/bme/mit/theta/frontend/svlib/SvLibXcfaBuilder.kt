@@ -120,6 +120,14 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
 
   override fun visitSelectTrace(ctx: SelectTraceContext) = throw ctx.unsupported("command 'select-trace'")
 
+  override fun visitDeclareFunCommand(ctx: DeclareFunCommandContext) {
+    val sorts = ctx.cmd_declareFun().sort().map { sortOf(it) }
+    val type = if (sorts.size == 1) sorts.first()
+      else sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) }
+    val name = ctx.cmd_declareFun().symbol().original
+    globalSymbolTable.put(Decls.Const(name, type), name, ctx.original)
+  }
+
   private fun declareProcedure(
     name: SymbolContext,
     inputs: ProcDeclarationArgumentsContext,
