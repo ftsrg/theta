@@ -174,7 +174,7 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     is StartLabel ->
       StartLabel(
         name,
-        params.map { ExprUtils.simplify(it, valuation).withCTypeOf(parseContext, it) },
+        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
         pidVar,
         metadata,
         tempLookup,
