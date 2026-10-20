@@ -507,15 +507,23 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                     } else {
                         final var declarators =
                                 structDeclarationContext.structDeclaratorList().structDeclarator();
+                        boolean ownsSpecifierStars = true;
                         for (CParser.StructDeclaratorContext structDeclaratorContext :
                                 declarators) {
                             CDeclaration declaration =
                                     structDeclaratorContext.accept(declarationVisitor);
+                            final boolean first = ownsSpecifierStars;
+                            ownsSpecifierStars = false;
                             if (declaration == null) {
                                 continue;
                             }
                             if (declaration.getType() == null) {
-                                declaration.setType(cSimpleType);
+                                declaration.setType(
+                                        declarationVisitor.declaratorType(
+                                                cSimpleType,
+                                                declaration,
+                                                declaratorOf(structDeclaratorContext),
+                                                first));
                             }
                             if (declaration.getName() == null) {
                                 // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not
@@ -544,6 +552,15 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
             return struct;
         }
+    }
+
+    private static CParser.DeclaratorContext declaratorOf(CParser.StructDeclaratorContext ctx) {
+        if (ctx instanceof CParser.StructDeclaratorSimpleContext simple) {
+            return simple.declarator();
+        } else if (ctx instanceof CParser.StructDeclaratorConstantContext bitfield) {
+            return bitfield.declarator();
+        }
+        return null;
     }
 
     @Override
@@ -657,7 +674,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             // A qualifier written *after* a star qualifies that star's pointer, not the type it
             // points at: `int * _Atomic p` is an atomic pointer to a plain int. Each star's
             // qualifiers are the ones written between it and the next.
-            if (qualifiersAfter(ctx, stars, i).contains("_Atomic")) {
+            if (qualifiersAfter(ctx.pointer(), i).contains("_Atomic")) {
                 subtype.markLastPointerAtomic();
             }
         }
@@ -665,11 +682,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     }
 
     /** The type qualifiers written after the i-th star, i.e. before the star that follows it. */
-    private String qualifiersAfter(
-            CParser.TypeSpecifierPointerContext ctx, List<Token> stars, int i) {
+    static String qualifiersAfter(CParser.PointerContext pointer, int i) {
+        final List<Token> stars = pointer.stars;
         final int from = stars.get(i).getTokenIndex();
         final int to = i + 1 < stars.size() ? stars.get(i + 1).getTokenIndex() : Integer.MAX_VALUE;
-        return ctx.pointer().typeQualifierList().stream()
+        return pointer.typeQualifierList().stream()
                 .filter(
                         list -> {
                             int at = list.getStart().getTokenIndex();

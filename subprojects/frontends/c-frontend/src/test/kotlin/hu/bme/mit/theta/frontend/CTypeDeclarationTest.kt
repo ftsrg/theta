@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.frontend
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
@@ -23,9 +24,11 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -45,9 +48,8 @@ import org.junit.jupiter.params.provider.CsvSource
 class CTypeDeclarationTest {
 
   /** The type of the global `x` declared by [program], as the frontend builds it. */
-  private fun typeOf(program: String): CComplexType {
+  private fun typeOf(program: String, logger: Logger = NullLogger.getInstance()): CComplexType {
     val parseContext = ParseContext()
-    val logger = NullLogger.getInstance()
     val declarationVisitor =
       DeclarationVisitor(parseContext, FunctionVisitor(parseContext, logger), logger)
 
@@ -190,6 +192,36 @@ class CTypeDeclarationTest {
     check(declaration, expected, prelude = "typedef int myint; typedef unsigned long myuint;")
 
   @ParameterizedTest(name = "{0} is {1}")
+  @DisplayName("each declarator of a list has its own stars, and only those")
+  @CsvSource(
+    // The grammar folds the first declarator's stars into the specifiers the others share.
+    "P x, CStruct",
+    "PP x, CPointer<CStruct>",
+    "PPP x, CPointer<CPointer<CStruct>>",
+    "PP *x, CPointer<CPointer<CStruct>>",
+    "PB x, CPointer<CStruct>",
+    "T x, CSignedInt",
+    "PT x, CPointer<CSignedInt>",
+    "'int y, *x', CPointer<CSignedInt>",
+    "'int *y, x', CSignedInt",
+    "'int *y, *x', CPointer<CSignedInt>",
+    "'int *y, **x', CPointer<CPointer<CSignedInt>>",
+    "'int *y, *x[2]', CArray<CPointer<CSignedInt>>",
+    "'int *y, (*x)[2]', CPointer<CArray<CSignedInt>>",
+    "typeof(((struct M *)0)->b) x, CPointer<CSignedInt>",
+    "typeof(((struct M *)0)->c) x, CPointer<CSignedInt>",
+    "typeof(((struct M *)0)->d) x, CSignedInt",
+  )
+  fun `declarator list stars`(declaration: String, expected: String) =
+    check(
+      declaration,
+      expected,
+      prelude =
+        "typedef struct S { int a; int b; } P, *PP, **PPP; typedef struct S *PA, *PB;" +
+          " typedef int T, *PT; struct M { int a, *b; int *c, d; };",
+    )
+
+  @ParameterizedTest(name = "{0} is {1}")
   @DisplayName("typeof over an expression")
   @CsvSource(
     // A dereference has one pointer level fewer than the declaration its type came from.
@@ -206,4 +238,23 @@ class CTypeDeclarationTest {
   )
   fun `typeof`(declaration: String, expected: String) =
     check(declaration, expected, prelude = "struct S { int a; int b; };")
+
+  @Test
+  fun `a struct embedding itself by value gets the placeholder its warning names`() {
+    val warnings = mutableListOf<String>()
+    val logger =
+      object : Logger {
+        override fun write(level: Logger.Level, pattern: String, vararg objects: Any?): Logger {
+          warnings += pattern.format(*objects)
+          return this
+        }
+      }
+    var member: CComplexType = typeOf("struct S { int a; struct S s; } x;", logger)
+    while (member is CStruct) member = member.fields[1].get2()
+    assertEquals("CSignedInt", describe(member))
+    assertEquals(
+      listOf("WARNING: self-embedded structs! Using int as a placeholder"),
+      warnings.map { it.trim() }.filter { "placeholder" in it },
+    )
+  }
 }
