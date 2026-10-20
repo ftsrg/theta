@@ -86,8 +86,10 @@ violation conditions while refinement finds new predicates.
 
 ## Known limitations
 
-* Error-location reachability only, single procedure only; labels without a weakest-precondition
-  rule (calls, memory operations, fences) make the block analysis fail.
+* Error-location reachability only: other properties are supported when a pass rewrites them to it
+  (assertions, overflow, memory safety), the rest (e.g. termination) are rejected.
+* Single procedure only; labels without a weakest-precondition rule (calls, memory operations,
+  fences) make the block analysis fail.
 * A solver query DSS itself cannot decide gives an unknown verdict.
 * Witness invariants appear only at C statements that start an XCFA edge; without every block's
   records, an UNSAFE verdict has an empty trace.

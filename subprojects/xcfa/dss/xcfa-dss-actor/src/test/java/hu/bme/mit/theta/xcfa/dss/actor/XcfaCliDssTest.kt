@@ -523,6 +523,66 @@ class XcfaCliDssTest {
     assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
   }
 
+  @Test
+  fun `properties a pass reduces to error-location reachability are checked`() {
+    assertTrue(dssVerdict("overflow_unsafe", "no-overflow").contains("SafetyResult Unsafe"))
+    assertTrue(
+      dssVerdict("assert_unsafe", "no-assertion-violation").contains("SafetyResult Unsafe")
+    )
+  }
+
+  @Test
+  fun `termination is rejected`() {
+    val (output, thrown) = runDss("safe", "termination")
+    assertTrue(thrown != null && "not TERMINATION" in output) { output }
+  }
+
+  /** The verdict line of a DSS run on [program] against `<property>.prp`. */
+  private fun dssVerdict(program: String, property: String): String {
+    val (output, thrown) = runDss(program, property)
+    if (thrown != null) throw thrown
+    return output.lines().lastOrNull { it.contains("SafetyResult") }.orEmpty()
+  }
+
+  /** The output of a DSS run on [program] against `<property>.prp`, and what it threw. */
+  private fun runDss(program: String, property: String): Pair<String, Throwable?> {
+    val temp = createTempDirectory()
+    val captured = temp.resolve("stdout_stderr").toFile()
+    var thrown: Throwable? = null
+    try {
+      PrintStream(BufferedOutputStream(FileOutputStream(captured)), true).use { ps ->
+        val savedOut = System.out
+        val savedErr = System.err
+        System.setOut(ps)
+        System.setErr(ps)
+        try {
+          main(
+            arrayOf(
+              "--backend",
+              "DSS",
+              "--property",
+              javaClass.getResource("/c/dss/$property.prp")!!.path,
+              "--output-directory",
+              temp.absolutePathString(),
+              "--input",
+              javaClass.getResource("/c/dss/$program.c")!!.path,
+              "--stacktrace",
+              "--debug",
+            )
+          )
+        } catch (e: Exception) {
+          thrown = e
+        } finally {
+          System.setOut(savedOut)
+          System.setErr(savedErr)
+        }
+      }
+      return captured.readText() to thrown
+    } finally {
+      temp.toFile().deleteRecursively()
+    }
+  }
+
   /** The SV-COMP witness of a DSS run on [program] with emergent27's settings. */
   private fun dssWitness(program: String, executor: String): String {
     val temp = createTempDirectory()

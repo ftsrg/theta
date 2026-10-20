@@ -18,12 +18,12 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.cli.checkers.checkDssSupports
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-/** Only DSS; properties other than error-location reachability go to [emergent26]. */
+/** Only DSS; fails on properties that no pass reduces to error-location reachability. */
 fun emergent27(
   xcfa: XCFA,
   mcm: MCM,
@@ -32,8 +32,7 @@ fun emergent27(
   logger: Logger,
   uniqueLogger: Logger,
 ): STM {
-  if (portfolioConfig.inputConfig.property.verifiedProperty != ErrorDetection.ERROR_LOCATION)
-    return emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+  checkDssSupports(portfolioConfig.inputConfig.property)
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 

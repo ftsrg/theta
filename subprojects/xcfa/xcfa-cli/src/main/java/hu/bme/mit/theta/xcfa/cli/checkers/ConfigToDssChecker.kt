@@ -32,6 +32,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -95,6 +96,19 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Blocks only search for error locations, so a property must be rewritten to one by a pass first;
+ * any other would be reported SAFE unchecked.
+ */
+fun checkDssSupports(property: XcfaProperty) =
+  check(
+    property.verifiedProperty == ErrorDetection.ERROR_LOCATION ||
+      property.verifiedProperty == ErrorDetection.NO_ASSERTION_VIOLATION
+  ) {
+    "DSS only checks properties reducible to error-location reachability, not " +
+      "${property.verifiedProperty} (input property ${property.inputProperty})"
+  }
+
 /** `--backend DSS`: distributed summary synthesis (`dss/DSS.md`). */
 fun getDssChecker(
   xcfa: XCFA,
@@ -104,12 +118,7 @@ fun getDssChecker(
   logger: Logger,
 ): SafetyChecker<Proof, Cex, XcfaPrec<*>> = SafetyChecker { _ ->
   val dssConfig = config.backendConfig.specConfig as DssConfig
-  val property = config.inputConfig.property
-  // Blocks only search for error locations: any other property would be reported SAFE unchecked.
-  check(property.verifiedProperty == ErrorDetection.ERROR_LOCATION) {
-    "DSS only checks error-location reachability, not ${property.verifiedProperty} " +
-      "(input property ${property.inputProperty}) - see dss/DSS.md's Known Limitations."
-  }
+  checkDssSupports(config.inputConfig.property)
   val procedure =
     xcfa.procedures.singleOrNull()
       ?: error(
