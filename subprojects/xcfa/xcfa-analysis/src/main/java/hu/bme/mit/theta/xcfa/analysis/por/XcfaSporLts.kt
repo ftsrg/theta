@@ -238,7 +238,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
           val blockingPids = edgesBlockedByOtherThreads[otherAction] ?: emptySet()
           if (blockingPids.isEmpty()) {
             // if no blocking processes are found, add the action directly to the source set
-            addedNewAction = addedNewAction || sourceSet.add(otherAction)
+            addedNewAction = sourceSet.add(otherAction) || addedNewAction
             edgesBlockedByOtherThreads.forEach { (action, blockingPids) ->
               if (blockingPids == setOf(otherAction.pid)) {
                 otherActions.remove(action)
@@ -247,7 +247,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
           } else {
             // otherwise, add the blocking actions
             val blockingActions = enabledActions.filter { it.pid in blockingPids }.toSet()
-            addedNewAction = addedNewAction || sourceSet.addAll(blockingActions)
+            addedNewAction = sourceSet.addAll(blockingActions) || addedNewAction
             otherActions.removeAll(blockingActions)
           }
           otherActions.remove(otherAction)
