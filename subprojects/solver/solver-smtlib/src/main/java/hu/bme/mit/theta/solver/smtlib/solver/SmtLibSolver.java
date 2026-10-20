@@ -236,7 +236,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         assertions.pop(n);
         declarationStack.pop(n);
         typeStack.pop(n);
-        issueGeneralCommand("(pop 1)");
+        issueGeneralCommand(String.format("(pop %d)", n));
         clearState();
     }
 
