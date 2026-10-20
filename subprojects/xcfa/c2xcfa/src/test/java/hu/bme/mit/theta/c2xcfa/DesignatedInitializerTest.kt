@@ -100,7 +100,7 @@ class DesignatedInitializerTest {
         """
         int a[5] = { [2] = 7, 8 };
         int main() {
-          if (a[3] != 8) { return 1; }
+          if (a[2] != 7 || a[3] != 8) { return 1; }
           return 0;
         }
         """

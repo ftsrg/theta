@@ -205,7 +205,7 @@ class BitfieldAndAnonymousMemberTest {
         """
         struct F { unsigned a : 4; unsigned b : 4; int count; };
         struct F g = {1, 2, 7};
-        int main() { return g.count != 7; }
+        int main() { return g.a + g.b + g.count != 10; }
         """
           .trimIndent()
       )

@@ -268,7 +268,7 @@ class XcfaCliVerifyTest {
         "--debug",
       )
     main(params)
-    Assertions.assertTrue(temp.resolve("xcfa.json").exists())
+    Assertions.assertTrue(temp.resolve("xcfa.dot").exists())
     Assertions.assertTrue(
       temp.resolve("arg-true.dot").exists() || temp.resolve("arg-false.dot").exists()
     )

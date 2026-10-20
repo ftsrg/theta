@@ -245,9 +245,7 @@ class XcfaDataRaceTest {
         decisionProcedure = OcDecisionProcedureType.BASIC,
         smtSolver = "Z3:4.13",
         logger = NullLogger.getInstance(),
-        conflictInput = null,
         outputConflictClauses = false,
-        nonPermissiveValidation = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,
         autoConflictBound = -1,
       )

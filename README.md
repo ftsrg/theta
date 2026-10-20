@@ -17,6 +17,7 @@
 [![](https://img.shields.io/badge/-EmergenTheta-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.13958195)
 [![](https://img.shields.io/badge/-Thorn-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.13958280)
 [![](https://img.shields.io/badge/-ThetaCHC-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.15537026)
+[![](https://img.shields.io/badge/-SymbolicTheta-red?logo=zenodo&logoSize=auto&labelColor=gray)](https://doi.org/10.5281/zenodo.23471935)
 
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)

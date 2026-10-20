@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ fun chcCompPortfolio25(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -143,11 +143,7 @@ fun chcCompPortfolio25(
         "MDD-$inProcess",
         baseMddConfig.copy(
           backendConfig =
-            baseMddConfig.backendConfig.copy(
-              timeoutMs = timeout,
-              inProcess = inProcess,
-              parseInProcess = true,
-            )
+            baseMddConfig.backendConfig.copy(timeoutMs = timeout, inProcess = inProcess)
         ),
         checker,
       )
@@ -161,7 +157,6 @@ fun chcCompPortfolio25(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = baseMddConfig.backendConfig.specConfig!!.copy(cegar = true),
             )
         ),
@@ -170,31 +165,13 @@ fun chcCompPortfolio25(
     }
 
     val complex25 =
-      ConfigNode(
-        "Complex-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Complex-$inProcess") {
+        complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val types = xcfa.collectVars().map { it.type }.toSet()
 
-    infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
+    infix fun Node.then(node: Node): Node {
       edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
     }

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.xcfa.model.FenceLabel
 import hu.bme.mit.theta.xcfa.model.MutexLock
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.known
 
 /** The set of mutexes acquired embedded into each other. */
@@ -25,6 +26,7 @@ inline val XcfaEdge.acquiredEmbeddedMutexes: Set<MutexLock>
   get() {
     val acquired = mutableSetOf<MutexLock>()
     val toVisit = mutableListOf<Pair<XcfaEdge, Set<MutexLock>>>(this to setOf())
+    val visited = mutableSetOf<XcfaLocation>()
     while (toVisit.isNotEmpty()) {
       val (visiting, mutexes) = toVisit.removeFirst()
       val newMutexes = mutexes.toMutableSet()
@@ -33,8 +35,10 @@ inline val XcfaEdge.acquiredEmbeddedMutexes: Set<MutexLock>
           fence.acquiredMutexes
         }
       )
-      if (visiting.mutexOperations(newMutexes)) {
-        visiting.target.outgoingEdges.forEach { toVisit.add(it to newMutexes) }
+      if (visited.add(visiting.target)) {
+        if (visiting.mutexOperations(newMutexes)) {
+          visiting.target.outgoingEdges.forEach { toVisit.add(it to newMutexes) }
+        }
       }
     }
     return acquired

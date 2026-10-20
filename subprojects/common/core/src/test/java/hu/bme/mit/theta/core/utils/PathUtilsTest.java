@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -45,25 +43,24 @@ public class PathUtilsTest {
     @Test
     public void testUnfold() {
         Assertions.assertEquals(
-                Eq(x1.getRef(), Add(y0.getRef(), Int(1))),
-                PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 0));
+                Eq(x1.getRef(), Inc(y0.getRef())),
+                PathUtils.unfold(Eq(Prime(vx.getRef()), Inc(vy.getRef())), 0));
 
         Assertions.assertEquals(
-                Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
-                PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
+                Eq(x2.getRef(), Inc(y1.getRef())),
+                PathUtils.unfold(Eq(Prime(vx.getRef()), Inc(vy.getRef())), 1));
     }
 
     @Test
     public void testUnfoldReversed() {
         Assertions.assertEquals(
-                Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
+                Eq(x0.getRef(), Inc(x1.getRef())),
                 PathUtils.unfoldReverse(
-                        Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))),
-                        VarIndexingFactory.indexing(0)));
+                        Eq(Prime(vx.getRef()), Inc(vx.getRef())), VarIndexingFactory.indexing(0)));
         Assertions.assertEquals(
-                Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
+                Eq(x0.getRef(), Inc(x2.getRef())),
                 PathUtils.unfoldReverse(
-                        Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))),
+                        Eq(Prime(Prime(vx.getRef())), Inc(vx.getRef())),
                         VarIndexingFactory.indexing(0)));
         Assertions.assertEquals(
                 Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
@@ -75,16 +72,16 @@ public class PathUtilsTest {
     @Test
     public void testFold() {
         Assertions.assertEquals(
-                Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-                PathUtils.foldin(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
+                Eq(Prime(vx.getRef()), Inc(vy.getRef())),
+                PathUtils.foldin(Eq(x1.getRef(), Inc(y0.getRef())), 0));
 
         Assertions.assertEquals(
-                Eq(Prime(vx.getRef(), 2), Add(Prime(vy.getRef()), Int(1))),
-                PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
+                Eq(Prime(vx.getRef(), 2), Inc(Prime(vy.getRef()))),
+                PathUtils.foldin(Eq(x2.getRef(), Inc(y1.getRef())), 0));
 
         Assertions.assertEquals(
-                Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-                PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
+                Eq(Prime(vx.getRef()), Inc(vy.getRef())),
+                PathUtils.foldin(Eq(x2.getRef(), Inc(y1.getRef())), 1));
     }
 
     @Test

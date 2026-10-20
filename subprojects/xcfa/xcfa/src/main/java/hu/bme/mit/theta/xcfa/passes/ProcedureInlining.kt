@@ -127,6 +127,7 @@ internal fun inlineCallSite(
   parseContext: ParseContext?,
   metadata: MetaData,
   freshFrame: Boolean = false,
+  onCopy: (copy: XcfaLocation, of: XcfaLocation) -> Unit = { _, _ -> },
 ) {
   val calleeLocs = callee.locs
   val calleeEdges = callee.edges
@@ -146,7 +147,7 @@ internal fun inlineCallSite(
   val calleeParams = callee.params.map { (v, dir) -> (frame[v] ?: v) to dir }
 
   val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
-  calleeLocs.forEach { newLocs[it] = it.inlinedCopy() }
+  calleeLocs.forEach { newLocs[it] = it.inlinedCopy().also { copy -> onCopy(copy, it) } }
   calleeVars.forEach { builder.addVar(it) }
   calleeParams.forEach { builder.addVar(it.first) }
   calleeEdges.forEach {
@@ -179,7 +180,7 @@ internal fun inlineCallSite(
         inStmts.add(
           StmtLabel(
             AssignStmt.of(cast(v, v.type), cast(v.type.defaultValue, v.type)),
-            metadata = EmptyMetaData,
+            metadata = invokeLabel.metadata,
           )
         )
       }
@@ -244,7 +245,7 @@ internal fun inlineCallSite(
               param.first.type,
             ),
           )
-      inStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
+      inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
     }
 
     if (param.second != ParamDirection.IN) {

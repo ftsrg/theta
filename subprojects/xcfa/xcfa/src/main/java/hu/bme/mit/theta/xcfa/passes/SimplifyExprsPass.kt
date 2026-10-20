@@ -70,13 +70,13 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val constValuation = MutableValuation()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
-    val modifiedGlobalVars =
-      builder.parent
-        .getVars()
-        .map { it.wrappedVar }
-        .separateConstAndModifiedVars(builder.parent.getProcedures(), constValuation)
+    val modifiedGlobals = mutableListOf<VarDecl<*>>()
+    builder.parent
+      .getVars()
+      .map { it.wrappedVar }
+      .getConstAndModifiedVars(builder.parent.getProcedures(), constValuation, modifiedGlobals)
 
-    builder.getVars().separateConstAndModifiedVars(setOf(builder), constValuation)
+    builder.getVars().getConstAndModifiedVars(setOf(builder), constValuation)
 
     lateinit var lastEdges: LinkedHashSet<XcfaEdge>
     do {
@@ -108,7 +108,7 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
         if (edge !in initEdges || newLabels.any { it is InvokeLabel || it is StartLabel }) {
           // note that global variable values are still propagated within an edge (XcfaEdge is
           // considered atomic)
-          modifiedGlobalVars.forEach { localValuation.remove(it) }
+          modifiedGlobals.forEach { localValuation.remove(it) }
         }
 
         if (newLabels != oldLabels) {
@@ -156,14 +156,15 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
     new: XcfaLabel,
     builder: XcfaProcedureBuilder,
   ): Boolean {
-    val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
-    fun globals(label: XcfaLabel) =
-      label.collectVarsWithAccessType(builder).filterKeys { it in globalVars }
+    fun nonAtomicGlobals(label: XcfaLabel) =
+      label.collectVarsWithAccessType(builder).filterKeys {
+        builder.parent.getVars().any { v -> v.wrappedVar == it && !v.atomic }
+      }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
 
-    val oldGlobals = globals(old)
-    val newGlobals = globals(new)
+    val oldGlobals = nonAtomicGlobals(old)
+    val newGlobals = nonAtomicGlobals(new)
     val lostGlobal =
       oldGlobals.any { (v, access) ->
         val kept = newGlobals[v]
@@ -176,12 +177,13 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
    * Separates the variables in this collection. The constant variables are added to the given
    * valuation with their values. Modified variables are returned as a list.
    */
-  private fun Collection<VarDecl<*>>.separateConstAndModifiedVars(
+  private fun Collection<VarDecl<*>>.getConstAndModifiedVars(
     accessingProcedures: Set<XcfaProcedureBuilder>,
     constValuation: MutableValuation,
-  ): List<VarDecl<*>> {
-    val writes = associateWith { 0 }.toMutableMap()
-    val firstWrites = mutableMapOf<VarDecl<*>, XcfaEdge>()
+    modifiedVariables: MutableList<VarDecl<*>> = mutableListOf(),
+  ) {
+    val writeCounts = associateWith { 0 }.toMutableMap()
+    val writes = mutableMapOf<VarDecl<*>, XcfaLabel>()
     accessingProcedures.forEach { proc ->
       val toVisit = mutableListOf(proc.initLoc)
       val visited = mutableSetOf<XcfaLocation>()
@@ -189,14 +191,17 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
         val loc = toVisit.removeFirst()
         if (!visited.add(loc)) continue
         loc.outgoingEdges.forEach { edge ->
-          edge.collectVarsWithAccessType(proc).forEach { (v, access) ->
-            if (v in writes) {
-              if (
-                access.isWritten ||
-                  (access.isRead && accessingProcedures.size == 1 && writes[v] == 0)
-              ) {
-                writes[v] = writes[v]!! + 1
-                firstWrites.putIfAbsent(v, edge)
+          edge.getFlatLabels().forEach { label ->
+            label.collectVarsWithAccessType(proc).forEach { (v, access) ->
+              if (v in writeCounts) {
+                // explicit write or range assume for uninitialized local vars
+                if (
+                  access.isWritten ||
+                    (access.isRead && accessingProcedures.size == 1 && writeCounts[v] == 0)
+                ) {
+                  writeCounts[v] = writeCounts[v]!! + 1
+                  writes.putIfAbsent(v, label)
+                }
               }
             }
           }
@@ -205,16 +210,32 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
       }
     }
 
-    return filter { v ->
-      if (writes[v]!! > 1) {
-        return@filter true
+    val potentialConsts =
+      filter { v ->
+          if (writeCounts[v]!! > 1) {
+            modifiedVariables.add(v)
+            false
+          } else {
+            true
+          }
+        }
+        .toMutableSet()
+
+    do {
+      var changed = false
+      potentialConsts.removeIf { v ->
+        writes[v]?.let { write ->
+          val valuation = MutableValuation.copyOf(constValuation)
+          write.simplify(valuation, parseContext)
+          valuation.toMap()[v]?.let {
+            if (v !in constValuation.decls) {
+              constValuation.put(v, it)
+              changed = true
+            }
+            true // remove if we have a constant value for it
+          } ?: false // we may have a chance later: e.g., x := y if y gets a value
+        } ?: true // no writing label found for v -> remove
       }
-      firstWrites[v]?.let { firstWrite ->
-        val valuation = MutableValuation()
-        firstWrite.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
-        valuation.toMap()[v]?.let { constValuation.put(v, it) }
-      }
-      false
-    }
+    } while (changed) // no change, no point in iterating further
   }
 }

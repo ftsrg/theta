@@ -101,11 +101,6 @@ fun getXcfa(
 
       InputType.LITMUS -> LitmusInterpreter.getXcfa(config.inputConfig.input!!)
 
-      InputType.JSON -> {
-        val gson = getGson()
-        gson.fromJson(config.inputConfig.input!!.readText(), XCFA::class.java)
-      }
-
       InputType.DSL -> {
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         kotlinEngine.eval(FileReader(config.inputConfig.input!!)) as XCFA

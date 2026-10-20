@@ -77,10 +77,10 @@ constructor(
 
   override fun getWrappedState(): S = sGlobal
 
-  fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
+  internal fun apply(a: XcfaAction): XcfaState<S> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
     if (mutexes[ATOMIC_MUTEX]?.any { it != a.pid } == true) {
-      return Pair(copy(bottom = true), a.withLabel(SequenceLabel(listOf(NopLabel))))
+      return copy(bottom = true)
     }
 
     val processState = processes[a.pid]
@@ -92,87 +92,78 @@ constructor(
       changes.add { state -> state.withProcesses(newProcesses) }
     }
 
-    val newLabels: List<XcfaLabel> =
-      a.edge.getFlatLabels().mapNotNull { label ->
-        when (label) {
-          is FenceLabel -> {
-            when (label) {
-              is AtomicBeginLabel,
-              is MutexLockLabel,
-              is RWLockReadLockLabel,
-              is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
+    a.edge.getFlatLabels().forEach { label ->
+      when (label) {
+        is FenceLabel -> {
+          when (label) {
+            is AtomicBeginLabel,
+            is MutexLockLabel,
+            is RWLockReadLockLabel,
+            is RWLockWriteLockLabel -> changes.add { it.enterMutex(label, a.pid) }
 
-              is AtomicEndLabel,
-              is MutexUnlockLabel,
-              is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
+            is AtomicEndLabel,
+            is MutexUnlockLabel,
+            is RWLockUnlockLabel -> changes.add { it.exitMutex(label, a.pid) }
 
-              is MutexTryLockLabel -> {
-                var success = false
-                changes.add { state ->
-                  val newState = state.enterMutex(label, a.pid)
-                  success = !newState.isBottom
-                  if (newState.isBottom) state else newState
-                }
-                AssignStmtLabel(
-                  label.successVar.ref,
-                  Int(if (success) 1 else 0),
-                  metadata = label.metadata,
-                )
+            is MutexTryLockLabel -> {
+              check(label.successful != null) {
+                "MutexTryLockLabel success must be encoded by the LTS."
               }
-            }.let { it as? XcfaLabel }
-          }
-
-          is InvokeLabel -> {
-            val proc =
-              xcfa?.procedures?.find { proc -> proc.name == label.name }
-                ?: error("No such method ${label.name}.")
-            val returnStmt =
-              SequenceLabel(
-                proc.params
-                  .withIndex()
-                  .filter { it.value.second != ParamDirection.IN }
-                  .map { iVal ->
-                    AssignStmtLabel(
-                      label.params[iVal.index] as RefExpr<*>,
-                      cast(iVal.value.first.ref, iVal.value.first.type),
-                      metadata = label.metadata,
-                    )
-                  }
-              )
-            changes.add { state ->
-              state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
+              changes.add { state ->
+                val newState = state.enterMutex(label, a.pid)
+                when {
+                  newState.isBottom == label.successful -> state.copy(bottom = true) // disabled
+                  newState.isBottom -> state // mutex lock did not succeed
+                  else -> newState // mutex lock succeeded
+                }
+              }
             }
-            null
           }
-
-          is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { label }
-
-          is StartLabel -> changes.add { state -> state.start(label, a.pid) }.let { null }
-          is JoinLabel -> {
-            changes.add { state ->
-              // joining a thread that was never started is a no-op (there is nothing to wait
-              // for); only block while a started thread is still running
-              val joinedPid = state.threadLookup[label.pidVar]
-              if (joinedPid != null && joinedPid in state.processes) copy(bottom = true) else state
-            }
-            null
-          }
-
-          is SequenceLabel -> label
-          is NondetLabel -> label
-          is StmtLabel -> label
-          NopLabel -> null
         }
+
+        is InvokeLabel -> {
+          val proc =
+            xcfa?.procedures?.find { proc -> proc.name == label.name }
+              ?: error("No such method ${label.name}.")
+          val returnStmt =
+            SequenceLabel(
+              proc.params
+                .withIndex()
+                .filter { it.value.second != ParamDirection.IN }
+                .map { iVal ->
+                  AssignStmtLabel(
+                    label.params[iVal.index] as RefExpr<*>,
+                    cast(iVal.value.first.ref, iVal.value.first.type),
+                    metadata = label.metadata,
+                  )
+                }
+            )
+          changes.add { state ->
+            state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), label.tempLookup)
+          }
+        }
+
+        is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }
+
+        is StartLabel -> changes.add { state -> state.start(label, a.pid) }
+        is JoinLabel -> {
+          changes.add { state ->
+            // joining a thread that was never started is a no-op (there is nothing to wait
+            // for); only block while a started thread is still running
+            val joinedPid = state.threadLookup[label.pidVar]
+            if (joinedPid != null && joinedPid in state.processes) copy(bottom = true) else state
+          }
+        }
+
+        else -> {}
       }
+    }
 
     changes.add { state ->
       if (state.processes[a.pid]!!.locs.isEmpty()) state.endProcess(a.pid) else state
     }
 
-    return Pair(
-      changes.fold(this) { current, change -> change(current) },
-      a.withLabel(SequenceLabel(newLabels)),
-    )
+    return changes.fold(this) { current, change -> change(current) }
   }
 
   private fun start(startLabel: StartLabel, startingPid: Int): XcfaState<S> {

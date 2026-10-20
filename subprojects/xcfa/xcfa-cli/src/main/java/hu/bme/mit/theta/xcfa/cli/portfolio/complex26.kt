@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,10 +45,10 @@ fun complex26(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
+  var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseIc3Config = baseIc3Config(portfolioConfig)
 
   fun getStm(mainTrait: MainTrait, inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -126,7 +126,6 @@ fun complex26(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -143,7 +142,6 @@ fun complex26(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -166,7 +164,6 @@ fun complex26(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = baseMddConfig.backendConfig.specConfig!!.copy(solver = solver),
             )
         ),
@@ -182,7 +179,6 @@ fun complex26(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig =
                 baseMddConfig.backendConfig.specConfig!!.copy(cegar = true, solver = solver),
             )
@@ -192,80 +188,26 @@ fun complex26(
     }
 
     val complex =
-      ConfigNode(
-        "Complex-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("COMPLEX")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Complex-$inProcess") {
+        complex26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val termination =
-      ConfigNode(
-        "Termination-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("TERMINATION")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("Termination-$inProcess") {
+        termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
     val multithread =
-      ConfigNode(
-        "MultiThread-$inProcess",
-        XcfaConfig(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig = portfolioConfig.frontendConfig,
-          backendConfig =
-            (portfolioConfig.backendConfig as BackendConfig<PortfolioConfig>).copy(
-              specConfig = PortfolioConfig("MULTITHREAD")
-            ),
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
+      NestedPortfolioNode("MultiThread-$inProcess") {
+        multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+      }
 
-    infix fun ConfigNode.then(node: ConfigNode): ConfigNode {
+    infix fun Node.then(node: Node): Node {
       edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
       return node
     }
 
-    infix fun ConfigNode.onSolverError(node: ConfigNode): ConfigNode {
+    infix fun Node.onSolverError(node: Node): Node {
       edges.add(Edge(this, node, solverError))
       return node
     }
@@ -304,10 +246,24 @@ fun complex26(
             val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
             val bmc = bmc(150_000, "Z3:new")
 
-            val kindCVC = kind(300_000, "cvc5:1.2.0")
-            val pred_bwCVC = cegar(300_000, "cvc5:1.2.0", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explCVC = cegar(200_000, "cvc5:1.2.0", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcCVC = bmc(150_000, "cvc5:1.2.0")
+            val kindCVC =
+              kind(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
+            val pred_bwCVC =
+              cegar(
+                300_000,
+                portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"),
+                Domain.PRED_CART,
+                Refinement.BW_BIN_ITP,
+              )
+            val explCVC =
+              cegar(
+                200_000,
+                portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"),
+                Domain.EXPL,
+                Refinement.NWT_IT_WP,
+              )
+            val bmcCVC =
+              bmc(150_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.2.0"))
 
             kind then pred_bw then expl then bmc
 

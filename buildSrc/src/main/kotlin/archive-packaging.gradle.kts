@@ -110,6 +110,11 @@ afterEvaluate {
 					dependsOn(":theta-solver-smtlib-cli:shadowJar")
 				}
 				
+				// Which solvers were asked for is an input: without it Gradle judges the task
+				// up to date from the output directory alone, so editing the list silently
+				// packages the previous set.
+				inputs.property("solvers", solvers)
+
 				// Declare outputs
 				outputs.dir(solversDirPath)
 				
@@ -120,7 +125,10 @@ afterEvaluate {
 						return@doLast
 					}
 					
+					// Installing is additive, so a solver dropped from the list would survive
+					// in the output directory and still be packaged. Start from empty.
 					val solversDir = solversDirPath.get().asFile
+					solversDir.deleteRecursively()
 					solversDir.mkdirs()
 					
 					val smtlibJarFile = File(smtlibJar)
@@ -147,6 +155,24 @@ afterEvaluate {
 						} catch (e: Exception) {
 							println("Error installing solver $solver: ${e.message}")
 						}
+					}
+
+					// What the archive ships is what matters, and neither failure above stops
+					// the build: a failed install only prints, and a skipped one leaves nothing
+					// behind. Compare the directory against the request instead.
+					val installed = (solversDir.listFiles() ?: emptyArray())
+						.filter { it.isDirectory }
+						.flatMap { family ->
+							(family.listFiles() ?: emptyArray())
+								.filter { it.isDirectory }
+								.map { "${family.name}:${it.name}" }
+						}
+						.toSet()
+					val requested = solvers.toSet()
+					check(installed == requested) {
+						"archive-packaging: $toolName would ship $installed but $requested was " +
+							"requested (missing ${requested - installed}, " +
+							"unexpected ${installed - requested})"
 					}
 				}
 			}

@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -128,6 +129,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   UnrollPass.UNROLL_RECURSION_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
+  UnrollPass.COLLAPSE_BUSY_WAITS =
+    config.inputConfig.property.verifiedProperty != ErrorDetection.TERMINATION
+  SpinLoopEffectPass.ENABLED = !config.frontendConfig.disableSpinLoopEffects
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
@@ -168,6 +172,12 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
   rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
     (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
   }
+  rule("OcDataRaceNeedsNoLbe") {
+    // the OC checker detects races between atomic units, which LBE would merge statements into
+    config.backendConfig.backend == Backend.OC &&
+      config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
+      config.frontendConfig.lbeLevel != LbePass.LbeLevel.NO_LBE
+  }
   rule("OcPropagatorWithoutZ3") {
     config.backendConfig.backend == Backend.OC &&
       (config.backendConfig.specConfig as? OcConfig)?.decisionProcedure ==
@@ -194,7 +204,7 @@ private fun parseInputFiles(
   logger: Logger,
   uniqueLogger: Logger,
 ): Triple<XCFA?, MCM?, ParseContext?> =
-  if (config.backendConfig.inProcess && config.backendConfig.parseInProcess) {
+  if (config.backendConfig.inProcess) {
     logger.info("Not parsing input because a worker process will handle it later.")
     Triple(null, null, null)
   } else {
@@ -351,6 +361,16 @@ private fun buildFrontend(
     "%s",
     "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}",
   )
+  logger.benchmark(
+    "%s",
+    "XCFA-TRAITS " +
+      xcfaTraits(
+        xcfa,
+        parseContext,
+        config.inputConfig.property.verifiedProperty.name,
+        config.inputConfig.propertyFile?.name ?: "-",
+      ),
+  )
 
   return Triple(xcfa, mcm, parseContext)
 }
@@ -377,57 +397,44 @@ private fun backend(
       )
 
       // we would not do post analysis logging if running in a portfolio otherwise
-      if (
+      when {
         config.inputConfig.property.verifiedProperty == ErrorDetection.ERROR_LOCATION &&
           (xcfa?.procedures?.all { it.errorLoc.isEmpty } ?: false) &&
-          !portfolioRun
-      ) {
-        val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-        logger.result("Input is trivially safe: no path leads to the error location.")
-        result
-      } else if (
+          !portfolioRun -> {
+          logger.result("Input is trivially safe: no path leads to the error location.")
+          SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+        }
+
         config.inputConfig.property.verifiedProperty == ErrorDetection.DATA_RACE &&
           xcfa != null &&
           !isDataRacePossible(xcfa, logger) &&
-          !portfolioRun
-      ) {
-        val result = SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
-        logger.result(
-          "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses."
-        )
-        result
-      } else {
-        val stopwatch = Stopwatch.createStarted()
-        val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
+          !portfolioRun -> {
+          logger.result(
+            "Input is trivially safe: potential concurrent accesses to the same memory locations are either all atomic or all read accesses."
+          )
+          SafetyResult.safe<EmptyProof, EmptyCex>(EmptyProof.getInstance())
+        }
 
-        logger.info(
-          "%s",
-          "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
-        )
+        else -> {
+          val stopwatch = Stopwatch.createStarted()
+          val checker = getSafetyChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
 
-        logger.info(
-          "%s",
-          "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
-        )
+          logger.info(
+            "%s",
+            "Input/Verified property: ${config.inputConfig.property.inputProperty.name} / ${config.inputConfig.property.verifiedProperty.name}",
+          )
 
-        val result =
-          exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
-              checker.check()
-            }
-            .let ResultMapper@{ result ->
-              when {
-                result.isSafe &&
-                  (xcfa?.unsafeUnrollUsed ?: false) &&
-                  !config.outputConfig.acceptUnreliableSafe -> {
-                  // cannot report safe if force unroll was used
-                  logger.benchmark("%s", "Analysis result: $result")
-                  logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
-                  if (config.outputConfig.acceptUnreliableSafe)
-                    result // for comparison with BMC tools
-                  else SafetyResult.unknown<EmptyProof, EmptyCex>()
-                }
+          logger.info(
+            "%s",
+            "Starting verification of ${if (xcfa?.name == "") "UnnamedXcfa" else (xcfa?.name ?: "DeferredXcfa")} using ${config.backendConfig.backend}\n${config}",
+          )
 
-                result.isUnsafe -> {
+          val result =
+            exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
+                checker.check()
+              }
+              .let ResultMapper@{ result ->
+                if (result.isUnsafe) {
                   // need to determine what kind
                   val property =
                     try {
@@ -442,14 +449,30 @@ private fun backend(
                     property?.also { logger.result("(Property %s)", it.name) }
                   }
                   result
+                } else {
+                  result
                 }
-
-                else -> result
               }
-            }
 
-        logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
-        result
+          logger.info("%s", "Backend finished (in ${stopwatch.elapsedMillis()} ms)")
+          result
+        }
+      }.let { result ->
+        if (
+          result.isSafe &&
+            (xcfa?.unsafeUnrollUsed ?: false) &&
+            !config.outputConfig.acceptUnreliableSafe
+        ) {
+          logger.benchmark("%s", "Analysis result: $result")
+          logger.benchmark("Incomplete loop unroll used: safe result is unreliable.")
+          if (config.outputConfig.acceptUnreliableSafe) {
+            result // for comparison with BMC tools
+          } else {
+            SafetyResult.unknown<EmptyProof, EmptyCex>()
+          }
+        } else {
+          result
+        }
       }
     }
   if (!portfolioRun) {

@@ -71,104 +71,128 @@ internal class XcfaOcTraceExtractor(
 
   internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
     get() {
-      check(ocChecker.solver.status.isSat)
-      val model = ocChecker.solver.model ?: error("No model found for trace extraction.")
-      val stateList = mutableListOf<XcfaState<PtrState<ExplState>>>()
-      val actionList = mutableListOf<XcfaAction>()
-      val valuation = model.toMap()
-      val (eventTrace, violation) = getEventTrace(model)
-
-      val processes =
-        mapOf(
-          0 to
-            XcfaProcessState(
-              locs = LinkedList(listOf(threads.find { it.pid == 0 }!!.procedure.initLoc)),
-              varLookup = LinkedList(listOf()),
-            )
-        )
-      var explState = PtrState(ExplState.of(ImmutableValuation.from(mapOf())))
-      stateList.add(XcfaState(xcfa, processes, explState))
-      var lastEdge: XcfaEdge = eventTrace[0].edge
-
-      for ((index, event) in eventTrace.withIndex()) {
-        extend(stateList.last(), event.pid, lastEdge.source, explState.innerState)?.let {
-          (midActions, midStates) ->
-          actionList.addAll(midActions)
-          stateList.addAll(midStates)
-        }
-
-        valuation[event.const]?.let {
-          val newVal =
-            explState.innerState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
-          explState = PtrState(ExplState.of(ImmutableValuation.from(newVal)))
-        }
-
-        var state = stateList.last()
-        val startedThread = threads.find { it.startEvent == event }
-        if (startedThread != null) {
-          state =
-            state.copy(
-              processes =
-                state.processes.toMutableMap().apply {
-                  put(
-                    startedThread.pid,
-                    XcfaProcessState(
-                      locs = LinkedList(listOf(startedThread.procedure.initLoc)),
-                      varLookup = LinkedList(emptyList()),
-                    ),
-                  )
-                }
-            )
-        }
-
-        val nextEvent = eventTrace.getOrNull(index + 1)
-        val nextEdge = nextEvent?.edge
-        if (nextEvent?.pid != event.pid || nextEdge != lastEdge) {
-          actionList.add(XcfaAction(event.pid, lastEdge.renamedFor(event.pid)))
-          stateList.add(
-            state.copy(
-              processes =
-                state.processes.toMutableMap().apply {
-                  put(
-                    event.pid,
-                    XcfaProcessState(
-                      locs = LinkedList(listOf(lastEdge.target)),
-                      varLookup = LinkedList(emptyList()),
-                    ),
-                  )
-                },
-              sGlobal = explState,
-              mutexes = state.mutexes.update(lastEdge, event.pid),
-            )
-          )
-          lastEdge = nextEdge ?: break
-        }
-      }
-
-      if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-        extend(stateList.last(), violation.pid, violation.errorLoc, explState.innerState)?.let {
-          (midActions, midStates) ->
-          actionList.addAll(midActions)
-          stateList.addAll(midStates)
-        }
-      }
-
-      return Trace.of(stateList, actionList)
+      val model = model()
+      val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
+      val lastEvent = violation.lastEvents.first { it.enabled(model) == true }
+      return trace(
+        model,
+        getEventTrace(model, lastEvent.clkId, true),
+        violation.pid to violation.errorLoc,
+      )
     }
 
-  private fun getEventTrace(model: Valuation): Pair<List<E>, Violation> {
-    val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
+  /** The trace to the state in which the racing accesses [e1] and [e2] are both enabled. */
+  internal fun raceTrace(e1: E, e2: E): Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
+    val model = model()
+    val first = if (ocChecker.getHappensBefore()!![e1.clkId, e2.clkId] != null) e1 else e2
+    val eventTrace = getEventTrace(model, first.clkId, false)
+    // an access in an atomic block goes last: moving it in takes the atomic lock, which moving the
+    // other process would first have to release
+    val targets = listOf(e1, e2).sortedBy { it.inAtomicBlock }.map { it.pid to it.edge.source }
+    return trace(model, eventTrace, *targets.toTypedArray())
+  }
 
+  private fun model(): Valuation {
+    check(ocChecker.solver.status.isSat)
+    return ocChecker.solver.model ?: error("No model found for trace extraction.")
+  }
+
+  /** Replays [eventTrace], then moves each process of [targets] on to its target location. */
+  private fun trace(
+    model: Valuation,
+    eventTrace: List<E>,
+    vararg targets: Pair<Int, XcfaLocation>,
+  ): Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
+    val stateList = mutableListOf<XcfaState<PtrState<ExplState>>>()
+    val actionList = mutableListOf<XcfaAction>()
+    val valuation = model.toMap()
+    val processes =
+      mapOf(
+        0 to
+          XcfaProcessState(
+            locs = LinkedList(listOf(threads.find { it.pid == 0 }!!.procedure.initLoc)),
+            varLookup = noLookup(),
+          )
+      )
+    var explState = PtrState(ExplState.of(ImmutableValuation.from(mapOf())))
+    stateList.add(XcfaState(xcfa, processes, explState))
+    var lastEdge: XcfaEdge? = eventTrace.firstOrNull()?.edge
+
+    for ((index, event) in eventTrace.withIndex()) {
+      val edge = checkNotNull(lastEdge)
+      extend(stateList.last(), event.pid, edge.source, explState.innerState)?.let {
+        (midActions, midStates) ->
+        actionList.addAll(midActions)
+        stateList.addAll(midStates)
+      }
+
+      valuation[event.const]?.let {
+        val newVal =
+          explState.innerState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
+        explState = PtrState(ExplState.of(ImmutableValuation.from(newVal)))
+      }
+
+      var state = stateList.last()
+      val startedThread = threads.find { it.startEvent == event }
+      if (startedThread != null) {
+        state =
+          state.copy(
+            processes =
+              state.processes.toMutableMap().apply {
+                put(
+                  startedThread.pid,
+                  XcfaProcessState(
+                    locs = LinkedList(listOf(startedThread.procedure.initLoc)),
+                    varLookup = noLookup(),
+                  ),
+                )
+              }
+          )
+      }
+
+      val nextEvent = eventTrace.getOrNull(index + 1)
+      val nextEdge = nextEvent?.edge
+      if (nextEvent?.pid != event.pid || nextEdge != edge) {
+        actionList.add(XcfaAction(event.pid, edge.renamedFor(event.pid)))
+        stateList.add(
+          state.copy(
+            processes =
+              state.processes.toMutableMap().apply {
+                put(
+                  event.pid,
+                  XcfaProcessState(locs = LinkedList(listOf(edge.target)), varLookup = noLookup()),
+                )
+              },
+            sGlobal = explState,
+            mutexes = state.mutexes.update(edge, event.pid),
+          )
+        )
+        lastEdge = nextEdge ?: break
+      }
+    }
+
+    for ((pid, loc) in targets) {
+      val process = stateList.last().processes[pid] ?: continue
+      if (process.locs.peek() == loc) continue
+      extend(stateList.last(), pid, loc, explState.innerState)?.let { (midActions, midStates) ->
+        actionList.addAll(midActions)
+        stateList.addAll(midStates)
+      }
+    }
+    return Trace.of(stateList, actionList)
+  }
+
+  /** The enabled events up to the atomic unit [startClk], in happens-before order. */
+  private fun getEventTrace(model: Valuation, startClk: Int, includeStart: Boolean): List<E> {
     val relations = ocChecker.getHappensBefore()!!
     val reverseRelations =
       Array(relations.size) { i -> Array(relations.size) { j -> relations[j, i] } }
     val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
     val posByClk = pos.filter { it.from.clkId == it.to.clkId }.groupBy { it.from.clkId }
 
-    val lastEvent = violation.lastEvents.first { it.enabled(model) == true }
     val finished = mutableListOf<Int>() // topological order
     val stack = Stack<StackItem>()
-    stack.push(StackItem(lastEvent.clkId))
+    stack.push(StackItem(startClk))
     while (stack.isNotEmpty()) {
       val top = stack.peek()
       if (top.eventsToVisit == null) {
@@ -190,6 +214,7 @@ internal class XcfaOcTraceExtractor(
       }
     }
 
+    if (!includeStart) finished.remove(startClk)
     val eventTrace =
       finished.flatMap { clk ->
         val blockPos = posByClk[clk]?.filter { it.enabled(model) }?.toMutableSet() ?: mutableSetOf()
@@ -217,7 +242,7 @@ internal class XcfaOcTraceExtractor(
         deque
       }
 
-    return eventTrace to violation
+    return eventTrace
   }
 
   private data class StackItem(val clk: Int) {
@@ -257,10 +282,7 @@ internal class XcfaOcTraceExtractor(
             currentState.processes.toMutableMap().apply {
               put(
                 stepPid,
-                XcfaProcessState(
-                  locs = LinkedList(listOf(edge.target)),
-                  varLookup = LinkedList(emptyList()),
-                ),
+                XcfaProcessState(locs = LinkedList(listOf(edge.target)), varLookup = noLookup()),
               )
             },
           sGlobal = PtrState(explState),
@@ -270,6 +292,9 @@ internal class XcfaOcTraceExtractor(
     }
     return actions to states
   }
+
+  // the labels are already thread-specific, but findDataRace (witness writer) peeks a frame
+  private fun noLookup() = LinkedList(listOf(mapOf<VarDecl<*>, VarDecl<*>>()))
 
   private fun Map<MutexLock, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<MutexLock, Set<Int>> {
     val map = this.toMutableMap()
