@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,18 +34,27 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.SolverFactory
 
-class SingleASGTraceRefiner<S : ExprState, A : ExprAction, P : Prec>(
+/**
+ * Checks the first lasso of the ASG and refines the precision if it is spurious.
+ *
+ * [traceEnricher] rewrites the lasso before it is checked and returned, for formalisms whose
+ * abstract actions lack context that only the whole path determines (e.g. pointer write history).
+ */
+class SingleASGTraceRefiner<S : ExprState, A : ExprAction, P : Prec>
+@JvmOverloads
+constructor(
   private val strategy: ASGTraceCheckerStrategy,
   private val solverFactory: SolverFactory,
   private val refiner: PrecRefiner<S, A, P, ItpRefutation>,
   private val logger: Logger,
   private val init: Expr<BoolType> = True(),
+  private val traceEnricher: (ASGTrace<S, A>) -> ASGTrace<S, A> = { it },
 ) : ASGTraceRefiner<S, A, P> {
 
   override fun refine(witness: ASG<S, A>, prec: P): RefinerResult<P, ASGTrace<S, A>> {
     val ldgTraces = witness.traces
     check(ldgTraces.isNotEmpty()) { "${this.javaClass.simpleName} needs at least one trace!" }
-    val ldgTrace = ldgTraces[0]
+    val ldgTrace = traceEnricher(ldgTraces[0])
     val refutation: ExprTraceStatus<ItpRefutation> =
       strategy.check(ldgTrace, solverFactory, init, logger)
     if (refutation.isInfeasible) {
