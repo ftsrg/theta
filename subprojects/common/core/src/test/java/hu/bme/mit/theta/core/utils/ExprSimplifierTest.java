@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
@@ -717,6 +718,22 @@ public class ExprSimplifierTest {
         assertEquals(a, simplify(Ite(True(), a, b)));
         assertEquals(b, simplify(Ite(False(), a, b)));
         assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
+    }
+
+    @Test
+    public void testPrime() {
+        final VarDecl<IntType> vv = Var("v", Int());
+        final VarDecl<IntType> vw = Var("w", Int());
+        final Expr<IntType> v = vv.getRef();
+        final Expr<IntType> w = vw.getRef();
+        final Valuation val = ImmutableValuation.builder().put(vv, Int(2)).put(ca, Int(5)).build();
+
+        assertEquals(Eq(Prime(v), Int(3)), simplify(Eq(Prime(v), Add(v, Int(1))), val));
+        assertEquals(Eq(Prime(v), w), simplify(Eq(Prime(v), w), val));
+        assertEquals(Prime(Prime(v)), simplify(Prime(Prime(v)), val));
+        assertEquals(Prime(v), simplify(Prime(Add(v, Int(0))), val));
+        assertEquals(Prime(Add(v, Int(5))), simplify(Prime(Add(v, a)), val));
+        assertEquals(Eq(Prime(v), v), simplify(Eq(Prime(v), v)));
     }
 
     // Array
