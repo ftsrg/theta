@@ -312,7 +312,9 @@ logicalOrExpression
 
 conditionalExpression
     // GNU `a ?: b` omits the middle operand: the guard itself is the true-branch value.
-    :   logicalOrExpression ('?' ifTrue=expression? ':' ifFalse=expression)?
+    // The false branch is a conditionalExpression (C11 6.5.15): an expression would swallow a
+    // following comma, e.g. the remaining arguments of `f(c ? a : b, x)`.
+    :   logicalOrExpression ('?' ifTrue=expression? ':' ifFalse=conditionalExpression)?
     ;
 
 assignmentExpression
