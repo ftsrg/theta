@@ -125,11 +125,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
             } else {
                 Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
             }
-            installDir
-                    .resolve("bin")
-                    .resolve(getSolverBinaryName())
-                    .toFile()
-                    .setExecutable(true, true);
+            makeExecutable(installDir.resolve("bin").resolve(getSolverBinaryName()));
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
