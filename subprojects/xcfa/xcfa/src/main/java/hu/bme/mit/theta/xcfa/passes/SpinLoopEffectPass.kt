@@ -87,7 +87,7 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
       loops.filter { loop ->
         val written =
           loop.edges
-            .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
+            .flatMap { it.label.collectVarsWithAccessType(builder).filter { a -> a.value.isWritten }.keys }
             .filter { it !in globals }
             .toSet()
         val liveWritten = written.filter { it in (live[loop.head] ?: emptySet()) }

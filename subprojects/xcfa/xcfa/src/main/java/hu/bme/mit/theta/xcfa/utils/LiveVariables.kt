@@ -54,7 +54,7 @@ fun strongLiveVars(builder: XcfaProcedureBuilder): Map<XcfaLocation, Set<VarDecl
               else -> l
             }
           is HavocStmt<*> -> if (stmt.varDecl in locals) l - stmt.varDecl else l
-          else -> l + label.collectVarsWithAccessType().keys
+          else -> l + label.collectVarsWithAccessType(builder).keys
         }
     }
     val src = live.getOrPut(edge.source) { mutableSetOf() }
