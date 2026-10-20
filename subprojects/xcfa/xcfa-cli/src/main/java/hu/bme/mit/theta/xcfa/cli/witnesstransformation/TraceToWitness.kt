@@ -80,7 +80,7 @@ fun traceToWitness(
               state.xcfa,
               state.processes,
               PtrState(state.sGlobal),
-              state.mutexes,
+              state.mutexState,
               state.threadLookup,
               state.bottom,
             )

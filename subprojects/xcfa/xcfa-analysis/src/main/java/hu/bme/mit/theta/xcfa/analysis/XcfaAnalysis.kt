@@ -135,7 +135,7 @@ fun getCoreXcfaLts(random: Random) =
               val newNewLabel =
                 SequenceLabel(
                   flatLabels.map { label ->
-                    if (label is InvokeLabel) {
+                    if (label is InvokeLabel && !label.isLibraryFunction) {
                       val procedure =
                         s.xcfa?.procedures?.find { proc -> proc.name == label.name }
                           ?: error("No such method ${label.name}.")
@@ -245,7 +245,7 @@ fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
   PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
     s1.processes == s2.processes &&
       s1.bottom == s2.bottom &&
-      s1.mutexes == s2.mutexes &&
+      s1.mutexState == s2.mutexState &&
       partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
   }
 
@@ -262,7 +262,7 @@ fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
     s1.processes.keys == s2.processes.keys &&
       stackIsLeq(s1, s2) &&
       s1.bottom == s2.bottom &&
-      s1.mutexes == s2.mutexes &&
+      s1.mutexState == s2.mutexState &&
       partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
   }
 
