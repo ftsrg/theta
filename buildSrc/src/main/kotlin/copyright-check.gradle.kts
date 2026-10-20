@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,14 +33,28 @@ val copyrightHeader = """/*
  */
 """
 
+// A shallow clone attributes every file last changed before its boundary to the boundary commit,
+// so the years taken from `git log -1` would be wrong for most files.
+val isShallowClone = providers.exec {
+    commandLine("git", "rev-parse", "--is-shallow-repository")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim() == "true" }
+
+val shallowCloneError =
+    "Copyright years come from each file's last commit, which a shallow git clone does not know " +
+        "for files older than its boundary. Run `git fetch --unshallow` first."
+
 tasks.register("checkCopyright", fun(task: Task){
     group = "verification"
     description = "Check copyright headers in .java, .kt, and .kts files"
 
     val projectDir = projectDir
     val rootDir = rootDir
+    val isShallowClone = isShallowClone
+    val shallowCloneError = shallowCloneError
 
   task.doLast(fun(task: Task) {
+    if (isShallowClone.get()) throw GradleException(shallowCloneError)
 
     fun extractCopyrightYear(file: File): Int? {
       val lines = file.readLines()
@@ -121,8 +135,11 @@ tasks.register("applyCopyright", fun(task: Task) {
   val projectDir = projectDir
   val rootDir = rootDir
   val copyrightHeader = copyrightHeader
+  val isShallowClone = isShallowClone
+  val shallowCloneError = shallowCloneError
 
     task.doLast {
+      if (isShallowClone.get()) throw GradleException(shallowCloneError)
 
       fun extractCopyrightYear(file: File): Int? {
         val lines = file.readLines()
