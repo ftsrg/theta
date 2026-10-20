@@ -28,8 +28,8 @@ import java.util.Map;
  * from zero upwards) so that a function id can never be confused with the base address of a data
  * object, and are never zero so that a function pointer is distinguishable from NULL.
  *
- * <p>Entries accumulate per process, like the struct/enum registries; each input file is parsed in
- * its own process, and re-parsing the same file simply re-registers the same names.
+ * <p>Like the struct/enum registries, it is cleared at the start of each compilation unit, as one
+ * JVM may parse several times (see {@link #reset()}).
  */
 public final class FunctionIds {
 
@@ -41,6 +41,11 @@ public final class FunctionIds {
     private static boolean indirectCallPresent = false;
 
     private FunctionIds() {}
+
+    public static void reset() {
+        ids.clear();
+        indirectCallPresent = false;
+    }
 
     /**
      * Records that the program calls through a function pointer. Function ids are only ever
