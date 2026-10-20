@@ -28,18 +28,12 @@ dependencies {
     implementation(project(":theta-xcfa-dss-decomposition"))
     implementation(project(":theta-xcfa-dss-analysis"))
     implementation(project(":theta-solver"))
-    // Expressions of the messages exchanged with DSS worker processes travel as parsed text
     implementation(project(":theta-grammar"))
 
     testImplementation(project(":theta-solver-z3"))
-    // Only tests need a real checker (PredicateBlockBehavior takes one as an injected factory in
-    // production - see PredicateBlockBehavior.kt) - not depending on xcfa-cli here is what lets
-    // xcfa-cli depend on this module for --algorithm DSS without a circular project dependency.
     testImplementation(project(":theta-xcfa-cli"))
 }
 
 tasks.withType<Test> {
-    // XcfaCliDssTest runs the concurrent executor with multi-threaded Z3, which can leave native
-    // solver state that breaks later test classes in the same JVM; a JVM per class avoids it.
     forkEvery = 1
 }

@@ -30,9 +30,5 @@ dependencies {
 
     testImplementation(project(":theta-grammar"))
     testImplementation(project(":theta-solver-z3"))
-    // Only tests need a real checker to exercise runWorkerConfig against - production code takes
-    // one as an injected factory instead (see WorkerConfigDelegator.kt), specifically so this
-    // module does not depend on xcfa-cli: xcfa-cli depends on DSS for --algorithm DSS, and this
-    // module depending back on xcfa-cli would have made that a circular project dependency.
     testImplementation(project(":theta-xcfa-cli"))
 }
