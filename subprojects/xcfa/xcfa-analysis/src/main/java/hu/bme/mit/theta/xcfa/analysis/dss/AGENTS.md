@@ -6,11 +6,10 @@ postconditions, operators, precisions, the checker roster), and `actor` runs the
 message-passing network with its executors. The `--backend DSS` wiring lives in `xcfa-cli`.
 
 ## Build and test
-- Unit tests: `./gradlew :theta-xcfa-analysis:test --tests 'hu.bme.mit.theta.xcfa.analysis.dss.*'`.
-- Tests with real checkers and the CLI are in `xcfa-cli`, packages
-  `hu.bme.mit.theta.xcfa.cli.dss.{analysis,actor}`:
-  `./gradlew :theta-xcfa-cli:test --tests 'hu.bme.mit.theta.xcfa.cli.dss.*'` (needs the native
-  libraries).
+- `./gradlew :theta-xcfa-analysis:test --tests 'hu.bme.mit.theta.xcfa.analysis.dss.*'` (needs the
+  native libraries).
+- Tests with real checkers use `xcfa-cli` (a test-only dependency); keep them here rather than in
+  `xcfa-cli`, as Sonar only counts a module's own tests towards its coverage.
 - End-to-end verdicts are one table in `DssVerdictTest`, run with `runDssActorsSequentially` (legacy
   Z3 is not thread-safe). Keep its loop bounds small: DSS unrolls a loop up to the violation.
 

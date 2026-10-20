@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.dss
+package hu.bme.mit.theta.xcfa.analysis.dss
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.*

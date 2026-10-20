@@ -13,12 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.dss.actor
+package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.*
+import hu.bme.mit.theta.xcfa.analysis.dss.END_TO_END_TIMEOUT
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecomposition
@@ -28,9 +28,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
-import hu.bme.mit.theta.xcfa.cli.dss.END_TO_END_TIMEOUT
-import hu.bme.mit.theta.xcfa.cli.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.stream.Stream
