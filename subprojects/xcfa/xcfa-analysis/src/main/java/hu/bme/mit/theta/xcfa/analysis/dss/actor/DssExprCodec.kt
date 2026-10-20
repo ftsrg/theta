@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
 import hu.bme.mit.theta.xcfa.XcfaScope
-import hu.bme.mit.theta.xcfa.analysis.dss.DssAuxVars
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation

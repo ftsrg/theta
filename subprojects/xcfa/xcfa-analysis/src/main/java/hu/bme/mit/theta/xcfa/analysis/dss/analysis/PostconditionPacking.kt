@@ -13,14 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.analysis.dss
+package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.utils.collectAssumes
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-/** Every assume condition of this XCFA (`--dss-global-predicate-pool`). */
-fun XCFA.collectAssumePreds(): Set<Expr<BoolType>> = collectAssumes().toSet()
-
-fun getAssumePredPrec(wholeProgram: XCFA) = getPredPrec(wholeProgram.collectAssumePreds())
+/** The disjunction of the states a safe [result] reached at [location]. */
+fun packPostcondition(
+  result: SafetyResult<LocationInvariants, *>,
+  location: XcfaLocation,
+): Expr<BoolType> {
+  check(result.isSafe) { "Can only pack a postcondition out of a safe result, but got: $result" }
+  val states = result.asSafe().proof.getPartitions()[location].orEmpty()
+  return Or(states.map { it.toExpr() })
+}

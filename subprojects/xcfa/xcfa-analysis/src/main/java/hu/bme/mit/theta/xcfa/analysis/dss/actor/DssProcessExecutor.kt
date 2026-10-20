@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.analysis.dss.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream

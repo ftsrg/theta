@@ -27,10 +27,10 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.findBlockRun
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.followPath
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
-import hu.bme.mit.theta.xcfa.analysis.dss.findBlockRun
-import hu.bme.mit.theta.xcfa.analysis.dss.followPath
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation

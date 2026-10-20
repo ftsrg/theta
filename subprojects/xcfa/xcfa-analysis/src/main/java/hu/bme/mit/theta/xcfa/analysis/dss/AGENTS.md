@@ -1,13 +1,14 @@
 # xcfa-analysis: `dss` package
 
 Distributed summary synthesis (design: `README.md` here). `decomposition` splits a procedure into
-blocks, the package root holds one block's analysis (block extraction, violation conditions,
+blocks, `analysis` holds one block's analysis (block extraction, violation conditions,
 postconditions, operators, precisions, the checker roster), and `actor` runs the blocks as a
 message-passing network with its executors. The `--backend DSS` wiring lives in `xcfa-cli`.
 
 ## Build and test
 - Unit tests: `./gradlew :theta-xcfa-analysis:test --tests 'hu.bme.mit.theta.xcfa.analysis.dss.*'`.
-- Tests with real checkers and the CLI are in `xcfa-cli` (`hu.bme.mit.theta.xcfa.cli.dss`):
+- Tests with real checkers and the CLI are in `xcfa-cli`, packages
+  `hu.bme.mit.theta.xcfa.cli.dss.{analysis,actor}`:
   `./gradlew :theta-xcfa-cli:test --tests 'hu.bme.mit.theta.xcfa.cli.dss.*'` (needs the native
   libraries).
 - End-to-end verdicts are one table in `DssVerdictTest`, run with `runDssActorsSequentially` (legacy

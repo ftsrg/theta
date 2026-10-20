@@ -13,18 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.dss
+package hu.bme.mit.theta.xcfa.cli.dss.actor
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.dss.CheckerFactory
-import hu.bme.mit.theta.xcfa.analysis.dss.DssCheckerRoster
-import hu.bme.mit.theta.xcfa.analysis.dss.FastestCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.analysis.dss.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.*
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
+import hu.bme.mit.theta.xcfa.cli.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals

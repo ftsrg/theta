@@ -46,8 +46,9 @@ used by several threads. `Z3:new` is thread-safe, but its interpolation fails on
 ## Packages
 
 * `dss.decomposition` — `Block`, `BlockGraph` and the decompositions.
-* `dss` — block extraction (`extractBlockXcfa`), violation conditions (`computeViolationCondition`,
-  `DssAuxVars`), postconditions, solver-backed operators, precisions, the checker roster.
+* `dss.analysis` — block extraction (`extractBlockXcfa`), violation conditions
+  (`computeViolationCondition`, `DssAuxVars`), postconditions, solver-backed operators,
+  precisions, the checker roster.
 * `dss.actor` — the actor network: `DssBlockActor` + `PredicateBlockBehavior` (CPAchecker's
   `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses.
 * `xcfa-cli` — `--backend DSS` (`ConfigToDssChecker.kt`, `DssConfig`).
