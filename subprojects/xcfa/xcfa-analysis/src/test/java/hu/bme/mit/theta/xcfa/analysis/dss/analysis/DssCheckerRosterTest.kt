@@ -32,7 +32,7 @@ class DssCheckerRosterTest {
   @Test
   fun `round-robin cycles through the list in order and wraps around`() {
     val checkers = stubCheckers(3)
-    val roster = DssCheckerRoster(checkers)
+    val roster = DssCheckerRoster(checkers, RoundRobinCheckerSelectionStrategy())
     val selectedIndices = List(7) { checkers.indexOf(roster.next()) }
     assertEquals(listOf(0, 1, 2, 0, 1, 2, 0), selectedIndices)
   }
@@ -40,7 +40,7 @@ class DssCheckerRosterTest {
   @Test
   fun `round-robin usage counts differ by at most one for an uneven total`() {
     val checkers = stubCheckers(3)
-    val roster = DssCheckerRoster(checkers)
+    val roster = DssCheckerRoster(checkers, RoundRobinCheckerSelectionStrategy())
     val counts = IntArray(3)
     repeat(20) { counts[checkers.indexOf(roster.next())]++ }
     assertEquals(20, counts.sum())
@@ -84,7 +84,7 @@ class DssCheckerRosterTest {
     val threadCount = 8
     val callsPerThread = 250
     val checkers = stubCheckers(checkerCount)
-    val roster = DssCheckerRoster(checkers)
+    val roster = DssCheckerRoster(checkers, RoundRobinCheckerSelectionStrategy())
     val counts = AtomicIntegerArray(checkerCount)
     val ready = CountDownLatch(threadCount)
     val start = CountDownLatch(1)

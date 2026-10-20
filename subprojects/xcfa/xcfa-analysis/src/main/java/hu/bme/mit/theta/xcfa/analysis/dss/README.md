@@ -33,7 +33,7 @@ Only single-procedure programs and error-location reachability are supported.
 |---|---|---|
 | `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one |
-| `--dss-checker-selection` | `ROUND_ROBIN` | `ROUND_ROBIN`, `PRIORITY` (first entry, the others as fallbacks), `FASTEST` (per block, after trying all once) |
+| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once) |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
 | `--dss-global-predicate-pool` | `true` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |

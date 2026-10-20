@@ -59,7 +59,7 @@ class FastestCheckerSelectionStrategy :
 /** The block checkers of a run, handed out by [strategy]; one instance shared by all blocks. */
 class DssCheckerRoster(
   private val checkers: List<CheckerFactory>,
-  private val strategy: DssCheckerSelectionStrategy = RoundRobinCheckerSelectionStrategy(),
+  private val strategy: DssCheckerSelectionStrategy = PriorityCheckerSelectionStrategy(),
 ) {
 
   init {

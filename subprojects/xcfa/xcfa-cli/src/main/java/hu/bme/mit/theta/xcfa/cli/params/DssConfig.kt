@@ -80,7 +80,7 @@ data class DssConfig(
     names = ["--dss-checker-selection"],
     description = "Which of --dss-checker-backends a block analysis starts with",
   )
-  var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.ROUND_ROBIN,
+  var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.PRIORITY,
   @Parameter(names = ["--dss-executor"], description = "How the block analyses are run")
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
   @Parameter(
