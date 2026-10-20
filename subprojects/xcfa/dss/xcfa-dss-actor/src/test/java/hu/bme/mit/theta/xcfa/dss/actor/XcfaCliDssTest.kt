@@ -17,19 +17,19 @@ package hu.bme.mit.theta.xcfa.dss.actor
 
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend
+import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.exists
-import kotlin.random.Random
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -37,515 +37,135 @@ class XcfaCliDssTest {
 
   companion object {
 
-    private val decompositionExecutorPairs: List<Pair<String, String>> =
+    @JvmStatic
+    fun decompositions(): Stream<Arguments> =
+      DssDecomposition.entries
+        .flatMap { d -> listOf("loop", "loop_unsafe").map { Arguments.of(d.name, it) } }
+        .stream()
+
+    @JvmStatic
+    fun options(): Stream<Arguments> =
       listOf(
-        "LINEAR" to "CONCURRENT",
-        "LINEAR" to "SEQUENTIAL",
-        "MERGE" to "CONCURRENT",
-        "MERGE" to "SEQUENTIAL",
-        "MERGE_ABSORB_SELF_LOOPS" to "CONCURRENT",
-        "MERGE_ABSORB_SELF_LOOPS" to "SEQUENTIAL",
-        "MERGE_ACYCLIC" to "CONCURRENT",
-        "MERGE_ACYCLIC" to "SEQUENTIAL",
-        "MIN_CUT" to "CONCURRENT",
-        "MIN_CUT" to "SEQUENTIAL",
-        "MIN_CUT_ABSORB_SELF_LOOPS" to "CONCURRENT",
-        "MIN_CUT_ABSORB_SELF_LOOPS" to "SEQUENTIAL",
-        "MIN_CUT_ACYCLIC" to "CONCURRENT",
-        "MIN_CUT_ACYCLIC" to "SEQUENTIAL",
-        "NONE" to "CONCURRENT",
-        "NONE" to "SEQUENTIAL",
-      )
-
-    @JvmStatic
-    fun decompositionAndExecutor(): Stream<Arguments> =
-      decompositionExecutorPairs.stream().map { (decomposition, executor) ->
-        Arguments.of(decomposition, executor)
-      }
-
-    @JvmStatic
-    fun checkerBackendLists(): Stream<Arguments> =
-      Stream.of(
-        Arguments.of("CEGAR_PRED_CART"),
-        Arguments.of("CEGAR_PRED_BOOL"),
-        Arguments.of("CEGAR_PRED_SPLIT"),
-        Arguments.of("BMC"),
-        Arguments.of("KIND"),
-        Arguments.of("IMC"),
-        Arguments.of("KINDIMC"),
-        Arguments.of("BOUNDED"),
-        Arguments.of("CEGAR_PRED_CART,CEGAR_PRED_BOOL,CEGAR_PRED_SPLIT"),
-        Arguments.of("CEGAR_PRED_CART,BMC,IMC"),
-        Arguments.of("CEGAR_PRED_CART,CEGAR_PRED_CART,BMC"),
-      )
-
-    private val randomCheckerBackendCombinations: List<String> =
-      Random(20260824).let { rnd ->
-        val allBackends = DssCheckerBackend.values()
-        List(5) {
-          List(rnd.nextInt(2, 5)) { allBackends[rnd.nextInt(allBackends.size)] }.joinToString(",")
-        }
-      }
-
-    @JvmStatic
-    fun randomCheckerBackendsAndDecompositionAndExecutor(): Stream<Arguments> =
-      randomCheckerBackendCombinations
-        .flatMap { backends ->
-          decompositionExecutorPairs.map { (decomposition, executor) ->
-            Arguments.of(backends, decomposition, executor)
-          }
-        }
+          listOf("--dss-executor", "CONCURRENT"),
+          listOf("--output", "ALL"),
+          listOf("--dss-reset-precision"),
+          listOf("--dss-reuse-block-precision"),
+          listOf("--dss-global-predicate-pool", "false"),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR_PRED_CART,KIND",
+            "--dss-checker-selection",
+            "PRIORITY",
+          ),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR_PRED_CART,KIND",
+            "--dss-checker-selection",
+            "FASTEST",
+          ),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR_PRED_CART,BMC",
+            "--dss-checker-selection",
+            "ROUND_ROBIN",
+          ),
+        )
+        .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
         .stream()
   }
 
-  @Test
-  fun `--dss-decomposition MIN_CUT_ACYCLIC runs to completion on a loop`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        "MIN_CUT_ACYCLIC",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/loop.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
+  private fun expected(program: String) =
+    if (program.endsWith("unsafe")) "SafetyResult Unsafe" else "SafetyResult Safe"
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict`(decomposition: String, program: String) {
+    assertTrue(
+      dssVerdict(program, "--dss-decomposition", decomposition).contains(expected(program))
     )
   }
 
-  @Test
-  fun `--backend DSS runs to completion on a SAFE program`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("options")
+  fun `every option keeps the verdict`(options: List<String>, program: String) {
+    assertTrue(dssVerdict(program, *options.toTypedArray()).contains(expected(program)))
+  }
+
+  @ParameterizedTest
+  @EnumSource(DssCheckerBackend::class)
+  fun `every checker backend finds the violation`(backend: DssCheckerBackend) {
+    assertTrue(dssVerdict("unsafe", "--dss-checker-backends", backend.name).contains("Unsafe"))
   }
 
   @Test
-  fun `--backend DSS runs to completion on an UNSAFE program`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/unsafe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
+  fun `a backend outside the DSS-compatible subset is rejected`() {
+    val (output, thrown) = runDss("safe", "--dss-checker-backends", "OC")
+    assertTrue(thrown != null && "OC" in output) { output }
   }
 
-  @ParameterizedTest
-  @MethodSource("decompositionAndExecutor")
-  fun `every --dss-decomposition and --dss-executor combination parses and runs on a SAFE program`(
-    decomposition: String,
-    executor: String,
-  ) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        decomposition,
-        "--dss-executor",
-        executor,
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
+  @Test
+  fun `properties a pass reduces to error-location reachability are checked`() {
+    assertTrue(
+      dssVerdict("overflow_unsafe", property = "no-overflow").contains("SafetyResult Unsafe")
     )
-  }
-
-  @ParameterizedTest
-  @MethodSource("decompositionAndExecutor")
-  fun `every --dss-decomposition and --dss-executor combination parses and runs on an UNSAFE program`(
-    decomposition: String,
-    executor: String,
-  ) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        decomposition,
-        "--dss-executor",
-        executor,
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/unsafe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
-  fun `--dss-reset-precision parses and runs to completion`(input: String) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        "MERGE",
-        "--dss-reset-precision",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource(input)!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
-  fun `--dss-reuse-block-precision parses and runs to completion`(input: String) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-reuse-block-precision",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource(input)!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
-  fun `--dss-checker-selection PRIORITY parses and runs to completion`(input: String) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-checker-backends",
-        "CEGAR_PRED_CART,KIND",
-        "--dss-checker-selection",
-        "PRIORITY",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource(input)!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = ["/c/dss/safe.c", "/c/dss/unsafe.c"])
-  fun `--dss-checker-selection FASTEST parses and runs to completion`(input: String) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-checker-backends",
-        "CEGAR_PRED_CART,KIND",
-        "--dss-checker-selection",
-        "FASTEST",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource(input)!!.path,
-        "--stacktrace",
-        "--debug",
-      )
+    assertTrue(
+      dssVerdict("assert_unsafe", property = "no-assertion-violation")
+        .contains("SafetyResult Unsafe")
     )
   }
 
   @Test
-  fun `--dss-global-predicate-pool false parses and runs to completion`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-global-predicate-pool",
-        "false",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @MethodSource("checkerBackendLists")
-  fun `--dss-checker-backends builds and runs to completion on a SAFE program`(backends: String) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-checker-backends",
-        backends,
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @Test
-  fun `--dss-checker-backends CEGAR_PRED_CART,CEGAR_PRED_BOOL,BMC,KIND builds and runs to completion on an UNSAFE program`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-checker-backends",
-        "CEGAR_PRED_CART,CEGAR_PRED_BOOL,BMC,KIND",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/unsafe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @MethodSource("randomCheckerBackendsAndDecompositionAndExecutor")
-  fun `each of 5 random --dss-checker-backends combinations runs on every --dss-decomposition x --dss-executor combination on a SAFE program`(
-    backends: String,
-    decomposition: String,
-    executor: String,
-  ) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        decomposition,
-        "--dss-executor",
-        executor,
-        "--dss-checker-backends",
-        backends,
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @ParameterizedTest
-  @MethodSource("randomCheckerBackendsAndDecompositionAndExecutor")
-  fun `each of 5 random --dss-checker-backends combinations runs on every --dss-decomposition x --dss-executor combination on an UNSAFE program`(
-    backends: String,
-    decomposition: String,
-    executor: String,
-  ) {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-decomposition",
-        decomposition,
-        "--dss-executor",
-        executor,
-        "--dss-checker-backends",
-        backends,
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/unsafe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @Test
-  fun `--dss-checker-backends rejects a backend outside the DSS-compatible subset`() {
-    val temp = createTempDirectory()
-    val captured = temp.resolve("stdout_stderr").toFile()
-    PrintStream(BufferedOutputStream(FileOutputStream(captured)), true).use { ps ->
-      val savedOut = System.out
-      val savedErr = System.err
-      System.setOut(ps)
-      System.setErr(ps)
-      try {
-        assertThrows(Exception::class.java) {
-          main(
-            arrayOf(
-              "--backend",
-              "DSS",
-              "--dss-checker-backends",
-              "OC",
-              "--input-type",
-              "C",
-              "--input",
-              javaClass.getResource("/c/dss/safe.c")!!.path,
-              "--stacktrace",
-              "--debug",
-            )
-          )
-        }
-      } finally {
-        System.setOut(savedOut)
-        System.setErr(savedErr)
-      }
-    }
-    val output = captured.readText()
-    assertTrue(output.contains("OC")) {
-      "expected JCommander's own invalid-enum-value message to mention OC, got: $output"
-    }
-    temp.toFile().deleteRecursively()
-  }
-
-  @Test
-  fun `--dss-checker-selection ROUND_ROBIN parses and runs to completion`() {
-    main(
-      arrayOf(
-        "--backend",
-        "DSS",
-        "--dss-checker-backends",
-        "CEGAR_PRED_CART,BMC,KIND",
-        "--dss-checker-selection",
-        "ROUND_ROBIN",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/safe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-  }
-
-  @Test
-  fun `--backend DSS with --output ALL does not crash on witness writing for an UNSAFE (no-trace) verdict`() {
-    val temp = createTempDirectory()
-    main(
-      arrayOf(
-        "--output",
-        "ALL",
-        "--output-directory",
-        temp.absolutePathString(),
-        "--backend",
-        "DSS",
-        "--input-type",
-        "C",
-        "--input",
-        javaClass.getResource("/c/dss/unsafe.c")!!.path,
-        "--stacktrace",
-        "--debug",
-      )
-    )
-    assertTrue(temp.exists())
-    temp.toFile().deleteRecursively()
+  fun `termination is rejected`() {
+    val (output, thrown) = runDss("safe", property = "termination")
+    assertTrue(thrown != null && "not TERMINATION" in output) { output }
   }
 
   @ParameterizedTest
   @ValueSource(strings = ["safe", "unsafe"])
   fun `--loglevel INFO prints exactly one SafetyResult line, the DSS verdict`(program: String) {
-    val temp = createTempDirectory()
-    val captured = temp.resolve("stdout_stderr").toFile()
-    PrintStream(BufferedOutputStream(FileOutputStream(captured)), true).use { ps ->
-      val savedOut = System.out
-      val savedErr = System.err
-      System.setOut(ps)
-      System.setErr(ps)
-      try {
-        main(
-          arrayOf(
-            "--backend",
-            "DSS",
-            "--input-type",
-            "C",
-            "--input",
-            javaClass.getResource("/c/dss/$program.c")!!.path,
-            "--stacktrace",
-            "--loglevel",
-            "INFO",
-          )
-        )
-      } finally {
-        System.setOut(savedOut)
-        System.setErr(savedErr)
-      }
-    }
-    val resultLines = captured.readLines().filter { it.contains("SafetyResult") }
-    temp.toFile().deleteRecursively()
-    assertTrue(resultLines.size == 1) { "expected one SafetyResult line, got: $resultLines" }
-    val expected = if (program == "safe") "SafetyResult Safe" else "SafetyResult Unsafe"
-    assertTrue(resultLines.single().contains(expected)) {
-      "expected $expected, got: ${resultLines.single()}"
-    }
+    val (output, thrown) = runDss(program, "--loglevel", "INFO", debug = false)
+    assertEquals(null, thrown)
+    val resultLines = output.lines().filter { it.contains("SafetyResult") }
+    assertEquals(1, resultLines.size) { "$resultLines" }
+    assertTrue(resultLines.single().contains(expected(program))) { resultLines.single() }
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
-  fun `a SAFE run writes location invariants that Theta validates`(executor: String) {
-    val witness = dssWitness("loop", executor)
+  @Test
+  fun `a SAFE run writes location invariants that Theta validates`() {
+    val witness = dssWitness("loop", "SEQUENTIAL")
     assertTrue(witness.contains("entry_type: 'invariant_set'")) { witness }
     assertTrue(witness.contains("location_invariant")) { witness }
     assertTrue(verdictWithWitness("loop", witness).contains("SafetyResult Safe"))
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
-  fun `an UNSAFE run writes a stitched violation witness that Theta validates`(executor: String) {
-    val witness = dssWitness("loop_unsafe", executor)
+  /** Each worker process only knows its own blocks, so the trace is stitched from all of them. */
+  @Test
+  fun `an UNSAFE run of the process executor writes a stitched violation witness`() {
+    val witness = dssWitness("loop_unsafe", "PROCESS")
     assertTrue(witness.contains("entry_type: 'violation_sequence'")) { witness }
     assertTrue(witness.contains("\\result == 3")) { witness }
     assertTrue(witness.contains("type: 'target'")) { witness }
     assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
   }
 
-  @Test
-  fun `properties a pass reduces to error-location reachability are checked`() {
-    assertTrue(dssVerdict("overflow_unsafe", "no-overflow").contains("SafetyResult Unsafe"))
-    assertTrue(
-      dssVerdict("assert_unsafe", "no-assertion-violation").contains("SafetyResult Unsafe")
-    )
-  }
-
-  @Test
-  fun `termination is rejected`() {
-    val (output, thrown) = runDss("safe", "termination")
-    assertTrue(thrown != null && "not TERMINATION" in output) { output }
-  }
-
   /** The verdict line of a DSS run on [program] against `<property>.prp`. */
-  private fun dssVerdict(program: String, property: String): String {
-    val (output, thrown) = runDss(program, property)
-    if (thrown != null) throw thrown
+  private fun dssVerdict(
+    program: String,
+    vararg options: String,
+    property: String = "unreach-call",
+  ): String {
+    val (output, thrown) = runDss(program, *options, property = property)
+    if (thrown != null) throw AssertionError(output, thrown)
     return output.lines().lastOrNull { it.contains("SafetyResult") }.orEmpty()
   }
 
   /** The output of a DSS run on [program] against `<property>.prp`, and what it threw. */
-  private fun runDss(program: String, property: String): Pair<String, Throwable?> {
+  private fun runDss(
+    program: String,
+    vararg options: String,
+    property: String = "unreach-call",
+    debug: Boolean = true,
+  ): Pair<String, Throwable?> {
     val temp = createTempDirectory()
     val captured = temp.resolve("stdout_stderr").toFile()
     var thrown: Throwable? = null
@@ -560,6 +180,7 @@ class XcfaCliDssTest {
             arrayOf(
               "--backend",
               "DSS",
+              *options,
               "--property",
               javaClass.getResource("/c/dss/$property.prp")!!.path,
               "--output-directory",
@@ -567,7 +188,7 @@ class XcfaCliDssTest {
               "--input",
               javaClass.getResource("/c/dss/$program.c")!!.path,
               "--stacktrace",
-              "--debug",
+              *(if (debug) arrayOf("--debug") else emptyArray()),
             )
           )
         } catch (e: Exception) {

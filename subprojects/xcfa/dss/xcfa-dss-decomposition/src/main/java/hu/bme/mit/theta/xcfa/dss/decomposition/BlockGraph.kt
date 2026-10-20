@@ -42,9 +42,6 @@ class BlockGraph(val blocks: Set<Block>) {
       check(block.finalLocation in block.locations) {
         "Block ${block.id} does not contain its own final location."
       }
-      check(block.violationConditionLocation in block.locations) {
-        "Block ${block.id} does not contain its own violation-condition location."
-      }
       for (successorId in block.successorIds) {
         val successor = requireBlock(successorId)
         check(block.id in successor.predecessorIds) {

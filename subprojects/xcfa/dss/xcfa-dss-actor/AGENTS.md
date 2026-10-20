@@ -5,8 +5,8 @@ quiescence monitor and the executors. Design: `dss/DSS.md`.
 
 ## Build and test
 - `./gradlew :theta-xcfa-dss-actor:test` (needs the native libraries).
-- End-to-end tests use `runDssActorsSequentially` only (legacy Z3 is not thread-safe) and are
-  timing-sensitive: rerun a timed-out `NestedLoopActorTest` alone before calling it a regression.
+- End-to-end verdicts are one table in `DssVerdictTest`, run with `runDssActorsSequentially` (legacy
+  Z3 is not thread-safe). Keep its loop bounds small: DSS unrolls a loop up to the violation.
 
 ## Invariants
 - No dependency on `xcfa-cli` in production code; checkers are injected factories.

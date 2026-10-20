@@ -126,8 +126,6 @@ fun getDssChecker(
           "procedures) - see dss/DSS.md's Known Limitations."
       )
 
-  // No BlockGraphInstrumentation (CPAchecker's instrumentCFA): blocks are extracted with a private
-  // exit already, and instrumenting would mutate the input XCFA in place.
   val decomposition: DssBlockDecomposition =
     when (dssConfig.decomposition) {
       DssDecomposition.LINEAR -> LinearBlockDecomposition()

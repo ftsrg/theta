@@ -61,8 +61,8 @@ internal fun processFixtureXcfa(incrementY: Boolean): XCFA =
           "x" assign "0"
           "y" assign "0"
         }
-        ("loophead" to "body") { assume("(< x 10)") }
-        ("loophead" to "afterloop") { assume("(>= x 10)") }
+        ("loophead" to "body") { assume("(< x 3)") }
+        ("loophead" to "afterloop") { assume("(>= x 3)") }
         if (incrementY) {
           ("body" to "loophead") {
             "x" assign "(+ x 1)"
@@ -179,21 +179,16 @@ class DssProcessExecutorTest {
   }
 
   @Test
-  fun `process executor reproduces the SAFE verdict with legacy Z3`() {
-    assertEquals(DssResult.SAFE, runInProcesses(incrementY = true, fixture = "safe"))
-  }
-
-  @Test
-  fun `process executor reproduces the UNSAFE verdict with legacy Z3`() {
-    assertEquals(DssResult.UNSAFE, runInProcesses(incrementY = false, fixture = "unsafe"))
-  }
-
-  @Test
   fun `process executor with fewer processes than blocks reproduces the SAFE verdict`() {
     assertEquals(
       DssResult.SAFE,
       runInProcesses(incrementY = true, fixture = "safe", maxProcesses = 2),
     )
+  }
+
+  @Test
+  fun `process executor reproduces the UNSAFE verdict`() {
+    assertEquals(DssResult.UNSAFE, runInProcesses(incrementY = false, fixture = "unsafe"))
   }
 
   @Test

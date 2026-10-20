@@ -77,39 +77,6 @@ class BlockGraphDotTest {
   }
 
   @Test
-  fun `a block with a dedicated abstraction point is rendered with a dashed border`() {
-    val procedure =
-      xcfa("branch") {
-          procedure("main") {
-            "x" type Int()
-            (init to "branch") { "x" assign "0" }
-            ("branch" to "afterA") { assume("(< x 10)") }
-            ("branch" to "afterB") { assume("(>= x 10)") }
-            ("afterA" to final) { nop() }
-            ("afterB" to err) { nop() }
-          }
-        }
-        .procedures
-        .single()
-
-    val blockGraph = LinearBlockDecomposition().decompose(procedure)
-    val instrumented = BlockGraphInstrumentation.instrumentForAbstraction(procedure, blockGraph)
-    val dot = instrumented.blockGraph.toDot()
-
-    val instrumentedBlock = instrumented.blockGraph.root
-    assertTrue(instrumentedBlock.isAbstractionPossible)
-    val nodeLine =
-      dot.lines().single {
-        it.trim().startsWith("\"${instrumentedBlock.id}\"") && it.contains("label=")
-      }
-    assertTrue(nodeLine.contains("style=dashed"), "expected a dashed border in: $nodeLine")
-    assertTrue(
-      nodeLine.contains("vcond: ${instrumentedBlock.violationConditionLocation.name}"),
-      "expected the vcond location name in the label: $nodeLine",
-    )
-  }
-
-  @Test
   fun `a cyclic block (its own predecessor and successor) renders a self-loop edge`() {
     val procedure =
       xcfa("xy-loop") {

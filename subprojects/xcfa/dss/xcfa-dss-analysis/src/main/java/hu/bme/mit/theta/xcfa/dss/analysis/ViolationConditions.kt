@@ -36,7 +36,6 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.GhostEdgeMetadata
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
@@ -103,15 +102,10 @@ private class BackwardConditions(
   private val memo = HashMap<XcfaLocation, WpState>()
   private val onStack = HashSet<XcfaLocation>()
 
-  val entryEdges: List<XcfaEdge> =
-    block.initialLocation.outgoingEdges.filter {
-      it in block.edges && it.metadata != GhostEdgeMetadata
-    }
+  val entryEdges: List<XcfaEdge> = block.initialLocation.outgoingEdges.filter { it in block.edges }
 
   fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
-    location.outgoingEdges.filter {
-      it in block.edges && (location != block.finalLocation || it.metadata == GhostEdgeMetadata)
-    }
+    location.outgoingEdges.filter { it in block.edges && location != block.finalLocation }
 
   fun at(location: XcfaLocation): WpState {
     memo[location]?.let {
@@ -194,7 +188,7 @@ fun hasInternalCycle(block: Block): Boolean {
     val cyclic =
       location.outgoingEdges.any { edge ->
         edge in block.edges &&
-          (!splitHead || location != block.finalLocation || edge.metadata == GhostEdgeMetadata) &&
+          (!splitHead || location != block.finalLocation) &&
           cycleFrom(edge.target)
       }
     onStack.remove(location)
@@ -202,9 +196,7 @@ fun hasInternalCycle(block: Block): Boolean {
     return cyclic
   }
 
-  return block.initialLocation.outgoingEdges.any {
-    it in block.edges && it.metadata != GhostEdgeMetadata && cycleFrom(it.target)
-  }
+  return block.initialLocation.outgoingEdges.any { it in block.edges && cycleFrom(it.target) }
 }
 
 /** The violation condition of a single path, for blocks with an internal cycle. */

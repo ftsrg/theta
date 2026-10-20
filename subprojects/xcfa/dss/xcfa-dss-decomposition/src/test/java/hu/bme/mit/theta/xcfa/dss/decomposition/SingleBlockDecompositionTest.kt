@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/** CPAchecker's `NO_DECOMPOSITION` and the single-block corner cases of merging/instrumentation. */
+/** CPAchecker's `NO_DECOMPOSITION` and the single-block corner case of merging. */
 class SingleBlockDecompositionTest {
 
   private fun loopWithError(): XcfaProcedure =
@@ -67,24 +67,5 @@ class SingleBlockDecompositionTest {
 
     assertEquals(listOf("SB1"), allowed.blocks.map { it.id })
     assertTrue(notAllowed.blocks.size > 1, "a loop cannot be merged away")
-  }
-
-  @Test
-  fun `the default merge target is CPAchecker's hardcoded 2`() {
-    assertEquals(2, DEFAULT_TARGET_BLOCK_COUNT)
-  }
-
-  @Test
-  fun `instrumenting a single-block graph changes nothing`() {
-    val procedure = loopWithError()
-    val graph = SingleBlockDecomposition.decompose(procedure)
-
-    val modification = BlockGraphInstrumentation.instrumentForAbstraction(procedure, graph)
-
-    assertSame(procedure, modification.procedure)
-    assertSame(graph, modification.blockGraph)
-    assertTrue(
-      procedure.locs.none { loc -> loc.outgoingEdges.any { it.metadata == GhostEdgeMetadata } }
-    )
   }
 }

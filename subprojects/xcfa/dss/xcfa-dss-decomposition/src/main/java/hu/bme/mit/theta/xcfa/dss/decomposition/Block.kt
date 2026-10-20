@@ -27,12 +27,8 @@ data class Block(
   val edges: Set<XcfaEdge>,
   val predecessorIds: Set<String> = emptySet(),
   val successorIds: Set<String> = emptySet(),
-  val violationConditionLocation: XcfaLocation = finalLocation,
 ) {
 
   val isRoot: Boolean
     get() = predecessorIds.isEmpty()
-
-  val isAbstractionPossible: Boolean
-    get() = violationConditionLocation != finalLocation
 }

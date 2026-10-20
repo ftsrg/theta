@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.GhostEdgeMetadata
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
@@ -83,12 +82,7 @@ fun extractBlockXcfa(
 
   for (original in block.edges) {
     val source =
-      if (
-        splitEntry &&
-          original.source == block.initialLocation &&
-          original.metadata != GhostEdgeMetadata
-      )
-        blockEntry
+      if (splitEntry && original.source == block.initialLocation) blockEntry
       else clonedLocations.getValue(original.source)
     val target = clonedLocations.getValue(original.target)
     val clone = XcfaEdge(source, target, original.label, original.metadata)
@@ -96,7 +90,7 @@ fun extractBlockXcfa(
     originalEdges[clone] = original
   }
 
-  val exitLocation = clonedLocations.getValue(block.violationConditionLocation)
+  val exitLocation = clonedLocations.getValue(block.finalLocation)
   val procedureVars = sourceProcedure.vars.toMutableSet()
 
   var errorLocation = allLocations.firstOrNull { it.error }

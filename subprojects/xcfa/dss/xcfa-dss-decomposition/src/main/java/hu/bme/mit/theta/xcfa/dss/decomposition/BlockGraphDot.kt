@@ -41,19 +41,10 @@ private fun nodeLabel(block: Block): String {
   val lines = buildList {
     add(block.id)
     add("${block.initialLocation.name} -> ${block.finalLocation.name}")
-    if (block.isAbstractionPossible) {
-      add("vcond: ${block.violationConditionLocation.name}")
-    }
   }
   return lines.joinToString("\\n") { dotEscape(it) }
 }
 
-private fun nodeStyle(block: Block): String =
-  when {
-    block.isRoot && block.isAbstractionPossible -> "peripheries=2, style=dashed"
-    block.isRoot -> "peripheries=2"
-    block.isAbstractionPossible -> "style=dashed"
-    else -> ""
-  }
+private fun nodeStyle(block: Block): String = if (block.isRoot) "peripheries=2" else ""
 
 private fun dotEscape(s: String): String = s.replace("\\", "\\\\").replace("\"", "\\\"")

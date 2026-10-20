@@ -347,7 +347,7 @@ class PredicateBlockBehavior(
     val targets = buildMap {
       if (containsViolationInsideBlock) putAll(targetsOfOwnViolations())
       if (reportReceivedViolations && violationCondition != null) {
-        put(block.violationConditionLocation, violationCondition)
+        put(block.finalLocation, violationCondition)
       }
     }
     val newViolationCondition =
