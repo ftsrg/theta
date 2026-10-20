@@ -639,7 +639,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             lastState.xcfa,
             lastState.processes,
             PtrState(lastState.sGlobal),
-            lastState.mutexes,
+            lastState.mutexState,
             lastState.threadLookup,
             lastState.bottom,
           ),
