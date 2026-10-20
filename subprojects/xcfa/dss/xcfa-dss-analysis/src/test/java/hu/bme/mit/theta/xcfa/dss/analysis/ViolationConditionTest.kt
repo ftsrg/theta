@@ -37,10 +37,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * The CPAchecker-derived pieces of the block analysis: violation conditions, predicate operators,
- * precision combination, and [extractBlockXcfa]'s loop-head entry/exit split.
- */
 class ViolationConditionTest {
 
   companion object {
@@ -123,13 +119,10 @@ class ViolationConditionTest {
     val vc1 = computeViolationCondition(body, mapOf(body.finalLocation to received))
     val vc2 = computeViolationCondition(body, mapOf(body.finalLocation to received))
 
-    // wp(x < 10; x := x + 1; havoc y, y > x) = x < 10 && exists a. a > x + 1
     assertEquals(1, DssAuxVars.collectVars(vc1).size)
     assertFalse(operators.isUnsat(vc1))
     assertTrue(operators.isUnsat(And(vc1, Geq(x, Int(10)))))
-    // repeated computations are structurally equal, so DSS can recognize repeated conditions
     assertEquals(vc1, vc2)
-    // and passing it through the loop body again does not capture the existing variable
     val vc3 = computeViolationCondition(body, mapOf(body.finalLocation to And(vc1, Gt(y, x))))
     assertEquals(2, DssAuxVars.collectVars(vc3).size)
     assertNotEquals(vc1, vc3)
@@ -156,7 +149,6 @@ class ViolationConditionTest {
 
     val vc = computePathViolationCondition(path)
 
-    // x < 2 && x + 1 < 2 && x + 2 >= 2, i.e., exactly two iterations from x = 0
     assertTrue(operators.isLeq(vc, Eq(x.ref, Int(0))))
     assertTrue(operators.isLeq(Eq(x.ref, Int(0)), vc))
   }
@@ -207,9 +199,7 @@ class ViolationConditionTest {
     val p1 = setOf(Lt(x, Int(10)), Gt(y, Int(0)))
     val p2 = setOf(Geq(x, Int(3)))
 
-    // x occurs in both precisions, so only predicates over x are kept
     assertEquals(setOf(Lt(x, Int(10)), Geq(x, Int(3))), combinePredPrecs(listOf(p1, p2)))
-    // no common variable: plain union
     val p3 = setOf(Gt(y, Int(1)))
     assertEquals(p2 + p3, combinePredPrecs(listOf(p2, p3)))
   }

@@ -48,8 +48,6 @@ class BlockGraphInstrumentationTest {
     val modification = BlockGraphInstrumentation.instrumentForAbstraction(procedure, decomposed)
     modification.blockGraph.checkConsistency()
 
-    // The root block ends at "branch", which has somewhere to go (two outgoing edges) - it should
-    // get a fresh, dedicated abstraction point.
     val root = modification.blockGraph.root
     assertEquals("branch", root.finalLocation.name)
     assertTrue(root.isAbstractionPossible)
@@ -104,8 +102,6 @@ class BlockGraphInstrumentationTest {
     val ghostLocation = root.violationConditionLocation
     val branchLocation = root.finalLocation
 
-    // The ghost edge is a real outgoing edge of "branch" (alongside the two original ones), not
-    // just bookkeeping recorded on the Block.
     val ghostEdge = branchLocation.outgoingEdges.single { it.target == ghostLocation }
     assertTrue(ghostEdge in root.edges)
     assertEquals(GhostEdgeMetadata, ghostEdge.metadata)

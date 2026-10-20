@@ -30,10 +30,6 @@ import org.junit.jupiter.api.Test
 /** The ASCII escape byte (0x1B) that ANSI color codes start with. */
 private const val ANSI_ESCAPE_BYTE = ""
 
-/**
- * Build-order step 7: given a `visualizationLog`, both executors record the run's message traffic
- * without changing the verdict.
- */
 class DssVisualizationActorTest {
 
   private fun loc(name: String) = XcfaLocation(name, metadata = EmptyMetaData)
@@ -85,10 +81,6 @@ class DssVisualizationActorTest {
 
   @Test
   fun `an UNSAFE run is captured too, including the violation condition`() {
-    // The violation must originate in a *non-root* block: a root that finds one locally shortcuts
-    // straight to broadcasting RESULT(UNSAFE) without ever putting a VIOLATION_CONDITION message
-    // on the wire at all (see DssBlockActor.broadcast) - a leaf's violation, by contrast, has to be
-    // routed back to the root first, which is the message this test wants to see captured.
     val root = block("R", successorIds = setOf("A"))
     val leaf = block("A", predecessorIds = setOf("R"))
     val blockGraph = BlockGraph(setOf(root, leaf))

@@ -33,10 +33,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Build-order step 5: feeding a block its predecessor's packed postcondition, by hand, makes
- * decomposed checking match the baseline. Uses [getAssumePredPrec] (see its doc).
- */
 class PostconditionPackingTest {
 
   companion object {
@@ -48,10 +44,6 @@ class PostconditionPackingTest {
     }
   }
 
-  /**
-   * init->branch sets x := 5, so `checkB` (guarded by x >= 10) is unreachable - but only knowably
-   * so from the precondition x == 5, which an isolated block checked from top lacks.
-   */
   private fun xcfa5Xcfa(): XCFA =
     xcfa("postcondition-packing") {
       val main =
@@ -106,8 +98,6 @@ class PostconditionPackingTest {
 
     val result = check(extractBlockXcfa(procedure, checkBBlock).xcfa)
 
-    // x is unconstrained here, so "x >= 10" is satisfiable and err looks reachable - wrong, but
-    // exactly the imprecision expected from a block with no incoming information yet.
     assertTrue(result.isUnsafe)
   }
 
@@ -120,8 +110,6 @@ class PostconditionPackingTest {
     val checkBBlock = blockGraph.blocks.single { it.locations.any { l -> l.name == "checkB" } }
 
     val postcondition = postconditionAtExit(wholeProgram, procedure, root)
-    // With the shared, whole-program predicate pool, the postcondition is a precise
-    // characterization of "x == 5" relative to the predicates {x < 10, x >= 10} - not just True().
     assertTrue(postcondition != True())
 
     val checkBExtraction = extractBlockXcfa(procedure, checkBBlock, precondition = postcondition)
@@ -138,7 +126,6 @@ class PostconditionPackingTest {
     val root = blockGraph.root
     val checkBBlock = blockGraph.blocks.single { it.locations.any { l -> l.name == "checkB" } }
 
-    // Fed x == 5, "checkB" (guarded by x >= 10) is never reached at all, not merely error-free.
     val postcondition = postconditionAtExit(wholeProgram, procedure, root)
     val checkBExtraction = extractBlockXcfa(procedure, checkBBlock, precondition = postcondition)
     val checkBResult = check(checkBExtraction.xcfa, getAssumePredPrec(wholeProgram))

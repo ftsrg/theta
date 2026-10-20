@@ -23,10 +23,7 @@ private const val SEQUENTIAL_OBSERVER_ID = "__observer__"
 private const val SEQUENTIAL_VISUALIZER_ID = "__visualizer__"
 private const val SEQUENTIAL_EXECUTOR_ID = "sequential-executor"
 
-/**
- * Single-threaded, deterministic variant of [runDssActors] with the same actors: visits actors
- * round-robin, one message each, and broadcasts `RESULT(SAFE)` once every queue is empty.
- */
+/** CPAchecker's `SequentialDssExecutor`: round-robin, SAFE once every queue is empty. */
 fun runDssActorsSequentially(
   blockGraph: BlockGraph,
   behaviorFor: (Block) -> DssBlockBehavior,
@@ -36,8 +33,7 @@ fun runDssActorsSequentially(
   val extraIds = if (visualizationLog != null) setOf(SEQUENTIAL_VISUALIZER_ID) else emptySet()
   val inboxes =
     (blockGraph.blocks.map { it.id }.sorted() + SEQUENTIAL_OBSERVER_ID + extraIds).associateWith {
-      // The visualizer must log every message, so it reads in plain arrival order instead of
-      // letting the final RESULT/STATISTIC messages overtake (and end its run before) the rest.
+      // Arrival order, so the final messages can't end the visualizer's run early
       if (it == SEQUENTIAL_VISUALIZER_ID) LinkedBlockingQueue<DssMessage>()
       else createDssMessageQueue()
     }
@@ -81,9 +77,7 @@ fun runDssActorsSequentially(
 
   blockActors.values.forEach { it.start() }
 
-  // Round-robin like CPAchecker's SequentialDssExecutor, so a self-feeding loop block can't starve
-  // the others. Keeps draining after the observer shuts down, as the visualizer's queue may still
-  // hold messages.
+  // Round-robin, so a self-feeding loop block can't starve the others
   fun hasWorkLeft() =
     !observer.shutdownRequested() ||
       inboxes.any { (id, queue) -> !workers.getValue(id).shutdownRequested() && queue.isNotEmpty() }
@@ -92,8 +86,6 @@ fun runDssActorsSequentially(
     for ((id, queue) in inboxes) {
       val worker = workers.getValue(id)
       if (worker.shutdownRequested()) {
-        // Like a worker thread of the concurrent executor, a finished actor reads nothing anymore
-        // (CPAchecker's sequential executor stops at the first RESULT altogether).
         queue.clear()
         continue
       }

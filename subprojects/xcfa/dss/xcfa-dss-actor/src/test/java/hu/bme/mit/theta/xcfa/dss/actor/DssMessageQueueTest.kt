@@ -31,7 +31,6 @@ class DssMessageQueueTest {
 
     listOf(post1, vc, post2, result, stats).forEach(queue::add)
 
-    // CPAchecker's DssDefaultQueue: RESULT/EXCEPTION/STATISTIC first, then FIFO.
     assertEquals(listOf(result, stats, post1, vc, post2), List(5) { queue.take() })
   }
 }

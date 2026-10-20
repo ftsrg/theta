@@ -29,96 +29,34 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Solver-backed operators of CPAchecker's distributed predicate CPA ([isUnsat], [isKnownUnsat],
- * [isLeq]). Failed queries go to the fallback solver, then [DssUndecidedQueryException].
+ * Solver-backed operators of CPAchecker's distributed predicate CPA. A query the solver fails on
+ * throws [DssUndecidedQueryException]: it must never be taken as satisfiable or unsatisfiable.
  */
-class DssPredicateOperators(
-  solverFactory: SolverFactory,
-  fallbackSolverFactory: SolverFactory? = null,
-  private val statistics: DssSolverStatistics = DssSolverStatistics(),
-) {
+class DssPredicateOperators(solverFactory: SolverFactory) {
 
   private val solver = OperatorSolver(solverFactory)
-  private val fallbackSolver = fallbackSolverFactory?.let(::OperatorSolver)
 
-  /**
-   * Throws [DssUndecidedQueryException] if neither the solver nor the fallback solver decides
-   * [expr]: here an undecided query must not be taken as satisfiable.
-   */
-  fun isUnsat(expr: Expr<BoolType>): Boolean =
-    decide(expr) { failure -> throw DssUndecidedQueryException(failure) }
-
-  /**
-   * [isUnsat], but `false` if the fallback solver cannot decide [expr] either. Only for callers
-   * where a missed unsat result merely skips a pruning or simplification step.
-   */
-  fun isKnownUnsat(expr: Expr<BoolType>): Boolean = decide(expr) { false }
-
-  /** Whether state 1 implies state 2 per [isKnownUnsat]. */
-  fun isLeq(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
-    state2 == True() || state1 == state2 || isKnownUnsat(And(state1, Not(state2)))
-
-  /** Without a fallback solver, a failure of the solver is never [undecided] but an exception. */
-  private inline fun decide(expr: Expr<BoolType>, undecided: (Exception) -> Boolean): Boolean {
+  fun isUnsat(expr: Expr<BoolType>): Boolean {
     if (expr == False()) return true
     if (expr == True()) return false
-    statistics.queries.incrementAndGet()
-    val failure =
-      try {
-        return solver.isUnsat(expr)
-      } catch (e: Exception) {
-        e
-      }
-    statistics.solverFailed.incrementAndGet()
-    val fallback =
-      fallbackSolver ?: throw DssUndecidedQueryException(failure).also { statistics.report() }
     return try {
-      fallback.isUnsat(expr).also {
-        statistics.fallbackDecided.incrementAndGet()
-        statistics.report()
-      }
+      solver.isUnsat(expr)
     } catch (e: Exception) {
-      statistics.fallbackFailed.incrementAndGet()
-      statistics.report()
-      e.addSuppressed(failure)
-      undecided(e)
+      throw DssUndecidedQueryException(e)
     }
   }
+
+  fun isLeq(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
+    state2 == True() || state1 == state2 || isUnsat(And(state1, Not(state2)))
 }
 
-/**
- * Solver statistics shared by all blocks: [solverFailed] of [queries] went to the fallback solver,
- * which decided [fallbackDecided]; [checkerFailed]/[checkerFallbackDecided] likewise for checkers.
- */
-class DssSolverStatistics(private val onSolverFailure: (DssSolverStatistics) -> Unit = {}) {
-  val queries = AtomicInteger()
-  val solverFailed = AtomicInteger()
-  val fallbackDecided = AtomicInteger()
-  val fallbackFailed = AtomicInteger()
-  val checkerFailed = AtomicInteger()
-  val checkerFallbackDecided = AtomicInteger()
-  val checkerFallbackFailed = AtomicInteger()
-
-  /** Called after every failure of the solver, so a run killed later still logged its counts. */
-  fun report() = onSolverFailure(this)
-
-  override fun toString() =
-    "queries=$queries solverFailed=$solverFailed fallbackDecided=$fallbackDecided " +
-      "fallbackFailed=$fallbackFailed checkerFailed=$checkerFailed " +
-      "checkerFallbackDecided=$checkerFallbackDecided checkerFallbackFailed=$checkerFallbackFailed"
-}
-
-/**
- * A coverage or satisfiability query of [DssPredicateOperators] that the solver (and its fallback,
- * if any) failed on: an unknown result or a crash. DSS reports an unknown verdict for it.
- */
+/** A query of [DssPredicateOperators] the solver failed on; DSS reports an unknown verdict. */
 class DssUndecidedQueryException(cause: Throwable) :
   RuntimeException("DSS solver query undecided: $cause", cause)
 
-/** One solver of [DssPredicateOperators]; a solver that threw is replaced by a fresh one. */
+/** A solver that threw is replaced by a fresh one. */
 private class OperatorSolver(private val factory: SolverFactory) {
 
   private var solver: Solver? = null
@@ -139,20 +77,14 @@ private class OperatorSolver(private val factory: SolverFactory) {
   }
 }
 
-/**
- * The predicates a block transmits as its precision: the atoms of a safe result's reached states
- * (Theta's checkers don't return their precision), without [DssAuxVars] variables.
- */
+/** A block's transmitted precision: the atoms of its reached states, without [DssAuxVars]. */
 fun Iterable<Expr<BoolType>>.collectPreds(): Set<Expr<BoolType>> =
   flatMap(ExprUtils::getAtoms)
     .filter { it != True() && it != False() }
     .filter { atom -> ExprUtils.getVars(atom).none(DssAuxVars::isAux) }
     .toSet()
 
-/**
- * CPAchecker's `CombinePredicatePrecisionOperator`: the union of [precisions], restricted to
- * predicates over variables common to all of them, if there are any.
- */
+/** CPAchecker's `CombinePredicatePrecisionOperator`. */
 fun combinePredPrecs(precisions: Collection<Set<Expr<BoolType>>>): Set<Expr<BoolType>> {
   if (precisions.isEmpty()) return emptySet()
   if (precisions.size == 1) return precisions.single()
@@ -168,13 +100,8 @@ fun combinePredPrecs(precisions: Collection<Set<Expr<BoolType>>>): Set<Expr<Bool
     .toSet()
 }
 
-/**
- * The predicates of a predicate-abstraction precision ([getPredPrec]'s shape), filtered like
- * [collectPreds]; empty for any other precision.
- */
 fun XcfaPrec<*>.collectPreds(): Set<Expr<BoolType>> =
   ((p as? PtrPrec<*>)?.innerPrec as? PredPrec)?.preds?.collectPreds() ?: emptySet()
 
-/** The initial precision a predicate-abstraction checker is started with for [predicates]. */
 fun getPredPrec(predicates: Set<Expr<BoolType>>): XcfaPrec<PtrPrec<PredPrec>> =
   XcfaPrec(PtrPrec(PredPrec.of(predicates), emptySet()))

@@ -23,10 +23,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * Pure selection tests with stub checkers that are never invoked; `PredicateBlockBehaviorTest`
- * covers the same distribution guarantee end to end with real checks.
- */
 class DssCheckerRosterTest {
 
   /** One distinct, never-invoked [CheckerFactory] per index, identifiable by reference identity. */
@@ -82,10 +78,6 @@ class DssCheckerRosterTest {
     assertThrows(IllegalArgumentException::class.java) { roster.next() }
   }
 
-  /**
-   * One well-parallelized run is enough: balance follows from `AtomicInteger.getAndIncrement` being
-   * linearizable, so this only guards against regressions (e.g. a non-atomic cursor).
-   */
   @Test
   fun `concurrent selection from many threads still produces an exact, race-free distribution`() {
     val checkerCount = 4

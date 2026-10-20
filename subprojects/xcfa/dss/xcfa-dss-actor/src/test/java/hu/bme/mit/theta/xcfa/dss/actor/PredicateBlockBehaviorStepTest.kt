@@ -39,10 +39,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Drives [PredicateBlockBehavior]'s individual steps (CPAchecker's `DssBlockAnalysis` methods)
- * directly, without the actor runtime, and checks the messages each step produces.
- */
 class PredicateBlockBehaviorStepTest {
 
   companion object {
@@ -91,10 +87,6 @@ class PredicateBlockBehaviorStepTest {
       main.start()
     }
 
-  /**
-   * init -(havoc x)-> a; a -> j and a -> b -> j (a join); j -(x := x + 1)-> k; k -(x > 5)-> err.
-   * With every location a block boundary, the block `j -> k` has two predecessors.
-   */
   private fun join(): XCFA =
     xcfa("vc-before-pre") {
       val main =
@@ -235,10 +227,6 @@ class PredicateBlockBehaviorStepTest {
     )
   }
 
-  /**
-   * Regression test (wrong SAFE): CPAchecker assumes an early violation condition is re-sent later
-   * ("the same vc must have been sent already"); Theta checks that instead.
-   */
   @Test
   fun `a violation condition that arrives before any precondition is still propagated`() {
     val f = everyLocationABoundary(join())
@@ -253,7 +241,6 @@ class PredicateBlockBehaviorStepTest {
         .isEmpty(),
       "nothing to analyze yet - no precondition",
     )
-    // The other predecessor has not reported yet, so top is analyzed besides this state.
     val answer =
       behavior.onPostCondition(
         DssPostConditionMessage(

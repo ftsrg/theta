@@ -18,10 +18,7 @@ package hu.bme.mit.theta.xcfa.dss.actor
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.PriorityBlockingQueue
 
-/**
- * An actor's inbox (CPAchecker's `DssDefaultQueue`): `RESULT`/`EXCEPTION`/`STATISTIC` overtake
- * analysis messages, so workers react to the verdict at once; otherwise creation order.
- */
+/** CPAchecker's `DssDefaultQueue`: `RESULT`/`EXCEPTION`/`STATISTIC` first, else FIFO. */
 fun createDssMessageQueue(): BlockingQueue<DssMessage> =
   PriorityBlockingQueue(11, compareBy<DssMessage>({ it.priority }, { it.sequenceNumber }))
 

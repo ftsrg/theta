@@ -24,10 +24,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Test
 
-/**
- * Validates the actor runtime's routing and termination detection against [EchoBlockAnalysis] stub
- * workers, before any real per-block CEGAR is wired in (build-order step 4).
- */
 class DssActorRuntimeTest {
 
   private fun loc(name: String) = XcfaLocation(name, metadata = EmptyMetaData)
@@ -78,9 +74,6 @@ class DssActorRuntimeTest {
 
   @Test
   fun `a cyclic block graph (a loop-body block that is its own predecessor and successor) still reaches SAFE`() {
-    // Mirrors xcfa-dss-decomposition's "tight self-loop" case: the loop-head block lists itself as
-    // both predecessor and successor. Quiescence detection must handle this without special-casing
-    // cycles at all (plan §2's whole point).
     val root = block("R", successorIds = setOf("LH"))
     val loopHead = block("LH", predecessorIds = setOf("R", "LH"), successorIds = setOf("LH", "X"))
     val exit = block("X", predecessorIds = setOf("LH"))

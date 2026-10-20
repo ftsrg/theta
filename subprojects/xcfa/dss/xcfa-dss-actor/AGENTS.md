@@ -1,56 +1,21 @@
 # xcfa-dss-actor
 
-The DSS actor network: one `DssBlockActor` per block running `PredicateBlockBehavior` (the block
-analysis), the observer, the quiescence monitor, the two executors, and the diagnostic trace. The
-design and its CPAchecker counterparts are in `dss/DSS.md` (sections 7, 8, 9, 11); read the
-relevant section before changing behavior.
+The DSS actor network: `DssBlockActor` + `PredicateBlockBehavior` per block, the observer, the
+quiescence monitor and the executors. Design: `dss/DSS.md`.
 
 ## Build and test
-- `./gradlew :theta-xcfa-dss-actor:test`
-- The end-to-end tests run real checkers (`xcfa-cli`, Z3) under `assertTimeoutPreemptively` and
-  need the native libraries. They are timing-sensitive: on a loaded machine, a timeout of
-  `NestedLoopActorTest` is not necessarily a regression; rerun it on its own before concluding.
-- End-to-end cases with real checkers use `runDssActorsSequentially` only: the default legacy Z3
-  is not thread-safe, and `Z3:new`'s interpolation fails on these fixtures. `DssProcessExecutorTest`
-  starts real worker JVMs (`DssProcessTestWorker`, the test classpath) and rebuilds its fixture there.
+- `./gradlew :theta-xcfa-dss-actor:test` (needs the native libraries).
+- End-to-end tests use `runDssActorsSequentially` only (legacy Z3 is not thread-safe) and are
+  timing-sensitive: rerun a timed-out `NestedLoopActorTest` alone before calling it a regression.
 
 ## Invariants
-- **No dependency on `xcfa-cli`** in production code (same reason as in `xcfa-dss-analysis`);
-  checkers are injected factories.
-- **Routing belongs to `DssBlockActor`, analysis to `DssBlockBehavior`**: postconditions go
-  forward to successors, violation conditions backward to predecessors, and a violation condition
-  at the root becomes `RESULT(UNSAFE)`. Behaviors return messages; they never send them.
-- **SAFE is quiescence**, detected by `DssThreadMonitor` (concurrent) or by empty queues
-  (sequential). Every message must be processed inside the `active` marker of `DssWorker`, or
-  the monitor can declare SAFE while a message is still being handled.
-- **Every block answers `RESULT`/`EXCEPTION` with exactly one `STATISTIC`**; the observer waits
-  for all of them, in any arrival order.
-- **Stored preconditions must keep covering the entry states**: a state may only be replaced by a
-  stronger one from the same sender (`storePrecondition`). Weakening this rule makes SAFE unsound
-  (`dss/DSS.md` section 9).
-- **Repeated violation conditions** are detected by structural equality, which relies on
-  `DssAuxVars.canonicalize` in `xcfa-dss-analysis`.
-- Legacy Z3 is not thread-safe; the concurrent executor needs a thread-safe solver (`Z3:new`). The
-  process executor (`runDssActorsInProcesses`) runs any solver in parallel.
-- **Message expressions must survive `DssExprCodec`** (process executor): only program variables
-  and `DssAuxVars`, no quantifiers if equality matters. A new message field needs a matching
-  change in `DssProcessExecutor.kt`'s `writeMessage`/`readMessage`, a new witness field in
-  `writeWitness`/`readWitness`. Locations travel by their index in the program, never by name:
-  `__loc_N` names come from a JVM-wide counter and differ between processes.
-- **Witness records must stay exact** (`DssWitness.kt`, `dss/DSS.md` 8.5): invariants only from
-  safe analyses of start states that cover the block's entries, and every violation condition
-  with the targets or saved path it was computed from; stitching relies on both.
-
-## Trace (`--dss-trace`, `--dss-trace-expressions`)
-- `DssTrace` is process-wide and off by default; emit through `DssTrace` only, never through
-  `println`, as the CLI routes it to the logger.
-- Line format: `DSS-TRACE <ms> <event> key=value...`. Values must not contain spaces; the only
-  exception is `expr=`, which must stay the last field (`traceContent` guarantees it).
-- New events or fields belong in the `--dss-trace` row of the option table in `dss/DSS.md`.
-
-## Integration points
-- Entry points `runDssActors` / `runDssActorsSequentially` / `runDssActorsInProcesses`, called by
-  `xcfa-cli` (`ConfigToDssChecker.kt`, `--dss-executor`); xcfa-cli also starts the worker
-  processes and runs `serveDssBlocks` in them (hidden `--dss-worker-*` options).
-- Consumes `xcfa-dss-analysis` (block-analysis primitives) and `xcfa-dss-decomposition` (block
-  graph).
+- No dependency on `xcfa-cli` in production code; checkers are injected factories.
+- Routing belongs to `DssBlockActor`, analysis to `DssBlockBehavior`; behaviors return messages,
+  they never send them.
+- SAFE is quiescence: every message must be processed inside `DssWorker`'s `active` marker.
+- Every block answers `RESULT`/`EXCEPTION` with exactly one `STATISTIC`.
+- A stored precondition may only be replaced by a stronger one from the same sender, or SAFE
+  becomes unsound.
+- Message and witness contents must survive `DssExprCodec` (`PROCESS` executor): only program
+  variables and `DssAuxVars`; locations travel by index. New fields need matching changes in
+  `DssProcessExecutor.kt`.

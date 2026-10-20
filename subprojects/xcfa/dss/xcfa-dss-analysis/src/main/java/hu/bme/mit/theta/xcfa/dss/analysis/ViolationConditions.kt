@@ -20,13 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.NonDetStmt
-import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.stmt.SkipStmt
-import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.AndExpr
@@ -55,8 +48,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Existentially quantified auxiliary variables encoding havocs in violation conditions (CPAchecker
- * uses SSA variables), interned by `(index, type)` and renumbered by [canonicalize] for equality.
+ * Existential variables for havocs in violation conditions, interned by `(index, type)` and
+ * renumbered by [canonicalize] so that equal conditions are structurally equal.
  */
 object DssAuxVars {
 
@@ -75,26 +68,13 @@ object DssAuxVars {
 
   fun isAux(decl: VarDecl<*>): Boolean = keyOf.containsKey(decl)
 
-  /**
-   * The interning index of an auxiliary variable, or null for any other variable. Together with the
-   * type it identifies the variable across processes, where the names differ.
-   */
   fun indexOf(decl: VarDecl<*>): Int? = keyOf[decl]?.index
 
-  /** The auxiliary variable of [index] and [type] in this process. */
   fun of(index: Int, type: Type): VarDecl<*> = get(index, type)
 
-  /** The auxiliary variables of [expr], in order of first occurrence. */
   fun collectVars(expr: Expr<*>): List<VarDecl<*>> =
     linkedSetOf<VarDecl<*>>().also { ExprUtils.collectVars(expr, it) }.filter(::isAux)
 
-  /** An auxiliary variable of [type] that does not occur in [expr]. */
-  fun freshFor(expr: Expr<*>, type: Type): VarDecl<*> {
-    val next = collectVars(expr).maxOfOrNull { keyOf.getValue(it).index }?.plus(1) ?: 0
-    return get(next, type)
-  }
-
-  /** Renumbers the auxiliary variables of [expr] by first occurrence. */
   fun <T : Type> canonicalize(expr: Expr<T>): Expr<T> {
     val vars = collectVars(expr)
     if (vars.isEmpty()) return expr
@@ -104,41 +84,36 @@ object DssAuxVars {
   }
 }
 
-/**
- * `packVcond` (CPAchecker's `ViolationConditionOperator`): the weakest existential precondition at
- * the block entry of reaching one of [targets], over all block paths; unsupported labels throw.
- */
+/** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
 fun computeViolationCondition(
   block: Block,
   targets: Map<XcfaLocation, Expr<BoolType>>,
 ): Expr<BoolType> =
   BackwardConditions(block, targets).let { conditions ->
-    val fromEntry = or(conditions.entryEdges.map { wep(it.label, conditions.at(it.target)) })
-    DssAuxVars.canonicalize(ExprUtils.simplify(fromEntry))
+    toViolationCondition(
+      orStates(conditions.entryEdges.map { wep(it.label, conditions.at(it.target)) })
+    )
   }
 
-/** The weakest existential precondition of reaching one of [targets] from each block location. */
 private class BackwardConditions(
   private val block: Block,
   private val targets: Map<XcfaLocation, Expr<BoolType>>,
 ) {
 
-  private val memo = HashMap<XcfaLocation, Expr<BoolType>>()
+  private val memo = HashMap<XcfaLocation, WpState>()
   private val onStack = HashSet<XcfaLocation>()
 
-  /** The block's edges leaving its entry, i.e., before the first edge is processed. */
   val entryEdges: List<XcfaEdge> =
     block.initialLocation.outgoingEdges.filter {
       it in block.edges && it.metadata != GhostEdgeMetadata
     }
 
-  /** The block ends at its final location; only the ghost edge may be followed from there. */
   fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
     location.outgoingEdges.filter {
       it in block.edges && (location != block.finalLocation || it.metadata == GhostEdgeMetadata)
     }
 
-  fun at(location: XcfaLocation): Expr<BoolType> {
+  fun at(location: XcfaLocation): WpState {
     memo[location]?.let {
       return it
     }
@@ -146,23 +121,17 @@ private class BackwardConditions(
       "Block ${block.id} contains a cycle through ${location.name}; violation conditions can only " +
         "be computed for acyclic blocks"
     }
-    val disjuncts = mutableListOf<Expr<BoolType>>()
-    targets[location]?.let(disjuncts::add)
+    val disjuncts = mutableListOf<WpState>()
+    targets[location]?.let { disjuncts += WpState.of(it) }
     for (edge in edgesFrom(location)) disjuncts += wep(edge.label, at(edge.target))
     onStack.remove(location)
-    return or(disjuncts).also { memo[location] = it }
+    return orStates(disjuncts).also { memo[location] = it }
   }
 }
 
-/**
- * A concrete run of a block: its [edges] from the entry to the target [end], and the [state] there.
- */
 class BlockRun(val edges: List<XcfaEdge>, val end: XcfaLocation, val state: Valuation)
 
-/**
- * A run of acyclic [block] from the concrete [entry] state to one of [targets]: at every location
- * it takes an edge from which a target stays reachable ([computeViolationCondition]'s conditions).
- */
+/** A concrete run of acyclic [block] from [entry] to one of [targets], for violation witnesses. */
 fun findBlockRun(
   block: Block,
   targets: Map<XcfaLocation, Expr<BoolType>>,
@@ -183,7 +152,7 @@ fun findBlockRun(
     }
     val (edge, next) =
       candidates.firstNotNullOfOrNull { edge ->
-        followPath(solver, state, listOf(edge), conditions.at(edge.target))?.let { edge to it }
+        followPath(solver, state, listOf(edge), conditions.at(edge.target).expr)?.let { edge to it }
       } ?: return null
     edges += edge
     state = next
@@ -192,10 +161,6 @@ fun findBlockRun(
   }
 }
 
-/**
- * The state reached from the concrete [state] along [edges] in a run that ends in [target], or null
- * if there is none. Auxiliary variables ([DssAuxVars]) are existential, so they are left out.
- */
 fun followPath(
   solver: Solver,
   state: Valuation,
@@ -217,10 +182,7 @@ fun followPath(
   }
 }
 
-/**
- * Whether [block] has a cycle other than a loop body from and to the loop head, which
- * [computeViolationCondition] can't handle (only `SelfLoopAbsorbingDecomposition` makes these).
- */
+/** A cycle other than a split loop head; [computeViolationCondition] can't handle these. */
 fun hasInternalCycle(block: Block): Boolean {
   val done = HashSet<XcfaLocation>()
   val onStack = HashSet<XcfaLocation>()
@@ -245,57 +207,50 @@ fun hasInternalCycle(block: Block): Boolean {
   }
 }
 
-/**
- * The violation condition of a single path [labels] to a target, for blocks with an internal cycle
- * ([hasInternalCycle]): each refuted counterexample pushes the next one onto another path.
- */
+/** The violation condition of a single path, for blocks with an internal cycle. */
 fun computePathViolationCondition(labels: List<XcfaLabel>): Expr<BoolType> =
-  DssAuxVars.canonicalize(
-    ExprUtils.simplify(
-      labels.foldRight<XcfaLabel, Expr<BoolType>>(True()) { label, post -> wep(label, post) }
-    )
-  )
+  toViolationCondition(labels.foldRight(WpState.of(True())) { label, post -> wep(label, post) })
 
-private fun wep(label: XcfaLabel, post: Expr<BoolType>): Expr<BoolType> =
-  if (post == False()) False()
-  else
-    when (label) {
-      is NopLabel -> post
-      is StmtLabel -> wep(label.stmt, post)
-      is SequenceLabel -> label.labels.foldRight(post) { l, acc -> wep(l, acc) }
-      is NondetLabel -> or(label.labels.map { wep(it, post) })
-      else ->
-        throw UnsupportedOperationException(
-          "DSS cannot compute violation conditions over $label (${label.javaClass.simpleName})"
-        )
-    }
-
-private fun wep(stmt: Stmt, post: Expr<BoolType>): Expr<BoolType> =
-  if (post == False()) False()
-  else
-    when (stmt) {
-      is SkipStmt,
-      is AssumeStmt,
-      is AssignStmt<*> -> WpState.of(post).wep(stmt).expr
-      // WpState havocs to a fresh constant; DSS needs an auxiliary variable instead, which the
-      // predecessor block can havoc and other processes can intern (see DssAuxVars).
-      is HavocStmt<*> ->
-        BasicSubstitution.builder()
-          .put(stmt.varDecl, DssAuxVars.freshFor(post, stmt.varDecl.type).ref)
-          .build()
-          .apply(post)
-      is SequenceStmt -> stmt.stmts.foldRight(post) { s, acc -> wep(s, acc) }
-      is NonDetStmt -> or(stmt.stmts.map { wep(it, post) })
-      else ->
-        throw UnsupportedOperationException(
-          "DSS cannot compute violation conditions over $stmt (${stmt.javaClass.simpleName})"
-        )
-    }
+private fun wep(label: XcfaLabel, post: WpState): WpState {
+  checkSupported(label)
+  return if (post.expr == False()) post else post.wep(label.toStmt())
+}
 
 /**
- * [Or] that factors `(c1 && φ) || (c2 && φ)` into `(c1 || c2) && φ`, so conditions don't double at
- * every branch point.
+ * `toStmt` turns labels it cannot express (calls, fences, ...) into skips, which is unsound here.
  */
+private fun checkSupported(label: XcfaLabel) {
+  when (label) {
+    is NopLabel,
+    is StmtLabel -> {}
+    is SequenceLabel -> label.labels.forEach(::checkSupported)
+    is NondetLabel -> label.labels.forEach(::checkSupported)
+    else ->
+      throw UnsupportedOperationException(
+        "DSS cannot compute violation conditions over $label (${label.javaClass.simpleName})"
+      )
+  }
+}
+
+/** Havocs become [DssAuxVars]: unlike [WpState]'s constants, predecessors can havoc them. */
+private fun toViolationCondition(state: WpState): Expr<BoolType> {
+  val expr = ExprUtils.simplify(state.expr)
+  val havocs = ExprUtils.getConstants(expr).filter { it.name.startsWith(WP_CONST_PREFIX) }
+  if (havocs.isEmpty()) return DssAuxVars.canonicalize(expr)
+  val next = DssAuxVars.collectVars(expr).mapNotNull(DssAuxVars::indexOf).maxOrNull()?.plus(1) ?: 0
+  val substitution = BasicSubstitution.builder()
+  havocs.forEachIndexed { i, const ->
+    substitution.put(const, DssAuxVars.of(next + i, const.type).ref)
+  }
+  return DssAuxVars.canonicalize(substitution.build().apply(expr))
+}
+
+private const val WP_CONST_PREFIX = "_wp_"
+
+private fun orStates(disjuncts: List<WpState>): WpState =
+  WpState.of(or(disjuncts.map { it.expr }), disjuncts.maxOfOrNull { it.constCount } ?: 0)
+
+/** Factors `(c1 && φ) || (c2 && φ)` into `(c1 || c2) && φ`, or conditions double per branch. */
 private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
   val relevant = disjuncts.filter { it != False() }.distinct()
   if (relevant.size <= 1 || True() in relevant) return Or(relevant)

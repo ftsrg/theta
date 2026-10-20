@@ -17,18 +17,26 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -81,6 +89,25 @@ public final class WpStateTest {
 
         // Assert
         assertEquals(expectedWp, actualWp);
+    }
+
+    @Test
+    public void testSequenceAndNonDet() {
+        final Stmt seq = SequenceStmt.of(List.of(ASSIGN_Y_X, ASSIGN_X_1));
+        assertEquals(GEQ_1_X, ExprUtils.simplify(WpState.of(GEQ_X_Y).wp(seq).getExpr()));
+
+        final Stmt nonDet = NonDetStmt.of(List.of(Assume(GEQ_X_1), Assume(GEQ_1_X)));
+        assertEquals(
+                Or(And(GEQ_X_1, GEQ_1_Y), And(GEQ_1_X, GEQ_1_Y)),
+                WpState.of(GEQ_1_Y).wep(nonDet).getExpr());
+    }
+
+    @Test
+    public void testHavocsInBranchesGetDistinctConstants() {
+        final Stmt nonDet = NonDetStmt.of(List.of(Havoc(VX), Havoc(VY)));
+        final WpState result = WpState.of(GEQ_X_Y).wep(nonDet);
+        assertEquals(2, result.getConstCount());
+        assertEquals(2, ExprUtils.getConstants(result.getExpr()).size());
     }
 
     public void initWpStateTest(Expr<BoolType> expr, Stmt stmt, Expr<BoolType> expectedWp) {

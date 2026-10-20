@@ -42,10 +42,6 @@ private fun DssLogEntry.render(startMillis: Long): String {
   return if (summary != null) "$head: $summary" else head
 }
 
-/**
- * Renders [DssVisualizationActor.log] as text, one `[+123ms] senderId -> TYPE: payload` line per
- * message, oldest first; see [renderAnsiColoredLog] for the colored variant.
- */
 fun DssVisualizationActor.renderTextLog(): String {
   val entries = log
   if (entries.isEmpty()) return ""
@@ -53,10 +49,6 @@ fun DssVisualizationActor.renderTextLog(): String {
   return entries.joinToString("\n") { it.render(startMillis) }
 }
 
-/**
- * [renderTextLog] with each line ANSI-colored by [DssMessageType], like CPAchecker's
- * `DssVisualizationWorker`. For terminals; use [renderTextLog] for files.
- */
 fun DssVisualizationActor.renderAnsiColoredLog(): String {
   val entries = log
   if (entries.isEmpty()) return ""

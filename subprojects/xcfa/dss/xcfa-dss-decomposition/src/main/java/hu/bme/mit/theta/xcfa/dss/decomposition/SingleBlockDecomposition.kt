@@ -19,10 +19,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * `NO_DECOMPOSITION` (CPAchecker's `SingleBlockDecomposition`): the whole procedure as root block
- * `SB1`, exiting at the last dead end a BFS from the entry finds (CPAchecker's choice).
- */
+/** CPAchecker's `NO_DECOMPOSITION`: exits at the last dead end a BFS from the entry finds. */
 object SingleBlockDecomposition : DssBlockDecomposition {
 
   override fun decompose(procedure: XcfaProcedure): BlockGraph {

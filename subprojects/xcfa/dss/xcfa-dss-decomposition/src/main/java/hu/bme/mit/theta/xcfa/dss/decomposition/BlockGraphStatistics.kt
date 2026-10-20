@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
-/**
- * Shape of a [BlockGraph]'s block connections (`--dss-block-graph-stats-only`). [edges] counts
- * block pairs incl. self loops; [cyclicSccs] counts SCCs with a cycle; [largestScc] is in blocks.
- */
+/** Shape of a [BlockGraph], logged by `--backend DSS`. */
 data class BlockGraphStatistics(
   val blocks: Int,
   val edges: Int,
@@ -54,7 +51,7 @@ fun BlockGraph.getStatistics(): BlockGraphStatistics {
   )
 }
 
-/** Tarjan's algorithm, iterative so that long block chains cannot overflow the stack. */
+/** Iterative, so that long block chains cannot overflow the stack. */
 internal fun getSCCs(successors: Map<String, Set<String>>): List<Set<String>> {
   val index = mutableMapOf<String, Int>()
   val lowLink = mutableMapOf<String, Int>()

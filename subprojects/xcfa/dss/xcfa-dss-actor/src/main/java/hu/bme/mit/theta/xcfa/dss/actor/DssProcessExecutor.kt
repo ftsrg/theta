@@ -44,28 +44,20 @@ private const val WORKER_EXIT_WAIT_SECONDS = 5L
 private const val PARENT_POLL_MILLIS = 500L
 private const val WORKER_ORPHANED_EXIT_CODE = 3
 
-/**
- * Starts the worker process [index] serving [blockIds], which connects back to `localhost:[port]`
- * and calls [serveDssBlocks] there.
- */
+/** Starts worker [index] for [blockIds]; it connects back to [port] and runs [serveDssBlocks]. */
 fun interface DssWorkerLauncher {
   fun launch(index: Int, blockIds: List<String>, port: Int): Process
 }
 
-/** A block analysis that failed in a worker process. */
 class DssWorkerException(message: String, remoteStackTrace: String? = null) :
   RuntimeException(if (remoteStackTrace == null) message else "$message\n$remoteStackTrace")
 
-/** Identifies the block graph, so that a worker can check that it decomposed the same way. */
 fun BlockGraph.fingerprint(): String =
   blocks.joinToString(";") { b ->
     "${b.id}>${b.successorIds.sorted().joinToString(",")}<${b.predecessorIds.sorted().joinToString(",")}"
   }
 
-/**
- * [runDssActors], but each block analysis runs in a worker process (at most [maxProcesses], 0: one
- * per block), so thread-unsafe native solvers never share one; a dead worker fails only its blocks.
- */
+/** [runDssActors] with every block analysis in a worker process, so any solver runs in parallel. */
 fun runDssActorsInProcesses(
   blockGraph: BlockGraph,
   launcher: DssWorkerLauncher,
@@ -134,7 +126,6 @@ fun runDssActorsInProcesses(
   }
 }
 
-/** This process's end of the connection to one worker process. */
 private class DssWorkerConnection(
   private val blockIds: List<String>,
   private val process: Process,
@@ -145,7 +136,6 @@ private class DssWorkerConnection(
 
   private val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
 
-  /** Set once a request was abandoned midway: its answer would be read as the next one's. */
   @Volatile private var broken = false
 
   fun behavior(blockId: String): DssBlockBehavior =
@@ -195,10 +185,7 @@ private class DssWorkerConnection(
     }
   }
 
-  /**
-   * Waits for the first byte of the answer. A blocking socket read ignores interrupts, so it polls:
-   * when the run ends, the actor's thread must not wait for a worker still busy with a stale query.
-   */
+  /** Polls, since a blocking socket read ignores interrupts. */
   private fun awaitReply(): Int {
     socket.soTimeout = INTERRUPT_POLL_MILLIS
     try {
@@ -237,10 +224,7 @@ private class DssWorkerConnection(
   }
 }
 
-/**
- * Worker side of [runDssActorsInProcesses]: connects to `localhost:[port]` as worker [index] and
- * answers requests with [behaviors] one at a time; [fingerprint] must match the main process's.
- */
+/** Worker side of [runDssActorsInProcesses]. */
 fun serveDssBlocks(
   port: Int,
   index: Int,
@@ -248,8 +232,7 @@ fun serveDssBlocks(
   behaviors: Map<String, DssBlockBehavior>,
   codec: DssExprCodec,
 ) {
-  // A killed main process cannot stop its workers, and one busy in a solver call would notice the
-  // closed connection only after the call returns
+  // A worker busy in a solver call would notice a killed main process only afterwards
   ProcessHandle.current().parent().ifPresent { parent ->
     thread(isDaemon = true, name = "dss-worker-$index-parent-watch") {
       while (parent.isAlive) Thread.sleep(PARENT_POLL_MILLIS)
@@ -371,7 +354,6 @@ private fun readExprs(input: DataInputStream, codec: DssExprCodec): List<Expr<Bo
 private const val RECORD_ALL_PATHS = 1
 private const val RECORD_PATH = 2
 
-/** [witness] (possibly null), with locations and edges as in [DssExprCodec.writeEdge]. */
 private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: DssBlockWitness?) {
   out.writeBoolean(witness != null)
   if (witness == null) return

@@ -17,49 +17,29 @@ package hu.bme.mit.theta.xcfa.dss.analysis
 
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * Picks which [CheckerFactory] a [DssCheckerRoster] hands out next. One instance is shared across a
- * run, possibly from many threads; key any state by list index (lambdas lack structural equality).
- */
+/** Shared by all blocks of a run, so it must be thread-safe; state is keyed by list index. */
 interface DssCheckerSelectionStrategy {
 
   fun select(checkers: List<CheckerFactory>): CheckerFactory
 
-  /**
-   * Chooses the checker for the [attempt]th try of one analysis (0 = first; later tries only under
-   * `--dss-checker-fallback`). Defaults to plain [select].
-   */
   fun select(checkers: List<CheckerFactory>, attempt: Int): CheckerFactory = select(checkers)
 
-  /**
-   * Whether each block ranks the checkers itself: its first analysis runs every checker, and the
-   * fastest one leads its later analyses (see [FastestCheckerSelectionStrategy]).
-   */
+  /** Whether each block ranks the checkers itself (see [FastestCheckerSelectionStrategy]). */
   val ranksPerBlock: Boolean
     get() = false
 }
 
-/**
- * Default strategy: cycles through [checkers] so each is used equally often (within one). A class,
- * not an object, so its cursor doesn't leak across runs; thread-safe via [AtomicInteger].
- */
 class RoundRobinCheckerSelectionStrategy : DssCheckerSelectionStrategy {
 
   private val cursor = AtomicInteger(0)
 
   override fun select(checkers: List<CheckerFactory>): CheckerFactory {
-    // .mod(), not %/.rem(): always non-negative for a positive divisor, so this stays correct even
-    // after getAndIncrement() wraps Int around at ~2^31 calls (.rem() would go negative there and
-    // throw on the list index below instead of just resuming the cycle).
+    // mod, not rem: stays non-negative after the counter overflows
     val index = cursor.getAndIncrement().mod(checkers.size)
     return checkers[index]
   }
 }
 
-/**
- * Fixed priority: every analysis runs `checkers[0]` first, and the [attempt]th try takes
- * `checkers[attempt]` (only under `--dss-checker-fallback`). Stateless, so it can be shared.
- */
 class PriorityCheckerSelectionStrategy : DssCheckerSelectionStrategy {
 
   override fun select(checkers: List<CheckerFactory>): CheckerFactory = checkers.first()
@@ -68,10 +48,7 @@ class PriorityCheckerSelectionStrategy : DssCheckerSelectionStrategy {
     checkers[attempt.coerceIn(0, checkers.size - 1)]
 }
 
-/**
- * Per-block fastest: a block's first analysis runs every checker, and the fastest leads its later
- * analyses, the rest as fallbacks ([ranksPerBlock]); else like [PriorityCheckerSelectionStrategy].
- */
+/** A block's first analysis runs every checker; the fastest leads its later analyses. */
 class FastestCheckerSelectionStrategy :
   DssCheckerSelectionStrategy by PriorityCheckerSelectionStrategy() {
 
@@ -79,10 +56,7 @@ class FastestCheckerSelectionStrategy :
     get() = true
 }
 
-/**
- * Equivalent [CheckerFactory]s, one handed out by [strategy] per [next] call (mixing different
- * analyses may never quiesce). Build once per run and share across blocks, or balancing breaks.
- */
+/** The block checkers of a run, handed out by [strategy]; one instance shared by all blocks. */
 class DssCheckerRoster(
   private val checkers: List<CheckerFactory>,
   private val strategy: DssCheckerSelectionStrategy = RoundRobinCheckerSelectionStrategy(),
@@ -92,18 +66,14 @@ class DssCheckerRoster(
     require(checkers.isNotEmpty()) { "DSS needs at least one checker to run blocks with" }
   }
 
-  /** The number of checkers in the roster (repeated entries counted separately). */
   val size: Int
     get() = checkers.size
 
-  /** See [DssCheckerSelectionStrategy.ranksPerBlock]. */
   val ranksPerBlock: Boolean
     get() = strategy.ranksPerBlock
 
-  /** The [index]th checker of the roster, for strategies that rank per block. */
   operator fun get(index: Int): CheckerFactory = checkers[index]
 
-  /** The checker for the [attempt]th try of one analysis (see [DssCheckerSelectionStrategy]). */
   fun next(attempt: Int = 0): CheckerFactory {
     val selected = strategy.select(checkers, attempt)
     require(selected in checkers) {

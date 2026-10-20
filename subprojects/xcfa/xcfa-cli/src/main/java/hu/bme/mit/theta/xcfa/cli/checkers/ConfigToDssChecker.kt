@@ -38,7 +38,6 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
-import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions
 import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend
@@ -53,11 +52,12 @@ import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.params.toJson
+import hu.bme.mit.theta.xcfa.dss.actor.CONCURRENT_DSS_SOLVER
+import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
 import hu.bme.mit.theta.xcfa.dss.actor.DssResult
-import hu.bme.mit.theta.xcfa.dss.actor.DssTrace
 import hu.bme.mit.theta.xcfa.dss.actor.DssWorkerLauncher
 import hu.bme.mit.theta.xcfa.dss.actor.PredicateBlockBehavior
 import hu.bme.mit.theta.xcfa.dss.actor.combineInvariants
@@ -71,13 +71,11 @@ import hu.bme.mit.theta.xcfa.dss.actor.violationTrace
 import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.dss.analysis.DssSolverStatistics
 import hu.bme.mit.theta.xcfa.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
-import hu.bme.mit.theta.xcfa.dss.analysis.withCheckerSolverFallback
 import hu.bme.mit.theta.xcfa.dss.analysis.withSolverConstructionLock
 import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
@@ -96,12 +94,8 @@ import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.thread
 
-/**
- * `--backend DSS`: Distributed Summary Synthesis (`dss/DSS.md`) as a [SafetyChecker], with block
- * checkers from [DssConfig.checkerBackends]. Single-procedure only; yields no cex or proof.
- */
+/** `--backend DSS`: distributed summary synthesis (`dss/DSS.md`). */
 fun getDssChecker(
   xcfa: XCFA,
   mcm: MCM,
@@ -123,65 +117,35 @@ fun getDssChecker(
           "procedures) - see dss/DSS.md's Known Limitations."
       )
 
-  // No BlockGraphInstrumentation (CPAchecker's instrumentCFA): every block is extracted into an
-  // XCFA with a private exit already, and instrumenting would mutate the input XCFA in place.
+  // No BlockGraphInstrumentation (CPAchecker's instrumentCFA): blocks are extracted with a private
+  // exit already, and instrumenting would mutate the input XCFA in place.
   val decomposition: DssBlockDecomposition =
     when (dssConfig.decomposition) {
       DssDecomposition.LINEAR -> LinearBlockDecomposition()
-      DssDecomposition.MERGE ->
-        MergeBlockDecomposition(
-          targetBlockCount = dssConfig.targetBlockCount,
-          largestHorizontalMerge = dssConfig.largestHorizontalMerge,
-          allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
-        )
-      DssDecomposition.MERGE_ABSORB_SELF_LOOPS ->
-        SelfLoopAbsorbingDecomposition(
-          targetBlockCount = dssConfig.targetBlockCount,
-          largestHorizontalMerge = dssConfig.largestHorizontalMerge,
-          allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
-        )
-      DssDecomposition.MERGE_ACYCLIC ->
-        AcyclicMergeDecomposition(
-          targetBlockCount = dssConfig.targetBlockCount,
-          largestHorizontalMerge = dssConfig.largestHorizontalMerge,
-          allowSingleBlockDecomposition = dssConfig.allowSingleBlockDecomposition,
-        )
-      DssDecomposition.MIN_CUT ->
-        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.ALLOW)
+      DssDecomposition.MERGE -> MergeBlockDecomposition()
+      DssDecomposition.MERGE_ABSORB_SELF_LOOPS -> SelfLoopAbsorbingDecomposition()
+      DssDecomposition.MERGE_ACYCLIC -> AcyclicMergeDecomposition()
+      DssDecomposition.MIN_CUT -> MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW)
       DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS ->
-        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.ABSORB_SELF_LOOPS)
-      DssDecomposition.MIN_CUT_ACYCLIC ->
-        MinCutDecomposition(dssConfig.cutBlockCount, CutLoopHandling.FORBID)
+        MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
+      DssDecomposition.MIN_CUT_ACYCLIC -> MinCutDecomposition(loopHandling = CutLoopHandling.FORBID)
       DssDecomposition.NONE -> SingleBlockDecomposition
     }
-  val statsLevel = if (dssConfig.blockGraphStatsOnly) Logger.Level.RESULT else Logger.Level.INFO
-  val blockGraph: BlockGraph =
-    if (decomposition is MinCutDecomposition) {
-      val cut = decomposition.cut(procedure)
-      cut.describe().forEach { logger.write(statsLevel, "%s\n", it) }
-      cut.blockGraph
-    } else decomposition.decompose(procedure)
+  val blockGraph: BlockGraph = decomposition.decompose(procedure)
   blockGraph.checkConsistency()
-  logger.write(statsLevel, "DSS block graph statistics: %s\n", blockGraph.getStatistics())
-  if (dssConfig.blockGraphStatsOnly) return@SafetyChecker SafetyResult.unknown()
-  if (dssConfig.trace || dssConfig.traceExpressions) {
-    DssTrace.enable(dssConfig.traceExpressions, dssConfig.workerTraceOrigin) {
-      logger.write(Logger.Level.RESULT, "%s\n", it)
-    }
-  }
+  logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", blockGraph.getStatistics())
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
   }
-  // One independent factory per dssConfig.checkerBackends entry (distinct instances matter for
-  // DssCheckerRoster's index-based bookkeeping); the default list keeps single-checker behavior.
   val blockLogger = BlockAnalysisLogger(logger)
-  // solver == null keeps the backend's own default solvers (Z3 for the bounded family)
+  val solver =
+    if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
   // The counterexample monitor's registry is global: only concurrent block checkers go without it
   val cexMonitor =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE
     else CexMonitorOptions.CHECK
-  fun checkerFor(backend: DssCheckerBackend, solver: String?): CheckerFactory =
+  fun checkerFor(backend: DssCheckerBackend): CheckerFactory =
     when (backend) {
       DssCheckerBackend.CEGAR_PRED_CART,
       DssCheckerBackend.CEGAR_PRED_BOOL,
@@ -190,11 +154,7 @@ fun getDssChecker(
             blockXcfa,
             mcm,
             parseContext,
-            getDefaultPredCegarConfig(
-              backend.toCegarDomain(),
-              solver ?: dssConfig.solver,
-              cexMonitor,
-            ),
+            getDefaultPredCegarConfig(backend.toCegarDomain(), solver, cexMonitor),
             blockLogger,
           )
         }
@@ -207,40 +167,21 @@ fun getDssChecker(
             getBoundedChecker(
               blockXcfa,
               parseContext,
-              getDefaultBoundedConfig(backend.toBoundedBackend(), solver),
+              getDefaultBoundedConfig(backend.toBoundedBackend()),
               blockLogger,
             )
           )
         }
     }
-  val solverStatistics = DssSolverStatistics { stats ->
-    logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", stats)
-  }
-  // An unknown fallback solver name fails here, at startup, not at the first failed block check
-  if (dssConfig.checkerSolverFallback) SolverManager.resolveSolverFactory(dssConfig.fallbackSolver)
-  val checkers: List<CheckerFactory> =
-    dssConfig.checkerBackends.map { backend ->
-      if (dssConfig.checkerSolverFallback)
-        withCheckerSolverFallback(
-          checkerFor(backend, null),
-          checkerFor(backend, dssConfig.fallbackSolver),
-          solverStatistics,
-        )
-      else checkerFor(backend, null)
-    }
+  val checkers: List<CheckerFactory> = dssConfig.checkerBackends.map(::checkerFor)
   val selectionStrategy: DssCheckerSelectionStrategy =
     when (dssConfig.checkerSelection) {
       DssCheckerSelectionMethod.ROUND_ROBIN -> RoundRobinCheckerSelectionStrategy()
       DssCheckerSelectionMethod.PRIORITY -> PriorityCheckerSelectionStrategy()
       DssCheckerSelectionMethod.FASTEST -> FastestCheckerSelectionStrategy()
     }
-  // Built once, not in behaviorFor: DssCheckerRoster requires one instance shared by all blocks.
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
-  val dssSolverFactory = SolverManager.resolveSolverFactory(dssConfig.solver)
-  val dssFallbackSolverFactory =
-    if (dssConfig.solverFallback) SolverManager.resolveSolverFactory(dssConfig.fallbackSolver)
-    else null
-  // Kept so the in-process executors' blocks can be asked for their witness data afterwards
+  val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val behaviorFor = { block: Block ->
     PredicateBlockBehavior(
@@ -251,16 +192,13 @@ fun getDssChecker(
         useGlobalPredicatePool = dssConfig.globalPredicatePool,
         resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
         reuseBlockPrecision = dssConfig.reuseBlockPrecision,
-        checkerFallback = dssConfig.checkerFallback,
+        checkerFallback = true,
         solverFactory = dssSolverFactory,
-        fallbackSolverFactory = dssFallbackSolverFactory,
-        solverStatistics = solverStatistics,
       )
       .also { behaviors[block.id] = it }
   }
 
   if (dssConfig.workerPort != 0) {
-    // A worker process of --dss-executor PROCESS: answers for its blocks, never reports a verdict
     val blocks = blockGraph.blocks.associateBy { it.id }
     serveDssBlocks(
       dssConfig.workerPort,
@@ -283,23 +221,18 @@ fun getDssChecker(
             blockGraph,
             getDssWorkerLauncher(config, dssConfig),
             DssExprCodec(xcfa),
-            dssConfig.maxProcesses,
             witnesses = processWitnesses,
           )
       }
     } catch (e: RuntimeException) {
-      // Usually wrapped: the observer rethrows a block's failure, see DssObserverActor.verdict
       val undecided =
         generateSequence<Throwable>(e) { it.cause }.firstOrNull { it is DssUndecidedQueryException }
           ?: throw e
       logger.write(Logger.Level.RESULT, "%s\n", undecided.message)
       return@SafetyChecker SafetyResult.unknown()
     } finally {
-      DssTrace.disable()
-      // Block checkers register counterexample monitors in the global registry; without this,
-      // later CEGAR runs in this JVM (e.g. LIVENESS_CEGAR) would run these stale monitors
+      // Block checkers register counterexample monitors globally; later CEGAR runs would see them
       MonitorCheckpoint.reset()
-      logger.write(Logger.Level.RESULT, "DSS solver statistics: %s\n", solverStatistics)
     }
 
   val witnesses =
@@ -319,7 +252,6 @@ fun getDssChecker(
             .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
             .toMap()
         )
-      // Without a stitched path, the trace is empty: UNSAFE, but no steps to show
       val path = stitchViolationPath(blockGraph, witnesses, initial, dssSolverFactory, logger)
       val trace = violationTrace(xcfa, procedure.initLoc, path.orEmpty(), initial)
       SafetyResult.unsafe(trace, EmptyProof.getInstance())
@@ -327,7 +259,6 @@ fun getDssChecker(
   }
 }
 
-/** The error path stitched from the blocks' violation records, starting in [initial]. */
 private fun stitchViolationPath(
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
@@ -348,7 +279,7 @@ private fun stitchViolationPath(
 
 /**
  * Starts DSS worker processes as this JVM with this run's config (`-c`, as `InProcessChecker`), so
- * they decompose the same way; only their trace lines are copied to this process's output.
+ * they decompose the same way.
  */
 private fun getDssWorkerLauncher(
   config: XcfaConfig<*, *>,
@@ -360,12 +291,10 @@ private fun getDssWorkerLauncher(
       .info()
       .command()
       .orElse(Paths.get(System.getProperty("java.home"), "bin", "java").toString())
-  val heap = dssConfig.workerHeap
   val jvmArgs =
     ManagementFactory.getRuntimeMXBean().inputArguments.filterNot {
-      it.startsWith("-agentlib:jdwp") || (heap != null && it.startsWith("-Xmx"))
-    } + listOfNotNull(heap?.let { "-Xmx$it" })
-  val traceOrigin = if (DssTrace.enabled) DssTrace.originEpochMillis() else null
+      it.startsWith("-agentlib:jdwp")
+    }
   return DssWorkerLauncher { index, blockIds, port ->
     val workerConfig =
       dssRun.copy(
@@ -380,12 +309,7 @@ private fun getDssWorkerLauncher(
             inProcess = false,
             timeoutMs = 0,
             specConfig =
-              dssConfig.copy(
-                workerPort = port,
-                workerIndex = index,
-                workerBlocks = blockIds,
-                workerTraceOrigin = traceOrigin,
-              ),
+              dssConfig.copy(workerPort = port, workerIndex = index, workerBlocks = blockIds),
           ),
       )
     val configFile =
@@ -398,34 +322,21 @@ private fun getDssWorkerLauncher(
         jvmArgs +
         listOf("-cp", System.getProperty("java.class.path"), XcfaCli::class.java.name) +
         listOf("-c", configFile.absolutePath)
-    val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.INHERIT).start()
-    thread(isDaemon = true, name = "dss-worker-$index-output") {
-      process.inputStream.bufferedReader().forEachLine {
-        if (it.startsWith("DSS-TRACE ")) println(it)
-      }
-    }
-    process
+    ProcessBuilder(command)
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.INHERIT)
+      .start()
   }
 }
 
-/**
- * A default [XcfaConfig] for a bounded-model-checking `--backend` preset, via
- * `BackendConfig.createSpecConfig` so it can't drift from the flag. [solver] replaces its solvers.
- */
-private fun getDefaultBoundedConfig(backend: Backend, solver: String? = null): XcfaConfig<*, *> {
+/** A default [XcfaConfig] for a bounded-model-checking `--backend` preset. */
+private fun getDefaultBoundedConfig(backend: Backend): XcfaConfig<*, *> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
   config.backendConfig.backend = backend
   config.backendConfig.createSpecConfig()
-  if (solver != null) {
-    val bounded = config.backendConfig.specConfig as BoundedConfig
-    bounded.bmcConfig.bmcSolver = solver
-    bounded.indConfig.indSolver = solver
-    bounded.itpConfig.itpSolver = solver
-  }
   return config
 }
 
-/** Maps a bounded-family [DssCheckerBackend] to its [Backend]; `CEGAR_*` entries never get here. */
 private fun DssCheckerBackend.toBoundedBackend(): Backend =
   when (this) {
     DssCheckerBackend.BMC -> Backend.BMC
@@ -439,7 +350,6 @@ private fun DssCheckerBackend.toBoundedBackend(): Backend =
       throw IllegalArgumentException("$this has no bounded-family Backend")
   }
 
-/** Maps a `CEGAR_*` [DssCheckerBackend] to its [Domain]; bounded entries never get here. */
 private fun DssCheckerBackend.toCegarDomain(): Domain =
   when (this) {
     DssCheckerBackend.CEGAR_PRED_CART -> Domain.PRED_CART
@@ -453,10 +363,7 @@ private fun DssCheckerBackend.toCegarDomain(): Domain =
       throw IllegalArgumentException("$this is not a CEGAR entry, has no Domain")
   }
 
-/**
- * Adapts a [UnitPrec] bounded checker to the roster's [XcfaChecker] shape, discarding the initial
- * [XcfaPrec] (the global pool seed). The cast is unchecked but safe: the trace is only read.
- */
+/** Discards the initial precision; the unchecked cast is safe, as the trace is only read. */
 @Suppress("UNCHECKED_CAST")
 private fun adaptBoundedChecker(
   inner:
@@ -465,10 +372,7 @@ private fun adaptBoundedChecker(
   inner.check() as SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>>
 }
 
-/**
- * Logger for block analyses: demotes messages to at least [Logger.Level.DETAIL], so per-block
- * `SafetyResult` lines can't be mistaken for DSS's verdict (e.g. by BenchExec's tool-info).
- */
+/** Demotes block analysis output, so their `SafetyResult` lines aren't taken as the verdict. */
 private class BlockAnalysisLogger(private val delegate: Logger) : Logger {
   override fun write(level: Logger.Level, pattern: String, vararg objects: Any?): Logger {
     val demoted =

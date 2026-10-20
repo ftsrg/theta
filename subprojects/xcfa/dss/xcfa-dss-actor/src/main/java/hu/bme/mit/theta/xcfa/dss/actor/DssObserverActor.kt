@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/**
- * Passively collects the verdict (CPAchecker's `DssObserverWorker`); stops once a `RESULT` and all
- * blocks' `STATISTIC`s arrived, in any order, since `broadcastToAll` isn't atomic across queues.
- */
+/** CPAchecker's `DssObserverWorker`: waits for a `RESULT` and every block's `STATISTIC`. */
 class DssObserverActor(
   id: String,
   override val connection: DssConnection,
@@ -53,16 +50,11 @@ class DssObserverActor(
     check(messages.isEmpty()) { "Observer never produces a response, but got: $messages" }
   }
 
-  /** Blocks the calling thread until a final verdict is known. */
   fun observe(): DssResult {
     run()
     return verdict()
   }
 
-  /**
-   * The verdict so far, throwing like [observe] if none is known yet. Separate from [observe] for
-   * executors that drive [processMessage] directly instead of [run].
-   */
   fun verdict(): DssResult {
     failure?.let { throw IllegalStateException(it.message, it) }
     return result ?: error("Analysis finished but no result is present.")

@@ -175,11 +175,7 @@ fun getCegarChecker(
   }
 
   return object :
-    SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>,
-    XcfaLastPrecProvider {
-    override val lastPrec: XcfaPrec<*>?
-      get() = cegarChecker.lastPrec as XcfaPrec<*>?
-
+    SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     override fun check(
       prec: XcfaPrec<*>?
     ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
@@ -236,11 +232,13 @@ fun getCegarChecker(
                 .toList()
             }
 
-        return SafetyResult.safe(LocationInvariants(locmap))
+        return SafetyResult.safe(LocationInvariants(locmap), null, ret.prec.orElse(null))
       } else {
         return SafetyResult.unsafe(
           ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
           LocationInvariants(),
+          null,
+          ret.prec.orElse(null),
         )
       }
     }

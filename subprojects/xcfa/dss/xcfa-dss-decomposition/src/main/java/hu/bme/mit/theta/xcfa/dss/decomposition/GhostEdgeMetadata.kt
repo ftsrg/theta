@@ -17,10 +17,7 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-/**
- * Marks a synthetic no-op edge/location inserted by [BlockGraphInstrumentation]. `XcfaLabel` is
- * sealed, so `NopLabel` is reused as the label (cf. CPAchecker's `GHOST_EDGE_DESCRIPTION`).
- */
+/** Marks an edge of [BlockGraphInstrumentation]; `XcfaLabel` is sealed, so it is a `NopLabel`. */
 object GhostEdgeMetadata : MetaData() {
 
   override fun combine(other: MetaData): MetaData = other

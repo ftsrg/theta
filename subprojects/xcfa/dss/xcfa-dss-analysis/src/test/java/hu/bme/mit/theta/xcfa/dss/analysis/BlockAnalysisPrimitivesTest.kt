@@ -43,10 +43,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * The building blocks of the block analysis: the extracted block programs, weakest preconditions
- * over every supported label kind, the predicate operators, and solver scopes.
- */
 class BlockAnalysisPrimitivesTest {
 
   companion object {
@@ -127,7 +123,6 @@ class BlockAnalysisPrimitivesTest {
 
     val vc = computeViolationCondition(block, mapOf(block.finalLocation to Gt(x.ref, y.ref)))
 
-    // exists a. a > y - satisfiable for every y, and x no longer occurs
     assertEquals(1, DssAuxVars.collectVars(vc).size)
     assertFalse(x in ExprUtils.getVars(vc))
     assertFalse(operators.isUnsat(And(Eq(y.ref, Int(100)), vc)))
@@ -242,7 +237,6 @@ class BlockAnalysisPrimitivesTest {
     val procedure = branching()
     val root = LinearBlockDecomposition().decompose(procedure).root
     val px = procedure.intVar("x").ref
-    // exists a. x == a + 3 - a violation condition with one auxiliary variable
     val havocY = chain(StmtLabel(Havoc(y)))
     val vc =
       computeViolationCondition(havocY, mapOf(havocY.finalLocation to Eq(px, Add(y.ref, Int(3)))))
@@ -255,7 +249,6 @@ class BlockAnalysisPrimitivesTest {
     val labels = (vcEdge.label as SequenceLabel).labels
     assertEquals(listOf(StmtLabel(Havoc(auxVar)), StmtLabel(Assume(vc))), labels)
     assertTrue(vcEdge.target.error)
-    // x == 0 at the root's exit, and "exists a. 0 == a + 3" holds
     assertTrue(check(extraction.xcfa).isUnsafe)
   }
 

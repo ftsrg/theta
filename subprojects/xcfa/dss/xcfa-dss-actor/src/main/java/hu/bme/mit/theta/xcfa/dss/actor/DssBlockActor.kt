@@ -17,10 +17,7 @@ package hu.bme.mit.theta.xcfa.dss.actor
 
 import hu.bme.mit.theta.xcfa.dss.decomposition.Block
 
-/**
- * A worker for one [Block], routing as CPAchecker's `DssAnalysisWorker`: postconditions forward,
- * violation conditions backward (UNSAFE at the root); results, exceptions and statistics to all.
- */
+/** CPAchecker's `DssAnalysisWorker`: routes the messages of one block's [behavior]. */
 class DssBlockActor(
   private val block: Block,
   override val connection: DssConnection,
@@ -47,7 +44,6 @@ class DssBlockActor(
   override fun broadcast(messages: Collection<DssMessage>) {
     val broadcaster = connection.broadcaster
     for (message in messages) {
-      traceOutgoing(message)
       when (message.type) {
         DssMessageType.POST_CONDITION -> {
           broadcaster.broadcastToObserver(message)
@@ -55,10 +51,8 @@ class DssBlockActor(
         }
         DssMessageType.VIOLATION_CONDITION -> {
           if (block.isRoot) {
-            // Not `shutdown = true` here: this worker still needs to receive its own broadcast
-            // RESULT message back through the normal loop (see processMessage) to emit the
-            // STATISTIC message the observer waits on. Shutting down early would leave that
-            // message permanently unconsumed and hang the whole run.
+            // No shutdown yet: the RESULT must come back through processMessage to emit the
+            // STATISTIC the observer waits on.
             broadcaster.broadcastToAll(DssResultMessage(id, DssResult.UNSAFE))
           } else {
             broadcaster.broadcastToObserver(message)
@@ -75,40 +69,9 @@ class DssBlockActor(
     }
   }
 
-  private fun traceOutgoing(message: DssMessage) {
-    if (!DssTrace.enabled) return
-    when (message) {
-      is DssPostConditionMessage ->
-        DssTrace.event(
-          "pc-out",
-          "actor" to id,
-          "to" to block.successorIds.size,
-          "states" to message.postconditions.size,
-          "prec" to message.precision.size,
-          *traceContent(message.postcondition),
-        )
-      is DssViolationConditionMessage ->
-        DssTrace.event(
-          "vc-out",
-          "actor" to id,
-          "root" to block.isRoot,
-          *traceContent(message.violationCondition),
-        )
-      else -> {}
-    }
-  }
-
-  /**
-   * Broadcasts [DssBlockBehavior.initialMessages]; returns `false` if that failed (a
-   * [DssExceptionMessage] was broadcast). Separate from [run] for the sequential executor.
-   */
   fun start(): Boolean =
     try {
-      broadcast(
-        DssTrace.span("init", "actor" to id, outcome = { "out${it.size}" }) {
-          behavior.initialMessages()
-        }
-      )
+      broadcast(behavior.initialMessages())
       true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
       connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))

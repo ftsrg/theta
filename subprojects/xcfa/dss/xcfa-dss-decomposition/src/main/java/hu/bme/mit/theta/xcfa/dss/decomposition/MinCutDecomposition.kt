@@ -21,23 +21,16 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 const val DEFAULT_CUT_BLOCK_COUNT = 2
 
-/** Upper bound on the edge visits of [MinCutDecomposition]'s search, about a few seconds. */
+/** Edge visits of the search, about a few seconds. */
 const val DEFAULT_CUT_SEARCH_BUDGET = 200_000_000L
 
-/** How [MinCutDecomposition] treats cycles of the block graph its cut produces. */
 enum class CutLoopHandling(val decompositionName: String) {
-  /** Any cut, cycles between blocks and self loops included. */
   ALLOW("MIN_CUT"),
-  /** The best cut, then every self-loop block is collapsed as in [collapseCycles]. */
   ABSORB_SELF_LOOPS("MIN_CUT_ABSORB_SELF_LOOPS"),
-  /** Only cuts with an acyclic block graph of at least two blocks. */
   FORBID("MIN_CUT_ACYCLIC"),
 }
 
-/**
- * Theta-only: cuts the procedure at cut locations (each starts a block) minimizing crossing edges,
- * then balancing block sizes, by budgeted branch and bound ([cut]), falling back to fewer blocks.
- */
+/** A cut with the fewest edges between blocks, then the most equal block sizes. */
 class MinCutDecomposition(
   private val blockCount: Int = DEFAULT_CUT_BLOCK_COUNT,
   private val loopHandling: CutLoopHandling = CutLoopHandling.ALLOW,
@@ -50,7 +43,6 @@ class MinCutDecomposition(
 
   override fun decompose(procedure: XcfaProcedure): BlockGraph = cut(procedure).blockGraph
 
-  /** The chosen cut and the resulting block graph. */
   fun cut(procedure: XcfaProcedure): MinCut {
     if (loopHandling == CutLoopHandling.ALLOW) return plainCut(procedure)
     val reason =
@@ -81,7 +73,6 @@ class MinCutDecomposition(
     )
   }
 
-  /** The cut of [loopHandling] `ABSORB_SELF_LOOPS`/`FORBID`, or `null` if it is not possible. */
   private fun loopHandledCut(procedure: XcfaProcedure): MinCut? {
     val acyclicOnly = loopHandling == CutLoopHandling.FORBID
     val search = CutSearch(procedure, acyclicOnly, searchBudget)
@@ -103,17 +94,12 @@ class MinCutDecomposition(
     }
 }
 
-/**
- * Result of [MinCutDecomposition.cut]: the cut [candidate] (`null` for a single block) and the
- * final [blockGraph], which differs from the cut's blocks if self loops were collapsed afterwards.
- */
 class MinCut
 internal constructor(
   private val candidate: CutCandidate?,
   val requestedBlockCount: Int,
   val blockGraph: BlockGraph,
   val exhaustive: Boolean,
-  /** Why `ABSORB_SELF_LOOPS`/`FORBID` fell back to the `ALLOW` cut, or `null`. */
   val fallbackReason: String? = null,
 ) {
 
@@ -122,10 +108,8 @@ internal constructor(
 
   val cutLocations: List<XcfaLocation> = candidate?.cutLocations.orEmpty()
   val cutEdges: List<XcfaEdge> = candidate?.cutEdges.orEmpty()
-  /** The blocks of the cut, in order: the entry block first, then one per cut location. */
   val cutBlocks: List<Block> = candidate?.blocks.orEmpty()
 
-  /** Human-readable report, one line each: summary, cut edges, blocks. */
   fun describe(): List<String> = buildList {
     val collapsed =
       if (blockGraph.blocks.size != cutBlocks.size.coerceAtLeast(1))
@@ -165,7 +149,6 @@ internal constructor(
   }
 }
 
-/** A valid cut: [graph] is wired from [blocks]. */
 internal class CutCandidate(
   val cutLocations: List<XcfaLocation>,
   val cutEdges: List<XcfaEdge>,
@@ -195,7 +178,6 @@ private class CutSearch(
   private fun inDegree(location: XcfaLocation) =
     location.incomingEdges.count { it in reachableEdges }
 
-  /** Cut locations must start a non-empty block, cheapest first. */
   private val candidates: List<XcfaLocation> =
     reachableEdges
       .map { it.target }
@@ -208,7 +190,6 @@ private class CutSearch(
   var exhaustive = true
     private set
 
-  /** The best valid cut with [cuts] cut locations, or `null` if none was found. */
   fun best(cuts: Int): CutCandidate? {
     if (cuts > candidates.size) return null
     var best: CutCandidate? = null
@@ -246,7 +227,6 @@ private class CutSearch(
   private fun isBetterBalanced(a: CutCandidate, b: CutCandidate): Boolean =
     compareValuesBy(a, b, { it.spread }, { it.deviation }) < 0
 
-  /** The blocks of the cut at [cutLocations], or `null` if the cut is not valid (or cyclic). */
   private fun evaluate(cutLocations: List<XcfaLocation>): CutCandidate? {
     val cutSet = cutLocations.toSet()
     val owner = HashMap<XcfaEdge, Int>()

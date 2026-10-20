@@ -32,10 +32,6 @@ import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Build-order step 5: a multi-block `LINEAR_DECOMPOSITION` program checked through the full actor
- * runtime with [PredicateBlockBehavior] gives the same verdict as the undecomposed program.
- */
 class PredicateBlockBehaviorTest {
 
   companion object {
@@ -65,10 +61,7 @@ class PredicateBlockBehaviorTest {
   ): DssResult {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
-    // One roster shared by all blocks, as DssCheckerRoster requires; with one checker a per-block
-    // roster wouldn't show, but the round-robin distribution test below would catch it.
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
@@ -114,10 +107,6 @@ class PredicateBlockBehaviorTest {
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * Two branches join before the check, so the join block must accumulate both postconditions:
-   * `checkD`/`err` are unreachable from x == 3 alone, but reachable from x == 15.
-   */
   private fun joinXcfa(): XCFA =
     xcfa("predicate-block-behavior-join") {
       val main =
@@ -144,10 +133,6 @@ class PredicateBlockBehaviorTest {
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * The default round-robin roster spreads a real multi-recheck run (the join block) across two
-   * copies of the same config - testing distribution, not convergence of different checkers.
-   */
   @Test
   fun `the default round-robin roster distributes real checks across every checker it's given`() {
     val wholeProgram = joinXcfa()
@@ -185,10 +170,6 @@ class PredicateBlockBehaviorTest {
     }
   }
 
-  /**
-   * Without the global predicate pool (empty precision, like CPAchecker), the spurious `err` only
-   * yields a violation condition the root refutes by refinement - the pool just saves rounds.
-   */
   @Test
   fun `without the global predicate pool, violation conditions still refute the spurious error`() {
     val wholeProgram = branchingXcfa(assignedValue = "5")

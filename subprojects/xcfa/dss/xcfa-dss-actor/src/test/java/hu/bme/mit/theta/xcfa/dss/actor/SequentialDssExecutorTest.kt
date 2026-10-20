@@ -24,10 +24,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Test
 
-/**
- * [DssActorRuntimeTest]'s routing/termination battery, driven through [runDssActorsSequentially]
- * with [EchoBlockAnalysis] stubs; it should agree with the concurrent executor on every case.
- */
 class SequentialDssExecutorTest {
 
   private fun loc(name: String) = XcfaLocation(name, metadata = EmptyMetaData)

@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
-/**
- * A graph of [Block]s covering a procedure's CFG (`B, G_B` in the DSS paper, CPAchecker's
- * `BlockGraph`). Always has exactly one root block, the one with no predecessors.
- */
+/** CPAchecker's `BlockGraph`, with exactly one root. */
 class BlockGraph(val blocks: Set<Block>) {
 
   private val blocksById: Map<String, Block> = blocks.associateBy { it.id }
@@ -37,10 +34,6 @@ class BlockGraph(val blocks: Set<Block>) {
   private fun requireBlock(id: String): Block =
     blocksById[id] ?: error("BlockGraph is inconsistent: no block with id '$id'.")
 
-  /**
-   * Sanity-checks that the block graph is well-formed: every block contains its own initial/final
-   * locations, and predecessor/successor ids agree with each other in both directions.
-   */
   fun checkConsistency() {
     for (block in blocks) {
       check(block.initialLocation in block.locations) {
@@ -69,10 +62,7 @@ class BlockGraph(val blocks: Set<Block>) {
 
   companion object {
 
-    /**
-     * Wires up predecessor/successor ids: `Y` succeeds `X` iff `Y` starts where `X` ends. Mirrors
-     * CPAchecker's `BlockGraph.fromBlockNodesWithoutGraphInformation`.
-     */
+    /** `Y` succeeds `X` iff `Y` starts where `X` ends. */
     fun fromBlocksWithoutEdges(blocksWithoutEdges: Collection<Block>): BlockGraph {
       val byInitialLocation = blocksWithoutEdges.groupBy { it.initialLocation }
       val byFinalLocation = blocksWithoutEdges.groupBy { it.finalLocation }

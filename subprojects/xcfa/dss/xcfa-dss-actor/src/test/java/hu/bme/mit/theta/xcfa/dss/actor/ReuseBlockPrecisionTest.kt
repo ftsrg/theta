@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.XcfaLastPrecProvider
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
@@ -61,10 +61,6 @@ class ReuseBlockPrecisionTest {
       main.start()
     }
 
-  /**
-   * The initial predicates DSS passed to every CEGAR run (empty if it passed none) and the
-   * predicates the run ended with, in order.
-   */
   private class Recorded {
     val initial = mutableListOf<Set<Expr<BoolType>>>()
     val last = mutableListOf<Set<Expr<BoolType>>>()
@@ -81,20 +77,16 @@ class ReuseBlockPrecisionTest {
             getDefaultPredCegarConfig(),
             NullLogger.getInstance(),
           )
-        object : XcfaChecker by inner, XcfaLastPrecProvider {
+        object : XcfaChecker by inner {
           override fun check(input: XcfaPrec<*>?) =
-            inner.check(input).also { record(input?.collectPreds().orEmpty()) }
+            inner.check(input).also { record(input?.collectPreds().orEmpty(), it) }
 
-          // the checker's own default initial precision
-          override fun check() = inner.check().also { record(emptySet()) }
+          override fun check() = inner.check().also { record(emptySet(), it) }
 
-          private fun record(initial: Set<Expr<BoolType>>) {
+          private fun record(initial: Set<Expr<BoolType>>, result: SafetyResult<*, *>) {
             recorded.initial += initial
-            recorded.last += lastPrec?.collectPreds().orEmpty()
+            recorded.last += (result.prec.orElse(null) as? XcfaPrec<*>)?.collectPreds().orEmpty()
           }
-
-          override val lastPrec: XcfaPrec<*>?
-            get() = (inner as XcfaLastPrecProvider).lastPrec
         }
       }
     )

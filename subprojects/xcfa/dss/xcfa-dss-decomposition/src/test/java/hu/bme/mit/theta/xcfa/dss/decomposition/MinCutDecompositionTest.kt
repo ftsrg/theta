@@ -72,10 +72,6 @@ class MinCutDecompositionTest {
       .procedures
       .single()
 
-  /**
-   * A loop at `h` left through three exits that rejoin at `j`: the cheapest cut is the loop head (2
-   * edges, a self loop), the cheapest acyclic one `j` (3 edges).
-   */
   private fun threeExitLoopProcedure(): XcfaProcedure =
     xcfa("three-exit-loop") {
         procedure("main") {
@@ -189,7 +185,6 @@ class MinCutDecompositionTest {
 
   @Test
   fun `the fallback is a single block where the plain min cut is one`() {
-    // one edge: no location to cut at
     val procedure =
       xcfa("straight") {
           procedure("main") {

@@ -22,10 +22,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 private val sequence = AtomicLong()
 
-/**
- * Mirrors CPAchecker's `DssMessage.DssMessageType` - five types; the paper only describes the two
- * analysis messages (`post`, `vcond`).
- */
 enum class DssMessageType {
   POST_CONDITION,
   VIOLATION_CONDITION,
@@ -39,18 +35,12 @@ enum class DssResult {
   UNSAFE,
 }
 
-/**
- * A message between [DssActor]s, mirroring CPAchecker's five-subtype `DssMessage`. Analysis
- * payloads are optional so stubs like `EchoBlockAnalysis` can omit them.
- */
+/** CPAchecker's `DssMessage`. */
 sealed class DssMessage {
 
   abstract val senderId: String
 
-  /**
-   * Creation order of messages, used by [createDssMessageQueue] to keep equal-priority messages
-   * FIFO.
-   */
+  /** Keeps equal-priority messages FIFO in [createDssMessageQueue]. */
   val sequenceNumber: Long = sequence.getAndIncrement()
 
   val type: DssMessageType
@@ -64,10 +54,6 @@ sealed class DssMessage {
       }
 }
 
-/**
- * A postcondition (CPAchecker's `DssPostConditionMessage`): the disjunction of [postconditions] at
- * the sender's exit, its [precision], and [nonTrivialForEachPredecessor] for the SCC handling.
- */
 data class DssPostConditionMessage(
   override val senderId: String,
   val postconditions: List<Expr<BoolType>> = emptyList(),
@@ -80,15 +66,10 @@ data class DssPostConditionMessage(
     postcondition: Expr<BoolType>,
   ) : this(senderId, listOf(postcondition))
 
-  /** The disjunction of [postconditions], or `null` for a bare (stub) message. */
   val postcondition: Expr<BoolType>?
     get() = postconditions.takeIf { it.isNotEmpty() }?.let { Or(it) }
 }
 
-/**
- * A violation condition (CPAchecker's `DssViolationConditionMessage`): one possibly disjunctive
- * formula at the sender's block entry from which a violation is reachable (see `DssAuxVars`).
- */
 data class DssViolationConditionMessage(
   override val senderId: String,
   val violationCondition: Expr<BoolType>? = null,

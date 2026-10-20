@@ -50,10 +50,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-/**
- * The x/y loop of [CyclicBlockGraphAnalysisTest] (the paper's running example), plus a bitvector
- * variable for the codec test. Every worker process builds it again, as xcfa-cli parses the input.
- */
 internal fun processFixtureXcfa(incrementY: Boolean): XCFA =
   xcfa("xy-loop") {
     val main =
@@ -90,10 +86,6 @@ private fun cegarChecker(xcfa: XCFA) =
     NullLogger.getInstance(),
   )
 
-/**
- * The worker side of the tests: `<safe|unsafe> <port> <index> <blocks>`, or `crash` instead of the
- * fixture for a worker that dies during its first request.
- */
 object DssProcessTestWorker {
 
   @JvmStatic
@@ -181,7 +173,6 @@ class DssProcessExecutorTest {
     val input = DataInputStream(ByteArrayInputStream(bytes.toByteArray()))
     exprs.forEach { expr ->
       val read = codec.read(input)
-      // A bound variable is declared anew, and declarations are equal by identity only
       if (expr === exprs[3]) assertEquals(expr.toString(), read.toString())
       else assertEquals(expr, read)
     }

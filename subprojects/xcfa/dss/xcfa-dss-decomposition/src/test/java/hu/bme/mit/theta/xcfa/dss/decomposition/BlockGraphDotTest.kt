@@ -96,8 +96,6 @@ class BlockGraphDotTest {
     val instrumented = BlockGraphInstrumentation.instrumentForAbstraction(procedure, blockGraph)
     val dot = instrumented.blockGraph.toDot()
 
-    // "branch" (root's own finalLocation) has two outgoing edges, so root - not either arm, both
-    // of which dead-end straight into final/err - is the one block that gets a ghost edge.
     val instrumentedBlock = instrumented.blockGraph.root
     assertTrue(instrumentedBlock.isAbstractionPossible)
     val nodeLine =

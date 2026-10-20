@@ -17,10 +17,7 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * Theta-only: [MergeBlockDecomposition], then self-loop blocks are absorbed into neighbours
- * ([absorbSelfLoops]) so loops run inside one block analysis; both alternate to a fixpoint.
- */
+/** [MergeBlockDecomposition], then self-loop blocks are absorbed into neighbours, to a fixpoint. */
 class SelfLoopAbsorbingDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
   private val largestHorizontalMerge: Int = NO_MERGE_LIMIT,
@@ -45,10 +42,7 @@ class SelfLoopAbsorbingDecomposition(
   }
 }
 
-/**
- * Absorbs self-loop blocks at a head `h` into the one other block ending (else starting) at `h`, as
- * `ML<n>`; heads with several of both are left alone. Returns [blockGraph] if nothing changed.
- */
+/** Into the one other block ending (else starting) at the head; otherwise left alone. */
 fun absorbSelfLoops(blockGraph: BlockGraph): BlockGraph {
   var nextId =
     blockGraph.blocks

@@ -66,9 +66,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->branch, branch->thenLoc->final, branch->elseLoc->final: the branch point starts a new
-    // block and the merge point (final, in-degree 2) ends both arms, even though neither arm
-    // itself contains a branch/join location.
     assertEquals(3, blockGraph.blocks.size)
 
     val root = blockGraph.root
@@ -84,10 +81,6 @@ class LinearBlockDecompositionTest {
     }
   }
 
-  /**
-   * The paper's running example (`x`/`y` loop, then `assert(x == y)`). Expected blocks: init ->
-   * loophead, loophead -> afterloop, loophead -> loophead (body), afterloop -> final/err.
-   */
   @Test
   fun `paper's x-y while-loop example decomposes with the loop body as its own block`() {
     val procedure =
@@ -127,8 +120,6 @@ class LinearBlockDecompositionTest {
     val loopBody = loopHeadSuccessors.single { it.finalLocation.name == "loophead" }
     assertEquals("loophead", loopBody.initialLocation.name)
     assertEquals(setOf("loophead", "body"), loopBody.locations.map { it.name }.toSet())
-    // The loop head is both the loop body's own entry and exit, so the loop-body block is its own
-    // predecessor and successor: after one iteration you are back where this same block starts.
     assertTrue(loopBody.id in loopBody.predecessorIds)
     assertTrue(loopBody.id in loopBody.successorIds)
 
@@ -162,7 +153,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->branch, three arms branch->armN->join, join->final: five blocks total.
     assertEquals(5, blockGraph.blocks.size)
 
     val root = blockGraph.root
@@ -202,11 +192,8 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->outerHead, outerHead->afterOuter->final, outerHead->innerHead,
-    // innerHead->outerHead, innerHead->innerHead (via innerBody): five blocks.
     assertEquals(5, blockGraph.blocks.size)
 
-    // The inner loop body is the only block that is its own predecessor and successor.
     val selfLoopingBlocks = blockGraph.blocks.filter { it.id in it.successorIds }
     assertEquals(1, selfLoopingBlocks.size)
     val innerBodyBlock = selfLoopingBlocks.single()
@@ -214,8 +201,6 @@ class LinearBlockDecompositionTest {
     assertEquals("innerHead", innerBodyBlock.finalLocation.name)
     assertEquals(setOf("innerHead", "innerBody"), innerBodyBlock.locations.map { it.name }.toSet())
 
-    // Both loop heads are genuine join points: reached from two distinct predecessor blocks each
-    // (outerHead via init and via the inner loop's exit; innerHead via outerHead and via itself).
     assertEquals(2, blockGraph.blocks.count { it.finalLocation.name == "outerHead" })
     assertEquals(2, blockGraph.blocks.count { it.finalLocation.name == "innerHead" })
     val innerHeadToOuterHead =
@@ -246,8 +231,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->loopHead, loopHead->after->final, loopHead->body1, body1->after (break),
-    // body1->loopHead (via body2): six blocks.
     assertEquals(6, blockGraph.blocks.size)
 
     val body1Block = blockGraph.blocks.single { it.finalLocation.name == "body1" }
@@ -256,7 +239,6 @@ class LinearBlockDecompositionTest {
     assertTrue(body1Successors.any { it.finalLocation.name == "loopHead" })
     assertTrue(body1Successors.any { it.finalLocation.name == "after" })
 
-    // "after" is reachable both directly from the loop head and via the break in the body.
     val afterBlock = blockGraph.blocks.single { it.initialLocation.name == "after" }
     assertEquals(2, afterBlock.predecessorIds.size)
   }
@@ -269,7 +251,6 @@ class LinearBlockDecompositionTest {
             "x" type Int()
             (init to "L0") { "x" assign "0" }
             ("L0" to final) { "x" assign "(+ x 1)" }
-            // Never wired to anything reachable from init.
             ("deadCode" to "alsoDeadCode") { "x" assign "42" }
           }
         }
@@ -303,7 +284,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->A, two parallel A->B blocks, B->final: four blocks.
     assertEquals(4, blockGraph.blocks.size)
 
     val root = blockGraph.root
@@ -313,7 +293,6 @@ class LinearBlockDecompositionTest {
       assertEquals("A", arm.initialLocation.name)
       assertEquals("B", arm.finalLocation.name)
     }
-    // The two arms are genuinely distinct blocks (different edge sets), not deduplicated.
     assertEquals(2, parallelArms.map { it.edges }.toSet().size)
   }
 
@@ -334,7 +313,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     blockGraph.checkConsistency()
 
-    // init->loopHead, loopHead->loopHead, loopHead->after->final: three blocks.
     assertEquals(3, blockGraph.blocks.size)
 
     val selfLoopBlock = blockGraph.blocks.single { it.id in it.successorIds }
@@ -362,7 +340,6 @@ class LinearBlockDecompositionTest {
     val blockGraph = everyLocationIsABlockEnd.decompose(procedure)
     blockGraph.checkConsistency()
 
-    // With every location treated as a boundary, each of the three edges becomes its own block.
     assertEquals(3, blockGraph.blocks.size)
     assertTrue(blockGraph.blocks.all { it.edges.size == 1 })
 

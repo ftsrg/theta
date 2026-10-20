@@ -20,21 +20,16 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * Gives each non-dead-end block its own abstraction point ([Block.violationConditionLocation]) via
- * a no-op ghost edge to a fresh location (CPAchecker's `instrumentCFA`); `xcfa-cli` doesn't run it.
- */
+/** CPAchecker's `instrumentCFA`; `xcfa-cli` does not run it. */
 object BlockGraphInstrumentation {
 
   data class Modification(val procedure: XcfaProcedure, val blockGraph: BlockGraph)
 
   fun instrumentForAbstraction(procedure: XcfaProcedure, blockGraph: BlockGraph): Modification {
-    // CPAchecker's BlockGraphModification.instrumentCFA leaves a single-block graph unchanged.
     if (blockGraph.blocks.size == 1) {
       return Modification(procedure, blockGraph)
     }
-    // Mutates the existing locations in place, so this must run after decomposition and merging:
-    // re-decomposing an instrumented procedure would treat the ghost edges as real CFG structure.
+    // Mutates the locations in place: run it only after decomposition
     val ghostEdgeByFinalLocation = mutableMapOf<XcfaLocation, XcfaEdge>()
 
     for (finalLocation in blockGraph.blocks.map(Block::finalLocation).toSet()) {

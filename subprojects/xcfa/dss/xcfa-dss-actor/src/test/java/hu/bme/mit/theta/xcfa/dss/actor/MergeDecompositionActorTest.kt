@@ -39,10 +39,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Runs *merged* block graphs (whose ids and abstraction points differ from linear ones) through
- * real [PredicateBlockBehavior]; merging was otherwise only tested standalone or via the CLI.
- */
 class MergeDecompositionActorTest {
 
   companion object {
@@ -69,7 +65,6 @@ class MergeDecompositionActorTest {
   private fun checkDecomposed(wholeProgram: XCFA, blockGraph: BlockGraph): DssResult {
     val procedure = wholeProgram.procedures.single()
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
@@ -80,10 +75,6 @@ class MergeDecompositionActorTest {
     }
   }
 
-  /**
-   * `DiverseProgramsActorTest`'s three-way join: all three arms share the triple
-   * `horizontalMergePass` groups on, so they reliably fold into one horizontally merged block.
-   */
   private fun threeWayJoinXcfa(errorValue: Int?): XCFA =
     xcfa("three-way-join-merge") {
       val main =
@@ -123,15 +114,11 @@ class MergeDecompositionActorTest {
     val procedure = wholeProgram.procedures.single()
     val linear = LinearBlockDecomposition().decompose(procedure)
 
-    // Block ids are auto-generated ("L0", "L1", ...) by LinearBlockDecomposition, not derived from
-    // XCFA location names - identify the arm blocks by which location they exit at instead.
     val armBlocksBefore = linear.blocks.filter { it.finalLocation.name == "join" }
     assertEquals(3, armBlocksBefore.size) {
       "sanity check: three separate arm blocks before merging"
     }
 
-    // Only the horizontal pass: the full pipeline would then also vertically merge the root into
-    // the same block (since its successor count drops to one), which this test isn't about.
     val merged = horizontalMergePass(linear)
     merged.checkConsistency()
 
@@ -159,10 +146,6 @@ class MergeDecompositionActorTest {
     assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * The paper's `x`/`y` loop with a body branching on `flag` into two identical arms, which merge
-   * horizontally inside the cycle; the verdict still depends only on [incrementY].
-   */
   private fun xyLoopXcfa(incrementY: Boolean): XCFA =
     xcfa("xy-loop-merge") {
       val main =
@@ -217,10 +200,6 @@ class MergeDecompositionActorTest {
     assertTrue(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * SV-COMP's `LIN_INT/stateful_check`, unsafe since a failed open makes its handler lock twice.
-   * Regression test for a wrong SAFE caused by skipping non-top states derived from top.
-   */
   private fun statefulCheckXcfa(): XCFA =
     xcfa("stateful-check") {
       val main =
@@ -265,7 +244,6 @@ class MergeDecompositionActorTest {
             "s" assign "(+ s 1)"
           }
           ("pick" to "release") { assume("(and (= c 3) (= s 3))") }
-          // opened: lock, unlock
           ("release" to "lockA") { assume("(not (= oc 0))") }
           ("lockA" to err) { assume("(not (= m 1))") }
           ("lockA" to "unlockA") {
@@ -279,7 +257,6 @@ class MergeDecompositionActorTest {
             "oc" assign "0"
             "s" assign "0"
           }
-          // not opened: lock twice
           ("release" to "lockB") { assume("(= oc 0)") }
           ("lockB" to err) { assume("(not (= m 1))") }
           ("lockB" to "lockB2") {
@@ -321,10 +298,6 @@ class MergeDecompositionActorTest {
     )
   }
 
-  /**
-   * `x = 0; n = *; if (n >= 0) { while (x < n) x++; assert(...) }`: the loop is absorbed into a
-   * non-root block. Unsafe needs exactly three iterations (`n = 3`); safe: `x == n` after the loop.
-   */
   private fun guardedLoopXcfa(unsafe: Boolean): XCFA =
     xcfa("guarded-loop") {
       val main =
@@ -369,10 +342,6 @@ class MergeDecompositionActorTest {
       assertEquals(0, it.getStatistics().cyclicSccs) { "acyclic block graph expected" }
     }
 
-  /**
-   * `n = *; x = 0; if (n >= 0) while (x < n) { x++; if (x == bad) error; }`: the error inside the
-   * loop makes the loop a cycle of two blocks with two exits, entered from a non-root block.
-   */
   private fun errorInGuardedLoopXcfa(bad: String): XCFA =
     xcfa("error-in-guarded-loop") {
       val main =

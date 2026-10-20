@@ -17,13 +17,10 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/** CPAchecker's hardcoded merge target (`DssDecompositionOptions.getConfiguredDecomposition`). */
+/** CPAchecker's hardcoded merge target. */
 const val DEFAULT_TARGET_BLOCK_COUNT = 2
 
-/**
- * `MERGE_DECOMPOSITION` (CPAchecker's `MergeBlockNodesDecomposition`): [linearDecomposition], then
- * merging toward [targetBlockCount] (CPAchecker hardcodes 2). `mergeFunctionCalls` is not ported.
- */
+/** CPAchecker's `MERGE_DECOMPOSITION`. */
 class MergeBlockDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
   private val largestHorizontalMerge: Int = NO_MERGE_LIMIT,

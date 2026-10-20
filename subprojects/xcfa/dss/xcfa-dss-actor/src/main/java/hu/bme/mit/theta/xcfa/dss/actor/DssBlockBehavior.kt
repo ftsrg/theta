@@ -15,22 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/**
- * A [DssBlockActor]'s analysis reaction, decoupled from routing/termination. Implemented by
- * [EchoBlockAnalysis] (stub) and [PredicateBlockBehavior] (real per-block CEGAR).
- */
+/** The analysis of a [DssBlockActor], without routing. */
 interface DssBlockBehavior {
 
-  /**
-   * Messages a block emits on startup, before receiving anything - e.g. its own summary computed
-   * from no incoming information (or a violation condition, if it can locally reach a target).
-   */
   fun initialMessages(): Collection<DssMessage>
 
   fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage>
 
   fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage>
 
-  /** What this block contributes to a verification witness, or null if it records nothing. */
   fun witness(): DssBlockWitness? = null
 }

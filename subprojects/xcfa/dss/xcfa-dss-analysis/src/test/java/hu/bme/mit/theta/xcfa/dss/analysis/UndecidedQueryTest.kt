@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/** Queries the solver cannot decide (as Z3 on nonlinear arithmetic), with and without fallback. */
+/** Queries the solver cannot decide, as Z3 on nonlinear arithmetic. */
 class UndecidedQueryTest {
 
   /** A factory whose solvers answer every check with [check]; counts the solvers created. */
@@ -64,55 +64,28 @@ class UndecidedQueryTest {
   private val nonlinear = Gt(Mul(x, x), Int(10))
 
   @Test
-  fun `without fallback every undecided query fails`() {
-    val operators = DssPredicateOperators(unknown.factory)
-    assertThrows(DssUndecidedQueryException::class.java) { operators.isUnsat(nonlinear) }
-    assertThrows(DssUndecidedQueryException::class.java) { operators.isKnownUnsat(nonlinear) }
-    assertThrows(DssUndecidedQueryException::class.java) {
-      operators.isLeq(nonlinear, Lt(x, Int(3)))
+  fun `every undecided query fails`() {
+    for (factory in listOf(unknown.factory, crashing.factory)) {
+      val operators = DssPredicateOperators(factory)
+      assertThrows(DssUndecidedQueryException::class.java) { operators.isUnsat(nonlinear) }
+      assertThrows(DssUndecidedQueryException::class.java) {
+        operators.isLeq(nonlinear, Lt(x, Int(3)))
+      }
     }
   }
 
   @Test
-  fun `fallback decides what the solver cannot`() {
-    assertTrue(DssPredicateOperators(unknown.factory, unsat.factory).isUnsat(nonlinear))
-    assertFalse(DssPredicateOperators(crashing.factory, sat.factory).isUnsat(nonlinear))
-    assertTrue(
-      DssPredicateOperators(unknown.factory, unsat.factory).isLeq(nonlinear, Eq(x, Int(0)))
-    )
-  }
-
-  @Test
-  fun `undecided by the fallback too`() {
-    val operators = DssPredicateOperators(unknown.factory, crashing.factory)
-    assertThrows(DssUndecidedQueryException::class.java) { operators.isUnsat(nonlinear) }
-    assertFalse(operators.isKnownUnsat(nonlinear))
-    assertFalse(operators.isLeq(nonlinear, Lt(x, Int(3))))
+  fun `decided queries`() {
+    assertTrue(DssPredicateOperators(unsat.factory).isUnsat(nonlinear))
+    assertFalse(DssPredicateOperators(sat.factory).isUnsat(nonlinear))
+    assertTrue(DssPredicateOperators(unsat.factory).isLeq(nonlinear, Eq(x, Int(0))))
   }
 
   @Test
   fun `a failed solver is replaced`() {
-    val operators = DssPredicateOperators(unknown.factory, sat.factory)
-    repeat(3) { operators.isKnownUnsat(nonlinear) }
+    val operators = DssPredicateOperators(unknown.factory)
+    repeat(3) { runCatching { operators.isUnsat(nonlinear) } }
     assertEquals(3, unknown.created)
-    assertEquals(1, sat.created)
-  }
-
-  @Test
-  fun `statistics count the fallback`() {
-    val statistics = DssSolverStatistics()
-    val decided = DssPredicateOperators(unknown.factory, sat.factory, statistics)
-    val undecided = DssPredicateOperators(unknown.factory, crashing.factory, statistics)
-    val direct = DssPredicateOperators(unsat.factory, null, statistics)
-    decided.isKnownUnsat(nonlinear)
-    undecided.isKnownUnsat(nonlinear)
-    direct.isUnsat(nonlinear)
-    direct.isLeq(nonlinear, True())
-    assertEquals(
-      "queries=3 solverFailed=2 fallbackDecided=1 fallbackFailed=1 checkerFailed=0 " +
-        "checkerFallbackDecided=0 checkerFallbackFailed=0",
-      "$statistics",
-    )
   }
 
   @Test

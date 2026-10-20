@@ -15,15 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
-/**
- * CPAchecker's `HorizontalMergeDecomposition.NO_MERGE_LIMIT`: no size limit on horizontal merges.
- */
 const val NO_MERGE_LIMIT = -1
 
-/**
- * Merged-block ids as in CPAchecker: `MH<n>` (horizontal) and `MV<n>` (vertical), counting across
- * passes. [startingAfter] continues an existing graph's numbering so ids never collide.
- */
+/** `MH<n>` (horizontal) and `MV<n>` (vertical) ids, counting across passes. */
 class MergeIdGenerator(private var horizontal: Int = 0, private var vertical: Int = 0) {
 
   fun nextHorizontal(): String = "MH${horizontal++}"
@@ -44,15 +38,9 @@ class MergeIdGenerator(private var horizontal: Int = 0, private var vertical: In
   }
 }
 
-/**
- * CPAchecker sorts the block nodes by id between merge passes, which makes merging deterministic.
- */
 private fun Collection<Block>.sortedById(): List<Block> = sortedBy { it.id }
 
-/**
- * Horizontal merge (CPAchecker's `mergeHorizontally`): merges blocks with the same predecessors,
- * successors and final location into `MH<n>`, honoring [targetBlockCount]/[largestHorizontalMerge].
- */
+/** CPAchecker's `mergeHorizontally`. */
 fun horizontalMergePass(
   blockGraph: BlockGraph,
   targetBlockCount: Int = 0,
@@ -104,10 +92,7 @@ private fun mergeHorizontally(group: List<Block>, id: String): Block {
   )
 }
 
-/**
- * Vertical merge (CPAchecker's `mergeVertically`): merges `X` and its only successor `Y` into
- * `MV<n>` if `X` is `Y`'s only predecessor, each block at most once per pass.
- */
+/** CPAchecker's `mergeVertically`. */
 fun verticalMergePass(
   blockGraph: BlockGraph,
   targetBlockCount: Int = 0,
@@ -164,10 +149,6 @@ fun verticalMergePass(
   )
 }
 
-/**
- * Repeats [horizontalMergePass] until the graph has at most [targetBlockCount] blocks or a pass
- * changes nothing - CPAchecker's `HorizontalMergeDecomposition.decompose`.
- */
 fun horizontalMerge(
   blockGraph: BlockGraph,
   targetBlockCount: Int = 1,
@@ -178,10 +159,6 @@ fun horizontalMerge(
     horizontalMergePass(it, targetBlockCount, largestHorizontalMerge, ids)
   }
 
-/**
- * Repeats [verticalMergePass] until the graph has at most [targetBlockCount] blocks or a pass
- * changes nothing - CPAchecker's `VerticalMergeDecomposition.decompose`.
- */
 fun verticalMerge(
   blockGraph: BlockGraph,
   targetBlockCount: Int = 1,
@@ -209,10 +186,7 @@ private fun remapBlockIds(block: Block, idRemap: Map<String, String>): Block =
     successorIds = block.successorIds.map { idRemap[it] ?: it }.toSet(),
   )
 
-/**
- * Alternates both passes (CPAchecker's `MergeBlockNodesDecomposition`) until at most
- * [targetBlockCount] blocks remain or a round makes no progress, as the target may be unreachable.
- */
+/** CPAchecker's `MergeBlockNodesDecomposition`. */
 fun mergeToTargetBlockCount(
   blockGraph: BlockGraph,
   targetBlockCount: Int,

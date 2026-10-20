@@ -17,9 +17,7 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/** Decomposes a procedure's control-flow graph into a graph of coherent [Block]s. */
 interface DssBlockDecomposition {
 
-  /** Decomposes [procedure] into a [BlockGraph] covering all of its locations and edges. */
   fun decompose(procedure: XcfaProcedure): BlockGraph
 }

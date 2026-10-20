@@ -36,32 +36,24 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * What one block contributes to a witness: the states it reaches at each location ([invariants],
- * null unless known for all its real entry states), its [violations], and the ones it [reported].
- */
+/** One block's witness data; [invariants] is null unless known for all real entry states. */
 data class DssBlockWitness(
   val invariants: Map<XcfaLocation, List<Expr<BoolType>>>?,
   val violations: List<DssViolationRecord>,
   val reported: List<Expr<BoolType>>,
 )
 
-/**
- * How a block computed the violation [condition]; [received] are the successors' conditions used.
- */
 sealed interface DssViolationRecord {
   val condition: Expr<BoolType>
   val received: List<Pair<String, Expr<BoolType>>>
 }
 
-/** A condition over every path of an acyclic block to [targets] (`computeViolationCondition`). */
 data class DssAllPathsViolation(
   override val condition: Expr<BoolType>,
   val targets: Map<XcfaLocation, Expr<BoolType>>,
   override val received: List<Pair<String, Expr<BoolType>>>,
 ) : DssViolationRecord
 
-/** The condition of one counterexample path [edges], ending in the [received] conditions or not. */
 data class DssPathViolation(
   override val condition: Expr<BoolType>,
   val edges: List<XcfaEdge>,
@@ -69,10 +61,8 @@ data class DssPathViolation(
   override val received: List<Pair<String, Expr<BoolType>>>,
 ) : DssViolationRecord
 
-/** DSS's proof: the reached states at every location, or null where they are not known. */
 data class DssInvariants(val invariants: Map<XcfaLocation, List<Expr<BoolType>>?>) : Proof
 
-/** Each location's states from every block containing it; null unless all of them know them. */
 fun combineInvariants(
   procedure: XcfaProcedure,
   blockGraph: BlockGraph,
@@ -89,10 +79,7 @@ fun combineInvariants(
     }
   )
 
-/**
- * A path of original edges from the program entry (in state [initial]) to an error: the root's
- * reported condition, followed block by block from the state the previous block ended in.
- */
+/** The error path, followed block by block from the root's reported condition. */
 fun stitchViolationPath(
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
@@ -124,7 +111,6 @@ fun stitchViolationPath(
   }
 }
 
-/** One block's part of a stitched path; [received] is null if it ended in the block's own error. */
 private class Step(
   val edges: List<XcfaEdge>,
   val state: Valuation,
@@ -146,8 +132,6 @@ private fun stepThrough(
     val run = findBlockRun(block, allPaths.targets, state, solver) ?: return null
     return Step(run.edges, run.state, allPaths.received.takeUnless { run.end.error })
   }
-  // A cyclic block's condition is the disjunction of its path conditions: any one satisfied by
-  // the state leads, along its own path, to that path's target.
   return witness.violations.filterIsInstance<DssPathViolation>().firstNotNullOfOrNull { record ->
     val target = if (record.reachedReceived) Or(record.received.map { it.second }) else True()
     followPath(solver, state, record.edges, target)?.let {
@@ -156,7 +140,6 @@ private fun stepThrough(
   }
 }
 
-/** [path] from [start] as a trace of [xcfa]'s only process; the states only fix [initial]. */
 fun violationTrace(
   xcfa: XCFA,
   start: XcfaLocation,

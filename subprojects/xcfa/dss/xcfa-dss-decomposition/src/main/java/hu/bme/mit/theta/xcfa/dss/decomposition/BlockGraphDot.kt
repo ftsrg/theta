@@ -15,10 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.dss.decomposition
 
-/**
- * Renders this [BlockGraph] as Graphviz DOT for visual debugging (purely structural). The root
- * block gets a double border; blocks with a dedicated abstraction point get a dashed one.
- */
 fun BlockGraph.toDot(): String {
   val sb = StringBuilder()
   sb.append("digraph BlockGraph {\n")

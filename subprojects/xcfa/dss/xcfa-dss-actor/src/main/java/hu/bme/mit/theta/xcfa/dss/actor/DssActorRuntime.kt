@@ -26,10 +26,7 @@ private const val VISUALIZER_ID = "__visualizer__"
 private const val VISUALIZER_JOIN_TIMEOUT_MILLIS = 10_000L
 private const val BLOCK_THREAD_JOIN_TIMEOUT_MILLIS = 10_000L
 
-/**
- * Runs one thread per block (CPAchecker's `MultithreadingDssExecutor`) and blocks until a verdict.
- * If [visualizationLog] is given, a [DssVisualizationActor] records every message into it.
- */
+/** CPAchecker's `MultithreadingDssExecutor`: one thread per block. */
 fun runDssActors(
   blockGraph: BlockGraph,
   behaviorFor: (Block) -> DssBlockBehavior,
@@ -40,8 +37,7 @@ fun runDssActors(
   val extraIds = if (visualizationLog != null) setOf(VISUALIZER_ID) else emptySet()
   val inboxes =
     (blockGraph.blocks.map { it.id } + OBSERVER_ID + extraIds).associateWith {
-      // The visualizer must log every message, so it reads in plain arrival order instead of
-      // letting the final RESULT/STATISTIC messages overtake (and end its run before) the rest.
+      // Arrival order, so the final messages can't end the visualizer's run early
       if (it == VISUALIZER_ID) LinkedBlockingQueue<DssMessage>() else createDssMessageQueue()
     }
   val connectionsForBroadcaster =
@@ -82,8 +78,6 @@ fun runDssActors(
         start()
       }
     }
-  // Not monitored, like the observer: both are pure sinks, and broadcaster.isEmpty() plus `active`
-  // already guarantee their queues are drained before quiescence is declared.
   val visualizerThread =
     visualizer?.let {
       Thread(it, it.id).apply {
@@ -100,19 +94,14 @@ fun runDssActors(
 
   try {
     val result = observer.observe()
-    // Wait for the visualizer (on its own queue) so the caller sees its complete log; bounded so a
-    // stuck visualizer can't hang the caller.
     visualizerThread?.join(VISUALIZER_JOIN_TIMEOUT_MILLIS)
     return result
   } finally {
-    // Only the SAFE path makes the monitor stop on its own; on the UNSAFE short-circuit path (and
-    // on any error) it would otherwise spin forever, since every block thread it watches ends up
-    // TERMINATED (not WAITING) rather than ever satisfying its quiescence check.
+    // The monitor only stops on its own after SAFE
     monitor.interrupt()
     blockThreads.forEach { it.interrupt() }
     visualizerThread?.interrupt()
-    // Join (bounded) so no block thread still runs native solver code after we return; leftover
-    // solver threads have corrupted solver state for the next run in the same JVM.
+    // Leftover solver threads corrupted the solver state of later runs in the same JVM
     blockThreads.forEach { it.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS) }
     monitor.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS)
   }

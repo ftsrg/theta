@@ -35,9 +35,6 @@ class AcyclicMergeDecompositionTest {
   private fun XcfaProcedure.decomposedWith(decomposition: DssBlockDecomposition) =
     decomposition.decompose(this)
 
-  /**
-   * while (x < 10) { x++; if (x == 7) error; } - the error splits the loop into a 2-block cycle.
-   */
   private fun errorInLoopProcedure(): XcfaProcedure =
     xcfa("error-in-loop") {
         procedure("main") {
@@ -158,7 +155,6 @@ class AcyclicMergeDecompositionTest {
 
   @Test
   fun `a cycle entered and left at the same location grows over its predecessors`() {
-    // r: A->B, p: B->C, z: B->D, w: D->C, c1: C->E, c2: E->C, x: C->F
     val (a, b, c, d) = listOf(loc("A"), loc("B"), loc("C"), loc("D"))
     val (e, f) = listOf(loc("E"), loc("F"))
     val graph =
@@ -176,7 +172,6 @@ class AcyclicMergeDecompositionTest {
 
     val acyclic = collapseCycles(graph)
 
-    // entry = exit = C adds p and w, whose two entries B and D add r and z
     acyclic.checkConsistency()
     assertEquals(0, acyclic.getStatistics().cyclicSccs)
     assertEquals(setOf("MC0", "x"), acyclic.blocks.map { it.id }.toSet())

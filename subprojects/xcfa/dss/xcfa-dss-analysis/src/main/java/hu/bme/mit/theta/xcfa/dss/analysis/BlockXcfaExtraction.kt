@@ -31,10 +31,6 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import java.util.Optional
 
-/**
- * The result of [extractBlockXcfa]: the standalone [xcfa], [locationMapping] to the clones, the
- * [exitLocation] the postcondition is read at, and the synthetic precondition/violation edges.
- */
 data class BlockXcfaExtraction(
   val xcfa: XCFA,
   val locationMapping: Map<XcfaLocation, XcfaLocation>,
@@ -42,15 +38,13 @@ data class BlockXcfaExtraction(
   val exitLocation: XcfaLocation,
   val preconditionEdge: XcfaEdge? = null,
   val violationConditionEdge: XcfaEdge? = null,
-  /** The original location of every clone; a split loop head's entry clone maps to the head. */
   val originalLocations: Map<XcfaLocation, XcfaLocation> = emptyMap(),
-  /** The original edge of every cloned edge; the synthetic edges have none. */
   val originalEdges: Map<XcfaEdge, XcfaEdge> = emptyMap(),
 )
 
 /**
- * Extracts [block] into a standalone [XCFA] (CPAchecker's `BlockCPA`), with [precondition] as an
- * entry `assume` and [violationCondition] as an edge from [exitLocation] into an error location.
+ * [block] as a standalone [XCFA], with [precondition] at the entry and [violationCondition] at the
+ * exit.
  */
 fun extractBlockXcfa(
   sourceProcedure: XcfaProcedure,
@@ -71,10 +65,8 @@ fun extractBlockXcfa(
       original.metadata,
     )
 
-  // Cloned, not reused: the original locations' adjacency sets hold the whole procedure's edges.
   val clonedLocations: Map<XcfaLocation, XcfaLocation> = block.locations.associateWith(::cloneOf)
-  // A loop body that starts and ends at its head gets separate entry/exit clones (CPAchecker's
-  // INITIAL vs. FINAL); otherwise the body could iterate inside a single block analysis.
+  // Split loop head (CPAchecker's INITIAL vs. FINAL): one analysis covers one iteration
   val splitEntry = block.initialLocation == block.finalLocation
   val blockEntry =
     if (splitEntry) cloneOf(block.initialLocation, "__entry")
@@ -90,8 +82,6 @@ fun extractBlockXcfa(
   }
 
   for (original in block.edges) {
-    // In a split loop-head block, the body leaves from the entry clone; the ghost edge (if any)
-    // leaves from the exit clone, i.e., only after the body has been processed.
     val source =
       if (
         splitEntry &&
@@ -148,9 +138,7 @@ fun extractBlockXcfa(
       finalLoc = Optional.ofNullable(clonedLocations.values.firstOrNull { it.final }),
       errorLoc = Optional.ofNullable(errorLocation),
     )
-  // XCFA's public constructor only accepts XcfaProcedureBuilders, which would re-run the whole
-  // pass/optimize pipeline - build an empty container instead and swap in the already-built
-  // procedure via `recreate`.
+  // The public constructor would re-run the pass pipeline on builders
   val xcfa =
     XCFA(name, globalVars).recreate(setOf(blockProcedure), listOf(blockProcedure to emptyList()))
   return BlockXcfaExtraction(

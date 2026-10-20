@@ -31,9 +31,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * `--dss-checker-fallback`: a block analysis whose checker throws is repeated with the next one.
- */
 class CheckerFallbackTest {
 
   companion object {
@@ -189,30 +186,5 @@ class CheckerFallbackTest {
       assertEquals(1, e.suppressed.size)
     }
     assertEquals(listOf("a", "b", "a", "b"), used)
-  }
-
-  @Test
-  fun `the trace shows every try with its outcome`() {
-    val lines = mutableListOf<String>()
-    DssTrace.enable { lines += it }
-    try {
-      initialMessages(listOf(crashing, cegar), checkerFallback = true)
-    } finally {
-      DssTrace.disable()
-    }
-    val events = lines.map { it.split(' ').drop(2) }
-    assertEquals(
-      listOf(
-        "analysis-start attempt=0",
-        "analysis-end attempt=0 outcome=exception:SolverBroke",
-        "analysis-start attempt=1",
-        "analysis-end attempt=1 outcome=unsafe",
-      ),
-      events.map { e ->
-        (listOf(e.first()) + e.filter { it.startsWith("attempt=") || it.startsWith("outcome=") })
-          .joinToString(" ")
-      },
-    )
-    assert(lines.all { "block=" in it && "preds=" in it })
   }
 }

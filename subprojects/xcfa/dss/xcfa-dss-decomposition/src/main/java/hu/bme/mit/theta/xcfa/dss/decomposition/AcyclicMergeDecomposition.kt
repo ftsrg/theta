@@ -18,10 +18,7 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * Theta-only: [MergeBlockDecomposition], then every cycle is collapsed into one block
- * ([collapseCycles]) so the block graph is acyclic; merging and collapsing alternate to a fixpoint.
- */
+/** [MergeBlockDecomposition], then every cycle is collapsed into one block, to a fixpoint. */
 class AcyclicMergeDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
   private val largestHorizontalMerge: Int = NO_MERGE_LIMIT,
@@ -46,10 +43,7 @@ class AcyclicMergeDecomposition(
   }
 }
 
-/**
- * Collapses each cyclic SCC of [blockGraph], smallest first, into one block `MC<n>` (grown to a
- * single entry/exit by [collapseRegion]) until acyclic. [onlySelfLoops] collapses only self loops.
- */
+/** Collapses each cyclic SCC, smallest first, into one block `MC<n>`. */
 fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): BlockGraph {
   var nextId =
     blockGraph.blocks
@@ -72,10 +66,7 @@ fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): Bloc
 
 private const val COLLAPSED_PREFIX = "MC"
 
-/**
- * Grows [initialRegion] to one entry and at most one exit, then merges it into block [id]. An entry
- * that is also the exit grows backward: such a block could not iterate its loop.
- */
+/** An entry that is also the exit grows backward: such a block could not iterate its loop. */
 private fun collapseRegion(
   blockGraph: BlockGraph,
   initialRegion: Set<String>,
@@ -123,10 +114,6 @@ private fun collapseRegion(
   }
 }
 
-/**
- * Exit for a region without successors: a dead-end location, preferably not an error location (like
- * CPAchecker's single block), else any location other than [entry].
- */
 private fun deadEndExit(members: List<Block>, entry: XcfaLocation): XcfaLocation {
   val locations = members.flatMap { it.locations }.distinct().sortedBy { it.name }
   return locations.filter { it.outgoingEdges.isEmpty() }.minByOrNull { it.error }

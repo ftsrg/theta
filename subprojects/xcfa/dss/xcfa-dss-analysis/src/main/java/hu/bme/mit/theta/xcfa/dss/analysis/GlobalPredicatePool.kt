@@ -20,10 +20,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 
-/**
- * Every assume condition of this XCFA, optionally seeding every block's precision
- * (`--dss-global-predicate-pool`; no CPAchecker counterpart). Saves violation-condition rounds.
- */
+/** Every assume condition of this XCFA (`--dss-global-predicate-pool`). */
 fun XCFA.collectAssumePreds(): Set<Expr<BoolType>> = collectAssumes().toSet()
 
 fun getAssumePredPrec(wholeProgram: XCFA) = getPredPrec(wholeProgram.collectAssumePreds())

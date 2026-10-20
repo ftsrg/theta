@@ -66,8 +66,6 @@ class MergeBlockDecompositionTest {
     val merged = MergeBlockDecomposition(targetBlockCount = 1).decompose(procedure)
 
     merged.checkConsistency()
-    // Every block here sits on a single unbranched path once the three arms are fused together
-    // (root -> merged-arms -> tail), so the whole thing can genuinely collapse to one block.
     assertEquals(1, merged.blocks.size)
     assertEquals(procedure.initLoc, merged.root.initialLocation)
     assertTrue(merged.root.finalLocation.final)
@@ -75,10 +73,6 @@ class MergeBlockDecompositionTest {
 
   @Test
   fun `a target the graph cannot reach still terminates and stays consistent`() {
-    // Two genuinely divergent, non-rejoining arms (one reaches final, the other err) can never be
-    // horizontally merged (different finalLocation) or vertically merged (branch has two
-    // successors), so no target below 3 is reachable here - mergeToTargetBlockCount must still
-    // terminate via its own fixpoint check rather than looping forever chasing an unreachable goal.
     val procedure =
       xcfa("unmergeable-branch") {
           procedure("main") {
@@ -105,8 +99,6 @@ class MergeBlockDecompositionTest {
       MergeBlockDecomposition(targetBlockCount = 1, largestHorizontalMerge = 2).decompose(procedure)
 
     merged.checkConsistency()
-    // Every arm has more locations than the limit, so horizontal merging must never touch them,
-    // regardless of how aggressively the target asks to shrink the graph.
     val armBlocks = merged.blocks.filter { it.locations.any { loc -> loc.name.startsWith("arm") } }
     assertEquals(3, armBlocks.size)
   }

@@ -17,19 +17,11 @@ package hu.bme.mit.theta.xcfa.dss.actor
 
 import java.util.concurrent.BlockingQueue
 
-/**
- * Whether an actor is a block worker or the (single) observer. Mirrors CPAchecker's confirmed
- * `DssCommunicationEntity`.
- */
 enum class DssActorRole {
   BLOCK,
   OBSERVER,
 }
 
-/**
- * Fans a [DssMessage] out to actor queues, targeted by id or by role; see [DssBlockActor] for which
- * messages go where.
- */
 class DssMessageBroadcaster(
   connections: Map<String, Pair<DssActorRole, BlockingQueue<DssMessage>>>
 ) {

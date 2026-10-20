@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/**
- * Stub [DssBlockBehavior] for testing the actor runtime: echoes one message on startup and once per
- * new sender (so cycles still quiesce); [originatesViolation] adds a startup violation condition.
- */
+/** Stub behavior for testing the runtime: echoes once on startup and once per new sender. */
 class EchoBlockAnalysis(
   private val blockId: String,
   private val originatesViolation: Boolean = false,

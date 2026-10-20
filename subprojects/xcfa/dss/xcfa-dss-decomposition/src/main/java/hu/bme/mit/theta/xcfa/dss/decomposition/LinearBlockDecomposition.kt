@@ -19,10 +19,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/**
- * `blk_linear` from the DSS paper: by default ([isBlockEnd]) a block ends at every branch, join or
- * dead end, so each loop body gets its own block (matches CPAchecker's `config/dss.properties`).
- */
+/** CPAchecker's `LINEAR_DECOMPOSITION`: a block ends at every branch, join or dead end. */
 class LinearBlockDecomposition(
   private val isBlockEnd: (XcfaLocation) -> Boolean = ::defaultIsBlockEnd
 ) : DssBlockDecomposition {
@@ -32,9 +29,6 @@ class LinearBlockDecomposition(
     val visitedEdges = mutableSetOf<XcfaEdge>()
     var nextId = 0
 
-    // The block-in-progress that a pending edge would continue, if it turns out not to be a block
-    // boundary. Threaded explicitly per traversal branch (rather than one shared mutable
-    // accumulator) so that branches pending on the stack can never corrupt each other's state.
     val stack = ArrayDeque<Pair<XcfaEdge, Chain>>()
     for (edge in procedure.initLoc.outgoingEdges) {
       stack.addLast(edge to Chain(procedure.initLoc))
@@ -62,8 +56,6 @@ class LinearBlockDecomposition(
           stack.addLast(next to Chain(edge.target))
         }
       } else {
-        // Not a boundary means exactly one outgoing edge (see defaultIsBlockEnd): the chain has a
-        // unique continuation, so keep accumulating into the same chain.
         stack.addLast(edge.target.outgoingEdges.single() to chain)
       }
     }

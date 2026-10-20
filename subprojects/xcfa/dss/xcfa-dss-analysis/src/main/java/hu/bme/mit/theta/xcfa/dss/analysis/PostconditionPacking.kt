@@ -22,10 +22,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-/**
- * `packPost`: ORs the states a safe [result] reached at [location], a location of the checked XCFA
- * (for an extracted block, the clone in [BlockXcfaExtraction.locationMapping]); `False()` if none.
- */
+/** The disjunction of the states a safe [result] reached at [location]. */
 fun packPostcondition(
   result: SafetyResult<LocationInvariants, *>,
   location: XcfaLocation,

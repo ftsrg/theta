@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/**
- * Detects SAFE by quiescence polling, as CPAchecker's `DssThreadMonitor`: once all threads are
- * parked and all queues and [active] are empty, broadcasts `RESULT(SAFE)`. Handles cyclic graphs.
- */
+/** Broadcasts `RESULT(SAFE)` once all threads wait and all queues and [active] are empty. */
 class DssThreadMonitor(
   private val threadsToMonitor: List<Thread>,
   private val broadcaster: DssMessageBroadcaster,

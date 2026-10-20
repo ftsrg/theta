@@ -26,10 +26,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Build-order step 3: with `NO_DECOMPOSITION`, a DSS worker is a plain call into Theta's
- * config-driven CEGAR, so it must report exactly what calling that entry point directly would.
- */
 class WorkerConfigDelegatorTest {
 
   companion object {

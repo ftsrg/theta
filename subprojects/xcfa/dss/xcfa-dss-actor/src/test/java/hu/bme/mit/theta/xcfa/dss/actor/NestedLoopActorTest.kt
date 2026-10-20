@@ -31,10 +31,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-/**
- * Drives real [PredicateBlockBehavior] through a *nested* cycle (an inner loop inside an outer
- * loop's body), not just the single self-loop `CyclicBlockGraphAnalysisTest` covers.
- */
 class NestedLoopActorTest {
 
   companion object {
@@ -62,7 +58,6 @@ class NestedLoopActorTest {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
@@ -73,10 +68,6 @@ class NestedLoopActorTest {
     }
   }
 
-  /**
-   * Outer loop (`x` to 3) containing an inner loop (`y` to 2) - two self/mutually referencing
-   * blocks. `z` mirrors `x` iff [safe], as in the paper's `x == y` check; `y` is never checked.
-   */
   private fun nestedLoopXcfa(safe: Boolean): XCFA =
     xcfa("nested-loop") {
       val main =
@@ -120,10 +111,6 @@ class NestedLoopActorTest {
     assertEquals(1, cyclicBlocks.size, "only the inner loop is a genuine single self-loop")
     assertEquals("innerHead", cyclicBlocks.single().initialLocation.name)
 
-    // The outer loop is a two-block cycle (outerHead-side <-> afterInner-side), the same shape
-    // `DiverseProgramsActorTest`'s loop-with-break fixture has - confirming this fixture is a
-    // genuine superset of complexity (a two-block outer cycle with an entirely separate,
-    // single-block inner cycle nested inside it), not just a relabeled existing fixture.
     val outerHeadBlocks = blockGraph.blocks.filter { it.finalLocation.name == "outerHead" }
     assertEquals(2, outerHeadBlocks.size, "outerHead is reached from init and from afterInner")
   }

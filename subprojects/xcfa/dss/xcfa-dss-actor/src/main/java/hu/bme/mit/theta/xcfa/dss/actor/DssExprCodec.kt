@@ -38,10 +38,7 @@ import java.io.DataOutputStream
 
 private const val TRANSPORT_PREFIX = "__dss_transport_"
 
-/**
- * Transfers DSS message expressions between processes as `toString()` text: program variables by
- * name, [DssAuxVars] by `(index, type)`. Round trips are exact unless quantifiers are involved.
- */
+/** Message expressions as text between processes; exact unless quantifiers are involved. */
 class DssExprCodec(private val xcfa: XCFA) {
 
   private val programVars: Map<String, VarDecl<*>>
@@ -94,10 +91,7 @@ class DssExprCodec(private val xcfa: XCFA) {
       as Expr<BoolType>
   }
 
-  /**
-   * The program's locations in a fixed order: names come from a JVM-wide counter, so they differ
-   * between processes, but every process that parsed the program builds them in the same order.
-   */
+  /** Location names differ between processes, their order does not. */
   private val locationList: List<XcfaLocation> by lazy { xcfa.procedures.flatMap { it.locs } }
   private val locationIndex: Map<XcfaLocation, Int> by lazy {
     locationList.withIndex().associate { (index, location) -> location to index }
@@ -110,7 +104,6 @@ class DssExprCodec(private val xcfa: XCFA) {
   fun readLocation(input: DataInputStream): XcfaLocation =
     input.readInt().let { locationList.getOrNull(it) ?: error("Unknown program location #$it") }
 
-  /** An edge as its ends and its position among the parallel edges with the same ends. */
   fun writeEdge(out: DataOutputStream, edge: XcfaEdge) {
     writeLocation(out, edge.source)
     writeLocation(out, edge.target)

@@ -15,55 +15,30 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/**
- * A participant in the DSS actor network; decides how to answer and route messages itself. See
- * [DssBlockActor] and [DssObserverActor] for the two roles.
- */
 interface DssActor : Runnable {
 
   val id: String
 
   val connection: DssConnection
 
-  /** Answers a received message with a (possibly empty) collection of responses. */
   fun processMessage(message: DssMessage): Collection<DssMessage>
 
-  /** Routes a collection of produced messages to whichever other actors should receive them. */
   fun broadcast(messages: Collection<DssMessage>)
 
-  /**
-   * Whether this actor should stop working. Once true, must never go back to false (matches
-   * CPAchecker's confirmed contract for `DssActor#shutdownRequested`).
-   */
+  /** Once true, never goes back to false. */
   fun shutdownRequested(): Boolean
 
   fun nextMessage(): DssMessage = connection.read()
 }
 
-/**
- * Base [DssActor] loop: take, process, route, repeat until [shutdownRequested]. A failure
- * broadcasts a [DssExceptionMessage] and ends the loop instead of silently hanging the network.
- */
+/** A failure is broadcast as a [DssExceptionMessage] instead of hanging the network. */
 abstract class DssWorker(override val id: String) : DssActor {
 
-  /**
-   * Processes one received [message], marking this actor [DssConnection.active] meanwhile so
-   * [DssThreadMonitor] never sees it as idle. Returns `false` if it failed (the actor should stop).
-   */
+  /** Marks the actor active meanwhile, so [DssThreadMonitor] never sees it idle. */
   fun processOneMessage(message: DssMessage): Boolean {
     connection.active.add(id)
     try {
-      broadcast(
-        DssTrace.span(
-          "msg",
-          "actor" to id,
-          "type" to message.type,
-          "from" to message.senderId,
-          outcome = { "out${it.size}" },
-        ) {
-          processMessage(message)
-        }
-      )
+      broadcast(processMessage(message))
       return true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
       connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))

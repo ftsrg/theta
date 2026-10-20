@@ -95,7 +95,6 @@ class SelfLoopAbsorbingDecompositionTest {
     assertTrue(absorbed.selfLoops().isEmpty())
     val loopBlock = absorbed.blocks.single { it.locations.any { loc -> loc.name == "bodyJoin" } }
     assertEquals(procedure.initLoc, loopBlock.initialLocation)
-    // The re-run MERGE also folds the loop exit in, so the loop head is no boundary at all.
     assertTrue(
       absorbed.blocks.none {
         it.initialLocation.name == "loophead" || it.finalLocation.name == "loophead"
@@ -119,7 +118,6 @@ class SelfLoopAbsorbingDecompositionTest {
     assertTrue(absorbed.root.locations.map { it.name }.containsAll(listOf("inner", "afterInner")))
   }
 
-  // r: A->B, p: B->C, q: B->D, s: D->C, l: C->C, e1: C->E (+ e2: C->F)
   private fun twoEntriesGraph(secondExit: Boolean): BlockGraph {
     val (a, b, c, d) = listOf(loc("A"), loc("B"), loc("C"), loc("D"))
     val (e, f) = listOf(loc("E"), loc("F"))

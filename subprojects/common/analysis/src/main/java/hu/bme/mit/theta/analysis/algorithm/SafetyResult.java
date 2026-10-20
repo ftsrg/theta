@@ -18,21 +18,25 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Cex;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import java.util.Optional;
 
 public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements Result<Pr> {
     private final Pr proof;
     private final Optional<Statistics> stats;
+    private final Optional<Prec> prec;
 
-    private SafetyResult(final Pr proof, final Optional<Statistics> stats) {
+    private SafetyResult(final Pr proof, final Optional<Statistics> stats, final Prec prec) {
         this.proof = proof;
         this.stats = checkNotNull(stats);
+        this.prec = Optional.ofNullable(prec);
     }
 
     private SafetyResult() {
         this.proof = null;
         this.stats = Optional.empty();
+        this.prec = Optional.empty();
     }
 
     @Override
@@ -45,13 +49,18 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
         return stats;
     }
 
+    /** The precision the analysis ended with, if it reports one. */
+    public Optional<Prec> getPrec() {
+        return prec;
+    }
+
     public static <Pr extends Proof, C extends Cex> Safe<Pr, C> safe(final Pr witness) {
-        return new Safe<>(witness, Optional.empty());
+        return new Safe<>(witness, Optional.empty(), null);
     }
 
     public static <Pr extends Proof, C extends Cex> Unsafe<Pr, C> unsafe(
             final C cex, final Pr witness) {
-        return new Unsafe<>(cex, witness, Optional.empty());
+        return new Unsafe<>(cex, witness, Optional.empty(), null);
     }
 
     public static <Pr extends Proof, C extends Cex> Unknown<Pr, C> unknown() {
@@ -60,12 +69,22 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
 
     public static <Pr extends Proof, C extends Cex> Safe<Pr, C> safe(
             final Pr witness, final Statistics stats) {
-        return new Safe<>(witness, Optional.ofNullable(stats));
+        return new Safe<>(witness, Optional.ofNullable(stats), null);
+    }
+
+    public static <Pr extends Proof, C extends Cex> Safe<Pr, C> safe(
+            final Pr witness, final Statistics stats, final Prec prec) {
+        return new Safe<>(witness, Optional.ofNullable(stats), prec);
     }
 
     public static <Pr extends Proof, C extends Cex> Unsafe<Pr, C> unsafe(
             final C cex, final Pr witness, final Statistics stats) {
-        return new Unsafe<>(cex, witness, Optional.ofNullable(stats));
+        return new Unsafe<>(cex, witness, Optional.ofNullable(stats), null);
+    }
+
+    public static <Pr extends Proof, C extends Cex> Unsafe<Pr, C> unsafe(
+            final C cex, final Pr witness, final Statistics stats, final Prec prec) {
+        return new Unsafe<>(cex, witness, Optional.ofNullable(stats), prec);
     }
 
     public static <Pr extends Proof, C extends Cex> Unknown<Pr, C> unknown(final Statistics stats) {
@@ -88,8 +107,8 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
     ////
 
     public static final class Safe<Pr extends Proof, C extends Cex> extends SafetyResult<Pr, C> {
-        private Safe(final Pr proof, final Optional<Statistics> stats) {
-            super(proof, stats);
+        private Safe(final Pr proof, final Optional<Statistics> stats, final Prec prec) {
+            super(proof, stats, prec);
         }
 
         @Override
@@ -127,8 +146,9 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
     public static final class Unsafe<Pr extends Proof, C extends Cex> extends SafetyResult<Pr, C> {
         private final C cex;
 
-        private Unsafe(final C cex, final Pr proof, final Optional<Statistics> stats) {
-            super(proof, stats);
+        private Unsafe(
+                final C cex, final Pr proof, final Optional<Statistics> stats, final Prec prec) {
+            super(proof, stats, prec);
             this.cex = checkNotNull(cex);
         }
 
@@ -176,11 +196,11 @@ public abstract class SafetyResult<Pr extends Proof, C extends Cex> implements R
         }
 
         public Unknown(final Optional<Statistics> stats) {
-            super(null, stats);
+            super(null, stats, null);
         }
 
         public Unknown(final Pr proof, final Optional<Statistics> stats) {
-            super(proof, stats);
+            super(proof, stats, null);
         }
 
         @Override

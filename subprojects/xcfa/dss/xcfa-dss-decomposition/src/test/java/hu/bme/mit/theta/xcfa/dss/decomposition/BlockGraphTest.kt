@@ -22,10 +22,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * Direct tests of [BlockGraph]'s invariants on hand-built (possibly broken) graphs, since
- * [BlockGraph.fromBlocksWithoutEdges] can never violate [BlockGraph.checkConsistency].
- */
 class BlockGraphTest {
 
   private fun loc(name: String) = XcfaLocation(name, metadata = EmptyMetaData)
@@ -55,7 +51,6 @@ class BlockGraphTest {
   fun `checkConsistency rejects a one-sided predecessor link`() {
     val a = loc("A")
     val b = loc("B")
-    // root does not list x as a successor, even though x claims root as a predecessor.
     val root = Block("root", a, a, setOf(a), emptySet())
     val x = Block("x", b, b, setOf(b), emptySet(), predecessorIds = setOf("root"))
     val blockGraph = BlockGraph(setOf(root, x))
@@ -104,7 +99,6 @@ class BlockGraphTest {
   fun `constructing a BlockGraph with zero roots fails`() {
     val a = loc("A")
     val b = loc("B")
-    // x and y each (wrongly) claim a predecessor, so neither looks like a root.
     val x = Block("x", a, b, setOf(a, b), emptySet(), predecessorIds = setOf("y"))
     val y = Block("y", b, a, setOf(a, b), emptySet(), predecessorIds = setOf("x"))
 

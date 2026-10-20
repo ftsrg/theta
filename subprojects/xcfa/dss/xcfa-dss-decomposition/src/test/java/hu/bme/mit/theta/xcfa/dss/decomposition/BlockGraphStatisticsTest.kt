@@ -39,7 +39,6 @@ class BlockGraphStatisticsTest {
 
   @Test
   fun `self loops, back-and-forth pairs and cyclic components are counted`() {
-    // root: A->B, x: B->C, self: C->C, y: C->D, z: D->C
     val (a, b, c, d) = listOf(loc("A"), loc("B"), loc("C"), loc("D"))
     val graph =
       BlockGraph.fromBlocksWithoutEdges(
@@ -52,7 +51,6 @@ class BlockGraphStatisticsTest {
         )
       )
     graph.checkConsistency()
-    // root->x, x->{self,y}, self->{self,y}, y->z, z->{self,y}: 8 edges; the cycle {self, y, z}.
     assertEquals(
       BlockGraphStatistics(
         blocks = 5,

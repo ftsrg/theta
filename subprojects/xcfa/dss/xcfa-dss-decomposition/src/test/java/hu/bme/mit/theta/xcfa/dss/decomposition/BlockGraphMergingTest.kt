@@ -106,8 +106,6 @@ class BlockGraphMergingTest {
         }
         .procedures
         .single()
-    // Force every location to be its own block boundary, so this still decomposes into multiple
-    // separate blocks for verticalMerge to have something to collapse.
     val blockGraph = LinearBlockDecomposition(isBlockEnd = { true }).decompose(procedure)
     assertTrue(blockGraph.blocks.size > 1)
 
@@ -137,19 +135,12 @@ class BlockGraphMergingTest {
         }
         .procedures
         .single()
-    // Force every location to be its own block boundary, so this decomposes into one block per
-    // edge in the first place, for verticalMerge to have something to collapse - otherwise
-    // LinearBlockDecomposition's own snake-collapsing would already have merged most of it.
     val blockGraph = LinearBlockDecomposition(isBlockEnd = { true }).decompose(procedure)
     assertEquals(8, blockGraph.blocks.size)
 
     val merged = verticalMerge(blockGraph)
 
     merged.checkConsistency()
-    // init->pre and pre->branch fuse; branch->armA and armA->join fuse (armA is not a real branch
-    // graph join, so isBlockEnd forcing it to be a location boundary does not stop the block-graph
-    // level merge); likewise for armB; join->post and post->final fuse. The genuine join, "join"
-    // itself (two block-level predecessors), is exactly where fusing has to stop.
     assertEquals(4, merged.blocks.size)
     val arms =
       merged.blocks.filter {
@@ -270,7 +261,6 @@ class BlockGraphMergingTest {
     val onePass = verticalMergePass(blockGraph)
 
     onePass.checkConsistency()
-    // L0+L1 and L2+L3 fuse; the two results only fuse in the next pass.
     assertEquals(setOf("MV0", "MV1"), onePass.blocks.map { it.id }.toSet())
     assertEquals(1, verticalMergePass(onePass).blocks.size)
   }

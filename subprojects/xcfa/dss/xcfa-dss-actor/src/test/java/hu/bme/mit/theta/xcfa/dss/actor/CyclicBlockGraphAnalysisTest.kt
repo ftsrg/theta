@@ -29,10 +29,6 @@ import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Build-order step 6: real per-block CEGAR on a cyclic block graph (the paper's `x`/`y` loop body
- * is its own successor), under [runDssActorsSequentially].
- */
 class CyclicBlockGraphAnalysisTest {
 
   companion object {
@@ -60,7 +56,6 @@ class CyclicBlockGraphAnalysisTest {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
@@ -71,10 +66,6 @@ class CyclicBlockGraphAnalysisTest {
     }
   }
 
-  /**
-   * The paper's running example: `x`/`y` incremented in a while loop, then `assert(x == y)` - safe
-   * iff [incrementY] keeps `y` in lockstep with `x`.
-   */
   private fun xyLoopXcfa(incrementY: Boolean): XCFA =
     xcfa("xy-loop") {
       val main =

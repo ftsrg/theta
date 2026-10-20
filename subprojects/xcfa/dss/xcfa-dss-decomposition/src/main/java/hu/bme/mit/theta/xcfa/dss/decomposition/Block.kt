@@ -18,10 +18,7 @@ package hu.bme.mit.theta.xcfa.dss.decomposition
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-/**
- * A coherent sub-graph of a procedure's CFG with one entry ([initialLocation]) and one exit
- * ([finalLocation]). Reuses the procedure's own locations/edges, so blocks can share boundaries.
- */
+/** A part of a procedure with one entry and one exit, sharing the procedure's locations. */
 data class Block(
   val id: String,
   val initialLocation: XcfaLocation,
@@ -30,17 +27,12 @@ data class Block(
   val edges: Set<XcfaEdge>,
   val predecessorIds: Set<String> = emptySet(),
   val successorIds: Set<String> = emptySet(),
-  /**
-   * Where a worker places this block's abstraction point, set by [BlockGraphInstrumentation].
-   * Defaults to [finalLocation], i.e. no dedicated abstraction point (not instrumented yet).
-   */
   val violationConditionLocation: XcfaLocation = finalLocation,
 ) {
 
   val isRoot: Boolean
     get() = predecessorIds.isEmpty()
 
-  /** Whether this block has a dedicated abstraction point, distinct from [finalLocation]. */
   val isAbstractionPossible: Boolean
     get() = violationConditionLocation != finalLocation
 }

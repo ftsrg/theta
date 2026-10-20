@@ -21,52 +21,31 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaLastPrecProvider
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-/**
- * The shape of `xcfa-cli`'s `getCegarChecker`, built only from lower-module types so this module
- * needn't depend on `xcfa-cli`. Any [SafetyChecker] fits, not just a CEGAR one.
- */
+/** A block checker; injected, since this module must not depend on `xcfa-cli`. */
 typealias XcfaChecker =
   SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 
-/** Builds an [XcfaChecker] for an [XCFA]; named so rosters can hold a list of them. */
 typealias CheckerFactory = (XCFA) -> XcfaChecker
 
-/**
- * Serializes checker construction only: concurrent Z3 `Context` creation crashed natively, while
- * checks themselves run in parallel, each on its own fresh solver (see `dss/DSS.md`).
- */
+/** Concurrent native solver construction crashed, so it is serialized; checks run in parallel. */
 private val solverConstructionLock = Any()
 
-/**
- * Runs [construct] under the same lock as checker construction in [runWorkerConfig] - for anything
- * else in DSS that creates a native solver context (e.g. [DssPredicateOperators]).
- */
 fun <T> withSolverConstructionLock(construct: () -> T): T =
   synchronized(solverConstructionLock) { construct() }
 
-/**
- * [onLastPrec], if given, receives the precision the checker ended with - only from checkers that
- * report one ([XcfaLastPrecProvider], i.e. CEGAR), and only once the check is done.
- */
 fun runWorkerConfig(
   xcfa: XCFA,
   checkerFactory: CheckerFactory,
   initialPrecision: XcfaPrec<*>? = null,
-  onLastPrec: ((XcfaPrec<*>) -> Unit)? = null,
 ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
-  // Every solver the checker creates is closed once the check is done (and under the same lock as
-  // construction): solver managers otherwise keep each one alive until SolverManager.closeAll(),
-  // and DSS builds a fresh checker for every single block analysis.
+  // Solver managers keep every solver until closeAll(); DSS builds a checker per block analysis
   return SolverManager.withSolverScope(solverConstructionLock) {
     val checker = withSolverConstructionLock { checkerFactory(xcfa) }
-    val result = if (initialPrecision != null) checker.check(initialPrecision) else checker.check()
-    if (onLastPrec != null) (checker as? XcfaLastPrecProvider)?.lastPrec?.let(onLastPrec)
-    result
+    if (initialPrecision != null) checker.check(initialPrecision) else checker.check()
   }
 }

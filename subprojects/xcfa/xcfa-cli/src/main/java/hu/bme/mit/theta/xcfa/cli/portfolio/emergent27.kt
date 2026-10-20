@@ -23,11 +23,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-/**
- * Runs only DSS: min-cut blocks with self loops absorbed, each block checked by predicate CEGAR
- * (Cartesian) first and by k-induction when that fails. Properties other than error-location
- * reachability (e.g. termination) are handed to [emergent26].
- */
+/** Only DSS; properties other than error-location reachability go to [emergent26]. */
 fun emergent27(
   xcfa: XCFA,
   mcm: MCM,
@@ -36,7 +32,6 @@ fun emergent27(
   logger: Logger,
   uniqueLogger: Logger,
 ): STM {
-  // DSS only checks error-location reachability; other properties keep the previous portfolio.
   if (portfolioConfig.inputConfig.property.verifiedProperty != ErrorDetection.ERROR_LOCATION)
     return emergent26(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
@@ -59,7 +54,6 @@ fun emergent27(
                   checkerBackends =
                     listOf(DssCheckerBackend.CEGAR_PRED_CART, DssCheckerBackend.KIND),
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
-                  checkerFallback = true,
                 ),
             )
         ),

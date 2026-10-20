@@ -29,10 +29,6 @@ import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * More diverse programs through real per-block CEGAR, each checked against the undecomposed
- * baseline: a three-way join, nested branches, a loop with a break, and two sequential loops.
- */
 class DiverseProgramsActorTest {
 
   companion object {
@@ -60,7 +56,6 @@ class DiverseProgramsActorTest {
     val procedure = wholeProgram.procedures.single()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val checkerRoster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
-    // Sequential only: the default (legacy) Z3 is not thread-safe
     return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
       runDssActorsSequentially(
         blockGraph,
@@ -71,10 +66,6 @@ class DiverseProgramsActorTest {
     }
   }
 
-  /**
-   * `branch` splits three ways, each arm assigning a distinct `x` before rejoining at `join` -
-   * three predecessors accumulating into one block.
-   */
   private fun threeWayJoinXcfa(errorValue: Int?): XCFA =
     xcfa("three-way-join") {
       val main =
@@ -110,9 +101,6 @@ class DiverseProgramsActorTest {
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * A branch inside a branch, all arms rejoining at `join` - a block graph more than one hop deep.
-   */
   private fun nestedBranchXcfa(errorValue: Int?): XCFA =
     xcfa("nested-branch") {
       val main =
@@ -149,10 +137,6 @@ class DiverseProgramsActorTest {
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * A loop that breaks early at `x >= 5` or loops back - a two-block cycle under `blk_linear`, not
-   * a single self-loop. Every path to `afterloop` guarantees `x >= 5`.
-   */
   private fun loopWithBreakXcfa(safe: Boolean): XCFA =
     xcfa("loop-with-break") {
       val main =
@@ -189,10 +173,6 @@ class DiverseProgramsActorTest {
     assert(checkDirectly(wholeProgram).isUnsafe) { "test fixture itself should be unsafe" }
   }
 
-  /**
-   * Two loops in sequence joined by a straight-line "mid" block - two cyclic components. The final
-   * check reuses loop 1's guard (`x >= 5`): Cartesian abstraction can't prove `x == 5` here.
-   */
   private fun twoSequentialLoopsXcfa(safe: Boolean): XCFA =
     xcfa("two-sequential-loops") {
       val main =

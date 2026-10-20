@@ -15,13 +15,9 @@
  */
 package hu.bme.mit.theta.xcfa.dss.actor
 
-/** One observed message, tagged with the wall-clock time it was processed at. */
 data class DssLogEntry(val timestampMillis: Long, val message: DssMessage)
 
-/**
- * Optional debug observer (CPAchecker's `DssVisualizationWorker`) that records every message it
- * receives into [log], shutting down like [DssObserverActor] so executors can wait for it.
- */
+/** CPAchecker's `DssVisualizationWorker`: records every message into [log]. */
 class DssVisualizationActor(
   id: String,
   override val connection: DssConnection,
@@ -33,7 +29,6 @@ class DssVisualizationActor(
   private var sawFinalMessage = false
   private val statsReceivedFrom = mutableSetOf<String>()
 
-  /** Every message this actor has observed, in receipt order, oldest first. */
   val log: List<DssLogEntry>
     get() = entries
 

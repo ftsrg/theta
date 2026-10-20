@@ -28,10 +28,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-/**
- * Build-order step 5: a [Block] extracted into a standalone XCFA can be checked in isolation with
- * the real, Z3-backed CEGAR delegator - no actor wiring or cross-block state passing yet.
- */
 class BlockXcfaExtractionTest {
 
   companion object {
@@ -43,10 +39,6 @@ class BlockXcfaExtractionTest {
     }
   }
 
-  /**
-   * init->branch, branch->safeArm->final (never touches the error location), branch->unsafeArm->err
-   * (always reaches it, once branch is taken).
-   */
   private fun branchingProcedureXcfa(): XCFA =
     xcfa("block-extraction") {
       val main =
@@ -87,8 +79,6 @@ class BlockXcfaExtractionTest {
 
   @Test
   fun `cloned locations do not carry adjacency from outside the block`() {
-    // Regression test: reusing the original locations (whose adjacency sets span the whole
-    // procedure) let a block with no error location of its own reach a neighbour's error location.
     val procedure = branchingProcedure()
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val safeArmBlock = blockGraph.blocks.single { it.locations.any { l -> l.name == "safeArm" } }
@@ -105,9 +95,6 @@ class BlockXcfaExtractionTest {
     val blockGraph = LinearBlockDecomposition().decompose(procedure)
     val unsafeArmBlock =
       blockGraph.blocks.single { it.locations.any { l -> l.name == "unsafeArm" } }
-    // Standalone, this block starts from "branch" with x unconstrained (top), not x == 0 as in the
-    // full program - exactly the "explore from the most general entry state" semantics a per-block
-    // worker with no incoming postcondition yet is supposed to have.
     assertEquals("branch", unsafeArmBlock.initialLocation.name)
 
     val result = check(extractBlockXcfa(procedure, unsafeArmBlock).xcfa)
@@ -140,8 +127,6 @@ class BlockXcfaExtractionTest {
     val direct = check(branchingProcedureXcfa())
     val extracted = check(extractBlockXcfa(procedure, wholeProcedureAsABlock).xcfa)
 
-    // The full, un-decomposed program starts from x == 0, so it never actually reaches the error
-    // location (unlike the isolated unsafeArm block above, which starts from x unconstrained).
     assertTrue(direct.isSafe)
     assertEquals(direct.isSafe, extracted.isSafe)
     assertEquals(direct.isUnsafe, extracted.isUnsafe)
