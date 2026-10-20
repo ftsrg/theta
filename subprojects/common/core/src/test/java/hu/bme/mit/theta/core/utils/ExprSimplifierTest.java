@@ -459,6 +459,19 @@ public class ExprSimplifierTest {
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, false, true, true}))));
         assertEquals(Bv(new boolean[] {false, false, false, true}), simplify(BvExprs.UDiv(e, e)));
+        assertEquals(
+                Bv(new boolean[] {false, true, false, false}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {true, true, false, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        // SMT-LIB bvudiv by zero is all ones
+        assertEquals(
+                Bv(new boolean[] {true, true, true, true}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {false, false, false, false}))));
     }
 
     @Test
@@ -481,6 +494,32 @@ public class ExprSimplifierTest {
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, false, true, true}))));
         assertEquals(Bv(new boolean[] {false, false, false, false}), simplify(BvExprs.URem(e, e)));
+        // operands with the sign bit set are still read unsigned: 10 % 3, 5 % 8, 12 % 9
+        assertEquals(
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, false, true, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        assertEquals(
+                Bv(new boolean[] {false, true, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {true, false, false, false}))));
+        assertEquals(
+                Bv(new boolean[] {false, false, true, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, true, false, false}),
+                                Bv(new boolean[] {true, false, false, true}))));
+        // SMT-LIB bvurem by zero is the dividend
+        assertEquals(
+                Bv(new boolean[] {true, false, true, false}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, false, true, false}),
+                                Bv(new boolean[] {false, false, false, false}))));
     }
 
     @Test
