@@ -36,12 +36,46 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.dss.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.DssCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.FastestCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.PriorityCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.RoundRobinCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.XcfaChecker
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockBehavior
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssExprCodec
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssResult
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssWorkerLauncher
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.PredicateBlockBehavior
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.combineInvariants
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.fingerprint
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActors
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActorsInProcesses
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActorsSequentially
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.serveDssBlocks
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.stitchViolationPath
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.violationTrace
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DssBlockDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.getStatistics
+import hu.bme.mit.theta.xcfa.analysis.dss.withSolverConstructionLock
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions
-import hu.bme.mit.theta.xcfa.cli.params.Domain
-import hu.bme.mit.theta.xcfa.cli.params.DssCheckerBackend
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
 import hu.bme.mit.theta.xcfa.cli.params.DssConfig
 import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
@@ -53,42 +87,6 @@ import hu.bme.mit.theta.xcfa.cli.params.WitnessLevel
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.params.toJson
-import hu.bme.mit.theta.xcfa.dss.actor.CONCURRENT_DSS_SOLVER
-import hu.bme.mit.theta.xcfa.dss.actor.DEFAULT_DSS_SOLVER
-import hu.bme.mit.theta.xcfa.dss.actor.DssBlockBehavior
-import hu.bme.mit.theta.xcfa.dss.actor.DssBlockWitness
-import hu.bme.mit.theta.xcfa.dss.actor.DssExprCodec
-import hu.bme.mit.theta.xcfa.dss.actor.DssResult
-import hu.bme.mit.theta.xcfa.dss.actor.DssWorkerLauncher
-import hu.bme.mit.theta.xcfa.dss.actor.PredicateBlockBehavior
-import hu.bme.mit.theta.xcfa.dss.actor.combineInvariants
-import hu.bme.mit.theta.xcfa.dss.actor.fingerprint
-import hu.bme.mit.theta.xcfa.dss.actor.runDssActors
-import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsInProcesses
-import hu.bme.mit.theta.xcfa.dss.actor.runDssActorsSequentially
-import hu.bme.mit.theta.xcfa.dss.actor.serveDssBlocks
-import hu.bme.mit.theta.xcfa.dss.actor.stitchViolationPath
-import hu.bme.mit.theta.xcfa.dss.actor.violationTrace
-import hu.bme.mit.theta.xcfa.dss.analysis.CheckerFactory
-import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerRoster
-import hu.bme.mit.theta.xcfa.dss.analysis.DssCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.dss.analysis.DssUndecidedQueryException
-import hu.bme.mit.theta.xcfa.dss.analysis.FastestCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.dss.analysis.PriorityCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.dss.analysis.RoundRobinCheckerSelectionStrategy
-import hu.bme.mit.theta.xcfa.dss.analysis.XcfaChecker
-import hu.bme.mit.theta.xcfa.dss.analysis.withSolverConstructionLock
-import hu.bme.mit.theta.xcfa.dss.decomposition.AcyclicMergeDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.Block
-import hu.bme.mit.theta.xcfa.dss.decomposition.BlockGraph
-import hu.bme.mit.theta.xcfa.dss.decomposition.CutLoopHandling
-import hu.bme.mit.theta.xcfa.dss.decomposition.DssBlockDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.LinearBlockDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.MergeBlockDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.MinCutDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.SelfLoopAbsorbingDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.SingleBlockDecomposition
-import hu.bme.mit.theta.xcfa.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import java.lang.management.ManagementFactory
@@ -109,7 +107,7 @@ fun checkDssSupports(property: XcfaProperty) =
       "${property.verifiedProperty} (input property ${property.inputProperty})"
   }
 
-/** `--backend DSS`: distributed summary synthesis (`dss/DSS.md`). */
+/** `--backend DSS`: distributed summary synthesis (`xcfa-analysis's dss/README.md`). */
 fun getDssChecker(
   xcfa: XCFA,
   mcm: MCM,
@@ -123,7 +121,7 @@ fun getDssChecker(
     xcfa.procedures.singleOrNull()
       ?: error(
         "DSS only supports single-procedure programs so far (found ${xcfa.procedures.size} " +
-          "procedures) - see dss/DSS.md's Known Limitations."
+          "procedures) - see xcfa-analysis's dss/README.md's Known Limitations."
       )
 
   val decomposition: DssBlockDecomposition =
@@ -145,6 +143,9 @@ fun getDssChecker(
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
   }
+  dssConfig.checkerBackends
+    .firstOrNull { it !in DSS_CHECKER_BACKENDS }
+    ?.let { throw IllegalArgumentException("--dss-checker-backends: $it cannot check DSS blocks") }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
@@ -152,34 +153,17 @@ fun getDssChecker(
   val cexMonitor =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE
     else CexMonitorOptions.CHECK
-  fun checkerFor(backend: DssCheckerBackend): CheckerFactory =
-    when (backend) {
-      DssCheckerBackend.CEGAR_PRED_CART,
-      DssCheckerBackend.CEGAR_PRED_BOOL,
-      DssCheckerBackend.CEGAR_PRED_SPLIT -> { blockXcfa: XCFA ->
-          getCegarChecker(
-            blockXcfa,
-            mcm,
-            parseContext,
-            getDefaultPredCegarConfig(backend.toCegarDomain(), solver, cexMonitor),
-            blockLogger,
-          )
-        }
-      DssCheckerBackend.BMC,
-      DssCheckerBackend.KIND,
-      DssCheckerBackend.IMC,
-      DssCheckerBackend.KINDIMC,
-      DssCheckerBackend.BOUNDED -> { blockXcfa: XCFA ->
-          adaptBoundedChecker(
-            getBoundedChecker(
-              blockXcfa,
-              parseContext,
-              getDefaultBoundedConfig(backend.toBoundedBackend()),
-              blockLogger,
-            )
-          )
-        }
+  fun checkerFor(backend: Backend): CheckerFactory {
+    val blockConfig =
+      if (backend == Backend.CEGAR)
+        getDefaultPredCegarConfig(solver = solver, cexMonitor = cexMonitor)
+      else getDefaultConfig(backend)
+    return { blockXcfa: XCFA ->
+      if (backend == Backend.CEGAR)
+        getCegarChecker(blockXcfa, mcm, parseContext, blockConfig, blockLogger)
+      else adaptBoundedChecker(getBoundedChecker(blockXcfa, parseContext, blockConfig, blockLogger))
     }
+  }
   val checkers: List<CheckerFactory> = dssConfig.checkerBackends.map(::checkerFor)
   val selectionStrategy: DssCheckerSelectionStrategy =
     when (dssConfig.checkerSelection) {
@@ -336,39 +320,17 @@ private fun getDssWorkerLauncher(
   }
 }
 
-/** A default [XcfaConfig] for a bounded-model-checking `--backend` preset. */
-private fun getDefaultBoundedConfig(backend: Backend): XcfaConfig<*, *> {
+/** The `--backend`s that check error-location reachability of a single procedure. */
+private val DSS_CHECKER_BACKENDS =
+  setOf(Backend.CEGAR, Backend.BMC, Backend.KIND, Backend.IMC, Backend.KINDIMC, Backend.BOUNDED)
+
+/** The default [XcfaConfig] of [backend], as `--backend` [backend] would build it. */
+private fun getDefaultConfig(backend: Backend): XcfaConfig<*, *> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
   config.backendConfig.backend = backend
   config.backendConfig.createSpecConfig()
   return config
 }
-
-private fun DssCheckerBackend.toBoundedBackend(): Backend =
-  when (this) {
-    DssCheckerBackend.BMC -> Backend.BMC
-    DssCheckerBackend.KIND -> Backend.KIND
-    DssCheckerBackend.IMC -> Backend.IMC
-    DssCheckerBackend.KINDIMC -> Backend.KINDIMC
-    DssCheckerBackend.BOUNDED -> Backend.BOUNDED
-    DssCheckerBackend.CEGAR_PRED_CART,
-    DssCheckerBackend.CEGAR_PRED_BOOL,
-    DssCheckerBackend.CEGAR_PRED_SPLIT ->
-      throw IllegalArgumentException("$this has no bounded-family Backend")
-  }
-
-private fun DssCheckerBackend.toCegarDomain(): Domain =
-  when (this) {
-    DssCheckerBackend.CEGAR_PRED_CART -> Domain.PRED_CART
-    DssCheckerBackend.CEGAR_PRED_BOOL -> Domain.PRED_BOOL
-    DssCheckerBackend.CEGAR_PRED_SPLIT -> Domain.PRED_SPLIT
-    DssCheckerBackend.BMC,
-    DssCheckerBackend.KIND,
-    DssCheckerBackend.IMC,
-    DssCheckerBackend.KINDIMC,
-    DssCheckerBackend.BOUNDED ->
-      throw IllegalArgumentException("$this is not a CEGAR entry, has no Domain")
-  }
 
 /** Discards the initial precision; the unchecked cast is safe, as the trace is only read. */
 @Suppress("UNCHECKED_CAST")

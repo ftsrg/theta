@@ -41,7 +41,7 @@ fun emergent27(
   fun getStm(inProcess: Boolean): STM {
     val dss =
       ConfigNode(
-        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-CEGAR_PRED_CART-KIND-$inProcess",
+        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-CEGAR-KIND-$inProcess",
         baseDssConfig.copy(
           backendConfig =
             baseDssConfig.backendConfig.copy(
@@ -50,8 +50,7 @@ fun emergent27(
               specConfig =
                 baseDssConfig.backendConfig.specConfig!!.copy(
                   decomposition = DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS,
-                  checkerBackends =
-                    listOf(DssCheckerBackend.CEGAR_PRED_CART, DssCheckerBackend.KIND),
+                  checkerBackends = listOf(Backend.CEGAR, Backend.KIND),
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
                 ),
             )

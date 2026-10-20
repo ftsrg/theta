@@ -23,7 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
-/** How DSS cuts the input procedure into blocks (see `dss/DSS.md`). */
+/** How DSS cuts the input procedure into blocks (see `xcfa-analysis's dss/README.md`). */
 enum class DssDecomposition {
   /** CPAchecker's `LINEAR_DECOMPOSITION`: a block boundary at every branch/join point/dead end. */
   LINEAR,
@@ -62,18 +62,6 @@ enum class DssCheckerSelectionMethod {
   FASTEST,
 }
 
-/** Block checker backends: the predicate CEGAR domains and the bounded `--backend` presets. */
-enum class DssCheckerBackend {
-  CEGAR_PRED_CART,
-  CEGAR_PRED_BOOL,
-  CEGAR_PRED_SPLIT,
-  BMC,
-  KIND,
-  IMC,
-  KINDIMC,
-  BOUNDED,
-}
-
 @Serializable
 data class DssConfig(
   @Parameter(
@@ -84,10 +72,10 @@ data class DssConfig(
   @Parameter(
     names = ["--dss-checker-backends"],
     description =
-      "Comma-separated list of block checker backends; a failing checker is retried with the " +
-        "next one (e.g. CEGAR_PRED_CART,KIND)",
+      "Comma-separated list of block checker backends (CEGAR, BMC, KIND, IMC, KINDIMC, " +
+        "BOUNDED); a failing checker is retried with the next one",
   )
-  var checkerBackends: List<DssCheckerBackend> = listOf(DssCheckerBackend.CEGAR_PRED_CART),
+  var checkerBackends: List<Backend> = listOf(Backend.CEGAR),
   @Parameter(
     names = ["--dss-checker-selection"],
     description = "Which of --dss-checker-backends a block analysis starts with",

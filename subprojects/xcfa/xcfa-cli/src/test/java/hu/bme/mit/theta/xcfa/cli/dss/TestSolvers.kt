@@ -1,0 +1,36 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.cli.dss
+
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.*
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import java.time.Duration
+
+/** Time limit of an end-to-end case: the sequential executor analyzes one block at a time. */
+val END_TO_END_TIMEOUT: Duration = Duration.ofSeconds(240)
+
+private var defaultSolversRegistered = false
+
+/** Registers Theta's built-in solver managers once per test JVM, as `xcfa-cli`'s startup does. */
+@Synchronized
+fun ensureDefaultSolversRegistered(config: XcfaConfig<*, *>, logger: Logger) {
+  if (!defaultSolversRegistered) {
+    registerAllSolverManagers(config.backendConfig.solverHome, logger)
+    defaultSolversRegistered = true
+  }
+}

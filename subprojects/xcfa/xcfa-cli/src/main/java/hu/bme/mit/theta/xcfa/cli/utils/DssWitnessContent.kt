@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.dss.actor.DssInvariants
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.utils.collectVars

@@ -53,10 +53,10 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
-import hu.bme.mit.theta.xcfa.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
