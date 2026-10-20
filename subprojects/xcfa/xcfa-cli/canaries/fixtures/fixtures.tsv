@@ -37,6 +37,7 @@ memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee cop
 vla_zero_length.c	efficient	ILP32	SAFE:valid-memsafety	a zero-length VLA that is never accessed is allowed (GNU C)
 vla_oversize_length.c	efficient	ILP32	UNSAFE:valid-memsafety	a VLA larger than PTRDIFF_MAX bytes is undefined
 vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
+race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
 pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	p-- keeps its sign under integer arithmetic (backwards buffer walk)
 store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	storing a mid-object pointer is refused, not clobbered onto one cell
 alloca_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	alloca memory is released at function return (use-after-return is caught)
