@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
@@ -72,7 +73,7 @@ fun Dereference<*, *, *>.addressesAtomicData(
     if (parseContext.isAtomicObjectCell(base, offset.asConstantBigInteger()?.toInt())) return true
   }
   // A live pointer *variable*: its type says what it points at.
-  (array as? RefExpr<*>)?.decl?.let { decl ->
+  (array.unwrapTraceable() as? RefExpr<*>)?.decl?.let { decl ->
     globalVars.firstOrNull { it.wrappedVar == decl }?.let { if (it.pointsToAtomic) return true }
     val pointee =
       try {
@@ -96,9 +97,9 @@ fun Dereference<*, *, *>.addressesAtomicData(
  * The value of a bare integer/bitvector literal, or null when this is not a compile-time constant.
  */
 fun Expr<*>.asConstantBigInteger(): BigInteger? =
-  when (this) {
-    is IntLitExpr -> value
-    is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
+  when (val bare = unwrapTraceable()) {
+    is IntLitExpr -> bare.value
+    is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bare)
     else -> null
   }
 
@@ -111,9 +112,10 @@ fun Expr<*>.resolveObjectBase(parseContext: ParseContext): BigInteger? {
   asConstantBigInteger()?.let {
     return it
   }
-  if (this is Dereference<*, *, *>) {
-    val parent = array.resolveObjectBase(parseContext) ?: return null
-    val offsetValue = offset.asConstantBigInteger()?.toInt() ?: return null
+  val deref = unwrapTraceable()
+  if (deref is Dereference<*, *, *>) {
+    val parent = deref.array.resolveObjectBase(parseContext) ?: return null
+    val offsetValue = deref.offset.asConstantBigInteger()?.toInt() ?: return null
     return parseContext.subObjectBaseAt(parent, offsetValue)
   }
   return null

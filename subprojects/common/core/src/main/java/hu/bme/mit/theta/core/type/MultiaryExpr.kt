@@ -19,10 +19,9 @@ import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.utils.TypeUtils
 
-sealed class MultiaryExpr<OpType : Type, ExprType : Type>
-protected constructor(ops: Iterable<Expr<OpType>>) : AbstractExpr<ExprType>() {
+sealed class MultiaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-  final override val ops: List<Expr<OpType>> = ImmutableList.copyOf(ops)
+  abstract override val ops: List<Expr<OpType>>
 
   @Volatile private var hashCode = 0
 
@@ -48,8 +47,10 @@ protected constructor(ops: Iterable<Expr<OpType>>) : AbstractExpr<ExprType>() {
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null && javaClass == other.javaClass && ops == (other as MultiaryExpr<*, *>).ops)
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null && javaClass == other.javaClass && ops == (other as MultiaryExpr<*, *>).ops)
 
   final override fun toString(): String =
     Utils.lispStringBuilder(operatorLabel).body().addAll(ops).toString()

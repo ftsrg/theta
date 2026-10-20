@@ -23,20 +23,30 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.serialization.XcfaFiles
 import hu.bme.mit.theta.xcfa.cli.utils.CachingFileSerializer
+import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.lang.System.err
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.createTempFile
 
+/**
+ * Runs [config] in a separate process. Given the built [xcfa] (or a portfolio's matching
+ * [BuiltXcfa]), the process reads it instead of parsing the input again.
+ */
 class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   val config: XcfaConfig<F, B>,
   val logger: Logger,
+  private val xcfa: XCFA? = null,
+  private val parseContext: ParseContext? = null,
 ) : SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> {
 
   override fun check(prec: XcfaPrec<*>?): SafetyResult<EmptyProof, EmptyCex> {
@@ -54,9 +64,33 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         }
       )
 
+    // If the XCFA cannot be written, the process parses the input itself.
+    val built =
+      xcfa?.let { x -> parseContext?.let { x to it } }
+        ?: config.inputConfig.builtXcfa
+          ?.takeIf { it.frontendConfig == config.frontendConfig.toString() }
+          ?.let { it.xcfa to it.parseContext }
+    val xcfaFile =
+      built?.let { (xcfa, parseContext) ->
+        val file = createTempFile(config.outputConfig.resultFolder.toPath(), "xcfa", ".pb").toFile()
+        Runtime.getRuntime().addShutdownHook(Thread { file.delete() })
+        runCatching { XcfaFiles.write(file, xcfa, parseContext) }
+          .onFailure {
+            file.delete()
+            logger.write(Logger.Level.INFO, "Could not write the XCFA for the process: $it\n")
+          }
+          .map { file }
+          .getOrNull()
+      }
+
     val childConfig =
       config.copy(
-        inputConfig = config.inputConfig.copy(xcfaWCtx = null),
+        inputConfig =
+          config.inputConfig.copy(
+            xcfaWCtx = null,
+            xcfaFile = xcfaFile ?: config.inputConfig.xcfaFile,
+            builtXcfa = null,
+          ),
         outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
         backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
       )
@@ -110,6 +144,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         processHandler.safetyResult
       }
 
+    xcfaFile?.delete()
     tempDir.toFile().listFiles()?.forEach {
       it.copyTo(config.outputConfig.resultFolder.resolve(it.name), overwrite = true)
     }

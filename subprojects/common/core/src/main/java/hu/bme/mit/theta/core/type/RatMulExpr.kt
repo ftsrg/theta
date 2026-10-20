@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.core.type
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import java.math.BigInteger
+import kotlinx.serialization.Serializable
 
-class RatMulExpr private constructor(ops: Iterable<Expr<RatType>>) : MulExpr<RatType>(ops) {
+@Serializable
+class RatMulExpr private constructor(override val ops: List<Expr<RatType>>) : MulExpr<RatType>() {
 
   override val type: RatType
     get() = Rat()
@@ -38,7 +41,7 @@ class RatMulExpr private constructor(ops: Iterable<Expr<RatType>>) : MulExpr<Rat
   }
 
   override fun with(ops: Iterable<Expr<RatType>>): RatMulExpr =
-    if (ops === this.ops) this else keepSourceType(of(ops))
+    if (ops === this.ops) this else of(ops)
 
   override val hashSeed: Int
     get() = HASH_SEED
@@ -50,7 +53,8 @@ class RatMulExpr private constructor(ops: Iterable<Expr<RatType>>) : MulExpr<Rat
     private const val HASH_SEED = 9479
     private const val OPERATOR_LABEL = "*"
 
-    @JvmStatic fun of(ops: Iterable<Expr<RatType>>): RatMulExpr = RatMulExpr(ops)
+    @JvmStatic
+    fun of(ops: Iterable<Expr<RatType>>): RatMulExpr = RatMulExpr(ImmutableList.copyOf(ops))
 
     @JvmStatic fun create(ops: List<Expr<*>>): RatMulExpr = of(ops.map { cast(it, Rat()) })
   }

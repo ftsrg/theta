@@ -16,23 +16,24 @@
 package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class IteExpr<ExprType : Type>
-private constructor(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprType>) :
-  AbstractExpr<ExprType>() {
+private constructor(
+  val cond: Expr<BoolType>,
+  val then: Expr<ExprType>,
+  val `else`: Expr<ExprType>,
+) : Expr<ExprType> {
 
-  val cond: Expr<BoolType> = checkNotNull(cond)
-  val then: Expr<ExprType> = checkNotNull(then)
-  val `else`: Expr<ExprType> = checkNotNull(elze)
-
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override val ops: List<Expr<*>>
     get() = ImmutableList.of(cond, then, `else`)
@@ -56,7 +57,7 @@ private constructor(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprT
 
   fun with(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprType>): IteExpr<ExprType> =
     if (this.cond === cond && this.then === then && this.`else` === elze) this
-    else keepSourceType(of(cond, then, elze))
+    else of(cond, then, elze)
 
   fun withCond(cond: Expr<BoolType>): IteExpr<ExprType> = with(cond, then, `else`)
 
@@ -77,6 +78,7 @@ private constructor(cond: Expr<BoolType>, then: Expr<ExprType>, elze: Expr<ExprT
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as IteExpr<*>

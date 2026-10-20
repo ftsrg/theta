@@ -16,17 +16,18 @@
 package hu.bme.mit.theta.core.type
 
 import hu.bme.mit.theta.core.model.Valuation
+import kotlinx.serialization.Serializable
 
-class PrimeExpr<ExprType : Type> private constructor(op: Expr<ExprType>) :
-  UnaryExpr<ExprType, ExprType>(op) {
+@Serializable
+class PrimeExpr<ExprType : Type> private constructor(override val op: Expr<ExprType>) :
+  UnaryExpr<ExprType, ExprType>() {
 
   override val type: ExprType
     get() = op.type
 
   override fun eval(valuation: Valuation): LitExpr<ExprType> = throw UnsupportedOperationException()
 
-  override fun with(op: Expr<ExprType>): PrimeExpr<ExprType> =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<ExprType>): PrimeExpr<ExprType> = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

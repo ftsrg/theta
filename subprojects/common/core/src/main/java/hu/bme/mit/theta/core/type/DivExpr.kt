@@ -18,9 +18,7 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class DivExpr<ExprType : Multiplicative<ExprType>>
-protected constructor(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>) :
-  BinaryExpr<ExprType, ExprType>(leftOp, rightOp) {
+sealed class DivExpr<ExprType : Multiplicative<ExprType>> : BinaryExpr<ExprType, ExprType>() {
 
   companion object {
     @JvmStatic

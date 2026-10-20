@@ -20,7 +20,9 @@ import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.enumtype.EnumType
+import kotlinx.serialization.Serializable
 
+@Serializable
 class EnumLitExpr private constructor(override val type: EnumType, val value: String) :
   NullaryExpr<EnumType>(), LitExpr<EnumType> {
 
@@ -29,6 +31,7 @@ class EnumLitExpr private constructor(override val type: EnumType, val value: St
   override fun toString(): String = EnumType.makeLongName(type.name, value)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as EnumLitExpr

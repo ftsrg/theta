@@ -167,13 +167,13 @@ private fun labelToEdge(
             splitName.subList(2, splitName.size).joinToString("::")
           else varDecl.name
         if (
-          parseContext.metadata.getMetadataValue(rootName, "cName").isPresent &&
+          parseContext.variableSources.containsKey(rootName) &&
             eval.isPresent &&
             // exclude non-scalar synchronization objects (e.g. pthread_mutex_t): their integer
             // encoding is not a valid C expression over the original program
             !parseContext.metadata.getMetadataValue(rootName, SYNC_VAR_METADATA_KEY).isPresent
         )
-          "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
+          "${parseContext.variableSources.getValue(rootName).cName} == ${
                     printLit(eval.get())
                 }"
         else null

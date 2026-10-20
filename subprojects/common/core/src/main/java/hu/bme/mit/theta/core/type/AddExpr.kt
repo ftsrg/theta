@@ -19,8 +19,7 @@ import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.core.type.abstracttype.Additive
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class AddExpr<ExprType : Additive<ExprType>>
-protected constructor(ops: Iterable<Expr<ExprType>>) : MultiaryExpr<ExprType, ExprType>(ops) {
+sealed class AddExpr<ExprType : Additive<ExprType>> : MultiaryExpr<ExprType, ExprType>() {
 
   companion object {
     @JvmStatic

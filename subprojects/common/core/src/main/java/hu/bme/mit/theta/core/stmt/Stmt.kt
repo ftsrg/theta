@@ -15,10 +15,14 @@
  */
 package hu.bme.mit.theta.core.stmt
 
+import hu.bme.mit.theta.core.serialization.StmtReferenceSerializer
+import kotlinx.serialization.Serializable
+
 /**
  * A statement. The hierarchy is sealed: statements defined outside this package extend
  * [ForeignStmt].
  */
+@Serializable(with = StmtReferenceSerializer::class)
 sealed interface Stmt {
   fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R
 }

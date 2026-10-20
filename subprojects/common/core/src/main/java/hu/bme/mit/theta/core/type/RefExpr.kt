@@ -15,13 +15,24 @@
  */
 package hu.bme.mit.theta.core.type
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.DeclReferenceSerializer
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 
-class RefExpr<DeclType : Type> private constructor(decl: Decl<DeclType>) : NullaryExpr<DeclType>() {
-
-  val decl: Decl<DeclType> = checkNotNull(decl)
+@Serializable(with = RefExprSerializer::class)
+class RefExpr<DeclType : Type> private constructor(val decl: Decl<DeclType>) :
+  NullaryExpr<DeclType>() {
 
   @Volatile private var hashCode = 0
 
@@ -47,8 +58,10 @@ class RefExpr<DeclType : Type> private constructor(decl: Decl<DeclType>) : Nulla
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null && javaClass == other.javaClass && decl == (other as RefExpr<*>).decl)
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null && javaClass == other.javaClass && decl == (other as RefExpr<*>).decl)
 
   override fun toString(): String = decl.name
 
@@ -57,4 +70,40 @@ class RefExpr<DeclType : Type> private constructor(decl: Decl<DeclType>) : Nulla
 
     @JvmStatic fun <DeclType : Type> of(decl: Decl<DeclType>): RefExpr<DeclType> = RefExpr(decl)
   }
+}
+
+/**
+ * A reference keeps whether it is its declaration's canonical [Decl.ref]: code compares against
+ * that object by identity.
+ */
+class RefExprSerializer<T>(type: KSerializer<T>) : KSerializer<RefExpr<*>> {
+  private val decl = DeclReferenceSerializer(type)
+
+  override val descriptor: SerialDescriptor =
+    buildClassSerialDescriptor("theta.RefExpr") {
+      element("decl", decl.descriptor)
+      element("canonical", Boolean.serializer().descriptor)
+    }
+
+  override fun serialize(encoder: Encoder, value: RefExpr<*>) =
+    encoder.encodeStructure(descriptor) {
+      encodeSerializableElement(descriptor, 0, decl, value.decl)
+      encodeBooleanElement(descriptor, 1, value === value.decl.ref)
+    }
+
+  override fun deserialize(decoder: Decoder): RefExpr<*> =
+    decoder.decodeStructure(descriptor) {
+      var d: Decl<*>? = null
+      var canonical = false
+      while (true) {
+        when (val index = decodeElementIndex(descriptor)) {
+          0 -> d = decodeSerializableElement(descriptor, 0, decl)
+          1 -> canonical = decodeBooleanElement(descriptor, 1)
+          CompositeDecoder.DECODE_DONE -> break
+          else -> throw SerializationException("Unexpected RefExpr element $index")
+        }
+      }
+      val resolved = checkNotNull(d) { "A RefExpr needs its declaration" }
+      if (canonical) resolved.ref else RefExpr.of(resolved)
+    }
 }

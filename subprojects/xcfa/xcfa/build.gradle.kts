@@ -26,4 +26,5 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-z3"))
+    testImplementation(Deps.kotlinxSerializationJson)
 }

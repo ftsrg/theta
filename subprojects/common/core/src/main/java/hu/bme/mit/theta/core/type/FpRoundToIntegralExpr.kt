@@ -20,12 +20,14 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.Serializable
 import org.kframework.mpfr.BigFloat
 
 /** Rounds to an integral value. */
+@Serializable
 class FpRoundToIntegralExpr
-private constructor(val roundingMode: FpRoundingMode, op: Expr<FpType>) :
-  UnaryExpr<FpType, FpType>(op) {
+private constructor(val roundingMode: FpRoundingMode, override val op: Expr<FpType>) :
+  UnaryExpr<FpType, FpType>() {
 
   override val type: FpType
     get() = op.type
@@ -39,9 +41,10 @@ private constructor(val roundingMode: FpRoundingMode, op: Expr<FpType>) :
   }
 
   override fun with(op: Expr<FpType>): FpRoundToIntegralExpr =
-    if (op === this.op) this else keepSourceType(of(roundingMode, op))
+    if (op === this.op) this else of(roundingMode, op)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpRoundToIntegralExpr

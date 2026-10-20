@@ -15,16 +15,26 @@
  */
 package hu.bme.mit.theta.core.decl
 
+import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.common.Utils
+import hu.bme.mit.theta.core.serialization.DeclReferenceSerializer
 import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.KeepGeneratedSerializer
+import kotlinx.serialization.Serializable
 
-class ParamDecl<DeclType : Type> internal constructor(name: String, type: DeclType) :
-  Decl<DeclType>(name, type) {
+@Serializable(with = DeclReferenceSerializer::class)
+@KeepGeneratedSerializer
+class ParamDecl<DeclType : Type>
+internal constructor(override val name: String, override val type: DeclType) : Decl<DeclType>() {
+
+  init {
+    checkArgument(name.isNotEmpty())
+  }
 
   override fun toString(): String =
     Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString()
 
-  private companion object {
-    const val DECL_LABEL = "Param"
+  companion object {
+    private const val DECL_LABEL = "Param"
   }
 }

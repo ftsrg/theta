@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.core.model.Valuation
+import kotlinx.serialization.Serializable
 
-class InvalidLitExpr<ExprType : Type>(type: ExprType) : NullaryExpr<ExprType>(), LitExpr<ExprType> {
-
-  override val type: ExprType = checkNotNull(type)
+@Serializable
+class InvalidLitExpr<ExprType : Type>(override val type: ExprType) :
+  NullaryExpr<ExprType>(), LitExpr<ExprType> {
 
   override fun eval(valuation: Valuation): LitExpr<ExprType> = this
 

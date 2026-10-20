@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -214,15 +215,18 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     size: Expr<*>,
     retType: CComplexType,
   ): XcfaLabel? {
-    if (ExprUtils.simplify(size) is LitExpr<*>) return null
+    if (ExprUtils.simplify(size).unwrapTraceable() is LitExpr<*>) return null
     val element = (retType as? CPointer)?.embeddedType ?: return null
     val probe = Var("__theta_vla_probe_${probeCnt++}", element.smtType)
     builder.addVar(probe)
-    parseContext.metadata.create(probe.ref, "cType", element)
+    CComplexType.withType(probe.ref, element)
     val offset = CComplexType.getUnsignedLong(parseContext).nullValue
     @Suppress("UNCHECKED_CAST")
-    val cell = Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
-    parseContext.metadata.create(cell, "cType", element)
+    val cell =
+      CComplexType.withType(
+        Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type),
+        element,
+      )
     return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
   }
 

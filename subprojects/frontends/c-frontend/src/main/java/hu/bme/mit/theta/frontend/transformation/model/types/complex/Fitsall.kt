@@ -18,9 +18,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class Fitsall(origin: CSimpleType?, parseContext: ParseContext) :
-  CInteger(origin, parseContext), Unsigned {
+@Serializable
+class Fitsall(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CInteger(), Unsigned {
   init {
     rank = RANK
     unsigned = false
@@ -38,7 +43,7 @@ class Fitsall(origin: CSimpleType?, parseContext: ParseContext) :
   override val unsignedVersion: CInteger
     get() = this
 
-  private companion object {
-    const val RANK = 100
+  companion object {
+    private const val RANK = 100
   }
 }

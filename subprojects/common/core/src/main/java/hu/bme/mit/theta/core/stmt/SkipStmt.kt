@@ -15,8 +15,11 @@
  */
 package hu.bme.mit.theta.core.stmt
 
+import kotlinx.serialization.Serializable
+
 /** A skip statement is a placeholder that does not perform any operation. */
-class SkipStmt private constructor() : Stmt {
+@Serializable
+object SkipStmt : Stmt {
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)
@@ -28,11 +31,8 @@ class SkipStmt private constructor() : Stmt {
 
   override fun toString(): String = STMT_LABEL
 
-  companion object {
-    private const val HASH_CODE = 1310147
-    private const val STMT_LABEL = "skip"
-    private val INSTANCE = SkipStmt()
+  private const val HASH_CODE = 1310147
+  private const val STMT_LABEL = "skip"
 
-    @JvmStatic fun getInstance(): SkipStmt = INSTANCE
-  }
+  @JvmStatic fun getInstance(): SkipStmt = this
 }

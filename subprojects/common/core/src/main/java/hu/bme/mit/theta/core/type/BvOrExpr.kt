@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.core.type
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
-class BvOrExpr private constructor(ops: Iterable<Expr<BvType>>) :
-  MultiaryExpr<BvType, BvType>(ops) {
+@Serializable
+class BvOrExpr private constructor(override val ops: List<Expr<BvType>>) :
+  MultiaryExpr<BvType, BvType>() {
 
   init {
     checkAllTypesEqual(ops)
@@ -35,8 +38,7 @@ class BvOrExpr private constructor(ops: Iterable<Expr<BvType>>) :
       acc.or(op.eval(valuation) as BvLitExpr)
     }
 
-  override fun with(ops: Iterable<Expr<BvType>>): BvOrExpr =
-    if (ops === this.ops) this else keepSourceType(of(ops))
+  override fun with(ops: Iterable<Expr<BvType>>): BvOrExpr = if (ops === this.ops) this else of(ops)
 
   override val hashSeed: Int
     get() = HASH_SEED
@@ -48,7 +50,7 @@ class BvOrExpr private constructor(ops: Iterable<Expr<BvType>>) :
     private const val HASH_SEED = 2745
     private const val OPERATOR_LABEL = "bvor"
 
-    @JvmStatic fun of(ops: Iterable<Expr<BvType>>): BvOrExpr = BvOrExpr(ops)
+    @JvmStatic fun of(ops: Iterable<Expr<BvType>>): BvOrExpr = BvOrExpr(ImmutableList.copyOf(ops))
 
     @JvmStatic fun create(ops: List<Expr<*>>): BvOrExpr = of(ops.map { castBv(it) })
   }

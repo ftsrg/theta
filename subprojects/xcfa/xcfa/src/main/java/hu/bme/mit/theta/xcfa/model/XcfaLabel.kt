@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-@file:UseContextualSerialization(Expr::class, VarDecl::class, Stmt::class, MetaData::class)
+@file:UseContextualSerialization(MetaData::class)
 
 package hu.bme.mit.theta.xcfa.model
 

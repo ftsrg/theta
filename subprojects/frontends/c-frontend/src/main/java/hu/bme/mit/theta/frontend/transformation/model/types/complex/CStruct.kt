@@ -16,13 +16,18 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
 import hu.bme.mit.theta.common.Tuple2
+import hu.bme.mit.theta.core.serialization.Tuple2Serializer
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.LayoutAttributesSerializer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
 import java.util.stream.Collectors
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class CStruct
 /**
  * @param bitfieldWidths bitfield width per field (-1 for an ordinary, non-bitfield member),
@@ -33,9 +38,13 @@ class CStruct
  * @param fieldAttributes layout attributes per field, parallel to `fields`; an empty list means
  *   none anywhere
  */
-constructor(
-  origin: CSimpleType?,
-  val fields: List<Tuple2<String, CComplexType>>,
+private constructor(
+  @Transient override val origin: CSimpleType? = null,
+  val fields:
+    List<
+      @Serializable(with = Tuple2Serializer::class)
+      Tuple2<String, @Serializable(with = CComplexTypeReferenceSerializer::class) CComplexType>
+    >,
   /**
    * A union's members all start at the same address, so they are all given member offset 0. Since a
    * member access lowers to `__arrays_T[base][offset]` -- an array *per SMT type* -- two members of
@@ -45,16 +54,17 @@ constructor(
    * of AD7 and is rejected rather than answered unsoundly.
    */
   val isUnion: Boolean,
-  parseContext: ParseContext,
-  bitfieldWidths: List<Int>,
-  paddings: List<Padding>,
-  /** Layout attributes on the struct itself (`packed`, `aligned(n)`). */
-  val attributes: ObjectLayout.Attributes,
-  fieldAttributes: List<ObjectLayout.Attributes>,
-) : CInteger(origin, parseContext) {
-
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
   /** Declared bitfield width per field (-1 for an ordinary member); see [overlayWidth]. */
-  private val bitfieldWidths: List<Int> = java.util.List.copyOf(bitfieldWidths)
+  private val bitfieldWidths: List<Int>,
+  /** The unnamed bitfields between this struct's members, in declaration order. */
+  val paddings: List<Padding>,
+  /** Layout attributes on the struct itself (`packed`, `aligned(n)`). */
+  @Serializable(with = LayoutAttributesSerializer::class) val attributes: ObjectLayout.Attributes,
+  /** Per-field layout attributes, parallel to [fields]. */
+  private val fieldAttributes:
+    List<@Serializable(with = LayoutAttributesSerializer::class) ObjectLayout.Attributes>,
+) : CInteger() {
 
   /**
    * An unnamed bitfield: `int : 3;` reserves bits, `int : 0;` closes the current storage unit. It
@@ -67,14 +77,9 @@ constructor(
    * @param bitWidth the declared width; 0 means "close the unit"
    * @param baseBits the width of the type it was declared with, i.e. the unit it closes
    */
-  @JvmRecord data class Padding(val afterFieldIndex: Int, val bitWidth: Int, val baseBits: Int)
-
-  /** The unnamed bitfields between this struct's members, in declaration order. */
-  val paddings: List<Padding> = java.util.List.copyOf(paddings)
-
-  /** Per-field layout attributes, parallel to [fields]. */
-  private val fieldAttributes: List<ObjectLayout.Attributes> =
-    java.util.List.copyOf(fieldAttributes)
+  @Serializable
+  @JvmRecord
+  data class Padding(val afterFieldIndex: Int, val bitWidth: Int, val baseBits: Int)
 
   /**
    * Per-field storage-unit layout, parallel to [fields]. For a struct with no bitfields every field
@@ -82,9 +87,17 @@ constructor(
    * one-cell-per-field model. Consecutive bitfields pack into a shared unit (see [BitfieldLayout]),
    * so a member access lowers to that unit's cell and, for a bitfield, a slice of it.
    */
-  private val slots: List<BitfieldLayout.Slot>
-
-  private val layoutUnitCount: Int
+  @Transient
+  private val layout: BitfieldLayout.Layout =
+    BitfieldLayout.compute(
+      fields.indices.map { i ->
+        val bitfieldWidth = if (i < bitfieldWidths.size) bitfieldWidths[i] else -1
+        // The base-type width only matters for a bitfield (its unit's packing capacity); for an
+        // ordinary member it is unused, so avoid width() -- which throws for aggregate members.
+        val baseBits = if (bitfieldWidth >= 0) fields[i].get2().width() else 0
+        BitfieldLayout.Member(baseBits, bitfieldWidth)
+      }
+    )
 
   constructor(
     origin: CSimpleType?,
@@ -107,32 +120,18 @@ constructor(
     bitfieldWidths: List<Int>,
   ) : this(
     origin,
-    fields,
+    java.util.List.copyOf(fields),
     union,
     parseContext,
-    bitfieldWidths,
+    java.util.List.copyOf(bitfieldWidths),
     listOf(),
     ObjectLayout.Attributes.NONE,
     listOf(),
   )
 
-  init {
-    val members = ArrayList<BitfieldLayout.Member>(fields.size)
-    for (i in fields.indices) {
-      val bitfieldWidth = if (i < bitfieldWidths.size) bitfieldWidths[i] else -1
-      // The base-type width only matters for a bitfield (its unit's packing capacity); for an
-      // ordinary member it is unused, so avoid width() -- which throws for aggregate members.
-      val baseBits = if (bitfieldWidth >= 0) fields[i].get2().width() else 0
-      members.add(BitfieldLayout.Member(baseBits, bitfieldWidth))
-    }
-    val layout = BitfieldLayout.compute(members)
-    slots = layout.slots()
-    layoutUnitCount = layout.unitCount()
-  }
-
   /** The number of storage cells the struct occupies (units, not members). */
   val unitCount: Int
-    get() = if (isUnion) 1 else layoutUnitCount
+    get() = if (isUnion) 1 else layout.unitCount()
 
   /**
    * The total bit width of this struct viewed as one packed word, or null if it cannot be.
@@ -278,13 +277,13 @@ constructor(
   /** The storage cell index for [memberName], or -1 if it has no field. */
   fun unitOffsetOf(memberName: String): Int {
     val i = fieldIndexOf(memberName)
-    return if (i < 0) -1 else slots[i].unitIndex()
+    return if (i < 0) -1 else layout.slots()[i].unitIndex()
   }
 
   /** The full slice descriptor for [memberName] (unit, bit offset, width, bitfield?), or null. */
   fun slotOf(memberName: String): BitfieldLayout.Slot? {
     val i = fieldIndexOf(memberName)
-    return if (i < 0) null else slots[i]
+    return if (i < 0) null else layout.slots()[i]
   }
 
   private fun fieldIndexOf(memberName: String): Int {
@@ -330,5 +329,28 @@ constructor(
     private const val MAX_OVERLAY_BITS = 64
 
     private fun allOrdinary(n: Int): List<Int> = List(n) { -1 }
+
+    /** A struct of copies of the given lists: the parser keeps building the ones it passes. */
+    @JvmStatic
+    fun of(
+      origin: CSimpleType?,
+      fields: List<Tuple2<String, CComplexType>>,
+      isUnion: Boolean,
+      parseContext: ParseContext,
+      bitfieldWidths: List<Int>,
+      paddings: List<Padding>,
+      attributes: ObjectLayout.Attributes,
+      fieldAttributes: List<ObjectLayout.Attributes>,
+    ): CStruct =
+      CStruct(
+        origin,
+        java.util.List.copyOf(fields),
+        isUnion,
+        parseContext,
+        java.util.List.copyOf(bitfieldWidths),
+        java.util.List.copyOf(paddings),
+        attributes,
+        java.util.List.copyOf(fieldAttributes),
+      )
   }
 }

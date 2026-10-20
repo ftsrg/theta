@@ -15,21 +15,22 @@
  */
 package hu.bme.mit.theta.core.stmt
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Assume statement of the form [EXPRESSION], where EXPRESSION is a Boolean [Expr]. The statement is
  * a guard that can only be passed if EXPRESSION evaluates to true.
  */
-class AssumeStmt private constructor(cond: Expr<BoolType>) : Stmt {
-  val cond: Expr<BoolType> = checkNotNull(cond)
+@Serializable
+class AssumeStmt private constructor(val cond: Expr<BoolType>) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)

@@ -116,9 +116,9 @@ class CAssignment(
         }
         else -> throw UnsupportedFrontendElementException("Unsupported operator: $operator")
       }
-    parseContext.metadata.create(ret, "cType", CComplexType.getType(lValue, parseContext))
+    ret = CComplexType.withType(ret, CComplexType.getType(lValue, parseContext))
     ret = CComplexType.getType(lValue, parseContext).castTo(ret)
-    parseContext.metadata.create(ret, "cType", CComplexType.getType(lValue, parseContext))
+    ret = CComplexType.withType(ret, CComplexType.getType(lValue, parseContext))
     return ret
   }
 }

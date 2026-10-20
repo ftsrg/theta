@@ -32,11 +32,14 @@ import hu.bme.mit.theta.core.type.ModExpr
 import hu.bme.mit.theta.core.type.PosExpr
 import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class MallocLitExpr<T : Type>(val kType: T) : ForeignLitExpr<T>() {
 
   override val type: T
@@ -65,10 +68,10 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
   val attempt =
     Try.attempt {
       fun unbox(e: Expr<*>): Expr<*> =
-        when (e) {
-          is PosExpr<*> -> unbox(e.op)
-          is ModExpr<*> -> unbox(e.ops[0])
-          else -> e
+        when (val bare = e.unwrapTraceable()) {
+          is PosExpr<*> -> unbox(bare.op)
+          is ModExpr<*> -> unbox(bare.ops[0])
+          else -> bare
         }
 
       val bases =
@@ -110,12 +113,16 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
                   proc.params
                     .withIndex()
                     .filter { (i, pair) ->
-                      pair.second != ParamDirection.IN && it.params[i] is RefExpr<*>
+                      pair.second != ParamDirection.IN &&
+                        it.params[i].unwrapTraceable() is RefExpr<*>
                     }
                     .map { (i, pair) ->
                       val (param, _) = pair
                       Assign(
-                        cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                        cast(
+                          (it.params[i].unwrapTraceable() as RefExpr<*>).decl as VarDecl<*>,
+                          param.type,
+                        ),
                         cast(param.ref, param.type),
                       )
                     }
@@ -139,12 +146,16 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
                   calledProc.params
                     .withIndex()
                     .filter { (i, pair) ->
-                      pair.second != ParamDirection.IN && it.params[i] is RefExpr<*>
+                      pair.second != ParamDirection.IN &&
+                        it.params[i].unwrapTraceable() is RefExpr<*>
                     }
                     .map { (i, pair) ->
                       val (param, _) = pair
                       Assign(
-                        cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                        cast(
+                          (it.params[i].unwrapTraceable() as RefExpr<*>).decl as VarDecl<*>,
+                          param.type,
+                        ),
                         cast(param.ref, param.type),
                       )
                     }
@@ -224,7 +235,7 @@ fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
  * with their points-to sets, and taking their Cartesian product.
  */
 fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
-  val simplified = ExprUtils.simplify(this) as? LitExpr<*>
+  val simplified = ExprUtils.simplify(this).unwrapTraceable() as? LitExpr<*>
   if (simplified != null) return setOf(simplified)
 
   val results = mutableSetOf<LitExpr<*>>()
@@ -244,7 +255,7 @@ fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
   }
   values.forEach { vs ->
     val valuation = ImmutableValuation.from(vs)
-    val simplified = ExprUtils.simplify(this, valuation)
+    val simplified = ExprUtils.simplify(this, valuation).unwrapTraceable()
     if (simplified !is LitExpr<*>) return null
     results.add(simplified)
   }

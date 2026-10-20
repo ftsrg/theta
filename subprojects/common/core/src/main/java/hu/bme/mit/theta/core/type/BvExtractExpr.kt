@@ -23,12 +23,15 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class BvExtractExpr
 private constructor(val bitvec: Expr<BvType>, val from: IntLitExpr, val until: IntLitExpr) :
-  AbstractExpr<BvType>() {
+  Expr<BvType> {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   init {
     checkArgument(from.value.signum() >= 0)
@@ -53,8 +56,8 @@ private constructor(val bitvec: Expr<BvType>, val from: IntLitExpr, val until: I
     val newBitvec = castBv(ops[0])
     val newFrom = cast(ops[1], Int()) as IntLitExpr
     val newUntil = cast(ops[2], Int()) as IntLitExpr
-    return if (bitvec == newBitvec && from == newFrom && until == newUntil) this
-    else keepSourceType(of(newBitvec, newFrom, newUntil))
+    return if (bitvec === newBitvec && from === newFrom && until === newUntil) this
+    else of(newBitvec, newFrom, newUntil)
   }
 
   override fun hashCode(): Int {
@@ -70,6 +73,7 @@ private constructor(val bitvec: Expr<BvType>, val from: IntLitExpr, val until: I
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as BvExtractExpr

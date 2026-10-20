@@ -17,8 +17,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CFloat(origin: CSimpleType?, parseContext: ParseContext) : CReal(origin, parseContext) {
+@Serializable
+class CFloat(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CReal() {
   init {
     rank = RANK
   }
@@ -29,7 +35,7 @@ class CFloat(origin: CSimpleType?, parseContext: ParseContext) : CReal(origin, p
   override val typeName: String
     get() = "float"
 
-  private companion object {
-    const val RANK = 0
+  companion object {
+    private const val RANK = 0
   }
 }

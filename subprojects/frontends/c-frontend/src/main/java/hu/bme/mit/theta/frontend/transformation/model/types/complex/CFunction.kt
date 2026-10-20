@@ -17,9 +17,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CFunction(origin: CSimpleType?, parseContext: ParseContext) :
-  CCompound(origin, parseContext) {
+@Serializable
+class CFunction(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CCompound() {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package hu.bme.mit.theta.core.type
 
-/**
- * The type an expression has in the source language it was translated from (e.g. its C type). Core
- * treats it as opaque: it is carried along with the expression but never interpreted.
- */
-interface SourceType
+import hu.bme.mit.theta.core.serialization.TypeReferenceSerializer
+import kotlinx.serialization.Serializable
+
+/** A type is serialized as a reference into the object table, see [TypeReferenceSerializer]. */
+@Serializable(with = TypeReferenceSerializer::class)
+interface Type {
+  val domainSize: DomainSize
+}

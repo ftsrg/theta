@@ -111,6 +111,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NotExpr;
 import hu.bme.mit.theta.core.type.OrExpr;
 import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.TrueExpr;
 import hu.bme.mit.theta.core.type.XorExpr;
 import hu.bme.mit.theta.core.type.arraytype.*;
@@ -302,7 +303,9 @@ final class EldaricaExprTransformer {
 
     public Utils.PredTermFormula toTerm(final Expr<?> expr) {
         try {
-            return exprToTerm.get(expr, () -> table.dispatch(expr));
+            // A wrapper equals its wrapped expression, so it must not reach the cache itself.
+            final Expr<?> bare = Traceability.unwrapTraceable(expr);
+            return exprToTerm.get(bare, () -> table.dispatch(bare));
         } catch (final ExecutionException e) {
             throw new AssertionError("Unhandled case: " + expr, e);
         }

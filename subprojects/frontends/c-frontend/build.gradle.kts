@@ -16,6 +16,7 @@
 plugins {
     id("kotlin-common")
     id("antlr-grammar")
+    kotlin("plugin.serialization")
 }
 dependencies {
     implementation(project(":theta-core"))

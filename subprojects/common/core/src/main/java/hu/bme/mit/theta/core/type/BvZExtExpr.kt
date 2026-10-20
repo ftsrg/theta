@@ -21,11 +21,13 @@ import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class BvZExtExpr private constructor(val op: Expr<BvType>, val extendType: BvType) :
-  AbstractExpr<BvType>() {
+@Serializable
+class BvZExtExpr private constructor(val op: Expr<BvType>, val extendType: BvType) : Expr<BvType> {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   init {
     checkArgument(extendType.size >= op.type.size)
@@ -45,7 +47,7 @@ class BvZExtExpr private constructor(val op: Expr<BvType>, val extendType: BvTyp
 
   override fun withOps(ops: List<Expr<*>>): Expr<BvType> {
     checkArgument(ops.size == 1)
-    return keepSourceType(of(castBv(ops[0]), extendType))
+    return of(castBv(ops[0]), extendType)
   }
 
   override fun hashCode(): Int {
@@ -60,6 +62,7 @@ class BvZExtExpr private constructor(val op: Expr<BvType>, val extendType: BvTyp
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as BvZExtExpr

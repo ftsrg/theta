@@ -28,6 +28,7 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.BvLitExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -449,7 +450,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             // already bound to it see these fields. A tag that already *has* fields is a genuine
             // redefinition and still gets its own instance, which is what keeps an earlier
             // definition's copies resolving to the fields they were written against.
-            final Struct forwardDeclared = name == null ? null : Struct.getByName(name, union);
+            final Struct forwardDeclared =
+                    name == null ? null : Struct.getByName(name, union, parseContext);
             Struct struct =
                     forwardDeclared != null && !forwardDeclared.hasFields()
                             ? forwardDeclared
@@ -536,7 +538,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public CSimpleType visitCompoundUsage(CParser.CompoundUsageContext ctx) {
         String text = ctx.Identifier().getText();
         final boolean union = ctx.structOrUnion().Struct() == null;
-        final Struct existing = Struct.getByName(text, union);
+        final Struct existing = Struct.getByName(text, union, parseContext);
         if (existing != null) {
             return existing;
         }
@@ -605,10 +607,10 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                             this,
                             uniqueWarningLogger);
             Expr<?> folded = ExprUtils.simplify(ctx.accept(expressionVisitor));
-            if (folded instanceof IntLitExpr intLit) {
+            if (Traceability.unwrapTraceable(folded) instanceof IntLitExpr intLit) {
                 return intLit.getValue().longValue();
             }
-            if (folded instanceof BvLitExpr bvLit) {
+            if (Traceability.unwrapTraceable(folded) instanceof BvLitExpr bvLit) {
                 return BvUtils.neutralBvLitExprToBigInteger(bvLit).longValue();
             }
         } catch (Exception e) {

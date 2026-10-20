@@ -24,14 +24,17 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr
 import hu.bme.mit.theta.core.utils.FpUtils.fpLitExprToBigFloat
 import hu.bme.mit.theta.core.utils.FpUtils.getMathContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.kframework.mpfr.BigFloat
 import org.kframework.mpfr.BinaryMathContext
 
+@Serializable
 class FpLitExpr
 private constructor(val hidden: Boolean, val exponent: BvLitExpr, val significand: BvLitExpr) :
   NullaryExpr<FpType>(), LitExpr<FpType>, Comparable<FpType> {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   fun isNaN(): Boolean = exponent.value.all { it } && significand.value.any { it }
 
@@ -127,12 +130,14 @@ private constructor(val hidden: Boolean, val exponent: BvLitExpr, val significan
   }
 
   override fun equals(other: Any?): Boolean =
-    other != null &&
-      javaClass == other.javaClass &&
-      type == (other as FpLitExpr).type &&
-      exponent == other.exponent &&
-      hidden == other.hidden &&
-      significand == other.significand
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      other != null &&
+        javaClass == other.javaClass &&
+        type == (other as FpLitExpr).type &&
+        exponent == other.exponent &&
+        hidden == other.hidden &&
+        significand == other.significand
 
   override fun toString(): String =
     Utils.lispStringBuilder(if (hidden) "#b1" else "#b0")

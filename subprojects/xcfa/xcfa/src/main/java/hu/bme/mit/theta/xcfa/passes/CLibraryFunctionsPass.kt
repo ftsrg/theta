@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -87,10 +88,10 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   companion object {
 
     /**
-     * Metadata flag (keyed by a variable's name, like `cName`) marking a global variable that
-     * encodes a C synchronization object whose source type is non-scalar (e.g. `pthread_mutex_t`,
-     * `pthread_cond_t`, `pthread_rwlock_t`). Witness `c_expression` constraints must not reference
-     * such variables, as their integer encoding (e.g. `m == 0`) is not a valid C expression.
+     * Metadata flag marking a global variable that encodes a C synchronization object whose source
+     * type is non-scalar (e.g. `pthread_mutex_t`, `pthread_cond_t`, `pthread_rwlock_t`). Witness
+     * `c_expression` constraints must not reference such variables, as their integer encoding (e.g.
+     * `m == 0`) is not a valid C expression.
      */
     const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
 
@@ -105,8 +106,8 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   /** Best-effort tagging of the synchronization object referenced by parameter [index], if any. */
   private fun InvokeLabel.markSyncParam(index: Int) {
     if (index >= params.size) return
-    var param = params[index]
-    while (param is Reference<*, *>) param = param.expr
+    var param = params[index].unwrapTraceable()
+    while (param is Reference<*, *>) param = param.expr.unwrapTraceable()
     ((param as? RefExpr<*>)?.decl as? VarDecl<*>)?.let(::markSynchronizationObject)
   }
 
@@ -178,7 +179,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   listOf(
                     JoinLabel(handle, metadata),
                     AssignStmtLabel(
-                      invokeLabel.params[0] as RefExpr<*>,
+                      invokeLabel.params[0].unwrapTraceable() as RefExpr<*>,
                       zeroOf(invokeLabel.params[0]),
                       metadata,
                     ),
@@ -199,7 +200,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   listOf(
                     StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
                     AssignStmtLabel(
-                      invokeLabel.params[0] as RefExpr<*>,
+                      invokeLabel.params[0].unwrapTraceable() as RefExpr<*>,
                       zeroOf(invokeLabel.params[0]),
                       metadata,
                     ),
@@ -311,15 +312,15 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
 
   private fun Expr<*>.asConstant(): BigInteger? =
-    when (this) {
-      is IntLitExpr -> value
-      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this)
+    when (val bare = unwrapTraceable()) {
+      is IntLitExpr -> bare.value
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bare)
       // A constant that has not been folded yet is still a constant. Unrolling substitutes the
       // index but leaves the unsigned-wraparound wrapper the frontend put around it, so the offset
       // of `&t[4]` arrives as `(mod 4 4294967296)` -- matching only a bare literal rejected the
       // handle as "non-constant dereference offset" even though its value is perfectly known.
       else ->
-        ExprUtils.simplify(this).let { simplified ->
+        ExprUtils.simplify(this).unwrapTraceable().let { simplified ->
           when (simplified) {
             is IntLitExpr -> simplified.value
             is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(simplified)
@@ -339,8 +340,8 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   private val arrayElementHandles = mutableMapOf<Pair<VarDecl<*>, BigInteger>, VarDecl<*>>()
 
   private fun InvokeLabel.getParam(index: Int): VarDecl<*> {
-    var param = params[index]
-    while (param is Reference<*, *>) param = param.expr
+    var param = params[index].unwrapTraceable()
+    while (param is Reference<*, *>) param = param.expr.unwrapTraceable()
     return when (param) {
       is RefExpr<*> -> {
         check(param.decl is VarDecl<*>)
@@ -348,10 +349,11 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       }
 
       is Dereference<*, *, *> -> {
-        check(param.array is RefExpr<*>) {
+        val array = param.array.unwrapTraceable()
+        check(array is RefExpr<*>) {
           "Unsupported library parameter: expected reference base variable, got ${param.array}"
         }
-        val base = (param.array as RefExpr<*>).decl
+        val base = array.decl
         check(base is VarDecl<*>)
         val offset =
           checkNotNull(param.offset.asConstant()) {

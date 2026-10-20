@@ -20,48 +20,48 @@ import com.google.common.base.Preconditions.checkState
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.Tuple2Serializer
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * ArrayInitExpr is a way to specify arbitrary array 'literals' that may contain non-literal
  * elements as well. Note that while this class is a descendant of MultiaryExpr, it is used in a
  * non-standard way: - ops is only used as a generic Type type, - ops are solely used for
- * inter-object interactions, intra-class the `elems` and `elseElem` are used. - `elems` and
+ * inter-object interactions, intra-class the `elements` and `elseElem` are used. - `elements` and
  * `elseElem` are mapped to `ops` by first placing the `elseElem`, then all indices, then all
  * elements.
  */
 @Suppress("UNCHECKED_CAST")
+@Serializable
 class ArrayInitExpr<IndexType : Type, ElemType : Type>
 private constructor(
-  private val elems: List<Tuple2<Expr<IndexType>, Expr<ElemType>>>,
-  elseElem: Expr<ElemType>,
-  type: ArrayType<IndexType, ElemType>,
-) :
-  MultiaryExpr<Type, ArrayType<IndexType, ElemType>>(
+  val elements:
+    List<@Serializable(with = Tuple2Serializer::class) Tuple2<Expr<IndexType>, Expr<ElemType>>>,
+  val elseElem: Expr<ElemType>,
+  override val type: ArrayType<IndexType, ElemType>,
+) : MultiaryExpr<Type, ArrayType<IndexType, ElemType>>() {
+
+  @Transient
+  override val ops: List<Expr<Type>> =
     listOf(elseElem as Expr<Type>) +
-      elems.map { it.get1() as Expr<Type> } +
-      elems.map { it.get2() as Expr<Type> }
-  ) {
-
-  override val type: ArrayType<IndexType, ElemType> = checkNotNull(type)
-
-  val elseElem: Expr<ElemType> = checkNotNull(elseElem)
-
-  val elements: List<Tuple2<Expr<IndexType>, Expr<ElemType>>>
-    get() = ImmutableList.copyOf(elems)
+      elements.map { it.get1() as Expr<Type> } +
+      elements.map { it.get2() as Expr<Type> }
 
   override fun eval(valuation: Valuation): LitExpr<ArrayType<IndexType, ElemType>> =
     ArrayLitExpr.of(
-      elems.map { Tuple2.of(it.get1().eval(valuation), it.get2().eval(valuation)) },
+      elements.map { Tuple2.of(it.get1().eval(valuation), it.get2().eval(valuation)) },
       elseElem,
       type,
     )
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as ArrayInitExpr<*, *>
-    return type == that.type && elems == that.elems && elseElem == that.elseElem
+    return type == that.type && elements == that.elements && elseElem == that.elseElem
   }
 
   override fun with(ops: Iterable<Expr<Type>>): ArrayInitExpr<IndexType, ElemType> {
@@ -73,7 +73,7 @@ private constructor(
       (0 until half).map {
         Tuple2.of(opList[1 + it] as Expr<IndexType>, opList[1 + half + it] as Expr<ElemType>)
       }
-    return keepSourceType(of(newOps, opList[0] as Expr<ElemType>, type))
+    return of(newOps, opList[0] as Expr<ElemType>, type)
   }
 
   override fun withOps(ops: List<Expr<*>>): ArrayInitExpr<IndexType, ElemType> =
@@ -94,7 +94,8 @@ private constructor(
       elems: List<Tuple2<Expr<IndexType>, Expr<ElemType>>>,
       elseElem: Expr<ElemType>,
       type: ArrayType<IndexType, ElemType>,
-    ): ArrayInitExpr<IndexType, ElemType> = ArrayInitExpr(elems, elseElem, type)
+    ): ArrayInitExpr<IndexType, ElemType> =
+      ArrayInitExpr(ImmutableList.copyOf(elems), checkNotNull(elseElem), checkNotNull(type))
 
     @JvmStatic
     fun <IndexType : Type, ElemType : Type> create(

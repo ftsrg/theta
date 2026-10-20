@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.ParamDecl
@@ -24,12 +23,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
 
-sealed class QuantifiedExpr
-protected constructor(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) :
-  AbstractExpr<BoolType>() {
+sealed class QuantifiedExpr : Expr<BoolType> {
 
-  val paramDecls: List<ParamDecl<*>> = ImmutableList.copyOf(checkNotNull(paramDecls))
-  val op: Expr<BoolType> = checkNotNull(op)
+  abstract val paramDecls: List<ParamDecl<*>>
+  abstract val op: Expr<BoolType>
 
   @Volatile private var hashCode = 0
 
@@ -59,6 +56,7 @@ protected constructor(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) :
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as QuantifiedExpr

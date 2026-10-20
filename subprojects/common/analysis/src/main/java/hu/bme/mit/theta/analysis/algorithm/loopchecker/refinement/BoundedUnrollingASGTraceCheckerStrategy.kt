@@ -123,7 +123,7 @@ class BoundedUnrollingASGTraceCheckerStrategy<S : ExprState, A : ExprAction>(
           val filtVars =
             usedVariablesPrecision.vars.filter(ExprUtils.getVars(state.toExpr())::contains)
           val types = filtVars.map(VarDecl<*>::type)
-          val sizes = types.map(Type::getDomainSize)
+          val sizes = types.map(Type::domainSize)
           val res = sizes.fold(DomainSize.ONE, DomainSize::multiply)
           res
         }

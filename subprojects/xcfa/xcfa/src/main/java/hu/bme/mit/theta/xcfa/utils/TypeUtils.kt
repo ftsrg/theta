@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -111,9 +112,7 @@ fun withinTypeRange(
   metadata: MetaData,
 ): List<XcfaLabel> {
   // Only when the C type is actually known: without it, `getType` guesses from the SMT type.
-  val cType =
-    parseContext.metadata.getMetadataValue(value, "cType").orElse(null) as? CComplexType
-      ?: return listOf()
+  val cType = CComplexType.getKnownType(value) ?: return listOf()
   // The integer limit visitor has no catch-all and throws on anything else (a pointer, a struct),
   // so a type it does not know simply goes unconstrained.
   val assume =
@@ -122,7 +121,7 @@ fun withinTypeRange(
     } catch (e: UnsupportedFrontendElementException) {
       return listOf()
     }
-  if (assume.cond is TrueExpr) {
+  if (assume.cond.unwrapTraceable() is TrueExpr) {
     return listOf()
   }
   return listOf(StmtLabel(assume, metadata = metadata))

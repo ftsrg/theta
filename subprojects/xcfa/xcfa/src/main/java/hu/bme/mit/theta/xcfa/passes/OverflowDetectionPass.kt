@@ -45,6 +45,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
@@ -111,16 +112,14 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
         val conditions =
           label
             .getExpressions {
-              (it is AddExpr ||
-                it is SubExpr ||
-                it is MulExpr ||
-                it is DivExpr ||
-                it is NegExpr ||
-                it is BvShiftLeftExpr) &&
-                parseContext.metadata
-                  .getMetadataValue(it, "cType")
-                  .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
-                  .orElse(false)
+              val bare = it.unwrapTraceable()
+              (bare is AddExpr ||
+                bare is SubExpr ||
+                bare is MulExpr ||
+                bare is DivExpr ||
+                bare is NegExpr ||
+                bare is BvShiftLeftExpr) &&
+                (CComplexType.getKnownType(it) as? CInteger)?.isSsigned ?: false
             }
             .flatMap { listOf(it) + evaluationPrefixesOf(it) }
             .mapNotNull {
@@ -128,7 +127,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 // A bitvector operation has already wrapped, so range-checking its result would
                 // always succeed; the overflow has to be reconstructed from the operands instead.
                 bvOverflowCondition(it)
-              } else if (it is DivExpr<*>) {
+              } else if (it.unwrapTraceable() is DivExpr<*>) {
                 // Division must not be range-checked. C's `/` is lowered to the solver's `div`,
                 // which
                 // is unconstrained when the divisor is zero -- so the "result" could be any value
@@ -137,17 +136,15 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 // divides by zero (a different kind of undefined behaviour, and not this property's
                 // concern). State instead the one input pair that genuinely overflows: the most
                 // negative value divided by -1, whose true result is one past the maximum.
-                val cType = parseContext.metadata.getMetadataValue(it, "cType").get() as CInteger
+                val cType = CComplexType.getKnownType(it) as CInteger
+                val div = it.unwrapTraceable() as DivExpr<*>
                 And(
-                  Eq(it.leftOp, Int(BigInteger.TWO.pow(cType.width() - 1).negate())),
-                  Eq(it.rightOp, Int(BigInteger.ONE.negate())),
+                  Eq(div.leftOp, Int(BigInteger.TWO.pow(cType.width() - 1).negate())),
+                  Eq(div.rightOp, Int(BigInteger.ONE.negate())),
                 )
               } else {
                 val cType =
-                  parseContext.metadata
-                    .getMetadataValue(it, "cType")
-                    .or { parseContext.metadata.getMetadataValue((it as IteExpr).then, "cType") }
-                    .get() as CComplexType
+                  CComplexType.getKnownType(it) ?: CComplexType.getKnownType((it as IteExpr).then)!!
                 Not(cType.accept(limitVisitor, it).cond)
               }
             }
@@ -243,23 +240,24 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
    * is exactly one intermediate. The full-length prefix is left out because the caller already
    * checks the original node.
    *
-   * Each prefix is stamped with the chain's own `cType`: the candidate filter requires that
-   * metadata and `FrontendMetadata` is identity-keyed, so a freshly built expression carries none
-   * and would be silently dropped.
+   * Each prefix is typed as the chain itself: the candidate filter requires a C type, and a freshly
+   * built expression carries none.
    */
-  private fun evaluationPrefixesOf(expr: Expr<*>): List<Expr<*>> {
+  private fun evaluationPrefixesOf(tracedExpr: Expr<*>): List<Expr<*>> {
+    val expr = tracedExpr.unwrapTraceable()
     if (expr !is AddExpr<*> && expr !is MulExpr<*>) return listOf()
     val ops = expr.ops
     if (ops.size <= 2) return listOf()
-    val cType =
-      parseContext.metadata.getMetadataValue(expr, "cType").orElse(null) ?: return listOf()
+    val cType = CComplexType.getKnownType(tracedExpr) ?: return listOf()
     val prefixes = mutableListOf<Expr<*>>()
     var acc: Expr<*> = ops[0]
     for (index in 1 until ops.size - 1) {
       acc =
-        if (expr is AddExpr<*>) AbstractExprs.Add(acc, ops[index])
-        else AbstractExprs.Mul(acc, ops[index])
-      parseContext.metadata.create(acc, "cType", cType)
+        CComplexType.withType(
+          if (expr is AddExpr<*>) AbstractExprs.Add(acc, ops[index])
+          else AbstractExprs.Mul(acc, ops[index]),
+          cType,
+        )
       prefixes.add(acc)
     }
     return prefixes

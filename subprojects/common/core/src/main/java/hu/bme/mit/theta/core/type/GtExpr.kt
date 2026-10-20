@@ -19,9 +19,7 @@ import hu.bme.mit.theta.core.type.abstracttype.Ordered
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class GtExpr<OpType : Ordered<OpType>>
-protected constructor(leftOp: Expr<OpType>, rightOp: Expr<OpType>) :
-  BinaryExpr<OpType, BoolType>(leftOp, rightOp) {
+sealed class GtExpr<OpType : Ordered<OpType>> : BinaryExpr<OpType, BoolType>() {
 
   companion object {
     @JvmStatic

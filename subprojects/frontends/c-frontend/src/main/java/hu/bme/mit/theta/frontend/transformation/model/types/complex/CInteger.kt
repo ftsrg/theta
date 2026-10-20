@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
-import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-sealed class CInteger(origin: CSimpleType?, parseContext: ParseContext) :
-  CComplexType(origin, parseContext) {
-  protected var rank = 0
-  protected var unsigned = false
+@Serializable
+sealed class CInteger : CComplexType() {
+  @Transient protected var rank = 0
+  @Transient protected var unsigned = false
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)

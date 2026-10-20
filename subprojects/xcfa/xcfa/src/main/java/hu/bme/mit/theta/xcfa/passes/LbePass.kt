@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.FalseExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.*
@@ -314,7 +315,9 @@ class LbePass(
       !(label is StartLabel || label is JoinLabel) &&
         label.collectVars().all(builder.getVars()::contains) &&
         label.dereferences.isEmpty() &&
-        !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
+        !(label is StmtLabel &&
+          label.stmt is AssumeStmt &&
+          label.stmt.cond.unwrapTraceable() is FalseExpr) &&
         !(label is FenceLabel && label.acquiredMutexes.isNotEmpty())
     } && nonConcurrentEdges?.contains(edge) != true
   }

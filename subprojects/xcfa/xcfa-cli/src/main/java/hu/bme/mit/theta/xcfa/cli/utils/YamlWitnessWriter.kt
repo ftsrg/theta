@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.SourceStatement
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
@@ -45,9 +46,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -247,7 +245,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val metadata = lastLabel.getCMetaData()
 
     return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
-      val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
+      val call = metadata?.sourceStatements?.find { it.call?.functionId == "reach_error" }
       call?.let {
         val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
         generateTrivialViolationWitness(
@@ -913,7 +911,7 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
-private fun getStopLocation(inputFile: File, statement: CStatement): Location {
+private fun getStopLocation(inputFile: File, statement: SourceStatement): Location {
   val line = statement.lineNumberStop
   val column = statement.colNumberStop
   return Location(fileName = inputFile.name, line = line, column = column.plus(1))
@@ -927,16 +925,13 @@ private fun getStopLocation(inputFile: File, statement: CStatement): Location {
  */
 private fun threadCreateLocation(edge: WitnessEdge, inputFile: File): Location? {
   val call =
-    edge.edge?.getCMetaData()?.astNodes?.filterIsInstance<CCall>()?.firstOrNull {
-      it.functionId == "pthread_create"
+    edge.edge?.getCMetaData()?.sourceStatements?.firstOrNull {
+      it.call?.functionId == "pthread_create"
     } ?: return null
   val line = call.lineNumberStart.takeIf { it > 0 } ?: return null
-  val colStart = call.colNumberStart.takeIf { it >= 0 } ?: return null
-  val parenIndex = call.sourceText.indexOf('(')
-  // the column is only well-defined if the '(' sits on the call's start line
-  if (parenIndex < 0 || call.sourceText.substring(0, parenIndex).contains('\n')) return null
+  val paren = call.call?.openParenColumn ?: return null
   // +1: Theta's columns are 0-based, witness columns are 1-based
-  return Location(fileName = inputFile.name, line = line, column = colStart + parenIndex + 1)
+  return Location(fileName = inputFile.name, line = line, column = paren + 1)
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -990,8 +985,8 @@ private fun WitnessNode.toSegment(
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
     // TODO this will very much break if we have 1+ nondet call on the edge or 1+ variable or .....
     if (
-      (outgoingEdge.edge?.metadata as CMetaData).astNodes.any {
-        it is CCall && it.functionId.contains("__VERIFIER_nondet_")
+      (outgoingEdge.edge?.metadata as CMetaData).sourceStatements.any {
+        it.call?.functionId?.contains("__VERIFIER_nondet_") == true
       } &&
         outgoingEdge.edge?.label is SequenceLabel &&
         (outgoingEdge.edge?.label as SequenceLabel).labels.any {
@@ -1018,8 +1013,8 @@ private fun WitnessNode.toSegment(
       loc =
         getStopLocation(
           inputFile,
-          (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
-            it is CCall && it.functionId.contains("__VERIFIER_nondet_")
+          (outgoingEdge.edge?.metadata as CMetaData).sourceStatements.first {
+            it.call?.functionId?.contains("__VERIFIER_nondet_") == true
           },
         )
       return WaypointContent(
@@ -1029,7 +1024,11 @@ private fun WitnessNode.toSegment(
         constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
         threadId = threadId,
       )
-    } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
+    } else if (
+      (outgoingEdge.edge?.metadata as CMetaData).sourceStatements.any {
+        it.kind == SourceStatement.Kind.IF
+      }
+    ) {
       val constraintValue =
         if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
           "false"
@@ -1070,12 +1069,8 @@ private fun WitnessNode.toSegment(
                 // the original program, so it must not appear in a c_expression constraint.
                 null
               } else {
-                if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
-                  "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-                    printLit(value)
-                  })"
-                } else {
-                  null
+                parseContext.variableSources[rootName]?.let {
+                  "(${it.cName} == ${printLit(value)})"
                 }
               }
             }
@@ -1153,7 +1148,8 @@ private fun DataRaceAccess.toTargetWaypoint(
   // important do not use getCMetadata() helpers here because they only return exportable metadata
   // however, data race may occur at a non-statement start location as well. The label's own
   // metadata can also be present but line-less (e.g. a ternary condition lowered to an `assume`,
-  // whose CIf metadata carries no source line), so prefer whichever of the label and the edge
+  // whose `if` statement metadata carries no source line), so prefer whichever of the label and the
+  // edge
   // actually has a source line.
   val metadata =
     listOfNotNull(label.metadata as? CMetaData, edge.metadata as? CMetaData).firstOrNull {

@@ -18,9 +18,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CBool(origin: CSimpleType?, parseContext: ParseContext) :
-  CInteger(origin, parseContext), Unsigned {
+@Serializable
+class CBool(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CInteger(), Unsigned {
   init {
     rank = RANK
     unsigned = true
@@ -38,7 +43,7 @@ class CBool(origin: CSimpleType?, parseContext: ParseContext) :
   override val unsignedVersion: CInteger
     get() = this
 
-  private companion object {
-    const val RANK = 0
+  companion object {
+    private const val RANK = 0
   }
 }

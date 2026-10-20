@@ -19,9 +19,12 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.enumtype.EnumType
+import kotlinx.serialization.Serializable
 
-class EnumEqExpr private constructor(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>) :
-  EqExpr<EnumType>(leftOp, rightOp) {
+@Serializable
+class EnumEqExpr
+private constructor(override val leftOp: Expr<EnumType>, override val rightOp: Expr<EnumType>) :
+  EqExpr<EnumType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -30,8 +33,7 @@ class EnumEqExpr private constructor(leftOp: Expr<EnumType>, rightOp: Expr<EnumT
     EnumLitExpr.eq(leftOp.eval(valuation) as EnumLitExpr, rightOp.eval(valuation) as EnumLitExpr)
 
   override fun with(leftOp: Expr<EnumType>, rightOp: Expr<EnumType>): EnumEqExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

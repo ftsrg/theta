@@ -18,6 +18,7 @@ package hu.bme.mit.theta.c2xcfa
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
@@ -69,7 +70,7 @@ class PointerParameterTest {
       .filterIsInstance<StmtLabel>()
       .map { it.stmt }
       .filterIsInstance<AssignStmt<*>>()
-      .any { it.varDecl.name.endsWith("_offset") && it.expr is LitExpr<*> }
+      .any { it.varDecl.name.endsWith("_offset") && it.expr.unwrapTraceable() is LitExpr<*> }
   }
 
   @Test

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.BitsSerializer
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
 import hu.bme.mit.theta.core.type.bvtype.BvType
@@ -30,11 +31,17 @@ import hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger
 import hu.bme.mit.theta.core.utils.BvUtils.signedBvLitExprToBigInteger
 import hu.bme.mit.theta.core.utils.BvUtils.unsignedBvLitExprToBigInteger
 import java.math.BigInteger
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class BvLitExpr private constructor(val value: BooleanArray, private val signed: Boolean?) :
-  NullaryExpr<BvType>(), LitExpr<BvType>, Comparable<BvLitExpr> {
+@Serializable
+class BvLitExpr
+private constructor(
+  @Serializable(with = BitsSerializer::class) val value: BooleanArray,
+  private val signed: Boolean?,
+) : NullaryExpr<BvType>(), LitExpr<BvType>, Comparable<BvLitExpr> {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   init {
     checkArgument(value.isNotEmpty(), "Bitvector must have positive size")
@@ -308,10 +315,12 @@ class BvLitExpr private constructor(val value: BooleanArray, private val signed:
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null &&
-        javaClass == other.javaClass &&
-        value.contentEquals((other as BvLitExpr).value))
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null &&
+          javaClass == other.javaClass &&
+          value.contentEquals((other as BvLitExpr).value))
 
   override fun toString(): String = value.joinToString("", prefix = "#b") { if (it) "1" else "0" }
 

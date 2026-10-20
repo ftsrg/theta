@@ -128,10 +128,12 @@ class CanarySuiteTest {
       addAll(listOf("--loglevel", "RESULT"))
       addAll(listOf("--property", property.absolutePath))
       addAll(listOf("--architecture", dataModel))
+      addAll(SuiteSupport.extraArgs)
     }
     val timeout = if (mode == "parse") PARSE_TIMEOUT_SECONDS else FULL_TIMEOUT_SECONDS
     val result =
       SuiteSupport.execute(SuiteSupport.thetaCommand(dist, input, options), dist, timeout)
+    SuiteSupport.keepOutput("${row["task_yml_relpath"]}-${row["property"]}", result.output)
 
     if (mode == "parse") {
       return when {

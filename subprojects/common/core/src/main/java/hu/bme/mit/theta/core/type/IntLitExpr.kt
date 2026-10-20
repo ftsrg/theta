@@ -16,16 +16,21 @@
 package hu.bme.mit.theta.core.type
 
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.BigIntegerSerializer
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import java.math.BigInteger
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class IntLitExpr private constructor(val value: BigInteger) :
+@Serializable
+class IntLitExpr
+private constructor(@Serializable(with = BigIntegerSerializer::class) val value: BigInteger) :
   NullaryExpr<IntType>(), LitExpr<IntType>, Comparable<IntLitExpr> {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override val type: IntType
     get() = Int()
@@ -119,10 +124,12 @@ class IntLitExpr private constructor(val value: BigInteger) :
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null &&
-        javaClass == other.javaClass &&
-        value.compareTo((other as IntLitExpr).value) == 0)
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null &&
+          javaClass == other.javaClass &&
+          value.compareTo((other as IntLitExpr).value) == 0)
 
   override fun toString(): String = value.toString()
 

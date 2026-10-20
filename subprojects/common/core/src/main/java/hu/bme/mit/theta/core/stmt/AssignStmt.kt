@@ -15,23 +15,23 @@
  */
 package hu.bme.mit.theta.core.stmt
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Assignment statement of the form VARIABLE := EXPRESSION. The statement updates the VARIABLE with
  * the result of EXPRESSION.
  */
+@Serializable
 class AssignStmt<DeclType : Type>
-private constructor(varDecl: VarDecl<DeclType>, expr: Expr<DeclType>) : Stmt {
-  val varDecl: VarDecl<DeclType> = checkNotNull(varDecl)
-  val expr: Expr<DeclType> = checkNotNull(expr)
+private constructor(val varDecl: VarDecl<DeclType>, val expr: Expr<DeclType>) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)

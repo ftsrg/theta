@@ -21,9 +21,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class IntGtExpr private constructor(leftOp: Expr<IntType>, rightOp: Expr<IntType>) :
-  GtExpr<IntType>(leftOp, rightOp) {
+@Serializable
+class IntGtExpr
+private constructor(override val leftOp: Expr<IntType>, override val rightOp: Expr<IntType>) :
+  GtExpr<IntType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -35,8 +38,7 @@ class IntGtExpr private constructor(leftOp: Expr<IntType>, rightOp: Expr<IntType
   }
 
   override fun with(leftOp: Expr<IntType>, rightOp: Expr<IntType>): IntGtExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

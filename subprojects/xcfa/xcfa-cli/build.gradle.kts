@@ -61,6 +61,24 @@ application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
 
+// The hash an XCFA file starts with (XcfaSerialization.computeFormatHash). Computing it loads every
+// serialized class, so it is done once here and shipped as a resource next to XcfaFiles.
+val xcfaFormatHash by
+    tasks.registering(JavaExec::class) {
+        val output = layout.buildDirectory.dir("generated/xcfa-format-hash")
+        // Not the resources: they include this task's output.
+        classpath = sourceSets["main"].output.classesDirs + configurations["runtimeClasspath"]
+        mainClass.set("hu.bme.mit.theta.xcfa.cli.serialization.XcfaFormatHash")
+        args(
+            output
+                .get()
+                .file("hu/bme/mit/theta/xcfa/cli/serialization/xcfa-format-hash")
+                .asFile.absolutePath,
+        )
+        outputs.dir(output)
+    }
+sourceSets["main"].resources.srcDir(xcfaFormatHash)
+
 archivePackaging {
     variant {
         toolName = "Theta-svcomp"
@@ -100,6 +118,13 @@ archivePackaging {
 // PackagedSolverTest reads the solver lists out of this file, so it is a test input: without
 // this Gradle judges the test up to date after the list changes, which is exactly when it matters.
 tasks.test { inputs.file("build.gradle.kts") }
+
+// Options both suites take: extra arguments for every task, and a directory to keep each output in.
+fun Test.canaryRunOptions() {
+    for (name in listOf("theta.canary.extraArgs", "theta.canary.outputDir")) {
+        project.findProperty(name)?.let { systemProperty(name, it.toString()) }
+    }
+}
 
 // The canary suite (see `canaries/README.md`) as a registered Gradle test task.
 //
@@ -154,6 +179,7 @@ val canaryTest by
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
         }
+        canaryRunOptions()
 
         // The result depends on the benchmarks and the built archive, not only on this project's
         // inputs, so caching a green run would hide a regression in either.
@@ -200,6 +226,7 @@ val fixtureTest by
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
         }
+        canaryRunOptions()
 
         // Depends on the benchmarks and the built archive, not only on this project's inputs.
         outputs.upToDateWhen { false }

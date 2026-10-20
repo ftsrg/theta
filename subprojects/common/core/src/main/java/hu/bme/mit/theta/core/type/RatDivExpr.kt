@@ -20,9 +20,12 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class RatDivExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatType>) :
-  DivExpr<RatType>(leftOp, rightOp) {
+@Serializable
+class RatDivExpr
+private constructor(override val leftOp: Expr<RatType>, override val rightOp: Expr<RatType>) :
+  DivExpr<RatType>() {
 
   override val type: RatType
     get() = Rat()
@@ -34,8 +37,7 @@ class RatDivExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatTyp
   }
 
   override fun with(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatDivExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

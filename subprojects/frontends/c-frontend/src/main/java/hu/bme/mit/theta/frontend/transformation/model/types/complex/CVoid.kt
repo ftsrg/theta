@@ -18,8 +18,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CVoid(origin: CSimpleType?, parseContext: ParseContext) : CComplexType(origin, parseContext) {
+@Serializable
+class CVoid(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CComplexType() {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)

@@ -57,6 +57,7 @@ import hu.bme.mit.theta.core.type.RatPosExpr;
 import hu.bme.mit.theta.core.type.RatSubExpr;
 import hu.bme.mit.theta.core.type.RatToIntExpr;
 import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.TraceableWrapperExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.XorExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -124,6 +125,7 @@ public final class ExprCanonizer {
                     // General
 
                     .addCase(RefExpr.class, ExprCanonizer::canonizeRef)
+                    .addCase(TraceableWrapperExpr.class, ExprCanonizer::canonizeTraceable)
                     .addCase(IteExpr.class, ExprCanonizer::canonizeIte)
 
                     // Default
@@ -148,6 +150,10 @@ public final class ExprCanonizer {
 
     private static Expr<?> canonizeRef(final RefExpr<?> expr) {
         return expr;
+    }
+
+    private static Expr<?> canonizeTraceable(final TraceableWrapperExpr<?> expr) {
+        return canonize(expr.getExpr());
     }
 
     private static Expr<?> canonizeIte(final IteExpr<?> expr) {

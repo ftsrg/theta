@@ -18,16 +18,17 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.Serializable
 
-class FpNegExpr private constructor(op: Expr<FpType>) : NegExpr<FpType>(op) {
+@Serializable
+class FpNegExpr private constructor(override val op: Expr<FpType>) : NegExpr<FpType>() {
 
   override val type: FpType
     get() = op.type
 
   override fun eval(valuation: Valuation): FpLitExpr = (op.eval(valuation) as FpLitExpr).neg()
 
-  override fun with(op: Expr<FpType>): FpNegExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<FpType>): FpNegExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

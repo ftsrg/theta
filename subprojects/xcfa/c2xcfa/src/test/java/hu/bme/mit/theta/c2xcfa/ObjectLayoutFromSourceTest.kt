@@ -54,7 +54,7 @@ class ObjectLayoutFromSourceTest {
       NullLogger.getInstance(),
     )
     val struct =
-      requireNotNull(Struct.getByName(tag, union)) {
+      requireNotNull(Struct.getByName(tag, union, parseContext)) {
         "struct $tag was not registered by the parser"
       }
     return ObjectLayout.of(struct.actualType as CStruct, arch)

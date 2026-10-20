@@ -18,8 +18,7 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.type.abstracttype.Additive
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class NegExpr<ExprType : Additive<ExprType>> protected constructor(op: Expr<ExprType>) :
-  UnaryExpr<ExprType, ExprType>(op) {
+sealed class NegExpr<ExprType : Additive<ExprType>> : UnaryExpr<ExprType, ExprType>() {
 
   companion object {
     @JvmStatic

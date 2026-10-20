@@ -15,21 +15,20 @@
  */
 package hu.bme.mit.theta.core.type
 
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class FuncAppExpr<ParamType : Type, ResultType : Type>
-private constructor(func: Expr<FuncType<ParamType, ResultType>>, param: Expr<ParamType>) :
-  AbstractExpr<ResultType>() {
+private constructor(val func: Expr<FuncType<ParamType, ResultType>>, val param: Expr<ParamType>) :
+  Expr<ResultType> {
 
-  val func: Expr<FuncType<ParamType, ResultType>> = checkNotNull(func)
-  val param: Expr<ParamType> = checkNotNull(param)
-
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override val type: ResultType
     get() = func.type.resultType
@@ -45,13 +44,13 @@ private constructor(func: Expr<FuncType<ParamType, ResultType>>, param: Expr<Par
     get() = ImmutableList.of(func, param)
 
   override fun withOps(ops: List<Expr<*>>): Expr<ResultType> =
-    keepSourceType(cast(create<Type, Type>(ops[0], ops[1]), type))
+    cast(create<Type, Type>(ops[0], ops[1]), type)
 
   fun with(
     func: Expr<FuncType<ParamType, ResultType>>,
     param: Expr<ParamType>,
   ): FuncAppExpr<ParamType, ResultType> =
-    if (this.func === func && this.param === param) this else keepSourceType(of(func, param))
+    if (this.func === func && this.param === param) this else of(func, param)
 
   fun withFunc(func: Expr<FuncType<ParamType, ResultType>>): FuncAppExpr<ParamType, ResultType> =
     with(func, param)
@@ -70,6 +69,7 @@ private constructor(func: Expr<FuncType<ParamType, ResultType>>, param: Expr<Par
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FuncAppExpr<*, *>

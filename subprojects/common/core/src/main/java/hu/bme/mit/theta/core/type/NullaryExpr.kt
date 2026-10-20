@@ -18,7 +18,7 @@ package hu.bme.mit.theta.core.type
 import com.google.common.base.Preconditions.checkArgument
 import com.google.common.collect.ImmutableList
 
-sealed class NullaryExpr<ExprType : Type> : AbstractExpr<ExprType>() {
+sealed class NullaryExpr<ExprType : Type> : Expr<ExprType> {
 
   final override val ops: List<Expr<*>>
     get() = ImmutableList.of()

@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.model.*
@@ -67,8 +68,9 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
 
     val initialValuation = MutableValuation()
     builder.getParams().forEachIndexed { index, param ->
-      if (param.second == ParamDirection.IN && index < params.size && params[index] is LitExpr<*>) {
-        initialValuation.put(param.first, params[index] as LitExpr<*>)
+      val value = params.getOrNull(index)?.unwrapTraceable()
+      if (param.second == ParamDirection.IN && value is LitExpr<*>) {
+        initialValuation.put(param.first, value)
       }
     }
 
@@ -87,7 +89,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
         val oldLabels = edge.getFlatLabels()
         val simplifiedLabels =
           oldLabels.flatMap {
-            val simplified = it.simplify(mergedValuation, parseContext)
+            val simplified = it.simplify(mergedValuation)
             simplifyStartLabelLogicalThread(simplified, passedSegments) ?: listOf(simplified)
           }
         builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
@@ -96,7 +98,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, passedSegments).filter {
             if (it is StmtLabel) {
               if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
-                val expr = it.stmt.expr
+                val expr = it.stmt.expr.unwrapTraceable()
                 if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
                   return@filter false
                 } else if (expr is IntLitExpr) {
@@ -156,14 +158,14 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
 
     val valuation = MutableValuation()
     return newLabels.map {
-      val result = it.simplify(valuation, parseContext)
+      val result = it.simplify(valuation)
       if (result is StmtLabel) {
         val stmt = result.stmt
         if (stmt is AssumeStmt) {
-          val cond = stmt.cond
+          val cond = stmt.cond.unwrapTraceable()
           if (cond is EqExpr<*>) {
-            val left = cond.leftOp
-            val right = cond.rightOp
+            val left = cond.leftOp.unwrapTraceable()
+            val right = cond.rightOp.unwrapTraceable()
             if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER && right is LitExpr<*>) {
               valuation.put(left.decl, right)
             } else if (
@@ -190,12 +192,12 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       ?.takeIf { stmt -> stmt.varDecl.name == SEGMENT_COUNTER }
       ?.let { stmt ->
         val updates = mutableSetOf<SegmentAlternatives>()
-        var expr = stmt.expr
+        var expr = stmt.expr.unwrapTraceable()
         while (expr is IteExpr<*>) {
           segmentIteValues<IntLitExpr>(expr)?.let { (current, next) ->
             updates.add(SegmentAlternatives(expr.cond, current, next, label.metadata))
           }
-          expr = expr.`else`
+          expr = expr.`else`.unwrapTraceable()
         }
         updates.sortedBy { it.current }
       } ?: emptyList()
@@ -211,7 +213,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
         var segmentCond: Expr<BoolType>? = null
         var nextSegmentAlternative: LitExpr<*>? = null
         var minNotPassedSegment: BigInteger? = null
-        var expr = param
+        var expr = param.unwrapTraceable()
         while (expr is IteExpr<*>) {
           segmentIteValues<LitExpr<*>>(expr)?.let { (segmentValue, paramValue) ->
             if (segmentValue.value !in passedSegmentValues) {
@@ -222,7 +224,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
               }
             }
           }
-          expr = expr.`else`
+          expr = expr.`else`.unwrapTraceable()
         }
 
         if (nextSegmentAlternative != null) {
@@ -235,10 +237,10 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   }
 
   private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {
-    val eq = e.cond as? EqExpr<*> ?: return null
-    if ((eq.leftOp as? RefExpr<*>)?.decl?.name != SEGMENT_COUNTER) return null
-    val current = eq.rightOp as? IntLitExpr ?: return null
-    val next = e.then as? L ?: return null
+    val eq = e.cond.unwrapTraceable() as? EqExpr<*> ?: return null
+    if ((eq.leftOp.unwrapTraceable() as? RefExpr<*>)?.decl?.name != SEGMENT_COUNTER) return null
+    val current = eq.rightOp.unwrapTraceable() as? IntLitExpr ?: return null
+    val next = e.then.unwrapTraceable() as? L ?: return null
     return current to next
   }
 }

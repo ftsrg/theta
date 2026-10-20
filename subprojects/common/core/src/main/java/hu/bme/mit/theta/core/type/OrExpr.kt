@@ -15,15 +15,18 @@
  */
 package hu.bme.mit.theta.core.type
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class OrExpr private constructor(ops: Iterable<Expr<BoolType>>) :
-  MultiaryExpr<BoolType, BoolType>(ops) {
+@Serializable
+class OrExpr private constructor(override val ops: List<Expr<BoolType>>) :
+  MultiaryExpr<BoolType, BoolType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -35,8 +38,7 @@ class OrExpr private constructor(ops: Iterable<Expr<BoolType>>) :
     return False()
   }
 
-  override fun with(ops: Iterable<Expr<BoolType>>): OrExpr =
-    if (ops === this.ops) this else keepSourceType(of(ops))
+  override fun with(ops: Iterable<Expr<BoolType>>): OrExpr = if (ops === this.ops) this else of(ops)
 
   override val hashSeed: Int
     get() = HASH_SEED
@@ -48,7 +50,7 @@ class OrExpr private constructor(ops: Iterable<Expr<BoolType>>) :
     private const val HASH_SEED = 131
     private const val OPERATOR_LABEL = "or"
 
-    @JvmStatic fun of(ops: Iterable<Expr<BoolType>>): OrExpr = OrExpr(ops)
+    @JvmStatic fun of(ops: Iterable<Expr<BoolType>>): OrExpr = OrExpr(ImmutableList.copyOf(ops))
 
     @JvmStatic fun create(ops: List<Expr<*>>): OrExpr = of(ops.map { cast(it, Bool()) })
   }

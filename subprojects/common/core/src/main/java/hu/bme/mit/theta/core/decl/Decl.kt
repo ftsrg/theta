@@ -15,23 +15,25 @@
  */
 package hu.bme.mit.theta.core.decl
 
-import com.google.common.base.Preconditions.checkArgument
+import hu.bme.mit.theta.core.serialization.DeclReferenceSerializer
 import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.Serializable
 
 /**
  * A named, typed declaration. Declarations are identities, not values: a declaration is equal only
  * to itself. Create them through [Decls].
  */
-sealed class Decl<DeclType : Type>(val name: String, val type: DeclType) {
+@Serializable(with = DeclReferenceSerializer::class)
+sealed class Decl<DeclType : Type> {
+
+  abstract val name: String
+
+  abstract val type: DeclType
 
   @Suppress("LeakingThis") val ref: RefExpr<DeclType> = RefExpr.of(this)
 
   @Volatile private var hashCode = 0
-
-  init {
-    checkArgument(name.isNotEmpty())
-  }
 
   final override fun hashCode(): Int {
     var result = hashCode
@@ -46,7 +48,7 @@ sealed class Decl<DeclType : Type>(val name: String, val type: DeclType) {
 
   final override fun equals(other: Any?): Boolean = this === other
 
-  private companion object {
-    const val HASH_SEED = 5351
+  companion object {
+    private const val HASH_SEED = 5351
   }
 }

@@ -18,9 +18,15 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CPointer(origin: CSimpleType?, val embeddedType: CComplexType?, parseContext: ParseContext) :
-  CInteger(origin, parseContext) {
+@Serializable
+class CPointer(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = CComplexTypeReferenceSerializer::class) val embeddedType: CComplexType?,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CInteger() {
 
   /**
    * True when this pointer holds a function's address (id) rather than a data-object address, so

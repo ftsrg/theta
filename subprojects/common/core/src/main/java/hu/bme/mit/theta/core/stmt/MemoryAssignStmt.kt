@@ -16,21 +16,33 @@
 package hu.bme.mit.theta.core.stmt
 
 import com.google.common.base.Objects
-import com.google.common.base.Preconditions.checkNotNull
+import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.unwrapTraceable
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Assignment statement of the form *(DEREF_EXPRESSION) := EXPRESSION. The statement updates the
  * value pointed to by DEREF_EXPRESSION with the result of EXPRESSION.
  */
+@Serializable
 class MemoryAssignStmt<PtrType : Type, OffsetType : Type, DeclType : Type>
-private constructor(deref: Dereference<PtrType, OffsetType, DeclType>, expr: Expr<DeclType>) :
-  Stmt {
-  val deref: Dereference<PtrType, OffsetType, DeclType> = checkNotNull(deref)
-  val expr: Expr<DeclType> = checkNotNull(expr)
+private constructor(
+  /** The written location as given: a [Dereference], possibly wrapped with traceability info. */
+  val tracedDeref: Expr<DeclType>,
+  val expr: Expr<DeclType>,
+) : Stmt {
+
+  @Suppress("UNCHECKED_CAST")
+  @Transient
+  val deref: Dereference<PtrType, OffsetType, DeclType> =
+    tracedDeref.unwrapTraceable().also {
+      checkArgument(it is Dereference<*, *, *>, "Not a dereference: %s", it)
+    } as Dereference<PtrType, OffsetType, DeclType>
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)
@@ -63,5 +75,14 @@ private constructor(deref: Dereference<PtrType, OffsetType, DeclType>, expr: Exp
       expr: Expr<DeclType>,
     ): MemoryAssignStmt<PtrType, OffsetType, DeclType> =
       of(deref as Dereference<PtrType, OffsetType, DeclType>, expr)
+
+    /** An assignment to [tracedDeref]: a [Dereference], possibly wrapped with traceability info. */
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun <DeclType : Type> create(
+      tracedDeref: Expr<*>,
+      expr: Expr<DeclType>,
+    ): MemoryAssignStmt<*, *, DeclType> =
+      MemoryAssignStmt<Type, Type, DeclType>(tracedDeref as Expr<DeclType>, expr)
   }
 }

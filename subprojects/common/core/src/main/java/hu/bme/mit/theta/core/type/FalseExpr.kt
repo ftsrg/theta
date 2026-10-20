@@ -18,7 +18,9 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import kotlinx.serialization.Serializable
 
+@Serializable
 object FalseExpr : BoolLitExpr() {
   private const val HASH_SEED = 712514
   private const val OPERATOR_LABEL = "false"
@@ -33,12 +35,11 @@ object FalseExpr : BoolLitExpr() {
 
   override fun eval(valuation: Valuation): BoolLitExpr = this
 
-  /** The singleton stays untyped: one object cannot carry the type of each of its uses. */
-  override fun withSourceType(sourceType: SourceType?): BoolLitExpr = this
-
   override fun hashCode(): Int = HASH_SEED
 
-  override fun equals(other: Any?): Boolean = other != null && javaClass == other.javaClass
+  override fun equals(other: Any?): Boolean =
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else other != null && javaClass == other.javaClass
 
   override fun toString(): String = OPERATOR_LABEL
 }

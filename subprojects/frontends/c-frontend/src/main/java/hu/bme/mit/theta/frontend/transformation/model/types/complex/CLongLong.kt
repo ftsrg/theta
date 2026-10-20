@@ -19,9 +19,11 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-sealed class CLongLong(origin: CSimpleType?, parseContext: ParseContext) :
-  CInteger(origin, parseContext) {
+@Serializable
+sealed class CLongLong : CInteger() {
   init {
     rank = RANK
   }
@@ -38,20 +40,26 @@ sealed class CLongLong(origin: CSimpleType?, parseContext: ParseContext) :
   override val unsignedVersion: CInteger
     get() = CUnsignedLongLong(null, parseContext)
 
-  private companion object {
-    const val RANK = 50
+  companion object {
+    private const val RANK = 50
   }
 }
 
-class CSignedLongLong(origin: CSimpleType?, parseContext: ParseContext) :
-  CLongLong(origin, parseContext), Signed {
+@Serializable
+class CSignedLongLong(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CLongLong(), Signed {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)
 }
 
-class CUnsignedLongLong(origin: CSimpleType?, parseContext: ParseContext) :
-  CLongLong(origin, parseContext), Unsigned {
+@Serializable
+class CUnsignedLongLong(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CLongLong(), Unsigned {
   init {
     unsigned = true
   }

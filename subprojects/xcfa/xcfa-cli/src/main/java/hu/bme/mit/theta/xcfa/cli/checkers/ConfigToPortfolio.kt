@@ -27,6 +27,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.params.BuiltXcfa
 import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
@@ -53,6 +54,8 @@ fun getPortfolioChecker(
   XcfaPrec<*>,
 > = SafetyChecker { _ ->
   val sw = Stopwatch.createStarted()
+  // The configurations share this input config; those run in worker processes reuse the XCFA.
+  config.inputConfig.builtXcfa = BuiltXcfa(config.frontendConfig.toString(), xcfa, parseContext)
   val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
   val chcModels =
     if (config.frontendConfig.inputType == InputType.CHC)

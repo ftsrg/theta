@@ -45,7 +45,10 @@ class AtomicAlignmentTest {
       XcfaProperty(ErrorDetection.ERROR_LOCATION),
       NullLogger.getInstance(),
     )
-    val struct = requireNotNull(Struct.getByName(tag, false)) { "struct $tag was not registered" }
+    val struct =
+      requireNotNull(Struct.getByName(tag, false, parseContext)) {
+        "struct $tag was not registered"
+      }
     return ObjectLayout.of(struct.actualType as CStruct, arch)
   }
 

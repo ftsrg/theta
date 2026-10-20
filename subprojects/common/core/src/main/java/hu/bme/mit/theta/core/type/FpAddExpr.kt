@@ -15,14 +15,18 @@
  */
 package hu.bme.mit.theta.core.type
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
-class FpAddExpr private constructor(val roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>) :
-  AddExpr<FpType>(ops) {
+@Serializable
+class FpAddExpr
+private constructor(val roundingMode: FpRoundingMode, override val ops: List<Expr<FpType>>) :
+  AddExpr<FpType>() {
 
   init {
     checkAllTypesEqual(ops)
@@ -37,9 +41,10 @@ class FpAddExpr private constructor(val roundingMode: FpRoundingMode, ops: Itera
     }
 
   override fun with(ops: Iterable<Expr<FpType>>): FpAddExpr =
-    if (ops === this.ops) this else keepSourceType(of(roundingMode, ops))
+    if (ops === this.ops) this else of(roundingMode, ops)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpAddExpr
@@ -58,7 +63,7 @@ class FpAddExpr private constructor(val roundingMode: FpRoundingMode, ops: Itera
 
     @JvmStatic
     fun of(roundingMode: FpRoundingMode, ops: Iterable<Expr<FpType>>): FpAddExpr =
-      FpAddExpr(roundingMode, ops)
+      FpAddExpr(roundingMode, ImmutableList.copyOf(ops))
 
     @JvmStatic
     fun create(roundingMode: FpRoundingMode, ops: List<Expr<*>>): FpAddExpr =

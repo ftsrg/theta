@@ -72,6 +72,7 @@ import hu.bme.mit.theta.core.type.RatLitExpr
 import hu.bme.mit.theta.core.type.RatToIntExpr
 import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.RemExpr
+import hu.bme.mit.theta.core.type.TraceableWrapperExpr
 import hu.bme.mit.theta.core.type.TrueExpr
 import hu.bme.mit.theta.core.type.XorExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
@@ -83,6 +84,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -365,8 +367,9 @@ private fun CComplexType.toC(): String =
   }
 
 // below functions implement the serialization of expressions to C-style expressions
-fun Expr<*>.toC(parseContext: ParseContext) =
+fun Expr<*>.toC(parseContext: ParseContext): String =
   when (this) {
+    is TraceableWrapperExpr<*> -> this.expr.toC(parseContext)
     is NullaryExpr<*> -> this.toC(parseContext)
     is UnaryExpr<*, *> -> this.toC(parseContext)
     is BinaryExpr<*, *> -> this.toC(parseContext)
@@ -415,7 +418,7 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // Emulate SMT-LIB semantics, which rounds towards negative infinity
       val rat = this.op.toC(parseContext)
       val castRat = "((int) $rat)"
-      (this.op as? RatLitExpr)?.run {
+      (this.op.unwrapTraceable() as? RatLitExpr)?.run {
         if (num.signum() != denom.signum() && num % denom != BigInteger.ZERO) "($castRat - 1)"
         else castRat
       } ?: "($rat < 0.0 && $rat - $castRat < 0 ? $castRat - 1 : $castRat)"
@@ -482,7 +485,7 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
         // -5 mod -3 = 1
         val lhs = leftOp.toC(parseContext)
         val rhs = rightOp.toC(parseContext)
-        (rightOp as? IntLitExpr)?.run {
+        (rightOp.unwrapTraceable() as? IntLitExpr)?.run {
           if (value < BigInteger.ZERO) "( ($lhs % $rhs - $rhs) % $rhs )"
           else "( ($lhs % $rhs + $rhs) % $rhs )"
         } ?: "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
@@ -496,8 +499,9 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // -5 rem -3 = -1
       val rhs = rightOp.toC(parseContext)
       val mod = ModExpr.create2(leftOp, rightOp).toC(parseContext)
-      (rightOp as? IntLitExpr)?.run { if (value < BigInteger.ZERO) "(- $mod)" else mod }
-        ?: "($rhs < 0 ? - $mod : $mod)"
+      (rightOp.unwrapTraceable() as? IntLitExpr)?.run {
+        if (value < BigInteger.ZERO) "(- $mod)" else mod
+      } ?: "($rhs < 0 ? - $mod : $mod)"
     }
     this is DivExpr<*> -> "(${leftOp.toC(parseContext)} / ${rightOp.toC(parseContext)})"
     this is ImplyExpr -> "(! ${leftOp.toC(parseContext)} || ${rightOp.toC(parseContext)})"
@@ -553,7 +557,7 @@ fun Expr<*>.arrayCOperator() =
 fun String.toC() = this.replace(Regex("[^A-Za-z_0-9$]"), "_")
 
 private fun IntModExpr.isDomainBound(parseContext: ParseContext): Boolean {
-  val m = rightOp as? IntLitExpr ?: return false
+  val m = rightOp.unwrapTraceable() as? IntLitExpr ?: return false
 
   val type =
     try {

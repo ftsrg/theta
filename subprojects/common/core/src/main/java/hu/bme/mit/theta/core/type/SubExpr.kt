@@ -18,9 +18,7 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.type.abstracttype.Additive
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class SubExpr<ExprType : Additive<ExprType>>
-protected constructor(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>) :
-  BinaryExpr<ExprType, ExprType>(leftOp, rightOp) {
+sealed class SubExpr<ExprType : Additive<ExprType>> : BinaryExpr<ExprType, ExprType>() {
 
   companion object {
     @JvmStatic

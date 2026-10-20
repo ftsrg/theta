@@ -19,16 +19,17 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class IntNegExpr private constructor(op: Expr<IntType>) : NegExpr<IntType>(op) {
+@Serializable
+class IntNegExpr private constructor(override val op: Expr<IntType>) : NegExpr<IntType>() {
 
   override val type: IntType
     get() = Int()
 
   override fun eval(valuation: Valuation): IntLitExpr = (op.eval(valuation) as IntLitExpr).neg()
 
-  override fun with(op: Expr<IntType>): IntNegExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<IntType>): IntNegExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

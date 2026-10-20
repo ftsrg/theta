@@ -18,6 +18,7 @@ package hu.bme.mit.theta.c2xcfa
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -72,8 +73,9 @@ class StructArrayCopyTest {
       .filterIsInstance<MemoryAssignStmt<*, *, *>>()
       .filter { stmt ->
         // arrays[dst_a][k] := arrays[src_a][k]: element cells of two *different* arrays
-        val toArray = (stmt.deref as? Dereference<*, *, *>)?.array
-        val fromArray = (stmt.expr as? Dereference<*, *, *>)?.array
+        val toArray = stmt.deref.array.unwrapTraceable()
+        val fromArray =
+          (stmt.expr.unwrapTraceable() as? Dereference<*, *, *>)?.array?.unwrapTraceable()
         toArray is Dereference<*, *, *> &&
           fromArray is Dereference<*, *, *> &&
           toArray.array != fromArray.array

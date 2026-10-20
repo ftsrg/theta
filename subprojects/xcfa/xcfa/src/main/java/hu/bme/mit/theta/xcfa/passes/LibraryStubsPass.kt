@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
@@ -202,7 +203,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     // question, answered (for the written buffers only) below.
     for (i in 1 until invoke.params.size) {
       val arg = invoke.params[i]
-      if (arg is LitExpr<*>) continue // a constant reads nothing
+      if (arg.unwrapTraceable() is LitExpr<*>) continue // a constant reads nothing
       val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
       builder.addVar(read)
       out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
@@ -225,12 +226,14 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         builder.addVar(fresh)
         val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
         val deref =
-          Dereference.of(
-            ptr as Expr<Type>,
-            cast(index, ptr.type) as Expr<Type>,
-            cell.smtType as Type,
+          CComplexType.withType(
+            Dereference.of(
+              ptr as Expr<Type>,
+              cast(index, ptr.type) as Expr<Type>,
+              cell.smtType as Type,
+            ),
+            CPointer(null, cell, parseContext),
           )
-        parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
         out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
         // Bound it to the cell's C type, exactly as a `__VERIFIER_nondet_<type>()` result is
         // bounded. A bare havoc is unconstrained across its whole SMT sort, and under integer
@@ -259,7 +262,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     }
 
     // The return value: a fixed one where the call is assumed to succeed, otherwise a havoc.
-    val ret = (invoke.params.getOrNull(0) as? RefExpr<*>)?.decl as? VarDecl<*>
+    val ret = (invoke.params.getOrNull(0)?.unwrapTraceable() as? RefExpr<*>)?.decl as? VarDecl<*>
     if (ret != null) {
       val fixed = spec.returns
       if (fixed == null) {

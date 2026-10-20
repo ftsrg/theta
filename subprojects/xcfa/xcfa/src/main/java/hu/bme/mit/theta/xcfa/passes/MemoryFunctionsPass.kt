@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -285,7 +286,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
   /** `mem*` all return their destination; keep that, so `p = memcpy(p, q, n)` still works. */
   private fun returns(invoke: InvokeLabel, dst: Expr<*>): List<XcfaLabel> {
-    val ret = (invoke.params[0] as? RefExpr<*>)?.decl as? VarDecl<*> ?: return listOf()
+    val ret =
+      (invoke.params[0].unwrapTraceable() as? RefExpr<*>)?.decl as? VarDecl<*> ?: return listOf()
     return listOf(
       AssignStmtLabel(
         cast(ret, ret.type),
@@ -528,7 +530,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    * looked at.
    */
   private fun literalValue(expr: Expr<*>): BigInteger? =
-    when (val e = ExprUtils.simplify(expr)) {
+    when (val e = ExprUtils.simplify(expr).unwrapTraceable()) {
       is IntLitExpr -> e.value
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(e)
       else -> null
@@ -664,11 +666,11 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
   private var counter = 0
 
-  private fun deref(pointer: Expr<*>, index: Expr<*>, element: CComplexType): Dereference<*, *, *> {
-    val of = Dereference.of(pointer as Expr<Type>, index as Expr<Type>, element.smtType as Type)
-    parseContext.metadata.create(of, "cType", element)
-    return of
-  }
+  private fun deref(pointer: Expr<*>, index: Expr<*>, element: CComplexType): Expr<*> =
+    CComplexType.withType(
+      Dereference.of(pointer as Expr<Type>, index as Expr<Type>, element.smtType as Type),
+      element,
+    )
 }
 
 /** Enough for any `sizeof` a benchmark copies; past it, a loop would be the honest model. */

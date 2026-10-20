@@ -18,16 +18,17 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.Serializable
 
-class FpPosExpr private constructor(op: Expr<FpType>) : PosExpr<FpType>(op) {
+@Serializable
+class FpPosExpr private constructor(override val op: Expr<FpType>) : PosExpr<FpType>() {
 
   override val type: FpType
     get() = op.type
 
   override fun eval(valuation: Valuation): FpLitExpr = (op.eval(valuation) as FpLitExpr).pos()
 
-  override fun with(op: Expr<FpType>): FpPosExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<FpType>): FpPosExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

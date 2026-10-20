@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
@@ -246,7 +247,7 @@ internal fun inlineCallSite(
     }
 
     if (param.second != ParamDirection.IN) {
-      val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
+      val varDecl = (invokeLabel.params[i].unwrapTraceable() as RefExpr<*>).decl as VarDecl<*>
       // This writes the callee's result into the *caller's* variable, so it is the caller's type
       // that the assignment has to be built at -- and the right-hand side already converts to it.
       // Naming the callee's type here instead is indistinguishable whenever the two agree, and they

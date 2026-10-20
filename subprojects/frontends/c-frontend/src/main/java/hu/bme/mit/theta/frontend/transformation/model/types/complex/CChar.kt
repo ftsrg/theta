@@ -19,9 +19,11 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-sealed class CChar(origin: CSimpleType?, parseContext: ParseContext) :
-  CInteger(origin, parseContext) {
+@Serializable
+sealed class CChar : CInteger() {
   init {
     rank = RANK
   }
@@ -38,20 +40,26 @@ sealed class CChar(origin: CSimpleType?, parseContext: ParseContext) :
   override val unsignedVersion: CInteger
     get() = CUnsignedChar(null, parseContext)
 
-  private companion object {
-    const val RANK = 10
+  companion object {
+    private const val RANK = 10
   }
 }
 
-class CSignedChar(origin: CSimpleType?, parseContext: ParseContext) :
-  CChar(origin, parseContext), Signed {
+@Serializable
+class CSignedChar(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CChar(), Signed {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)
 }
 
-class CUnsignedChar(origin: CSimpleType?, parseContext: ParseContext) :
-  CChar(origin, parseContext), Unsigned {
+@Serializable
+class CUnsignedChar(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CChar(), Unsigned {
   init {
     unsigned = true
   }

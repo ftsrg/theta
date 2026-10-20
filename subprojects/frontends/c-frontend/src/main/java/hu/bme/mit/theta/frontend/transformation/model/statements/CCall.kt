@@ -27,12 +27,9 @@ class CCall(val functionId: String, val params: List<CStatement>, parseContext: 
 
   init {
     params.forEach { it.setParent(this) }
-    val type =
-      parseContext.metadata.getMetadataValue(functionId, "cType").orElseGet {
-        CSignedInt(null, parseContext)
-      } as CComplexType
+    val type = parseContext.functionReturnTypes[functionId] ?: CSignedInt(null, parseContext)
     ret = Var("call_" + functionId + "_ret" + counter++, type.smtType)
-    parseContext.metadata.create(ret.ref, "cType", type)
+    CComplexType.withType(ret.ref, type)
   }
 
   override fun <P, R> accept(visitor: CStatementVisitor<P, R>, param: P): R =

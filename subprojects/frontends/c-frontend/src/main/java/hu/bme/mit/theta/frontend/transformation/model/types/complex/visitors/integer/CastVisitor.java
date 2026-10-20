@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.MulExpr;
 import hu.bme.mit.theta.core.type.NegExpr;
 import hu.bme.mit.theta.core.type.PosExpr;
 import hu.bme.mit.theta.core.type.SubExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -70,9 +71,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
      * width-preserving cast transparent: a pointer cast to `unsigned long` and back stays the very
      * same expression, so a pointer routed through an integer is still recognisable as one.
      *
-     * <p>A distinct {@code Pos} wrapper is returned rather than the bare operand, so that recording
-     * the target type on the result (see {@code CComplexType.castTo}) does not overwrite the
-     * operand's own recorded type.
+     * <p>A distinct {@code Pos} node is returned rather than the bare operand: the caller types the
+     * result, and typing a variable's own reference would retype the variable (see {@code
+     * CComplexType.withType}).
      */
     private Expr<?> widthPreserving(CInteger type, Expr<?> param) {
         CComplexType source = CComplexType.getType(param, parseContext);
@@ -99,9 +100,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
      * anything that is not an arithmetic result -- may skip it.
      */
     private boolean cannotLeaveItsRange(Expr<?> param) {
-        Expr<?> expr = param;
+        Expr<?> expr = Traceability.unwrapTraceable(param);
         while (expr instanceof PosExpr<?> pos) {
-            expr = pos.getOp();
+            expr = Traceability.unwrapTraceable(pos.getOp());
         }
         return !(expr instanceof AddExpr
                 || expr instanceof SubExpr

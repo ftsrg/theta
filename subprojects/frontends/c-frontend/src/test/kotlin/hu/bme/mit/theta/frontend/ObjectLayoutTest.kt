@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
  */
 class ObjectLayoutTest {
 
-  private fun ctx(arch: ArchitectureType) = ParseContext().apply { setArchitecture(arch) }
+  private fun ctx(arch: ArchitectureType) = ParseContext().apply { architecture = arch }
 
   private fun struct(
     parseContext: ParseContext,

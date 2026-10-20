@@ -21,9 +21,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class RatGeqExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatType>) :
-  GeqExpr<RatType>(leftOp, rightOp) {
+@Serializable
+class RatGeqExpr
+private constructor(override val leftOp: Expr<RatType>, override val rightOp: Expr<RatType>) :
+  GeqExpr<RatType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -35,8 +38,7 @@ class RatGeqExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatTyp
   }
 
   override fun with(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatGeqExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

@@ -19,7 +19,10 @@ import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class LoopStmt
 private constructor(
   val stmt: Stmt,
@@ -28,7 +31,7 @@ private constructor(
   val to: Expr<IntType>,
 ) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)

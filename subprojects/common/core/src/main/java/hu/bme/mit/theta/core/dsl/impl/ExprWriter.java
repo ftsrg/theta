@@ -122,6 +122,7 @@ import hu.bme.mit.theta.core.type.RatNeqExpr;
 import hu.bme.mit.theta.core.type.RatPosExpr;
 import hu.bme.mit.theta.core.type.RatSubExpr;
 import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.TraceableWrapperExpr;
 import hu.bme.mit.theta.core.type.TrueExpr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.XorExpr;
@@ -269,6 +270,7 @@ public final class ExprWriter {
                         // General
 
                         .addCase(RefExpr.class, e -> e.getDecl().getName())
+                        .addCase(TraceableWrapperExpr.class, this::traceable)
                         .addCase(IteExpr.class, this::ite)
                         .addCase(PrimeExpr.class, e -> postfixUnary(e, "'"))
                         .addDefault(
@@ -372,6 +374,10 @@ public final class ExprWriter {
                 + " <- "
                 + write(e.getElem())
                 + "]";
+    }
+
+    private String traceable(final TraceableWrapperExpr<?> expr) {
+        return write(expr.getExpr());
     }
 
     private String ite(final IteExpr<?> expr) {

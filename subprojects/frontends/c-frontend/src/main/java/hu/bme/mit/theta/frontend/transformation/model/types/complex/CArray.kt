@@ -15,20 +15,33 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
+import hu.bme.mit.theta.core.serialization.ExprReferenceSerializer
+import hu.bme.mit.theta.core.serialization.ObjectTable
+import hu.bme.mit.theta.core.serialization.TypeReferenceSerializer
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
+@Serializable
 class CArray
 @JvmOverloads
 constructor(
-  origin: CSimpleType?,
-  val embeddedType: CComplexType,
-  parseContext: ParseContext,
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = CComplexTypeReferenceSerializer::class) val embeddedType: CComplexType,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
   /** If null, infinite */
-  val arrayDimension: CStatement? = null,
-) : CInteger(origin, parseContext) {
+  @Serializable(with = ArrayDimensionSerializer::class) val arrayDimension: CStatement? = null,
+) : CInteger() {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)
@@ -49,4 +62,23 @@ constructor(
       arrayDimension == other.arrayDimension
 
   override fun hashCode(): Int = Objects.hash(javaClass, embeddedType, arrayDimension)
+}
+
+/**
+ * A parsed program only reads a dimension's expression, so that is what is kept of it; a dimension
+ * without one reads back as none.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+object ArrayDimensionSerializer : KSerializer<CStatement?> {
+  private val expression = ExprReferenceSerializer(TypeReferenceSerializer).nullable
+
+  override val descriptor = SerialDescriptor("theta.ArrayDimension", expression.descriptor)
+
+  override fun serialize(encoder: Encoder, value: CStatement?) =
+    encoder.encodeSerializableValue(expression, value?.expression)
+
+  override fun deserialize(decoder: Decoder): CStatement? =
+    decoder.decodeSerializableValue(expression)?.let {
+      CExpr(it, ObjectTable.current().ambient(ParseContext::class.java))
+    }
 }

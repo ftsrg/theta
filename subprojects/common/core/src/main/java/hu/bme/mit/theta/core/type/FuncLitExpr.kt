@@ -16,22 +16,21 @@
 package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.TypeUtils
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class FuncLitExpr<ParamType : Type, ResultType : Type>
-private constructor(param: ParamDecl<ParamType>, result: Expr<ResultType>) :
-  AbstractExpr<FuncType<ParamType, ResultType>>(), LitExpr<FuncType<ParamType, ResultType>> {
+private constructor(val param: ParamDecl<ParamType>, val result: Expr<ResultType>) :
+  LitExpr<FuncType<ParamType, ResultType>> {
 
-  val param: ParamDecl<ParamType> = checkNotNull(param)
-  val result: Expr<ResultType> = checkNotNull(result)
-
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override val type: FuncType<ParamType, ResultType>
     get() = FuncType.of(param.type, result.type)
@@ -50,7 +49,7 @@ private constructor(param: ParamDecl<ParamType>, result: Expr<ResultType>) :
   }
 
   fun with(result: Expr<ResultType>): FuncLitExpr<ParamType, ResultType> =
-    if (this.result === result) this else keepSourceType(of(param, result))
+    if (this.result === result) this else of(param, result)
 
   override fun hashCode(): Int {
     var tmp = hashCode
@@ -64,6 +63,7 @@ private constructor(param: ParamDecl<ParamType>, result: Expr<ResultType>) :
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FuncLitExpr<*, *>

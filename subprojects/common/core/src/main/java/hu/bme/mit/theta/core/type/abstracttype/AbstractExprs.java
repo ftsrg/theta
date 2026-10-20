@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.Traceability.unwrapTraceable;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Try;
@@ -96,8 +97,9 @@ public final class AbstractExprs {
     }
 
     private static <T extends Additive<T>> List<Expr<T>> getAddOps(final Expr<T> expr) {
-        if (expr instanceof AddExpr) {
-            final AddExpr<T> addExpr = (AddExpr<T>) expr;
+        // A traced operand is flattened too: its traceability info does not survive the merge.
+        if (unwrapTraceable(expr) instanceof AddExpr) {
+            final AddExpr<T> addExpr = (AddExpr<T>) unwrapTraceable(expr);
             return addExpr.getOps();
         } else {
             return ImmutableList.of(expr);
@@ -164,8 +166,9 @@ public final class AbstractExprs {
     }
 
     private static <T extends Multiplicative<T>> List<Expr<T>> getMulOps(final Expr<T> expr) {
-        if (expr instanceof MulExpr) {
-            final MulExpr<T> mulExpr = (MulExpr<T>) expr;
+        // A traced operand is flattened too: its traceability info does not survive the merge.
+        if (unwrapTraceable(expr) instanceof MulExpr) {
+            final MulExpr<T> mulExpr = (MulExpr<T>) unwrapTraceable(expr);
             return mulExpr.getOps();
         } else {
             return ImmutableList.of(expr);

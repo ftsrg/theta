@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.BvLitExpr
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
@@ -137,14 +138,7 @@ class UnresolvedInvokeToHavocPass(
    * [CComplexType.getType]'s SMT-type fallback: under integer arithmetic a pointer is an
    * integer-typed expression, so the fallback would misreport pointers as scalars.
    */
-  private fun cTypeOf(expr: Expr<*>): CComplexType? {
-    val meta = parseContext.metadata.getMetadataValue(expr, "cType")
-    if (meta.isEmpty) return null
-    return when (val value = meta.get()) {
-      is CComplexType -> value
-      else -> null
-    }
-  }
+  private fun cTypeOf(expr: Expr<*>): CComplexType? = CComplexType.getKnownType(expr)
 
   private fun isPlainIntegerScalar(type: CComplexType): Boolean =
     type is CInteger && type !is CPointer && type !is CArray
@@ -155,7 +149,7 @@ class UnresolvedInvokeToHavocPass(
    * 0 2^64) 2^64)`.
    */
   private fun isNullLiteral(expr: Expr<*>): Boolean =
-    when (val folded = ExprUtils.simplify(expr)) {
+    when (val folded = ExprUtils.simplify(expr).unwrapTraceable()) {
       is IntLitExpr -> folded.value == BigInteger.ZERO
       is BvLitExpr -> folded.value.all { !it }
       else -> false

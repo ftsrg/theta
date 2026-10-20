@@ -20,13 +20,15 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
+@Serializable
 class FpSubExpr
 private constructor(
   val roundingMode: FpRoundingMode?,
-  leftOp: Expr<FpType>,
-  rightOp: Expr<FpType>,
-) : SubExpr<FpType>(leftOp, rightOp) {
+  override val leftOp: Expr<FpType>,
+  override val rightOp: Expr<FpType>,
+) : SubExpr<FpType>() {
 
   init {
     checkAllTypesEqual(leftOp, rightOp)
@@ -43,9 +45,10 @@ private constructor(
 
   override fun with(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpSubExpr =
     if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(roundingMode, leftOp, rightOp))
+    else of(roundingMode, leftOp, rightOp)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpSubExpr

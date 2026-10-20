@@ -19,9 +19,11 @@ import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
+import kotlinx.serialization.Serializable
 
-class FpFromIeeeBvExpr private constructor(op: Expr<BvType>, val fpType: FpType) :
-  UnaryExpr<BvType, FpType>(op) {
+@Serializable
+class FpFromIeeeBvExpr private constructor(override val op: Expr<BvType>, val fpType: FpType) :
+  UnaryExpr<BvType, FpType>() {
 
   override val type: FpType
     get() = fpType
@@ -45,9 +47,10 @@ class FpFromIeeeBvExpr private constructor(op: Expr<BvType>, val fpType: FpType)
   }
 
   override fun with(op: Expr<BvType>): FpFromIeeeBvExpr =
-    if (op === this.op) this else keepSourceType(of(op, fpType))
+    if (op === this.op) this else of(op, fpType)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpFromIeeeBvExpr

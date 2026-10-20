@@ -100,7 +100,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
             .reversed()
         for ((index, value) in reversed) {
           val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-          if (parseContext.metadata.getMetadataValue(varDecl.ref, "cType").isPresent) {
+          if (CComplexType.getKnownType(varDecl.ref) != null) {
             val type =
               CComplexType.getType(
                 varDecl.ref,

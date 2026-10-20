@@ -20,9 +20,12 @@ import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
-class FpMinExpr private constructor(leftOp: Expr<FpType>, rightOp: Expr<FpType>) :
-  BinaryExpr<FpType, FpType>(leftOp, rightOp) {
+@Serializable
+class FpMinExpr
+private constructor(override val leftOp: Expr<FpType>, override val rightOp: Expr<FpType>) :
+  BinaryExpr<FpType, FpType>() {
 
   init {
     checkAllTypesEqual(leftOp, rightOp)
@@ -43,8 +46,7 @@ class FpMinExpr private constructor(leftOp: Expr<FpType>, rightOp: Expr<FpType>)
   }
 
   override fun with(leftOp: Expr<FpType>, rightOp: Expr<FpType>): FpMinExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

@@ -56,6 +56,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -75,8 +76,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.LaidOutValue
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.StorageOrigin
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
@@ -127,6 +129,8 @@ class FrontendXcfaBuilder(
    */
   val alreadyHandledStatements: MutableSet<CStatement> = LinkedHashSet()
 
+  private val sourceStatements = SourceStatement.Registry()
+
   private fun getLoc(
     builder: XcfaProcedureBuilder,
     name: String?,
@@ -151,13 +155,17 @@ class FrontendXcfaBuilder(
    */
   /** One storage cell a bitfield store has to touch, and where the field sits inside it. */
   private data class BitfieldCellWrite(
-    val cell: Dereference<*, *, *>,
+    /** The cell as found: a dereference, possibly wrapped with its C type. */
+    val tracedCell: Expr<*>,
     /** bit offset of the written slice within this cell */
     val cellOffset: Int,
     /** bit offset of the written slice within the field's value */
     val valueOffset: Int,
     val width: Int,
-  )
+  ) {
+    val cell: Dereference<*, *, *>
+      get() = tracedCell.unwrapTraceable() as Dereference<*, *, *>
+  }
 
   /**
    * The cells a bitfield store must write, recovered from the left-hand side's *shape*.
@@ -178,17 +186,18 @@ class FrontendXcfaBuilder(
    * not a dereference -- concat padding is not storage -- rather than dropping those bits.
    */
   private fun structuralBitfieldWrites(lValue: Expr<*>): List<BitfieldCellWrite>? {
-    val extract = peelWidthWrappers(lValue) as? BvExtractExpr ?: return null
+    val extract = peelWidthWrappers(lValue).unwrapTraceable() as? BvExtractExpr ?: return null
     var from = extract.from.value.toInt()
     var until = extract.until.value.toInt()
     if (until <= from) return null
-    var unit = peelWidthWrappers(extract.bitvec)
+    var unit = peelWidthWrappers(extract.bitvec).unwrapTraceable()
     // The cell is often reached through further NARROWINGS, not directly: reading a bitfield out
     // of a 64-bit cell slices the cell to 32 bits first, and the field is then extracted from
     // that. `extract(extract(X, a, b), c, d)` is just bits [a+c, a+d) of X, so fold the chain down
     // to the cell rather than giving up on it. Without it a bitfield store reached through a
     // narrowing is refused, because the operand is an extract where this expects a dereference.
     var depth = 0
+    var tracedUnit: Expr<*> = unit
     while (unit is BvExtractExpr && depth++ < 8) {
       val innerFrom = unit.from.value.toInt()
       val innerUntil = unit.until.value.toInt()
@@ -197,13 +206,14 @@ class FrontendXcfaBuilder(
       if (innerFrom + until > innerUntil) return null
       from += innerFrom
       until += innerFrom
-      unit = peelWidthWrappers(unit.bitvec)
+      tracedUnit = peelWidthWrappers(unit.bitvec)
+      unit = tracedUnit.unwrapTraceable()
     }
     if (unit is Dereference<*, *, *>) {
       // Never write past the end of the cell the chain landed on.
       val cellWidth = (unit.type as? BvType)?.size ?: return null
       if (until > cellWidth) return null
-      return listOf(BitfieldCellWrite(unit, from, 0, until - from))
+      return listOf(BitfieldCellWrite(tracedUnit, from, 0, until - from))
     }
     if (unit !is BvConcatExpr) return null
     val writes = mutableListOf<BitfieldCellWrite>()
@@ -214,10 +224,12 @@ class FrontendXcfaBuilder(
       val overlapLow = maxOf(from, low)
       val overlapHigh = minOf(until, low + partWidth)
       if (overlapLow < overlapHigh) {
-        val cell = peelWidthWrappers(part) as? Dereference<*, *, *> ?: return null
+        val cell =
+          peelWidthWrappers(part).takeIf { it.unwrapTraceable() is Dereference<*, *, *> }
+            ?: return null
         writes.add(
           BitfieldCellWrite(
-            cell = cell,
+            tracedCell = cell,
             cellOffset = overlapLow - low,
             valueOffset = overlapLow - from,
             width = overlapHigh - overlapLow,
@@ -257,11 +269,11 @@ class FrontendXcfaBuilder(
     var depth = 0
     while (depth++ < 8) {
       current =
-        when (current) {
-          is BvZExtExpr -> current.ops[0]
-          is BvSExtExpr -> current.ops[0]
+        when (val bare = current.unwrapTraceable()) {
+          is BvZExtExpr -> bare.ops[0]
+          is BvSExtExpr -> bare.ops[0]
           // BvSignChangeExpr is a PosExpr, as is the `+` a cast can leave on an operand.
-          is PosExpr<*> -> current.ops[0]
+          is PosExpr<*> -> bare.ops[0]
           else -> return current
         }
     }
@@ -311,7 +323,7 @@ class FrontendXcfaBuilder(
       offsetStart = source.offsetStart.takeIf { it != -1 },
       offsetEnd = source.offsetEnd.takeIf { it != -1 },
       sourceText = source.sourceText,
-      astNodes = listOf(source),
+      sourceStatements = listOf(sourceStatements.of(source)),
       functionName = source.functionName.takeIf { it != "" },
       notStatementStart = alreadyHandledStatements.contains(source),
     )
@@ -448,14 +460,11 @@ class FrontendXcfaBuilder(
     // funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
     if (funcDecl.actualType !is CVoid) {
       val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-      parseContext.metadata.create(toAdd.ref, "cType", funcDecl.actualType)
+      CComplexType.withType(toAdd.ref, funcDecl.actualType)
       builder.addParam(toAdd, ParamDirection.OUT)
     } else {
       // TODO we assume later that there is always a ret var, but this should change
       val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-      val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext, uniqueWarningLogger)
-      signedIntType.isSigned = true
-      parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
       builder.addParam(toAdd, ParamDirection.OUT)
     }
     for (functionParam in funcDecl.functionParams) {
@@ -566,7 +575,7 @@ class FrontendXcfaBuilder(
 
   /** The static object, and the cell of it, that [objectExpr] is stored in, if any. */
   private fun parentCell(objectExpr: Expr<*>): Pair<Int, Int?>? {
-    val cell = objectExpr as? Dereference<*, *, *> ?: return null
+    val cell = objectExpr.unwrapTraceable() as? Dereference<*, *, *> ?: return null
     val parent = staticObjectBases[cell.array] ?: return null
     return parent to cell.offset.asConstantBigInteger()?.toInt()
   }
@@ -626,12 +635,14 @@ class FrontendXcfaBuilder(
         val subObjectBase = ptrCnt // capture: reading ptrCnt advances it
         val unitOffset = type.unitOffsetOf(field.get1())
         val deref =
-          Dereference(
-            cast(objectExpr, objectExpr.type),
-            cast(type.getValue("$unitOffset"), objectExpr.type),
-            fieldType.smtType,
+          CComplexType.withType(
+            Dereference(
+              cast(objectExpr, objectExpr.type),
+              cast(type.getValue("$unitOffset"), objectExpr.type),
+              fieldType.smtType,
+            ),
+            fieldType,
           )
-        parseContext.metadata.create(deref, "cType", fieldType)
         initStmtList.add(
           StmtLabel(
             MemoryAssignStmt.create(
@@ -783,9 +794,9 @@ class FrontendXcfaBuilder(
     parentType: CComplexType,
     index: Int,
     subobjectType: CComplexType,
-  ): Dereference<*, *, *> {
+  ): Expr<*> {
     val indexValue = parentType.getValue("$index")
-    val sum = parent.withoutPos() as? AddExpr<*>
+    val sum = parent.withoutPos().unwrapTraceable() as? AddExpr<*>
     val base = sum?.let { pointerOperandOf(it) }
     return if (base == null) {
         Dereference(cast(parent, parent.type), cast(indexValue, parent.type), subobjectType.smtType)
@@ -797,10 +808,11 @@ class FrontendXcfaBuilder(
           subobjectType.smtType,
         )
       }
-      .also { parseContext.metadata.create(it, "cType", subobjectType) }
+      .let { CComplexType.withType(it, subobjectType) }
   }
 
-  private fun Expr<*>.withoutPos(): Expr<*> = if (this is PosExpr<*>) op.withoutPos() else this
+  private fun Expr<*>.withoutPos(): Expr<*> =
+    (unwrapTraceable() as? PosExpr<*>)?.op?.withoutPos() ?: this
 
   /**
    * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
@@ -834,7 +846,7 @@ class FrontendXcfaBuilder(
    */
   private fun fixedArraySize(type: CArray): Int? {
     val dimension = type.arrayDimension ?: return null
-    return when (val bounds = ExprUtils.simplify(dimension.expression)) {
+    return when (val bounds = ExprUtils.simplify(dimension.expression).unwrapTraceable()) {
       is IntLitExpr -> bounds.value.toInt()
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bounds).toInt()
       else -> null
@@ -896,14 +908,8 @@ class FrontendXcfaBuilder(
         is CPointer -> this.embeddedType as? CStruct
         else -> null
       } ?: return null
-    // NOT widened to an untyped right-hand side. `Toc->TrackData[0] = Toc->TrackData[index]`
-    // fails here because the rhs element address loses its struct cType -- FrontendMetadata is
-    // identity-keyed -- and the frontend then derives
-    // `CUnsignedInt` from the (Bv 32) sort. Accepting "the lvalue is a struct, so C says the rhs
-    // must be too" was tried and reverted: a derived type is indistinguishable from a real one, so
-    // the rule also swallowed pointer assignments and sent them into structCopy, which threw
-    // ClassCastException -- and it regressed tasks that had started building. The real fix is to
-    // keep the struct type on the rebuilt element address; until then this stays a loud refusal.
+    // Decided by the right-hand side's own C type, never by the lvalue's: a type derived from an
+    // SMT sort cannot tell a struct from a pointer, so pointer assignments would become copies.
     return candidate.takeIf { it == CComplexType.getType(rExpression, parseContext) }
   }
 
@@ -968,10 +974,16 @@ class FrontendXcfaBuilder(
     val cells = if (width != null) 1 else unionCellCount(type)
     return (0 until cells).map { i ->
       val offset = offsetLiteral(i.toLong())
-      val to = Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
-      val from = Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType)
-      parseContext.metadata.create(to, "cType", cellType)
-      parseContext.metadata.create(from, "cType", cellType)
+      val to =
+        CComplexType.withType(
+          Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType),
+          cellType,
+        )
+      val from =
+        CComplexType.withType(
+          Dereference(cast(source, source.type), cast(offset, source.type), cellType.smtType),
+          cellType,
+        )
       StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata)
     }
   }
@@ -1040,12 +1052,7 @@ class FrontendXcfaBuilder(
     }
 
   private fun copyScalar(to: Expr<*>, from: Expr<*>, metadata: MetaData): List<XcfaLabel> =
-    listOf(
-      StmtLabel(
-        MemoryAssignStmt.create(to as Dereference<*, *, *>, cast(from, to.type)),
-        metadata = metadata,
-      )
-    )
+    listOf(StmtLabel(MemoryAssignStmt.create(to, cast(from, to.type)), metadata = metadata))
 
   /**
    * Passes a struct argument *by value*: copies it into a fresh object and hands the callee that.
@@ -1071,7 +1078,7 @@ class FrontendXcfaBuilder(
     metadata: MetaData,
   ): Pair<Expr<*>, List<XcfaLabel>> {
     val tmp = Var("__theta_structarg" + structArgCnt++, type.smtType)
-    parseContext.metadata.create(tmp.ref, "cType", type)
+    CComplexType.withType(tmp.ref, type)
     builder.addVar(tmp)
     val labels: MutableList<XcfaLabel> = ArrayList()
     allocateStackStruct(tmp.ref, type, labels)
@@ -1091,7 +1098,8 @@ class FrontendXcfaBuilder(
     if (type is CVoid) {
       return
     }
-    if (globalDeclaration is RefExpr<*>) {
+    val globalRef = globalDeclaration.unwrapTraceable()
+    if (globalRef is RefExpr<*>) {
       // `_Atomic int *p` makes the *pointee* atomic, not p, so it is `pointsToAtomic` that the
       // declaration sets -- and it is what a memory access through p has to ask. Leaving it false
       // meant an access through a pointer declared to point at atomic data was checked for races
@@ -1108,8 +1116,8 @@ class FrontendXcfaBuilder(
         }
       builder.addVar(
         XcfaGlobalVar(
-          globalDeclaration.decl as VarDecl<*>,
-          type.nullValue,
+          globalRef.decl as VarDecl<*>,
+          type.nullLiteral,
           atomic = isAtomic,
           pointsToAtomic = pointeeAtomic,
         )
@@ -1209,8 +1217,11 @@ class FrontendXcfaBuilder(
         val total = flatArraySize(type) ?: 0
         for (index in 0 until total) {
           val cellType = cellTypeAt(type, index)
-          val cell = Dereference(globalDeclaration, offsetLiteral(index.toLong()), cellType.smtType)
-          parseContext.metadata.create(cell, "cType", cellType)
+          val cell =
+            CComplexType.withType(
+              Dereference(globalDeclaration, offsetLiteral(index.toLong()), cellType.smtType),
+              cellType,
+            )
           initStmtList.add(AssignStmtLabel(cell, cellType.nullValue))
         }
         return
@@ -1252,8 +1263,11 @@ class FrontendXcfaBuilder(
       if (initExpr != null && initExpr !is CInitializerList) {
         for (unit in 0 until type.unitCount) {
           val et = unitTypes[unit]
-          val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), et.smtType)
-          parseContext.metadata.create(cell, "cType", et)
+          val cell =
+            CComplexType.withType(
+              Dereference(globalDeclaration, offsetLiteral(unit.toLong()), et.smtType),
+              et,
+            )
           initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
         }
         return
@@ -1287,7 +1301,9 @@ class FrontendXcfaBuilder(
       // that the guards swallowed), the scalar has to be unwrapped out of them; asking a
       // CInitializerList for its single .expression throws.
       val scalarInit = unwrapScalarInitializer(initExpr)
-      if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
+      if (
+        scalarInit != null && scalarInit.expression?.unwrapTraceable() !is UnsupportedInitializer
+      ) {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression!!)))
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
@@ -1320,8 +1336,10 @@ class FrontendXcfaBuilder(
     for (i in 0 until dimension) {
       val et = embeddedType(i)
       val embeddedDeclaration =
-        Dereference(globalDeclaration, offsetLiteral(i.toLong()), et.smtType)
-      parseContext.metadata.create(embeddedDeclaration, "cType", et)
+        CComplexType.withType(
+          Dereference(globalDeclaration, offsetLiteral(i.toLong()), et.smtType),
+          et,
+        )
       initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
     }
   }
@@ -1413,8 +1431,11 @@ class FrontendXcfaBuilder(
     fillFlat(type, initExpr, intArrayOf(0), values)
     for (index in 0 until total) {
       val cellType = cellTypeAt(type, index)
-      val cell = Dereference(target, offsetLiteral(index.toLong()), cellType.smtType)
-      parseContext.metadata.create(cell, "cType", cellType)
+      val cell =
+        CComplexType.withType(
+          Dereference(target, offsetLiteral(index.toLong()), cellType.smtType),
+          cellType,
+        )
       val value = values[index]
       initStmtList.add(
         AssignStmtLabel(
@@ -1542,8 +1563,11 @@ class FrontendXcfaBuilder(
     val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
     for (unit in 0 until type.unitCount) {
       val cellType = unitType(unit)
-      val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), cellType.smtType)
-      parseContext.metadata.create(cell, "cType", cellType)
+      val cell =
+        CComplexType.withType(
+          Dereference(globalDeclaration, offsetLiteral(unit.toLong()), cellType.smtType),
+          cellType,
+        )
       val members = type.fields.indices.filter { slotOf(it).unitIndex() == unit }
       if (members.size == 1 && !slotOf(members[0]).bitfield()) {
         initializeGlobalVariable(builder, cell, initStmtList, initExprs[members[0]])
@@ -1569,7 +1593,7 @@ class FrontendXcfaBuilder(
 
   /** The position a designated element writes, or null for take-the-next-slot. */
   private fun designatedIndex(designator: java.util.Optional<CStatement>): Int? =
-    designator.map { (it.expression as IntLitExpr).value.toInt() }.orElse(null)
+    designator.map { (it.expression!!.unwrapTraceable() as IntLitExpr).value.toInt() }.orElse(null)
 
   /**
    * Whether [declaration] only *declares* its object, leaving the definition -- and anything the
@@ -1606,7 +1630,7 @@ class FrontendXcfaBuilder(
     // No castTo here: only the literal's value is needed, and the dimension expression may be
     // typed for the wrong arithmetic (types registered by the early typedef pass carry
     // default-arithmetic literals; casting one with the bitvector visitor throws).
-    val bounds = ExprUtils.simplify(type.arrayDimension!!.expression)
+    val bounds = ExprUtils.simplify(type.arrayDimension!!.expression).unwrapTraceable()
     checkState(
       bounds is IntLitExpr || bounds is BvLitExpr,
       "Only IntLit and BvLit expression expected here.",
@@ -1636,30 +1660,29 @@ class FrontendXcfaBuilder(
     // Assigning to a packed bitfield writes only its own bits: read the shared cell, splice the
     // new value in, and store the cell back. Without this the neighbouring fields in the same
     // storage unit would be clobbered.
-    val bitfieldCell =
-      parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.CELL).orElse(null)
-        as? Dereference<*, *, *>
-    // The metadata is identity-keyed and does not survive the lvalue being rebuilt, which is what
-    // happens to every bitfield store in the intel-tdx-module sources. Recover the cells from the
-    // expression's shape instead; see [structuralBitfieldWrites].
+    val origin = LaidOutValue.originOf(lValue)
+    val bitfield =
+      (origin as? StorageOrigin.Bitfield)?.takeIf {
+        it.cell.unwrapTraceable() is Dereference<*, *, *>
+      }
+    val tracedBitfieldCell = bitfield?.cell
+    val bitfieldCell = tracedBitfieldCell?.unwrapTraceable() as Dereference<*, *, *>?
+    // The origin does not survive the lvalue being rebuilt, which is what happens to every
+    // bitfield store in the intel-tdx-module sources. Recover the cells from the expression's shape
+    // instead; see [structuralBitfieldWrites].
     val structuralWrites = if (bitfieldCell == null) structuralBitfieldWrites(lValue) else null
     // Assigning to a byte-laid-out union member (AD7, the intractable half -- see
     // ExpressionVisitor#byteScalarRead): unlike a bitfield there is no single cell to
     // read-modify-write, so the right-hand side is split into its own one-byte cells and each is
-    // written outright to the union's own byte-cell array. A single unsigned byte never reaches
-    // here -- it is a bare Dereference (see ByteUnionSlice#WIDTH), handled by the ordinary
-    // `is Dereference` branch below like any other scalar lvalue.
-    val byteUnionBase =
-      parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.BASE).orElse(null) as? Expr<*>
+    // written outright to the union's own byte-cell array. A single unsigned byte is a plain
+    // dereference, but it records its origin too, so it is written here as a one-cell member.
+    val byteUnionValue = origin as? StorageOrigin.ByteUnionValue
+    val tracedTarget = peelWidthWrappers(lValue)
     val label: XcfaLabel =
-      if (byteUnionBase != null) {
-        val byteOffset =
-          parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.OFFSET).orElseThrow()
-            as Expr<*>
-        val widthBytes =
-          (parseContext.metadata.getMetadataValue(lValue, ByteUnionSlice.WIDTH).orElseThrow()
-              as Number)
-            .toInt()
+      if (byteUnionValue != null) {
+        val byteUnionBase = byteUnionValue.base
+        val byteOffset = byteUnionValue.offset
+        val widthBytes = byteUnionValue.widthBytes
         val cellCType = CUnsignedChar(null, parseContext)
         val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
         val byteValues = ByteUnionSlice.toBytes(castRExpression, widthBytes)
@@ -1674,8 +1697,11 @@ class FrontendXcfaBuilder(
                   cast(byteOffset, op.type),
                   cast(indexType.getValue(j.toString()), op.type),
                 )
-            val deref = Dereference(op, cast(off, op.type), cellCType.smtType)
-            parseContext.metadata.create(deref, "cType", CPointer(null, cellCType, parseContext))
+            val deref =
+              CComplexType.withType(
+                Dereference(op, cast(off, op.type), cellCType.smtType),
+                CPointer(null, cellCType, parseContext),
+              )
             StmtLabel(MemoryAssignStmt.create(deref, cast(byteValues[j], deref.type)))
           }
         SequenceLabel(writes, metadata = getMetadata(statement))
@@ -1684,7 +1710,7 @@ class FrontendXcfaBuilder(
         val fieldValue = memberType.castTo(rExpression)
         val writes =
           structuralWrites.map { w ->
-            val cellType = cellSpliceType(w.cell, CComplexType.getType(w.cell, parseContext))
+            val cellType = cellSpliceType(w.cell, CComplexType.getType(w.tracedCell, parseContext))
             val cellBv = cellType.smtType as BvType
             @Suppress("UNCHECKED_CAST") val valueBv = fieldValue as Expr<BvType>
             // The slice of the stored value that lands in this cell, moved into the cell's low
@@ -1698,30 +1724,26 @@ class FrontendXcfaBuilder(
                 ),
                 cellBv,
               )
-            val newCell = BitfieldSlice.write(w.cell, slice, w.cellOffset, w.width)
+            val newCell = BitfieldSlice.write(w.tracedCell, slice, w.cellOffset, w.width)
             val op = cast(w.cell.array, w.cell.array.type)
             val offset = cast(w.cell.offset, op.type)
-            val deref = Dereference(op, offset, cellBv)
-            parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+            val deref =
+              CComplexType.withType(
+                Dereference(op, offset, cellBv),
+                CPointer(null, cellType, parseContext),
+              )
             StmtLabel(MemoryAssignStmt.create(deref, cast(newCell, deref.type)))
           }
         SequenceLabel(writes, metadata = getMetadata(statement))
       } else if (bitfieldCell != null) {
-        val bitOffset =
-          (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.OFFSET).orElseThrow()
-              as Number)
-            .toInt()
-        val fieldWidth =
-          (parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.WIDTH).orElseThrow()
-              as Number)
-            .toInt()
+        val bitOffset = bitfield!!.bitOffset
+        val fieldWidth = bitfield.width
         val cellType =
-          cellSpliceType(bitfieldCell, CComplexType.getType(bitfieldCell, parseContext))
+          cellSpliceType(bitfieldCell, CComplexType.getType(tracedBitfieldCell!!, parseContext))
         // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
         // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
         // float, offset 0 and width == cell width, so the splice replaces the whole cell.
-        val isIeeeFloat =
-          parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.IEEE_FLOAT).isPresent
+        val isIeeeFloat = bitfield.ieeeFloat
         val spliced =
           if (isIeeeFloat) {
             @Suppress("UNCHECKED_CAST")
@@ -1740,11 +1762,14 @@ class FrontendXcfaBuilder(
           } else {
             cellType.castTo(rExpression)
           }
-        val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
+        val newCell = BitfieldSlice.write(tracedBitfieldCell!!, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)
         val offset = cast(bitfieldCell.offset, op.type)
-        val deref = Dereference(op, offset, cellType.smtType)
-        parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
+        val deref =
+          CComplexType.withType(
+            Dereference(op, offset, cellType.smtType),
+            CPointer(null, cellType, parseContext),
+          )
         StmtLabel(
           MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
           metadata = getMetadata(statement),
@@ -1762,7 +1787,7 @@ class FrontendXcfaBuilder(
       // shapes in a `PosExpr` branch -- routes a wrapped dereference, a wrapped struct-array
       // element (`AddExpr`) and a wrapped variable each to the branch that already knows how to
       // assign to it.
-      when (val target = peelWidthWrappers(lValue)) {
+      when (val target = tracedTarget.unwrapTraceable()) {
           is Dereference<*, *, *> -> {
             val op = cast(target.array, target.array.type)
             val offset = cast(target.offset, op.type)
@@ -1772,28 +1797,31 @@ class FrontendXcfaBuilder(
             // `h.id = src` followed by a write to `src` was read back through `h.id`. Copy into the
             // storage the cell already points at instead, leaving its base intact. The same check
             // exists on the RefExpr branch below for `t = a[i]`; a member lvalue arrives here.
-            val memberType = CComplexType.getType(target, parseContext)
+            val memberType = CComplexType.getType(tracedTarget, parseContext)
             if (memberType is CStruct && memberType.isCopiedStruct(rExpression)) {
               SequenceLabel(
-                aggregateCopy(target, rExpression, memberType, getMetadata(statement))
+                aggregateCopy(tracedTarget, rExpression, memberType, getMetadata(statement))
                   ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else {
-              val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
+              val castRExpression =
+                CComplexType.getType(tracedTarget, parseContext).castTo(rExpression)
               val type = CComplexType.getType(castRExpression, parseContext)
 
-              val deref = Dereference(op, offset, type.smtType)
+              val deref =
+                CComplexType.withType(
+                  Dereference(op, offset, type.smtType),
+                  CPointer(null, type, parseContext),
+                )
 
               val memassign = MemoryAssignStmt.create(deref, castRExpression)
-
-              parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
               StmtLabel(memassign, metadata = getMetadata(statement))
             }
           }
 
           is RefExpr<*> -> {
-            val lhsType = CComplexType.getType(target, parseContext)
+            val lhsType = CComplexType.getType(tracedTarget, parseContext)
             // Resolved, never cast: [copiedStructOrNull] accepts a **pointer to** the aggregate as
             // well as the aggregate itself, so the lvalue's own type is not necessarily the CStruct
             // being copied, so `lhsType as CStruct` threw ClassCastException as soon as a
@@ -1808,13 +1836,13 @@ class FrontendXcfaBuilder(
               // alias of the element -- and left it a split variable, which then failed outright on
               // the next bare use of `t`.
               SequenceLabel(
-                aggregateCopy(target, rExpression, copiedAggregate, getMetadata(statement))
+                aggregateCopy(tracedTarget, rExpression, copiedAggregate, getMetadata(statement))
                   ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
             } else if (
               (lhsType is CPointer || lhsType is CArray || lhsType is CStruct) &&
-                rExpression !is hu.bme.mit.theta.core.type.Reference<*, *> &&
+                rExpression.unwrapTraceable() !is hu.bme.mit.theta.core.type.Reference<*, *> &&
                 rExpression.hasArithmetic()
             ) {
               // A pointer *value* is an object id: memory is `arrays[base][offset]`, so the offset
@@ -1893,10 +1921,11 @@ class FrontendXcfaBuilder(
           // the
           // sum back into base and offset for each field.
           is AddExpr<*> -> {
-            val copied = CComplexType.getType(target, parseContext).copiedStructOrNull(rExpression)
+            val copied =
+              CComplexType.getType(tracedTarget, parseContext).copiedStructOrNull(rExpression)
             if (copied != null) {
               SequenceLabel(
-                aggregateCopy(target, rExpression, copied, getMetadata(statement))
+                aggregateCopy(tracedTarget, rExpression, copied, getMetadata(statement))
                   ?: error(unhandledLhs(lValue, target, rExpression)),
                 metadata = getMetadata(statement),
               )
@@ -1916,7 +1945,7 @@ class FrontendXcfaBuilder(
     // aggregates need objects of their own -- see [allocateArrayElements].
     val lhsType = CComplexType.getType(lValue, parseContext)
     val elementLabels = mutableListOf<XcfaLabel>()
-    if (lValue is RefExpr<*> && lhsType is CArray) {
+    if (lValue.unwrapTraceable() is RefExpr<*> && lhsType is CArray) {
       allocateArrayElements(lValue, lhsType, elementLabels)
     }
     val edgeLabel =
@@ -2678,7 +2707,7 @@ class FrontendXcfaBuilder(
 }
 
 private fun Expr<*>.hasArithmetic(): Boolean =
-  when (this) {
+  when (val bare = unwrapTraceable()) {
     is AddExpr -> true
     is SubExpr -> true
     is DivExpr -> true
@@ -2689,12 +2718,12 @@ private fun Expr<*>.hasArithmetic(): Boolean =
     // dereferencing a bogus base. The loaded value is already whatever pointer sat in the cell, so
     // stop here rather than descending into the addressing arithmetic.
     is Dereference<*, *, *> -> false
-    else -> ops.any { it.hasArithmetic() }
+    else -> bare.ops.any { it.hasArithmetic() }
   }
 
 /** Every pointer/array-typed leaf reachable in this expression (a pointer *value*, i.e. a base). */
 private fun Expr<*>.pointerLeaves(parseContext: ParseContext): List<Expr<*>> {
-  if (this is RefExpr<*>) {
+  if (unwrapTraceable() is RefExpr<*>) {
     when (CComplexType.getType(this, parseContext)) {
       is CPointer,
       is CArray -> return listOf(this)
@@ -2743,9 +2772,10 @@ private fun Expr<*>.asPointerArithReference(
   val zeroedBase = CComplexType.getType(base, parseContext).nullValue
   val offset = (this as Expr<Type>).replaceExpr(base, zeroedBase)
   val index = CComplexType.getSignedLong(parseContext).castTo(offset)
-  val deref = Dereference(base as Expr<Type>, index as Expr<Type>, elemType!!.smtType)
-  parseContext.metadata.create(deref, "cType", CPointer(null, elemType, parseContext))
-  val ref = Reference(deref, ptrType.smtType)
-  parseContext.metadata.create(ref, "cType", ptrType)
-  return ref
+  val deref =
+    CComplexType.withType(
+      Dereference(base as Expr<Type>, index as Expr<Type>, elemType!!.smtType),
+      CPointer(null, elemType, parseContext),
+    )
+  return CComplexType.withType(Reference(deref, ptrType.smtType), ptrType)
 }

@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
@@ -103,12 +104,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
-                    // Nothing to convert -- but the *caller* records the target C type on whatever
-                    // comes back, and types are keyed by the expression itself. Handing back
-                    // `param`
-                    // therefore rewrites the operand's own type: `a[j]` used to make `j` an array.
-                    // So the no-op gets a wrapper of its own to carry the new type, exactly as the
-                    // integer cast visitor already does.
+                    // Nothing to convert, but the caller types the result: typing a variable's own
+                    // reference would retype the variable (see CComplexType.withType), so the
+                    // no-op gets a node of its own.
                     return Pos(param);
                 }
             }
@@ -156,7 +154,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
-                    return Pos(param); // see above: the no-op needs its own expression to be typed
+                    return Pos(param); // see above: the no-op needs its own node to be typed
                 }
             }
         } else {
@@ -185,7 +183,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return param;
         }
         final Expr<?> simplified = ExprUtils.simplify(param);
-        if (simplified instanceof IntLitExpr lit) {
+        if (Traceability.unwrapTraceable(simplified) instanceof IntLitExpr lit) {
             return that.getValue(lit.getValue().toString());
         }
         return param;

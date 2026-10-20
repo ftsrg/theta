@@ -21,8 +21,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
-class FpIsInfiniteExpr private constructor(op: Expr<FpType>) : UnaryExpr<FpType, BoolType>(op) {
+@Serializable
+class FpIsInfiniteExpr private constructor(override val op: Expr<FpType>) :
+  UnaryExpr<FpType, BoolType>() {
 
   init {
     checkAllTypesEqual(op)
@@ -36,8 +39,7 @@ class FpIsInfiniteExpr private constructor(op: Expr<FpType>) : UnaryExpr<FpType,
     return Bool(opVal.isNegativeInfinity() || opVal.isPositiveInfinity())
   }
 
-  override fun with(op: Expr<FpType>): FpIsInfiniteExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<FpType>): FpIsInfiniteExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

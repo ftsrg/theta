@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import java.math.BigInteger
 
@@ -52,7 +53,8 @@ import java.math.BigInteger
  * operation is folded left to right and each step is checked against the *wrapped* running value,
  * exactly as the program computes it.
  */
-fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
+fun bvOverflowCondition(tracedExpr: Expr<*>): Expr<BoolType>? {
+  val expr = tracedExpr.unwrapTraceable()
   // `OverflowDetectionPass.getExpressions` threads the short-circuit condition of `&&`/`||` through
   // the operands and wraps a guarded arithmetic expression as `Ite(cond, arith, 0)`: the operand --
   // and so its overflow -- is reached only when `cond` holds. The integer path range-checks the
@@ -72,7 +74,8 @@ fun bvOverflowCondition(expr: Expr<*>): Expr<BoolType>? {
   fun widen(e: Expr<BvType>, to: Int): Expr<BvType> = BvExprs.SExt(e, BvType.of(to, true))
 
   fun widenOperand(e: Expr<BvType>, to: Int): Expr<BvType> =
-    if (e is NegExpr<*>) BvExprs.Neg(widenOperand(bv(e.op), to)) else widen(e, to)
+    (e.unwrapTraceable() as? NegExpr<*>)?.let { BvExprs.Neg(widenOperand(bv(it.op), to)) }
+      ?: widen(e, to)
 
   fun lit(value: BigInteger): Expr<BvType> = BvUtils.bigIntegerToSignedBvLitExpr(value, width)
 

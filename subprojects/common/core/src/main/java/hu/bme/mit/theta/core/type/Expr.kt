@@ -16,12 +16,15 @@
 package hu.bme.mit.theta.core.type
 
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.ExprReferenceSerializer
 import java.util.function.Function
+import kotlinx.serialization.Serializable
 
 /**
  * An expression. The hierarchy is sealed: expressions defined outside this package extend
  * [ForeignExpr] (or [ForeignLitExpr] for literals).
  */
+@Serializable(with = ExprReferenceSerializer::class)
 sealed interface Expr<ExprType : Type> {
 
   val arity: Int
@@ -39,23 +42,13 @@ sealed interface Expr<ExprType : Type> {
 
   fun map(function: Function<in Expr<*>, out Expr<*>>): Expr<ExprType> =
     withOps(ops.map { function.apply(it) })
-
-  /**
-   * The type of this expression in the source language, if known. It is not part of the
-   * expression's meaning: [equals] and [hashCode] ignore it, and operand rewrites ([withOps], [map]
-   * and the classes' `with` methods) keep it.
-   */
-  val sourceType: SourceType?
-
-  /** A copy of this expression with [sourceType] attached (or this expression if unchanged). */
-  fun withSourceType(sourceType: SourceType?): Expr<ExprType>
 }
 
 /**
  * The extension point of the sealed [Expr] hierarchy, for expressions defined outside of it (e.g.
  * frontend-internal placeholders). Code switching over [Expr] handles all of them with one branch.
  */
-abstract class ForeignExpr<ExprType : Type> : AbstractExpr<ExprType>()
+abstract class ForeignExpr<ExprType : Type> : Expr<ExprType>
 
 /** A [ForeignExpr] that is also a literal. */
 abstract class ForeignLitExpr<ExprType : Type> : ForeignExpr<ExprType>(), LitExpr<ExprType>

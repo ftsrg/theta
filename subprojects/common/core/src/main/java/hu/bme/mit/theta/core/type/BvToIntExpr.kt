@@ -21,9 +21,11 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
 
-class BvToIntExpr private constructor(op: Expr<BvType>, val isSigned: Boolean) :
-  CastExpr<BvType, IntType>(op) {
+@Serializable
+class BvToIntExpr private constructor(override val op: Expr<BvType>, val isSigned: Boolean) :
+  CastExpr<BvType, IntType>() {
 
   override val type: IntType
     get() = Int()
@@ -35,10 +37,10 @@ class BvToIntExpr private constructor(op: Expr<BvType>, val isSigned: Boolean) :
   }
 
   /** Re-derives the signedness from the new operand's type. */
-  override fun with(op: Expr<BvType>): BvToIntExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<BvType>): BvToIntExpr = if (op === this.op) this else of(op)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as BvToIntExpr
@@ -48,7 +50,7 @@ class BvToIntExpr private constructor(op: Expr<BvType>, val isSigned: Boolean) :
   override fun hashCode(): Int = 37 * hashSeed + op.hashCode() + isSigned.hashCode()
 
   fun withSignedness(signed: Boolean): BvToIntExpr =
-    if (signed == isSigned) this else keepSourceType(create(op, signed))
+    if (signed == isSigned) this else create(op, signed)
 
   override val hashSeed: Int
     get() = HASH_SEED

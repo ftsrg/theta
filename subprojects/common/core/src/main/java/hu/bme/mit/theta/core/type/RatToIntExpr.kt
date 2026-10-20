@@ -21,16 +21,18 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class RatToIntExpr private constructor(op: Expr<RatType>) : UnaryExpr<RatType, IntType>(op) {
+@Serializable
+class RatToIntExpr private constructor(override val op: Expr<RatType>) :
+  UnaryExpr<RatType, IntType>() {
 
   override val type: IntType
     get() = Int()
 
   override fun eval(valuation: Valuation): IntLitExpr = (op.eval(valuation) as RatLitExpr).toInt()
 
-  override fun with(op: Expr<RatType>): RatToIntExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<RatType>): RatToIntExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

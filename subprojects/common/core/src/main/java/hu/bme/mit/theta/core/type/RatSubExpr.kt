@@ -19,9 +19,12 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class RatSubExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatType>) :
-  SubExpr<RatType>(leftOp, rightOp) {
+@Serializable
+class RatSubExpr
+private constructor(override val leftOp: Expr<RatType>, override val rightOp: Expr<RatType>) :
+  SubExpr<RatType>() {
 
   override val type: RatType
     get() = Rat()
@@ -33,8 +36,7 @@ class RatSubExpr private constructor(leftOp: Expr<RatType>, rightOp: Expr<RatTyp
   }
 
   override fun with(leftOp: Expr<RatType>, rightOp: Expr<RatType>): RatSubExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

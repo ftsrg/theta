@@ -18,8 +18,11 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
+import kotlinx.serialization.Serializable
 
-class FpToIeeeBvExpr private constructor(op: Expr<FpType>) : UnaryExpr<FpType, BvType>(op) {
+@Serializable
+class FpToIeeeBvExpr private constructor(override val op: Expr<FpType>) :
+  UnaryExpr<FpType, BvType>() {
 
   override val type: BvType
     get() = BvType.of(bitWidth(op.type))
@@ -36,8 +39,7 @@ class FpToIeeeBvExpr private constructor(op: Expr<FpType>) : UnaryExpr<FpType, B
     return BvLitExpr.of(bits)
   }
 
-  override fun with(op: Expr<FpType>): FpToIeeeBvExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<FpType>): FpToIeeeBvExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

@@ -16,15 +16,13 @@
 package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.utils.TypeUtils
 
-sealed class UnaryExpr<OpType : Type, ExprType : Type>(op: Expr<OpType>) :
-  AbstractExpr<ExprType>() {
+sealed class UnaryExpr<OpType : Type, ExprType : Type> : Expr<ExprType> {
 
-  val op: Expr<OpType> = checkNotNull(op)
+  abstract val op: Expr<OpType>
 
   @Volatile private var hashCode = 0
 
@@ -52,8 +50,10 @@ sealed class UnaryExpr<OpType : Type, ExprType : Type>(op: Expr<OpType>) :
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null && javaClass == other.javaClass && op == (other as UnaryExpr<*, *>).op)
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null && javaClass == other.javaClass && op == (other as UnaryExpr<*, *>).op)
 
   final override fun toString(): String =
     Utils.lispStringBuilder(operatorLabel).body().add(op).toString()

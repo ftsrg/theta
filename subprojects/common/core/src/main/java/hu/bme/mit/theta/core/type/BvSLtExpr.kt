@@ -21,9 +21,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
 import hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual
+import kotlinx.serialization.Serializable
 
-class BvSLtExpr private constructor(leftOp: Expr<BvType>, rightOp: Expr<BvType>) :
-  LtExpr<BvType>(leftOp, rightOp) {
+@Serializable
+class BvSLtExpr
+private constructor(override val leftOp: Expr<BvType>, override val rightOp: Expr<BvType>) :
+  LtExpr<BvType>() {
 
   init {
     checkAllTypesEqual(leftOp, rightOp)
@@ -39,8 +42,7 @@ class BvSLtExpr private constructor(leftOp: Expr<BvType>, rightOp: Expr<BvType>)
   }
 
   override fun with(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvSLtExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

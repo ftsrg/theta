@@ -18,9 +18,12 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
 
-class BvSignChangeExpr private constructor(op: Expr<BvType>, private val newType: BvType) :
-  PosExpr<BvType>(op) {
+@Serializable
+class BvSignChangeExpr
+private constructor(override val op: Expr<BvType>, private val newType: BvType) :
+  PosExpr<BvType>() {
 
   override val type: BvType
     get() = newType
@@ -28,9 +31,10 @@ class BvSignChangeExpr private constructor(op: Expr<BvType>, private val newType
   override fun eval(valuation: Valuation): BvLitExpr = (op.eval(valuation) as BvLitExpr).pos()
 
   override fun with(op: Expr<BvType>): BvSignChangeExpr =
-    if (op === this.op) this else keepSourceType(of(op, newType))
+    if (op === this.op) this else of(op, newType)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as BvSignChangeExpr

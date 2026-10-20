@@ -17,30 +17,22 @@ package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.BigIntegerSerializer
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.rattype.RatExprs.Rat
 import hu.bme.mit.theta.core.type.rattype.RatType
 import java.math.BigInteger
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class RatLitExpr private constructor(num: BigInteger, denom: BigInteger) :
-  NullaryExpr<RatType>(), LitExpr<RatType>, Comparable<RatLitExpr> {
+@Serializable
+class RatLitExpr
+private constructor(
+  @Serializable(with = BigIntegerSerializer::class) val num: BigInteger,
+  @Serializable(with = BigIntegerSerializer::class) val denom: BigInteger,
+) : NullaryExpr<RatType>(), LitExpr<RatType>, Comparable<RatLitExpr> {
 
-  val num: BigInteger
-  val denom: BigInteger
-
-  @Volatile private var hashCode = 0
-
-  init {
-    checkArgument(denom.signum() != 0)
-    val gcd = num.abs().gcd(denom.abs())
-    if (denom.signum() >= 0) {
-      this.num = num.divide(gcd)
-      this.denom = denom.divide(gcd)
-    } else {
-      this.num = num.divide(gcd).negate()
-      this.denom = denom.divide(gcd).negate()
-    }
-  }
+  @Transient @Volatile private var hashCode = 0
 
   override val type: RatType
     get() = Rat()
@@ -101,6 +93,7 @@ class RatLitExpr private constructor(num: BigInteger, denom: BigInteger) :
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as RatLitExpr
@@ -117,6 +110,13 @@ class RatLitExpr private constructor(num: BigInteger, denom: BigInteger) :
   companion object {
     private const val HASH_SEED = 149
 
-    @JvmStatic fun of(num: BigInteger, denom: BigInteger): RatLitExpr = RatLitExpr(num, denom)
+    /** In lowest terms with a positive denominator: equality relies on this form. */
+    @JvmStatic
+    fun of(num: BigInteger, denom: BigInteger): RatLitExpr {
+      checkArgument(denom.signum() != 0)
+      val gcd = num.abs().gcd(denom.abs())
+      return if (denom.signum() >= 0) RatLitExpr(num.divide(gcd), denom.divide(gcd))
+      else RatLitExpr(num.divide(gcd).negate(), denom.divide(gcd).negate())
+    }
   }
 }

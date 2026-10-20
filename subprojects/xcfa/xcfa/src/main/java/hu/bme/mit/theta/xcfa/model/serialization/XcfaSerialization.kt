@@ -13,16 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-@file:UseContextualSerialization(Expr::class)
-
 package hu.bme.mit.theta.xcfa.model.serialization
 
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.serialization.CoreTableClasses
+import hu.bme.mit.theta.core.serialization.ObjectTable
+import hu.bme.mit.theta.core.serialization.TableClass
+import hu.bme.mit.theta.core.serialization.TableClasses
+import hu.bme.mit.theta.core.serialization.TypeReferenceSerializer
+import hu.bme.mit.theta.core.serialization.formatFingerprint
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.TraceabilityInfo
+import hu.bme.mit.theta.frontend.FrontendTableClasses
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.LaidOutValue
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -33,19 +37,27 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.model.serialization.XcfaSerializationSession.Companion.use
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.MallocLitExpr
 import java.math.BigInteger
+import kotlin.reflect.KClass
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.StringFormat
-import kotlinx.serialization.UseContextualSerialization
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.SerializersModuleCollector
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.modules.polymorphic
 
@@ -190,71 +202,58 @@ class XcfaSurrogate(
   }
 }
 
-/** Serializes a table, and on decoding immediately rebuilds its objects into the session. */
-private abstract class TableSerializer<T>(element: KSerializer<T>) : KSerializer<List<T>> {
-  private val delegate = ListSerializer(element)
+/** The metadata, after the objects it may refer to. */
+private object MetaDataTable : KSerializer<List<MetaData>> {
+  private val delegate = ListSerializer(PolymorphicSerializer(MetaData::class))
   override val descriptor = delegate.descriptor
 
-  override fun serialize(encoder: Encoder, value: List<T>) =
+  override fun serialize(encoder: Encoder, value: List<MetaData>) =
     encoder.encodeSerializableValue(delegate, value)
 
-  override fun deserialize(decoder: Decoder): List<T> =
+  override fun deserialize(decoder: Decoder): List<MetaData> =
     decoder.decodeSerializableValue(delegate).also {
-      materialize(XcfaSerializationSession.get(), it)
+      XcfaSerializationSession.get().metas.addAll(it)
     }
-
-  abstract fun materialize(s: XcfaSerializationSession, nodes: List<T>)
 }
 
-private object ClassTable : TableSerializer<String>(String.serializer()) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<String>) {
-    nodes.forEach { s.classes.add(Class.forName(it)) }
+/** The parse context, which the C types in the object table share. */
+private object ParseContextEntry : KSerializer<ParseContext> {
+  override val descriptor = ParseContext.serializer().descriptor
+
+  override fun serialize(encoder: Encoder, value: ParseContext) =
+    encoder.encodeSerializableValue(ParseContext.serializer(), value)
+
+  override fun deserialize(decoder: Decoder): ParseContext =
+    decoder.decodeSerializableValue(ParseContext.serializer()).also {
+      XcfaSerializationSession.get().decoded(it)
+    }
+}
+
+/** The writer's format: a reader of another one stops here instead of misreading the rest. */
+private object FormatHeader : KSerializer<String> {
+  override val descriptor = PrimitiveSerialDescriptor("theta.XcfaFormat", PrimitiveKind.STRING)
+
+  override fun serialize(encoder: Encoder, value: String) = encoder.encodeString(value)
+
+  override fun deserialize(decoder: Decoder): String {
+    val format = decoder.decodeString()
+    val expected = XcfaSerializationSession.get().formatHash
+    if (format != expected) {
+      throw SerializationException(
+        "The XCFA was written in serialization format $format, this build reads $expected"
+      )
+    }
+    return format
   }
 }
 
-private object DeclTable : TableSerializer<DeclNode>(DeclNode.serializer()) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<DeclNode>) {
-    val types = HashMap<TypeNode, Type>()
-    nodes.forEach { s.decls.add(it.toDecl(types)) }
-  }
-}
-
-private object ExprTable : TableSerializer<ExprNode>(ExprNode.serializer()) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<ExprNode>) {
-    val types = HashMap<TypeNode, Type>()
-    s.exprs.ensureCapacity(nodes.size)
-    nodes.forEach { s.exprs.add(it.toExpr(s, types)) }
-  }
-}
-
-private object StmtTable : TableSerializer<StmtNode>(StmtNode.serializer()) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<StmtNode>) {
-    nodes.forEach { s.stmts.add(it.toStmt(s)) }
-  }
-}
-
-private object CTypeTable : TableSerializer<CTypeNode>(CTypeNode.serializer()) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<CTypeNode>) {
-    nodes.forEach { s.ctypes.add(it.toCType(s)) }
-  }
-}
-
-private object MetaDataTable : TableSerializer<MetaData>(PolymorphicSerializer(MetaData::class)) {
-  override fun materialize(s: XcfaSerializationSession, nodes: List<MetaData>) {
-    s.metas.addAll(nodes)
-  }
-}
-
-/** Tables come first: decoding resolves every reference as soon as it reads it. */
+/** The tables come first: decoding resolves every reference as soon as it reads it. */
 @Serializable
 class XcfaPayload(
-  @Serializable(with = ClassTable::class) val classes: List<String>,
-  @Serializable(with = DeclTable::class) val decls: List<DeclNode>,
-  @Serializable(with = ExprTable::class) val exprs: List<ExprNode>,
-  @Serializable(with = StmtTable::class) val stmts: List<StmtNode>,
-  @Serializable(with = CTypeTable::class) val ctypes: List<CTypeNode>,
+  @Serializable(with = FormatHeader::class) val format: String,
+  @Serializable(with = ParseContextEntry::class) val parseContext: ParseContext,
+  @Serializable(with = ObjectTable.Serializer::class) val objects: ObjectTable,
   @Serializable(with = MetaDataTable::class) val metas: List<MetaData>,
-  val parseContext: ParseContextSurrogate,
   val frontendMetadata: FrontendMetadataSurrogate,
   val xcfa: XcfaSurrogate,
 )
@@ -268,69 +267,133 @@ object XcfaSerialization {
   @Suppress("UNCHECKED_CAST")
   fun module(metaData: SerializersModule): SerializersModule =
     SerializersModule {
-      contextual(Expr::class, ExprReferenceSerializer as KSerializer<Expr<*>>)
-      contextual(LitExpr::class, LitExprReferenceSerializer as KSerializer<LitExpr<*>>)
-      contextual(VarDecl::class, VarDeclReferenceSerializer as KSerializer<VarDecl<*>>)
-      contextual(Stmt::class, StmtReferenceSerializer)
       contextual(MetaData::class, MetaDataReferenceSerializer)
       polymorphic(MetaData::class) { subclass(EmptyMetaData::class, EmptyMetaData.serializer()) }
+      polymorphic(TraceabilityInfo::class) {
+        subclass(LaidOutValue::class, LaidOutValue.serializer())
+        defaultDeserializer { if (it == CTypeInfoSerializer.NAME) CTypeInfoSerializer else null }
+      }
+      polymorphicDefaultSerializer(TraceabilityInfo::class) {
+        if (it is CComplexType) CTypeInfoSerializer as SerializationStrategy<TraceabilityInfo>
+        else null
+      }
     } + metaData
 
-  private fun payload(
-    s: XcfaSerializationSession,
-    xcfa: XCFA,
-    module: SerializersModule,
-  ): XcfaPayload {
-    val surrogate = XcfaSurrogate.of(xcfa)
-    val collector = CollectingEncoder(module)
-    collector.encodeSerializableValue(XcfaSurrogate.serializer(), surrogate)
-    val parseContext = ParseContextSurrogate.of(s)
-    val frontendMetadata = FrontendMetadataSurrogate.of(s)
-    collector.encodeSerializableValue(
-      ListSerializer(PolymorphicSerializer(MetaData::class)),
-      s.metaList,
+  private object XcfaTableClasses : TableClasses() {
+    override val names: Set<String> = setOf("hu.bme.mit.theta.xcfa.utils.MallocLitExpr")
+
+    override fun entry(name: String): TableClass =
+      when (name) {
+        "hu.bme.mit.theta.xcfa.utils.MallocLitExpr" ->
+          TableClass(MallocLitExpr::class.java, MallocLitExpr.serializer(TypeReferenceSerializer))
+        else -> error("No entry for $name")
+      }
+  }
+
+  /** Every class whose objects the object table may hold. */
+  val tableClasses: TableClasses = CoreTableClasses + FrontendTableClasses + XcfaTableClasses
+
+  /**
+   * A hash of the shapes of everything an XCFA is written with in [module] (see
+   * [formatFingerprint]): two builds read each other's output exactly when they agree on it. It
+   * loads every serialized class, so it is computed when building (xcfa-cli's `xcfaFormatHash`
+   * task), and encoding and decoding are given the result.
+   */
+  @OptIn(ExperimentalSerializationApi::class)
+  fun computeFormatHash(module: SerializersModule): String {
+    val descriptors = ArrayList<SerialDescriptor>()
+    tableClasses.all.forEach { descriptors.add(it.serializer.descriptor) }
+    descriptors.add(XcfaPayload.serializer().descriptor)
+    descriptors.add(CTypeInfoSerializer.descriptor)
+    module.dumpTo(
+      object : SerializersModuleCollector {
+        override fun <T : Any> contextual(
+          kClass: KClass<T>,
+          provider: (typeArgumentsSerializers: List<KSerializer<*>>) -> KSerializer<*>,
+        ) {}
+
+        override fun <Base : Any, Sub : Base> polymorphic(
+          baseClass: KClass<Base>,
+          actualClass: KClass<Sub>,
+          actualSerializer: KSerializer<Sub>,
+        ) {
+          descriptors.add(actualSerializer.descriptor)
+        }
+
+        override fun <Base : Any> polymorphicDefaultSerializer(
+          baseClass: KClass<Base>,
+          defaultSerializerProvider: (value: Base) -> SerializationStrategy<Base>?,
+        ) {}
+
+        override fun <Base : Any> polymorphicDefaultDeserializer(
+          baseClass: KClass<Base>,
+          defaultDeserializerProvider: (className: String?) -> DeserializationStrategy<Base>?,
+        ) {}
+      }
     )
+    return formatFingerprint(descriptors)
+  }
+
+  private fun payload(s: XcfaSerializationSession, xcfa: XCFA): XcfaPayload {
+    val surrogate = XcfaSurrogate.of(xcfa)
+    s.objects.collect(XcfaSurrogate.serializer(), surrogate)
+    val frontendMetadata = FrontendMetadataSurrogate.of(s)
+    s.objects.collect(ListSerializer(PolymorphicSerializer(MetaData::class)), s.metaList)
+    s.objects.complete()
     s.collecting = false
     return XcfaPayload(
-      s.classNames,
-      s.declNodes,
-      s.exprNodes,
-      s.stmtNodes,
-      s.ctypeNodes,
+      s.formatHash,
+      s.parseContext,
+      s.objects,
       s.metaList,
-      parseContext,
       frontendMetadata,
       surrogate,
     )
   }
 
-  fun encodeToByteArray(format: BinaryFormat, xcfa: XCFA, parseContext: ParseContext): ByteArray {
-    val s = XcfaSerializationSession(parseContext, decoding = false)
-    return s.use {
-      format.encodeToByteArray(XcfaPayload.serializer(), payload(s, xcfa, format.serializersModule))
-    }
+  // Each function takes the format's hash (see computeFormatHash): it is written first, and a file
+  // starting with another one is refused.
+
+  fun encodeToByteArray(
+    format: BinaryFormat,
+    formatHash: String,
+    xcfa: XCFA,
+    parseContext: ParseContext,
+  ): ByteArray {
+    val s = XcfaSerializationSession(parseContext, format.serializersModule, formatHash)
+    return s.use { format.encodeToByteArray(XcfaPayload.serializer(), payload(s, xcfa)) }
   }
 
-  fun encodeToString(format: StringFormat, xcfa: XCFA, parseContext: ParseContext): String {
-    val s = XcfaSerializationSession(parseContext, decoding = false)
-    return s.use {
-      format.encodeToString(XcfaPayload.serializer(), payload(s, xcfa, format.serializersModule))
-    }
+  fun encodeToString(
+    format: StringFormat,
+    formatHash: String,
+    xcfa: XCFA,
+    parseContext: ParseContext,
+  ): String {
+    val s = XcfaSerializationSession(parseContext, format.serializersModule, formatHash)
+    return s.use { format.encodeToString(XcfaPayload.serializer(), payload(s, xcfa)) }
   }
 
   private fun finish(s: XcfaSerializationSession, payload: XcfaPayload): Pair<XCFA, ParseContext> {
-    payload.parseContext.applyTo(s)
     payload.frontendMetadata.applyTo(s)
     return payload.xcfa.toXcfa() to s.parseContext
   }
 
-  fun decodeFromByteArray(format: BinaryFormat, bytes: ByteArray): Pair<XCFA, ParseContext> {
-    val s = XcfaSerializationSession(ParseContext(), decoding = true)
+  fun decodeFromByteArray(
+    format: BinaryFormat,
+    formatHash: String,
+    bytes: ByteArray,
+  ): Pair<XCFA, ParseContext> {
+    val s = XcfaSerializationSession(null, format.serializersModule, formatHash)
     return s.use { finish(s, format.decodeFromByteArray(XcfaPayload.serializer(), bytes)) }
   }
 
-  fun decodeFromString(format: StringFormat, string: String): Pair<XCFA, ParseContext> {
-    val s = XcfaSerializationSession(ParseContext(), decoding = true)
+  fun decodeFromString(
+    format: StringFormat,
+    formatHash: String,
+    string: String,
+  ): Pair<XCFA, ParseContext> {
+    val s = XcfaSerializationSession(null, format.serializersModule, formatHash)
     return s.use { finish(s, format.decodeFromString(XcfaPayload.serializer(), string)) }
   }
 }

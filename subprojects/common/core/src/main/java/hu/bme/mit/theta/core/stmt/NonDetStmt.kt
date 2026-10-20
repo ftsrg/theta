@@ -17,11 +17,13 @@ package hu.bme.mit.theta.core.stmt
 
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class NonDetStmt private constructor(stmts: List<Stmt>) : Stmt {
-  val stmts: List<Stmt> = if (stmts.isEmpty()) ImmutableList.of(SkipStmt.getInstance()) else stmts
+@Serializable
+class NonDetStmt private constructor(val stmts: List<Stmt>) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)
@@ -49,6 +51,9 @@ class NonDetStmt private constructor(stmts: List<Stmt>) : Stmt {
     private const val HASH_SEED = 361
     private const val STMT_LABEL = "nondet"
 
-    @JvmStatic fun of(stmts: List<Stmt>): NonDetStmt = NonDetStmt(stmts)
+    /** An empty list stands for a single skip. */
+    @JvmStatic
+    fun of(stmts: List<Stmt>): NonDetStmt =
+      NonDetStmt(if (stmts.isEmpty()) ImmutableList.of(SkipStmt.getInstance()) else stmts)
   }
 }

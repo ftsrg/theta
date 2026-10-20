@@ -18,6 +18,7 @@ package hu.bme.mit.theta.c2xcfa
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -73,7 +74,9 @@ class StructCopyTest {
       .filterIsInstance<StmtLabel>()
       .map { it.stmt }
       .filterIsInstance<MemoryAssignStmt<*, *, *>>()
-      .mapNotNull { stmt -> (stmt.expr as? Dereference<*, *, *>)?.let { stmt.deref to it } }
+      .mapNotNull { stmt ->
+        (stmt.expr.unwrapTraceable() as? Dereference<*, *, *>)?.let { stmt.deref to it }
+      }
   }
 
   private fun assertCopiesBothFields(

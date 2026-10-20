@@ -18,16 +18,17 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
 
-class BvNotExpr private constructor(op: Expr<BvType>) : UnaryExpr<BvType, BvType>(op) {
+@Serializable
+class BvNotExpr private constructor(override val op: Expr<BvType>) : UnaryExpr<BvType, BvType>() {
 
   override val type: BvType
     get() = op.type
 
   override fun eval(valuation: Valuation): BvLitExpr = (op.eval(valuation) as BvLitExpr).not()
 
-  override fun with(op: Expr<BvType>): BvNotExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<BvType>): BvNotExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

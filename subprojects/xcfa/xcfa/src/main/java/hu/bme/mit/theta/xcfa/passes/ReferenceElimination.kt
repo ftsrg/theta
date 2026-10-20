@@ -51,6 +51,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
@@ -67,6 +68,7 @@ import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.references
+import hu.bme.mit.theta.xcfa.utils.typedLike
 import java.math.BigInteger
 
 /**
@@ -188,12 +190,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             builder.parent.addVar(
               XcfaGlobalVar(
                 varDecl,
-                lit,
+                lit.unwrapTraceable() as LitExpr<*>,
                 pointsToAtomic = ptrType.embeddedType!!.isAtomic || referredAtomic,
               )
             )
             recordReferencedObjectAtomicity(objectBase, ptrType.embeddedType!!, referredAtomic)
-            parseContext.metadata.create(varDecl.ref, "cType", ptrType)
+            CComplexType.withType(varDecl.ref, ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
               if (MemsafetyPass.enabled) {
@@ -271,7 +273,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               } else {
                 ptrType.getValue("$rawId")
               }
-            builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
+            builder.parent.addVar(
+              XcfaGlobalVar(ptrVar, initVal.unwrapTraceable() as LitExpr<*>, atomic = true)
+            )
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
             initProc.forEach { proc ->
@@ -297,7 +301,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
-          parseContext.metadata.create(varDecl.ref, "cType", ptrType)
+          CComplexType.withType(varDecl.ref, ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
             if (MemsafetyPass.enabled) {
@@ -344,7 +348,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             it is StmtLabel &&
               it.stmt is AssignStmt<*> &&
               it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> } &&
-              it.stmt.expr is ArrayLitExpr<*, *>
+              it.stmt.expr.unwrapTraceable() is ArrayLitExpr<*, *>
           }
         val spInit =
           labels.find {
@@ -385,7 +389,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun getDirectReferencedDecl(reference: Reference<*, *>): VarDecl<*>? =
-    (reference.expr as? RefExpr<*>)?.decl as? VarDecl<*>
+    (reference.expr.unwrapTraceable() as? RefExpr<*>)?.decl as? VarDecl<*>
 
   /**
    * The number of flat cells an object of [type] occupies, or null when it is not statically sized
@@ -440,7 +444,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * does, `q = (unsigned long)p; ... (T *)q` -- arrives wrapped in `Pos`. Look through it to find
    * the split variable the base/offset machinery tracks.
    */
-  private fun Expr<*>.stripPos(): Expr<*> = if (this is PosExpr<*>) op.stripPos() else this
+  private fun Expr<*>.stripPos(): Expr<*> =
+    (unwrapTraceable() as? PosExpr<*>)?.op?.stripPos() ?: this
+
+  /** The dereference this `&*d` takes the address of, matched through traceability wrappers. */
+  private fun Expr<*>.refToDeref(): Dereference<*, *, *>? =
+    (unwrapTraceable() as? Reference<*, *>)?.expr?.unwrapTraceable() as? Dereference<*, *, *>
 
   /**
    * The flat-model counterpart of [runComplexReferenceElimination]: it never splits. Every `(ref
@@ -489,7 +498,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is AssignStmt<*> ->
         AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.flattenReferences(), varDecl.type))
       is MemoryAssignStmt<*, *, *> -> {
-        val d = (deref as Expr<*>).flattenReferences() as Dereference<*, *, *>
+        val d = tracedDeref.flattenReferences()
         MemoryAssignStmt.create(d, cast(expr.flattenReferences(), d.type))
       }
       is AssumeStmt -> AssumeStmt.of(cond.flattenReferences())
@@ -498,8 +507,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.flattenReferences(): Expr<T> =
-    if (this is Reference<*, *> && this.expr is Dereference<*, *, *>) {
-      val innerDeref = this.expr as Dereference<*, *, *>
+    if (this is Reference<*, *> && this.refToDeref() != null) {
+      val innerDeref = this.refToDeref()!!
       val base = innerDeref.array.flattenReferences()
       val off = innerDeref.offset.flattenReferences()
       cast(Add(cast(base, base.type), cast(signedStep(off), base.type)), this.type) as Expr<T>
@@ -510,7 +519,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   private fun runComplexReferenceElimination(builder: XcfaProcedureBuilder): Boolean {
     val hasRefToDeref =
       builder.getEdges().any { edge ->
-        edge.label.getFlatLabels().flatMap { it.references }.any { it.expr is Dereference<*, *, *> }
+        edge.label.getFlatLabels().flatMap { it.references }.any { it.refToDeref() != null }
       }
     // A *global* split anywhere concerns every procedure that touches it, even one containing no
     // reference of its own: `p = &q[1]` in main splits p into p_base/p_offset and rewrites main's
@@ -622,14 +631,16 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 if (lhs !in globals) return@forEach
                 val rhs = stmt.expr
                 when {
-                  rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *> -> {
-                    val deref = rhs.expr as Dereference<*, *, *>
+                  rhs.refToDeref() != null -> {
+                    val deref = rhs.refToDeref()!!
                     changed =
                       ensureSplitVar(proc, shared, lhs, deref.array.type, deref.offset.type) ||
                         changed
                   }
-                  rhs.stripPos().let { it is RefExpr<*> && it.decl in shared.keys } -> {
-                    val src = shared[(rhs.stripPos() as RefExpr<*>).decl]!!
+                  rhs.stripPos().unwrapTraceable().let {
+                    it is RefExpr<*> && it.decl in shared.keys
+                  } -> {
+                    val src = shared[(rhs.stripPos().unwrapTraceable() as RefExpr<*>).decl]!!
                     changed =
                       ensureSplitVar(proc, shared, lhs, src.base.type, src.offset.type) || changed
                   }
@@ -659,14 +670,16 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val lhs = stmt.varDecl
             val rhs = stmt.expr
             when {
-              rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *> -> {
-                val deref = rhs.expr as Dereference<*, *, *>
+              rhs.refToDeref() != null -> {
+                val deref = rhs.refToDeref()!!
                 changed =
                   ensureSplitVar(builder, splitVars, lhs, deref.array.type, deref.offset.type) ||
                     changed
               }
-              rhs.stripPos().let { it is RefExpr<*> && it.decl in splitVars.keys } -> {
-                val src = splitVars[(rhs.stripPos() as RefExpr<*>).decl]!!
+              rhs.stripPos().unwrapTraceable().let {
+                it is RefExpr<*> && it.decl in splitVars.keys
+              } -> {
+                val src = splitVars[(rhs.stripPos().unwrapTraceable() as RefExpr<*>).decl]!!
                 changed =
                   ensureSplitVar(builder, splitVars, lhs, src.base.type, src.offset.type) || changed
               }
@@ -760,7 +773,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         val rhs = this.expr
         val nestedRefs = rhs.collectRefToDerefExprs().toMutableList()
         if (nestedRefs.isEmpty()) return listOf(this)
-        if (rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *>) return listOf(this)
+        if (rhs.refToDeref() != null) return listOf(this)
 
         val replacements = linkedMapOf<Reference<*, *>, Expr<*>>()
         val preAssigns = mutableListOf<Stmt>()
@@ -778,7 +791,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
       is MemoryAssignStmt<*, *, *> -> {
         val nestedRefs =
-          (deref.collectRefToDerefExprs() + expr.collectRefToDerefExprs()).toMutableList()
+          (tracedDeref.collectRefToDerefExprs() + expr.collectRefToDerefExprs()).toMutableList()
         if (nestedRefs.isEmpty()) return listOf(this)
 
         val replacements = linkedMapOf<Reference<*, *>, Expr<*>>()
@@ -789,9 +802,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           replacements[refExpr] = tmp.ref
           preAssigns += AssignStmt.of(cast(tmp, tmp.type), cast(refExpr, tmp.type))
         }
-        val newDeref = deref.replaceRefExprs(replacements)
+        val newDeref = tracedDeref.replaceRefExprs(replacements)
         val newExpr = expr.replaceRefExprs(replacements)
-        return preAssigns + MemoryAssignStmt.create(newDeref as Dereference<*, *, *>, newExpr)
+        return preAssigns + MemoryAssignStmt.create(newDeref, newExpr)
       }
 
       is AssumeStmt -> {
@@ -815,7 +828,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   private fun Expr<*>.collectRefToDerefExprs(): List<Reference<*, *>> {
     val nested = ops.flatMap { it.collectRefToDerefExprs() }
-    return if (this is Reference<*, *> && this.expr is Dereference<*, *, *>) listOf(this) + nested
+    return if (this is Reference<*, *> && this.refToDeref() != null) listOf(this) + nested
     else nested
   }
 
@@ -893,7 +906,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         } else {
           listOf(
             MemoryAssignStmt.create(
-              deref.changeComplexReferredVars(splitVars) as Dereference<*, *, *>,
+              tracedDeref.changeComplexReferredVars(splitVars),
               expr.changeComplexReferredVars(splitVars),
             )
           )
@@ -952,16 +965,17 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   ): List<Stmt> {
     val lhs = varDecl
     val rhs = expr
-    if (rhs is Reference<*, *> && rhs.expr is Dereference<*, *, *>) {
+    if (rhs.refToDeref() != null) {
       val split = splitVars[lhs] ?: error("Split vars not found for ${lhs.name}")
-      val deref = rhs.expr as Dereference<*, *, *>
+      val deref = rhs.refToDeref()!!
       val array = deref.array
       val offsetExpr = deref.offset.changeComplexReferredVars(splitVars)
-      if (array is RefExpr<*> && array.decl in splitVars.keys) {
+      val bareArray = array.unwrapTraceable()
+      if (bareArray is RefExpr<*> && bareArray.decl in splitVars.keys) {
         // Chained pointer arithmetic: the base is itself a split pointer, as in `p = q + i` after
         // `q = r + j`. Compose rather than re-address -- `p_base = q_base`, `p_offset = q_offset +
         // i` -- so the offset accumulates instead of the bare split `q` being used as an address.
-        val src = splitVars[array.decl]!!
+        val src = splitVars[bareArray.decl]!!
         return listOf(
           AssignStmt.of(cast(split.base, split.base.type), cast(src.base.ref, split.base.type)),
           AssignStmt.of(
@@ -982,7 +996,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         AssignStmt.of(cast(split.offset, split.offset.type), cast(offsetExpr, split.offset.type)),
       )
     }
-    val strippedRhs = rhs.stripPos()
+    val strippedRhs = rhs.stripPos().unwrapTraceable()
     if (strippedRhs is RefExpr<*> && strippedRhs.decl in splitVars.keys) {
       // A plain copy, or the same pointer routed through a width-preserving integer cast (which the
       // cast visitor leaves as a `Pos` no-op): the base and the offset travel together.
@@ -1053,7 +1067,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     if (offset.type !is IntType) return offset // bitvector: the addition already wraps
     // Through the simplifier: the step arrives wrapped in the frontend's casts (a `Pos`, or the
     // modulo of a fold), not as a bare literal.
-    val literal = ExprUtils.simplify(offset) as? IntLitExpr ?: return offset
+    val literal = ExprUtils.simplify(offset).unwrapTraceable() as? IntLitExpr ?: return offset
     val width = CComplexType.getUnsignedLong(parseContext).width()
     val modulus = BigInteger.TWO.pow(width)
     val half = BigInteger.TWO.pow(width - 1)
@@ -1061,7 +1075,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun Expr<*>.splitPairOf(splitVars: Map<VarDecl<*>, SplitVarPair>): SplitVarPair? {
-    val resolved = stripPos()
+    val resolved = stripPos().unwrapTraceable()
     return if (resolved is RefExpr<*> && resolved.decl in splitVars.keys) splitVars[resolved.decl]
     else null
   }
@@ -1154,7 +1168,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
     if (this is AddExpr<*>) {
       val signed =
-        ops.map { op -> op.stripPos().let { if (it is NegExpr<*>) it.op to true else op to false } }
+        ops.map { op ->
+          op.stripPos().unwrapTraceable().let {
+            if (it is NegExpr<*>) it.op to true else op to false
+          }
+        }
       // Only a *split* pointer forces a decomposition here; without one the ordinary rewriting is
       // fine (and a difference of two never-split pointers is not something this pass created).
       val split = signed.firstOrNull { it.first.splitPairOf(splitVars) != null } ?: return null
@@ -1190,7 +1208,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    */
   private fun Expr<*>.isPointerOperand(splitVars: Map<VarDecl<*>, SplitVarPair>): Boolean {
     if (splitPairOf(splitVars) != null) return true
-    val resolved = stripPos()
+    val resolved = stripPos().unwrapTraceable()
     if (resolved is RefExpr<*>) {
       val cType = CComplexType.getType((resolved.decl as VarDecl<*>).ref, parseContext)
       return cType is CPointer || cType is CArray
@@ -1215,10 +1233,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): Expr<T> {
     val rewritten = rewriteComplexReferredVars(splitVars)
-    if (rewritten !== this && parseContext.metadata.getMetadataValue(this, "cType").isPresent) {
-      parseContext.metadata.create(rewritten, "cType", CComplexType.getType(this, parseContext))
-    }
-    return rewritten
+    return if (rewritten !== this) rewritten.typedLike(this) else rewritten
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -1237,9 +1252,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       // The address may have come back through a width-preserving integer cast (`*(T *)q` after
       // `q = (unsigned long)p`), which the cast visitor leaves as a `Pos` no-op.
       val arr = this.array.stripPos()
+      val bareArr = arr.unwrapTraceable()
       val rewrittenOffset = this.offset.changeComplexReferredVars(splitVars)
-      if (arr is Reference<*, *> && arr.expr is Dereference<*, *, *>) {
-        val innerDeref = arr.expr as Dereference<*, *, *>
+      if (arr.refToDeref() != null) {
+        val innerDeref = arr.refToDeref()!!
         val rewrittenBase = innerDeref.array.changeComplexReferredVars(splitVars)
         val rewrittenInnerOffset = innerDeref.offset.changeComplexReferredVars(splitVars)
         val newOffset =
@@ -1254,8 +1270,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         )
           as Expr<T>
       }
-      if (arr is RefExpr<*> && arr.decl in splitVars.keys) {
-        val split = splitVars[arr.decl]!!
+      if (bareArr is RefExpr<*> && bareArr.decl in splitVars.keys) {
+        val split = splitVars[bareArr.decl]!!
         val newOffset =
           Add(cast(split.offset.ref, split.offset.type), cast(rewrittenOffset, split.offset.type))
         return Dereference(
@@ -1352,7 +1368,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         is MemoryAssignStmt<*, *, *> ->
           listOf(
             MemoryAssignStmt.create(
-              deref.changeReferredVars(varLut, parseContext) as Dereference<*, *, *>,
+              tracedDeref.changeReferredVars(varLut, parseContext),
               expr.changeReferredVars(varLut, parseContext),
             )
           )
@@ -1367,12 +1383,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         is HavocStmt<*> -> listOf(this) // no expression to rewrite; the havoced var is not referred
         else -> TODO("Not yet implemented ($this)")
       }
-    val metadataValue = parseContext?.metadata?.getMetadataValue(this, "sourceStatement")
-    if (metadataValue?.isPresent == true) {
-      for (stmt in stmts) {
-        parseContext.metadata.create(stmt, "sourceStatement", metadataValue.get())
-      }
-    }
     return stmts
   }
 
@@ -1384,31 +1394,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     if (this is RefExpr<T>) {
       (decl as VarDecl<T>).changeReferredVars(varLut)
     } else if (this is Reference<*, *>) {
-      when (val target = this.expr) {
+      when (val target = this.expr.unwrapTraceable()) {
         is RefExpr<*> ->
           (varLut[target.decl]?.first?.ref as? Expr<T>)
             ?: run {
-              val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
-              if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
-                parseContext.metadata.create(ret, "cType", CComplexType.getType(this, parseContext))
-              }
-              ret
+              this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
+                .typedLike(this)
             }
 
         else -> {
-          val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
-          if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
-            parseContext.metadata.create(ret, "cType", CComplexType.getType(this, parseContext))
-          }
-          ret
+          this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) }).typedLike(this)
         }
       }
     } else {
-      val ret = this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) })
-      if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
-        parseContext.metadata?.create(ret, "cType", CComplexType.getType(this, parseContext))
-      }
-      ret
+      this.withOps(this.ops.map { it.changeReferredVars(varLut, parseContext) }).typedLike(this)
     }
 
   private fun <T : Type> VarDecl<T>.changeReferredVars(

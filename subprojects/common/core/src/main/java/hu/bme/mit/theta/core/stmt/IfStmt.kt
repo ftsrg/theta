@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.stmt
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class IfStmt private constructor(cond: Expr<BoolType>, then: Stmt, elze: Stmt) : Stmt {
-  val cond: Expr<BoolType> = checkNotNull(cond)
-  val then: Stmt = checkNotNull(then)
-  val elze: Stmt = checkNotNull(elze)
+@Serializable
+class IfStmt private constructor(val cond: Expr<BoolType>, val then: Stmt, val elze: Stmt) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)

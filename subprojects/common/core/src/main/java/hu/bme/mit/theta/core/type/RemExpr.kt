@@ -18,9 +18,7 @@ package hu.bme.mit.theta.core.type
 import hu.bme.mit.theta.core.type.abstracttype.Divisible
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-sealed class RemExpr<ExprType : Divisible<ExprType>>
-protected constructor(leftOp: Expr<ExprType>, rightOp: Expr<ExprType>) :
-  BinaryExpr<ExprType, ExprType>(leftOp, rightOp) {
+sealed class RemExpr<ExprType : Divisible<ExprType>> : BinaryExpr<ExprType, ExprType>() {
 
   companion object {
     @JvmStatic

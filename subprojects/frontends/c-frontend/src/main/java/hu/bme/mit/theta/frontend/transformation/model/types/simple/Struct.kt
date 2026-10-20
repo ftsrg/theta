@@ -41,8 +41,8 @@ private constructor(
    * If this instance is a copy (see [copyOf]) of another [Struct], this points to the specific
    * struct definition instance it was copied from, bound once at copy-creation time. `null` means
    * this instance IS a canonical struct definition (i.e. either a fresh,
-   * possibly-still-being-parsed struct, or one no longer reachable through [definedTypes] because
-   * it was superseded by a later redefinition of the same tag).
+   * possibly-still-being-parsed struct, or one its tag no longer resolves to because it was
+   * superseded by a later redefinition of the same tag).
    *
    * Field lookups ([resolvedFields]) are delegated through this reference instead of
    * value-snapshotting the field map at copy time. This matters for self-referential structs (e.g.
@@ -51,9 +51,9 @@ private constructor(
    * possibly `next` itself) have all been added. Snapshotting at that point would freeze an empty
    * (or partial) field map into the copy forever. Delegating instead means the copy always sees the
    * canonical definition's current (eventually complete) field map. Binding to the specific object
-   * (rather than re-resolving the tag name through [definedTypes] on every access) also means a
-   * later, genuine redefinition of the same tag name does not retroactively change the fields
-   * already-created copies resolve to.
+   * (rather than re-resolving the tag name on every access) also means a later, genuine
+   * redefinition of the same tag name does not retroactively change the fields already-created
+   * copies resolve to.
    */
   private val canonicalRef: Struct?,
 ) : NamedType(parseContext, if (isUnion) "union" else "struct", uniqueWarningLogger) {
@@ -89,6 +89,26 @@ private constructor(
   /** `packed` / `aligned(n)` on the struct itself; see [setLayoutAttributes]. */
   private var layoutAttributes: ObjectLayout.Attributes = ObjectLayout.Attributes.NONE
 
+  /**
+   * Tag → the canonical structs whose cached expansion baked in that tag while it was still
+   * field-less. [addField] clears exactly these when the tag is finally defined.
+   *
+   * This exists because `addField` invalidating only its *own* cache is not enough: in a
+   * CIL-preprocessed kernel source `struct device` expands `struct device_private *p` hundreds of
+   * thousands of characters before that tag is defined, so `struct device` keeps a pointer to a
+   * field-less struct forever and every `(dev->p)->driver_data` fails with "available fields are:
+   * []".
+   *
+   * Targeted invalidation, rather than the two blunter options, both of which were measured:
+   * declining to cache an incomplete expansion at all sounds narrow ("incomplete tags are rare")
+   * but is not -- forward declarations are pervasive in these sources, so nearly nothing cached and
+   * three LDV files went from ~19s to `OutOfMemoryError`, the expansion being exponential in
+   * nesting depth. A global generation counter invalidating every cache per `addField` fails the
+   * same way for the whole declaration phase.
+   */
+  private val incompleteDependents: MutableMap<String, MutableSet<Struct>>
+    get() = parseContext.incompleteStructDependents
+
   internal constructor(
     name: String?,
     parseContext: ParseContext,
@@ -102,7 +122,7 @@ private constructor(
     uniqueWarningLogger: Logger,
   ) : this(name, union, parseContext, uniqueWarningLogger, null) {
     if (name != null) {
-      definedTypes[tagOf(name, union)] = this
+      parseContext.definedStructs[tagOf(name, union)] = this
     }
   }
 
@@ -227,7 +247,7 @@ private constructor(
       val fieldAttributes = resolvedFields().values.map { it.layoutAttributes }
 
       var type: CComplexType =
-        CStruct(
+        CStruct.of(
           this,
           actualFields,
           isUnion,
@@ -266,32 +286,10 @@ private constructor(
      */
     private val expansionFrames = ArrayDeque<MutableSet<String>>()
 
-    /**
-     * Tag → the canonical structs whose cached expansion baked in that tag while it was still
-     * field-less. [addField] clears exactly these when the tag is finally defined.
-     *
-     * This exists because `addField` invalidating only its *own* cache is not enough: in a
-     * CIL-preprocessed kernel source `struct device` expands `struct device_private *p` hundreds of
-     * thousands of characters before that tag is defined, so `struct device` keeps a pointer to a
-     * field-less struct forever and every `(dev->p)->driver_data` fails with "available fields are:
-     * []".
-     *
-     * Targeted invalidation, rather than the two blunter options, both of which were measured:
-     * declining to cache an incomplete expansion at all sounds narrow ("incomplete tags are rare")
-     * but is not -- forward declarations are pervasive in these sources, so nearly nothing cached
-     * and three LDV files went from ~19s to `OutOfMemoryError`, the expansion being exponential in
-     * nesting depth. A global generation counter invalidating every cache per `addField` fails the
-     * same way for the whole declaration phase.
-     */
-    private val incompleteDependents: MutableMap<String, MutableSet<Struct>> = LinkedHashMap()
-
-    private val definedTypes: MutableMap<String, Struct> = LinkedHashMap()
-
-    @JvmStatic fun getByName(name: String): Struct? = getByName(name, false)
-
     /** `struct X` and `union X` are distinct types, so the tag alone does not identify one. */
     @JvmStatic
-    fun getByName(name: String, union: Boolean): Struct? = definedTypes[tagOf(name, union)]
+    fun getByName(name: String, union: Boolean, parseContext: ParseContext): Struct? =
+      parseContext.definedStructs[tagOf(name, union)]
 
     private fun tagOf(name: String, union: Boolean): String =
       (if (union) "union " else "struct ") + name

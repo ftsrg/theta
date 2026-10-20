@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.SourceStatement
 import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.NullLogger
@@ -377,9 +378,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                     // A modelled pthread_create's return assignment is after the call, even
                     // though it inherits the same statement-start metadata as the StartLabel.
                     !(statement in threadCreatingCalls &&
-                      statement is CCall &&
                       label is StmtLabel &&
-                      (label.stmt as? AssignStmt<*>)?.varDecl == statement.ret))) &&
+                      (label.stmt as? AssignStmt<*>)?.varDecl == statement.call?.ret))) &&
                   statement.lineNumberStart == loc.line &&
                   (loc.column == null || statement.colNumberStart + 1 == loc.column)
               }
@@ -534,7 +534,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   /** The constraint that has to hold when the waypoint is passed. */
   private fun waypointConstraint(
     wp: WaypointContent,
-    statementToEdge: LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>,
+    statementToEdge: LinkedHashSet<Triple<SourceStatement, XcfaLabel, XcfaEdge>>,
     builder: XcfaProcedureBuilder,
   ): Expr<BoolType> {
     val loc = wp.location
@@ -574,8 +574,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           True() // no or multiple vars
         } else {
           val v = vars.first()
-          val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
-          if (cNameOpt.isPresent) {
+          val cName = parseContext.variableSources[v.name]?.cName
+          if (cName != null) {
             val constraint = wp.constraint!!
             check(
               constraint.format!! == Format.C_EXPRESSION ||
@@ -584,7 +584,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               "Not handled: $constraint"
             }
             getBoolExpressionFromC(
-              constraint.value.replace("\\result", cNameOpt.get() as String),
+              constraint.value.replace("\\result", cName),
               parseContext,
               false,
               false,
@@ -608,9 +608,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 statement
               else null
             }
-            .firstOrNull {
-              it is CWhile || it is CFor || it is CIf || it is CDoWhile
-            } // we hope it's a single ast node..
+            .firstOrNull { it.kind.isBranching } // we hope it's a single statement..
           ?: error("Branching not on iteration/branching statement.")
 
         val guardAssume =
@@ -872,8 +870,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
 fun getStatementToEdge(
   builder: XcfaProcedureBuilder
-): LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>> {
-  val statementToEdge = LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>()
+): LinkedHashSet<Triple<SourceStatement, XcfaLabel, XcfaEdge>> {
+  val statementToEdge = LinkedHashSet<Triple<SourceStatement, XcfaLabel, XcfaEdge>>()
   for (edge in builder.getEdges()) {
     extractEdge(edge, statementToEdge)
   }
@@ -882,12 +880,12 @@ fun getStatementToEdge(
 
 private fun extractEdge(
   edge: XcfaEdge,
-  statementToEdge: LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>,
+  statementToEdge: LinkedHashSet<Triple<SourceStatement, XcfaLabel, XcfaEdge>>,
 ) {
   for (flatLabel in edge.label.getFlatLabels()) {
     (flatLabel.metadata as? CMetaData)?.also {
-      for (astNode in it.astNodes) {
-        statementToEdge.add(Triple(astNode, flatLabel, edge))
+      for (statement in it.sourceStatements) {
+        statementToEdge.add(Triple(statement, flatLabel, edge))
         // for termination, we also need iteration statements' bodies
         //        if (astNode is CWhile) {
         //          statementToEdge.add(Triple(astNode.body, flatLabel, edge))

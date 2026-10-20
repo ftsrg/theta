@@ -22,44 +22,26 @@ import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.serialization.Tuple2Serializer
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Suppress("UNCHECKED_CAST")
+@Serializable
 class ArrayLitExpr<IndexType : Type, ElemType : Type>
 private constructor(
-  elems: List<Tuple2<out Expr<IndexType>, out Expr<ElemType>>>,
-  elseElem: Expr<ElemType>,
-  type: ArrayType<IndexType, ElemType>,
+  val elements:
+    List<
+      @Serializable(with = Tuple2Serializer::class)
+      Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>
+    >,
+  val elseElem: LitExpr<ElemType>,
+  override val type: ArrayType<IndexType, ElemType>,
 ) : NullaryExpr<ArrayType<IndexType, ElemType>>(), LitExpr<ArrayType<IndexType, ElemType>> {
 
-  override val type: ArrayType<IndexType, ElemType> = checkNotNull(type)
-
-  val elseElem: LitExpr<ElemType>
-
-  private val elems: List<Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>>
-
-  @Volatile private var hashCode = 0
-
-  init {
-    val exprSimplifier = ExprSimplifier.create()
-    val simplifiedElem = exprSimplifier.simplify(checkNotNull(elseElem), ImmutableValuation.empty())
-    checkState(simplifiedElem is LitExpr<*>, "ArrayLitExprs shall only contain literal values!")
-    this.elseElem = simplifiedElem as LitExpr<ElemType>
-    this.elems =
-      checkNotNull(elems).map { elem ->
-        val index = exprSimplifier.simplify(elem.get1(), ImmutableValuation.empty())
-        val element = exprSimplifier.simplify(elem.get2(), ImmutableValuation.empty())
-        checkState(
-          index is LitExpr<*> && element is LitExpr<*>,
-          "ArrayLitExprs shall only contain literal values",
-        )
-        Tuple2.of(index as LitExpr<IndexType>, element as LitExpr<ElemType>)
-      }
-  }
-
-  val elements: List<Tuple2<LitExpr<IndexType>, LitExpr<ElemType>>>
-    get() = ImmutableList.copyOf(elems)
+  @Transient @Volatile private var hashCode = 0
 
   override fun eval(valuation: Valuation): LitExpr<ArrayType<IndexType, ElemType>> = this
 
@@ -68,7 +50,7 @@ private constructor(
     if (tmp == 0) {
       tmp = HASH_SEED
       tmp = 31 * tmp + type.hashCode()
-      for (elem in elems) {
+      for (elem in elements) {
         tmp = 31 * tmp + elem.hashCode()
       }
       hashCode = tmp
@@ -77,16 +59,17 @@ private constructor(
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as ArrayLitExpr<*, *>
-    return type == that.type && elems == that.elems && elseElem == that.elseElem
+    return type == that.type && elements == that.elements && elseElem == that.elseElem
   }
 
   override fun toString(): String =
     Utils.lispStringBuilder(OPERATOR_LABEL)
       .body()
-      .addAll(elems.map { String.format("(%s %s)", it.get1(), it.get2()) })
+      .addAll(elements.map { String.format("(%s %s)", it.get1(), it.get2()) })
       .add(String.format("(default %s)", elseElem))
       .toString()
 
@@ -99,6 +82,19 @@ private constructor(
       elems: List<Tuple2<out Expr<IndexType>, out Expr<ElemType>>>,
       elseElem: Expr<ElemType>,
       type: ArrayType<IndexType, ElemType>,
-    ): ArrayLitExpr<IndexType, ElemType> = ArrayLitExpr(elems, elseElem, type)
+    ): ArrayLitExpr<IndexType, ElemType> {
+      val exprSimplifier = ExprSimplifier.create()
+      // An element is a plain value: traceability info is not kept inside a literal.
+      fun <T : Type> literal(expr: Expr<T>): LitExpr<T> {
+        val simplified = exprSimplifier.simplify(expr, ImmutableValuation.empty()).unwrapTraceable()
+        checkState(simplified is LitExpr<*>, "ArrayLitExprs shall only contain literal values")
+        return simplified as LitExpr<T>
+      }
+      return ArrayLitExpr(
+        ImmutableList.copyOf(elems.map { Tuple2.of(literal(it.get1()), literal(it.get2())) }),
+        literal(elseElem),
+        checkNotNull(type),
+      )
+    }
   }
 }

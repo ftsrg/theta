@@ -15,12 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.model.serialization
 
-import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.serialization.ObjectTable
+import hu.bme.mit.theta.core.serialization.ObjectTable.Companion.use
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
@@ -33,100 +31,88 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.AbstractEncoder
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
 /**
- * Identity tables shared by the serializers of one encode or decode.
- *
- * Declarations, expressions, statements, C types, metadata and locations have identity (a [VarDecl]
- * is equal only to itself, C types are keyed by expression identity, edges point at location
- * objects), so they are written once into a table and referred to by index. Encoding runs twice
- * over the same object: the first pass only fills the tables, the second writes them out before
- * anything that refers to them, so decoding can resolve every reference on the spot.
+ * The state of one encode (of the [encoded] parse context's XCFA) or decode (when it is null).
+ * Types, declarations, expressions, statements and C types live in the [objects] table (see
+ * [ObjectTable]); metadata and locations have tables of their own, as edges point at location
+ * objects. [formatHash] is the one written, or the one a decoded file must start with.
  */
 class XcfaSerializationSession
-internal constructor(internal val parseContext: ParseContext, internal val decoding: Boolean) {
+internal constructor(
+  encoded: ParseContext?,
+  module: SerializersModule,
+  internal val formatHash: String,
+) {
 
-  /** While true (first encoding pass), unseen objects are added; afterwards they are an error. */
-  internal var collecting = !decoding
+  private val decoding = encoded == null
 
-  private val declIds = IdentityHashMap<Decl<*>, Int>()
-  private val exprIds = IdentityHashMap<Expr<*>, Int>()
-  private val stmtIds = IdentityHashMap<Stmt, Int>()
-  private val ctypeIds = IdentityHashMap<CComplexType, Int>()
-  private val ctypeNodeIds = HashMap<CTypeNode, Int>()
-  private val metaIds = IdentityHashMap<MetaData, Int>()
-  private val locIds = IdentityHashMap<XcfaLocation, Int>()
-  private val classIds = HashMap<String, Int>()
+  /**
+   * The C types' parse context: given when encoding, read before the object table when decoding.
+   */
+  internal lateinit var parseContext: ParseContext
+    private set
 
-  internal val declNodes = ArrayList<DeclNode>()
-  internal val exprNodes = ArrayList<ExprNode>()
-  internal val stmtNodes = ArrayList<StmtNode>()
-  internal val ctypeNodes = ArrayList<CTypeNode>()
-  internal val metaList = ArrayList<MetaData>()
-  internal val classNames = ArrayList<String>()
+  internal val objects: ObjectTable =
+    if (decoding) ObjectTable.forDecoding(module, XcfaSerialization.tableClasses)
+    else
+      ObjectTable.forEncoding(
+        module,
+        XcfaSerialization.tableClasses,
+        internKey = ::internKey,
+        ambient = listOfNotNull(encoded),
+      )
 
-  internal val decls = ArrayList<Decl<*>>()
-  internal val exprs = ArrayList<Expr<*>>()
-  internal val stmts = ArrayList<Stmt>()
-  internal val ctypes = ArrayList<CComplexType>()
-  internal val metas = ArrayList<MetaData>()
-  internal val locs = ArrayList<XcfaLocation>()
-  internal val classes = ArrayList<Class<*>>()
-
-  internal fun reachableExprs(): Map<Expr<*>, Int> = exprIds
-
-  internal fun reachableDecls(): Map<Decl<*>, Int> = declIds
-
-  internal fun reachableStmts(): Map<Stmt, Int> = stmtIds
-
-  private fun <K> intern(ids: IdentityHashMap<K, Int>, key: K, create: () -> Unit): Int {
-    ids[key]?.let {
-      return it
-    }
-    check(collecting) { "Not collected in the first pass: ${key!!::class.java.name} $key" }
-    create()
-    // create() may have registered children first, so the id is assigned only now.
-    return ids.size.also { ids[key] = it }
+  init {
+    encoded?.let { parseContext = it }
   }
 
-  internal fun classId(cls: Class<*>): Int =
-    classIds.getOrPut(cls.name) {
-      check(collecting) { "Not collected in the first pass: class ${cls.name}" }
-      classNames.add(cls.name)
-      classNames.size - 1
-    }
+  internal fun decoded(parseContext: ParseContext) {
+    this.parseContext = parseContext
+    objects.addAmbient(parseContext)
+  }
 
-  internal fun declId(d: Decl<*>): Int = intern(declIds, d) { declNodes.add(DeclNode.of(d)) }
+  /** While true (first encoding pass), unseen metadata is added; afterwards it is an error. */
+  internal var collecting = !decoding
 
-  internal fun exprId(e: Expr<*>): Int =
-    intern(exprIds, e) {
-      val node = ExprNode.of(e, this)
-      exprNodes.add(node)
-    }
+  private val metaIds = IdentityHashMap<MetaData, Int>()
+  private val locIds = IdentityHashMap<XcfaLocation, Int>()
 
-  internal fun stmtId(s: Stmt): Int = intern(stmtIds, s) { stmtNodes.add(StmtNode.of(s, this)) }
+  internal val metaList = ArrayList<MetaData>()
+  internal val metas = ArrayList<MetaData>()
+  internal val locs = ArrayList<XcfaLocation>()
 
   // C types are hash-consed: the parser re-expands struct types on every use, so the same type
-  // exists as thousands of objects. Nothing keys on their identity (equality is structural).
-  internal fun ctypeId(t: CComplexType): Int =
-    ctypeIds[t]
-      ?: run {
-        check(collecting) { "Not collected in the first pass: C type $t" }
-        val node = CTypeNode.of(t, this)
-        val id =
-          ctypeNodeIds.getOrPut(node) {
-            ctypeNodes.add(node)
-            ctypeNodes.size - 1
-          }
-        id.also { ctypeIds[t] = it }
-      }
+  // exists as thousands of objects. Nothing keys on their identity, and their equals ignores
+  // some state (e.g. a pointer's isFunctionPointer), so they are compared by what is written.
+  private fun internKey(value: Any): Any? =
+    when (value) {
+      is Type -> value
+      is CComplexType -> objects.definitionKey(value)
+      else -> null
+    }
+
+  internal fun ctypeId(t: CComplexType): Int = objects.idOf(t)
+
+  internal fun ctype(i: Int): CComplexType = objects.valueAt(i) as CComplexType
+
+  internal fun exprId(e: Expr<*>): Int = objects.idOf(e)
+
+  internal fun expr(i: Int): Expr<*> = objects.valueAt(i) as Expr<*>
 
   internal fun metaId(m: MetaData): Int =
-    if (m === EmptyMetaData) -1 else intern(metaIds, m) { metaList.add(m) }
+    if (m === EmptyMetaData) -1
+    else
+      metaIds[m]
+        ?: run {
+          check(collecting) { "Not collected in the first pass: ${m.javaClass.name} $m" }
+          metaList.add(m)
+          (metaList.size - 1).also { metaIds[m] = it }
+        }
 
   internal fun locId(l: XcfaLocation, define: Boolean): Int =
     locIds[l]
@@ -146,7 +132,7 @@ internal constructor(internal val parseContext: ParseContext, internal val decod
       check(current.get() == null) { "Nested XCFA serialization sessions are not supported" }
       current.set(this)
       try {
-        return block()
+        return objects.use(block)
       } finally {
         current.remove()
       }
@@ -157,54 +143,6 @@ internal constructor(internal val parseContext: ParseContext, internal val decod
 private fun session() = XcfaSerializationSession.get()
 
 private fun intDescriptor(name: String) = PrimitiveSerialDescriptor(name, PrimitiveKind.INT)
-
-object ExprReferenceSerializer : KSerializer<Expr<*>> {
-  override val descriptor = intDescriptor("theta.ExprRef")
-
-  override fun serialize(encoder: Encoder, value: Expr<*>) =
-    encoder.encodeInt(session().exprId(value))
-
-  override fun deserialize(decoder: Decoder): Expr<*> = session().exprs[decoder.decodeInt()]
-}
-
-@Suppress("UNCHECKED_CAST")
-object BoolExprReferenceSerializer : KSerializer<Expr<BoolType>> {
-  override val descriptor = intDescriptor("theta.BoolExprRef")
-
-  override fun serialize(encoder: Encoder, value: Expr<BoolType>) =
-    encoder.encodeInt(session().exprId(value))
-
-  override fun deserialize(decoder: Decoder): Expr<BoolType> =
-    session().exprs[decoder.decodeInt()] as Expr<BoolType>
-}
-
-object LitExprReferenceSerializer : KSerializer<LitExpr<*>> {
-  override val descriptor = intDescriptor("theta.LitExprRef")
-
-  override fun serialize(encoder: Encoder, value: LitExpr<*>) =
-    encoder.encodeInt(session().exprId(value))
-
-  override fun deserialize(decoder: Decoder): LitExpr<*> =
-    session().exprs[decoder.decodeInt()] as LitExpr<*>
-}
-
-object VarDeclReferenceSerializer : KSerializer<VarDecl<*>> {
-  override val descriptor = intDescriptor("theta.VarDeclRef")
-
-  override fun serialize(encoder: Encoder, value: VarDecl<*>) =
-    encoder.encodeInt(session().declId(value))
-
-  override fun deserialize(decoder: Decoder): VarDecl<*> =
-    session().decls[decoder.decodeInt()] as VarDecl<*>
-}
-
-object StmtReferenceSerializer : KSerializer<Stmt> {
-  override val descriptor = intDescriptor("theta.StmtRef")
-
-  override fun serialize(encoder: Encoder, value: Stmt) = encoder.encodeInt(session().stmtId(value))
-
-  override fun deserialize(decoder: Decoder): Stmt = session().stmts[decoder.decodeInt()]
-}
 
 object MetaDataReferenceSerializer : KSerializer<MetaData> {
   override val descriptor = intDescriptor("theta.MetaDataRef")
@@ -250,11 +188,32 @@ object OptionalLocationReferenceSerializer : KSerializer<Optional<XcfaLocation>>
     decoder.decodeInt().let { if (it == -1) Optional.empty() else Optional.of(session().locs[it]) }
 }
 
-/** Runs serializers without producing output: the first encoding pass. */
-@OptIn(ExperimentalSerializationApi::class)
-internal class CollectingEncoder(override val serializersModule: SerializersModule) :
-  AbstractEncoder() {
-  override fun encodeValue(value: Any) {}
+/**
+ * A C type where a [hu.bme.mit.theta.core.type.TraceabilityInfo] is expected: polymorphic
+ * serialization needs a class-like value, so the reference is wrapped in one.
+ */
+object CTypeInfoSerializer : KSerializer<CComplexType> {
+  const val NAME = "ctype"
 
-  override fun encodeNull() {}
+  override val descriptor: SerialDescriptor =
+    buildClassSerialDescriptor(NAME) { element("id", intDescriptor("theta.CTypeRef")) }
+
+  override fun serialize(encoder: Encoder, value: CComplexType) {
+    val composite = encoder.beginStructure(descriptor)
+    composite.encodeIntElement(descriptor, 0, session().ctypeId(value))
+    composite.endStructure(descriptor)
+  }
+
+  override fun deserialize(decoder: Decoder): CComplexType {
+    val composite = decoder.beginStructure(descriptor)
+    var id = -1
+    while (true) {
+      val index = composite.decodeElementIndex(descriptor)
+      if (index < 0) break
+      id = composite.decodeIntElement(descriptor, index)
+    }
+    composite.endStructure(descriptor)
+    check(id >= 0) { "A C type reference needs its index" }
+    return session().ctype(id)
+  }
 }

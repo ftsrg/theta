@@ -19,8 +19,11 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class NotExpr private constructor(op: Expr<BoolType>) : UnaryExpr<BoolType, BoolType>(op) {
+@Serializable
+class NotExpr private constructor(override val op: Expr<BoolType>) :
+  UnaryExpr<BoolType, BoolType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -28,8 +31,7 @@ class NotExpr private constructor(op: Expr<BoolType>) : UnaryExpr<BoolType, Bool
   override fun eval(valuation: Valuation): BoolLitExpr =
     Bool(!(op.eval(valuation) as BoolLitExpr).value)
 
-  override fun with(op: Expr<BoolType>): NotExpr =
-    if (op === this.op) this else keepSourceType(of(op))
+  override fun with(op: Expr<BoolType>): NotExpr = if (op === this.op) this else of(op)
 
   override val hashSeed: Int
     get() = HASH_SEED

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-@file:UseContextualSerialization(Expr::class, VarDecl::class, LitExpr::class, MetaData::class)
+@file:UseContextualSerialization(MetaData::class)
 
 package hu.bme.mit.theta.xcfa.model
 
@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.model.serialization.BoolExprReferenceSerializer
 import hu.bme.mit.theta.xcfa.model.serialization.LocationDefinitionSerializer
 import hu.bme.mit.theta.xcfa.model.serialization.LocationReferenceSerializer
 import hu.bme.mit.theta.xcfa.model.serialization.OptionalLocationReferenceSerializer
@@ -147,7 +146,7 @@ data class XcfaProcedure(
   val finalLoc: Optional<XcfaLocation>, // final location (optional)
   @Serializable(with = OptionalLocationReferenceSerializer::class)
   val errorLoc: Optional<XcfaLocation>, // error location (optional)
-  @Serializable(with = BoolExprReferenceSerializer::class) val prop: Expr<BoolType> = True(),
+  val prop: Expr<BoolType> = True(),
 ) {
 
   @Transient internal lateinit var parent: XCFA

@@ -104,6 +104,9 @@ object Deps {
 
     val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
 
+    val kotlinxSerializationCore =
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.kotlinxSerializationJson}"
+
     val kotlinxSerializationJson =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerializationJson}"
 

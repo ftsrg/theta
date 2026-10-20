@@ -18,18 +18,37 @@ package hu.bme.mit.theta.core.decl
 import com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.common.collection.CollectionUtil
+import hu.bme.mit.theta.core.serialization.DeclReferenceSerializer
 import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.TraceabilityInfo
 import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.KeepGeneratedSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Represents a variable declaration. Variables cannot be directly passed to the SMT solver, they
  * must be replaced with constants for a given index ([IndexedConstDecl]). See also
  * [hu.bme.mit.theta.core.utils.PathUtils].
  */
-open class VarDecl<DeclType : Type> internal constructor(name: String, type: DeclType) :
-  Decl<DeclType>(name, type) {
+@Serializable(with = DeclReferenceSerializer::class)
+@KeepGeneratedSerializer
+open class VarDecl<DeclType : Type>
+internal constructor(override val name: String, override val type: DeclType) : Decl<DeclType>() {
 
+  init {
+    checkArgument(name.isNotEmpty())
+  }
+
+  @Transient
   private val indexToConst: MutableMap<Int, IndexedConstDecl<DeclType>> = CollectionUtil.createMap()
+
+  /**
+   * Information tying this variable to its origin (e.g. its type in the source language). A
+   * variable is one object shared by all its uses, so it carries the info itself instead of being
+   * wrapped in a [hu.bme.mit.theta.core.type.TraceableWrapperExpr].
+   */
+  var traceability: TraceabilityInfo? = null
 
   fun getConstDecl(index: Int): IndexedConstDecl<DeclType> {
     checkArgument(index >= 0)

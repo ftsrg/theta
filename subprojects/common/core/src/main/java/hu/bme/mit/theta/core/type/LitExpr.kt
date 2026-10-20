@@ -15,4 +15,8 @@
  */
 package hu.bme.mit.theta.core.type
 
+import hu.bme.mit.theta.core.serialization.ExprReferenceSerializer
+import kotlinx.serialization.Serializable
+
+@Serializable(with = ExprReferenceSerializer::class)
 sealed interface LitExpr<ExprType : Type> : Expr<ExprType>

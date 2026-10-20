@@ -17,5 +17,5 @@ package hu.bme.mit.theta.core.type
 
 import hu.bme.mit.theta.core.type.abstracttype.Castable
 
-sealed class CastExpr<SourceType : Castable<SourceType>, TargetType : Type>(op: Expr<SourceType>) :
-  UnaryExpr<SourceType, TargetType>(op)
+sealed class CastExpr<SourceType : Castable<SourceType>, TargetType : Type> :
+  UnaryExpr<SourceType, TargetType>()

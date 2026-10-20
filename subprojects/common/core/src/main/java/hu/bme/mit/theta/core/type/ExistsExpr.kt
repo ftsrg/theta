@@ -15,19 +15,23 @@
  */
 package hu.bme.mit.theta.core.type
 
+import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class ExistsExpr private constructor(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>) :
-  QuantifiedExpr(paramDecls, op) {
+@Serializable
+class ExistsExpr
+private constructor(override val paramDecls: List<ParamDecl<*>>, override val op: Expr<BoolType>) :
+  QuantifiedExpr() {
 
   override fun eval(valuation: Valuation): LitExpr<BoolType> = throw UnsupportedOperationException()
 
   override fun with(op: Expr<BoolType>): ExistsExpr =
-    if (op === this.op) this else keepSourceType(of(paramDecls, op))
+    if (op === this.op) this else of(paramDecls, op)
 
   override val hashSeed: Int
     get() = HASH_SEED
@@ -41,7 +45,7 @@ class ExistsExpr private constructor(paramDecls: Iterable<ParamDecl<*>>, op: Exp
 
     @JvmStatic
     fun of(paramDecls: Iterable<ParamDecl<*>>, op: Expr<BoolType>): ExistsExpr =
-      ExistsExpr(paramDecls, op)
+      ExistsExpr(ImmutableList.copyOf(paramDecls), op)
 
     @JvmStatic
     fun create(paramDecls: Iterable<ParamDecl<*>>, op: Expr<*>): ExistsExpr =

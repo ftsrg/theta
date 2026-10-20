@@ -19,9 +19,12 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
 
-class XorExpr private constructor(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>) :
-  NeqExpr<BoolType>(leftOp, rightOp) {
+@Serializable
+class XorExpr
+private constructor(override val leftOp: Expr<BoolType>, override val rightOp: Expr<BoolType>) :
+  NeqExpr<BoolType>() {
 
   override val type: BoolType
     get() = Bool()
@@ -33,8 +36,7 @@ class XorExpr private constructor(leftOp: Expr<BoolType>, rightOp: Expr<BoolType
   }
 
   override fun with(leftOp: Expr<BoolType>, rightOp: Expr<BoolType>): XorExpr =
-    if (leftOp === this.leftOp && rightOp === this.rightOp) this
-    else keepSourceType(of(leftOp, rightOp))
+    if (leftOp === this.leftOp && rightOp === this.rightOp) this else of(leftOp, rightOp)
 
   override val hashSeed: Int
     get() = HASH_SEED

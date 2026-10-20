@@ -29,9 +29,6 @@ class CFunction(
 
   init {
     compound.setParent(this)
-    parseContext.metadata.lookupMetadata(funcDecl).forEach { (s, o) ->
-      parseContext.metadata.create(this, s, o)
-    }
   }
 
   override fun <P, R> accept(visitor: CStatementVisitor<P, R>, param: P): R =

@@ -21,17 +21,13 @@ import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.utils.TypeUtils.castBv
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class BvConcatExpr private constructor(ops: Iterable<Expr<BvType>>) : AbstractExpr<BvType>() {
+@Serializable
+class BvConcatExpr private constructor(override val ops: List<Expr<BvType>>) : Expr<BvType> {
 
-  override val ops: List<Expr<BvType>>
-
-  @Volatile private var hashCode = 0
-
-  init {
-    checkArgument(ops.iterator().hasNext())
-    this.ops = ImmutableList.copyOf(ops)
-  }
+  @Transient @Volatile private var hashCode = 0
 
   override val arity: Int
     get() = ops.size
@@ -46,7 +42,7 @@ class BvConcatExpr private constructor(ops: Iterable<Expr<BvType>>) : AbstractEx
 
   override fun withOps(ops: List<Expr<*>>): Expr<BvType> {
     checkArgument(ops.isNotEmpty())
-    return keepSourceType(of(ops.map { castBv(it) }))
+    return of(ops.map { castBv(it) })
   }
 
   override fun hashCode(): Int {
@@ -60,8 +56,10 @@ class BvConcatExpr private constructor(ops: Iterable<Expr<BvType>>) : AbstractEx
   }
 
   override fun equals(other: Any?): Boolean =
-    this === other ||
-      (other != null && javaClass == other.javaClass && ops == (other as BvConcatExpr).ops)
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      this === other ||
+        (other != null && javaClass == other.javaClass && ops == (other as BvConcatExpr).ops)
 
   override fun toString(): String =
     Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(ops).toString()
@@ -70,7 +68,11 @@ class BvConcatExpr private constructor(ops: Iterable<Expr<BvType>>) : AbstractEx
     private const val HASH_SEED = 8264
     private const val OPERATOR_LABEL = "++"
 
-    @JvmStatic fun of(ops: Iterable<Expr<BvType>>): BvConcatExpr = BvConcatExpr(ops)
+    @JvmStatic
+    fun of(ops: Iterable<Expr<BvType>>): BvConcatExpr {
+      checkArgument(ops.iterator().hasNext())
+      return BvConcatExpr(ImmutableList.copyOf(ops))
+    }
 
     @JvmStatic fun create(ops: List<Expr<*>>): BvConcatExpr = of(ops.map { castBv(it) })
   }

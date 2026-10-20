@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
@@ -195,7 +196,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
    * it can be read/assigned directly. Returns null otherwise (e.g. `&a->f`, `&a[i]`).
    */
   private fun directVar(ptr: Expr<*>): Expr<*>? =
-    if (ptr is Reference<*, *>) ptr.expr as? RefExpr<*> else null
+    (ptr.unwrapTraceable() as? Reference<*, *>)?.expr?.unwrapTraceable() as? RefExpr<*>
 
   /** The cell `*ptr`: the variable itself when `ptr` is the address of one, else a dereference. */
   private fun cell(ptr: Expr<*>, pointee: CComplexType = pointeeOf(ptr)): Expr<*> =

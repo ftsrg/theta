@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getSafetyChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel.NONE
+import hu.bme.mit.theta.xcfa.cli.serialization.XcfaFiles
 import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
@@ -80,16 +81,6 @@ fun runConfig(
   postAnalysisLogging(xcfa, result, mcm, parseContext, config, logger, uniqueLogger)
 
   return result
-}
-
-/** Experiment hook: builds the XCFA exactly as [runConfig] would, without running a backend. */
-fun buildXcfaForExperiment(
-  config: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
-): Triple<XCFA, MCM, ParseContext> {
-  propagateInputOptions(config, logger, uniqueLogger)
-  return frontend(config, logger, uniqueLogger)
 }
 
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
@@ -254,6 +245,13 @@ private fun frontend(
   if (config.inputConfig.xcfaWCtx != null) {
     return config.inputConfig.xcfaWCtx!!
   }
+  config.inputConfig.xcfaFile?.let { file ->
+    val stopwatch = Stopwatch.createStarted()
+    val (xcfa, parseContext) = XcfaFiles.read(file)
+    val mcm = config.inputConfig.catFile?.let { CatDslManager.createMCM(it) } ?: emptySet()
+    logger.benchmark("%s", "XCFA loaded: ${xcfa.name}  (in ${stopwatch.elapsedMillis()} ms)")
+    return Triple(xcfa, mcm, parseContext)
+  }
 
   val cConfig = config.frontendConfig.specConfig as? CFrontendConfig
   val mayFallBackToFlat =
@@ -319,11 +317,12 @@ private fun buildFrontend(
   allowBytesFallback: Boolean,
 ): Triple<XCFA, MCM, ParseContext> {
   val stopwatch = Stopwatch.createStarted()
+  val wallStart = System.nanoTime()
 
   val input = config.inputConfig.input!!
   logger.info("%s", "Parsing the input $input as ${config.frontendConfig.inputType}")
 
-  val parseContext = ParseContext()
+  var parseContext = ParseContext()
 
   if (config.frontendConfig.inputType == InputType.C) {
     val cConfig = config.frontendConfig.specConfig
@@ -340,8 +339,17 @@ private fun buildFrontend(
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
   }
 
-  val xcfa =
+  var xcfa =
     getXcfa(config, parseContext, logger, uniqueLogger, allowFlatFallback, allowBytesFallback)
+  if (config.debugConfig.serializationRoundTrip) {
+    // Kept out of the frontend's time, so that it reads the same with and without the flag.
+    stopwatch.stop()
+    val parseNanos = System.nanoTime() - wallStart
+    val decoded = serializationRoundTrip(xcfa, parseContext, parseNanos, config, logger)
+    stopwatch.start()
+    xcfa = decoded.first
+    parseContext = decoded.second
+  }
   val mcm =
     if (config.inputConfig.catFile != null) {
       CatDslManager.createMCM(config.inputConfig.catFile!!)
@@ -383,6 +391,46 @@ private fun buildFrontend(
   )
 
   return Triple(xcfa, mcm, parseContext)
+}
+
+/**
+ * `--serialization-roundtrip`: the rest of the run analyses what a worker given this XCFA would.
+ * The decoded XCFA must encode to the same bytes, so nothing that is serialized gets lost on the
+ * way.
+ *
+ * Timed by the wall clock throughout, parsing included, so that the figures compare with each
+ * other; the frontend's own figure is the CPU time of the whole cgroup. A failure is a frontend
+ * failure: a worker could not have been given this XCFA.
+ */
+private fun serializationRoundTrip(
+  xcfa: XCFA,
+  parseContext: ParseContext,
+  parseNanos: Long,
+  config: XcfaConfig<*, *>,
+  logger: Logger,
+): Pair<XCFA, ParseContext> {
+  fun ms(nanos: Long) = nanos / 1_000_000
+  try {
+    val encodeStart = System.nanoTime()
+    val bytes = XcfaFiles.encode(xcfa, parseContext)
+    val decodeStart = System.nanoTime()
+    val decoded = XcfaFiles.decode(bytes)
+    val reencodeStart = System.nanoTime()
+    val reencoded = XcfaFiles.encode(decoded.first, decoded.second)
+    val end = System.nanoTime()
+    check(reencoded.contentEquals(bytes)) { "the decoded XCFA does not encode to the same bytes" }
+    logger.benchmark(
+      "%s",
+      "Serialization round trip: ${bytes.size} bytes; parsed in ${ms(parseNanos)} ms, encoded in " +
+        "${ms(decodeStart - encodeStart)} ms, decoded in ${ms(reencodeStart - decodeStart)} ms, " +
+        "re-encoded in ${ms(end - reencodeStart)} ms",
+    )
+    return decoded
+  } catch (e: Exception) {
+    if (config.debugConfig.stacktrace) e.printStackTrace()
+    logger.write(Logger.Level.RESULT, "%s", "Frontend failed! (serialization round trip, $e)\n")
+    exitProcess(config.debugConfig.debug, e, ExitCodes.FRONTEND_FAILED.code)
+  }
 }
 
 private fun backend(

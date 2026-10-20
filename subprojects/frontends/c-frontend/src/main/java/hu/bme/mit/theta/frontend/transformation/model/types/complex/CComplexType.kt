@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.serialization.AbstractReferenceSerializer
+import hu.bme.mit.theta.core.serialization.AmbientSerializer
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.AddExpr
 import hu.bme.mit.theta.core.type.DivExpr
@@ -24,14 +27,18 @@ import hu.bme.mit.theta.core.type.ModExpr
 import hu.bme.mit.theta.core.type.MulExpr
 import hu.bme.mit.theta.core.type.NegExpr
 import hu.bme.mit.theta.core.type.PosExpr
-import hu.bme.mit.theta.core.type.SourceType
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.SubExpr
+import hu.bme.mit.theta.core.type.TraceabilityInfo
+import hu.bme.mit.theta.core.type.TraceableWrapperExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.traceabilityInfo
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getCastVisitor
@@ -40,31 +47,45 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getNullValueV
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getTypeVisitor
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getUnitValueVisitor
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getValueVisitor
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.LaidOutValue
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
 
-sealed class CComplexType(val origin: CSimpleType?, val parseContext: ParseContext) : SourceType {
+/**
+ * A C type. Each is written once into the object table with its class's generated serializer; a
+ * property referring to one names [CComplexTypeReferenceSerializer].
+ */
+@Serializable
+sealed class CComplexType : TraceabilityInfo {
+  /** The declaration-side type this was made from; only read while parsing. */
+  abstract val origin: CSimpleType?
+
+  abstract val parseContext: ParseContext
+
   private var threadLocal = false
   private var atomic = false
 
-  val nullValue: LitExpr<*>
-    get() {
-      val accept = accept(getNullValueVisitor(parseContext), null)
-      parseContext.metadata.create(accept, "cType", this)
-      return accept
-    }
+  /** The zero of this type, typed as this type. */
+  val nullValue: Expr<*>
+    get() = withType(nullLiteral, this)
 
-  val unitValue: LitExpr<*>
-    get() {
-      val accept = accept(getUnitValueVisitor(parseContext), null)
-      parseContext.metadata.create(accept, "cType", this)
-      return accept
-    }
+  /** The one of this type, typed as this type. */
+  val unitValue: Expr<*>
+    get() = withType(unitLiteral, this)
 
-  fun getValue(value: String): LitExpr<*> {
-    val accept = accept(getValueVisitor(parseContext), value)
-    parseContext.metadata.create(accept, "cType", this)
-    return accept
-  }
+  /** The literal [value] of this type, typed as this type. */
+  fun getValue(value: String): Expr<*> = withType(getLiteral(value), this)
+
+  /** The zero of this type as a plain literal, which cannot carry its C type. */
+  val nullLiteral: LitExpr<*>
+    get() = accept(getNullValueVisitor(parseContext), null)
+
+  /** The one of this type as a plain literal, which cannot carry its C type. */
+  val unitLiteral: LitExpr<*>
+    get() = accept(getUnitValueVisitor(parseContext), null)
+
+  /** The literal [value] of this type as a plain literal, which cannot carry its C type. */
+  fun getLiteral(value: String): LitExpr<*> = accept(getValueVisitor(parseContext), value)
 
   fun limit(expr: Expr<*>): AssumeStmt = accept(getLimitVisitor(parseContext), expr)
 
@@ -78,12 +99,10 @@ sealed class CComplexType(val origin: CSimpleType?, val parseContext: ParseConte
     // with its result type *before* casting it. Short-circuiting on the recorded type alone
     // therefore skipped the very modulo that performs the wraparound, and `UINT_MAX + 1` quietly
     // stopped coming back to 0.
-    if (getType(expr, parseContext) == this && !isArithmetic(expr)) {
+    if (getType(expr, parseContext) == this && !isArithmetic(expr.unwrapTraceable())) {
       return expr
     }
-    val accept = accept(getCastVisitor(parseContext), expr)
-    parseContext.metadata.create(accept, "cType", this)
-    return accept
+    return withType(accept(getCastVisitor(parseContext), expr), this)
   }
 
   val smtType: Type
@@ -194,9 +213,9 @@ sealed class CComplexType(val origin: CSimpleType?, val parseContext: ParseConte
      * cast's wraparound is for); a variable, a literal or an already-cast value cannot.
      */
     private fun isArithmetic(expr: Expr<*>): Boolean {
-      var e = expr
+      var e = expr.unwrapTraceable()
       while (e is PosExpr<*>) {
-        e = e.op
+        e = e.op.unwrapTraceable()
       }
       return e is AddExpr<*> ||
         e is SubExpr<*> ||
@@ -248,15 +267,45 @@ sealed class CComplexType(val origin: CSimpleType?, val parseContext: ParseConte
         else -> if (s.endsWith("*")) CPointer(null, null, parseContext) else null
       }
 
+    /**
+     * The C type recorded for [expr], or null: the info of its traceability wrapper, or for a
+     * variable's own reference ([VarDecl.ref]) the variable's.
+     */
     @JvmStatic
-    fun getType(expr: Expr<*>, parseContext: ParseContext): CComplexType {
-      val cTypeOptional = parseContext.metadata.getMetadataValue(expr, "cType")
-      return when (val cType = cTypeOptional.orElse(null)) {
-        is CComplexType -> cType
-        is CSimpleType -> cType.actualType
-        else -> getType(expr.type, parseContext)
+    fun getKnownType(expr: Expr<*>): CComplexType? {
+      when (val info = expr.traceabilityInfo) {
+        is CComplexType -> return info
+        is LaidOutValue -> return info.cType
       }
+      val e = expr.unwrapTraceable()
+      return if (e is RefExpr<*> && e === e.decl.ref) {
+        (e.decl as? VarDecl<*>)?.traceability as? CComplexType
+      } else null
     }
+
+    /**
+     * Records [type] as the C type of [expr]. A variable's own reference is shared by all its uses,
+     * so its type is recorded on the variable; any other expression is wrapped, and the result must
+     * be used in place of [expr]. Where [expr] was read from (see [LaidOutValue]) is kept.
+     */
+    @JvmStatic
+    fun <T : Type> withType(expr: Expr<T>, type: CComplexType): Expr<T> {
+      val e = expr.unwrapTraceable()
+      if (e is RefExpr<T> && e === e.decl.ref) {
+        val decl = e.decl
+        if (decl is VarDecl<*>) {
+          decl.traceability = type
+          return e
+        }
+      }
+      val origin = LaidOutValue.originOf(expr)
+      return TraceableWrapperExpr.of(expr, if (origin == null) type else LaidOutValue(type, origin))
+    }
+
+    /** The C type of [expr]: the recorded one, or one guessed from its SMT type. */
+    @JvmStatic
+    fun getType(expr: Expr<*>, parseContext: ParseContext): CComplexType =
+      getKnownType(expr) ?: getType(expr.type, parseContext)
 
     private fun getType(type: Type, parseContext: ParseContext): CComplexType {
       return when (type) {
@@ -352,3 +401,10 @@ sealed class CComplexType(val origin: CSimpleType?, val parseContext: ParseConte
     fun getFitsall(parseContext: ParseContext): CComplexType = Fitsall(null, parseContext)
   }
 }
+
+object CComplexTypeReferenceSerializer :
+  AbstractReferenceSerializer<CComplexType>("theta.CTypeRef", CComplexType::class.java)
+
+/** The C types of one program share its parse context, which is not serialized with them. */
+object ParseContextSerializer :
+  AmbientSerializer<ParseContext>("theta.ParseContext", ParseContext::class.java)

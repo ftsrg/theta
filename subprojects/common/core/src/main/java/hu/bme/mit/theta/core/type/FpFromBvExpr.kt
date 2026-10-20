@@ -21,15 +21,17 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
+import kotlinx.serialization.Serializable
 import org.kframework.mpfr.BigFloat
 
+@Serializable
 class FpFromBvExpr
 private constructor(
   val roundingMode: FpRoundingMode,
-  op: Expr<BvType>,
+  override val op: Expr<BvType>,
   val fpType: FpType,
   val isSigned: Boolean,
-) : UnaryExpr<BvType, FpType>(op) {
+) : UnaryExpr<BvType, FpType>() {
 
   override val type: FpType
     get() = fpType
@@ -44,6 +46,7 @@ private constructor(
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpFromBvExpr
@@ -51,7 +54,7 @@ private constructor(
   }
 
   override fun with(op: Expr<BvType>): FpFromBvExpr =
-    keepSourceType(FpFromBvExpr(roundingMode, op, fpType, isSigned))
+    FpFromBvExpr(roundingMode, op, fpType, isSigned)
 
   override val hashSeed: Int
     get() = HASH_SEED

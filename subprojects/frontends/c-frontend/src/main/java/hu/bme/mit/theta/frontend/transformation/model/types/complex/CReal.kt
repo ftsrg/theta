@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
-import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-sealed class CReal(origin: CSimpleType?, parseContext: ParseContext) :
-  CComplexType(origin, parseContext) {
-  protected var rank = 0
+@Serializable
+sealed class CReal : CComplexType() {
+  @Transient protected var rank = 0
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)

@@ -122,8 +122,8 @@ class EldaricaHornSolver(
     if (type is FuncType<*, *>) {
       val funcType = type
 
-      val paramType: Type = funcType.getParamType()
-      val resultType: Type = funcType.getResultType()
+      val paramType: Type = funcType.paramType
+      val resultType: Type = funcType.resultType
 
       Preconditions.checkArgument(paramType !is FuncType<*, *>)
 

@@ -16,21 +16,20 @@
 package hu.bme.mit.theta.core.type
 
 import com.google.common.base.Preconditions.checkArgument
-import com.google.common.base.Preconditions.checkNotNull
 import com.google.common.collect.ImmutableList
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 class ArrayReadExpr<IndexType : Type, ElemType : Type>
-private constructor(array: Expr<ArrayType<IndexType, ElemType>>, index: Expr<IndexType>) :
-  AbstractExpr<ElemType>() {
+private constructor(val array: Expr<ArrayType<IndexType, ElemType>>, val index: Expr<IndexType>) :
+  Expr<ElemType> {
 
-  val array: Expr<ArrayType<IndexType, ElemType>> = checkNotNull(array)
-  val index: Expr<IndexType> = checkNotNull(index)
-
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override val type: ElemType
     get() = array.type.elemType
@@ -60,7 +59,7 @@ private constructor(array: Expr<ArrayType<IndexType, ElemType>>, index: Expr<Ind
     array: Expr<ArrayType<IndexType, ElemType>>,
     index: Expr<IndexType>,
   ): ArrayReadExpr<IndexType, ElemType> =
-    if (this.array === array && this.index === index) this else keepSourceType(of(array, index))
+    if (this.array === array && this.index === index) this else of(array, index)
 
   fun withArray(array: Expr<ArrayType<IndexType, ElemType>>): ArrayReadExpr<IndexType, ElemType> =
     with(array, index)
@@ -79,6 +78,7 @@ private constructor(array: Expr<ArrayType<IndexType, ElemType>>, index: Expr<Ind
   }
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as ArrayReadExpr<*, *>

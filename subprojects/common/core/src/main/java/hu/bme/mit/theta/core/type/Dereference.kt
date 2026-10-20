@@ -21,20 +21,23 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.inttype.IntType
 import java.util.Objects
 import java.util.Optional
+import kotlinx.serialization.Serializable
 
+@Serializable
 class Dereference<A : Type, O : Type, T : Type>
 private constructor(
   val array: Expr<A>,
   val offset: Expr<O>,
-  uniqueness: Expr<IntType>?,
+  val uniqueness: Expr<IntType>?,
   override val type: T,
-) : AbstractExpr<T>() {
+) : Expr<T> {
 
-  val uniquenessIdx: Optional<Expr<IntType>> = Optional.ofNullable(uniqueness)
+  val uniquenessIdx: Optional<Expr<IntType>>
+    get() = Optional.ofNullable(uniqueness)
 
   // TODO: this kills the stuck check
   fun withUniquenessExpr(expr: Expr<IntType>): Dereference<A, O, T> =
-    keepSourceType(Dereference(array, offset, expr, type))
+    Dereference(array, offset, expr, type)
 
   override val arity: Int
     get() = 3
@@ -50,24 +53,24 @@ private constructor(
   override fun withOps(ops: List<Expr<*>>): Expr<T> {
     checkState(ops.size == 3 || ops.size == 2)
     @Suppress("UNCHECKED_CAST")
-    return keepSourceType(
-      Dereference(
-        ops[0] as Expr<A>,
-        ops[1] as Expr<O>,
-        if (ops.size == 3) ops[2] as Expr<IntType> else null,
-        type,
-      )
+    return Dereference(
+      ops[0] as Expr<A>,
+      ops[1] as Expr<O>,
+      if (ops.size == 3) ops[2] as Expr<IntType> else null,
+      type,
     )
   }
 
   override fun hashCode(): Int = Objects.hash(array, offset, uniquenessIdx, type)
 
   override fun equals(other: Any?): Boolean =
-    other is Dereference<*, *, *> &&
-      array == other.array &&
-      offset == other.offset &&
-      uniquenessIdx == other.uniquenessIdx &&
-      type == other.type
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else
+      other is Dereference<*, *, *> &&
+        array == other.array &&
+        offset == other.offset &&
+        uniquenessIdx == other.uniquenessIdx &&
+        type == other.type
 
   override fun toString(): String {
     val base = Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(offset)

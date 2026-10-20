@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.BvLitExpr;
 import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
@@ -278,10 +279,10 @@ public final class ObjectLayout {
             return null;
         }
         final var folded = ExprUtils.simplify(array.getArrayDimension().getExpression());
-        if (folded instanceof IntLitExpr intLit) {
+        if (Traceability.unwrapTraceable(folded) instanceof IntLitExpr intLit) {
             return intLit.getValue().intValueExact();
         }
-        if (folded instanceof BvLitExpr bvLit) {
+        if (Traceability.unwrapTraceable(folded) instanceof BvLitExpr bvLit) {
             return BvUtils.neutralBvLitExprToBigInteger(bvLit).intValueExact();
         }
         return null;

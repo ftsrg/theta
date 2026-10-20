@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -51,7 +52,7 @@ class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               "Nondet function ${invokeLabel.name} with arguments is not supported: " +
                 "havocing the return value would silently drop the effect on the arguments."
             }
-            val slot = invokeLabel.params[0] as RefExpr<*>
+            val slot = invokeLabel.params[0].unwrapTraceable() as RefExpr<*>
             val havoc = HavocStmt.of(slot.decl as VarDecl<*>)
             // No range annotation here: HavocPromotionAndRange, which runs after this, bounds every
             // havoc that needs it. Adding it here as well only emitted the same assume twice.

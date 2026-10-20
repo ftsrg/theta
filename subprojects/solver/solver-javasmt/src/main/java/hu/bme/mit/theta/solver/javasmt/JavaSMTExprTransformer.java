@@ -144,6 +144,7 @@ import hu.bme.mit.theta.core.type.RatPosExpr;
 import hu.bme.mit.theta.core.type.RatSubExpr;
 import hu.bme.mit.theta.core.type.RatToIntExpr;
 import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.TrueExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.XorExpr;
@@ -386,7 +387,9 @@ final class JavaSMTExprTransformer {
 
     public Formula toTerm(final Expr<?> expr) {
         try {
-            return exprToTerm.get(expr, () -> table.dispatch(expr));
+            // A wrapper equals its wrapped expression, so it must not reach the cache itself.
+            final Expr<?> bare = Traceability.unwrapTraceable(expr);
+            return exprToTerm.get(bare, () -> table.dispatch(bare));
         } catch (final ExecutionException e) {
             throw new AssertionError("Unhandled case: " + expr, e);
         }

@@ -17,8 +17,14 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-class CLongDouble(origin: CSimpleType?, parseContext: ParseContext) : CReal(origin, parseContext) {
+@Serializable
+class CLongDouble(
+  @Transient override val origin: CSimpleType? = null,
+  @Serializable(with = ParseContextSerializer::class) override val parseContext: ParseContext,
+) : CReal() {
   init {
     rank = RANK
   }
@@ -29,7 +35,7 @@ class CLongDouble(origin: CSimpleType?, parseContext: ParseContext) : CReal(orig
   override val typeName: String
     get() = "long double"
 
-  private companion object {
-    const val RANK = 20
+  companion object {
+    private const val RANK = 20
   }
 }

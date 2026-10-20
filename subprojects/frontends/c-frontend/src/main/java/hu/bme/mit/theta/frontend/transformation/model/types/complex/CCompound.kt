@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex
 
-import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType
 import java.util.Objects
+import kotlinx.serialization.Serializable
 
-sealed class CCompound(origin: CSimpleType?, parseContext: ParseContext) :
-  CComplexType(origin, parseContext) {
+@Serializable
+sealed class CCompound : CComplexType() {
 
   override fun <T, R> accept(visitor: CComplexTypeVisitor<T, R>, param: T): R =
     visitor.visit(this, param)

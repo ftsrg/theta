@@ -15,19 +15,20 @@
  */
 package hu.bme.mit.theta.core.stmt
 
-import com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Havoc statement of the form havoc VARIABLE, which performs a non-deterministic assignment to
  * VARIABLE.
  */
-class HavocStmt<DeclType : Type> private constructor(varDecl: VarDecl<DeclType>) : Stmt {
-  val varDecl: VarDecl<DeclType> = checkNotNull(varDecl)
+@Serializable
+class HavocStmt<DeclType : Type> private constructor(val varDecl: VarDecl<DeclType>) : Stmt {
 
-  @Volatile private var hashCode = 0
+  @Transient @Volatile private var hashCode = 0
 
   override fun <P, R> accept(visitor: StmtVisitor<in P, out R>, param: P): R =
     visitor.visit(this, param)

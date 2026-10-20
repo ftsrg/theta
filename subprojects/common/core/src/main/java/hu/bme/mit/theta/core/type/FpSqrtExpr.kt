@@ -20,9 +20,12 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.castFp
+import kotlinx.serialization.Serializable
 
-class FpSqrtExpr private constructor(val roundingMode: FpRoundingMode, op: Expr<FpType>) :
-  UnaryExpr<FpType, FpType>(op) {
+@Serializable
+class FpSqrtExpr
+private constructor(val roundingMode: FpRoundingMode, override val op: Expr<FpType>) :
+  UnaryExpr<FpType, FpType>() {
 
   override val type: FpType
     get() = op.type
@@ -36,9 +39,10 @@ class FpSqrtExpr private constructor(val roundingMode: FpRoundingMode, op: Expr<
   }
 
   override fun with(op: Expr<FpType>): FpSqrtExpr =
-    if (op === this.op) this else keepSourceType(of(roundingMode, op))
+    if (op === this.op) this else of(roundingMode, op)
 
   override fun equals(other: Any?): Boolean {
+    if (other is TraceableWrapperExpr<*>) return equals(other.expr)
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as FpSqrtExpr

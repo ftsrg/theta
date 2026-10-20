@@ -21,6 +21,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.serialization.XcfaFiles
 import hu.bme.mit.theta.xcfa.cli.utils.PrecReuse
 import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -60,6 +61,7 @@ internal fun preAnalysisLogging(
 
       if (enabled || config.outputConfig.xcfaOutputConfig.enabled) {
         writeXcfaAsDot(resultFolder, xcfa, logger)
+        writeXcfaAsJson(resultFolder, xcfa, parseContext, logger)
       }
 
       if (enabled || config.outputConfig.cOutputConfig.enabled) {
@@ -99,6 +101,20 @@ private fun writeXcfaAsDot(resultFolder: File, xcfa: XCFA, logger: Logger) {
     xcfaDotFile.writeText(xcfa.toDot())
   } catch (e: Exception) {
     logger.info("Could not emit XCFA as DOT file: ${e.stackTraceToString()}")
+  }
+}
+
+/** The serialized XCFA, as a worker process would get it, in a readable form. */
+private fun writeXcfaAsJson(
+  resultFolder: File,
+  xcfa: XCFA,
+  parseContext: ParseContext,
+  logger: Logger,
+) {
+  try {
+    XcfaFiles.writeJson(File(resultFolder, "xcfa.json"), xcfa, parseContext)
+  } catch (e: Exception) {
+    logger.info("Could not emit XCFA as JSON file: ${e.stackTraceToString()}")
   }
 }
 

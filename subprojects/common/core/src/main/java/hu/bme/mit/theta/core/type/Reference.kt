@@ -19,9 +19,11 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.common.Utils
 import hu.bme.mit.theta.core.model.Valuation
 import java.util.Objects
+import kotlinx.serialization.Serializable
 
+@Serializable
 class Reference<A : Type, T : Type> private constructor(val expr: Expr<T>, override val type: A) :
-  AbstractExpr<A>() {
+  Expr<A> {
 
   override val arity: Int
     get() = 1
@@ -34,13 +36,14 @@ class Reference<A : Type, T : Type> private constructor(val expr: Expr<T>, overr
 
   override fun withOps(ops: List<Expr<*>>): Expr<A> {
     checkState(ops.size == 1)
-    @Suppress("UNCHECKED_CAST") return keepSourceType(of(ops[0] as Expr<T>, type))
+    @Suppress("UNCHECKED_CAST") return of(ops[0] as Expr<T>, type)
   }
 
   override fun hashCode(): Int = Objects.hash(expr, type)
 
   override fun equals(other: Any?): Boolean =
-    other is Reference<*, *> && expr == other.expr && type == other.type
+    if (other is TraceableWrapperExpr<*>) equals(other.expr)
+    else other is Reference<*, *> && expr == other.expr && type == other.type
 
   override fun toString(): String =
     Utils.lispStringBuilder(OPERATOR_LABEL).body().add(expr).add(type).toString()

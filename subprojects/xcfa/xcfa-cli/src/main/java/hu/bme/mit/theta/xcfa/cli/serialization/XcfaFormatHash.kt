@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.type;
+@file:JvmName("XcfaFormatHash")
 
-public interface Type {
-    DomainSize getDomainSize();
+package hu.bme.mit.theta.xcfa.cli.serialization
+
+import hu.bme.mit.theta.xcfa.model.serialization.XcfaSerialization
+import java.io.File
+
+/** Writes the format hash of [XcfaFiles.module] to the file `args[0]`; the build runs this. */
+fun main(args: Array<String>) {
+  val file = File(args.single())
+  file.parentFile.mkdirs()
+  file.writeText(XcfaSerialization.computeFormatHash(XcfaFiles.module) + "\n")
 }
