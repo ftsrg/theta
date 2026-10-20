@@ -81,3 +81,5 @@ ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-exp
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
 typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
 typeof_rvalue.c	efficient	LP64	SAFE	typeof over a literal or an arithmetic result
+short_circuit_postfix.c	efficient	LP64	SAFE	a postfix ++/-- in a && / || operand runs only if the operand does, before the next operand
+short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values taken before a later operand's side effect

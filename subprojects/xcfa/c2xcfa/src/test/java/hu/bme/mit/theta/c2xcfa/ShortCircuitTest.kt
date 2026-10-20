@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -44,7 +45,13 @@ import org.junit.jupiter.api.Test
  */
 class ShortCircuitTest {
 
-  private fun locationCount(body: String): Int {
+  private fun locationCount(body: String): Int = main(body).locs.size
+
+  /** How many values were taken into a temporary to shield them from a later operand's effect. */
+  private fun snapshotCount(body: String): Int =
+    main(body).vars.count { it.name.contains("shortcircuit") }
+
+  private fun main(body: String): XcfaProcedure {
     val parseContext = ParseContext()
     parseContext.architecture = ArchitectureType.ILP32
     val (xcfa, _, _) =
@@ -66,7 +73,7 @@ class ShortCircuitTest {
         XcfaProperty(ErrorDetection.ERROR_LOCATION),
         NullLogger.getInstance(),
       )
-    return xcfa.procedures.first { it.name == "main" }.locs.size
+    return xcfa.procedures.first { it.name == "main" }
   }
 
   @Test
@@ -104,5 +111,24 @@ class ShortCircuitTest {
       parenCall > pure,
       "a parenthesised call must still be guarded (got $parenCall locs, same as pure $pure)",
     )
+  }
+
+  @Test
+  @DisplayName("a later operand's effect on what an earlier operand read is preceded by a snapshot")
+  fun earlierOperandsAreSnapshotted() {
+    // The operator's value is built after every operand ran, so `a > 1` would be re-read after the
+    // decrement, and `g == 0` after `bump()` set `g`.
+    assertTrue(snapshotCount("if (a > 1 && --a) { g = 2; }") > 0, "a > 1 must be snapshotted")
+    assertTrue(snapshotCount("if (g == 0 && bump()) { g = 2; }") > 0, "g == 0 must be snapshotted")
+  }
+
+  @Test
+  @DisplayName("an effect that cannot change the earlier operands adds no snapshot")
+  fun noNeedlessSnapshot() {
+    // A nondet call writes nothing the earlier operand reads, a call result is written only by its
+    // own call, and `c` is not read before it is assigned.
+    assertEquals(0, snapshotCount("if (a != 0 && __VERIFIER_nondet_int()) { g = 2; }"))
+    assertEquals(0, snapshotCount("if (bump() || bump()) { g = 2; }"))
+    assertEquals(0, snapshotCount("int c = 0; if (a != 0 && (c = 3)) { g = 2; }"))
   }
 }
