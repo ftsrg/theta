@@ -111,7 +111,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         if (trace is Trace<*, *>) {
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-            XcfaTraceConcretizer.concretize(
+            XcfaTraceConcretizer().concretize(
               trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
               cexSolverFactory,
               parseContext,

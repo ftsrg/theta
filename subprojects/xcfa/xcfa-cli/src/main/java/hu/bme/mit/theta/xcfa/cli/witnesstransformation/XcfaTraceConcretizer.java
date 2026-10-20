@@ -59,7 +59,7 @@ public class XcfaTraceConcretizer {
     /**
      * Reverse map (renamed/SSA variable -> original declaration) over all of `state`'s processes.
      */
-    private static Map<VarDecl<?>, VarDecl<?>> revLookup(XcfaState<?> state) {
+    protected Map<VarDecl<?>, VarDecl<?>> revLookup(XcfaState<?> state) {
         final var revLookup = new LinkedHashMap<VarDecl<?>, VarDecl<?>>();
         state.getProcesses().values().stream()
                 .flatMap(process -> process.getVarLookup().stream())
@@ -69,15 +69,24 @@ public class XcfaTraceConcretizer {
     }
 
     /** Whether `decl` corresponds to a named C variable (carries a `cName` metadata entry). */
-    private static boolean hasCName(VarDecl<?> decl, ParseContext parseContext) {
+    protected boolean isProgramVar(VarDecl<?> decl, ParseContext parseContext) {
         return parseContext.getMetadata().getMetadataValue(decl.getName(), "cName").isPresent();
+    }
+
+    protected boolean isSbe(XcfaLabel label) {
+        final var otherMetadata = getCMetaData(label);
+        final var otherAstNodes =
+            otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
+        final var metadata = getCMetaData(label);
+        final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
+        return otherAstNodes.equals(astNodes);
     }
 
     /**
      * Rebuild `state`'s global valuation keeping only variables that map back to a named C
      * variable, so the re-checked trace carries just the C-visible state.
      */
-    private static XcfaState<PtrState<?>> keepNamedVars(
+    protected XcfaState<PtrState<?>> keepProgramVars(
             XcfaState<PtrState<?>> state, ParseContext parseContext) {
         if (!(state.getSGlobal().getInnerState() instanceof ExplState explState)) {
             return state;
@@ -88,7 +97,7 @@ public class XcfaTraceConcretizer {
                         .filter(
                                 entry -> {
                                     final var decl = (VarDecl<?>) entry.getKey();
-                                    return hasCName(
+                                    return isProgramVar(
                                             revLookup.getOrDefault(decl, decl), parseContext);
                                 })
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -100,7 +109,7 @@ public class XcfaTraceConcretizer {
      * already written (`varSoFar`) that are either a kept nondet result (`nondetVars`) or map back
      * to a named C variable.
      */
-    private static ExplState concreteState(
+    protected ExplState concreteState(
             XcfaState<?> state,
             Valuation valuation,
             Set<VarDecl<?>> varSoFar,
@@ -114,8 +123,8 @@ public class XcfaTraceConcretizer {
                                     final var decl = (VarDecl<?>) entry.getKey();
                                     return varSoFar.contains(decl)
                                             && (nondetVars.contains(decl)
-                                                    || hasCName(decl, parseContext)
-                                                    || hasCName(
+                                                    || isProgramVar(decl, parseContext)
+                                                    || isProgramVar(
                                                             revLookup.getOrDefault(decl, decl),
                                                             parseContext));
                                 })
@@ -126,14 +135,14 @@ public class XcfaTraceConcretizer {
         return ExplState.of(ImmutableValuation.from(kept));
     }
 
-    public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
+    public Trace<XcfaState<ExplState>, XcfaAction> concretize(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext) {
         return concretize(trace, solverFactory, parseContext, Function.identity());
     }
 
-    public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
+    public Trace<XcfaState<ExplState>, XcfaAction> concretize(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext,
@@ -142,7 +151,7 @@ public class XcfaTraceConcretizer {
         trace =
                 Trace.of(
                         trace.getStates().stream()
-                                .map(state -> keepNamedVars(state, parseContext))
+                                .map(state -> keepProgramVars(state, parseContext))
                                 .toList(),
                         trace.getActions());
 
@@ -164,12 +173,7 @@ public class XcfaTraceConcretizer {
                 if (currentList.isEmpty()) {
                     currentList.add(label);
                 } else {
-                    final var otherMetadata = getCMetaData(currentList.get(0));
-                    final var otherAstNodes =
-                            otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
-                    final var metadata = getCMetaData(label);
-                    final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
-                    if (otherAstNodes.equals(astNodes)) {
+                    if (isSbe(currentList.get(0))) {
                         currentList.add(label);
                     } else {
                         if (currentList.size() == 1) {

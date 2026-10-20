@@ -537,7 +537,7 @@ internal fun concretizeTrace(
       parseContext,
     )
   } else {
-    XcfaTraceConcretizer.concretize(
+    XcfaTraceConcretizer().concretize(
       trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
       getSolver(
         config.outputConfig.witnessConfig.concretizerSolver,

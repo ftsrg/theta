@@ -22,6 +22,8 @@ class SvLibTagMetadata(val tags: Set<String> = setOf()) : MetaData() {
     if (other is SvLibTagMetadata) SvLibTagMetadata(this.tags + other.tags) else this
 
   override fun isSubstantial() = tags.isNotEmpty()
+
+  override fun toString() = tags.joinToString(" ")
 }
 
 class SvLibSourceMetadata(val source: String) : MetaData() {
@@ -29,4 +31,6 @@ class SvLibSourceMetadata(val source: String) : MetaData() {
     if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}") else this
 
   override fun isSubstantial() = source.isNotEmpty()
+
+  override fun toString() = source
 }

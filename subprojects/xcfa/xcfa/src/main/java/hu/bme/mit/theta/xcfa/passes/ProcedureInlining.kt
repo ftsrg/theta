@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -272,8 +273,10 @@ internal fun inlineCallSite(
   val finalLoc = callee.finalLoc
   val errorLoc = callee.errorLoc
 
+  if (inStmts.isEmpty()) inStmts.add(StmtLabel(Stmts.Skip(), metadata = metadata))
+
   builder.addEdge(
-    XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts), metadata)
+    XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts, metadata = metadata), metadata)
   )
   if (finalLoc.isPresent)
     builder.addEdge(

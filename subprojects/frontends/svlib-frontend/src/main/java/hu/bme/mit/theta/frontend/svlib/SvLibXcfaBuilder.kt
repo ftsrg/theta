@@ -105,7 +105,12 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
         is TagPropertyContext -> {
           when (val property = attribute.property()) {
             is CheckTruePropertyContext -> {
-              locations.forEach { it.insertCheck(property.relationalTerm().original) }
+              locations.forEach {
+                it.insertCheck(
+                  property.relationalTerm().original,
+                  SvLibSourceMetadata("${ctx.symbol().original} ${attribute.original}")
+                )
+              }
             }
             else -> property.unsupported("property '${property.original}'")
           }
@@ -205,8 +210,8 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
     globalSymbolTable.registerVar(it)
   }
 
-  private fun XcfaLocation.insertCheck(term: String) = context.let { (procedure, symbolTable) ->
-    procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()))
+  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibSourceMetadata) = context.let { (procedure, symbolTable) ->
+    procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()), metadata)
   }
 
   private fun ProcDeclarationArgumentsContext.getVars()

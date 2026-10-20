@@ -239,7 +239,7 @@ class SvLibPasses(logger: Logger) : ProcedurePassManager(
   ),
   listOf(
     // Clean up procedures after inlining
-    InlinedProcedureRemovalPass()
+//    InlinedProcedureRemovalPass()
   ),
   listOf(
     EmptyEdgeRemovalPass(),

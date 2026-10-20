@@ -32,18 +32,19 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.misc.Interval
 
-internal fun newLoc(tags: Set<String> = setOf())
-  = XcfaLocation("l" + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
+internal fun newLoc(prefix: String = "l", tags: Set<String> = setOf())
+  = XcfaLocation(prefix + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
 
 private var tmpVarCnt = 0
-internal fun VarDecl<*>.createTemp() = Decls.Var("__theta_${name}_${tmpVarCnt++}", type)
+const val tmpVarPrefix = "__theta"
+internal fun VarDecl<*>.createTemp() = Decls.Var("${tmpVarPrefix}_${name}_${tmpVarCnt++}", type)
 
-internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition: Expr<BoolType>): XcfaLocation {
+internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition: Expr<BoolType>, metadata: SvLibSourceMetadata): XcfaLocation {
   val originalOutgoingEdges = location.outgoingEdges.toMutableList()
   val nextLoc = newLoc()
 
-  addEdge(XcfaEdge(location, errorLoc.get(), StmtLabel(Assume(Not(condition))), location.metadata))
-  addEdge(XcfaEdge(location, nextLoc, StmtLabel(Assume(condition)), location.metadata))
+  addEdge(XcfaEdge(location, errorLoc.get(), StmtLabel(Assume(Not(condition)), metadata = metadata), metadata))
+  addEdge(XcfaEdge(location, nextLoc, StmtLabel(Assume(condition), metadata = metadata), metadata))
 
   originalOutgoingEdges.forEach {
     removeEdge(it)

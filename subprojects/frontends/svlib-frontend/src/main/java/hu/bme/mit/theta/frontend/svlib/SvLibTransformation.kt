@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
@@ -38,7 +37,7 @@ class SvLibTermTransformer(private val symbolTable: SvLibSymbolTable = SvLibSymb
 
   fun <T : Type> toExpr(term: String, type: T): Expr<T> =
     termTransformer
-      .toExpr(term, type, SmtLibModel(mapOf()))
+      .toExpr(term, type, SmtLibModel(emptyMap()))
       .changeVars(symbolTable.constToVar)
 }
 
@@ -46,7 +45,7 @@ class SvLibExprTransformer {
   private val symbolTable = SvLibSymbolTable()
   private val transformationManager: SmtLibTransformationManager = GenericSmtLibTransformationManager(symbolTable)
 
-  fun toTerm(expr: Expr<BoolType>): String {
+  fun toTerm(expr: Expr<*>): String {
     ExprUtils.getVars(expr).forEach(symbolTable::registerVar)
     val constExpr = ExprUtils.changeDecls(expr, symbolTable.varToConst)
     return transformationManager.toTerm(constExpr)
@@ -67,7 +66,7 @@ class SvLibSymbolTable : GenericSmtLibSymbolTable  {
   val constToVar: Map<ConstDecl<*>, VarDecl<*>> = varConstants.inverse()
 
   fun registerVar(varDecl: VarDecl<*>) {
-    if (varConstants.contains(varDecl)) return
+    if (definesSymbol(varDecl.name)) return
 
     val constDecl = Decls.Const(varDecl.name, varDecl.type)
     transformConst(constDecl)

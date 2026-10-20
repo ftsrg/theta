@@ -181,11 +181,11 @@ class SvLibStatementVisitor(
     val choiceStart = current
     val choiceEnd = newLoc()
 
-    ctx.statement().forEach { stmtContext ->
+    ctx.statement().forEachIndexed { i, stmtContext ->
       current = choiceStart
       visit(stmtContext)
       procedure.addEdge(
-        XcfaEdge(current, choiceEnd, NopLabel, SvLibSourceMetadata("choice"))
+        XcfaEdge(current, choiceEnd, NopLabel, SvLibSourceMetadata("choice $i"))
       )
     }
 
@@ -194,7 +194,7 @@ class SvLibStatementVisitor(
 
   override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
     val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }.toSet()
-    current = current.extend(NopLabel, tags)
+    current = current.extend(NopLabel, "__THETA_",tags)
     tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
 
     val annotatedStart = current
@@ -204,7 +204,7 @@ class SvLibStatementVisitor(
     ctx.attributeSvLib().filterIsInstance<TagPropertyContext>().forEach { attribute ->
       when (val property = attribute.property()) {
         is CheckTruePropertyContext -> {
-          current = procedure.insertCheck(annotatedStart, termTransformer.toExpr(property.relationalTerm().original, Bool()))
+          current = procedure.insertCheck(annotatedStart, termTransformer.toExpr(property.relationalTerm().original, Bool()), attribute.metadata)
         }
         else -> property.unsupported("property '${property.original}'")
       }
@@ -228,8 +228,8 @@ class SvLibStatementVisitor(
     }
   }
 
-  private fun XcfaLocation.extend(label: XcfaLabel, locationTags: Set<String> = setOf()): XcfaLocation {
-    val to = newLoc(locationTags)
+  private fun XcfaLocation.extend(label: XcfaLabel, locationPrefix: String = "l", locationTags: Set<String> = setOf()): XcfaLocation {
+    val to = newLoc(locationPrefix, locationTags)
     procedure.addEdge(XcfaEdge(this, to, label, label.metadata))
     return to
   }

@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.model;
 
+import hu.bme.mit.theta.common.Utils;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -36,5 +38,13 @@ public class SmtLibModel {
 
     public int size() {
         return values.size();
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder().addAll(
+            values.entrySet().stream()
+                .map(e -> "(" + e.getKey() + " " + e.getValue() + ")"))
+            .toString();
     }
 }
