@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ public final class VarFilter {
 
     public Valuation filter(final Valuation valuation) {
         MutableValuation filteredValuation = new MutableValuation();
-        for (VarDecl decl : xsts.getVars()) {
+        // Locals only live within one transition, so their leftover values are not state.
+        for (VarDecl decl : xsts.getStateVars()) {
             Optional<LitExpr> val = valuation.eval(decl);
             if (val.isPresent()) {
                 filteredValuation.put(decl, val.get());
