@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -56,14 +57,13 @@ fun Dereference<*, *, *>.addressesAtomicData(
   parseContext: ParseContext,
 ): Boolean {
   if (parseContext.memoryModel.flatAddressing()) {
-    // FlatMemoryPass folded the base into the offset: array is a bare 0 and offset is the flat
-    // address objectBase*STRIDE + cell. Decode it back to (base, cell) and ask directly; the
-    // multi-model branches below must not run, because their array-based resolution (a RefExpr
-    // pointer, or `initValue == array`) would spuriously match the folded 0 and mark a racy access
-    // atomic -- missing a real race. When the address is not a compile-time constant we cannot
-    // resolve the object, so we answer "not atomic": that keeps the access in the race check
-    // (sound; at worst over-reports), never excludes it.
-    val flatAddr = offset.asConstantBigInteger() ?: return false
+    // The flat address is array + offset, wrapped as FlatMemoryPass folds it (the race pass may ask
+    // before that pass runs). The lookups below must not run: they would match the folded array 0.
+    // A non-literal address is "not atomic", so the access stays race-checked.
+    val sum =
+      (array.asConstantBigInteger() ?: return false) +
+        (offset.asConstantBigInteger() ?: return false)
+    val flatAddr = (array.type as? BvType)?.let { sum.mod(BigInteger.TWO.pow(it.size)) } ?: sum
     val stride = BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE)
     return parseContext.isAtomicObjectCell(flatAddr.divide(stride), flatAddr.mod(stride).toInt())
   }

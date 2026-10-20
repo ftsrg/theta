@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.repatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -29,13 +30,16 @@ import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -79,6 +83,7 @@ data class DataRace(
  * accesses are excluded here (via [parseContext]), so both consumers stay atomic-aware.
  */
 fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseContext): DataRace? {
+  if (s.isBottom) return null
   val xcfa = s.xcfa!!
   val processes = s.processes.entries.toList()
   for (i in processes.indices) {
@@ -242,6 +247,11 @@ private class MemoryAccessWithMutexes(
   val offset: Expr<*>,
   /** The cell is `_Atomic`, so nothing that touches it races with anything. */
   val atomic: Boolean,
+  /**
+   * The address reads memory after an earlier memory write of the same label, so it cannot be
+   * evaluated in the state before the label.
+   */
+  val addressAfterMemoryWrite: Boolean,
   access: AccessType,
   acquiredMutexes: Set<MutexLock>,
   blockingMutexes: Set<MutexLock>,
@@ -307,19 +317,25 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
   val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<MemoryAccessWithMutexes>()
   val precedingStmts = mutableListOf<Stmt>()
+  var memoryWritten = false
   getFlatLabels().forEach { label ->
     if (label is FenceLabel) {
       acquiredMutexes.addAll(label.acquiredMutexes(state))
       blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
-      label.dereferencesWithAccessType.forEach { (deref, access) ->
+      val derefs = label.dereferencesWithAccessType
+      derefs.forEach { (deref, access) ->
+        val addressAfterMemoryWrite =
+          memoryWritten &&
+            (deref.array.dereferences.isNotEmpty() || deref.offset.dereferences.isNotEmpty())
         if (
-          accesses.none {
-            it.array == deref.array &&
-              it.offset == deref.offset &&
-              (it.access == access && it.access == WRITE) &&
-              it.precedingStatements == precedingStmts
-          }
+          addressAfterMemoryWrite ||
+            accesses.none {
+              it.array == deref.array &&
+                it.offset == deref.offset &&
+                (it.access == access && it.access == WRITE) &&
+                it.precedingStatements == precedingStmts
+            }
         ) {
           accesses.add(
             MemoryAccessWithMutexes(
@@ -327,6 +343,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               deref.array,
               deref.offset,
               deref.addressesAtomicData(xcfa.globalVars, parseContext),
+              addressAfterMemoryWrite,
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
@@ -335,6 +352,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
           )
         }
       }
+      if (derefs.values.any { it.isWritten }) memoryWritten = true
     }
     label.toStmt().takeUnless { it is SkipStmt }?.let(precedingStmts::add)
   }
@@ -369,41 +387,51 @@ private fun mayBeSameMemoryLocation(
     if (simplified == False()) return false
   }
 
-  val array1 = access1.array
-  val offset1 = access1.offset
-  val array2 = access2.array
-  val offset2 = access2.offset
+  // Nested dereferences in the addresses read the current memory contents, which abstract states
+  // name by uniqueness index 0 (see `repatch`); the refiner hands over patched states.
+  val array1 = access1.array.readingCurrentMemory()
+  val offset1 = access1.offset.readingCurrentMemory()
+  val array2 = access2.array.readingCurrentMemory()
+  val offset2 = access2.offset.readingCurrentMemory()
 
   val possibleSameLocation =
-    try {
-      WithPushPop(dependencySolver).use {
-        dependencySolver.add(
-          ExprUtils.simplify(
-            And(
-              PathUtils.unfold(state.sGlobal.toExpr(), zeroIndexing),
-              PathUtils.unfold(precondition1, zeroIndexing),
-              PathUtils.unfold(precondition2, zeroIndexing),
-              Eq(PathUtils.unfold(array1, indexing1), PathUtils.unfold(array2, indexing2)),
-              Eq(PathUtils.unfold(offset1, indexing1), PathUtils.unfold(offset2, indexing2)),
+    access1.addressAfterMemoryWrite ||
+      access2.addressAfterMemoryWrite ||
+      try {
+        WithPushPop(dependencySolver).use {
+          dependencySolver.add(
+            ExprUtils.simplify(
+              And(
+                PathUtils.unfold(state.sGlobal.innerState.repatch().toExpr(), zeroIndexing),
+                PathUtils.unfold(precondition1, zeroIndexing),
+                PathUtils.unfold(precondition2, zeroIndexing),
+                Eq(PathUtils.unfold(array1, indexing1), PathUtils.unfold(array2, indexing2)),
+                Eq(PathUtils.unfold(offset1, indexing1), PathUtils.unfold(offset2, indexing2)),
+              )
             )
           )
-        )
-        dependencySolver.check().isSat
+          dependencySolver.check().isSat
+        }
+      } catch (_: Exception) {
+        // TODO this is reached when having incomplete dereferences, we should do it properly
+        true
       }
-    } catch (_: Exception) {
-      // TODO this is reached when having incomplete dereferences, we should do it properly
-      true
-    }
   if (!possibleSameLocation) return false
 
   val pointerPartitions = state.xcfa!!.getPointerPartitions()
-  val a1 = (array1 as? RefExpr<*>)?.decl ?: return true // cannot decide
-  val a2 = (array2 as? RefExpr<*>)?.decl ?: return true // cannot decide
+  val a1 = (access1.array as? RefExpr<*>)?.decl ?: return true // cannot decide
+  val a2 = (access2.array as? RefExpr<*>)?.decl ?: return true // cannot decide
   val partition1 = pointerPartitions.indexOfFirst { a1.belongsTo(it, state) }
   val partition2 = pointerPartitions.indexOfFirst { a2.belongsTo(it, state) }
   if (partition1 == -1 || partition2 == -1) return true // cannot decide
   return partition1 == partition2
 }
+
+private fun <T : Type> Expr<T>.readingCurrentMemory(): Expr<T> =
+  when (this) {
+    is Dereference<*, *, T> -> withUniquenessExpr(Int(0)).map { it.readingCurrentMemory() }
+    else -> map { it.readingCurrentMemory() }
+  }
 
 private fun Decl<*>.belongsTo(
   partition: Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>,
