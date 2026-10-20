@@ -188,4 +188,22 @@ class CTypeDeclarationTest {
   )
   fun `typedef'd scalars`(declaration: String, expected: String) =
     check(declaration, expected, prelude = "typedef int myint; typedef unsigned long myuint;")
+
+  @ParameterizedTest(name = "{0} is {1}")
+  @DisplayName("typeof over an expression")
+  @CsvSource(
+    // A dereference has one pointer level fewer than the declaration its type came from.
+    "typeof(*(struct S *)0) x, CStruct",
+    "typeof(*(int **)0) x, CPointer<CSignedInt>",
+    "typeof(**(int **)0) x, CSignedInt",
+    "typeof(((typeof(*(struct S *)0) *)0)->a) x, CSignedInt", // container_of in list macros
+    // Literals and arithmetic results have a type, but no declaration behind it.
+    "typeof(32) x, CSignedInt",
+    "typeof(1 + 2) x, CSignedInt",
+    "typeof(1UL) x, CUnsignedLong",
+    "typeof(1.0) x, CDouble",
+    "typeof(&((struct S *)0)->b) x, CPointer<CSignedInt>",
+  )
+  fun `typeof`(declaration: String, expected: String) =
+    check(declaration, expected, prelude = "struct S { int a; int b; };")
 }

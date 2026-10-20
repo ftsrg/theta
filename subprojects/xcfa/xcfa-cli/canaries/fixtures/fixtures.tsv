@@ -79,3 +79,5 @@ unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
+typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
+typeof_rvalue.c	efficient	LP64	SAFE	typeof over a literal or an arithmetic result

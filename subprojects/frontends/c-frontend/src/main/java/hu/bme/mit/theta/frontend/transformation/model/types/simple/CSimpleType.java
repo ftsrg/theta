@@ -111,6 +111,18 @@ public abstract class CSimpleType {
         ++starPointers;
     }
 
+    /**
+     * Drops outermost pointer levels until at most [levels] remain, i.e. what dereferencing a value
+     * of this type yields. Their atomicity goes with them.
+     */
+    public void keepInnermostPointers(int levels) {
+        while (pointerLevel > levels) {
+            --pointerLevel;
+            atomicPointers.remove(atomicPointers.size() - 1);
+        }
+        starPointers = Math.min(starPointers, pointerLevel);
+    }
+
     /** Whether the pointer at this level -- 0 being the innermost -- is itself atomic. */
     public boolean isAtomicPointer(int level) {
         return level < atomicPointers.size() && atomicPointers.get(level);
