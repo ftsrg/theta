@@ -224,6 +224,44 @@ class PassTests {
             ("L1_loop2" to final) { nop() }
           },
         ),
+        // The loop variable's initialization sharing its edge with an unrelated assignment
+        // (a global counter beside the allocation counter, say) must not stop the unrolling.
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(UnrollPass()),
+          input = {
+            (init to "L1") {
+              "y".assign("7")
+              "x".assign("0")
+            }
+            ("L1" to "L2") {
+              assume("(< x 2)")
+              "x".assign("(+ x 1)")
+            }
+            ("L2" to "L1") { skip() }
+            ("L1" to final) { assume("(= x 2)") }
+          },
+          output = {
+            (init to "L1") {
+              "y".assign("7")
+              "x".assign("0")
+            }
+            ("L1" to "L2_loop0") {
+              nop()
+              "x".assign("(+ x 1)")
+            }
+            ("L2_loop0" to "L1_loop0") { skip() }
+            ("L1_loop0" to "L2_loop1") {
+              nop()
+              "x".assign("(+ x 1)")
+            }
+            ("L2_loop1" to "L1_loop1") { skip() }
+            ("L1_loop1" to final) { nop() }
+          },
+        ),
         PassTestData(
           global = {
             "y" type BvType(32) init "0"
