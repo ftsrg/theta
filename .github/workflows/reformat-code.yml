@@ -22,14 +22,13 @@ jobs:
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         token: ${{ steps.generate-token.outputs.token }}
-        fetch-depth: 0 # applyCopyright takes each file's year from its last commit
-
+        fetch-depth: 0 # applyCopyright reads each file's last commit date
+    
     - name: Setup Java 21
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
         distribution: temurin
         java-version: 21
-
     - name: Do reformat
       uses: ./.github/actions/cache-build
       with:
