@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -329,6 +329,15 @@ public interface SmtLibSolverInstaller {
 
         protected final Path infoFile(final Path installDir) {
             return installDir.resolve("solver-info.txt");
+        }
+
+        /**
+         * Marks an installed solver binary (or build script) executable for every user, not just
+         * its owner: the solver may later run under a different uid than the one that installed it
+         * (e.g., a shared or container-mounted solver home).
+         */
+        protected static void makeExecutable(final Path file) {
+            file.toFile().setExecutable(true, false);
         }
 
         private void deleteDirectory(File directoryToBeDeleted) throws IOException {
