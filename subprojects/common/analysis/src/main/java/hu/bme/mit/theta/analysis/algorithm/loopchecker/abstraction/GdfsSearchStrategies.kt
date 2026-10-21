@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,27 +36,54 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
     expand: NodeExpander<S, A>,
     logger: Logger,
   ): Collection<ASGTrace<S, A>> {
-    return expandThroughNode(
-        emptyMap(),
-        ASGEdge(null, initNode, null, false),
-        emptyList(),
-        0,
-        stopAtLasso,
-        expand,
-        logger,
-      )
+    return ExpansionSearch(stopAtLasso, expand, logger)
+      .expandThroughNode(ASGEdge(null, initNode, null, false))
       .second!!
   }
+}
 
-  private fun <S : ExprState, A : ExprAction> expandThroughNode(
-    pathSoFar: Map<ASGNode<S, A>, Int>,
-    incomingEdge: ASGEdge<S, A>,
-    edgesSoFar: List<ASGEdge<S, A>>,
-    targetsSoFar: Int,
-    stopAtLasso: Boolean,
-    expand: NodeExpander<S, A>,
-    logger: Logger,
-  ): BacktrackResult<S, A> {
+private class ExpansionFrame<S : ExprState, A : ExprAction>(
+  val expandingNode: ASGNode<S, A>,
+  val totalTargets: Int,
+  val addedIncomingEdge: Boolean,
+  val outgoingEdges: Iterator<ASGEdge<S, A>>,
+) {
+  val results: MutableList<BacktrackResult<S, A>> = mutableListOf()
+}
+
+/**
+ * A depth-first expansion unrolled onto an explicit [stack] of frames, so the depth is not bounded
+ * by the call stack. [pathSoFar] and [edgesSoFar] are shared and always describe the path of the
+ * frames on the stack; [enter] and [leave] are the parts of a visit before and after its children.
+ */
+private class ExpansionSearch<S : ExprState, A : ExprAction>(
+  private val stopAtLasso: Boolean,
+  private val expand: NodeExpander<S, A>,
+  private val logger: Logger,
+) {
+
+  private val pathSoFar: MutableMap<ASGNode<S, A>, Int> = linkedMapOf()
+  private val edgesSoFar: MutableList<ASGEdge<S, A>> = mutableListOf()
+  private val stack = ArrayDeque<ExpansionFrame<S, A>>()
+
+  fun expandThroughNode(initEdge: ASGEdge<S, A>): BacktrackResult<S, A> {
+    var result: BacktrackResult<S, A>? = enter(initEdge, 0)
+    while (true) {
+      if (result == null) {
+        val frame = stack.last()
+        result =
+          if (frame.outgoingEdges.hasNext()) enter(frame.outgoingEdges.next(), frame.totalTargets)
+          else leave()
+        continue
+      }
+      val parent = stack.lastOrNull() ?: return result
+      parent.results.add(result)
+      result = if (stopAtLasso && result.second?.isNotEmpty() == true) leave() else null
+    }
+  }
+
+  /** Returns the result of visiting [incomingEdge]'s target, or null if it pushed a frame. */
+  private fun enter(incomingEdge: ASGEdge<S, A>, targetsSoFar: Int): BacktrackResult<S, A>? {
     val expandingNode: ASGNode<S, A> = incomingEdge.target
     logger.write(
       Logger.Level.VERBOSE,
@@ -103,25 +130,25 @@ abstract class AbstractSearchStrategy : ILoopCheckerSearchStrategy {
     val expandStrategy: NodeExpander<S, A> =
       if (needsTraversing) expand else { _ -> mutableSetOf() }
     val outgoingEdges: Collection<ASGEdge<S, A>> = expandStrategy(expandingNode)
-    val results: MutableList<BacktrackResult<S, A>> = mutableListOf()
-    for (newEdge in outgoingEdges) {
-      val result: BacktrackResult<S, A> =
-        expandThroughNode(
-          pathSoFar + (expandingNode to totalTargets),
-          newEdge,
-          if (incomingEdge.source != null) edgesSoFar.plus(incomingEdge) else edgesSoFar,
-          totalTargets,
-          stopAtLasso,
-          expand,
-          logger,
-        )
-      results.add(result)
-      if (stopAtLasso && result.second?.isNotEmpty() == true) break
-    }
+    pathSoFar[expandingNode] = totalTargets
+    val addedIncomingEdge = incomingEdge.source != null
+    if (addedIncomingEdge) edgesSoFar.add(incomingEdge)
+    stack.addLast(
+      ExpansionFrame(expandingNode, totalTargets, addedIncomingEdge, outgoingEdges.iterator())
+    )
+    return null
+  }
+
+  /** Pops the top frame and returns the result of its visit. */
+  private fun leave(): BacktrackResult<S, A> {
+    val frame = stack.removeLast()
+    pathSoFar.remove(frame.expandingNode)
+    if (frame.addedIncomingEdge) edgesSoFar.removeAt(edgesSoFar.lastIndex)
+    val results = frame.results
     val result: BacktrackResult<S, A> = combineLassos(results)
     if (result.second != null) return result
     val validLoopHondas: Collection<ASGNode<S, A>> = results.flatMap { it.first ?: emptyList() }
-    expandingNode.validLoopHondas.addAll(validLoopHondas)
+    frame.expandingNode.validLoopHondas.addAll(validLoopHondas)
     return BacktrackResult(validLoopHondas.toSet(), null)
   }
 }
