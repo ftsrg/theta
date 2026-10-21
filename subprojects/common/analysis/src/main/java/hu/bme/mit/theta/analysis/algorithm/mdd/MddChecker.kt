@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd
 import com.google.common.base.Preconditions
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
 import hu.bme.mit.delta.java.mdd.MddHandle
+import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.Trace
@@ -29,10 +30,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.ExprLatticeDefinition
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicPlaceholders
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
@@ -45,15 +48,23 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
+import hu.bme.mit.theta.solver.utils.WithPushPop
+import java.math.BigInteger
 
 class MddChecker
 @JvmOverloads
@@ -71,12 +82,103 @@ constructor(
   private val solverMeasurements: Boolean = false,
   private val traceSearch: TraceSearch = TraceSearch.DFS,
   private val approximation: MddApproximation = MddApproximation.exact(),
+  // keys may be terms over symbolic values, and state terminals hold their path condition
+  private val symbolicValues: Boolean = false,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
+    val outer = LitExprConverter.isSymbolic()
+    LitExprConverter.setSymbolic(symbolicValues)
+    try {
+      return checkWithKeys()
+    } finally {
+      LitExprConverter.setSymbolic(outer)
+    }
+  }
+
+  /**
+   * A model of a violating path condition fixes the symbols, so a run on the concrete model gives
+   * the trace.
+   */
+  private fun replayWithInputs(propViolating: MddHandle): Trace<ExplState, ExprAction>? {
+    var node: MddNode = propViolating.node
+    while (!node.isTerminal) {
+      node =
+        node.defaultValue()
+          ?: node.cursor().let {
+            it.moveNext()
+            it.value()
+          }
+    }
+    @Suppress("UNCHECKED_CAST")
+    val condition = (node as MddNode.Terminal<*>).terminalData as Expr<BoolType>
+    val solver = solverPool.requestSolver()
+    val model =
+      try {
+        WithPushPop(solver).use {
+          solver.add(condition)
+          if (!solver.check().isSat) return null
+          solver.model
+        }
+      } finally {
+        solverPool.returnSolver(solver)
+      }
+    val inputs = MutableValuation()
+    (ExprUtils.getConstants(monolithicExpr.initExpr) +
+        ExprUtils.getConstants(monolithicExpr.transExpr))
+      .forEach { symbol ->
+        val value =
+          model.eval(symbol).orElse(null)
+            ?: when (val type = symbol.type) {
+              is IntType -> Int(0)
+              is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, type.size)
+              else -> null
+            }
+        if (value != null) inputs.put(symbol, value)
+      }
+    val fix = { expr: Expr<BoolType> -> ExprUtils.simplify(expr, inputs) }
+    val concrete =
+      monolithicExpr.copy(
+        initExpr = fix(monolithicExpr.initExpr),
+        transExpr = fix(monolithicExpr.transExpr),
+        propExpr = fix(monolithicExpr.propExpr),
+        explicitSplit = monolithicExpr.explicitSplit?.map(fix),
+      )
+    val replay =
+      MddChecker(
+          concrete,
+          solverPool,
+          logger,
+          iterationStrategy,
+          traceTimeout,
+          variableOrdering,
+          lookAheadStrategy,
+          proofStrategy,
+          false,
+          traceSearch,
+          MddApproximation.of(approximation.strategy, approximation.edgeLimit),
+        )
+        .check(null)
+    return if (replay.isUnsafe) replay.asUnsafe().cex else null
+  }
+
+  private fun checkWithKeys(): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
     val totalTime = Stopwatch.createStarted()
 
-    val mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
+    // variable-level look-ahead bounds keys by value, which interned keys are not
+    val lookAheadStrategy =
+      if (
+        symbolicValues &&
+          lookAheadStrategy == MddExpressionRepresentation.MddToExprStrategy.VARIABLE_LEVEL
+      )
+        MddExpressionRepresentation.MddToExprStrategy.NODE_LEVEL
+      else lookAheadStrategy
+    val mddGraph =
+      JavaMddFactory.getDefault()
+        .createMddGraph(
+          if (symbolicValues) ExprLatticeDefinition.forSymbolicExpr(solverPool)
+          else ExprLatticeDefinition.forExpr()
+        )
     val mddGraph2 = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr())
     mddGraph.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
     mddGraph2.setAttribute(MddExpressionRepresentation.LOOK_AHEAD, lookAheadStrategy)
@@ -126,6 +228,19 @@ constructor(
     val stateSig = stateOrder.defaultSetSignature
     val transSig = transOrder.defaultSetSignature
 
+    if (symbolicValues) {
+      SymbolicPlaceholders.setLevels(
+        variableOrdering
+          .flatMap {
+            listOf(
+              it.getConstDecl(0),
+              it.getConstDecl(maxOf(monolithicExpr.transOffsetIndex[it], 1)),
+            )
+          }
+          .toSet()
+      )
+    }
+
     val solverCountBefore = solverPool.checkCount
     val ssgTime = Stopwatch.createStarted()
 
@@ -137,11 +252,25 @@ constructor(
 
     logger.write(Logger.Level.INFO, "Created initial node\n")
 
+    val unfoldedExprs =
+      monolithicExpr.split.map { expr ->
+        And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
+      }
+    // steps inside a transition must not reach a path condition, where every firing shares them;
+    // only the steps of variables a symbol can reach could get there
+    val transExprs =
+      if (symbolicValues) {
+        SymbolicPlaceholders.setTainted(unfoldedExprs)
+        logger.write(
+          Logger.Level.INFO,
+          "Variables a symbol can reach: ${SymbolicPlaceholders.getTainted().size}\n",
+        )
+        unfoldedExprs.map { SymbolicPlaceholders.eliminateIntermediates(it) }
+      } else unfoldedExprs
+
     val transNodes = mutableListOf<MddHandle>()
     val descriptors = mutableListOf<AbstractNextStateDescriptor>()
-    for (expr in monolithicExpr.split) {
-      val transExpr =
-        And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
+    for (transExpr in transExprs) {
       val transitionNode =
         transSig.topVariableHandle.checkInNode(
           MddExpressionTemplate.of(transExpr, { it as Decl<*> }, solverPool, true)
@@ -163,12 +292,28 @@ constructor(
     logger.write(Logger.Level.INFO, "Created next-state node, starting fixed point calculation\n")
     val stateSpaceProvider = iterationStrategy.createProvider(stateSig.variableOrder)
 
-    val stateSpace =
+    var stateSpace =
       stateSpaceProvider.compute(
         MddNodePostcondition.of(initNode),
         targetedNextStates,
         stateSig.topVariableHandle,
       )
+    // with symbolic values a target can be reached under a path condition that does not hold;
+    // a stop that leaves no violating state is then followed by a full exploration
+    if (
+      symbolicValues &&
+        (targetedNextStates as? OnTheFlyReachabilityNextStateDescriptor)?.isKilled == true &&
+        MddInterpreter.calculateNonzeroCount(stateSpace.intersection(propNode)) == 0L
+    ) {
+      logger.write(
+        Logger.Level.INFO,
+        "Stopped on an unsatisfiable path condition, exploring fully\n",
+      )
+      stateSpace =
+        iterationStrategy
+          .createProvider(stateSig.variableOrder)
+          .compute(MddNodePostcondition.of(initNode), nextStates, stateSig.topVariableHandle)
+    }
 
     ssgTime.stop()
 
@@ -210,8 +355,15 @@ constructor(
       return SafetyResult.unknown(statistics)
     }
 
+    // the invariant decodes keys, which in symbolic mode only works while this run's keys are on
+    val proof =
+      MddProof.of(stateSpace, proofStrategy).also { if (symbolicValues) it.getInvariant() }
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
-    if (violatingSize != 0L) {
+    if (violatingSize != 0L && symbolicValues) {
+      logger.write(Logger.Level.INFO, "Replaying the violation with concrete inputs\n")
+      val trace = replayWithInputs(propViolating) ?: Trace.of(listOf(ExplState.top()), listOf())
+      result = SafetyResult.unsafe(trace, proof, statistics)
+    } else if (violatingSize != 0L) {
       // on trace generation timeout, fall back to an empty trace
       val trace =
         generateTrace(
@@ -226,9 +378,9 @@ constructor(
           logger,
           search = traceSearch,
         ) ?: Trace.of(listOf(ExplState.top()), listOf())
-      result = SafetyResult.unsafe(trace, MddProof.of(stateSpace, proofStrategy), statistics)
+      result = SafetyResult.unsafe(trace, proof, statistics)
     } else {
-      result = SafetyResult.safe(MddProof.of(stateSpace, proofStrategy), statistics)
+      result = SafetyResult.safe(proof, statistics)
     }
     return result
   }

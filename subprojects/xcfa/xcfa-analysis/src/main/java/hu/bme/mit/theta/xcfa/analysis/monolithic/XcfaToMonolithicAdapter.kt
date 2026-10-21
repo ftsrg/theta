@@ -19,7 +19,13 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.formalisms.ModelToMo
 import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.IfStmt
+import hu.bme.mit.theta.core.stmt.NonDetStmt
+import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -28,6 +34,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -35,6 +42,8 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.NO_ASSERTION_VIOLATION
@@ -44,6 +53,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.defaultValue
@@ -55,11 +65,56 @@ abstract class XcfaToMonolithicAdapter(
   furtherPasses: ProcedurePassManager,
   protected val parseContext: ParseContext,
   protected val initValues: Boolean,
+  private val symbolicHavoc: Boolean = false,
 ) : ModelToMonolithicAdapter<XCFA, XcfaState<PtrState<ExplState>>, XcfaAction, LocationInvariants> {
 
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
   protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
+
+  private var symbolCount = 0
+
+  /**
+   * A havoc on an edge that runs at most once picks an input value, so it becomes an assignment of
+   * a fresh symbol, which the MDD backend keeps symbolic.
+   */
+  protected fun Stmt.withSymbolicHavocs(edge: XcfaEdge): Stmt =
+    if (symbolicHavoc && !edge.mayRepeat()) replaceHavocs() else this
+
+  private fun XcfaEdge.mayRepeat(): Boolean {
+    val seen = mutableSetOf(target)
+    val stack = ArrayDeque(listOf(target))
+    while (stack.isNotEmpty()) {
+      val loc = stack.removeLast()
+      if (loc == source) return true
+      loc.outgoingEdges.forEach { if (seen.add(it.target)) stack.add(it.target) }
+    }
+    return false
+  }
+
+  private fun isCBool(varDecl: VarDecl<*>): Boolean =
+    runCatching { CComplexType.getType(varDecl.ref, parseContext) is CBool }.getOrDefault(false)
+
+  @Suppress("UNCHECKED_CAST")
+  private fun Stmt.replaceHavocs(): Stmt =
+    when (this) {
+      // a C _Bool is an int in integer arithmetic, but two values are cheap to enumerate
+      is HavocStmt<*> ->
+        if (varDecl.type is BoolType || varDecl.type is EnumType || isCBool(varDecl)) this
+        else
+          AssignStmt.of(
+            varDecl as VarDecl<Type>,
+            Decls.Const(
+                "__theta_sym_${symbolCount++}_${varDecl.name.replace(Regex("[^A-Za-z0-9_]"), "_")}",
+                varDecl.type,
+              )
+              .ref as Expr<Type>,
+          )
+      is SequenceStmt -> SequenceStmt.of(stmts.map { it.replaceHavocs() })
+      is NonDetStmt -> NonDetStmt.of(stmts.map { it.replaceHavocs() })
+      is IfStmt -> IfStmt.of(cond, then.replaceHavocs(), elze.replaceHavocs())
+      else -> this
+    }
 
   init {
     check(

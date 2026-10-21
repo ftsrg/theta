@@ -122,8 +122,7 @@ object MddToExprNodeLevel : MddToExpr {
               getRepresentativeForNode(cursor.value(), variable.lower.orElse(null))
 
             val value = cursor.key()
-            disjuncts +=
-              And(Eq(x.ref, LitExprConverter.toLitExpr(value, x.type)), childRepresentative)
+            disjuncts += And(Eq(x.ref, LitExprConverter.toExpr(value, x.type)), childRepresentative)
           }
 
           Eq(representative, Or(disjuncts))

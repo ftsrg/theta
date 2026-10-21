@@ -60,6 +60,7 @@ class XcfaSingleThreadToMonolithicAdapter(
   property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
+  symbolicHavoc: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
@@ -67,6 +68,7 @@ class XcfaSingleThreadToMonolithicAdapter(
     ProcedurePassManager(listOf(DereferenceToArrayPass())),
     parseContext,
     initValues,
+    symbolicHavoc,
   ) {
 
   private lateinit var locVar: VarDecl<Type>
@@ -96,7 +98,7 @@ class XcfaSingleThreadToMonolithicAdapter(
           SequenceStmt.of(
             listOf(
               AssumeStmt.of(Eq(locVar.ref, smtInt(locationMap[source]!!))),
-              label.toStmt(),
+              label.toStmt().withSymbolicHavocs(edge),
               AssignStmt.of(locVar, cast(smtInt(locationMap[target]!!), locVar.type)),
               AssignStmt.of(edgeVar, cast(smtInt(edgeMap[edge]!!), edgeVar.type)),
             )

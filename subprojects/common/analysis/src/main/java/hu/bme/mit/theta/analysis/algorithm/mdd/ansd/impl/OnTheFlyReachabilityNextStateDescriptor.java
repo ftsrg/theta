@@ -18,7 +18,9 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import java.util.ArrayList;
@@ -90,6 +92,10 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
         return of(wrapped, target, new KillSwitch());
     }
 
+    public boolean isKilled() {
+        return killSwitch.isKilled();
+    }
+
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         return killSwitch.isKilled()
@@ -138,5 +144,10 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
     @Override
     public boolean evaluate() {
         return wrapped.evaluate();
+    }
+
+    @Override
+    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+        return wrapped.constrainTerminal(terminal, graph);
     }
 }

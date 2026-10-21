@@ -22,7 +22,15 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.SolverPool;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExprLatticeDefinition {
 
@@ -34,5 +42,55 @@ public class ExprLatticeDefinition {
                 SmartBoolExprs::Or,
                 SmartBoolExprs::And,
                 (a, b) -> And(a, Not(b)));
+    }
+
+    /**
+     * Terminals hold the path condition over symbolic values: an unsatisfiable intersection is
+     * bottom, and a union returns an operand that implies the other, so fixpoints are detected.
+     */
+    @SuppressWarnings("unchecked")
+    public static LatticeDefinition<Expr> forSymbolicExpr(SolverPool solverPool) {
+        final Map<Expr<BoolType>, Boolean> satCache = new HashMap<>();
+        final var lattice =
+                new Object() {
+                    boolean isSat(Expr<BoolType> expr) {
+                        final Expr<BoolType> simplified = ExprUtils.simplify(expr);
+                        if (simplified instanceof TrueExpr) return true;
+                        if (simplified instanceof FalseExpr) return false;
+                        final Boolean cached = satCache.get(simplified);
+                        if (cached != null) return cached;
+                        final var solver = solverPool.requestSolver();
+                        final boolean sat;
+                        try (var wpp = new WithPushPop(solver)) {
+                            solver.add(simplified);
+                            sat = solver.check().isSat();
+                        } finally {
+                            solverPool.returnSolver(solver);
+                        }
+                        satCache.put(simplified, sat);
+                        return sat;
+                    }
+
+                    Expr<BoolType> feasible(Expr<BoolType> expr) {
+                        final Expr<BoolType> simplified = ExprUtils.simplify(expr);
+                        return isSat(simplified) ? simplified : False();
+                    }
+
+                    Expr<BoolType> union(Expr<BoolType> a, Expr<BoolType> b) {
+                        if (a.equals(b) || b instanceof FalseExpr || a instanceof TrueExpr)
+                            return a;
+                        if (a instanceof FalseExpr || b instanceof TrueExpr) return b;
+                        if (!isSat(And(b, Not(a)))) return a;
+                        if (!isSat(And(a, Not(b)))) return b;
+                        return SmartBoolExprs.Or(a, b);
+                    }
+                };
+        return new LatticeDefinition<>(
+                Expr.class,
+                False(),
+                True(),
+                (a, b) -> lattice.union(a, b),
+                (a, b) -> lattice.feasible(And(a, b)),
+                (a, b) -> lattice.feasible(And(a, Not(b))));
     }
 }

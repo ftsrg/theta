@@ -23,6 +23,8 @@ import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicPlaceholders;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -283,10 +285,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 if (s != terminalZeroNode) {
                     confirm(variable, cTo.key());
 
-                    templateBuilder.set(
-                            cTo.key(),
-                            terminalZeroToNull(
-                                    unionChildren(templateBuilder.get(cTo.key()), s, variable)));
+                    setTarget(templateBuilder, cTo.key(), s, variable);
                 }
             }
         }
@@ -322,7 +321,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         if (n.isTerminal() && dfire.evaluate()) {
-            return n;
+            return dfire.constrainTerminal(n, variableOrder.getMddGraph());
         }
 
         boolean lhsSkipped = !n.isOn(variable);
@@ -421,10 +420,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 if (s != terminalZeroNode) {
                     confirm(variable, cTo.key());
 
-                    templateBuilder.set(
-                            cTo.key(),
-                            terminalZeroToNull(
-                                    unionChildren(templateBuilder.get(cTo.key()), s, variable)));
+                    setTarget(templateBuilder, cTo.key(), s, variable);
                 }
             }
         }
@@ -450,6 +446,20 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     }
 
     private void confirm(final MddVariable variable, final int key) {}
+
+    // a placeholder target is replaced by the terms it is bound to in the states below
+    private void setTarget(
+            MddUnsafeTemplateBuilder templateBuilder, int key, MddNode s, MddVariable variable) {
+        final Map<Integer, MddNode> lifted = SymbolicPlaceholders.lift(key, s, variable);
+        (lifted == null ? Map.of(key, s) : lifted)
+                .forEach(
+                        (k, sk) ->
+                                templateBuilder.set(
+                                        k,
+                                        terminalZeroToNull(
+                                                unionChildren(
+                                                        templateBuilder.get(k), sk, variable))));
+    }
 
     @Override
     public MddNode computeTerminal(

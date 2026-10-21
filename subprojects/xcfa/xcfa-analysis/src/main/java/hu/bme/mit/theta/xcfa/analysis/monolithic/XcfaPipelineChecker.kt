@@ -54,6 +54,7 @@ constructor(
   private val logger: Logger = NullLogger.getInstance(),
   private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
+  symbolicHavoc: Boolean = false,
 ) :
   FormalismPipelineChecker<
     XCFA,
@@ -64,7 +65,13 @@ constructor(
   >(
     if (parseContext.multiThreading) {
       try {
-        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+        XcfaMultiThreadToMonolithicAdapter(
+          xcfa,
+          property,
+          parseContext,
+          initValues,
+          symbolicHavoc = symbolicHavoc,
+        )
       } catch (e: IllegalStateException) {
         if (
           "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop" in
@@ -73,11 +80,18 @@ constructor(
           logger.info(
             "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
           )
-          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
+          XcfaMultiThreadToMonolithicAdapter(
+            xcfa,
+            property,
+            parseContext,
+            initValues,
+            true,
+            symbolicHavoc,
+          )
         } else throw e
       }
     } else {
-      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, symbolicHavoc)
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   ) {

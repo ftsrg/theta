@@ -702,6 +702,12 @@ data class MddConfig(
       "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
   )
   var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
+  @Parameter(
+    names = ["--symbolic-values"],
+    description =
+      "Keep the values of havocs that run at most once symbolic, with the path condition in the terminals",
+  )
+  var symbolicValues: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
