@@ -160,7 +160,7 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
 ${visualizeNodes()}
 
 [*] --> ${initNode.name.replace(Regex("[:\\.-]+"), "_")}
-${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
+${edges.joinToString("\n") { it.visualize() }}
 """
       .trimMargin()
 

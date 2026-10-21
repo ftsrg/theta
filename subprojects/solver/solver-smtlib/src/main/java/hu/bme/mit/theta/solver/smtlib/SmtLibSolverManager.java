@@ -443,7 +443,9 @@ public final class SmtLibSolverManager extends SolverManager {
         public Solver createSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
 
@@ -451,7 +453,9 @@ public final class SmtLibSolverManager extends SolverManager {
         public UCSolver createUCSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createUCSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
 
@@ -459,7 +463,9 @@ public final class SmtLibSolverManager extends SolverManager {
         public ItpSolver createItpSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createItpSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
 
@@ -467,7 +473,9 @@ public final class SmtLibSolverManager extends SolverManager {
         public HornSolver createHornSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createHornSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
     }
