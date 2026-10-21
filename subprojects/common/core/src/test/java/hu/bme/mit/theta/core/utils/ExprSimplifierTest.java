@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.ArrayInit;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
@@ -458,6 +459,19 @@ public class ExprSimplifierTest {
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, false, true, true}))));
         assertEquals(Bv(new boolean[] {false, false, false, true}), simplify(BvExprs.UDiv(e, e)));
+        assertEquals(
+                Bv(new boolean[] {false, true, false, false}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {true, true, false, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        // SMT-LIB bvudiv by zero is all ones
+        assertEquals(
+                Bv(new boolean[] {true, true, true, true}),
+                simplify(
+                        BvExprs.UDiv(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {false, false, false, false}))));
     }
 
     @Test
@@ -480,6 +494,32 @@ public class ExprSimplifierTest {
                                 Bv(new boolean[] {false, true, false, false}),
                                 Bv(new boolean[] {false, false, true, true}))));
         assertEquals(Bv(new boolean[] {false, false, false, false}), simplify(BvExprs.URem(e, e)));
+        // operands with the sign bit set are still read unsigned: 10 % 3, 5 % 8, 12 % 9
+        assertEquals(
+                Bv(new boolean[] {false, false, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, false, true, false}),
+                                Bv(new boolean[] {false, false, true, true}))));
+        assertEquals(
+                Bv(new boolean[] {false, true, false, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {false, true, false, true}),
+                                Bv(new boolean[] {true, false, false, false}))));
+        assertEquals(
+                Bv(new boolean[] {false, false, true, true}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, true, false, false}),
+                                Bv(new boolean[] {true, false, false, true}))));
+        // SMT-LIB bvurem by zero is the dividend
+        assertEquals(
+                Bv(new boolean[] {true, false, true, false}),
+                simplify(
+                        BvExprs.URem(
+                                Bv(new boolean[] {true, false, true, false}),
+                                Bv(new boolean[] {false, false, false, false}))));
     }
 
     @Test
@@ -717,6 +757,22 @@ public class ExprSimplifierTest {
         assertEquals(a, simplify(Ite(True(), a, b)));
         assertEquals(b, simplify(Ite(False(), a, b)));
         assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
+    }
+
+    @Test
+    public void testPrime() {
+        final VarDecl<IntType> vv = Var("v", Int());
+        final VarDecl<IntType> vw = Var("w", Int());
+        final Expr<IntType> v = vv.getRef();
+        final Expr<IntType> w = vw.getRef();
+        final Valuation val = ImmutableValuation.builder().put(vv, Int(2)).put(ca, Int(5)).build();
+
+        assertEquals(Eq(Prime(v), Int(3)), simplify(Eq(Prime(v), Add(v, Int(1))), val));
+        assertEquals(Eq(Prime(v), w), simplify(Eq(Prime(v), w), val));
+        assertEquals(Prime(Prime(v)), simplify(Prime(Prime(v)), val));
+        assertEquals(Prime(v), simplify(Prime(Add(v, Int(0))), val));
+        assertEquals(Prime(Add(v, Int(5))), simplify(Prime(Add(v, a)), val));
+        assertEquals(Eq(Prime(v), v), simplify(Eq(Prime(v), v)));
     }
 
     // Array

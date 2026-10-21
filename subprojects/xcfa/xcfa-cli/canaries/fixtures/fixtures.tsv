@@ -22,6 +22,7 @@ union_slice_punning.c	bitvector	LP64	PARSE-OK	union slice punning, bitvector Ext
 byte_addressed_union.c	efficient	LP64	PARSE-OK	byte-addressed union (AD7, array members, no shared word)
 byte_addressed_union.c	bitvector	LP64	PARSE-OK	byte-addressed union, bitvector Concat/Extract
 deref_cast_lvalue.c	efficient	ILP32	PARSE-OK	assignment through a dereferenced cast lvalue (*(T*)p = v)
+fp_negative_zero_division.c	efficient	LP64	UNSAFE	the sign of a floating-point zero literal survives constant folding: 1.0f / -0.0f is -inf
 funcptr_qualifier.c	efficient	ILP32	PARSE-OK	type qualifier on a function-pointer declarator (void (* _Atomic fp)(void))
 partial_init_zerofill.c	efficient	LP64	SAFE	local partial brace initializer zero-fills the remaining cells
 string_array_init.c	efficient	LP64	SAFE	char array initialised from a string literal gets its own object and the bytes
