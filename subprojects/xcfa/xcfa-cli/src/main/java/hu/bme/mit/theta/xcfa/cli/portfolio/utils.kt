@@ -400,6 +400,22 @@ fun baseIc3Config(portfolioConfig: XcfaConfig<*, *>): XcfaConfig<*, Ic3Config> =
     debugConfig = portfolioConfig.debugConfig,
   )
 
+fun baseDssConfig(portfolioConfig: XcfaConfig<*, *>): XcfaConfig<*, DssConfig> =
+  XcfaConfig(
+    inputConfig = portfolioConfig.inputConfig,
+    frontendConfig = portfolioConfig.frontendConfig as FrontendConfig<SpecFrontendConfig>,
+    backendConfig =
+      BackendConfig(
+        backend = Backend.DSS,
+        memlimit = portfolioConfig.backendConfig.memlimit,
+        solverHome = portfolioConfig.backendConfig.solverHome,
+        timeoutMs = 0,
+        specConfig = DssConfig(),
+      ),
+    outputConfig = getDefaultOutputConfig(portfolioConfig),
+    debugConfig = portfolioConfig.debugConfig,
+  )
+
 fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
   OutputConfig(
     enabled = portfolioConfig.outputConfig.enabled,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -79,7 +79,9 @@ public final class JavaSMTSolverManager extends SolverManager {
         public Solver createSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
 
@@ -87,7 +89,9 @@ public final class JavaSMTSolverManager extends SolverManager {
         public UCSolver createUCSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createUCSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
 
@@ -95,7 +99,9 @@ public final class JavaSMTSolverManager extends SolverManager {
         public ItpSolver createItpSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createItpSolver();
-            instantiatedSolvers.add(solver);
+            if (!adoptIntoSolverScope(solver)) {
+                instantiatedSolvers.add(solver);
+            }
             return solver;
         }
     }

@@ -102,6 +102,7 @@ enum class Backend {
   MDD,
   MDD_CEGAR,
   IC3,
+  DSS,
   NONE,
 }
 

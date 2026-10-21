@@ -333,6 +333,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         Backend.MDD_CEGAR -> MddCegarConfig() as T
         Backend.NONE -> null
         Backend.IC3 -> Ic3Config() as T
+        Backend.DSS -> DssConfig() as T
       }
   }
 }
