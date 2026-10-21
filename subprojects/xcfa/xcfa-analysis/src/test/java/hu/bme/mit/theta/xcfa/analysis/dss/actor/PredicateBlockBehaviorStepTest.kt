@@ -176,7 +176,7 @@ class PredicateBlockBehaviorStepTest {
   }
 
   @Test
-  fun `preconditions are covered per sender - stronger ones replace, weaker ones are ignored`() {
+  fun `a postcondition replaces its sender's preconditions and only a repeat is ignored`() {
     val f = linear(branching("5"))
     val x = f.program.intVar("x").ref
     val behavior = f.behavior(f.errorBlock())
@@ -184,11 +184,15 @@ class PredicateBlockBehaviorStepTest {
 
     assertTrue(behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(10)))))
     assertTrue(behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(5)))))
-    assertFalse(
+    assertTrue(
       behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(20)))),
-      "a state implied by a stored state of the same sender is not relevant",
+      "a weaker state adds entry states, so the block must analyze it",
     )
-    assertFalse(behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(5)))))
+    assertFalse(behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(20)))))
+    assertFalse(
+      behavior.storePrecondition(DssPostConditionMessage(sender, Lt(Int(-20), Neg(x)))),
+      "an equivalent state is a repeat",
+    )
   }
 
   @Test
@@ -216,43 +220,38 @@ class PredicateBlockBehaviorStepTest {
   }
 
   @Test
-  fun `a block without violations does not re-analyze new preconditions, like CPAchecker's`() {
+  fun `a block without violations still publishes the postcondition of a new precondition`() {
     val f = linear(branching("5"))
     val x = f.program.intVar("x").ref
     val safeBlock = f.block { b -> b.locations.any { it.final } }
     val behavior = f.behavior(safeBlock)
-    behavior.runInitialAnalysis()
-
     assertTrue(
-      behavior.onPostCondition(DssPostConditionMessage(f.graph.root.id, Lt(x, Int(3)))).isEmpty()
+      behavior.runInitialAnalysis().isEmpty(),
+      "a non-root block publishes nothing from top",
     )
+
+    val answer = behavior.onPostCondition(DssPostConditionMessage(f.graph.root.id, Lt(x, Int(3))))
+
+    assertTrue(answer.single() is DssPostConditionMessage, "$answer")
   }
 
   @Test
-  fun `a violation condition that arrives before any precondition is still propagated`() {
+  fun `a violation condition that arrives before any precondition is propagated from top`() {
     val f = everyLocationABoundary(join())
     val x = f.program.intVar("x").ref
     val increment = f.block { it.initialLocation.name == "j" }
     val behavior = f.behavior(increment)
     behavior.runInitialAnalysis()
 
-    assertTrue(
-      behavior
-        .onViolationCondition(DssViolationConditionMessage(f.errorBlock().id, Gt(x, Int(5))))
-        .isEmpty(),
-      "nothing to analyze yet - no precondition",
-    )
     val answer =
-      behavior.onPostCondition(
-        DssPostConditionMessage(
-          increment.predecessorIds.first(),
-          listOf(True()),
-          setOf(Gt(x, Int(0))),
-        )
-      )
+      behavior.onViolationCondition(DssViolationConditionMessage(f.errorBlock().id, Gt(x, Int(5))))
 
     val vc = answer.filterIsInstance<DssViolationConditionMessage>().single().violationCondition!!
     assertTrue(equivalent(vc, Gt(x, Int(4))), "$vc")
+    assertTrue(
+      answer.none { it is DssPostConditionMessage },
+      "the speculative run from top publishes no postcondition",
+    )
   }
 
   @Test

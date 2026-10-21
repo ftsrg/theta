@@ -28,8 +28,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   they never send them.
 - SAFE is quiescence: every message must be processed inside `DssWorker`'s `active` marker.
 - Every block answers `RESULT`/`EXCEPTION` with exactly one `STATISTIC`.
-- A stored precondition may only be replaced by a stronger one from the same sender, or SAFE
-  becomes unsound.
+- A postcondition message replaces everything stored from its sender, and every analysis starts
+  from all stored preconditions (plus top while a predecessor has not sent): analyzing only the new
+  states, or skipping a state covered by an older one, makes SAFE unsound.
 - Message and witness contents must survive `DssExprCodec` (`PROCESS` executor): only program
   variables and `DssAuxVars`; locations travel by index. New fields need matching changes in
   `DssProcessExecutor.kt`.

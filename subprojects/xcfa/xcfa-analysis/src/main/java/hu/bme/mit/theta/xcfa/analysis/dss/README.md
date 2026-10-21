@@ -67,10 +67,11 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
   the weakest precondition along each counterexample, accumulated as a disjunction.
 * **Precision** is the set of atoms of the reached states plus the start precision, not
   location-specific; the start state's own atoms are always added.
-* **Valid postconditions are normalized to `true`**, and non-top start states are analyzed first;
-  without either, the SCC rule never applies to loop blocks.
-* **A violation condition reached from top is only suppressed** if it was already reported from top;
-  CPAchecker assumes this and can lose the condition (a wrong SAFE).
+* **Valid postconditions are normalized to `true`**, and non-top start states are analyzed first.
+* **A sender's repeated postcondition is detected by its union**, not state by state: Theta's
+  predicate states are not canonical, so the same entry states can arrive split differently.
+* **A violation condition reached from top is always reported**, also when it was sent before: the
+  predecessor replaces its stored condition with each new one, so suppressing it would lose it.
 * **Witnesses**: correctness witnesses from the block invariants, violation witnesses stitched along
   the violation conditions. CPAchecker's DSS reports none.
 
@@ -78,8 +79,9 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
 
 Violation conditions are exact (no abstraction), so UNSAFE is sound; bounded checkers may miss a
 target but never invent one. SAFE relies on the stored preconditions covering the reachable entry
-states: missing predecessors count as top, and a stored state is only replaced by a stronger one
-from the same sender. As in CPAchecker, the SCC rule assumes a fixed point without checking it.
+states. As in CPAchecker's `AlwaysReplacePreconditionHandler`, a postcondition replaces everything
+stored from its sender, every analysis starts from all stored preconditions, and a predecessor that
+has not sent anything yet counts as top; a block stops only when a sender repeats its states.
 
 Termination is not guaranteed, in CPAchecker either: a loop block can keep refuting ever longer
 violation conditions while refinement finds new predicates.

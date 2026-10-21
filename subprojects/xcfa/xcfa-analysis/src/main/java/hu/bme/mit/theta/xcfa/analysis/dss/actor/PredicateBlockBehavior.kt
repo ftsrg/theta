@@ -72,11 +72,7 @@ class PredicateBlockBehavior(
   private val solverFactory: SolverFactory? = null,
 ) : DssBlockBehavior {
 
-  private data class Summary(
-    val state: Expr<BoolType>,
-    val precision: Set<Expr<BoolType>>,
-    val nonTrivialForEachPredecessor: Boolean = false,
-  ) {
+  private data class Summary(val state: Expr<BoolType>, val precision: Set<Expr<BoolType>>) {
     val isTop: Boolean
       get() = state == True()
   }
@@ -117,9 +113,7 @@ class PredicateBlockBehavior(
 
   private val preconditions = LinkedHashMap<String, MutableList<Summary>>()
   private val violationConditions = LinkedHashMap<String, MutableList<Expr<BoolType>>>()
-  private val relevant = mutableListOf<Summary>()
   private var containsViolationInsideBlock = false
-  private val reportedFromTop = mutableSetOf<Expr<BoolType>>()
 
   private val ownTargets: List<XcfaLocation> = block.locations.filter { it.error }
 
@@ -138,73 +132,43 @@ class PredicateBlockBehavior(
 
   private fun top() = Summary(True(), startPrecision)
 
+  /**
+   * Explores the block from top. Only the root publishes the postcondition, as top is its real
+   * precondition; elsewhere a postcondition from top would feed itself back through a loop.
+   */
   fun runInitialAnalysis(): Collection<DssMessage> {
     return when (val result = run(top(), violationCondition = null)) {
       is RunResult.Safe ->
-        if (result.postcondition == False()) emptyList()
+        if (!block.isRoot || result.postcondition == False()) emptyList()
         else reportPostconditions(listOf(Summary(result.postcondition, result.precision)))
       is RunResult.Unsafe -> {
         containsViolationInsideBlock = true
-        buildList {
-          // Stand-in for CPAchecker's "block end reached": a Theta checker stops at the first cex
-          if (block.successorIds.isNotEmpty()) {
-            add(DssPostConditionMessage(block.id, listOf(True()), startPrecision))
-          }
-          addAll(
-            result.path?.let {
-              violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
-              reportViolationCondition(accumulatePathViolations(listOf(it.condition)))
-            } ?: reportViolationConditions(targetsOfOwnViolations())
-          )
-        }
+        result.path?.let {
+          violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
+          reportViolationCondition(accumulatePathViolations(listOf(it.condition)))
+        } ?: reportViolationConditions(targetsOfOwnViolations())
       }
     }
   }
 
-  /** Returns whether the analysis should proceed (CPAchecker's `shouldProceed`). */
+  /**
+   * CPAchecker's `AlwaysReplacePreconditionHandler`: the message replaces everything stored from
+   * its sender; returns whether the analysis should proceed, i.e. whether the states changed.
+   */
   fun storePrecondition(message: DssPostConditionMessage): Boolean {
-    relevant.clear()
-    val received =
-      message.postconditions.map { state ->
-        Summary(state, message.precision, message.nonTrivialForEachPredecessor)
-      }
-    val sender = message.senderId
-    val stored = preconditions[sender]
-    if (stored.isNullOrEmpty()) {
-      preconditions[sender] = received.toMutableList()
-      relevant.addAll(received)
-      appendTopToRelevantIfNecessary(sender)
-      return true
-    }
-    for (new in received) {
-      var isRelevant = true
-      for (old in stored.toList()) {
-        if (operators.isLeq(new.state, old.state)) {
-          stored.remove(old)
-        }
-        if (isRelevant && operators.isLeq(old.state, new.state)) {
-          isRelevant = false
-        }
-      }
-      if (isRelevant) relevant.add(new)
-      stored.add(new)
-    }
-    if (relevant.isNotEmpty()) appendTopToRelevantIfNecessary(sender)
-    return relevant.isNotEmpty()
+    val received = message.postconditions.map { Summary(it, message.precision) }
+    val stored = preconditions.put(message.senderId, received.toMutableList())
+    return stored == null || !statesEqual(received, stored)
   }
 
-  private fun appendTopToRelevantIfNecessary(sender: String) {
-    if (preconditions.keys.size != block.predecessorIds.size) {
-      relevant.add(top())
-      return
-    }
-    for ((other, states) in preconditions) {
-      if (other == sender) continue
-      if (states.any { it.isTop }) {
-        relevant.add(top())
-        return
-      }
-    }
+  /**
+   * Whether both lists cover the same entry states. CPAchecker matches the states pairwise, but
+   * Theta's states are not canonical: the same union can arrive split differently every round.
+   */
+  private fun statesEqual(states1: List<Summary>, states2: List<Summary>): Boolean {
+    val union1 = Or(states1.map { it.state })
+    val union2 = Or(states2.map { it.state })
+    return operators.isLeq(union1, union2) && operators.isLeq(union2, union1)
   }
 
   /** Returns false if the condition is unsatisfiable or repeats the sender's last one. */
@@ -218,67 +182,52 @@ class PredicateBlockBehavior(
     return condition !in old
   }
 
+  /**
+   * Also without a violation condition: on a cycle of blocks nobody else would start the others.
+   */
   fun analyzePrecondition(): Collection<DssMessage> {
-    if (!containsViolationInsideBlock && violationConditions.isEmpty()) {
-      return emptyList()
-    }
     val received =
       violationConditions.flatMap { (sender, conditions) -> conditions.map { sender to it } }
-    val result = analyzeViolationCondition(received, checkOnlyRelevant = true)
+    val result = analyzeViolationCondition(received)
     return reportViolationCondition(result.violationCondition) +
       reportPostconditions(result.summaries)
   }
 
   fun analyzeViolationCondition(sender: String): Collection<DssMessage> {
-    relevant.clear()
     val violations = violationConditions[sender]
     require(!violations.isNullOrEmpty()) { "No violation condition found for sender ID: $sender" }
-    val result =
-      analyzeViolationCondition(violations.map { sender to it }, checkOnlyRelevant = false)
+    val result = analyzeViolationCondition(violations.map { sender to it })
     return reportPostconditions(result.summaries) +
       reportViolationCondition(result.violationCondition)
   }
 
+  /**
+   * Runs the block analysis with [received] attached at the block exit from every stored
+   * precondition, as CPAchecker's `AlwaysReplaceExplorationEngine` does: a postcondition replaces
+   * its sender's earlier ones, so it must cover all of them. While a predecessor has not sent
+   * anything, a speculative run from top looks for violations only; its postcondition is dropped.
+   */
   private fun analyzeViolationCondition(
-    received: List<Pair<String, Expr<BoolType>>>,
-    checkOnlyRelevant: Boolean,
+    received: List<Pair<String, Expr<BoolType>>>
   ): AnalysisResult {
     val violations = received.map { it.second }
-    if (preconditions.isEmpty() && !block.isRoot) {
-      return AnalysisResult(emptyList(), null)
-    }
-
-    val hasNonTrivialSummariesForEachPredecessor =
-      preconditions.isNotEmpty() && preconditions.values.all { states -> states.any { !it.isTop } }
-
     val startStates = linkedSetOf<Summary>()
-    if (checkOnlyRelevant) {
-      startStates.addAll(relevant)
-    } else if (preconditions.isNotEmpty()) {
-      for (state in preconditions.values.flatten()) {
-        // SCC rule: skip only top states; skipping non-top states derived from top is unsound
-        if (
-          hasNonTrivialSummariesForEachPredecessor &&
-            state.nonTrivialForEachPredecessor &&
-            state.isTop
-        ) {
-          continue
-        }
-        startStates.add(state)
-      }
-    } else {
-      startStates.add(top())
-    }
-
+    startStates.addAll(preconditions.values.flatten())
+    if (block.isRoot) startStates.add(top())
     // Non-top first: a top summary would otherwise deduplicate the others away
-    val orderedStartStates = startStates.sortedBy { it.isTop }
+    val orderedStartStates = startStates.sortedBy { it.isTop }.map { it to false }.toMutableList()
+    val speculative =
+      !block.isRoot &&
+        !preconditions.keys.containsAll(block.predecessorIds) &&
+        startStates.none { it.isTop }
+    if (speculative) orderedStartStates += top() to true
     val violationCondition = if (violations.isEmpty()) null else Or(violations)
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
     val pathViolations = mutableListOf<Expr<BoolType>>()
     var analyzedTrivial = false
-    for (start in orderedStartStates) {
+    for ((start, discardSummary) in orderedStartStates) {
       if (start.isTop && analyzedTrivial) continue
       analyzedTrivial = analyzedTrivial || start.isTop
       val precision =
@@ -289,51 +238,32 @@ class PredicateBlockBehavior(
 
       when (val result = run(startState, violationCondition)) {
         is RunResult.Safe -> {
-          if (result.postcondition != False()) {
-            summaries +=
-              Summary(
-                result.postcondition,
-                result.precision,
-                hasNonTrivialSummariesForEachPredecessor,
-              )
+          if (!discardSummary && result.postcondition != False()) {
+            summaries += Summary(result.postcondition, result.precision)
           }
         }
         is RunResult.Unsafe -> {
           // The checker stopped at the cex, so the postcondition needs a run without targets
-          val summary = run(startState, violationCondition = null, keepSpecificationTargets = false)
-          if (summary is RunResult.Safe && summary.postcondition != False()) {
-            summaries +=
-              Summary(
-                summary.postcondition,
-                summary.precision,
-                hasNonTrivialSummariesForEachPredecessor,
-              )
+          if (!discardSummary) {
+            val summary =
+              run(startState, violationCondition = null, keepSpecificationTargets = false)
+            if (summary is RunResult.Safe && summary.postcondition != False()) {
+              summaries += Summary(summary.postcondition, summary.precision)
+            }
           }
           targetReached = true
-          // CPAchecker assumes a vc reached from top was already sent; that fails if it arrived
-          // before any precondition
-          val reportReceived =
-            violations.isNotEmpty() &&
-              (!checkOnlyRelevant ||
-                startStates.size == 1 ||
-                !start.isTop ||
-                violationCondition !in reportedFromTop)
-          if (reportReceived) {
-            reportReceivedViolations = true
-            if (start.isTop && violationCondition != null) reportedFromTop += violationCondition
+          // Never suppressed: the predecessor replaces its stored condition with every new one
+          if (violations.isNotEmpty()) reportReceivedViolations = true
+          result.path?.let {
+            pathViolations += it.condition
+            violationRecords +=
+              DssPathViolation(
+                it.condition,
+                it.edges,
+                it.reachedReceivedViolation,
+                if (it.reachedReceivedViolation) received else emptyList(),
+              )
           }
-          result.path
-            ?.takeIf { !it.reachedReceivedViolation || reportReceived }
-            ?.let {
-              pathViolations += it.condition
-              violationRecords +=
-                DssPathViolation(
-                  it.condition,
-                  it.edges,
-                  it.reachedReceivedViolation,
-                  if (it.reachedReceivedViolation) received else emptyList(),
-                )
-            }
         }
       }
     }
@@ -516,7 +446,6 @@ class PredicateBlockBehavior(
         block.id,
         unique.map { it.state },
         unique.flatMapTo(linkedSetOf()) { it.precision },
-        unique.any { it.nonTrivialForEachPredecessor },
       )
     )
   }

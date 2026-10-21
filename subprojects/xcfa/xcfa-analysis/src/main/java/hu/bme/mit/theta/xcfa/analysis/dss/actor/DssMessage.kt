@@ -58,7 +58,6 @@ data class DssPostConditionMessage(
   override val senderId: String,
   val postconditions: List<Expr<BoolType>> = emptyList(),
   val precision: Set<Expr<BoolType>> = emptySet(),
-  val nonTrivialForEachPredecessor: Boolean = false,
 ) : DssMessage() {
 
   constructor(

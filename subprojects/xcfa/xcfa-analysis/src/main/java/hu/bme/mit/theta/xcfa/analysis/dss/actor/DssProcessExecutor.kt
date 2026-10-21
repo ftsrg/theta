@@ -310,7 +310,6 @@ private fun writeMessage(out: DataOutputStream, codec: DssExprCodec, message: Ds
       writeString(out, message.senderId)
       writeExprs(out, codec, message.postconditions)
       writeExprs(out, codec, message.precision)
-      out.writeBoolean(message.nonTrivialForEachPredecessor)
     }
     is DssViolationConditionMessage -> {
       out.writeByte(MESSAGE_VIOLATION_CONDITION)
@@ -329,7 +328,6 @@ private fun readMessage(input: DataInputStream, codec: DssExprCodec): DssMessage
         readString(input),
         readExprs(input, codec),
         readExprs(input, codec).toSet(),
-        input.readBoolean(),
       )
     MESSAGE_VIOLATION_CONDITION ->
       DssViolationConditionMessage(

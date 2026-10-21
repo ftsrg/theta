@@ -78,6 +78,7 @@ class DssVerdictTest {
         "sequential loops" to ::sequentialLoopsXcfa,
         "guarded loop" to ::guardedLoopXcfa,
         "error inside a loop" to ::errorInLoopXcfa,
+        "nondeterministic counter" to ::counterXcfa,
       )
 
     private val programs = loopFree + loops
@@ -136,6 +137,24 @@ class DssVerdictTest {
             ("join" to "checkErr") { assume("(>= x 10)") }
             ("checkSafe" to final) { nop() }
             ("checkErr" to err) { nop() }
+          }
+        main.start()
+      }
+
+    /** Btor2C's counters: the loop's own postcondition must keep growing for several rounds. */
+    private fun counterXcfa(safe: Boolean): XCFA =
+      xcfa("counter") {
+        val main =
+          procedure("main") {
+            "x" type Int()
+            (init to "loophead") { "x" assign "1" }
+            ("loophead" to err) { assume(if (safe) "(= x 5)" else "(= x 4)") }
+            ("loophead" to "step") { assume(if (safe) "(/= x 5)" else "(/= x 4)") }
+            ("step" to "loophead") { nop() }
+            ("step" to "inc") { assume("(< x 4)") }
+            ("step" to "wrap") { assume("(>= x 4)") }
+            ("inc" to "loophead") { "x" assign "(+ x 1)" }
+            ("wrap" to "loophead") { "x" assign "1" }
           }
         main.start()
       }
