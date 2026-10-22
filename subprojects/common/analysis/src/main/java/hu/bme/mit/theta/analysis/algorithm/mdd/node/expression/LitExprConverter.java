@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -48,9 +49,17 @@ public class LitExprConverter {
     private static int cnt = 0;
     private static final BiMap<Object, Integer> objToInt = HashBiMap.create();
 
-    // symbolic mode: int and bitvector keys are interned like arrays, so terms over symbols can be
-    // keys too
+    // symbolic mode: int and bitvector keys are interned like arrays, so the token, the key that
+    // leaves the value to the terminal, cannot clash with a literal
     private static boolean symbolic = false;
+
+    private static final Object TOKEN =
+            new Object() {
+                @Override
+                public String toString() {
+                    return "#";
+                }
+            };
 
     public static void setSymbolic(boolean symbolic) {
         LitExprConverter.symbolic = symbolic;
@@ -75,20 +84,19 @@ public class LitExprConverter {
                 || (symbolic && (type instanceof IntType || type instanceof BvType));
     }
 
-    /** The key of a literal or, in symbolic mode, of a term over symbols. */
-    public static int toInt(Expr<?> expr) {
-        if (expr instanceof LitExpr<?> litExpr) return toInt(litExpr);
-        Preconditions.checkState(symbolic, "Only literals can be keys outside symbolic mode");
-        return intern(expr);
+    public static int token() {
+        Preconditions.checkState(symbolic, "The token is a key in symbolic mode only");
+        return intern(TOKEN);
     }
 
-    /** The literal or, in symbolic mode, the term a key stands for. */
-    public static Expr<?> toExpr(int integer, Type type) {
-        if (symbolic && interned(type)) {
-            final Object obj = objToInt.inverse().get(integer);
-            return obj == null ? new InvalidLitExpr<>(type) : (Expr<?>) obj;
-        }
-        return toLitExpr(integer, type);
+    public static boolean isToken(int integer) {
+        return symbolic && objToInt.inverse().get(integer) == TOKEN;
+    }
+
+    /** The literal a key stands for or, for the token, the decl itself. */
+    public static Expr<?> toExpr(int integer, Decl<?> decl) {
+        if (isToken(integer)) return decl.getRef();
+        return toLitExpr(integer, decl.getType());
     }
 
     /** A literal whose key is not used yet, for a decl a model leaves free. */

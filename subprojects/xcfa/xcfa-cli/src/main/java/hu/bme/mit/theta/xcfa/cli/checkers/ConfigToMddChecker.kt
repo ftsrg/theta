@@ -90,7 +90,6 @@ fun getMddChecker(
     passes,
     logger,
     config.outputConfig.acceptUnreliableSafe,
-    true,
-    mddConfig.symbolicValues,
+    !mddConfig.symbolicValues,
   )
 }

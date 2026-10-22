@@ -90,22 +90,25 @@ public class MddExpressionTemplate implements MddNode.Template {
         return result;
     }
 
-    /** Substitutes a key's value, a literal or a term over symbols, for {@code decl}. */
+    /**
+     * Substitutes a key's value, a literal or for the token the decl itself, for {@code decl}; in
+     * symbolic mode a written next-state level is marked, so the terminal knows of the write.
+     */
     static Expr<BoolType> simplify(
             final Expr<BoolType> expr,
             final Decl<?> decl,
             final Expr<?> value,
             final MddGraph<?> graph) {
-        if (value instanceof LitExpr<?> lit) {
-            return simplify(expr, ImmutableValuation.builder().put(decl, lit).build(), graph);
+        final Expr<BoolType> substituted =
+                value instanceof LitExpr<?> lit
+                        ? simplify(expr, ImmutableValuation.builder().put(decl, lit).build(), graph)
+                        : expr;
+        if (LitExprConverter.isSymbolic()
+                && SymbolicKeys.isTarget(decl)
+                && SymbolicKeys.canBeToken(decl.getType())) {
+            return And(substituted, SymbolicKeys.marker(decl));
         }
-        final Set<Expr<BoolType>> known =
-                graph.getAttribute(SIMPLIFIED, MddExpressionTemplate::newSimplifiedSet);
-        final Expr<BoolType> result =
-                ExprUtils.simplify(
-                        BasicSubstitution.builder().put(decl, value).build().apply(expr));
-        known.add(result);
-        return result;
+        return substituted;
     }
 
     private static Valuation checkSat(
@@ -184,6 +187,28 @@ public class MddExpressionTemplate implements MddNode.Template {
         } else {
             satModel = checkSat(ExprUtils.canonize(simplifiedExpr), solverPool, satCache);
             if (satModel == null) return null;
+        }
+
+        // a free next-state value takes the token
+        if (LitExprConverter.isSymbolic()
+                && transExpr
+                && SymbolicKeys.isTarget(decl)
+                && SymbolicKeys.canBeToken(decl.getType())
+                && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
+            final Expr<BoolType> childExpr =
+                    simplify(simplifiedExpr, decl, decl.getRef(), mddVariable.getMddGraph());
+            final MddNode childNode =
+                    mddVariable.getLower().isPresent()
+                            ? mddVariable.getLower().get().checkInNode(knownChild(childExpr))
+                            : terminalFor(mddVariable.getMddGraph(), childExpr, childExpr);
+            return MddExpressionRepresentation.ofDetermined(
+                    simplifiedExpr,
+                    decl,
+                    mddVariable,
+                    solverPool,
+                    LitExprConverter.token(),
+                    childNode,
+                    transExpr);
         }
 
         // Check if default
@@ -266,8 +291,7 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
         }
 
-        final Expr<?> determinedValue =
-                findDeterminedValue(simplifiedExpr, decl, isNextState(decl));
+        final LitExpr<?> determinedValue = findDeterminedValue(simplifiedExpr, decl);
         if (determinedValue != null) {
             final int key = LitExprConverter.toInt(determinedValue);
 
@@ -290,23 +314,14 @@ public class MddExpressionTemplate implements MddNode.Template {
                 simplifiedExpr, decl, mddVariable, solverPool, transExpr, satModel);
     }
 
-    // a term can only be the key of a next-state level: source levels are matched against the
-    // keys of the states, so a term there would hide every concrete source
-    private boolean isNextState(Decl<?> decl) {
-        return LitExprConverter.isSymbolic()
-                && transExpr
-                && decl instanceof IndexedConstDecl<?> constDecl
-                && constDecl.getIndex() > 0;
-    }
-
-    private static Expr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl, boolean terms) {
+    private static LitExpr<?> findDeterminedValue(Expr<BoolType> expr, Decl<?> decl) {
         if (expr instanceof EqExpr<?> eq) {
-            return extractLiteralForDecl(eq, decl, terms);
+            return extractLiteralForDecl(eq, decl);
         }
         if (expr instanceof AndExpr and) {
             for (var op : and.getOps()) {
                 if (op instanceof EqExpr<?> eq) {
-                    final Expr<?> lit = extractLiteralForDecl(eq, decl, terms);
+                    final LitExpr<?> lit = extractLiteralForDecl(eq, decl);
                     if (lit != null) return lit;
                 }
             }
@@ -314,23 +329,23 @@ public class MddExpressionTemplate implements MddNode.Template {
         return null;
     }
 
-    private static Expr<?> extractLiteralForDecl(EqExpr<?> eq, Decl<?> decl, boolean terms) {
+    private static LitExpr<?> extractLiteralForDecl(EqExpr<?> eq, Decl<?> decl) {
         if (eq.getLeftOp() instanceof RefExpr<?> ref
                 && ref.getDecl().equals(decl)
-                && isValue(eq.getRightOp(), terms)) {
-            return eq.getRightOp();
+                && eq.getRightOp() instanceof LitExpr<?> lit) {
+            return lit;
         }
         if (eq.getRightOp() instanceof RefExpr<?> ref
                 && ref.getDecl().equals(decl)
-                && isValue(eq.getLeftOp(), terms)) {
-            return eq.getLeftOp();
+                && eq.getLeftOp() instanceof LitExpr<?> lit) {
+            return lit;
         }
         return null;
     }
 
     /**
      * The terminal for a satisfiable residual; in symbolic mode it keeps what the residual says
-     * about symbols, otherwise it is {@code otherwise}.
+     * about the token values, otherwise it is {@code otherwise}.
      */
     @SuppressWarnings("unchecked")
     static MddNode terminalFor(
@@ -341,14 +356,5 @@ public class MddExpressionTemplate implements MddNode.Template {
                 ExprUtils.canonize(SymbolicKeys.withoutIntermediates(residual));
         return mddGraph.getNodeFor(
                 ExprUtils.getConstants(projected).isEmpty() ? True() : projected);
-    }
-
-    // where terms are allowed, a non-bool term over symbols only (no level decls) is a value
-    private static boolean isValue(Expr<?> expr, boolean terms) {
-        if (expr instanceof LitExpr<?>) return true;
-        return terms
-                && !(expr.getType() instanceof BoolType)
-                && ExprUtils.getConstants(expr).stream()
-                        .noneMatch(c -> c instanceof IndexedConstDecl<?>);
     }
 }

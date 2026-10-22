@@ -89,7 +89,9 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     when (config.frontendConfig.memoryInit) {
       MemoryInit.ZERO -> true
       MemoryInit.UNCONSTRAINED -> false
-      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+      MemoryInit.AUTO ->
+        config.backendConfig.backend == Backend.MDD &&
+          (config.backendConfig.specConfig as? MddConfig)?.symbolicValues != true
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability

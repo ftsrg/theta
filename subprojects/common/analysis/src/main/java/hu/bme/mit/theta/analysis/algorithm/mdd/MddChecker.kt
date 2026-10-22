@@ -17,8 +17,10 @@ package hu.bme.mit.theta.analysis.algorithm.mdd
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.delta.java.mdd.JavaMddFactory
+import hu.bme.mit.delta.java.mdd.MddGraph
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
+import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate
 import hu.bme.mit.delta.mdd.MddInterpreter
 import hu.bme.mit.delta.mdd.MddVariableDescriptor
 import hu.bme.mit.theta.analysis.Trace
@@ -48,23 +50,17 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.MutableValuation
+import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
-import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.core.utils.BvUtils
-import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverPool
-import hu.bme.mit.theta.solver.utils.WithPushPop
-import java.math.BigInteger
 
 class MddChecker
 @JvmOverloads
@@ -94,72 +90,6 @@ constructor(
     } finally {
       LitExprConverter.setSymbolic(outer)
     }
-  }
-
-  /**
-   * A model of a violating path condition fixes the symbols, so a run on the concrete model gives
-   * the trace.
-   */
-  private fun replayWithInputs(propViolating: MddHandle): Trace<ExplState, ExprAction>? {
-    var node: MddNode = propViolating.node
-    while (!node.isTerminal) {
-      node =
-        node.defaultValue()
-          ?: node.cursor().let {
-            it.moveNext()
-            it.value()
-          }
-    }
-    @Suppress("UNCHECKED_CAST")
-    val condition = (node as MddNode.Terminal<*>).terminalData as Expr<BoolType>
-    val solver = solverPool.requestSolver()
-    val model =
-      try {
-        WithPushPop(solver).use {
-          solver.add(condition)
-          if (!solver.check().isSat) return null
-          solver.model
-        }
-      } finally {
-        solverPool.returnSolver(solver)
-      }
-    val inputs = MutableValuation()
-    (ExprUtils.getConstants(monolithicExpr.initExpr) +
-        ExprUtils.getConstants(monolithicExpr.transExpr))
-      .forEach { symbol ->
-        val value =
-          model.eval(symbol).orElse(null)
-            ?: when (val type = symbol.type) {
-              is IntType -> Int(0)
-              is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, type.size)
-              else -> null
-            }
-        if (value != null) inputs.put(symbol, value)
-      }
-    val fix = { expr: Expr<BoolType> -> ExprUtils.simplify(expr, inputs) }
-    val concrete =
-      monolithicExpr.copy(
-        initExpr = fix(monolithicExpr.initExpr),
-        transExpr = fix(monolithicExpr.transExpr),
-        propExpr = fix(monolithicExpr.propExpr),
-        explicitSplit = monolithicExpr.explicitSplit?.map(fix),
-      )
-    val replay =
-      MddChecker(
-          concrete,
-          solverPool,
-          logger,
-          iterationStrategy,
-          traceTimeout,
-          variableOrdering,
-          lookAheadStrategy,
-          proofStrategy,
-          false,
-          traceSearch,
-          MddApproximation.of(approximation.strategy, approximation.edgeLimit),
-        )
-        .check(null)
-    return if (replay.isUnsafe) replay.asUnsafe().cex else null
   }
 
   private fun checkWithKeys(): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
@@ -246,9 +176,11 @@ constructor(
 
     val initExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
     val initNode =
-      stateSig.topVariableHandle.checkInNode(
-        MddExpressionTemplate.of(initExpr, { it as Decl<*> }, solverPool)
-      )
+      if (symbolicValues) symbolicInit(initExpr, stateSig, transSig)
+      else
+        stateSig.topVariableHandle.checkInNode(
+          MddExpressionTemplate.of(initExpr, { it as Decl<*> }, solverPool)
+        )
 
     logger.write(Logger.Level.INFO, "Created initial node\n")
 
@@ -346,9 +278,8 @@ constructor(
       MddProof.of(stateSpace, proofStrategy).also { if (symbolicValues) it.getInvariant() }
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
     if (violatingSize != 0L && symbolicValues) {
-      logger.write(Logger.Level.INFO, "Replaying the violation with concrete inputs\n")
-      val trace = replayWithInputs(propViolating) ?: Trace.of(listOf(ExplState.top()), listOf())
-      result = SafetyResult.unsafe(trace, proof, statistics)
+      // the trace search walks literal keys only
+      result = SafetyResult.unsafe(Trace.of(listOf(ExplState.top()), listOf()), proof, statistics)
     } else if (violatingSize != 0L) {
       // on trace generation timeout, fall back to an empty trace
       val trace =
@@ -369,6 +300,51 @@ constructor(
       result = SafetyResult.safe(proof, statistics)
     }
     return result
+  }
+
+  /**
+   * The initial states as a step from the state where every variable holds the token: init
+   * constrains the next-state values, so what it leaves free stays symbolic.
+   */
+  private fun symbolicInit(
+    initExpr: Expr<BoolType>,
+    stateSig: hu.bme.mit.delta.java.mdd.MddSignature,
+    transSig: hu.bme.mit.delta.java.mdd.MddSignature,
+  ): MddHandle {
+    val toNext = BasicSubstitution.builder()
+    variableOrdering.forEach {
+      toNext.put(
+        it.getConstDecl(0),
+        it.getConstDecl(maxOf(monolithicExpr.transOffsetIndex[it], 1)).ref,
+      )
+    }
+    val initStep =
+      transSig.topVariableHandle.checkInNode(
+        MddExpressionTemplate.of(
+          toNext.build().apply(initExpr),
+          { it as Decl<*> },
+          solverPool,
+          true,
+        )
+      )
+    val levels =
+      generateSequence(stateSig.topVariableHandle.variable.orElseThrow()) { it.lower.orElse(null) }
+        .toList()
+    @Suppress("UNCHECKED_CAST")
+    var any: MddNode = (stateSig.topVariableHandle.mddGraph as MddGraph<Any>).getNodeFor(True())
+    for (level in levels.reversed()) {
+      val builder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
+      when (val type = level.getTraceInfo(Decl::class.java).type) {
+        is BoolType -> listOf(0, 1)
+        is EnumType -> type.values.map { type.getIntValue(it) }
+        else -> listOf(LitExprConverter.token())
+      }.forEach { builder.set(it, any) }
+      any = level.checkInNode(MddStructuralTemplate.of(builder.buildAndReset()))
+    }
+    val init =
+      RelationalProductProviderImpl(stateSig.variableOrder)
+        .compute(any, MddNodeNextStateDescriptor.of(initStep), levels.first())
+    return stateSig.topVariableHandle.getHandleFor(init)
   }
 
   private fun structuralRerun(

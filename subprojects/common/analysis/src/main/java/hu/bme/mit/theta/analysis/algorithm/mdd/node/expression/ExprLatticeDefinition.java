@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ExprLatticeDefinition {
@@ -45,12 +46,14 @@ public class ExprLatticeDefinition {
     }
 
     /**
-     * Terminals hold the path condition over symbolic values: an unsatisfiable intersection is
-     * bottom, and a union returns an operand that implies the other, so fixpoints are detected.
+     * Terminals hold a formula over the token values: an unsatisfiable intersection is bottom, and
+     * a union returns an operand that implies the other, so fixpoints are detected. Names bound in
+     * both operands of an intersection stand for different values.
      */
     @SuppressWarnings("unchecked")
     public static LatticeDefinition<Expr> forSymbolicExpr(SolverPool solverPool) {
         final Map<Expr<BoolType>, Boolean> satCache = new HashMap<>();
+        final Map<List<Expr<BoolType>>, Expr<BoolType>> unions = new HashMap<>();
         final var lattice =
                 new Object() {
                     boolean isSat(Expr<BoolType> expr) {
@@ -89,8 +92,8 @@ public class ExprLatticeDefinition {
                 Expr.class,
                 False(),
                 True(),
-                (a, b) -> lattice.union(a, b),
-                (a, b) -> lattice.feasible(And(a, b)),
+                (a, b) -> unions.computeIfAbsent(List.of(a, b), k -> lattice.union(a, b)),
+                (a, b) -> lattice.feasible(And(a, SymbolicKeys.renamedApart(a, b))),
                 (a, b) -> lattice.feasible(And(a, Not(b))));
     }
 }

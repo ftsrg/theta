@@ -60,7 +60,6 @@ class XcfaMultiThreadToMonolithicAdapter(
   parseContext: ParseContext,
   initValues: Boolean = false,
   forceUnroll: Boolean = false,
-  symbolicHavoc: Boolean = false,
 ) :
   XcfaToMonolithicAdapter(
     model,
@@ -81,7 +80,6 @@ class XcfaMultiThreadToMonolithicAdapter(
     ),
     parseContext,
     initValues,
-    symbolicHavoc,
   ) {
 
   // use model of super class in init expressions since it is optimized further
@@ -152,7 +150,7 @@ class XcfaMultiThreadToMonolithicAdapter(
                       )
                     )
                   else null,
-                  label.changeVars(varLookUp, parseContext).toStmt().withSymbolicHavocs(edge),
+                  label.changeVars(varLookUp, parseContext).toStmt(),
                   AssignStmt.of(locVar, cast(smtInt(locMap[target]!!), locVar.type)),
                   AssignStmt.of(edgeVar, cast(smtInt(edges[thread]!![edge]!!), edgeVar.type)),
                 ) +

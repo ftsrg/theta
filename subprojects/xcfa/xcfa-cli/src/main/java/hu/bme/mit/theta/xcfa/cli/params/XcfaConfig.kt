@@ -705,7 +705,7 @@ data class MddConfig(
   @Parameter(
     names = ["--symbolic-values"],
     description =
-      "Keep the values of havocs that run at most once symbolic, with the path condition in the terminals",
+      "Keep values the program leaves free symbolic, with a formula over them in the terminals",
   )
   var symbolicValues: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")

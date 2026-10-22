@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.mddtoexpr.MddToExprNodeLevel;
-import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -32,8 +31,15 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -43,110 +49,108 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
- * Keys over symbols for next-state levels: a value that depends on symbols on the path look-ahead
- * found is either a source key it equals, or a symbol named by the transition and the source keys
- * it reads, which the transition defines in the path condition.
+ * Symbolic values: a key is a literal or the token, which leaves the value of its variable to the
+ * terminal below, a formula over the current values of the token variables. A step conjoins what
+ * the relation leaves over and projects the overwritten values out; what cannot be eliminated is
+ * kept under a name bound in that formula.
  */
 public final class SymbolicKeys {
 
     // the decls that are diagram levels; other indexed decls are steps inside one transition
     private static Set<Decl<?>> levels = Set.of();
 
-    private static final Map<List<Object>, ConstDecl<?>> names = new HashMap<>();
-    private static final Map<List<Object>, Boolean> functional = new HashMap<>();
+    // a conjunct of a relation below a written next-state level, so its terminal knows the write
+    private static final Map<Decl<?>, ConstDecl<BoolType>> markers = new HashMap<>();
+    private static final Map<ConstDecl<BoolType>, Decl<?>> written = new HashMap<>();
+
+    private static final Map<List<Object>, ConstDecl<?>> boundNames = new HashMap<>();
+    private static final String BOUND = "__theta_old_";
 
     private SymbolicKeys() {}
 
     public static void setLevels(Set<Decl<?>> levels) {
         SymbolicKeys.levels = levels;
-        names.clear();
-        functional.clear();
+        markers.clear();
+        written.clear();
+        images.clear();
     }
 
     static boolean isIntermediate(Decl<?> decl) {
         return decl instanceof IndexedConstDecl<?> && !levels.contains(decl);
     }
 
-    private static boolean isSource(Decl<?> decl) {
-        return levels.contains(decl) && ((IndexedConstDecl<?>) decl).getIndex() == 0;
+    static boolean isTarget(Decl<?> decl) {
+        return levels.contains(decl) && ((IndexedConstDecl<?>) decl).getIndex() > 0;
     }
 
-    private static boolean isSymbol(Decl<?> decl) {
-        return !(decl instanceof IndexedConstDecl<?>);
+    /** Bool and enum values stay literals: their levels are small and fully enumerable. */
+    public static boolean canBeToken(Type type) {
+        return !(type instanceof BoolType) && !(type instanceof EnumType);
     }
 
-    /** An edge: its key, the relation below it (null: substitute the key), and what it covers. */
-    record Choice(Expr<?> key, Expr<BoolType> child, Expr<BoolType> covered) {}
+    static Expr<BoolType> marker(Decl<?> target) {
+        return markers.computeIfAbsent(
+                        target,
+                        d -> {
+                            final ConstDecl<BoolType> m =
+                                    Decls.Const("__theta_w_" + d.getName(), BoolType.getInstance());
+                            written.put(m, d);
+                            return m;
+                        })
+                .getRef();
+    }
 
-    /**
-     * The edge for the next-state {@code decl} of {@code expr} in {@code model}, where it is {@code
-     * value}, or null if the literal is the edge.
-     */
-    static Choice choose(
+    /** Whether the next-state {@code decl}, {@code value} in {@code model}, takes the token. */
+    static boolean takesToken(
             Expr<BoolType> expr,
             Decl<?> decl,
             LitExpr<?> value,
             Valuation model,
             MddHandle lookAhead,
             SolverPool solverPool) {
-        if (decl.getType() instanceof BoolType || decl.getType() instanceof EnumType) return null;
-        final Map<Decl<?>, Expr<?>> path = path(lookAhead, model);
-        final Map<Decl<?>, Expr<?>> read = new HashMap<>();
-        boolean symbolic = false;
-        for (ConstDecl<?> c : ExprUtils.getConstants(expr)) {
-            if (isSymbol(c)) symbolic = true;
-            if (isSource(c) && path.containsKey(c)) {
-                read.put(c, path.get(c));
-                symbolic |= !(path.get(c) instanceof LitExpr<?>);
-            }
-        }
-        if (!symbolic) return null;
-
+        if (!canBeToken(decl.getType())) return false;
+        final Map<Decl<?>, Expr<?>> keys = new HashMap<>();
+        final Expr<BoolType> leaf = path(lookAhead, model, keys);
         final BasicSubstitution.Builder sub = BasicSubstitution.builder();
-        read.forEach(sub::put);
+        keys.forEach(sub::put);
         final Expr<BoolType> onPath = ExprUtils.simplify(sub.build().apply(expr));
-        if (!isSat(And(onPath, Neq(decl.getRef(), value)), solverPool)) return null;
-
-        for (Expr<?> key : read.values()) {
-            if (!(key instanceof LitExpr<?>)
-                    && key.getType().equals(decl.getType())
-                    && value.equals(ExprUtils.simplify(key, model))
-                    && !isSat(And(onPath, Neq(decl.getRef(), key)), solverPool)) {
-                return new Choice(key, null, Eq(decl.getRef(), key));
-            }
-        }
-
-        if (!isFunctional(onPath, decl, solverPool)) return null;
-        final ConstDecl<?> symbol =
-                names.computeIfAbsent(
-                        List.of(expr, decl, read),
-                        n ->
-                                Decls.Const(
-                                        "__theta_def_" + names.size() + "_" + decl.getName(),
-                                        decl.getType()));
-        final List<Expr<BoolType>> sources = new ArrayList<>();
-        read.forEach((d, k) -> sources.add(Eq(d.getRef(), k)));
-        final Expr<BoolType> child =
-                And(
-                        ExprUtils.simplify(
-                                BasicSubstitution.builder()
-                                        .put(decl, symbol.getRef())
-                                        .build()
-                                        .apply(expr)),
-                        And(sources));
-        return new Choice(symbol.getRef(), child, And(sources));
+        return !hasFewValues(And(onPath, leaf), decl, solverPool);
     }
 
-    // the source keys of the state the model is in, as far as look-ahead covers it
-    private static Map<Decl<?>, Expr<?>> path(MddHandle lookAhead, Valuation model) {
-        final Map<Decl<?>, Expr<?>> path = new HashMap<>();
-        if (lookAhead == null) return path;
+    // values with at most this many possibilities on a path stay literals
+    private static final int FEW = 4;
+
+    /** Whether {@code expr} leaves {@code decl} only a few values, which are then enumerated. */
+    static boolean hasFewValues(Expr<BoolType> expr, Decl<?> decl, SolverPool solverPool) {
+        final var solver = solverPool.requestSolver();
+        try (var wpp = new WithPushPop(solver)) {
+            solver.add(expr);
+            for (int i = 0; i <= FEW; i++) {
+                if (!solver.check().isSat()) return true;
+                final var value = solver.getModel().eval(decl);
+                if (value.isEmpty()) return false;
+                solver.add(Neq(decl.getRef(), value.get()));
+            }
+            return false;
+        } finally {
+            solverPool.returnSolver(solver);
+        }
+    }
+
+    // the literal keys of the state the model is in, as far as look-ahead covers it, and its
+    // terminal
+    private static Expr<BoolType> path(
+            MddHandle lookAhead, Valuation model, Map<Decl<?>, Expr<?>> keys) {
+        if (lookAhead == null) return True();
         MddNode node = lookAhead.getNode();
         MddVariable variable = lookAhead.getVariableHandle().getVariable().orElse(null);
         while (node != null && !node.isTerminal() && variable != null) {
@@ -161,12 +165,13 @@ public final class SymbolicKeys {
                 continue;
             }
             final Decl<?> d = variable.getTraceInfo(Decl.class);
+            final Expr<?> value = model.eval(d).orElse(null);
             MddNode next = null;
             for (var c = node.cursor(); c.moveNext(); ) {
-                final Expr<?> key = LitExprConverter.toExpr(c.key(), d.getType());
-                if (ExprUtils.simplify(Eq(d.getRef(), key), model) instanceof TrueExpr
-                        && taken(c.value(), lower, model)) {
-                    path.put(d, key);
+                final boolean token = LitExprConverter.isToken(c.key());
+                final Expr<?> key = LitExprConverter.toExpr(c.key(), d);
+                if ((token || key.equals(value)) && taken(c.value(), lower, model)) {
+                    if (!token) keys.put(d, key);
                     next = c.value();
                     break;
                 }
@@ -174,99 +179,285 @@ public final class SymbolicKeys {
             node = next;
             variable = lower;
         }
-        return path;
+        return node != null && node.isTerminal() ? leafOf(node) : True();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Expr<BoolType> leafOf(MddNode terminal) {
+        return ((MddNode.Terminal<?>) terminal).getTerminalData() instanceof Expr<?> e
+                ? (Expr<BoolType>) e
+                : True();
     }
 
     private static boolean taken(MddNode node, MddVariable variable, Valuation model) {
-        if (node.isTerminal()) return true;
+        if (node.isTerminal())
+            return !(ExprUtils.simplify(leafOf(node), model) instanceof FalseExpr);
         final Decl<BoolType> aux =
                 MddToExprNodeLevel.INSTANCE.getAuxvarCache().getOrNull(node, variable);
-        return aux == null || !(ExprUtils.simplify(aux.getRef(), model) instanceof FalseExpr);
-    }
-
-    // one value on the path, so the name of that value means the same in every state
-    private static boolean isFunctional(
-            Expr<BoolType> onPath, Decl<?> decl, SolverPool solverPool) {
-        return functional.computeIfAbsent(
-                List.of(onPath, decl),
-                k -> {
-                    final BasicSubstitution.Builder copy = BasicSubstitution.builder();
-                    Decl<?> declCopy = null;
-                    for (ConstDecl<?> c : ExprUtils.getConstants(onPath)) {
-                        if (isSymbol(c)) continue;
-                        final ConstDecl<?> fresh = Decls.Const(c.getName() + "'", c.getType());
-                        copy.put(c, fresh.getRef());
-                        if (c.equals(decl)) declCopy = fresh;
-                    }
-                    return declCopy == null
-                            || !isSat(
-                                    And(
-                                            List.of(
-                                                    onPath,
-                                                    copy.build().apply(onPath),
-                                                    Neq(decl.getRef(), declCopy.getRef()))),
-                                    solverPool);
-                });
+        return aux == null || !(model.eval(aux).orElse(null) instanceof FalseExpr);
     }
 
     private static boolean isSat(Expr<BoolType> expr, SolverPool solverPool) {
+        final Expr<BoolType> simplified = ExprUtils.simplify(expr);
+        if (simplified instanceof TrueExpr) return true;
+        if (simplified instanceof FalseExpr) return false;
         final var solver = solverPool.requestSolver();
         try (var wpp = new WithPushPop(solver)) {
-            solver.add(expr);
+            solver.add(simplified);
             return solver.check().isSat();
         } finally {
             solverPool.returnSolver(solver);
         }
     }
 
-    /**
-     * Substitutes the steps inside a transition that the residual defines and drops the rest of
-     * what it says about them, which is known to be satisfiable, so only symbols remain; gives up
-     * where such steps stay tied to symbols.
-     */
+    /** What a relation leaves at its terminal, without its own steps where they are defined. */
     static Expr<BoolType> withoutIntermediates(Expr<BoolType> residual) {
-        Expr<BoolType> current = residual;
-        for (var d = definition(current); d != null; d = definition(current)) {
-            current =
-                    ExprUtils.simplify(
-                            BasicSubstitution.builder()
-                                    .put(d.getKey(), d.getValue())
-                                    .build()
-                                    .apply(current));
-        }
-        final List<? extends Expr<BoolType>> conjuncts =
-                current instanceof AndExpr and ? and.getOps() : List.of(current);
-        final List<Expr<BoolType>> kept = new ArrayList<>();
-        for (Expr<BoolType> conjunct : conjuncts) {
-            final Set<ConstDecl<?>> constants = ExprUtils.getConstants(conjunct);
-            if (constants.stream().noneMatch(SymbolicKeys::isIntermediate)) {
-                kept.add(conjunct);
-            } else if (constants.stream().anyMatch(SymbolicKeys::isSymbol)) {
-                throw new NotSolvableException();
+        final Set<Decl<?>> eliminated = new HashSet<>();
+        for (ConstDecl<?> c : ExprUtils.getConstants(residual))
+            if (isIntermediate(c)) eliminated.add(c);
+        return eliminate(residual, eliminated);
+    }
+
+    /**
+     * The terminal after a step: {@code joined} is the source terminal and what the relation left,
+     * satisfiable; the values the step overwrote are projected out and the next-state values become
+     * current.
+     */
+    public static Expr<BoolType> image(Expr<BoolType> joined) {
+        return images.computeIfAbsent(joined, SymbolicKeys::computeImage);
+    }
+
+    private static final Map<Expr<BoolType>, Expr<BoolType>> images = new HashMap<>();
+
+    private static Expr<BoolType> computeImage(Expr<BoolType> joined) {
+        final Set<ConstDecl<?>> constants = ExprUtils.getConstants(joined);
+        final Set<Decl<?>> targets = new HashSet<>();
+        final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
+        for (ConstDecl<?> c : constants) {
+            final Decl<?> target = written.get(c);
+            if (target != null) {
+                targets.add(target);
+                unmark.put(c, True());
             }
         }
+        Expr<BoolType> current =
+                ExprUtils.simplify(normalizeArrays(unmark.build().apply(joined), new HashMap<>()));
+        final Set<Decl<?>> eliminated = new HashSet<>();
+        for (ConstDecl<?> c : ExprUtils.getConstants(current)) {
+            if (isIntermediate(c)) eliminated.add(c);
+            else if (c instanceof IndexedConstDecl<?> ic && ic.getIndex() == 0) {
+                final Decl<?> target = targetOf(ic);
+                if (target != null && targets.contains(target)) eliminated.add(c);
+            }
+        }
+        current = eliminate(current, eliminated);
+        final BasicSubstitution.Builder bind = BasicSubstitution.builder();
+        final Set<ConstDecl<?>> used = ExprUtils.getConstants(current);
+        int next = 0;
+        for (ConstDecl<?> c : used) {
+            if (!eliminated.contains(c)) continue;
+            ConstDecl<?> name;
+            do {
+                name = boundName(next++, c.getType());
+            } while (used.contains(name));
+            bind.put(c, name.getRef());
+        }
+        for (Decl<?> target : targets) {
+            bind.put(target, ((IndexedConstDecl<?>) target).getVarDecl().getConstDecl(0).getRef());
+        }
+        final Expr<BoolType> result = ExprUtils.canonize(bind.build().apply(current));
+        return ExprUtils.getConstants(result).isEmpty() ? True() : result;
+    }
+
+    // reads and writes at literal indices resolved through write chains, writes kept in index order
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T extends Type> Expr<T> normalizeArrays(
+            Expr<T> expr, Map<Expr<?>, Expr<?>> memo) {
+        final Expr<?> cached = memo.get(expr);
+        if (cached != null) return (Expr<T>) cached;
+        Expr<?> result = expr;
+        final List<? extends Expr<?>> ops = expr.getOps();
+        if (!ops.isEmpty()) {
+            final List<Expr<?>> normalized = new ArrayList<>(ops.size());
+            boolean changed = false;
+            for (Expr<?> op : ops) {
+                final Expr<?> n = normalizeArrays(op, memo);
+                changed |= n != op;
+                normalized.add(n);
+            }
+            if (changed) result = expr.withOps(normalized);
+        }
+        if (result instanceof ArrayReadExpr read && read.getIndex() instanceof LitExpr<?> index) {
+            Expr<?> array = read.getArray();
+            Expr<?> found = null;
+            while (found == null
+                    && array instanceof ArrayWriteExpr<?, ?> write
+                    && write.getIndex() instanceof LitExpr<?> i) {
+                if (i.equals(index)) found = write.getElem();
+                else array = write.getArray();
+            }
+            if (found != null) result = found;
+            else if (array != read.getArray()) result = read.with((Expr) array, index);
+        } else if (result instanceof ArrayWriteExpr write
+                && write.getIndex() instanceof LitExpr<?>) {
+            final List<ArrayWriteExpr<?, ?>> chain = new ArrayList<>();
+            Expr<?> base = result;
+            while (base instanceof ArrayWriteExpr<?, ?> w && w.getIndex() instanceof LitExpr<?>) {
+                chain.add(w);
+                base = w.getArray();
+            }
+            final Map<Expr<?>, Expr<?>> cells =
+                    new TreeMap<>(Comparator.comparing(Object::toString));
+            for (ArrayWriteExpr<?, ?> w : chain) cells.putIfAbsent(w.getIndex(), w.getElem());
+            Expr rebuilt = base;
+            for (var cell : cells.entrySet())
+                rebuilt = ArrayWriteExpr.of(rebuilt, (Expr) cell.getKey(), (Expr) cell.getValue());
+            if (!rebuilt.equals(result)) result = rebuilt;
+        }
+        memo.put(expr, result);
+        return (Expr<T>) result;
+    }
+
+    private static Decl<?> targetOf(IndexedConstDecl<?> source) {
+        for (Decl<?> d : levels) {
+            if (d instanceof IndexedConstDecl<?> ic
+                    && ic.getIndex() > 0
+                    && ic.getVarDecl().equals(source.getVarDecl())) return d;
+        }
+        return null;
+    }
+
+    private static ConstDecl<?> boundName(int index, Type type) {
+        return boundNames.computeIfAbsent(
+                List.of(index, type), k -> Decls.Const(BOUND + index, type));
+    }
+
+    static boolean isBound(Decl<?> decl) {
+        return decl instanceof ConstDecl<?> && decl.getName().startsWith(BOUND);
+    }
+
+    /** {@code b} with its bound names renamed apart from those of {@code a}. */
+    static Expr<BoolType> renamedApart(Expr<BoolType> a, Expr<BoolType> b) {
+        final Set<ConstDecl<?>> inA = ExprUtils.getConstants(a);
+        final Set<ConstDecl<?>> inB = ExprUtils.getConstants(b);
+        final BasicSubstitution.Builder rename = BasicSubstitution.builder();
+        boolean clash = false;
+        int next = 0;
+        for (ConstDecl<?> c : inB) {
+            if (!isBound(c) || !inA.contains(c)) continue;
+            clash = true;
+            ConstDecl<?> name;
+            do {
+                name = boundName(next++, c.getType());
+            } while (inA.contains(name) || inB.contains(name));
+            rename.put(c, name.getRef());
+        }
+        return clash ? rename.build().apply(b) : b;
+    }
+
+    /**
+     * Existentially eliminates {@code eliminated} from the satisfiable {@code expr} where that is
+     * cheap: by substituting their definitions and dropping the parts that only talk about them and
+     * bound names. Leftovers stay in the result.
+     */
+    private static Expr<BoolType> eliminate(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
+        if (eliminated.isEmpty()) return expr;
+        // a definition conjunct is dropped and substituted into the others, then all is simplified
+        final List<Expr<BoolType>> remaining =
+                new ArrayList<>(expr instanceof AndExpr and ? and.getOps() : List.of(expr));
+        final Map<Expr<?>, Expr<?>> memo = new HashMap<>();
+        boolean substituted = false;
+        for (var d = definition(remaining, eliminated);
+                d != null;
+                d = definition(remaining, eliminated)) {
+            remaining.remove(d.conjunct());
+            final var sub = BasicSubstitution.builder().put(d.decl(), d.value()).build();
+            remaining.replaceAll(e -> normalizeArrays(sub.apply(e), memo));
+            substituted = true;
+        }
+        final Expr<BoolType> current =
+                substituted ? ExprUtils.simplify(And(remaining)) : And(remaining);
+        final List<? extends Expr<BoolType>> conjuncts =
+                current instanceof AndExpr and ? and.getOps() : List.of(current);
+        // conjuncts linked by shared eliminated or bound constants form one closed part, unless
+        // one of them mentions anything else
+        final int n = conjuncts.size();
+        final int[] parent = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+        final Map<Decl<?>, Integer> owner = new HashMap<>();
+        final boolean[] open = new boolean[n];
+        for (int i = 0; i < n; i++) {
+            for (ConstDecl<?> c : ExprUtils.getConstants(conjuncts.get(i))) {
+                if (eliminated.contains(c) || isBound(c)) {
+                    final Integer j = owner.putIfAbsent(c, i);
+                    if (j != null) parent[find(parent, i)] = find(parent, j);
+                } else {
+                    open[i] = true;
+                }
+            }
+        }
+        final boolean[] openRoot = new boolean[n];
+        for (int i = 0; i < n; i++) if (open[i]) openRoot[find(parent, i)] = true;
+        final List<Expr<BoolType>> kept = new ArrayList<>();
+        for (int i = 0; i < n; i++) if (openRoot[find(parent, i)]) kept.add(conjuncts.get(i));
         return And(kept);
     }
 
-    private static Map.Entry<Decl<?>, Expr<?>> definition(Expr<BoolType> expr) {
-        final List<? extends Expr<BoolType>> conjuncts =
-                expr instanceof AndExpr and ? and.getOps() : List.of(expr);
+    private static int find(int[] parent, int i) {
+        while (parent[i] != i) i = parent[i] = parent[parent[i]];
+        return i;
+    }
+
+    private record Definition(Expr<BoolType> conjunct, Decl<?> decl, Expr<?> value) {}
+
+    private static Definition definition(List<Expr<BoolType>> conjuncts, Set<Decl<?>> eliminated) {
         for (Expr<BoolType> conjunct : conjuncts) {
-            if (conjunct instanceof EqExpr<?> eq) {
-                final var left = defines(eq.getLeftOp(), eq.getRightOp());
-                if (left != null) return left;
-                final var right = defines(eq.getRightOp(), eq.getLeftOp());
-                if (right != null) return right;
+            if (!(conjunct instanceof EqExpr<?> eq)) continue;
+            for (ConstDecl<?> c : ExprUtils.getConstants(eq)) {
+                if (!eliminated.contains(c)) continue;
+                Expr<?> solved = solve(eq.getLeftOp(), eq.getRightOp(), c);
+                if (solved == null) solved = solve(eq.getRightOp(), eq.getLeftOp(), c);
+                if (solved != null) return new Definition(conjunct, c, solved);
             }
         }
         return null;
     }
 
-    private static Map.Entry<Decl<?>, Expr<?>> defines(Expr<?> lhs, Expr<?> rhs) {
-        if (lhs instanceof RefExpr<?> ref
-                && isIntermediate(ref.getDecl())
-                && !ExprUtils.getConstants(rhs).contains(ref.getDecl())) {
-            return Map.entry(ref.getDecl(), rhs);
+    // value = side, solved for c where side is c under additions, subtractions and negations
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Expr<?> solve(Expr<?> value, Expr<?> side, Decl<?> c) {
+        if (ExprUtils.getConstants(value).contains(c)) return null;
+        if (side instanceof RefExpr<?> ref && ref.getDecl().equals(c)) return value;
+        if (side instanceof AddExpr<?> add) {
+            Expr<?> withC = null;
+            final List<Expr> others = new ArrayList<>();
+            for (Expr<?> op : add.getOps()) {
+                if (ExprUtils.getConstants(op).contains(c)) {
+                    if (withC != null) return null;
+                    withC = op;
+                } else others.add(op);
+            }
+            if (withC == null) return null;
+            Expr rest = value;
+            for (Expr o : others) rest = AbstractExprs.Sub(rest, o);
+            return solve(rest, withC, c);
+        }
+        if (side instanceof SubExpr<?> sub) {
+            final boolean inLeft = ExprUtils.getConstants(sub.getLeftOp()).contains(c);
+            final boolean inRight = ExprUtils.getConstants(sub.getRightOp()).contains(c);
+            if (inLeft == inRight) return null;
+            return inLeft
+                    ? solve(
+                            AbstractExprs.Add((Expr) value, (Expr) sub.getRightOp()),
+                            sub.getLeftOp(),
+                            c)
+                    : solve(
+                            AbstractExprs.Sub((Expr) sub.getLeftOp(), (Expr) value),
+                            sub.getRightOp(),
+                            c);
+        }
+        if (side instanceof NegExpr<?> neg) {
+            return solve(AbstractExprs.Neg((Expr) value), neg.getOp(), c);
         }
         return null;
     }

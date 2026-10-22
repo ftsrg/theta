@@ -28,6 +28,7 @@ import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import java.util.List;
@@ -90,8 +91,12 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         final MddNode node = handle.getNode();
         if (!isConstrained(node)) return terminal;
         final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
-        return mddGraph.intersectionTerminal(
-                terminal, mddGraph.getNodeFor(((MddNode.Terminal<?>) node).getTerminalData()));
+        final MddNode joined =
+                mddGraph.intersectionTerminal(
+                        terminal,
+                        mddGraph.getNodeFor(((MddNode.Terminal<?>) node).getTerminalData()));
+        if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        return mddGraph.getNodeFor(SymbolicKeys.image(SymbolicKeys.leafOf(joined)));
     }
 
     @Override
