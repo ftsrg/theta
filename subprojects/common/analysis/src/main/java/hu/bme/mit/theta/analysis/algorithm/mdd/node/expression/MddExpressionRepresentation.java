@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentat
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -321,6 +322,44 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     // children of term keys, found by substitution; the explicit edges list values only
     private final Map<Integer, MddNode> termChildren = new HashMap<>();
 
+    // what an edge over symbols covers, which an enumeration excludes; a value covers itself
+    private final Map<Integer, Expr<BoolType>> covered = new HashMap<>();
+
+    private Expr<BoolType> coveredBy(int key) {
+        final Expr<BoolType> c = covered.get(key);
+        return c != null ? c : Eq(decl.getRef(), LitExprConverter.toExpr(key, decl.getType()));
+    }
+
+    private boolean isNextState() {
+        return transExpr
+                && decl instanceof IndexedConstDecl<?> constDecl
+                && constDecl.getIndex() > 0;
+    }
+
+    private void cacheTermEdge(int key, SymbolicKeys.Choice choice) {
+        covered.put(key, choice.covered());
+        if (explicitRepresentation.getCacheView().containsKey(key)) return;
+        final Expr<BoolType> childExpr =
+                choice.child() != null
+                        ? choice.child()
+                        : MddExpressionTemplate.simplify(
+                                expr, decl, choice.key(), mddVariable.getMddGraph());
+        final MddNode childNode =
+                mddVariable.getLower().isPresent()
+                        ? mddVariable
+                                .getLower()
+                                .get()
+                                .checkInNode(
+                                        MddExpressionTemplate.ofKnownSat(
+                                                childExpr, o -> (Decl) o, solverPool, transExpr))
+                        : terminalFor(childExpr);
+        if (!explicitRepresentation.isComplete()
+                && explicitRepresentation.getCacheView().defaultValue() == null
+                && !mddVariable.isNullOrZero(childNode)) {
+            cacheExploredEdge(key, childNode);
+        }
+    }
+
     @Override
     public MddNode get(int key) {
         final var cached = explicitRepresentation.getCacheView().get(key);
@@ -407,7 +446,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         }
         final var constraintExpr = strategy.toExpr(mddHandle);
 
-        return new Cursor(null, Traverser.create(this, constraintExpr, solverPool));
+        return new Cursor(null, Traverser.create(this, constraintExpr, mddHandle, solverPool));
     }
 
     @Override
@@ -532,6 +571,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         private MddExpressionRepresentation currentRepresentation;
         private final Expr<BoolType> constraint;
+        private final MddHandle lookAhead;
         private boolean constraintApplied;
 
         private final SolverPool solverPool;
@@ -546,10 +586,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         private Traverser(
                 MddExpressionRepresentation rootRepresentation,
                 Expr<BoolType> constraint,
+                MddHandle lookAhead,
                 SolverPool solverPool) {
             this.solverPool = solverPool;
             this.stack = new Stack<>();
             this.constraint = constraint;
+            this.lookAhead = lookAhead;
             this.currentRepresentation = rootRepresentation;
             this.constraintApplied = false;
         }
@@ -557,13 +599,14 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         public static Traverser create(
                 MddExpressionRepresentation rootRepresentation,
                 Expr<BoolType> constraint,
+                MddHandle lookAhead,
                 SolverPool solverPool) {
-            return new Traverser(rootRepresentation, constraint, solverPool);
+            return new Traverser(rootRepresentation, constraint, lookAhead, solverPool);
         }
 
         public static Traverser create(
                 MddExpressionRepresentation rootRepresentation, SolverPool solverPool) {
-            return new Traverser(rootRepresentation, True(), solverPool);
+            return new Traverser(rootRepresentation, True(), null, solverPool);
         }
 
         private void stopEnumeration() {
@@ -639,6 +682,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                 if (solver == null) solver = solverPool.requestSolver();
 
+                // symbolic keys are read off the path of the model, so it needs look-ahead
+                final boolean symbolicTarget =
+                        LitExprConverter.isSymbolic()
+                                && lookAhead != null
+                                && currentRepresentation.isNextState();
+
                 if (!enumerationActive) {
                     solver.push();
                     solver.add(currentRepresentation.expr);
@@ -648,13 +697,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                             .getCacheView()
                                             .cursor();
                             cur.moveNext(); ) {
-                        solver.add(
-                                Neq(
-                                        currentRepresentation.decl.getRef(),
-                                        LitExprConverter.toExpr(
-                                                cur.key(), currentRepresentation.decl.getType())));
+                        solver.add(Not(currentRepresentation.coveredBy(cur.key())));
                     }
-                    if (currentRepresentation.explicitRepresentation.getCacheView().size() >= 5) {
+                    if (symbolicTarget
+                            || currentRepresentation.explicitRepresentation.getCacheView().size()
+                                    >= 5) {
                         solver.add(constraint);
                         constraintApplied = true;
                     }
@@ -676,6 +723,30 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 if (status.isSat()) {
                     final Decl<?> decl = currentRepresentation.decl;
                     final Optional<? extends LitExpr<?>> optionalLitExpr = model.eval(decl);
+
+                    final SymbolicKeys.Choice choice =
+                            symbolicTarget && optionalLitExpr.isPresent()
+                                    ? SymbolicKeys.choose(
+                                            currentRepresentation.expr,
+                                            decl,
+                                            optionalLitExpr.get(),
+                                            model,
+                                            lookAhead,
+                                            solverPool)
+                                    : null;
+                    if (choice != null) {
+                        final int key = LitExprConverter.toInt(choice.key());
+                        currentRepresentation.cacheTermEdge(key, choice);
+                        if (!currentRepresentation
+                                .explicitRepresentation
+                                .getCacheView()
+                                .containsKey(key)) {
+                            stopEnumeration();
+                            return QueryResult.failed();
+                        }
+                        solver.add(Not(choice.covered()));
+                        return QueryResult.singleEdge(key);
+                    }
 
                     final LitExpr<?> literal;
                     final Valuation modelToCache;

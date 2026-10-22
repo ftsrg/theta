@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
@@ -158,6 +159,39 @@ class MddSymbolicValuesTest {
         error = 4,
       )
     assertEquals(Outcome.UNSAFE, outcome)
+  }
+
+  @Test
+  fun `a value computed from a symbol keeps its definition`() {
+    val events =
+      arrayOf(
+        step(0, 1, Eq(Prime(x.ref), s.ref), unchanged(y)),
+        step(1, 2, Eq(Prime(y.ref), Add(x.ref, Int(1))), unchanged(x)),
+      )
+    assertEquals(
+      Outcome.SAFE,
+      check(start, *events, step(2, 3, Neq(y.ref, Add(x.ref, Int(1))), unchanged(x, y)), error = 3),
+    )
+    assertEquals(
+      Outcome.UNSAFE,
+      check(start, *events, step(2, 3, Eq(y.ref, Int(8)), unchanged(x, y)), error = 3),
+    )
+  }
+
+  @Test
+  fun `values computed from different symbols get different names`() {
+    val w = Decls.Var("w", int)
+    val outcome =
+      check(
+        And(start, Eq(w.ref, Int(0))),
+        step(0, 1, Eq(Prime(x.ref), s.ref), unchanged(y, w)),
+        step(1, 2, Eq(Prime(y.ref), Add(x.ref, Int(1))), unchanged(x, w)),
+        step(2, 3, Eq(Prime(x.ref), t.ref), unchanged(y, w)),
+        step(3, 4, Eq(Prime(w.ref), Add(x.ref, Int(1))), unchanged(x, y)),
+        step(4, 5, Neq(Sub(y.ref, w.ref), Sub(s.ref, t.ref)), unchanged(x, y, w)),
+        error = 5,
+      )
+    assertEquals(Outcome.SAFE, outcome)
   }
 
   @Test

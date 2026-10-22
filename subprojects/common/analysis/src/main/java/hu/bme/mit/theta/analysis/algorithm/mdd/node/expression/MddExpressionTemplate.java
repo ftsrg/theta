@@ -40,12 +40,10 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -268,10 +266,8 @@ public class MddExpressionTemplate implements MddNode.Template {
             }
         }
 
-        Expr<?> determinedValue = findDeterminedValue(simplifiedExpr, decl, isNextState(decl));
-        if (determinedValue == null && definedByLower(simplifiedExpr, decl)) {
-            determinedValue = SymbolicPlaceholders.of(decl).getRef();
-        }
+        final Expr<?> determinedValue =
+                findDeterminedValue(simplifiedExpr, decl, isNextState(decl));
         if (determinedValue != null) {
             final int key = LitExprConverter.toInt(determinedValue);
 
@@ -332,39 +328,6 @@ public class MddExpressionTemplate implements MddNode.Template {
         return null;
     }
 
-    // in symbolic mode a next-state decl that a symbol can reach and that is set equal to an
-    // expression over lower levels gets a placeholder, which the relational product replaces by
-    // the terms it is bound to; others are enumerated with look-ahead as usual
-    private boolean definedByLower(Expr<BoolType> expr, Decl<?> decl) {
-        if (!isNextState(decl)
-                || !SymbolicPlaceholders.isTainted(decl)
-                || decl.getType() instanceof BoolType
-                || decl.getType() instanceof EnumType) {
-            return false;
-        }
-        final List<? extends Expr<BoolType>> conjuncts =
-                expr instanceof AndExpr and ? and.getOps() : List.of(expr);
-        for (Expr<BoolType> conjunct : conjuncts) {
-            if (conjunct instanceof EqExpr<?> eq
-                    && (definesDecl(eq.getLeftOp(), eq.getRightOp(), decl)
-                            || definesDecl(eq.getRightOp(), eq.getLeftOp(), decl))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean definesDecl(Expr<?> lhs, Expr<?> rhs, Decl<?> decl) {
-        if (!(lhs instanceof RefExpr<?> ref) || !ref.getDecl().equals(decl)) return false;
-        final var indexed =
-                ExprUtils.getConstants(rhs).stream()
-                        .filter(c -> c instanceof IndexedConstDecl<?>)
-                        .toList();
-        return !indexed.isEmpty()
-                && !indexed.contains(decl)
-                && indexed.stream().allMatch(SymbolicPlaceholders::isLevel);
-    }
-
     /**
      * The terminal for a satisfiable residual; in symbolic mode it keeps what the residual says
      * about symbols, otherwise it is {@code otherwise}.
@@ -375,7 +338,7 @@ public class MddExpressionTemplate implements MddNode.Template {
         final MddGraph<Expr> mddGraph = (MddGraph<Expr>) graph;
         if (!LitExprConverter.isSymbolic()) return mddGraph.getNodeFor(otherwise);
         final Expr<BoolType> projected =
-                ExprUtils.canonize(SymbolicPlaceholders.withoutIntermediates(residual));
+                ExprUtils.canonize(SymbolicKeys.withoutIntermediates(residual));
         return mddGraph.getNodeFor(
                 ExprUtils.getConstants(projected).isEmpty() ? True() : projected);
     }

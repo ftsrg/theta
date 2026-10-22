@@ -35,7 +35,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddApproximation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionRepresentation
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExpressionTemplate
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicPlaceholders
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddAnalysisStatistics
 import hu.bme.mit.theta.analysis.algorithm.mdd.result.MddProof
 import hu.bme.mit.theta.analysis.algorithm.mdd.trace.TraceSearch
@@ -229,7 +229,7 @@ constructor(
     val transSig = transOrder.defaultSetSignature
 
     if (symbolicValues) {
-      SymbolicPlaceholders.setLevels(
+      SymbolicKeys.setLevels(
         variableOrdering
           .flatMap {
             listOf(
@@ -252,25 +252,11 @@ constructor(
 
     logger.write(Logger.Level.INFO, "Created initial node\n")
 
-    val unfoldedExprs =
-      monolithicExpr.split.map { expr ->
-        And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
-      }
-    // steps inside a transition must not reach a path condition, where every firing shares them;
-    // only the steps of variables a symbol can reach could get there
-    val transExprs =
-      if (symbolicValues) {
-        SymbolicPlaceholders.setTainted(unfoldedExprs)
-        logger.write(
-          Logger.Level.INFO,
-          "Variables a symbol can reach: ${SymbolicPlaceholders.getTainted().size}\n",
-        )
-        unfoldedExprs.map { SymbolicPlaceholders.eliminateIntermediates(it) }
-      } else unfoldedExprs
-
     val transNodes = mutableListOf<MddHandle>()
     val descriptors = mutableListOf<AbstractNextStateDescriptor>()
-    for (transExpr in transExprs) {
+    for (expr in monolithicExpr.split) {
+      val transExpr =
+        And(PathUtils.unfold(expr, VarIndexingFactory.indexing(0)), And(identityExprs))
       val transitionNode =
         transSig.topVariableHandle.checkInNode(
           MddExpressionTemplate.of(transExpr, { it as Decl<*> }, solverPool, true)
