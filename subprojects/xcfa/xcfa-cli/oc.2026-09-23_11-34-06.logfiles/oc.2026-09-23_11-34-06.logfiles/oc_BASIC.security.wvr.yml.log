@@ -1,7 +1,0 @@
-tools/theta/theta-start.sh /home/csanad/sv-benchmarks/c/weaver/security.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property /home/csanad/sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-tools/theta/theta-start.sh: line 6: /usr/lib/jvm/java-25-openjdk-amd64/bin/java: No such file or directory

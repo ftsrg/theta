@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/weaver/security.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_5af856cf-a748-4281-9698-6316d9a3022b5068638378073948389/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5af856cf-a748-4281-9698-6316d9a3022b5068638378073948389/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/security.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5af856cf-a748-4281-9698-6316d9a3022b5068638378073948389/tools/theta/solvers
-Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker.toRefineryExpr(XcfaRefineryOcChecker.kt:460), java.lang.UnsupportedOperationException: Unsupported expression (mod _t0::call___VERIFIER_nondet_uint_ret4:2 4294967296) in refinery expression conversion.)
-Error: class java.lang.UnsupportedOperationException Unsupported expression (mod _t0::call___VERIFIER_nondet_uint_ret4:2 4294967296) in refinery expression conversion. (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr:460, hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr:434)

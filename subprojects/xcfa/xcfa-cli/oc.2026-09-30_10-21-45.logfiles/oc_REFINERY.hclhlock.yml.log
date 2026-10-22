@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/libvsync/hclhlock.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_d9e171df-fdbb-4de0-8f63-368883bb04749496656203415721996/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_d9e171df-fdbb-4de0-8f63-368883bb04749496656203415721996/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/libvsync/hclhlock.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_d9e171df-fdbb-4de0-8f63-368883bb04749496656203415721996/tools/theta/solvers
-Frontend failed! (hu.bme.mit.theta.frontend.transformation.model.statements.CCompound.addCStatement(CCompound.java:47), java.lang.NullPointerException: Cannot invoke "hu.bme.mit.theta.frontend.transformation.model.statements.CStatement.setParent(hu.bme.mit.theta.frontend.transformation.model.statements.CStatement)" because "cStatement" is null)
-Error: class java.lang.NullPointerException Cannot invoke "hu.bme.mit.theta.frontend.transformation.model.statements.CStatement.setParent(hu.bme.mit.theta.frontend.transformation.model.statements.CStatement)" because "cStatement" is null (hu.bme.mit.theta.frontend.transformation.model.statements.CCompound#addCStatement:47, hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor#visitBlockItemList:346)

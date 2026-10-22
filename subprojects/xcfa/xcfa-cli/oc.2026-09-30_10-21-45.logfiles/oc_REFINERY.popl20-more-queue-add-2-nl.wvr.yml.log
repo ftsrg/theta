@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/weaver/popl20-more-queue-add-2-nl.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_512ecb6f-312b-4912-81a1-52e41b13b27b9140195180774913147/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_512ecb6f-312b-4912-81a1-52e41b13b27b9140195180774913147/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/popl20-more-queue-add-2-nl.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_512ecb6f-312b-4912-81a1-52e41b13b27b9140195180774913147/tools/theta/solvers
-Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker.toRefineryExpr(XcfaRefineryOcChecker.kt:460), java.lang.UnsupportedOperationException: Unsupported expression (mod (+ (mod _x:1 4294967296) (mod _C:2 4294967296)) 4294967296) in refinery expression conversion.)
-Error: class java.lang.UnsupportedOperationException Unsupported expression (mod (+ (mod _x:1 4294967296) (mod _C:2 4294967296)) 4294967296) in refinery expression conversion. (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr:460, hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr:434)

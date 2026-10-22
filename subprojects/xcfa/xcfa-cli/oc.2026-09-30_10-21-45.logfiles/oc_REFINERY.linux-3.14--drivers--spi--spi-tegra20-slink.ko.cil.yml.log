@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/ldv-linux-3.14-races/linux-3.14--drivers--spi--spi-tegra20-slink.ko.cil.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_96bd0bf9-0e3f-4aba-9cb8-c2f921680d9b546621595042288223/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_96bd0bf9-0e3f-4aba-9cb8-c2f921680d9b546621595042288223/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/ldv-linux-3.14-races/linux-3.14--drivers--spi--spi-tegra20-slink.ko.cil.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_96bd0bf9-0e3f-4aba-9cb8-c2f921680d9b546621595042288223/tools/theta/solvers
-Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionMemberAccess$0(ExpressionVisitor.java:979), java.lang.IllegalStateException: Field [func] not found, available fields are: [])
-Error: class java.lang.IllegalStateException Field [func] not found, available fields are: [] (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionMemberAccess$0:979)
