@@ -75,7 +75,6 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   private fun generateMetamodel(): String {
     return """
             import builtin::strategy.
-            import builtin::theory::ibex.
             
             abstract class Event {
                 int value
