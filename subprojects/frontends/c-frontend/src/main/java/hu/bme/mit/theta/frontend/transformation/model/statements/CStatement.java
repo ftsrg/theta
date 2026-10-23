@@ -48,6 +48,10 @@ public abstract class CStatement {
         this.parseContext = parseContext;
     }
 
+    public ParseContext getParseContext() {
+        return parseContext;
+    }
+
     public String getId() {
         return id;
     }
