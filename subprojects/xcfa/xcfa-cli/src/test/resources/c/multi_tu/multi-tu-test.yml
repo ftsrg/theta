@@ -1,0 +1,4 @@
+# Multi-TU integration test: two .c files verified together
+input_files:
+  - 'file_a.c'
+  - 'file_b.c'

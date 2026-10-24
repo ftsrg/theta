@@ -1,5 +1,5 @@
 /*
- *  Copyright 2026 Budapest University of Technology and Economics
+ *  Copyright 2025 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
+import hu.bme.mit.theta.c2xcfa.getXcfaFromC as getXcfaFromCFiles
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
@@ -217,71 +218,105 @@ private fun parseC(
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
-  var input =
+  // Resolve input file(s) from .yml manifest or direct file
+  val inputs: List<File> =
     if (input.name.endsWith(".yml")) {
       try {
         val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
         if (parsedYaml is YamlMap) {
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
-              val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
-              inputFile
+              val resolved = files.items.map { Path(input.parent).resolve(it.toString()).toFile() }
+              logger.result(
+                "%s",
+                "Parsing ${resolved.size} input file(s) from ${input.name}: " +
+                  resolved.joinToString(" ") { it.name }
+              )
+              resolved
             }
             is YamlScalar -> {
               val inputFile = Path(input.parent).resolve(files.content).toFile()
               logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
-              inputFile
+              listOf(inputFile)
             }
             else -> {
               logger.info("%s", "Unexpected yml content: $files")
-              input
+              listOf(input)
             }
           }
         } else {
           logger.info("%s", "Unexpected yml content: $parsedYaml")
-          input
+          listOf(input)
         }
       } catch (ex: Exception) {
         logger.info("%s", "Could not parse YAML data: ${ex.message}")
-        input
+        listOf(input)
       }
     } else {
-      input
+      listOf(input)
     }
 
-  input =
+  // Apply cir2c transformation if enabled
+  val transformedInputs =
     if (frontendConfig.useCir2c) {
       val temp = createTempDirectory()
-      val copied = temp.resolve("input.${input.extension}").toFile()
-      var curlyBraceCount = 0
-      input.readLines().forEach { line ->
-        line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
-        val newLine =
-          if (curlyBraceCount == 0 && '{' !in line) {
-            "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
-          } else {
-            line
+
+      // Preprocess each input: fix empty parameter lists for C compatibility
+      val copiedInputs =
+        inputs.map { inputFile ->
+          val copied = temp.resolve("input_${inputFile.name}.${inputFile.extension}").toFile()
+          var curlyBraceCount = 0
+          inputFile.readLines().forEach { line ->
+            line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
+            val newLine =
+              if (curlyBraceCount == 0 && '{' !in line) {
+                "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
+              } else {
+                line
+              }
+            copied.appendText(newLine)
+            copied.appendText(System.lineSeparator())
           }
-        copied.appendText(newLine)
-        copied.appendText(System.lineSeparator())
-      }
+          copied
+        }
+
       val transformed = temp.resolve("input-transformed.c").toFile()
 
       // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
       // cir2c) and finds its own toolchain relative to the script, so we only pass the
       // source and the desired C output path.
-      "./run-cir2c.sh ${copied.absolutePath} ${transformed.absolutePath}"
-        .runCommand(frontendConfig.cir2cDir, logger)
-      transformed
+      if (copiedInputs.size == 1) {
+        // Single-file path: backward compatible
+        "./run-cir2c.sh ${copiedInputs[0].absolutePath} ${transformed.absolutePath}"
+          .runCommand(frontendConfig.cir2cDir, logger)
+      } else {
+        // Multi-file path: use C-level merge via run-cir2c.sh
+        val inputArgs = copiedInputs.joinToString(" ") { "\"${it.absolutePath}\"" }
+        "./run-cir2c.sh $inputArgs --merge c ${transformed.absolutePath}"
+          .runCommand(frontendConfig.cir2cDir, logger)
+      }
+      listOf(transformed)
     } else {
-      input
+      inputs
     }
 
+  // Parse single or multiple translation units
   val xcfaFromC =
     try {
-      val stream = FileInputStream(input)
-      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+      if (transformedInputs.size == 1) {
+        val stream = FileInputStream(transformedInputs[0])
+        getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+      } else {
+        getXcfaFromCFiles(
+            transformedInputs,
+            parseContext,
+            false,
+            property,
+            uniqueWarningLogger,
+            logger,
+          )
+          .first
+      }
     } catch (e: Throwable) {
       // The retry used to require `efficient`, which it never saw: FunctionVisitor resolves
       // `efficient` into integer or bitvector before the parse gets far enough to fail, so by the
@@ -297,9 +332,27 @@ private fun parseC(
       if (revisable) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
-        val stream = FileInputStream(input)
         val xcfa =
-          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+          if (transformedInputs.size == 1) {
+            val stream = FileInputStream(transformedInputs[0])
+            getXcfaFromC(
+              stream,
+              parseContext,
+              false,
+              property,
+              uniqueWarningLogger,
+              logger,
+            ).first
+          } else {
+            getXcfaFromCFiles(
+              transformedInputs,
+              parseContext,
+              false,
+              property,
+              uniqueWarningLogger,
+              logger,
+            ).first
+          }
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
