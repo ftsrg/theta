@@ -226,8 +226,7 @@ private fun parseC(
         if (parsedYaml is YamlMap) {
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
-              val resolved =
-                files.map { Path(input.parent).resolve(it.toString()).toFile() }
+              val resolved = files.items.map { Path(input.parent).resolve(it.toString()).toFile() }
               logger.result(
                 "%s",
                 "Parsing ${resolved.size} input file(s) from ${input.name}: " +
