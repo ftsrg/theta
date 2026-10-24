@@ -35,6 +35,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.io.InputStream
 import java.util.ArrayDeque
