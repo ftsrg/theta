@@ -102,8 +102,6 @@ fun XSTS.toRelations(): List<Relation> {
   val vars = vars.map { varChangeMap[it] ?: it }
 
   val types = vars.map { it.type }.toTypedArray()
-  // Solvers identify bound params by name, and distinct vars may share one (e.g. same-name locals),
-  // so the var's position makes each name unique.
   val oldParams = vars.withIndex().associate { (i, v) -> v to Param("|${v.name}_$i|", v.type) }
   val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
   val newParams =

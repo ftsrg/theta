@@ -36,7 +36,6 @@ public final class VarFilter {
 
     public Valuation filter(final Valuation valuation) {
         MutableValuation filteredValuation = new MutableValuation();
-        // Locals only live within one transition, so their leftover values are not state.
         for (VarDecl decl : xsts.getStateVars()) {
             Optional<LitExpr> val = valuation.eval(decl);
             if (val.isPresent()) {
