@@ -1,6 +1,12 @@
 This folder contains dependencies for Theta.
 See [Build.md](../doc/Build.md#dependencies) for more information.
 
+`mpfr_java-1.4.jar` is patched: its native `mpfr.mpz_get_str(byte[], int, mpz_t)` is declared to
+return `long` instead of `String`, because the C side returns GMP's `char *`. As a `String` that
+pointer became a bogus object reference (a GraalVM native image refuses it outright); its only
+caller, `mpfr.mpz_get_str(int, mpz_t)`, discards the value, now with `pop2`. Check it with
+`javap -p -c -cp lib/mpfr_java-1.4.jar org.kframework.mpfr.mpfr`.
+
 Z3 is licensed under the following license:
 ```
 Z3
