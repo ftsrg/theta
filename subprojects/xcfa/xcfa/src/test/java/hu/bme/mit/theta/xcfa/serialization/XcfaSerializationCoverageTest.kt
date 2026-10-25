@@ -34,6 +34,7 @@ import java.lang.reflect.Modifier
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.zip.ZipFile
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.reflect.KClass
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -56,7 +57,9 @@ class XcfaSerializationCoverageTest {
     val prefix = pkg.replace('.', '/') + "/"
     val names =
       if (root.isDirectory()) {
-        Files.walk(root).use { s -> s.map { root.relativize(it).toString() }.toList() }
+        Files.walk(root).use { s ->
+          s.map { root.relativize(it).invariantSeparatorsPathString }.toList()
+        }
       } else {
         ZipFile(root.toFile()).use { z -> z.entries().asSequence().map { it.name }.toList() }
       }
