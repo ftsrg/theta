@@ -28,7 +28,9 @@ restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Jav
 Both suites are plain JUnit (`CanarySuiteTest`, `FixtureSuiteTest`) sharing `SuiteSupport`, so they
 run wherever Gradle does. Both take `-Ptheta.canary.extraArgs="<options>"`, appended to every task
 (`--serialization-roundtrip` puts every task through the XCFA serialization a worker process sees),
-and `-Ptheta.canary.outputDir=<dir>`, which keeps each task's output there. They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself
+and `-Ptheta.canary.outputDir=<dir>`, which keeps each task's output there.
+`-Ptheta.canary.variant=Theta-svcomp-native` runs them against the native executable instead
+(which needs `-Ptheta.graalvm`, see the xcfa-cli README). They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself
 uses — and fall back to launching `theta.jar` directly where there is no POSIX shell.
 
 `canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a

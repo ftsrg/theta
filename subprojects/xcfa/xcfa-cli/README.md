@@ -21,6 +21,21 @@ example `java -jar theta-xcfa-cli.jar --input program.c --loglevel INFO` runs th
 with logging on
 the `program.c` input file.
 
+### Native executable
+
+The tool can also be built into a native executable with GraalVM's `native-image`, which starts in
+a fraction of the JVM's time and does not need a JVM to run:
+
+```
+./gradlew :theta-xcfa-cli:nativeImage -Ptheta.graalvm=<GraalVM for JDK 25>
+LD_LIBRARY_PATH=lib subprojects/xcfa/xcfa-cli/build/native/theta -Xss120m --input program.c
+```
+
+It takes the same arguments as the jar, `-X` options included. `buildArchiveTheta-svcomp-native`
+packages it like `Theta-svcomp`. Kotlin script inputs (`--input-type DSL`) and portfolios given as
+script files need the JVM. `-Ptheta.native.args` passes further options to `native-image`, e.g.
+`-J-Xmx9g` on a machine short of memory.
+
 ## Configuration
 
 <details><summary>UML Source</summary>

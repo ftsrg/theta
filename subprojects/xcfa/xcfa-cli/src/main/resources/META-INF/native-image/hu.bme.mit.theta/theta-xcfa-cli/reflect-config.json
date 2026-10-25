@@ -1,0 +1,311 @@
+[
+  {
+    "name": "[Ljava.lang.Object;"
+  },
+  {
+    "name": "android.os.Build$VERSION"
+  },
+  {
+    "name": "boolean",
+    "allDeclaredFields": true
+  },
+  {
+    "name": "byte",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "com.google.common.util.concurrent.AbstractFuture",
+    "fields": [
+      {
+        "name": "listeners"
+      },
+      {
+        "name": "value"
+      },
+      {
+        "name": "waiters"
+      }
+    ]
+  },
+  {
+    "name": "com.google.common.util.concurrent.AbstractFuture$Waiter",
+    "fields": [
+      {
+        "name": "next"
+      },
+      {
+        "name": "thread"
+      }
+    ]
+  },
+  {
+    "name": "int",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "java.io.File",
+    "allDeclaredFields": true,
+    "methods": [
+      {
+        "name": "toPath",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.lang.ClassValue"
+  },
+  {
+    "name": "java.lang.Object",
+    "methods": [
+      {
+        "name": "equals",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      },
+      {
+        "name": "hashCode",
+        "parameterTypes": []
+      },
+      {
+        "name": "toString",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.lang.String",
+    "allDeclaredFields": true,
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "java.lang.Throwable",
+    "methods": [
+      {
+        "name": "addSuppressed",
+        "parameterTypes": [
+          "java.lang.Throwable"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.lang.reflect.Method",
+    "methods": [
+      {
+        "name": "isVarArgs",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.nio.Buffer"
+  },
+  {
+    "name": "java.nio.file.Files",
+    "methods": [
+      {
+        "name": "setPosixFilePermissions",
+        "parameterTypes": [
+          "java.nio.file.Path",
+          "java.util.Set"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.nio.file.Path"
+  },
+  {
+    "name": "java.nio.file.attribute.PosixFilePermissions",
+    "methods": [
+      {
+        "name": "fromString",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.security.SecureRandomParameters"
+  },
+  {
+    "name": "java.util.concurrent.ForkJoinTask",
+    "fields": [
+      {
+        "name": "aux"
+      },
+      {
+        "name": "status"
+      }
+    ]
+  },
+  {
+    "name": "java.util.concurrent.atomic.AtomicBoolean",
+    "fields": [
+      {
+        "name": "value"
+      }
+    ]
+  },
+  {
+    "name": "java.util.concurrent.atomic.AtomicReference",
+    "fields": [
+      {
+        "name": "value"
+      }
+    ]
+  },
+  {
+    "name": "jdk.internal.misc.Unsafe"
+  },
+  {
+    "name": "kotlin.SafePublicationLazyImpl",
+    "fields": [
+      {
+        "name": "_value"
+      }
+    ]
+  },
+  {
+    "name": "kotlin.jvm.internal.DefaultConstructorMarker"
+  },
+  {
+    "name": "kotlin.reflect.jvm.internal.ReflectionFactoryImpl",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "long",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "short",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "sun.misc.Unsafe",
+    "allDeclaredFields": true
+  },
+  {
+    "name": "sun.security.provider.NativePRNG",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.security.SecureRandomParameters"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.provider.SHA",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "sun.security.provider.SHA2$SHA256",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "void",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  }
+]

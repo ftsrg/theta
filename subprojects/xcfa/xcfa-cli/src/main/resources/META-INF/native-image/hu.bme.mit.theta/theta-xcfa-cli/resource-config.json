@@ -1,0 +1,22 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\QMETA-INF/native/linux64/amd64/libmpfr_java.so\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/native/linux64/libmpfr_java.so\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+      },
+      {
+        "pattern": "\\Qhu/bme/mit/theta/xcfa/cli/serialization/xcfa-format-hash\\E"
+      }
+    ]
+  },
+  "bundles": []
+}

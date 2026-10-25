@@ -29,6 +29,7 @@ open class ArchivePackagingVariant : Serializable {
 	var taskName: String? = null                // custom task name (else buildArchive<toolName> or buildArchive)
 	var smoketestSource: File? = null           // optional smoketest path (omit if null/missing)
 	var inputSource: File? = null               // optional input.c path (omit if null/missing)
+	var nativeImage: Boolean = false            // ship the project's nativeImage output as `theta` instead of theta.jar
 }
 
 open class ArchivePackagingExtension {
@@ -74,7 +75,8 @@ afterEvaluate {
 		val readmeTemplate = v.readmeTemplate
 		val smoketestFile = v.smoketestSource
 		val inputSource = v.inputSource
-		
+		val nativeImage = v.nativeImage
+
 		// Capture layout directories at configuration time
 		val buildDirProvider = layout.buildDirectory
 		val distributionsDir = buildDirProvider.dir("distributions")
@@ -233,9 +235,17 @@ afterEvaluate {
 				if (inputSource != null && inputSource.exists()) from(inputSource) {
           rename { inputSource.name because "Aforementioned very simple problem" }
         }
-				// main jar - use provider
-				from(mainShadowProvider.map { (it as org.gradle.jvm.tasks.Jar).archiveFile }) { 
-					rename { "theta.jar" because "Executable jar file of the tool" }
+				if (nativeImage) {
+					from(tasks.named("nativeImage")) {
+						include("theta")
+						rename { "theta" because "Native executable of the tool" }
+						filePermissions { unix(0b111101101) } // 0755 in octal = rwxr-xr-x
+					}
+				} else {
+					// main jar - use provider
+					from(mainShadowProvider.map { (it as org.gradle.jvm.tasks.Jar).archiveFile }) {
+						rename { "theta.jar" because "Executable jar file of the tool" }
+					}
 				}
 				// solver cli jar - use provider
 				if (includeSolverCli && hasSolverCli) {

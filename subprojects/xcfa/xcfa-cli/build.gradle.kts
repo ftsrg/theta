@@ -55,11 +55,46 @@ dependencies {
     implementation(project(":theta-btor2-frontend"))
     implementation(project(":theta-btor2xcfa"))
     testImplementation(kotlin("script-runtime"))
+    // Only for ThetaNativeImageFeature, which native-image runs at build time.
+    compileOnly("org.graalvm.sdk:nativeimage:25.0.4")
 }
 
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
+
+// A native executable built with GraalVM's native-image, outside `build`: point -Ptheta.graalvm (or
+// GRAALVM_HOME) at a GraalVM for JDK 25; -Ptheta.native.args adds options (e.g. `--gc=G1`). How to
+// build the image is in the jar, under META-INF/native-image.
+val nativeImage by
+    tasks.registering(Exec::class) {
+        group = "build"
+        description = "Builds build/native/theta from the shadow jar with GraalVM native-image."
+        val jar = tasks.named<Jar>("shadowJar").flatMap { it.archiveFile }
+        val output = layout.buildDirectory.dir("native")
+        val graalvm =
+            providers.gradleProperty("theta.graalvm").orElse(providers.environmentVariable("GRAALVM_HOME"))
+        val extraArgs = providers.gradleProperty("theta.native.args").orElse("")
+        inputs.file(jar)
+        inputs.property("extraArgs", extraArgs)
+        outputs.dir(output)
+        doFirst {
+            check(graalvm.isPresent) { "Set -Ptheta.graalvm or GRAALVM_HOME to a GraalVM installation" }
+            executable = graalvm.get() + "/bin/native-image"
+            args(
+                listOf(
+                    "-jar",
+                    jar.get().asFile.absolutePath,
+                    "-o",
+                    output
+                        .get()
+                        .file("theta")
+                        .asFile.absolutePath,
+                ) +
+                    extraArgs.get().split(' ').filter { it.isNotBlank() },
+            )
+        }
+    }
 
 // The hash an XCFA file starts with (XcfaSerialization.computeFormatHash). Computing it loads every
 // serialized class, so it is done once here and shipped as a resource next to XcfaFiles.
@@ -91,6 +126,16 @@ archivePackaging {
         inputSource = file("src/main/resources/archive-packaging/input.c")
     }
     variant {
+        toolName = "Theta-svcomp-native"
+        inputFlags = "--svcomp --portfolio STABLE"
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+        scriptName = "theta-start-native.sh"
+        nativeImage = true
+    }
+    variant {
         toolName = "EmergenTheta-svcomp"
         inputFlags = "--svcomp --portfolio EMERGENT"
         solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12")
@@ -119,6 +164,9 @@ archivePackaging {
 // this Gradle judges the test up to date after the list changes, which is exactly when it matters.
 tasks.test { inputs.file("build.gradle.kts") }
 
+// The distribution both suites run, e.g. -Ptheta.canary.variant=Theta-svcomp-native.
+val canaryVariant = (findProperty("theta.canary.variant") ?: "Theta-svcomp").toString()
+
 // Options both suites take: extra arguments for every task, and a directory to keep each output in.
 fun Test.canaryRunOptions() {
     for (name in listOf("theta.canary.extraArgs", "theta.canary.outputDir")) {
@@ -146,7 +194,7 @@ val canaryTest by
 
         // The suite needs the packaged distribution, not just the classes. Referenced by name
         // because the archive-packaging plugin registers its variants after this block is evaluated.
-        dependsOn("buildArchiveTheta-svcomp")
+        dependsOn("buildArchive$canaryVariant")
         // The filter below matches a compiled class, so the test classes have to exist even when
         // this task is invoked on its own; without it the task can fail with "No tests found".
         dependsOn(tasks.named("testClasses"))
@@ -161,7 +209,7 @@ val canaryTest by
         systemProperty(
             "theta.canary.dist",
             layout.buildDirectory
-                .dir("distributions/Theta-svcomp")
+                .dir("distributions/$canaryVariant")
                 .get()
                 .asFile.absolutePath,
         )
@@ -206,7 +254,7 @@ val fixtureTest by
         classpath = sourceSets["test"].runtimeClasspath
         filter { includeTestsMatching("*FixtureSuiteTest*") }
 
-        dependsOn("buildArchiveTheta-svcomp")
+        dependsOn("buildArchive$canaryVariant")
         dependsOn(tasks.named("testClasses"))
 
         systemProperty(
@@ -219,7 +267,7 @@ val fixtureTest by
         systemProperty(
             "theta.canary.dist",
             layout.buildDirectory
-                .dir("distributions/Theta-svcomp")
+                .dir("distributions/$canaryVariant")
                 .get()
                 .asFile.absolutePath,
         )

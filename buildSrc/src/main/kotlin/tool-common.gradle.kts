@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ val shadowJar = tasks.withType<ShadowJar> {
     }
     isZip64 = true
     entryCompression = ZipEntryCompression.DEFLATED
+    // jline's native-image metadata names files that shading drops, which aborts a native build.
+    exclude("META-INF/native-image/org.jline/**")
 }
 
 tasks.register("prepareDockerDistribution") {
