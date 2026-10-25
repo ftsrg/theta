@@ -93,13 +93,15 @@ allprojects {
 
 sonar {
     properties {
+        val mergedReport =
+            "${project.layout.buildDirectory.asFile.get()}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
         property("sonar.projectKey", "ftsrg_theta")
         property("sonar.organization", "ftsrg-github")
         property("sonar.host.url", "https://sonarcloud.io")
-        property(
-            "sonar.coverage.jacoco.xmlReportPaths",
-            "${project.layout.buildDirectory.asFile.get()}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
-        )
+        property("sonar.coverage.jacoco.xmlReportPaths", mergedReport)
+        // Each module's xmlReportPaths is overridden with its own report, so cross-module coverage
+        // only reaches Sonar through the project-level aggregate report.
+        property("sonar.coverage.jacoco.aggregateXmlReportPaths", mergedReport)
         property(
             "sonar.cpd.exclusions",
             "subprojects/xcfa/xcfa-cli/src/main/java/hu/bme/mit/theta/xcfa/cli/portfolio/**"
