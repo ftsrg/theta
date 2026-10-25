@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package hu.bme.mit.theta.analysis.utils
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.common.visualization.Color
 import hu.bme.mit.theta.common.visualization.EdgeAttributes
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.LineStyle
 import hu.bme.mit.theta.common.visualization.NodeAttributes
-import java.awt.Color
 
 /**
  * This class visualizes not single traces, but a group of traces, connected by trace metadata. The

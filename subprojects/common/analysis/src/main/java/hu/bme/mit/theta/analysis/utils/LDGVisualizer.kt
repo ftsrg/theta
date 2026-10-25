@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.visualization.*
 import hu.bme.mit.theta.common.visualization.Alignment.LEFT
+import hu.bme.mit.theta.common.visualization.Color
 import hu.bme.mit.theta.common.visualization.Shape.RECTANGLE
-import java.awt.Color
 
 class AsgVisualizer<S : ExprState, A : ExprAction>(
   private val stateToString: (S) -> String,
