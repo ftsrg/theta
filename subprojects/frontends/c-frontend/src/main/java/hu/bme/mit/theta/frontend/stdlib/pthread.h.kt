@@ -96,7 +96,7 @@ __uint64_identity (__uint64_t __x)
 {
   return __x;
 }
-typedef unsigned int size_t;
+typedef long unsigned int size_t;
 typedef __time_t time_t;
 struct timespec
 {
