@@ -36,10 +36,10 @@ import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallLock;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,23 +47,23 @@ public final class SmtLibSolverManager extends SolverManager {
 
     public static final Path HOME = Path.of(System.getProperty("user.home"), ".theta");
 
-    private static final Map<String, Class<? extends SmtLibSolverInstaller>> installerDeclarations =
-            new HashMap<>();
-    private static Tuple2<String, Class<? extends GenericSmtLibSolverInstaller>>
+    private static final Map<String, Function<Logger, ? extends SmtLibSolverInstaller>>
+            installerDeclarations = new HashMap<>();
+    private static Tuple2<String, Function<Logger, ? extends GenericSmtLibSolverInstaller>>
             genericInstallerDeclaration;
 
     static {
-        registerInstaller("z3", Z3SmtLibSolverInstaller.class);
-        registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
-        registerInstaller("cvc5", CVC5SmtLibSolverInstaller.class);
-        registerInstaller("mathsat", MathSATSmtLibSolverInstaller.class);
-        registerInstaller("boolector", BoolectorSmtLibSolverInstaller.class);
-        registerInstaller("bitwuzla", BitwuzlaSmtLibSolverInstaller.class);
-        registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
-        registerInstaller("princess", PrincessSmtLibSolverInstaller.class);
-        registerInstaller("eldarica", EldaricaSmtLibSolverInstaller.class);
-        registerInstaller("golem", GolemSmtLibSolverInstaller.class);
-        registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
+        registerInstaller("z3", Z3SmtLibSolverInstaller::new);
+        registerInstaller("cvc4", CVC4SmtLibSolverInstaller::new);
+        registerInstaller("cvc5", CVC5SmtLibSolverInstaller::new);
+        registerInstaller("mathsat", MathSATSmtLibSolverInstaller::new);
+        registerInstaller("boolector", BoolectorSmtLibSolverInstaller::new);
+        registerInstaller("bitwuzla", BitwuzlaSmtLibSolverInstaller::new);
+        registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller::new);
+        registerInstaller("princess", PrincessSmtLibSolverInstaller::new);
+        registerInstaller("eldarica", EldaricaSmtLibSolverInstaller::new);
+        registerInstaller("golem", GolemSmtLibSolverInstaller::new);
+        registerGenericInstaller("generic", GenericSmtLibSolverInstaller::new);
     }
 
     private final Path home;
@@ -78,55 +78,35 @@ public final class SmtLibSolverManager extends SolverManager {
 
         this.home = home;
 
-        try {
-            this.genericInstaller =
-                    Tuple2.of(
-                            genericInstallerDeclaration.get1(),
-                            genericInstallerDeclaration
-                                    .get2()
-                                    .getDeclaredConstructor(Logger.class)
-                                    .newInstance(logger));
+        this.genericInstaller =
+                Tuple2.of(
+                        genericInstallerDeclaration.get1(),
+                        genericInstallerDeclaration.get2().apply(logger));
 
-            this.installers =
-                    Stream.concat(
-                                    Stream.of(this.genericInstaller),
-                                    installerDeclarations.entrySet().stream()
-                                            .map(
-                                                    p -> {
-                                                        try {
-                                                            return Tuple2.of(
-                                                                    p.getKey(),
-                                                                    p.getValue()
-                                                                            .getDeclaredConstructor(
-                                                                                    Logger.class)
-                                                                            .newInstance(logger));
-                                                        } catch (InstantiationException
-                                                                | IllegalAccessException
-                                                                | InvocationTargetException
-                                                                | NoSuchMethodException e) {
-                                                            throw new RuntimeException(e);
-                                                        }
-                                                    }))
-                            .collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2));
-        } catch (InstantiationException
-                | InvocationTargetException
-                | NoSuchMethodException
-                | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        this.installers =
+                Stream.concat(
+                                Stream.of(this.genericInstaller),
+                                installerDeclarations.entrySet().stream()
+                                        .map(
+                                                p ->
+                                                        Tuple2.of(
+                                                                p.getKey(),
+                                                                p.getValue().apply(logger))))
+                        .collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2));
 
         this.instantiatedSolvers = new HashSet<>();
     }
 
-    public static <T extends SmtLibSolverInstaller> void registerInstaller(
-            final String name, final Class<T> decl) {
-        installerDeclarations.put(name, decl);
+    public static void registerInstaller(
+            final String name, final Function<Logger, ? extends SmtLibSolverInstaller> factory) {
+        installerDeclarations.put(name, factory);
     }
 
-    public static <T extends GenericSmtLibSolverInstaller> void registerGenericInstaller(
-            final String name, final Class<T> decl) {
+    public static void registerGenericInstaller(
+            final String name,
+            final Function<Logger, ? extends GenericSmtLibSolverInstaller> factory) {
         checkState(genericInstallerDeclaration == null);
-        genericInstallerDeclaration = Tuple2.of(name, decl);
+        genericInstallerDeclaration = Tuple2.of(name, factory);
     }
 
     public static String getSolverName(final String name) {
