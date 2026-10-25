@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
-import com.zaxxer.nuprocess.NuProcessBuilder;
+import hu.bme.mit.theta.common.process.NuProcesses;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -71,12 +71,8 @@ public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
             processCmd.addAll(Arrays.asList(args));
             processCmd.add(file.getAbsolutePath());
 
-            final var solverProcessBuilder = new NuProcessBuilder(processCmd);
-            solverProcessBuilder.environment().putAll(env);
             final var handler = new ProcessHandler();
-            solverProcessBuilder.setProcessListener(handler);
-
-            final var proc = solverProcessBuilder.start();
+            final var proc = NuProcesses.start(processCmd, handler, env);
 
             proc.waitFor(0, TimeUnit.SECONDS);
 
