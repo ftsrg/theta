@@ -59,7 +59,8 @@ internal object SuiteSupport {
         }
       }
     }
-    if (!File(distDir, "theta.jar").isFile) return null
+    // A native distribution has the executable `theta` instead of the jar.
+    if (!File(distDir, "theta.jar").isFile && !File(distDir, "theta").isFile) return null
     distDir
       .walkTopDown()
       .filter { it.isFile }
