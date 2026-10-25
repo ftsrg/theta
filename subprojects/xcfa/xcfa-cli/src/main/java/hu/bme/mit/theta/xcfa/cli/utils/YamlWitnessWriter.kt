@@ -55,6 +55,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -641,7 +642,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             lastState.xcfa,
             lastState.processes,
             PtrState(lastState.sGlobal),
-            lastState.mutexes,
+            lastState.mutexState,
             lastState.threadLookup,
             lastState.bottom,
           ),
@@ -1310,5 +1311,6 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
         }
     return invs
   }
+  if (this is DssInvariants) return toContent(inputFile, parseContext)
   return listOf()
 }

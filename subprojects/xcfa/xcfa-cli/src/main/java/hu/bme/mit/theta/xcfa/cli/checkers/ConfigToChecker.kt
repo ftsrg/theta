@@ -40,7 +40,7 @@ fun getSafetyChecker(
   uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(config, logger)
   } else {
     xcfa!!
     mcm!!
@@ -70,6 +70,7 @@ fun getSafetyChecker(
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger, parseContext)
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
       Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
+      Backend.DSS -> getDssChecker(xcfa, mcm, config, parseContext, logger)
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"
@@ -86,7 +87,7 @@ fun getChecker(
   uniqueLogger: Logger,
 ): Checker<*, XcfaPrec<*>> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(xcfa, config, parseContext, logger)
+    InProcessChecker(config, logger)
   } else {
     when (config.backendConfig.backend) {
       Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config, logger)

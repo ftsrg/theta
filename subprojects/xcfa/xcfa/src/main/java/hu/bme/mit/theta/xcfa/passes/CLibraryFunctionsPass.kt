@@ -78,6 +78,9 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       "pthread_cond_signal",
       "pthread_cond_broadcast",
       "pthread_mutex_init",
+      "pthread_mutexattr_init",
+      "pthread_mutexattr_settype",
+      "pthread_mutexattr_destroy",
       "pthread_cond_init",
       "pthread_exit",
       "pthread_key_create",
@@ -246,6 +249,25 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 addSeq(listOf(MutexUnlockLabel(handle, metadata), MutexLockLabel(handle, metadata)))
               }
 
+              "pthread_mutex_init",
+              "pthread_mutexattr_init",
+              "pthread_mutexattr_settype",
+              "pthread_mutexattr_destroy" -> {
+                invokeLabel.markSyncParam(1)
+                if (invokeLabel.name == "pthread_mutex_init") invokeLabel.markSyncParam(2)
+                invokeLabel.isLibraryFunction = true
+                addSeq(
+                  listOf(
+                    invokeLabel,
+                    AssignStmtLabel(
+                      invokeLabel.params[0] as RefExpr<*>,
+                      zeroOf(invokeLabel.params[0]),
+                      metadata,
+                    ),
+                  )
+                )
+              }
+
               // Detaching only makes a thread unjoinable; it neither starts nor stops it, so it
               // has no effect on what may race. Left unmodelled it survived as a call to a
               // procedure that does not exist and brought down the race analysis' own procedure
@@ -255,7 +277,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               "pthread_detach",
               "pthread_cond_broadcast", // No need for special handling due to spurious wakeup
               "pthread_cond_signal", // No need for special handling due to spurious wakeup
-              "pthread_mutex_init",
               "pthread_cond_init" -> {
                 // the mutex/condition object (non-scalar source type)
                 invokeLabel.markSyncParam(1)

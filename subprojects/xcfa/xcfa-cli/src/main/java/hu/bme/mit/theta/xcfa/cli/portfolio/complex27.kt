@@ -61,10 +61,10 @@ fun complex27(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
+  var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseIc3Config = baseIc3Config(portfolioConfig)
 
   fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
     fun cegar(
@@ -140,7 +140,6 @@ fun complex27(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -157,7 +156,6 @@ fun complex27(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -180,7 +178,6 @@ fun complex27(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = baseMddConfig.backendConfig.specConfig!!.copy(solver = solver),
             )
         ),
@@ -196,7 +193,6 @@ fun complex27(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig =
                 baseMddConfig.backendConfig.specConfig!!.copy(cegar = true, solver = solver),
             )
@@ -245,7 +241,7 @@ fun complex27(
               inputType = InputType.C,
               specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
             ),
-          backendConfig = adapted.backendConfig.copy(parseInProcess = true),
+          backendConfig = adapted.backendConfig,
           outputConfig = baseCegarConfig.outputConfig,
           debugConfig = portfolioConfig.debugConfig,
         ),

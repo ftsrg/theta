@@ -17,7 +17,6 @@
 
 package hu.bme.mit.theta.xcfa.cli.params
 
-import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
@@ -72,14 +71,12 @@ import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectAssumes
 import hu.bme.mit.theta.xcfa.utils.collectVars
-import java.lang.reflect.Type
 import java.util.function.Predicate
 import kotlin.random.Random
 
 enum class InputType {
   C,
   LLVM,
-  JSON,
   DSL,
   CHC,
   LITMUS,
@@ -104,6 +101,7 @@ enum class Backend {
   MDD,
   MDD_CEGAR,
   IC3,
+  DSS,
   NONE,
 }
 
@@ -169,7 +167,6 @@ enum class Domain(
   val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
   val partialOrd: (Solver) -> PartialOrd<out PtrState<out ExprState>>,
   val nodePruner: NodePruner<out ExprState, out ExprAction>,
-  val stateType: Type,
 ) {
 
   EXPL(
@@ -216,7 +213,6 @@ enum class Domain(
     initPrec = { x, ip -> ip.explPrec(x) },
     partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) }.getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<ExplState>>, XcfaAction>(),
-    stateType = TypeToken.get(ExplState::class.java).type,
   ),
   PRED_BOOL(
     asgAbstractor = {
@@ -269,7 +265,6 @@ enum class Domain(
     initPrec = { x, ip -> ip.predPrec(x) },
     partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
-    stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_CART(
     asgAbstractor = {
@@ -322,7 +317,6 @@ enum class Domain(
     initPrec = { x, ip -> ip.predPrec(x) },
     partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
-    stateType = TypeToken.get(PredState::class.java).type,
   ),
   PRED_SPLIT(
     asgAbstractor = {
@@ -375,7 +369,6 @@ enum class Domain(
     initPrec = { x, ip -> ip.predPrec(x) },
     partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
-    stateType = TypeToken.get(PredState::class.java).type,
   ),
   EXPL_PRED_SPLIT(
     asgAbstractor = {
@@ -436,7 +429,6 @@ enum class Domain(
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
-    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   EXPL_PRED_STMT(
     asgAbstractor = {
@@ -497,7 +489,6 @@ enum class Domain(
     },
     nodePruner =
       AtomicNodePruner<XcfaState<PtrState<Prod2State<ExplState, PredState>>>, XcfaAction>(),
-    stateType = TypeToken.get(Prod2State::class.java).type,
   ),
   UNIT(
     asgAbstractor = {
@@ -542,7 +533,6 @@ enum class Domain(
     initPrec = { _, _ -> XcfaPrec(PtrPrec(UnitPrec.getInstance())) },
     partialOrd = { UnitAnalysis.getInstance().partialOrd.getPtrPartialOrd() },
     nodePruner = AtomicNodePruner<XcfaState<PtrState<UnitState>>, XcfaAction>(),
-    stateType = TypeToken.get(UnitState::class.java).type,
   ),
 }
 
