@@ -78,3 +78,5 @@ unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop vari
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
+size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
+size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64

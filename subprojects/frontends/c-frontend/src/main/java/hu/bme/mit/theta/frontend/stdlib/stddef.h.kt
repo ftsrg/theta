@@ -17,6 +17,6 @@ package hu.bme.mit.theta.frontend.stdlib
 
 internal val stddef_h =
   """
-typedef unsigned size_t;
+typedef long unsigned int size_t;
 """
     .trimIndent()
