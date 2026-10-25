@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.common.NativeImage
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.process.NuProcesses
 import hu.bme.mit.theta.frontend.ParseContext
@@ -103,7 +104,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
     // A native image is its own launcher: it has no class path, and takes the same -X options.
     val mainClass =
-      if (NuProcesses.inNativeImage) emptyList()
+      if (NativeImage.running) emptyList()
       else
         listOf(
           "-cp",

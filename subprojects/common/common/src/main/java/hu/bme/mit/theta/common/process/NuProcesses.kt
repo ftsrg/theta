@@ -18,6 +18,7 @@ package hu.bme.mit.theta.common.process
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
 import com.zaxxer.nuprocess.NuProcessHandler
+import hu.bme.mit.theta.common.NativeImage
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
@@ -29,9 +30,6 @@ import kotlin.concurrent.thread
  */
 object NuProcesses {
 
-  @JvmField
-  val inNativeImage: Boolean = System.getProperty("org.graalvm.nativeimage.imagecode") == "runtime"
-
   @JvmStatic
   @JvmOverloads
   fun start(
@@ -39,7 +37,7 @@ object NuProcesses {
     handler: NuProcessHandler,
     environment: Map<String, String> = emptyMap(),
   ): NuProcess? =
-    if (inNativeImage) PlainProcess(command, environment, handler)
+    if (NativeImage.running) PlainProcess(command, environment, handler)
     else
       NuProcessBuilder(command)
         .also {
