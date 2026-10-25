@@ -983,51 +983,29 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
         } else if (ctx.typeName() != null) {
-            final Optional<CComplexType> type =
-                    typedefVisitor
-                            .getType(ctx.typeName().getText())
-                            .or(
-                                    () ->
-                                            Optional.ofNullable(
-                                                    CComplexType.getType(
-                                                            ctx.typeName().getText(),
-                                                            parseContext)))
-                            .or(
-                                    () ->
-                                            parseContext
-                                                    .getMetadata()
-                                                    .getMetadataValue(
-                                                            ctx.typeName().getText(),
-                                                            "cTypedefName")
-                                                    .map(it -> (CComplexType) it))
-                            .or(
-                                    () ->
-                                            Optional.ofNullable(getVar(ctx.typeName().getText()))
-                                                    .map(
-                                                            v ->
-                                                                    CComplexType.getType(
-                                                                            v.getRef(),
-                                                                            parseContext)))
-                            // struct/union/enum tags (e.g. "sizeof(struct node)") aren't typedef
-                            // names, builtin keywords, or variables, so none of the lookups above
-                            // find them; resolve the tag through the type visitor instead.
-                            .or(
-                                    () -> {
-                                        try {
-                                            CSimpleType simpleType =
-                                                    ctx.typeName()
-                                                            .specifierQualifierList()
-                                                            .accept(typeVisitor);
-                                            return Optional.ofNullable(simpleType)
-                                                    .map(CSimpleType::getActualType);
-                                        } catch (RuntimeException e) {
-                                            return Optional.empty();
-                                        }
-                                    });
+            final TypeNameContext typeName = ctx.typeName();
+            // The lookups below only know the type before an array suffix, so `T[N][M]` is sized
+            // as T and then multiplied by the dimensions.
+            final List<Integer> dimensions = arrayDimensions(typeName.abstractDeclarator());
+            final Optional<CComplexType> type;
+            if (dimensions == null) {
+                type = typeNameType(typeName.getText(), typeName.specifierQualifierList());
+            } else if (typeName.abstractDeclarator().pointer() != null) {
+                // an array of pointers; every pointer is as wide as `unsigned long`
+                type = Optional.of(CComplexType.getUnsignedLong(parseContext));
+            } else {
+                type =
+                        typeNameType(
+                                typeName.specifierQualifierList().getText(),
+                                typeName.specifierQualifierList());
+            }
 
             if (type.isPresent()) {
-                LitExpr<?> value =
-                        CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type.get()));
+                long size = sizeOf(type.get());
+                for (int dimension : dimensions == null ? List.<Integer>of() : dimensions) {
+                    size *= dimension;
+                }
+                LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + size);
                 return value;
             } else {
                 uniqueWarningLogger.write(
@@ -1046,6 +1024,69 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
             return value;
         }
+    }
+
+    private Optional<CComplexType> typeNameType(
+            String text, SpecifierQualifierListContext specifierQualifierList) {
+        return typedefVisitor
+                .getType(text)
+                .or(() -> Optional.ofNullable(CComplexType.getType(text, parseContext)))
+                .or(
+                        () ->
+                                parseContext
+                                        .getMetadata()
+                                        .getMetadataValue(text, "cTypedefName")
+                                        .map(it -> (CComplexType) it))
+                .or(
+                        () ->
+                                Optional.ofNullable(getVar(text))
+                                        .map(v -> CComplexType.getType(v.getRef(), parseContext)))
+                // struct/union/enum tags (e.g. "sizeof(struct node)") aren't typedef
+                // names, builtin keywords, or variables, so none of the lookups above
+                // find them; resolve the tag through the type visitor instead.
+                .or(
+                        () -> {
+                            try {
+                                CSimpleType simpleType = specifierQualifierList.accept(typeVisitor);
+                                return Optional.ofNullable(simpleType)
+                                        .map(CSimpleType::getActualType);
+                            } catch (RuntimeException e) {
+                                return Optional.empty();
+                            }
+                        });
+    }
+
+    /**
+     * The dimensions of an abstract declarator that only appends constant array suffixes (`[2][3]`,
+     * `*[4]`), or null for any other shape: none at all, a parenthesized or function declarator, or
+     * a dimension that does not fold to a constant.
+     */
+    private List<Integer> arrayDimensions(AbstractDeclaratorContext ctx) {
+        if (ctx == null || ctx.directAbstractDeclarator() == null) {
+            return null;
+        }
+        final List<Integer> dimensions = new ArrayList<>();
+        for (DirectAbstractDeclaratorContext suffix = ctx.directAbstractDeclarator();
+                suffix != null;
+                suffix = suffix.directAbstractDeclarator()) {
+            if (suffix.assignmentExpression() == null || suffix.abstractDeclarator() != null) {
+                return null;
+            }
+            try {
+                final Expr<?> folded =
+                        ExprUtils.simplify(suffix.assignmentExpression().accept(this));
+                if (folded instanceof IntLitExpr intLit) {
+                    dimensions.add(intLit.getValue().intValueExact());
+                } else if (folded instanceof BvLitExpr bvLit) {
+                    dimensions.add(BvUtils.neutralBvLitExprToBigInteger(bvLit).intValueExact());
+                } else {
+                    return null;
+                }
+            } catch (RuntimeException e) {
+                return null;
+            }
+        }
+        return dimensions;
     }
 
     /**
