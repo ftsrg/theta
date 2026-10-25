@@ -49,7 +49,8 @@ runs:
         done
         cat "$XML"
 
-        folder=$(dirname $(find . -name "theta.jar" | head -n1))
+        # The unpacked archive: the jar, or the native executable for the native variants.
+        folder=$(dirname $(find . -path ./.git -prune -o \( -name theta.jar -o -name theta -type f \) -print | head -n1))
         timeout -k 60 3600 benchexec "$XML" --no-container --tool-directory "$folder" | tee -a $GITHUB_STEP_SUMMARY
     - name: Upload results
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2

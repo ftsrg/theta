@@ -57,20 +57,27 @@ find_suitable_java() {
 # Main script logic
 # ----------------------------------------
 
+# The native executable when the archive ships one, otherwise the jar on a suitable JVM. Both take
+# the same arguments, -X options included.
+if [[ -x "$scriptdir/theta" ]]; then
+    THETA=("$scriptdir/theta" -Xss120m -Xmx14210m)
+elif [[ "${1:-}" == "--version" ]]; then
+    THETA=(java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar")
+else
+    JAVA_BIN=$(find_suitable_java) || print_error "No suitable Java (>= $MIN_JAVA_VERSION) found."
+    echo "Using Java: $JAVA_BIN (version $(get_java_version "$JAVA_BIN"))"
+    THETA=("$JAVA_BIN" -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar")
+fi
+
 if [[ "${1:-}" == "--version" ]]; then
-    LD_LIBRARY_PATH="$scriptdir/lib" java -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" --version \
-        || echo "$VERIFIER_VERSION"
+    LD_LIBRARY_PATH="$scriptdir/lib" "${THETA[@]}" --version || echo "$VERIFIER_VERSION"
     exit 0
 fi
 
-JAVA_BIN=$(find_suitable_java) || print_error "No suitable Java (>= $MIN_JAVA_VERSION) found."
-
-echo "Using Java: $JAVA_BIN (version $(get_java_version "$JAVA_BIN"))"
-
 echo "Verifying input '$input_file' using arguments '${@:2}'"
 
-echo LD_LIBRARY_PATH="$scriptdir/lib" "$JAVA_BIN" -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+echo LD_LIBRARY_PATH="$scriptdir/lib" "${THETA[@]}" \
     "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"
 
-LD_LIBRARY_PATH="$scriptdir/lib" "$JAVA_BIN" -Xss120m -Xmx14210m -jar "$scriptdir/theta.jar" \
+LD_LIBRARY_PATH="$scriptdir/lib" "${THETA[@]}" \
     "${@:2}" --input "$input_file" --smt-home "$scriptdir/solvers"

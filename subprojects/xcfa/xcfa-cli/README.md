@@ -31,10 +31,12 @@ a fraction of the JVM's time and does not need a JVM to run:
 LD_LIBRARY_PATH=lib subprojects/xcfa/xcfa-cli/build/native/theta -Xss120m --input program.c
 ```
 
-It takes the same arguments as the jar, `-X` options included. `buildArchiveTheta-svcomp-native`
-packages it like `Theta-svcomp`. Kotlin script inputs (`--input-type DSL`) and portfolios given as
-script files need the JVM. `-Ptheta.native.args` passes further options to `native-image`, e.g.
-`-J-Xmx9g` on a machine short of memory.
+It takes the same arguments as the jar, `-X` options included. The `Theta-svcomp`,
+`EmergenTheta-svcomp` and `Thorn-svcomp` archives ship it instead of `theta.jar`, so building them
+needs a GraalVM (`-Ptheta.graalvm` or `GRAALVM_HOME`); their `theta-start.sh` runs `theta` when
+present and falls back to `theta.jar` otherwise. Kotlin script inputs (`--input-type DSL`) and
+portfolios given as script files need the JVM. `-Ptheta.native.args` passes further options to
+`native-image`, e.g. `-J-Xmx9g` on a machine short of memory.
 
 Prefer Oracle GraalVM (free to use and redistribute under the GraalVM Free Terms and Conditions)
 with its default serial GC: it produces a faster executable than the Community Edition. For a

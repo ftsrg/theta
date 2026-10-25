@@ -124,15 +124,6 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
-    }
-    variant {
-        toolName = "Theta-svcomp-native"
-        inputFlags = "--svcomp --portfolio STABLE"
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
-        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
-        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
-        inputSource = file("src/main/resources/archive-packaging/input.c")
-        scriptName = "theta-start-native.sh"
         nativeImage = true
     }
     variant {
@@ -142,6 +133,7 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
+        nativeImage = true
     }
     variant {
         toolName = "Thorn-svcomp"
@@ -150,6 +142,7 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
+        nativeImage = true
     }
     variant {
         toolName = "Theta-chccomp"
@@ -163,9 +156,6 @@ archivePackaging {
 // PackagedSolverTest reads the solver lists out of this file, so it is a test input: without
 // this Gradle judges the test up to date after the list changes, which is exactly when it matters.
 tasks.test { inputs.file("build.gradle.kts") }
-
-// The distribution both suites run, e.g. -Ptheta.canary.variant=Theta-svcomp-native.
-val canaryVariant = (findProperty("theta.canary.variant") ?: "Theta-svcomp").toString()
 
 // Options both suites take: extra arguments for every task, and a directory to keep each output in.
 fun Test.canaryRunOptions() {
@@ -194,7 +184,7 @@ val canaryTest by
 
         // The suite needs the packaged distribution, not just the classes. Referenced by name
         // because the archive-packaging plugin registers its variants after this block is evaluated.
-        dependsOn("buildArchive$canaryVariant")
+        dependsOn("buildArchiveTheta-svcomp")
         // The filter below matches a compiled class, so the test classes have to exist even when
         // this task is invoked on its own; without it the task can fail with "No tests found".
         dependsOn(tasks.named("testClasses"))
@@ -209,7 +199,7 @@ val canaryTest by
         systemProperty(
             "theta.canary.dist",
             layout.buildDirectory
-                .dir("distributions/$canaryVariant")
+                .dir("distributions/Theta-svcomp")
                 .get()
                 .asFile.absolutePath,
         )
@@ -254,7 +244,7 @@ val fixtureTest by
         classpath = sourceSets["test"].runtimeClasspath
         filter { includeTestsMatching("*FixtureSuiteTest*") }
 
-        dependsOn("buildArchive$canaryVariant")
+        dependsOn("buildArchiveTheta-svcomp")
         dependsOn(tasks.named("testClasses"))
 
         systemProperty(
@@ -267,7 +257,7 @@ val fixtureTest by
         systemProperty(
             "theta.canary.dist",
             layout.buildDirectory
-                .dir("distributions/$canaryVariant")
+                .dir("distributions/Theta-svcomp")
                 .get()
                 .asFile.absolutePath,
         )

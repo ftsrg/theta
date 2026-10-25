@@ -13,8 +13,9 @@ after, or it guards nothing.
 
 Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
 full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing and
-restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Java 21+ must be on
-`PATH`.
+restores the execute bits a zip cannot carry. That archive ships the native executable, so building
+it needs a GraalVM (`-Ptheta.graalvm=<home>` or `GRAALVM_HOME`, see the xcfa-cli README); running
+the suites on an existing archive (`-x buildArchiveTheta-svcomp`) needs only Gradle's JVM.
 
 ## Modes
 
@@ -29,9 +30,8 @@ Both suites are plain JUnit (`CanarySuiteTest`, `FixtureSuiteTest`) sharing `Sui
 run wherever Gradle does. Both take `-Ptheta.canary.extraArgs="<options>"`, appended to every task
 (`--serialization-roundtrip` puts every task through the XCFA serialization a worker process sees),
 and `-Ptheta.canary.outputDir=<dir>`, which keeps each task's output there.
-`-Ptheta.canary.variant=Theta-svcomp-native` runs them against the native executable instead
-(which needs `-Ptheta.graalvm`, see the xcfa-cli README). They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself
-uses — and fall back to launching `theta.jar` directly where there is no POSIX shell.
+They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself uses — and fall back to
+launching the executable (or `theta.jar`) directly where there is no POSIX shell.
 
 `canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
 given task only *happens* to exercise a feature. That is what the fixtures are for.
