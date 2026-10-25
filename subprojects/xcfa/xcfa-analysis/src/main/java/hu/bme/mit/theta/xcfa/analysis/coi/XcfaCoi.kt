@@ -200,14 +200,14 @@ abstract class XcfaCoi(protected val xcfa: XCFA, random: Random) {
             if (stmt.varDecl in prec.usedVars) {
               StmtLabel(HavocStmt.of(stmt.varDecl), metadata = this.metadata)
             } else {
-              NopLabel
+              NopLabel()
             }
 
           is HavocStmt<*> ->
             if (stmt.varDecl in prec.usedVars) {
               this
             } else {
-              NopLabel
+              NopLabel()
             }
 
           else -> this

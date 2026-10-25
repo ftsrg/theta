@@ -277,6 +277,7 @@ private fun XcfaLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
   when (this) {
     is StmtLabel -> this.toC(parseContext, intRangeConstraint)
     is SequenceLabel -> labels.joinToString("\n") { it.toC(parseContext, intRangeConstraint) }
+    is NopLabel -> ""
     is InvokeLabel ->
       "${params[0].toC(parseContext)} = ${name.toC()}(${
             params.subList(1, params.size).map { it.toC(parseContext) }.joinToString(", ")

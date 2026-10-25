@@ -90,7 +90,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
                 new XcfaEdge(
                         blockState.getLastLocation(),
                         errLoc,
-                        NopLabel.INSTANCE,
+                        new NopLabel(),
                         new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);

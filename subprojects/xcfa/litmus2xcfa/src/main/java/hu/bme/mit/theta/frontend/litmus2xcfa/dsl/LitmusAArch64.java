@@ -126,7 +126,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
                     new XcfaEdge(
                             lastLocation.get(threadId),
                             procBuilder.getFinalLoc().get(),
-                            NopLabel.INSTANCE,
+                            new NopLabel(),
                             EmptyMetaData.INSTANCE));
         }
         return builder.build();
@@ -477,7 +477,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
                             new XcfaEdge(
                                     lastLocation.get(currentProc),
                                     branchTo,
-                                    NopLabel.INSTANCE,
+                                    new NopLabel(),
                                     EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;
@@ -491,7 +491,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
                             new XcfaEdge(
                                     lastLocation.get(currentProc),
                                     newLoc,
-                                    NopLabel.INSTANCE,
+                                    new NopLabel(),
                                     EmptyMetaData.INSTANCE));
             lastLocation.put(currentProc, newLoc);
             return newLoc;

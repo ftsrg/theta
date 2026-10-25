@@ -67,7 +67,7 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
                 new XcfaEdge(
                         blockState.getLastLocation(),
                         newLoc,
-                        NopLabel.INSTANCE,
+                        new NopLabel(),
                         new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(newLoc);

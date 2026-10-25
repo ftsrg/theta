@@ -224,7 +224,7 @@ public class Utils {
                         new XcfaEdge(
                                 blockState.getLastLocation(),
                                 loc,
-                                NopLabel.INSTANCE,
+                                new NopLabel(),
                                 new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);

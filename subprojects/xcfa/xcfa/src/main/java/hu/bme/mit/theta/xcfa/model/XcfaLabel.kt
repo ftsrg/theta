@@ -455,12 +455,17 @@ constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyM
   }
 }
 
-object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
+/** Does nothing, but may carry the metadata of what it replaced (e.g. a removed call). */
+data class NopLabel @JvmOverloads constructor(override val metadata: MetaData = EmptyMetaData) :
+  XcfaLabel(metadata = metadata) {
 
   override fun toString(): String {
     return "Nop"
   }
 }
+
+/** A nop that can be dropped without losing a source location. */
+fun XcfaLabel.isDroppableNop(): Boolean = this is NopLabel && !metadata.isSubstantial()
 
 fun getTempLookup(label: XcfaLabel): Map<VarDecl<*>, VarDecl<*>> {
   return when (label) {

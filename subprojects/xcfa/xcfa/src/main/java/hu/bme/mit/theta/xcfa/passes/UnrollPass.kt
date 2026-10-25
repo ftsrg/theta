@@ -459,7 +459,7 @@ class UnrollPass(
         // a folded branch guard still locates its branch (e.g., for witnesses)
         this == stmtToRemove ->
           (this as StmtLabel).let {
-            if (it.choiceType == ChoiceType.NONE) NopLabel
+            if (it.choiceType == ChoiceType.NONE) NopLabel()
             else StmtLabel(Assume(True()), it.choiceType, it.metadata)
           }
         this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)

@@ -98,7 +98,7 @@ class XcfaStateLtsTest {
     actionOrder.add {
       XcfaAction(
         0,
-        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel), EmptyMetaData),
+        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel()), EmptyMetaData),
       )
     }
     expectations.add {
@@ -136,7 +136,7 @@ class XcfaStateLtsTest {
     actionOrder.add { s ->
       XcfaAction(
         s.foreignKey()!!,
-        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel), EmptyMetaData),
+        XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel()), EmptyMetaData),
       )
     }
     expectations.add {

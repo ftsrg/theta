@@ -34,7 +34,7 @@ class EliminateSelfLoops : ProcedurePass {
         builder.addLoc(target)
         builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))
         builder.addEdge(
-          XcfaEdge(target, source, SequenceLabel(listOf(NopLabel)), selfLoop.metadata)
+          XcfaEdge(target, source, SequenceLabel(listOf(NopLabel())), selfLoop.metadata)
         )
       } else {
         break

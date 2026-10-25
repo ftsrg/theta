@@ -332,7 +332,7 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     }
 
     fun nop(): SequenceLabel {
-      val label = NopLabel
+      val label = NopLabel()
       labelList.add(label)
       return SequenceLabel(labelList)
     }

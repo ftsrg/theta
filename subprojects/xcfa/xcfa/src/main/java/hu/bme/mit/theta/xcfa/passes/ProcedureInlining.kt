@@ -287,7 +287,7 @@ internal fun inlineCallSite(
       XcfaEdge(
         checkNotNull(newLocs[errorLoc.get()]),
         builder.errorLoc.get(),
-        SequenceLabel(listOf(NopLabel)),
+        SequenceLabel(listOf(NopLabel())),
         EmptyMetaData,
       )
     )

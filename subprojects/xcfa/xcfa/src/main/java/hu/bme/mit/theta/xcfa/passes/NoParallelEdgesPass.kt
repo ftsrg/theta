@@ -33,7 +33,7 @@ class NoParallelEdgesPass : ProcedurePass {
             metadata = otherEdge.target.metadata,
           )
         builder.addEdge(otherEdge.withTarget(target))
-        builder.addEdge(XcfaEdge(target, otherEdge.target, NopLabel, otherEdge.metadata))
+        builder.addEdge(XcfaEdge(target, otherEdge.target, NopLabel(), otherEdge.metadata))
       }
     }
     return builder

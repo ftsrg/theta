@@ -169,7 +169,7 @@ constructor(
 data class XcfaEdge(
   val source: XcfaLocation, // source location
   val target: XcfaLocation, // target location
-  val label: XcfaLabel = NopLabel, // edge label
+  val label: XcfaLabel = NopLabel(), // edge label
   val metadata: MetaData,
 ) {
 
