@@ -165,6 +165,13 @@ class XcfaCliValidateTest {
           "--property no-data-race.prp",
           "SafetyResult Unsafe",
         ),
+        // a race witness whose targets are not the racing accesses is refuted
+        Arguments.of(
+          "/c/witness-validation/concurrent-data-race.i",
+          "/c/witness-validation/concurrent-data-race.refuted-witness.yml",
+          "--property no-data-race.prp",
+          "SafetyResult Safe",
+        ),
         // a spawned thread's nondet write is pinned via a thread-id-guarded assumption
         Arguments.of(
           "/c/witness-validation/concurrent-nondet.i",
