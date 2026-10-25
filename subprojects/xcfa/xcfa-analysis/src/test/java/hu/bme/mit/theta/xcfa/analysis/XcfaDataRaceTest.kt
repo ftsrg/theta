@@ -56,6 +56,7 @@ import kotlin.random.Random
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class XcfaDataRaceTest {
 
@@ -91,11 +92,12 @@ class XcfaDataRaceTest {
    * The loops are unrolled and the index folded ([PthreadArrayHandleUnrollPass]), then each `&t[i]`
    * / `t[i]` keys its own handle ([CLibraryFunctionsPass]); conflating them would spawn just one
    * thread and hide every race the array's threads have. Checked structurally, so it does not
-   * depend on any one engine finding the race.
+   * depend on any one engine finding the race. `t + i` must key the same handle as `&t[i]`.
    */
-  @org.junit.jupiter.api.Test
-  fun pthreadArrayHandlesAreDistinctThreads() {
-    val stream = javaClass.getResourceAsStream("/12pthread_array_race.c")
+  @ParameterizedTest
+  @ValueSource(strings = ["/12pthread_array_race.c", "/25pthread_array_sum_race.c"])
+  fun pthreadArrayHandlesAreDistinctThreads(program: String) {
+    val stream = javaClass.getResourceAsStream(program)
     val xcfa =
       getXcfaFromC(
           stream!!,
