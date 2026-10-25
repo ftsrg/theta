@@ -168,6 +168,22 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return false;
     }
 
+    /** Whether [expr] reads a variable or memory anywhere inside it. */
+    private static boolean readsVariable(Expr<?> expr) {
+        if (expr instanceof RefExpr<?> ref && ref.getDecl() instanceof VarDecl<?>) {
+            return true;
+        }
+        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+            return true;
+        }
+        for (Expr<?> op : expr.getOps()) {
+            if (readsVariable(op)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -1961,14 +1977,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // does not misreport: assign each branch's value to a temporary *inside* the guarded
             // branch, and let the conditional's value be that temporary.
             //
-            // Gated on memory-safety verification: for any other property the Ite is fine (it
-            // selects the right branch, and reading the unselected one has no observable effect),
-            // so the XCFA is left byte-for-byte unchanged there.
-            final boolean guardsDereference =
-                    parseContext.isCheckMemsafety()
-                            && (containsDereference(lhs) || containsDereference(rhs));
+            // Gated on memory-safety verification, and on data-race verification, where reading
+            // the unselected branch is an access that can race. For any other property the Ite is
+            // fine (it selects the right branch), so the XCFA is left byte-for-byte unchanged
+            // there.
+            final boolean guardsAccess =
+                    (parseContext.isCheckMemsafety()
+                                    && (containsDereference(lhs) || containsDereference(rhs)))
+                            || (parseContext.isCheckDataRace()
+                                    && (readsVariable(lhs) || readsVariable(rhs)));
             VarDecl<?> conditionalTmp = null;
-            if (guardsDereference) {
+            if (guardsAccess) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");
                 parseContext
                         .getMetadata()
@@ -1986,7 +2005,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 "=",
                                 parseContext));
             }
-            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsDereference) {
+            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsAccess) {
                 CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
                 recordMetadata(ctx, preIf);
                 preStatements.addCStatement(preIf);
