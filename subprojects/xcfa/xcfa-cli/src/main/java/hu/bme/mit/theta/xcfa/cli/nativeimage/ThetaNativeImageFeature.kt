@@ -22,6 +22,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.relativeTo
 import org.graalvm.nativeimage.hosted.Feature
@@ -109,7 +110,7 @@ class ThetaNativeImageFeature : Feature {
           Files.walk(entry).use { files ->
             files
               .filter { it.extension == "class" }
-              .map { it.relativeTo(entry).toString() }
+              .map { it.relativeTo(entry).invariantSeparatorsPathString }
               .toList()
           }
         } else if (entry.extension == "jar") {
