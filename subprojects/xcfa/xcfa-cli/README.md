@@ -36,6 +36,14 @@ packages it like `Theta-svcomp`. Kotlin script inputs (`--input-type DSL`) and p
 script files need the JVM. `-Ptheta.native.args` passes further options to `native-image`, e.g.
 `-J-Xmx9g` on a machine short of memory.
 
+Prefer Oracle GraalVM (free to use and redistribute under the GraalVM Free Terms and Conditions)
+with its default serial GC: it produces a faster executable than the Community Edition. For a
+release, profile-guided optimization makes it faster still: build with
+`-Ptheta.native.args=--pgo-instrument`, run that executable on representative inputs (each run
+writes `default.iprof` into its working directory), then build again with
+`-Ptheta.native.args=--pgo=<comma-separated .iprof files>`. Both builds need more memory than a
+plain one (`-J-Xmx9g` to `-J-Xmx11g`), and a few dozen profiles are enough.
+
 ## Configuration
 
 <details><summary>UML Source</summary>
