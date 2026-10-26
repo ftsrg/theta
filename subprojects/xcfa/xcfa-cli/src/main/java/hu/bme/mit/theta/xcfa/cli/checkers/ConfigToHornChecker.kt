@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
@@ -25,6 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.chc.CexTree
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
 import hu.bme.mit.theta.analysis.algorithm.chc.Invariant
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.BasicExprState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -41,9 +41,11 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -51,14 +53,17 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.ProofNode
 import hu.bme.mit.theta.xcfa.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.HornConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa2chc.toCHC
-import kotlin.collections.plus
 import kotlin.jvm.optionals.getOrNull
 
 fun getHornChecker(
@@ -67,7 +72,7 @@ fun getHornChecker(
   config: XcfaConfig<*, *>,
   logger: Logger,
   parseContext: ParseContext,
-): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+): SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
   checkState(xcfa.isInlined, "Only inlined XCFAs work right now")
   checkState(xcfa.initProcedures.size == 1, "Only one-procedure XCFAs work right now")
@@ -106,11 +111,11 @@ fun getHornChecker(
         .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
     val checker = hornChecker(chc)
 
-    return SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    return SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
       val result = checker.check(null)
 
       if (result.isSafe) {
-        SafetyResult.safe(EmptyProof.getInstance())
+        getLocationInvariants(xcfa, result.asSafe()?.proof, vars)
       } else if (result.isUnsafe) {
         try {
           getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
@@ -131,7 +136,7 @@ fun getHornChecker(
               ),
               listOf(),
             ),
-            EmptyProof.getInstance(),
+            LocationInvariants(),
           )
         }
       } else {
@@ -218,7 +223,7 @@ fun getHornChecker(
       },
       logger,
     )
-      as SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
+      as SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
   }
 }
 
@@ -226,7 +231,7 @@ private fun getProperTrace(
   xcfa: XCFA,
   result: SafetyResult<Invariant, CexTree>,
   vars: List<VarDecl<*>>,
-): SafetyResult.Unsafe<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>>? {
+): SafetyResult.Unsafe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>>? {
   val getName = { s: String ->
     val split = s.split("_")
     val allButLast = split.subList(0, split.size - 1)
@@ -313,7 +318,7 @@ private fun getProperTrace(
 
   return SafetyResult.unsafe(
     Trace.of(states.reversed(), actions.reversed()),
-    EmptyProof.getInstance(),
+    LocationInvariants(),
   )
 }
 
@@ -334,4 +339,32 @@ fun getShortestPath(start: XcfaLocation, end: XcfaLocation): Pair<Int, List<Xcfa
     }
   }
   return Pair(Int.MAX_VALUE, emptyList())
+}
+
+fun getLocationInvariants(
+  xcfa: XCFA,
+  invariants: Invariant?,
+  vars: List<VarDecl<*>>,
+): SafetyResult.Safe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>> {
+  val emptyInvariant = SafetyResult.safe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(LocationInvariants())
+  if (invariants == null) return emptyInvariant
+
+  val locationNames = xcfa.initProcedures[0].first.locs.associateBy { it.name }
+
+  val locationInvariants = invariants.lookup.entries.mapNotNull { (relation, expr) ->
+    if (relation.arity != vars.size) return@mapNotNull null
+
+    var funcDef = expr as? FuncLitExpr<*, *> ?: return@mapNotNull null
+    val varLookup = vars.associateBy {
+      val param = funcDef.param
+      funcDef = funcDef.result as? FuncLitExpr<*, *> ?: funcDef
+      param
+    }
+    val invariant = funcDef.result.changeVars(varLookup) as? Expr<BoolType> ?: return@mapNotNull null
+
+    val location = locationNames[relation.name] ?: return@mapNotNull null
+    location to listOf(BasicExprState.of(invariant))
+  }.toMap()
+
+  return SafetyResult.safe(LocationInvariants(locationInvariants))
 }

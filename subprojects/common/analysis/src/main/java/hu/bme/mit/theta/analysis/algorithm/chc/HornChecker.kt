@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.Relation
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -29,7 +30,7 @@ import hu.bme.mit.theta.solver.ProofNode
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 
-data class Invariant(val lookup: Map<Relation, Expr<BoolType>>) : Proof
+data class Invariant(val lookup: Map<Relation, Expr<BoolType>>, val vars: List<VarDecl<*>> = emptyList()) : Proof
 
 data class CexTree(val proofNode: ProofNode) : Cex {
 
