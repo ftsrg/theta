@@ -112,12 +112,23 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     /** Read-only view of the explored structure. */
     public Explored explored() {
-        return explicitRepresentation;
-    }
+        // the child of the token is an edge too where it was looked up rather than enumerated
+        if (tokenChild == null) return explicitRepresentation;
+        return new Explored() {
+            @Override
+            public IntObjMapView<MddNode> knownEdges() {
+                return explicitRepresentation
+                        .knownEdges()
+                        .union(
+                                IntObjMapView.singleton(LitExprConverter.token(), tokenChild),
+                                (edge, token) -> edge);
+            }
 
-    /** The child of the token where it was looked up rather than kept as an edge, if any. */
-    public MddNode lookedUpTokenChild() {
-        return tokenChecked ? tokenChild : null;
+            @Override
+            public boolean isComplete() {
+                return explicitRepresentation.isComplete();
+            }
+        };
     }
 
     public static MddExpressionRepresentation of(
