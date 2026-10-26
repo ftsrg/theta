@@ -403,17 +403,28 @@ final class Z3TermTransformer {
 
         final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder =
                 ImmutableList.builder();
-        while (constInterp.getNumArgs() == 3) {
-            var args = constInterp.getArgs();
-            var index = defaultingTransform(args[1], model, vars);
-            var value = defaultingTransform(args[2], model, vars);
-            builder.add(Tuple2.of(List.of(index), value));
-            constInterp = args[0];
+        final Expr<?> elseExpr;
+        if (constInterp.isAsArray()) {
+            final com.microsoft.z3.FuncInterp interp =
+                    model.getFuncInterp(constInterp.getFuncDecl().getParameters()[0].getFuncDecl());
+            for (var entry : interp.getEntries()) {
+                var index = defaultingTransform(entry.getArgs()[0], model, vars);
+                var value = defaultingTransform(entry.getValue(), model, vars);
+                builder.add(Tuple2.of(List.of(index), value));
+            }
+            elseExpr = defaultingTransform(interp.getElse(), model, vars);
+        } else {
+            while (constInterp.getNumArgs() == 3) {
+                var args = constInterp.getArgs();
+                var index = defaultingTransform(args[1], model, vars);
+                var value = defaultingTransform(args[2], model, vars);
+                builder.add(Tuple2.of(List.of(index), value));
+                constInterp = args[0];
+            }
+            checkState(constInterp.getNumArgs() == 1);
+            elseExpr = defaultingTransform(constInterp.getArgs()[0], model, vars);
         }
         var entryExprs = builder.build();
-
-        checkState(constInterp.getNumArgs() == 1);
-        var elseExpr = defaultingTransform(constInterp.getArgs()[0], model, vars);
 
         if (funcDecl.getRange() instanceof ArraySort sort) {
             return createArrayLitExpr(sort, entryExprs, elseExpr);
