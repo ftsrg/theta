@@ -3315,12 +3315,35 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "atomic_compare_exchange_strong_explicit",
                     "atomic_compare_exchange_weak_explicit");
 
+    // Clang's <stdatomic.h> expands each C11 operation to a `__c11_atomic_*` builtin that takes
+    // the arguments of the `atomic_*_explicit` function it implements, so it is emitted as that.
+    private static final java.util.Map<String, String> CLANG_C11_ATOMICS =
+            java.util.Map.ofEntries(
+                    java.util.Map.entry("__c11_atomic_init", "atomic_init"),
+                    java.util.Map.entry("__c11_atomic_load", "atomic_load_explicit"),
+                    java.util.Map.entry("__c11_atomic_store", "atomic_store_explicit"),
+                    java.util.Map.entry("__c11_atomic_exchange", "atomic_exchange_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_strong",
+                            "atomic_compare_exchange_strong_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_weak",
+                            "atomic_compare_exchange_weak_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_add", "atomic_fetch_add_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_sub", "atomic_fetch_sub_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_or", "atomic_fetch_or_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_and", "atomic_fetch_and_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_xor", "atomic_fetch_xor_explicit"),
+                    java.util.Map.entry("__c11_atomic_thread_fence", "atomic_thread_fence"),
+                    java.util.Map.entry("__c11_atomic_signal_fence", "atomic_signal_fence"));
+
     /**
      * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower
      * it) with its return variable typed correctly, and return the call's value. Returns null
      * otherwise, so ordinary builtin handling proceeds.
      */
     private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
+        name = CLANG_C11_ATOMICS.getOrDefault(name, name);
         if (ATOMIC_RETURNS_POINTEE.contains(name)) {
             return atomicCall(name, args, AtomicReturn.POINTEE);
         }
