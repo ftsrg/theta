@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
@@ -50,10 +49,10 @@ fun hornPortfolio(
         FrontendConfig(
           lbeLevel = LbePass.defaultLevel,
           loopUnroll = UnrollPass.UNROLL_LIMIT,
-          inputType = InputType.C,
+          inputType = portfolioConfig.frontendConfig.inputType,
           enableDataRaceToReachability =
             portfolioConfig.inputConfig.property.verifiedProperty == DATA_RACE,
-          specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient),
+          specConfig = portfolioConfig.frontendConfig.specConfig,
         ),
       backendConfig =
         BackendConfig(

@@ -82,8 +82,6 @@ fun getHornChecker(
         listOf(
           NormalizePass(),
           DeterministicPass(),
-          NoUninitVar(),
-          HavocToUninitVar(),
           NoParallelEdgesPass(),
           EliminateSelfLoops(),
         )
