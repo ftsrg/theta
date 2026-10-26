@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,7 +66,9 @@ final class JavaSMTTypeTransformer {
         } else if (type instanceof BvType bvType) {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {
-            return FormulaType.getFloatingPointType(fpType.getExponent(), fpType.getSignificand());
+            // JavaSMT's mantissa excludes the hidden bit, Theta's significand includes it
+            return FormulaType.getFloatingPointType(
+                    fpType.getExponent(), fpType.getSignificand() - 1);
         } else if (type instanceof ArrayType<?, ?> arrayType) {
             final FormulaType<?> indexSort = toSort(arrayType.getIndexType());
             final FormulaType<?> elemSort = toSort(arrayType.getElemType());

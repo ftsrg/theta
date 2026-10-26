@@ -470,7 +470,9 @@ final class JavaSMTTermTransformer {
         environment.put(
                 Tuple2.of(FunctionDeclarationKind.BV_EXTRACT, 1),
                 (term, args, model, vars) -> {
-                    final Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
+                    // Z3 prints "(_ extract msb lsb)", MathSAT "bvextract_msb_lsb_width"
+                    final Pattern pattern =
+                            Pattern.compile("(?:extract |bvextract_)([0-9]+)[ _]([0-9]+)");
                     final String termStr = term.toString();
                     final Matcher match = pattern.matcher(termStr);
                     if (match.find()) {
