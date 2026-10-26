@@ -18,9 +18,12 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
 import java.util.Objects;
 
 /** The target-only (postcondition) descriptor of an MDD node, one level per key. */
@@ -41,6 +44,14 @@ public class MddNodePostcondition implements AbstractNextStateDescriptor.Postcon
     @Override
     public boolean evaluate() {
         return true;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+        // a symbolic initial terminal carries its formula into the copy
+        if (!LitExprConverter.isSymbolic() || !handle.getNode().isTerminal()) return terminal;
+        return ((MddGraph<Object>) graph).intersectionTerminal(terminal, handle.getNode());
     }
 
     @Override

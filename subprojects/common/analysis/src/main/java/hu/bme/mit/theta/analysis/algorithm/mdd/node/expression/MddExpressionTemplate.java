@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.node.expression;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 import com.google.common.collect.MapMaker;
@@ -87,6 +88,27 @@ public class MddExpressionTemplate implements MddNode.Template {
         final Expr<BoolType> result = ExprUtils.simplify(expr, valuation);
         known.add(result);
         return result;
+    }
+
+    /**
+     * Substitutes a key's value, a literal or for the token the decl itself, for {@code decl}; in
+     * symbolic mode a written next-state level is marked, so the terminal knows of the write.
+     */
+    static Expr<BoolType> simplify(
+            final Expr<BoolType> expr,
+            final Decl<?> decl,
+            final Expr<?> value,
+            final MddGraph<?> graph) {
+        final Expr<BoolType> substituted =
+                value instanceof LitExpr<?> lit
+                        ? simplify(expr, ImmutableValuation.builder().put(decl, lit).build(), graph)
+                        : expr;
+        if (LitExprConverter.isSymbolic()
+                && SymbolicKeys.isTarget(decl)
+                && SymbolicKeys.canBeToken(decl.getType())) {
+            return And(substituted, SymbolicKeys.marker(decl));
+        }
+        return substituted;
     }
 
     private static Valuation checkSat(
@@ -167,6 +189,28 @@ public class MddExpressionTemplate implements MddNode.Template {
             if (satModel == null) return null;
         }
 
+        // a free next-state value takes the token
+        if (LitExprConverter.isSymbolic()
+                && transExpr
+                && SymbolicKeys.isTarget(decl)
+                && SymbolicKeys.canBeToken(decl.getType())
+                && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
+            final Expr<BoolType> childExpr =
+                    simplify(simplifiedExpr, decl, decl.getRef(), mddVariable.getMddGraph());
+            final MddNode childNode =
+                    mddVariable.getLower().isPresent()
+                            ? mddVariable.getLower().get().checkInNode(knownChild(childExpr))
+                            : terminalFor(mddVariable.getMddGraph(), childExpr, childExpr);
+            return MddExpressionRepresentation.ofDetermined(
+                    simplifiedExpr,
+                    decl,
+                    mddVariable,
+                    solverPool,
+                    LitExprConverter.token(),
+                    childNode,
+                    transExpr);
+        }
+
         // Check if default
         if (mddVariable.getDomainSize() == 0
                 && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
@@ -175,7 +219,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                 childNode = mddVariable.getLower().get().checkInNode(knownChild(simplifiedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                childNode = mddGraph.getNodeFor(simplifiedExpr);
+                childNode = terminalFor(mddGraph, simplifiedExpr, simplifiedExpr);
             }
             return MddExpressionRepresentation.ofDefault(
                     simplifiedExpr, decl, mddVariable, solverPool, childNode, transExpr);
@@ -241,7 +285,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                                                     transExpr));
                 } else {
                     final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                    cont = mddGraph.getNodeFor(overApproxExpr);
+                    cont = terminalFor(mddGraph, overApproxExpr, overApproxExpr);
                 }
                 return new IdentityRepresentation(cont);
             }
@@ -252,17 +296,14 @@ public class MddExpressionTemplate implements MddNode.Template {
             final int key = LitExprConverter.toInt(determinedValue);
 
             final Expr<BoolType> substitutedExpr =
-                    simplify(
-                            simplifiedExpr,
-                            ImmutableValuation.builder().put(decl, determinedValue).build(),
-                            mddVariable.getMddGraph());
+                    simplify(simplifiedExpr, decl, determinedValue, mddVariable.getMddGraph());
 
             final MddNode childNode;
             if (mddVariable.getLower().isPresent()) {
                 childNode = mddVariable.getLower().get().checkInNode(knownChild(substitutedExpr));
             } else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                childNode = mddGraph.getNodeFor(substitutedExpr);
+                childNode = terminalFor(mddGraph, substitutedExpr, substitutedExpr);
             }
 
             return MddExpressionRepresentation.ofDetermined(
@@ -300,5 +341,20 @@ public class MddExpressionTemplate implements MddNode.Template {
             return lit;
         }
         return null;
+    }
+
+    /**
+     * The terminal for a satisfiable residual; in symbolic mode it keeps what the residual says
+     * about the token values, otherwise it is {@code otherwise}.
+     */
+    @SuppressWarnings("unchecked")
+    static MddNode terminalFor(
+            MddGraph<?> graph, Expr<BoolType> residual, Expr<BoolType> otherwise) {
+        final MddGraph<Expr> mddGraph = (MddGraph<Expr>) graph;
+        if (!LitExprConverter.isSymbolic()) return mddGraph.getNodeFor(otherwise);
+        final Expr<BoolType> projected =
+                ExprUtils.canonize(SymbolicKeys.withoutIntermediates(residual));
+        return mddGraph.getNodeFor(
+                ExprUtils.getConstants(projected).isEmpty() ? True() : projected);
     }
 }

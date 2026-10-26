@@ -161,6 +161,11 @@ public class SolverPool implements AutoCloseable {
         }
 
         @Override
+        public Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, String tactic) {
+            return wrapped.eliminateQuantifiers(expr, tactic);
+        }
+
+        @Override
         public void close() throws Exception {
             wrapped.close();
         }

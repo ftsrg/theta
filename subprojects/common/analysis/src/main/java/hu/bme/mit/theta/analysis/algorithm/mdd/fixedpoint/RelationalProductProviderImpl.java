@@ -187,7 +187,7 @@ public final class RelationalProductProviderImpl implements RelationalProductPro
         if (mddNode == mddGraph.getTerminalZeroNode() || !abstractNextStateDescriptor.evaluate()) {
             return mddGraph.getTerminalZeroNode();
         }
-        return mddNode;
+        return abstractNextStateDescriptor.constrainTerminal(mddNode, mddGraph);
     }
 
     private MddNode terminalZeroToNull(MddNode node, MddNode terminalZero) {

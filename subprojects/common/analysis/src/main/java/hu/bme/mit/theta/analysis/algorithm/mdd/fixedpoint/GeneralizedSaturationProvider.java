@@ -23,6 +23,9 @@ import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -35,6 +38,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     private RelationalProductProvider relProdProvider;
     private final CacheManager<SaturationCache> cacheManager =
             new CacheManager<>(v -> new SaturationCache());
+    private final SaturationCache terminalCache = new SaturationCache();
     private MddNode terminalZeroNode;
 
     public GeneralizedSaturationProvider(final MddVariableOrder variableOrder) {
@@ -116,7 +120,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 || d == AbstractNextStateDescriptor.terminalIdentity()
                 || d == AbstractNextStateDescriptor.terminalEmpty()) {
             // TODO this does not handle level skips
-            return n;
+            return n.isTerminal() && LitExprConverter.isSymbolic() ? saturateTerminal(n, d) : n;
         }
 
         MddNode ret = cache.getCache().getSaturateCache().getOrNull(n, d);
@@ -203,6 +207,49 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         // variable.getDomainSize());
         //
         return nsat;
+    }
+
+    // with symbolic values a step can change a terminal and no key
+    private MddNode saturateTerminal(MddNode n, AbstractNextStateDescriptor d) {
+        if (n == terminalZeroNode
+                || d == AbstractNextStateDescriptor.terminalIdentity()
+                || d == AbstractNextStateDescriptor.terminalEmpty()) return n;
+        MddNode ret = terminalCache.getSaturateCache().getOrNull(n, d);
+        if (ret != null) {
+            return ret;
+        }
+        final List<AbstractNextStateDescriptor> steps = new ArrayList<>();
+        collectSteps(d, steps);
+        final MddGraph<?> graph = variableOrder.getMddGraph();
+        MddNode nsat = n;
+        boolean changed;
+        do {
+            changed = false;
+            for (AbstractNextStateDescriptor step : steps) {
+                if (!step.evaluate()) continue;
+                final MddNode nfire =
+                        graph.unionTerminal(nsat, step.constrainTerminal(nsat, graph));
+                if (nfire != nsat) {
+                    nsat = nfire;
+                    changed = true;
+                }
+            }
+        } while (changed);
+        terminalCache.getSaturateCache().addToCache(n, d, nsat);
+        return nsat;
+    }
+
+    private static void collectSteps(
+            AbstractNextStateDescriptor d, List<AbstractNextStateDescriptor> steps) {
+        if (d == AbstractNextStateDescriptor.terminalIdentity()
+                || d == AbstractNextStateDescriptor.terminalEmpty()) return;
+        final var split = d.split();
+        if (split.isPresent()) {
+            for (AbstractNextStateDescriptor part : split.get()) {
+                if (part == d) steps.add(d);
+                else collectSteps(part, steps);
+            }
+        } else steps.add(d);
     }
 
     private MddNode satFire(
@@ -322,7 +369,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         if (n.isTerminal() && dfire.evaluate()) {
-            return n;
+            final MddNode fired = dfire.constrainTerminal(n, variableOrder.getMddGraph());
+            return LitExprConverter.isSymbolic() ? saturateTerminal(fired, dsat) : fired;
         }
 
         boolean lhsSkipped = !n.isOn(variable);
@@ -479,11 +527,12 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     @Override
     public void clear() {
         cacheManager.clearAll();
+        terminalCache.clear();
     }
 
     @Override
     public void cleanup() {
-        this.cacheManager.forEachCache(
+        final Consumer<SaturationCache> clean =
                 (cache) -> {
                     cache.getSaturateCache()
                             .clearSelectively(
@@ -495,7 +544,9 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                                     (source, ns1, ns2, result) ->
                                             source.getReferenceCount() == 0
                                                     || result.getReferenceCount() == 0);
-                });
+                };
+        this.cacheManager.forEachCache(clean);
+        clean.accept(terminalCache);
     }
 
     private class Aggregator implements Consumer<SaturationCache> {

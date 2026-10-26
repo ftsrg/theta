@@ -21,12 +21,16 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,7 +57,10 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return AbstractNextStateDescriptor.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom accepts everything below it
-            return AbstractNextStateDescriptor.terminalIdentity();
+            if (!isConstrained(node)) return AbstractNextStateDescriptor.terminalIdentity();
+            // a path condition has to reach the state terminals, so keep descending
+            return IdentityNextStateDescriptor.withChild(
+                    of(node, variableHandle.getLower().orElseThrow().getLower().orElseThrow()));
         }
         if (node.getRepresentation()
                 instanceof IdentityRepresentation identityExpressionRepresentation) {
@@ -69,6 +76,27 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public boolean evaluate() {
         return true;
+    }
+
+    // only symbolic values leave a path condition at the bottom of a relation
+    private static boolean isConstrained(MddNode node) {
+        return LitExprConverter.isSymbolic()
+                && node instanceof MddNode.Terminal<?> terminal
+                && !(terminal.getTerminalData() instanceof TrueExpr);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+        final MddNode node = handle.getNode();
+        if (!isConstrained(node)) return terminal;
+        final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
+        final MddNode joined =
+                mddGraph.intersectionTerminal(
+                        terminal,
+                        mddGraph.getNodeFor(((MddNode.Terminal<?>) node).getTerminalData()));
+        if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        return mddGraph.getNodeFor(SymbolicKeys.image(SymbolicKeys.leafOf(joined)));
     }
 
     @Override

@@ -278,6 +278,25 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     }
 
     @Override
+    public Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, String tactic) {
+        try {
+            Goal g = z3Context.mkGoal(true, false, false);
+            g.add((BoolExpr) transformationManager.toTerm(expr));
+            Goal[] subgoals = z3Context.mkTactic(tactic).apply(g).getSubgoals();
+            BoolExpr result =
+                    subgoals.length == 1
+                            ? subgoals[0].AsBoolExpr()
+                            : z3Context.mkOr(
+                                    Arrays.stream(subgoals)
+                                            .map(Goal::AsBoolExpr)
+                                            .toArray(BoolExpr[]::new));
+            return (Expr<BoolType>) termTransformer.toExpr(result);
+        } catch (Throwable t) {
+            return expr;
+        }
+    }
+
+    @Override
     public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
         checkNotNull(root);
         return Z3ItpPattern.of(root);

@@ -84,8 +84,12 @@ object MddToExprNodeLevel : MddToExpr {
   }
 
   fun getRepresentativeForNode(node: MddNode, variable: MddVariable?): Expr<BoolType> {
-    if (node.isTerminal) return True()
-    else {
+    if (node.isTerminal) {
+      // in symbolic mode a terminal is the formula over the token values above it
+      @Suppress("UNCHECKED_CAST") val data = (node as MddNode.Terminal<*>).terminalData
+      return if (LitExprConverter.isSymbolic() && data is Expr<*>) data as Expr<BoolType>
+      else True()
+    } else {
       auxvarCache.getOrNull(node, variable)?.let {
         return it.ref
       }
@@ -123,7 +127,8 @@ object MddToExprNodeLevel : MddToExpr {
 
             val value = cursor.key()
             disjuncts +=
-              And(Eq(x.ref, LitExprConverter.toLitExpr(value, x.type)), childRepresentative)
+              if (LitExprConverter.isToken(value)) childRepresentative
+              else And(Eq(x.ref, LitExprConverter.toExpr(value, x)), childRepresentative)
           }
 
           Eq(representative, Or(disjuncts))
