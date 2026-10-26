@@ -47,7 +47,6 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
-import kotlin.random.Random
 
 fun getCegarChecker(
   xcfa: XCFA,
@@ -73,7 +72,7 @@ fun getCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val random = Random.Default
+  val random = explorationRandom()
   val (coi, lts) =
     cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry, random)
   val waitlist =
