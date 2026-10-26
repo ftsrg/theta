@@ -262,10 +262,7 @@ constructor(
     val proof =
       MddProof.of(stateSpace, proofStrategy).also { if (symbolicValues) it.getInvariant() }
     val result: SafetyResult<MddProof, Trace<ExplState, ExprAction>>
-    if (violatingSize != 0L && symbolicValues) {
-      // the trace search walks literal keys only
-      result = SafetyResult.unsafe(Trace.of(listOf(ExplState.top()), listOf()), proof, statistics)
-    } else if (violatingSize != 0L) {
+    if (violatingSize != 0L) {
       // on trace generation timeout, fall back to an empty trace
       val trace =
         generateTrace(
@@ -279,6 +276,7 @@ constructor(
           traceTimeout,
           logger,
           search = traceSearch,
+          solverPool = if (symbolicValues) solverPool else null,
         ) ?: Trace.of(listOf(ExplState.top()), listOf())
       result = SafetyResult.unsafe(trace, proof, statistics)
     } else {

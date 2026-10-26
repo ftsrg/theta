@@ -15,15 +15,25 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.trace;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
+
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -58,17 +68,47 @@ public class MddValuationCollector {
      * Streams every vector of the subtree to {@code consumer} without collecting them into a set.
      */
     public static void collect(MddHandle node, Consumer<Valuation> consumer) {
-        collect(node, new Stack<>(), consumer);
+        walk(
+                node,
+                new Stack<>(),
+                (assignments, terminal) -> consumer.accept(toValuation(assignments)));
     }
 
-    private static void collect(
-            MddHandle node, Stack<Assignment> assignments, Consumer<Valuation> consumer) {
+    /**
+     * The vectors of the subtree as an expression: the literal keys of each path and, with symbolic
+     * values, the formula of its terminal.
+     */
+    public static Expr<BoolType> toExpr(MddHandle node) {
+        final List<Expr<BoolType>> paths = new ArrayList<>();
+        walk(
+                node,
+                new Stack<>(),
+                (assignments, terminal) -> {
+                    final List<Expr<BoolType>> conjuncts = new ArrayList<>();
+                    for (Assignment ass : assignments) {
+                        if (LitExprConverter.isToken(ass.value)) continue;
+                        final Decl<?> decl = ass.variable.getTraceInfo(Decl.class);
+                        conjuncts.add(
+                                Eq(
+                                        decl.getRef(),
+                                        LitExprConverter.toLitExpr(ass.value, decl.getType())));
+                    }
+                    conjuncts.add(SymbolicKeys.leafOf(terminal.getNode()));
+                    paths.add(And(conjuncts));
+                });
+        return Or(paths);
+    }
+
+    private static void walk(
+            MddHandle node,
+            Stack<Assignment> assignments,
+            BiConsumer<Stack<Assignment>, MddHandle> atTerminal) {
         if (node.isTerminal()) {
-            consumer.accept(toValuation(assignments));
+            atTerminal.accept(assignments, node);
         } else {
             if (!node.defaultValue().isTerminalZero()) {
 
-                collect(node.defaultValue(), assignments, consumer);
+                walk(node.defaultValue(), assignments, atTerminal);
 
             } else {
                 for (var cursor = node.cursor(); cursor.moveNext(); ) {
@@ -78,7 +118,7 @@ public class MddValuationCollector {
                                     node.getVariableHandle().getVariable().orElseThrow(),
                                     cursor.key()));
 
-                    collect((MddHandle) cursor.value(), assignments, consumer);
+                    walk((MddHandle) cursor.value(), assignments, atTerminal);
 
                     assignments.pop();
                 }

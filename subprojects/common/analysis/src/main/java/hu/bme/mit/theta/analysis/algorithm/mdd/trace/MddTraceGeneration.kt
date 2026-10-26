@@ -35,7 +35,19 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.stopwatch.Stopwatch
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.IndexedConstDecl
+import hu.bme.mit.theta.core.model.BasicSubstitution
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.solver.SolverPool
+import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -70,15 +82,17 @@ internal fun generateTrace(
   traceTimeout: Long,
   logger: Logger,
   search: TraceSearch = TraceSearch.DFS,
+  solverPool: SolverPool? = null,
 ): Trace<ExplState, ExprAction>? {
   // an initially violating state must be the seed, or the collector may pick a non-initial one
   val initViolating = propViolating.intersection(initNode)
   val traceSeed =
     if (MddInterpreter.calculateNonzeroCount(initViolating) > 0) initViolating else propViolating
 
-  val executor = Executors.newSingleThreadExecutor()
+  // a daemon: a search that ignores the interrupt after a timeout must not keep the JVM alive
+  val executor = Executors.newSingleThreadExecutor { Thread(it).apply { isDaemon = true } }
   val future =
-    executor.submit<Trace<ExplState, ExprAction>> {
+    executor.submit<Trace<ExplState, ExprAction>?> {
       val mirrorTop = MddExplicitRepresentationExtractor.mirrorTopOf(transSig.topVariableHandle)
       val explicitTrans =
         transNodes.map { MddExplicitRepresentationExtractor.transform(it, mirrorTop) }
@@ -102,6 +116,8 @@ internal fun generateTrace(
             TraceSearch.BFS_BACKWARD ->
               traceProvider.computeBreadthFirst(traceSeed, orReversed, initNode, top)
           }
+        // with symbolic values the solver picks the valuations and the fired transitions at once
+        if (solverPool != null) return@submit concretize(layers, model, solverPool, logger)
         // resolve the fired transition (and, for BFS_BACKWARD, the next state) by a forward step
         states.add(layers[0].satOne())
         for (k in 0 until layers.size - 1) {
@@ -156,6 +172,62 @@ internal fun generateTrace(
     throw RuntimeException(e)
   } finally {
     executor.shutdownNow()
+  }
+}
+
+/**
+ * With symbolic values a trace state stands for many valuations: one choice along the whole trace,
+ * each state at its own indexing (with its own bound names) and some transition between them, the
+ * first that holds in the model being the one that fired. Null if there is none.
+ */
+private fun concretize(
+  states: List<MddHandle>,
+  model: MonolithicExpr,
+  solverPool: SolverPool,
+  logger: Logger,
+): Trace<ExplState, ExprAction>? {
+  val indices = ArrayList<VarIndexing>()
+  indices.add(VarIndexingFactory.indexing(0))
+  repeat(states.size - 1) { indices.add(indices.last().add(model.transOffsetIndex)) }
+  val conjuncts = ArrayList<Expr<BoolType>>()
+  conjuncts.add(PathUtils.unfold(model.initExpr, indices[0]))
+  for ((k, state) in states.withIndex()) {
+    val expr = MddValuationCollector.toExpr(state)
+    val atStep = BasicSubstitution.builder()
+    for (c in ExprUtils.getConstants(expr)) {
+      if (c is IndexedConstDecl<*> && c.index == 0) {
+        atStep.put(c, c.varDecl.getConstDecl(indices[k][c.varDecl]).ref)
+      } else {
+        atStep.put(c, Decls.Const("${c.name}_$k", c.type).ref)
+      }
+    }
+    conjuncts.add(atStep.build().apply(expr))
+    if (k < states.size - 1) conjuncts.add(PathUtils.unfold(Or(model.split), indices[k]))
+  }
+  val solver = solverPool.requestSolver()
+  try {
+    WithPushPop(solver).use {
+      solver.add(conjuncts)
+      if (!solver.check().isSat) {
+        logger.mainStep("No valuation along the symbolic trace.\n")
+        return null
+      }
+      val valuation = solver.model
+      val actions =
+        (0 until states.size - 1).map { k ->
+          val fired =
+            model.split.indexOfFirst {
+              ExprUtils.simplify(PathUtils.unfold(it, indices[k]), valuation) is TrueExpr
+            }
+          if (fired >= 0) model.splitAction(fired) else model.action()
+        }
+      return Trace.of(
+        indices.map { ExplState.of(PathUtils.extractValuation(valuation, it, model.vars)) },
+        actions,
+      )
+    }
+  } finally {
+    solverPool.returnSolver(solver)
   }
 }
 

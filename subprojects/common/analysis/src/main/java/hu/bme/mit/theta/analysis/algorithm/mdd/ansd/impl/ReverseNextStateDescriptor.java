@@ -17,11 +17,15 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import java.util.Objects;
 
 public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
@@ -187,6 +191,25 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public boolean isLocallyIdentity(StateSpaceInfo stateSpaceInfo) {
         return false;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+        // with symbolic values the source terminal is what the state space, the relation and the
+        // target terminal allow together
+        if (!LitExprConverter.isSymbolic() || !transitions.isTerminal()) return terminal;
+        final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
+        final MddNode joined =
+                mddGraph.intersectionTerminal(
+                        stateSpace.getNode(),
+                        mddGraph.getNodeFor(((MddNode.Terminal<?>) transitions).getTerminalData()));
+        if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        return mddGraph.intersectionTerminal(
+                mddGraph.getNodeFor(
+                        SymbolicKeys.preImage(
+                                SymbolicKeys.leafOf(joined), SymbolicKeys.leafOf(terminal))),
+                mddGraph.getNodeFor(BoolExprs.True()));
     }
 
     @Override

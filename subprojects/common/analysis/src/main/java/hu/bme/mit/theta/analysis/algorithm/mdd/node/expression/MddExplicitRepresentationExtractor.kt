@@ -110,6 +110,18 @@ object MddExplicitRepresentationExtractor {
                 )
               if (!s.isTerminalZero) templateBuilder.set(cursor.key(), s.node)
             }
+            // the token child of a source level is looked up, not kept as an edge
+            val tokenChild =
+              (node.node.representation as MddExpressionRepresentation).lookedUpTokenChild()
+            if (tokenChild != null && !knownEdges.containsKey(LitExprConverter.token())) {
+              val s =
+                transform(
+                  node.variableHandle.lower.get().getHandleFor(tokenChild),
+                  variable.lower.orElse(null),
+                  cache,
+                )
+              if (!s.isTerminalZero) templateBuilder.set(LitExprConverter.token(), s.node)
+            }
           }
           variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()))
         }

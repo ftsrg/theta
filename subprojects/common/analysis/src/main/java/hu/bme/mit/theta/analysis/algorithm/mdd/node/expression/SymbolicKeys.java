@@ -230,6 +230,36 @@ public final class SymbolicKeys {
     private static final UnaryOperationCache<Expr<BoolType>, Expr<BoolType>> images =
             new UnaryOperationCache<>();
 
+    /**
+     * The source terminal of a step back from {@code target}: {@code joined} is the source terminal
+     * and what the relation left, satisfiable; the values the step wrote are next-state values in
+     * the target and are projected out.
+     */
+    public static Expr<BoolType> preImage(Expr<BoolType> joined, Expr<BoolType> target) {
+        final Set<Decl<?>> targets = new HashSet<>();
+        final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
+        final BasicSubstitution.Builder toNext = BasicSubstitution.builder();
+        for (ConstDecl<?> c : ExprUtils.getConstants(joined)) {
+            final Decl<?> t = written.get(c);
+            if (t != null) {
+                targets.add(t);
+                unmark.put(c, True());
+                toNext.put(((IndexedConstDecl<?>) t).getVarDecl().getConstDecl(0), t.getRef());
+            }
+        }
+        final Expr<BoolType> source = unmark.build().apply(joined);
+        final Expr<BoolType> after = toNext.build().apply(renamedApart(source, target));
+        Expr<BoolType> current =
+                ExprUtils.simplify(
+                        normalizeArrays(And(source, after), new UnaryOperationCache<>()));
+        final Set<Decl<?>> eliminated = new HashSet<>(targets);
+        for (ConstDecl<?> c : ExprUtils.getConstants(current))
+            if (isIntermediate(c)) eliminated.add(c);
+        // the leftovers stay bound: a trace needs no canonical terminal, and the solver can stall
+        current = eliminateCheaply(current, eliminated);
+        return canonical(bindLeftovers(current, eliminated, BasicSubstitution.builder()));
+    }
+
     // what elimination left over of the eliminated decls is kept under bound names
     private static Expr<BoolType> bindLeftovers(
             Expr<BoolType> expr, Set<Decl<?>> eliminated, BasicSubstitution.Builder bind) {

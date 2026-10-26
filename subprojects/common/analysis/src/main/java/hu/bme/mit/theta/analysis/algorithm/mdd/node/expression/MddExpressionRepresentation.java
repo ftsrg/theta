@@ -115,6 +115,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         return explicitRepresentation;
     }
 
+    /** The child of the token where it was looked up rather than kept as an edge, if any. */
+    public MddNode lookedUpTokenChild() {
+        return tokenChecked ? tokenChild : null;
+    }
+
     public static MddExpressionRepresentation of(
             final Expr<BoolType> expr,
             final Decl<?> decl,
