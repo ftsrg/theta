@@ -91,3 +91,5 @@ hex_literal_unsigned_add.c	efficient	LP64	SAFE:no-overflow	a hex constant that d
 hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/unsigned/long/... candidate list, width and sign kept in bitvector
 rebuild_struct_registry.c	bitvector	ILP32	SAFE	an in-process frontend rebuild (multi -> flat fallback) starts from an empty struct registry
 typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
+statement_expression_order.c	efficient	LP64	SAFE	a statement expression as an initializer or assigned value runs its statements and their side effects in order
+parenthesized_postfix.c	efficient	LP64	SAFE	`(a++)` yields `a` and then increments it, in an initializer, a condition, a comma list and a `&&` operand

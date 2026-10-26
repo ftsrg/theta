@@ -1840,7 +1840,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
-    private void resetPostStatements(CStatement statement) {
+    public void resetPostStatements(CStatement statement) {
         if (statement instanceof CCompound compound) {
             compound.setPostStatements(null);
             for (CStatement cStatement : compound.getcStatementList()) {
@@ -1849,10 +1849,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
-    private List<CStatement> getStatementList(CStatement statement) {
+    /** Every statement `statement` runs, in order: a compound's pre-statements, body, then post. */
+    private List<CStatement> linearize(CStatement statement) {
         if (statement instanceof CCompound compound) {
-            return compound.getcStatementList().stream()
-                    .flatMap(i -> getStatementList(i).stream())
+            return Stream.of(
+                            linearize(compound.getPreStatements()).stream(),
+                            compound.getcStatementList().stream()
+                                    .flatMap(i -> linearize(i).stream()),
+                            linearize(compound.getPostStatements()).stream())
+                    .flatMap(i -> i)
                     .toList();
         } else if (statement != null) {
             return List.of(statement);
@@ -1863,16 +1868,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     /*
     This collects the following:
-        - the current compound's pre-statement
-        - all pre-statements of the pre-statement (before the pre-statement)
+        - the current compound's pre-statement, in the order it runs (a statement expression in it
+          is a sequence: each of its statements' side effects stays next to that statement)
         - all the pre-statement of every cStatement
      */
     private List<CStatement> collectPreStatements(CStatement cStatement) {
         if (cStatement instanceof CCompound) {
             return Stream.concat(
-                            Stream.concat(
-                                    collectPreStatements(cStatement.getPreStatements()).stream(),
-                                    getStatementList(cStatement.getPreStatements()).stream()),
+                            linearize(cStatement.getPreStatements()).stream(),
                             ((CCompound) cStatement)
                                     .getcStatementList().stream()
                                             .flatMap(
@@ -1887,10 +1890,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /*
     This collects the following:
         - all the post-statements of every cStatement
-        - the current compound's post-statement
-        - all post-statements of the post-statement (after the post-statement)
+        - the current compound's post-statement, in the order it runs
      */
-    private List<CStatement> collectPostStatements(CStatement cStatement) {
+    public List<CStatement> collectPostStatements(CStatement cStatement) {
         if (cStatement instanceof CCompound) {
             return Stream.concat(
                             ((CCompound) cStatement)
@@ -1899,9 +1901,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                                     cStatement1 ->
                                                             collectPostStatements(cStatement1)
                                                                     .stream()),
-                            Stream.concat(
-                                    getStatementList(cStatement.getPostStatements()).stream(),
-                                    collectPostStatements(cStatement.getPostStatements()).stream()))
+                            linearize(cStatement.getPostStatements()).stream())
                     .filter(i -> !(i instanceof CExpr))
                     .toList();
         } else return List.of();

@@ -3672,7 +3672,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CParser.PrimaryExpressionBraceExpressionContext ctx) {
         if (functionVisitor != null) {
             CStatement statement = ctx.expression().accept(functionVisitor);
-            preStatements.add(statement);
+            queueValueStatement(statement);
             return statement.getExpression();
         } else {
             return getConstExpr(ctx);
@@ -3709,8 +3709,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     Level.INFO, "WARNING: statement expression yields no value\n");
             return null;
         }
-        preStatements.add(statement);
+        queueValueStatement(statement);
         return value;
+    }
+
+    /**
+     * Queues a parenthesised or statement expression to run first, except for the post-statements
+     * of its last item -- the one yielding the value: `(a++)` reads `a` before incrementing it,
+     * just like `a++`. The earlier items are sequenced before the value and run in full.
+     */
+    private void queueValueStatement(CStatement statement) {
+        if (statement instanceof CCompound compound && !compound.getcStatementList().isEmpty()) {
+            List<CStatement> items = compound.getcStatementList();
+            CStatement value = items.get(items.size() - 1);
+            postStatements.addAll(functionVisitor.collectPostStatements(value));
+            functionVisitor.resetPostStatements(value);
+        }
+        preStatements.add(statement);
     }
 
     @Override
