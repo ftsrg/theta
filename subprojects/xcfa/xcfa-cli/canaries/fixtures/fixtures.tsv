@@ -96,3 +96,5 @@ atomic_load_by_pointer.c	efficient	LP64	SAFE	the generic `__atomic_load(p, &ret,
 typeof_storage_class.c	efficient	LP64	SAFE	`typeof(s)` of a `static` variable does not make the new variable static
 auto_type.c	efficient	LP64	SAFE	GNU `__auto_type x = e` declares x with the type of e
 gcc_stdatomic_expansion.c	efficient	LP64	SAFE	gcc-preprocessed <stdatomic.h> operations (`__auto_type`, `typeof((void)0, *p)`, generic `__atomic_*` builtins)
+statement_expression_order.c	efficient	LP64	SAFE	a statement expression as an initializer or assigned value runs its statements and their side effects in order
+parenthesized_postfix.c	efficient	LP64	SAFE	`(a++)` yields `a` and then increments it, in an initializer, a condition, a comma list and a `&&` operand
