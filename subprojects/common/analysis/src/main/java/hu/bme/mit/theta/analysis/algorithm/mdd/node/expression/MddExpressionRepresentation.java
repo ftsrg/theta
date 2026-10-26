@@ -345,36 +345,10 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     private MddNode tokenChild;
     private boolean tokenChecked;
 
-    // what an edge covers, which an enumeration excludes: the token covers every value
-    private Expr<BoolType> coveredBy(int key) {
-        return Eq(decl.getRef(), values().toExpr(key, decl));
-    }
-
     private boolean isNextState() {
         return transExpr
                 && decl instanceof IndexedConstDecl<?> constDecl
                 && constDecl.getIndex() > 0;
-    }
-
-    private void cacheTokenEdge(int key) {
-        if (explicitRepresentation.getCacheView().containsKey(key)) return;
-        final Expr<BoolType> childExpr =
-                MddExpressionTemplate.simplify(
-                        expr, decl, decl.getRef(), mddVariable.getMddGraph());
-        final MddNode childNode =
-                mddVariable.getLower().isPresent()
-                        ? mddVariable
-                                .getLower()
-                                .get()
-                                .checkInNode(
-                                        MddExpressionTemplate.ofKnownSat(
-                                                childExpr, o -> (Decl) o, solverPool, transExpr))
-                        : terminalFor(childExpr);
-        if (!explicitRepresentation.isComplete()
-                && explicitRepresentation.getCacheView().defaultValue() == null
-                && !mddVariable.isNullOrZero(childNode)) {
-            cacheExploredEdge(key, childNode);
-        }
     }
 
     @Override
@@ -723,7 +697,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                             .getCacheView()
                                             .cursor();
                             cur.moveNext(); ) {
-                        solver.add(Not(currentRepresentation.coveredBy(cur.key())));
+                        // the token covers every value
+                        solver.add(
+                                Neq(
+                                        currentRepresentation.decl.getRef(),
+                                        currentRepresentation
+                                                .values()
+                                                .toExpr(cur.key(), currentRepresentation.decl)));
                     }
                     if (symbolicTarget
                             || currentRepresentation.explicitRepresentation.getCacheView().size()
@@ -765,7 +745,33 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                                                             lookAhead));
                     if (token) {
                         final int key = currentRepresentation.symbolic().token();
-                        currentRepresentation.cacheTokenEdge(key);
+                        final MddExpressionRepresentation r = currentRepresentation;
+                        if (!r.explicitRepresentation.getCacheView().containsKey(key)) {
+                            final Expr<BoolType> childExpr =
+                                    MddExpressionTemplate.simplify(
+                                            r.expr,
+                                            r.decl,
+                                            r.decl.getRef(),
+                                            r.mddVariable.getMddGraph());
+                            final MddNode childNode =
+                                    r.mddVariable.getLower().isPresent()
+                                            ? r.mddVariable
+                                                    .getLower()
+                                                    .get()
+                                                    .checkInNode(
+                                                            MddExpressionTemplate.ofKnownSat(
+                                                                    childExpr,
+                                                                    o -> (Decl) o,
+                                                                    r.solverPool,
+                                                                    r.transExpr))
+                                            : r.terminalFor(childExpr);
+                            if (!r.explicitRepresentation.isComplete()
+                                    && r.explicitRepresentation.getCacheView().defaultValue()
+                                            == null
+                                    && !r.mddVariable.isNullOrZero(childNode)) {
+                                r.cacheExploredEdge(key, childNode);
+                            }
+                        }
                         if (!currentRepresentation
                                 .explicitRepresentation
                                 .getCacheView()

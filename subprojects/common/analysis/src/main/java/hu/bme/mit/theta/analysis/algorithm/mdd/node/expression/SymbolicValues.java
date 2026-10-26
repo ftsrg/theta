@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -189,8 +190,30 @@ public final class SymbolicValues implements MddValues {
                         source,
                         mddGraph.getNodeFor(((MddNode.Terminal<?>) step).getTerminalData()));
         if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        // the values the step wrote are next-state values in the target and are projected out
+        final Set<Decl<?>> eliminated = new HashSet<>();
+        final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
+        final BasicSubstitution.Builder toNext = BasicSubstitution.builder();
+        for (ConstDecl<?> c : ExprUtils.getConstants(formulaOf(joined))) {
+            final Decl<?> t = written.get(c);
+            if (t != null) {
+                eliminated.add(t);
+                unmark.put(c, True());
+                toNext.put(((IndexedConstDecl<?>) t).getVarDecl().getConstDecl(0), t.getRef());
+            }
+        }
+        final Expr<BoolType> before = unmark.build().apply(formulaOf(joined));
+        final Expr<BoolType> after = toNext.build().apply(renamedApart(before, formulaOf(target)));
+        Expr<BoolType> current =
+                ExprUtils.simplify(
+                        normalizeArrays(And(before, after), new UnaryOperationCache<>()));
+        for (ConstDecl<?> c : ExprUtils.getConstants(current))
+            if (isIntermediate(c)) eliminated.add(c);
+        // the leftovers stay bound: a trace needs no canonical terminal, and the solver can stall
+        current = eliminateCheaply(current, eliminated);
         return mddGraph.intersectionTerminal(
-                mddGraph.getNodeFor(preImage(formulaOf(joined), formulaOf(target))),
+                mddGraph.getNodeFor(
+                        canonical(bindLeftovers(current, eliminated, BasicSubstitution.builder()))),
                 mddGraph.getNodeFor(True()));
     }
 
@@ -227,11 +250,55 @@ public final class SymbolicValues implements MddValues {
             Valuation model,
             MddHandle lookAhead) {
         if (!canBeToken(decl.getType())) return false;
-        final Map<Decl<?>, Expr<?>> keys = new HashMap<>();
-        final Expr<BoolType> leaf = path(lookAhead, model, keys);
-        final BasicSubstitution.Builder sub = BasicSubstitution.builder();
-        keys.forEach(sub::put);
-        final Expr<BoolType> onPath = ExprUtils.simplify(sub.build().apply(expr));
+        // the literal keys of the state the model is in, as far as look-ahead covers it, and its
+        // terminal
+        final BasicSubstitution.Builder keys = BasicSubstitution.builder();
+        MddNode node = lookAhead == null ? null : lookAhead.getNode();
+        MddVariable variable =
+                lookAhead == null ? null : lookAhead.getVariableHandle().getVariable().orElse(null);
+        while (node != null && !node.isTerminal() && variable != null) {
+            final MddVariable lower = variable.getLower().orElse(null);
+            if (!node.isOn(variable)) {
+                variable = lower;
+                continue;
+            }
+            if (node.defaultValue() != null) {
+                node = node.defaultValue();
+                variable = lower;
+                continue;
+            }
+            final Decl<?> d = variable.getTraceInfo(Decl.class);
+            final Expr<?> current = model.eval(d).orElse(null);
+            MddNode next = null;
+            for (var c = node.cursor(); c.moveNext(); ) {
+                final boolean token = isToken(c.key());
+                final Expr<?> key = toExpr(c.key(), d);
+                if (!token && !key.equals(current)) continue;
+                // the model is on this edge unless what it leads to is false in the model
+                final MddNode child = c.value();
+                final Decl<BoolType> aux =
+                        child.isTerminal()
+                                ? null
+                                : MddToExprNodeLevel.INSTANCE
+                                        .getAuxvarCache()
+                                        .getOrNull(child, lower);
+                final boolean taken =
+                        child.isTerminal()
+                                ? !(ExprUtils.simplify(formulaOf(child), model)
+                                        instanceof FalseExpr)
+                                : aux == null
+                                        || !(model.eval(aux).orElse(null) instanceof FalseExpr);
+                if (taken) {
+                    if (!token) keys.put(d, key);
+                    next = child;
+                    break;
+                }
+            }
+            node = next;
+            variable = lower;
+        }
+        final Expr<BoolType> leaf = node != null && node.isTerminal() ? formulaOf(node) : True();
+        final Expr<BoolType> onPath = ExprUtils.simplify(keys.build().apply(expr));
         return !hasFewValues(And(onPath, leaf), decl);
     }
 
@@ -255,49 +322,6 @@ public final class SymbolicValues implements MddValues {
         }
     }
 
-    // the literal keys of the state the model is in, as far as look-ahead covers it, and its
-    // terminal
-    private Expr<BoolType> path(MddHandle lookAhead, Valuation model, Map<Decl<?>, Expr<?>> keys) {
-        if (lookAhead == null) return True();
-        MddNode node = lookAhead.getNode();
-        MddVariable variable = lookAhead.getVariableHandle().getVariable().orElse(null);
-        while (node != null && !node.isTerminal() && variable != null) {
-            final MddVariable lower = variable.getLower().orElse(null);
-            if (!node.isOn(variable)) {
-                variable = lower;
-                continue;
-            }
-            if (node.defaultValue() != null) {
-                node = node.defaultValue();
-                variable = lower;
-                continue;
-            }
-            final Decl<?> d = variable.getTraceInfo(Decl.class);
-            final Expr<?> value = model.eval(d).orElse(null);
-            MddNode next = null;
-            for (var c = node.cursor(); c.moveNext(); ) {
-                final boolean token = isToken(c.key());
-                final Expr<?> key = toExpr(c.key(), d);
-                if ((token || key.equals(value)) && taken(c.value(), lower, model)) {
-                    if (!token) keys.put(d, key);
-                    next = c.value();
-                    break;
-                }
-            }
-            node = next;
-            variable = lower;
-        }
-        return node != null && node.isTerminal() ? formulaOf(node) : True();
-    }
-
-    private boolean taken(MddNode node, MddVariable variable, Valuation model) {
-        if (node.isTerminal())
-            return !(ExprUtils.simplify(formulaOf(node), model) instanceof FalseExpr);
-        final Decl<BoolType> aux =
-                MddToExprNodeLevel.INSTANCE.getAuxvarCache().getOrNull(node, variable);
-        return aux == null || !(model.eval(aux).orElse(null) instanceof FalseExpr);
-    }
-
     /** What a relation leaves at its terminal, without its own steps where they are defined. */
     Expr<BoolType> withoutIntermediates(Expr<BoolType> residual) {
         final Set<Decl<?>> eliminated = new HashSet<>();
@@ -311,43 +335,35 @@ public final class SymbolicValues implements MddValues {
      * satisfiable; the values the step overwrote are projected out and the next-state values become
      * current.
      */
-    public Expr<BoolType> image(Expr<BoolType> joined) {
-        Expr<BoolType> ret = images.getOrNull(joined);
-        if (ret == null) {
-            ret = computeImage(joined);
-            images.addToCache(joined, ret);
-        }
-        return ret;
-    }
-
-    /**
-     * The source terminal of a step back from {@code target}: {@code joined} is the source terminal
-     * and what the relation left, satisfiable; the values the step wrote are next-state values in
-     * the target and are projected out.
-     */
-    private Expr<BoolType> preImage(Expr<BoolType> joined, Expr<BoolType> target) {
-        final Set<Decl<?>> targets = new HashSet<>();
+    private Expr<BoolType> image(Expr<BoolType> joined) {
+        final Expr<BoolType> cached = images.getOrNull(joined);
+        if (cached != null) return cached;
+        final Set<VarDecl<?>> overwritten = new HashSet<>();
         final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
-        final BasicSubstitution.Builder toNext = BasicSubstitution.builder();
+        final BasicSubstitution.Builder bind = BasicSubstitution.builder();
         for (ConstDecl<?> c : ExprUtils.getConstants(joined)) {
-            final Decl<?> t = written.get(c);
-            if (t != null) {
-                targets.add(t);
+            final Decl<?> target = written.get(c);
+            if (target != null) {
+                final VarDecl<?> var = ((IndexedConstDecl<?>) target).getVarDecl();
+                overwritten.add(var);
                 unmark.put(c, True());
-                toNext.put(((IndexedConstDecl<?>) t).getVarDecl().getConstDecl(0), t.getRef());
+                bind.put(target, var.getConstDecl(0).getRef());
             }
         }
-        final Expr<BoolType> source = unmark.build().apply(joined);
-        final Expr<BoolType> after = toNext.build().apply(renamedApart(source, target));
         Expr<BoolType> current =
                 ExprUtils.simplify(
-                        normalizeArrays(And(source, after), new UnaryOperationCache<>()));
-        final Set<Decl<?>> eliminated = new HashSet<>(targets);
-        for (ConstDecl<?> c : ExprUtils.getConstants(current))
-            if (isIntermediate(c)) eliminated.add(c);
-        // the leftovers stay bound: a trace needs no canonical terminal, and the solver can stall
-        current = eliminateCheaply(current, eliminated);
-        return canonical(bindLeftovers(current, eliminated, BasicSubstitution.builder()));
+                        normalizeArrays(unmark.build().apply(joined), new UnaryOperationCache<>()));
+        final Set<Decl<?>> eliminated = new HashSet<>();
+        for (ConstDecl<?> c : ExprUtils.getConstants(current)) {
+            if (isIntermediate(c)
+                    || c instanceof IndexedConstDecl<?> ic
+                            && ic.getIndex() == 0
+                            && overwritten.contains(ic.getVarDecl())) eliminated.add(c);
+        }
+        current = eliminate(current, eliminated);
+        final Expr<BoolType> result = canonical(bindLeftovers(current, eliminated, bind));
+        images.addToCache(joined, result);
+        return result;
     }
 
     // what elimination left over of the eliminated decls is kept under bound names
@@ -369,36 +385,6 @@ public final class SymbolicValues implements MddValues {
     private static Expr<BoolType> canonical(Expr<BoolType> expr) {
         final Expr<BoolType> result = ExprUtils.canonize(expr);
         return ExprUtils.getConstants(result).isEmpty() ? True() : result;
-    }
-
-    private Expr<BoolType> computeImage(Expr<BoolType> joined) {
-        final Set<ConstDecl<?>> constants = ExprUtils.getConstants(joined);
-        final Set<Decl<?>> targets = new HashSet<>();
-        final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
-        for (ConstDecl<?> c : constants) {
-            final Decl<?> target = written.get(c);
-            if (target != null) {
-                targets.add(target);
-                unmark.put(c, True());
-            }
-        }
-        Expr<BoolType> current =
-                ExprUtils.simplify(
-                        normalizeArrays(unmark.build().apply(joined), new UnaryOperationCache<>()));
-        final Set<Decl<?>> eliminated = new HashSet<>();
-        for (ConstDecl<?> c : ExprUtils.getConstants(current)) {
-            if (isIntermediate(c)) eliminated.add(c);
-            else if (c instanceof IndexedConstDecl<?> ic && ic.getIndex() == 0) {
-                final Decl<?> target = targetOf(ic);
-                if (target != null && targets.contains(target)) eliminated.add(c);
-            }
-        }
-        current = eliminate(current, eliminated);
-        final BasicSubstitution.Builder bind = BasicSubstitution.builder();
-        for (Decl<?> target : targets) {
-            bind.put(target, ((IndexedConstDecl<?>) target).getVarDecl().getConstDecl(0).getRef());
-        }
-        return canonical(bindLeftovers(current, eliminated, bind));
     }
 
     // reads and writes at literal indices resolved through write chains, writes kept in index order
@@ -450,15 +436,6 @@ public final class SymbolicValues implements MddValues {
         return (Expr<T>) result;
     }
 
-    private Decl<?> targetOf(IndexedConstDecl<?> source) {
-        for (Decl<?> d : levels) {
-            if (d instanceof IndexedConstDecl<?> ic
-                    && ic.getIndex() > 0
-                    && ic.getVarDecl().equals(source.getVarDecl())) return d;
-        }
-        return null;
-    }
-
     private ConstDecl<?> boundName(int index, Type type) {
         return boundNames.computeIfAbsent(
                 List.of(index, type), k -> Decls.Const(BOUND + index, type));
@@ -490,7 +467,28 @@ public final class SymbolicValues implements MddValues {
     // and what that leaves over by the solver's quantifier elimination, where it succeeds
     private Expr<BoolType> eliminate(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
         if (eliminated.isEmpty()) return expr;
-        return eliminateQuantifiers(eliminateCheaply(expr, eliminated), eliminated);
+        final Expr<BoolType> kept = eliminateCheaply(expr, eliminated);
+        final BasicSubstitution.Builder toParams = BasicSubstitution.builder();
+        final List<ParamDecl<?>> params = new ArrayList<>();
+        for (ConstDecl<?> c : ExprUtils.getConstants(kept)) {
+            if (!eliminated.contains(c) && !isBound(c)) continue;
+            final ParamDecl<?> p =
+                    qeParams.computeIfAbsent(
+                            List.of(params.size(), c.getType()),
+                            k -> Decls.Param("__theta_qe_" + k.get(0), c.getType()));
+            params.add(p);
+            toParams.put(c, p.getRef());
+        }
+        if (params.isEmpty()) return kept;
+        final var solver = solverPool.requestSolver();
+        try {
+            final Expr<BoolType> result =
+                    solver.eliminateQuantifiers(
+                            Exists(params, toParams.build().apply(kept)), "qe2");
+            return hasQuantifier(result) ? kept : ExprUtils.simplify(result);
+        } finally {
+            solverPool.returnSolver(solver);
+        }
     }
 
     /**
@@ -539,30 +537,6 @@ public final class SymbolicValues implements MddValues {
         final List<Expr<BoolType>> kept = new ArrayList<>();
         for (int i = 0; i < n; i++) if (openRoot[find(parent, i)]) kept.add(conjuncts.get(i));
         return And(kept);
-    }
-
-    private Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
-        final BasicSubstitution.Builder toParams = BasicSubstitution.builder();
-        final List<ParamDecl<?>> params = new ArrayList<>();
-        for (ConstDecl<?> c : ExprUtils.getConstants(expr)) {
-            if (!eliminated.contains(c) && !isBound(c)) continue;
-            final ParamDecl<?> p =
-                    qeParams.computeIfAbsent(
-                            List.of(params.size(), c.getType()),
-                            k -> Decls.Param("__theta_qe_" + k.get(0), c.getType()));
-            params.add(p);
-            toParams.put(c, p.getRef());
-        }
-        if (params.isEmpty()) return expr;
-        final var solver = solverPool.requestSolver();
-        try {
-            final Expr<BoolType> result =
-                    solver.eliminateQuantifiers(
-                            Exists(params, toParams.build().apply(expr)), "qe2");
-            return hasQuantifier(result) ? expr : ExprUtils.simplify(result);
-        } finally {
-            solverPool.returnSolver(solver);
-        }
     }
 
     private static boolean hasQuantifier(Expr<?> expr) {

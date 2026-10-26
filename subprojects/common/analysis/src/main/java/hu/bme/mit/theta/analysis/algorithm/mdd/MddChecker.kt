@@ -171,8 +171,46 @@ constructor(
 
     val initExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
     val initNode =
-      if (values != null) symbolicInit(initExpr, stateSig, transSig, values)
-      else
+      if (values != null) {
+        // the initial states as a step from the state where every variable holds the token: init
+        // constrains the next-state values, so what it leaves free stays symbolic
+        val toNext = BasicSubstitution.builder()
+        variableOrdering.forEach {
+          toNext.put(
+            it.getConstDecl(0),
+            it.getConstDecl(maxOf(monolithicExpr.transOffsetIndex[it], 1)).ref,
+          )
+        }
+        val initStep =
+          transSig.topVariableHandle.checkInNode(
+            MddExpressionTemplate.of(
+              toNext.build().apply(initExpr),
+              { it as Decl<*> },
+              solverPool,
+              true,
+            )
+          )
+        val levels =
+          generateSequence(stateSig.topVariableHandle.variable.orElseThrow()) {
+              it.lower.orElse(null)
+            }
+            .toList()
+        @Suppress("UNCHECKED_CAST")
+        var any: MddNode = (stateSig.topVariableHandle.mddGraph as MddGraph<Any>).getNodeFor(True())
+        for (level in levels.reversed()) {
+          val builder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
+          when (val type = level.getTraceInfo(Decl::class.java).type) {
+            is BoolType -> listOf(0, 1)
+            is EnumType -> type.values.map { type.getIntValue(it) }
+            else -> listOf(values.token())
+          }.forEach { builder.set(it, any) }
+          any = level.checkInNode(MddStructuralTemplate.of(builder.buildAndReset()))
+        }
+        val init =
+          RelationalProductProviderImpl(stateSig.variableOrder)
+            .compute(any, MddNodeNextStateDescriptor.of(initStep), levels.first())
+        stateSig.topVariableHandle.getHandleFor(init)
+      } else
         stateSig.topVariableHandle.checkInNode(
           MddExpressionTemplate.of(initExpr, { it as Decl<*> }, solverPool)
         )
@@ -274,52 +312,6 @@ constructor(
       result = SafetyResult.safe(proof, statistics)
     }
     return result
-  }
-
-  /**
-   * The initial states as a step from the state where every variable holds the token: init
-   * constrains the next-state values, so what it leaves free stays symbolic.
-   */
-  private fun symbolicInit(
-    initExpr: Expr<BoolType>,
-    stateSig: hu.bme.mit.delta.java.mdd.MddSignature,
-    transSig: hu.bme.mit.delta.java.mdd.MddSignature,
-    values: SymbolicValues,
-  ): MddHandle {
-    val toNext = BasicSubstitution.builder()
-    variableOrdering.forEach {
-      toNext.put(
-        it.getConstDecl(0),
-        it.getConstDecl(maxOf(monolithicExpr.transOffsetIndex[it], 1)).ref,
-      )
-    }
-    val initStep =
-      transSig.topVariableHandle.checkInNode(
-        MddExpressionTemplate.of(
-          toNext.build().apply(initExpr),
-          { it as Decl<*> },
-          solverPool,
-          true,
-        )
-      )
-    val levels =
-      generateSequence(stateSig.topVariableHandle.variable.orElseThrow()) { it.lower.orElse(null) }
-        .toList()
-    @Suppress("UNCHECKED_CAST")
-    var any: MddNode = (stateSig.topVariableHandle.mddGraph as MddGraph<Any>).getNodeFor(True())
-    for (level in levels.reversed()) {
-      val builder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder()
-      when (val type = level.getTraceInfo(Decl::class.java).type) {
-        is BoolType -> listOf(0, 1)
-        is EnumType -> type.values.map { type.getIntValue(it) }
-        else -> listOf(values.token())
-      }.forEach { builder.set(it, any) }
-      any = level.checkInNode(MddStructuralTemplate.of(builder.buildAndReset()))
-    }
-    val init =
-      RelationalProductProviderImpl(stateSig.variableOrder)
-        .compute(any, MddNodeNextStateDescriptor.of(initStep), levels.first())
-    return stateSig.topVariableHandle.getHandleFor(init)
   }
 
   private fun structuralRerun(
