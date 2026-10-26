@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.ASGAbstractor
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.abstraction.LoopCheckerSearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.ASGTraceCheckerStrategy;
 import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.BoundedUnrollingASGTraceCheckerStrategy;
+import hu.bme.mit.theta.analysis.algorithm.loopchecker.refinement.SingleASGTraceRefiner;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
@@ -31,6 +32,7 @@ import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
+import hu.bme.mit.theta.common.exception.NotSolvableException;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -142,6 +144,22 @@ public class ASGTraceCheckerTest {
                 BoolExprs.True(), ExprUtils.simplify(xsts.getInitFormula(), valuations.get(0)));
     }
 
+    @Test
+    public void testRefinementLeavingThePrecisionUnchangedIsNotSolvable() throws IOException {
+        final XSTS xsts = loadXsts("counter3.xsts", "x_eq_3.prop");
+        final ASG<XstsState<PredState>, XstsAction> asg = buildAsg(xsts);
+        final SingleASGTraceRefiner<XstsState<PredState>, XstsAction, PredPrec> refiner =
+                new SingleASGTraceRefiner<>(
+                        ASGTraceCheckerStrategy.Companion.getDefault(),
+                        Z3LegacySolverFactory.getInstance(),
+                        (prec, trace, refutation) -> prec,
+                        NullLogger.getInstance(),
+                        xsts.getInitFormula());
+
+        Assertions.assertThrows(
+                NotSolvableException.class, () -> refiner.refine(asg, PredPrec.of()));
+    }
+
     private static XSTS loadXsts(String xstsFile, String propFile) throws IOException {
         try (InputStream inputStream =
                 new SequenceInputStream(
@@ -152,6 +170,10 @@ public class ASGTraceCheckerTest {
     }
 
     private static ASGTrace<XstsState<PredState>, XstsAction> findLasso(XSTS xsts) {
+        return buildAsg(xsts).getTraces().iterator().next();
+    }
+
+    private static ASG<XstsState<PredState>, XstsAction> buildAsg(XSTS xsts) {
         final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
         final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis =
                 XstsAnalysis.create(
@@ -174,6 +196,6 @@ public class ASGTraceCheckerTest {
                         NullLogger.getInstance());
         final ASG<XstsState<PredState>, XstsAction> asg = new ASG<>(target);
         abstractor.check(asg, PredPrec.of());
-        return asg.getTraces().iterator().next();
+        return asg;
     }
 }

@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -60,6 +61,8 @@ constructor(
     if (refutation.isInfeasible) {
       val refinedPrecision: P =
         refiner.refine(prec, ldgTrace.toTrace(), refutation.asInfeasible().refutation)
+      // the ASG is rebuilt from scratch, so an unchanged precision would find the same lasso again
+      if (refinedPrecision == prec) throw NotSolvableException()
       witness.pruneAll()
       return RefinerResult.spurious(refinedPrecision)
     }
