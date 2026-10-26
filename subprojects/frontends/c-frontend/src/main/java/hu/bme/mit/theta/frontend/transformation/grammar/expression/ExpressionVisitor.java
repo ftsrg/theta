@@ -3266,7 +3266,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private static final java.util.Set<String> ATOMIC_RETURNS_POINTEE =
             java.util.Set.of(
                     "__atomic_load_n",
-                    "__atomic_load",
                     "atomic_load",
                     "atomic_load_explicit",
                     "__atomic_exchange_n",
@@ -3298,6 +3297,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             java.util.Set.of(
                     "__atomic_store_n",
                     "__atomic_store",
+                    "__atomic_load", // ret is by pointer, the call value is unused
                     "atomic_store",
                     "atomic_store_explicit",
                     "atomic_init",

@@ -92,3 +92,4 @@ hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/uns
 rebuild_struct_registry.c	bitvector	ILP32	SAFE	an in-process frontend rebuild (multi -> flat fallback) starts from an empty struct registry
 typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
 clang_c11_atomics.c	efficient	ILP32	SAFE	clang-preprocessed <stdatomic.h> operations (`__c11_atomic_*` builtins) are the C11 `atomic_*_explicit` calls
+atomic_load_by_pointer.c	efficient	LP64	SAFE	the generic `__atomic_load(p, &ret, order)` writes its result through `ret`

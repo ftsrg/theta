@@ -250,8 +250,10 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
     if (name in loadNames) {
       // ret = *p  -- a single memory read, already atomic; the block keeps it uniform.
+      // __atomic_load(p, ret_ptr, order) returns it by pointer instead: *ret_ptr = *p.
       val p = args[0]
-      return atomic(listOf(AssignStmtLabel(ret, cell(p))))
+      val target = if (name == "__atomic_load") cell(args[1]) else ret
+      return atomic(listOf(AssignStmtLabel(target, cell(p))))
     }
 
     if (name in storeNames) {
