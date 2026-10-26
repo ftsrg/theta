@@ -44,6 +44,9 @@ fun XcfaProperty.ltlPropertyFromTrace(trace: Trace<XcfaState<*>, XcfaAction>?): 
           ?.firstOrNull { it.name.contains("__THETA_") }
           ?.name
 
+      if (locName == null && trace != null) {
+        throw UnknownResultException("Uncertain $inputProperty result: no subproperty in the trace")
+      }
       locName?.let {
         // Matched by *prefix*: a copied procedure has its locations suffixed to tell the copies
         // apart
