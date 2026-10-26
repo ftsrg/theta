@@ -1730,7 +1730,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is
         // decided
         // here (so the call's return variable is typed right); the semantics live in the pass.
-        Expr<?> atomic = atomicBuiltinCall(name, args);
+        // A C11 name the program declares itself is an ordinary function and is called as one.
+        Expr<?> atomic = getVar(name) == null ? atomicBuiltinCall(name, args) : null;
         if (atomic != null) {
             return atomic;
         }
@@ -1782,6 +1783,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 LitExpr<?> toNearest = signedInt.getNullValue();
                 parseContext.getMetadata().create(toNearest, "cType", signedInt);
                 return toNearest;
+            }
+            case "__atomic_always_lock_free", "__atomic_is_lock_free", "atomic_is_lock_free" -> {
+                return args.isEmpty() || getVar(name) != null ? null : lockFree(name, args);
             }
             case "__builtin_constant_p" -> {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
@@ -3198,10 +3202,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "__atomic_exchange", // ret is by pointer, the call value is unused
                     "__atomic_thread_fence",
                     "__atomic_signal_fence",
+                    "__atomic_clear",
+                    "atomic_flag_clear",
+                    "atomic_flag_clear_explicit",
                     "atomic_thread_fence",
                     "atomic_signal_fence");
     private static final java.util.Set<String> ATOMIC_RETURNS_INT =
             java.util.Set.of(
+                    "__atomic_test_and_set",
+                    "atomic_flag_test_and_set",
+                    "atomic_flag_test_and_set_explicit",
                     "__atomic_compare_exchange_n",
                     "__atomic_compare_exchange",
                     "atomic_compare_exchange_strong",
@@ -3233,6 +3243,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         VOID,
     }
 
+    private static final java.util.Set<String> ATOMIC_FLAG_OPERATIONS =
+            java.util.Set.of(
+                    "__atomic_test_and_set",
+                    "atomic_flag_test_and_set",
+                    "atomic_flag_test_and_set_explicit",
+                    "__atomic_clear",
+                    "atomic_flag_clear",
+                    "atomic_flag_clear_explicit");
+    // GCC steps a pointer by bytes (as if it were a uintptr_t), C11 by elements.
+    private static final java.util.Set<String> ATOMIC_POINTER_STEP_IN_BYTES =
+            java.util.Set.of(
+                    "__atomic_fetch_add",
+                    "__atomic_fetch_sub",
+                    "__atomic_add_fetch",
+                    "__atomic_sub_fetch");
+    private static final java.util.Set<String> ATOMIC_POINTER_STEP_IN_ELEMENTS =
+            java.util.Set.of(
+                    "atomic_fetch_add",
+                    "atomic_fetch_sub",
+                    "atomic_fetch_add_explicit",
+                    "atomic_fetch_sub_explicit");
+
     private Expr<?> atomicCall(
             String name, List<AssignmentExpressionContext> args, AtomicReturn returnKind) {
         if (functionVisitor == null) {
@@ -3242,6 +3274,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         for (AssignmentExpressionContext arg : args) {
             arguments.add(arg.accept(functionVisitor));
         }
+        if (ATOMIC_FLAG_OPERATIONS.contains(name) && !arguments.isEmpty()) {
+            arguments.set(0, flagAddress(arguments.get(0)));
+        }
+        boolean stepInBytes = ATOMIC_POINTER_STEP_IN_BYTES.contains(name);
+        if ((stepInBytes || ATOMIC_POINTER_STEP_IN_ELEMENTS.contains(name))
+                && arguments.size() > 1
+                && pointeeOf(arguments.get(0).getExpression()) instanceof CPointer cell) {
+            Expr<?> step = arguments.get(1).getExpression();
+            Expr<?> offset = pointerStep(step, cell.getEmbeddedType(), stepInBytes);
+            arguments.set(1, new CExpr(offset, parseContext));
+        }
         CComplexType returnType;
         if (returnKind == AtomicReturn.POINTEE && !arguments.isEmpty()) {
             // load/exchange/fetch return the value at the object -- the pointee of the first
@@ -3249,13 +3292,106 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType pointee = pointeeOf(arguments.get(0).getExpression());
             returnType = pointee != null ? pointee : CComplexType.getSignedInt(parseContext);
         } else {
-            // compare-exchange returns a bool (int); store and fence are void (value unused).
+            // compare-exchange and test-and-set return a bool (int); store, clear and fence are
+            // void (value unused).
             returnType = CComplexType.getSignedInt(parseContext);
         }
         parseContext.getMetadata().create(name, "cType", returnType);
         CCall cCall = new CCall(name, arguments, parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
+    }
+
+    /**
+     * The lock-free queries, answered as GCC does on x86: an object of 1, 2, 4 or 8 bytes is
+     * lock-free, any other size is not always lock-free. Whether it is lock-free at run time
+     * depends on the processor, so {@code __atomic_is_lock_free} of such a size is refused.
+     */
+    private Expr<?> lockFree(String name, List<AssignmentExpressionContext> args) {
+        BigInteger size;
+        if (name.equals("atomic_is_lock_free")) {
+            CComplexType object = pointeeOf(args.get(0).accept(this));
+            size =
+                    object == null
+                            ? null
+                            : BigInteger.valueOf(
+                                    ObjectLayout.sizeBits(object, parseContext.getArchitecture())
+                                            / 8);
+        } else {
+            size = literalValue(ExprUtils.simplify(args.get(0).accept(this)));
+        }
+        if (size == null) {
+            throw new UnsupportedFrontendElementException(
+                    name + " is supported only for an object of constant size");
+        }
+        boolean lockFree = size.signum() > 0 && size.bitCount() == 1 && size.bitLength() <= 4;
+        if (!lockFree && !name.equals("__atomic_always_lock_free")) {
+            throw new UnsupportedFrontendElementException(
+                    name + " of a " + size + "-byte object depends on the processor");
+        }
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        LitExpr<?> answer = lockFree ? signedInt.getUnitValue() : signedInt.getNullValue();
+        parseContext.getMetadata().create(answer, "cType", signedInt);
+        return answer;
+    }
+
+    private static BigInteger literalValue(Expr<?> expr) {
+        Expr<?> stripped = stripPos(expr);
+        if (stripped instanceof IntLitExpr intLit) {
+            return intLit.getValue();
+        }
+        if (stripped instanceof BvLitExpr bvLit) {
+            return BvUtils.neutralBvLitExprToBigInteger(bvLit);
+        }
+        return null;
+    }
+
+    /**
+     * An {@code atomic_flag} is a struct around the flag byte; the flag operations use the byte.
+     */
+    private CStatement flagAddress(CStatement pointer) {
+        Expr<?> address = pointer.getExpression();
+        if (!(pointeeOf(address) instanceof CStruct flag) || flag.getFields().isEmpty()) {
+            return pointer;
+        }
+        Expr<?> flagByte = structMemberAccess(address, flag, flag.getFields().get(0).get1());
+        return new CExpr(reference(flagByte), parseContext);
+    }
+
+    /**
+     * The step of an atomic add/sub on a pointer, in the unit the memory model offsets a pointer
+     * by: bytes under the bytes model, cells otherwise. A byte step that is not a whole number of
+     * elements is truncated, as the cell models cannot point inside an element.
+     */
+    private Expr<?> pointerStep(Expr<?> step, CComplexType element, boolean inBytes) {
+        final CComplexType stepType = CComplexType.getSignedLong(parseContext);
+        // A `void *` steps by bytes (GNU).
+        final Expr<?> size =
+                element instanceof CVoid ? stepType.getUnitValue() : byteStrideExpr(element);
+        final Expr<?> unit = byteAddressed() ? size : cellCountExpr(element);
+        if (size == null || unit == null) {
+            throw new UnsupportedFrontendElementException(
+                    "Atomic arithmetic on a pointer to an element of unknown size");
+        }
+        Expr<?> offset = stepType.castTo(step);
+        if (byteAddressed() && inBytes) {
+            parseContext.getMetadata().create(offset, "cType", stepType);
+            return offset;
+        }
+        if (inBytes) {
+            final Expr<?> bytes = stepType.castTo(size);
+            offset =
+                    offset.getType() instanceof IntType
+                            ? createIntDiv(offset, bytes)
+                            : AbstractExprs.Div(offset, bytes);
+            parseContext.getMetadata().create(offset, "cType", stepType);
+            offset = stepType.castTo(offset);
+        }
+        if (!isLiteralOne(unit)) {
+            offset = stepType.castTo(Mul(List.of(offset, stepType.castTo(unit))));
+        }
+        parseContext.getMetadata().create(offset, "cType", stepType);
+        return offset;
     }
 
     /**
