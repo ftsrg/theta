@@ -219,9 +219,9 @@ private fun parseInputFiles(
  *
  * The default `multi` memory model splits a pointer into a base and an offset channel, and there
  * are local-variable patterns its splitting machinery cannot represent -- those make the frontend
- * throw [UnsupportedPointerSplitException]. The `flat` model has no splitting at all (a pointer is
- * a single scalar address), so the very same program builds there; when the model was left at its
- * default we therefore rebuild the whole frontend under `flat` rather than failing.
+ * throw [UnsupportedPointerSplitException]. When possible, the frontend retries under `bytes`,
+ * which also uses scalar addresses while preserving byte-level object layout. If byte addressing is
+ * unavailable, it falls back to `flat`.
  *
  * A union punned through members of different widths is the mirror image: the cell models must lay
  * it out as bytes by hand and run out of room (a pointer cannot cover several cells, a member whose
@@ -279,25 +279,64 @@ private fun frontend(
       allowBytesFallback = false,
     )
   } catch (e: UnsupportedPointerSplitException) {
-    logger.write(
-      Logger.Level.RESULT,
-      "%s%n",
-      "note: frontend build failed due to a pointer-splitting limitation under --memory-model" +
-        " ${cConfig!!.effectiveMemoryModel}; retrying with --memory-model flat",
-    )
     logger.info("%s", "Pointer-splitting limitation was: ${e.message}")
-    // Pin the model for everything downstream too: the portfolio re-runs the frontend once per
-    // configuration it tries (in-process runs re-parse from this very config), and they must all
-    // agree with the XCFA we return here.
-    cConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
-    // No fallback left to offer: whatever this attempt throws is reported as a real failure.
-    buildFrontend(
-      config,
-      logger,
-      uniqueLogger,
-      allowFlatFallback = false,
-      allowBytesFallback = false,
-    )
+    val cFrontendConfig = checkNotNull(cConfig)
+    if (mayFallBackToBytes) {
+      logger.write(
+        Logger.Level.RESULT,
+        "%s%n",
+        "note: frontend build failed due to a pointer-splitting limitation under --memory-model" +
+          " ${cFrontendConfig.effectiveMemoryModel}; retrying with --memory-model bytes",
+      )
+      val arithmetic = cFrontendConfig.arithmetic
+      cFrontendConfig.memoryModel = ArchitectureConfig.MemoryModelType.bytes
+      cFrontendConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      try {
+        buildFrontend(
+          config,
+          logger,
+          uniqueLogger,
+          allowFlatFallback = false,
+          allowBytesFallback = true,
+        )
+      } catch (byteException: RequiresByteAddressedMemoryException) {
+        logger.write(
+          Logger.Level.RESULT,
+          "%s%n",
+          "note: byte-addressed memory cannot represent this construct; retrying with" +
+            " --memory-model flat",
+        )
+        logger.info("%s", "Byte-granularity limitation was: ${byteException.message}")
+        cFrontendConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
+        cFrontendConfig.arithmetic = arithmetic
+        buildFrontend(
+          config,
+          logger,
+          uniqueLogger,
+          allowFlatFallback = false,
+          allowBytesFallback = false,
+        )
+      }
+    } else {
+      logger.write(
+        Logger.Level.RESULT,
+        "%s%n",
+        "note: frontend build failed due to a pointer-splitting limitation under --memory-model" +
+          " ${cFrontendConfig.effectiveMemoryModel}; retrying with --memory-model flat",
+      )
+      // Pin the model for everything downstream too: the portfolio re-runs the frontend once per
+      // configuration it tries (in-process runs re-parse from this very config), and they must all
+      // agree with the XCFA we return here.
+      cFrontendConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
+      // No fallback left to offer: whatever this attempt throws is reported as a real failure.
+      buildFrontend(
+        config,
+        logger,
+        uniqueLogger,
+        allowFlatFallback = false,
+        allowBytesFallback = false,
+      )
+    }
   }
 }
 
