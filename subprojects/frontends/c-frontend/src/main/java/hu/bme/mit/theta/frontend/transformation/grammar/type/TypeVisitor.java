@@ -856,6 +856,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         if (type.getOrigin() != null) {
             final CSimpleType copy = type.getOrigin().copyOf();
             copy.keepInnermostPointers(indirections(type));
+            // The origin is the declaration's whole specifier list, but its storage class is not
+            // part of the type: `typeof(s)` of a `static int s` declares an ordinary int.
+            copy.setExtern(false);
+            copy.setStaticStorage(false);
+            copy.setTypedef(false);
             return copy;
         }
         final CComplexType pointee = pointeeOf(type);
