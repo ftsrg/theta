@@ -42,6 +42,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.*
@@ -65,6 +66,7 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
     if (safetyResult.isSafe) {
       when (val proof = safetyResult.asSafe().proof) {
         is LocationInvariants -> witnessfile.writeText(proof.toSvLibCorrectnessWitness())
+        is DssInvariants -> witnessfile.writeText(proof.toSvLibCorrectnessWitness())
         else -> writeTrivialCorrectnessWitness(safetyResult, inputFile, property, parseContext, witnessfile, ltlSpecification, architecture)
       }
     } else if (safetyResult.isUnsafe) {
@@ -102,40 +104,62 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
   ): String {
     throw UnsupportedOperationException("SV-LIB violation witnesses are not supported")
   }
+}
 
-  private fun LocationInvariants.toSvLibCorrectnessWitness(): String {
-    val statesByTag: Map<String, MutableList<ExprState>> = this.partitions.entries
-      .fold(LinkedHashMap()) { tagStates, (location, states) ->
-        if (states.isNotEmpty()) {
-          (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
-            tagStates.getOrPut(tag, { mutableListOf() }).addAll(states)
-          }
+private fun LocationInvariants.toSvLibCorrectnessWitness(): String {
+  val statesByTag: Map<String, MutableList<ExprState>> = this.partitions.entries
+    .fold(LinkedHashMap()) { tagStates, (location, states) ->
+      if (states.isNotEmpty()) {
+        (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
+          tagStates.getOrPut(tag, { mutableListOf() }).addAll(states)
         }
-        tagStates
       }
+      tagStates
+    }
 
-    val invariantsByTag: Map<String, Expr<BoolType>> = statesByTag
-      .mapValues { (_, states) ->
-        val invariants = states.map(ExprState::getInvariant)
-        ExprUtils.simplify(BoolExprs.Or(invariants))
+  val invariantsByTag: Map<String, Expr<BoolType>> = statesByTag
+    .mapValues { (_, states) ->
+      val invariants = states.mapNotNull { state ->
+        val invariant = ExprUtils.simplify(state.getInvariant())
+        if (ExprUtils.getVars(invariant).any { it.name.startsWith(tmpVarPrefix) }) null
+        else invariant
       }
+      ExprUtils.simplify(BoolExprs.Or(invariants))
+    }
 
-    val transformer = SvLibExprTransformer()
-    val annotations = invariantsByTag.map { (tag, invariant) ->
-      """
+  return invariantsByTag.toSvLibCorrectnessWitness()
+}
+
+private fun DssInvariants.toSvLibCorrectnessWitness(): String {
+  val invariantsByTag: Map<String, Expr<BoolType>> = this.invariants.entries
+    .fold(LinkedHashMap<String, MutableList<Expr<BoolType>>>()) { tagInvariants, (location, invariants) ->
+      if (invariants?.isNotEmpty() == true) {
+        (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
+          tagInvariants.getOrPut(tag, { mutableListOf() }).addAll(invariants)
+        }
+      }
+      tagInvariants
+    }
+    .mapValues { (_, invariants) ->
+      ExprUtils.simplify(BoolExprs.Or(invariants))
+    }
+
+  return invariantsByTag.toSvLibCorrectnessWitness()
+}
+
+private fun Map<String, Expr<BoolType>>.toSvLibCorrectnessWitness(): String {
+  val transformer = SvLibExprTransformer()
+  val annotations = this.map { (tag, invariant) ->
+    """
       (annotate-tag
         ${GenericSmtLibSymbolTable.encodeSymbol(tag)}
         :invariant
       ${transformer.toTerm(invariant).indent()}
       )
       """.trimIndent()
-    }
-
-    return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"
   }
 
-  private fun String.indent(spaces: Int = 4)
-    = this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }
+  return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"
 }
 
 private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): String {
@@ -297,3 +321,6 @@ private fun Valuation.toSvLib(): String {
     "(${GenericSmtLibSymbolTable.encodeSymbol(varDecl.name)} ${transformer.toTerm(litExpr)})"
   }
 }
+
+private fun String.indent(spaces: Int = 4)
+  = this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }
