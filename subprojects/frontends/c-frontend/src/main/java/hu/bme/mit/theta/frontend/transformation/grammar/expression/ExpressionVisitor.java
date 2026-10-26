@@ -71,6 +71,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -1213,10 +1214,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // &a[0]`). Taking its address is then the identity -- re-typed to a pointer to the
                 // element -- not a `reference()` of a bare lvalue, which is why the libvsync
                 // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
+                // A nested member (`&s.inner`) is a cell holding the member's own base, so its
+                // address is that value too -- unless the cell is a packed struct's storage. Unions
+                // are left out: the pthread sync objects are unions whose handle is the cell
+                // address.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
-                if ((ampType instanceof CStruct || ampType instanceof CArray)
+                if ((ampType instanceof CArray || (ampType instanceof CStruct s && !s.isUnion()))
                         && !(originalOperand instanceof RefExpr<?>)
-                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
+                        && parseContext
+                                .getMetadata()
+                                .getMetadataValue(originalOperand, BitfieldSlice.PACKED_CELL)
+                                .isEmpty()) {
                     final Expr<?> address = Pos(originalOperand);
                     parseContext
                             .getMetadata()

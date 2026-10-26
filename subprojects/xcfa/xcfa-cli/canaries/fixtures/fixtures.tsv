@@ -29,6 +29,8 @@ alloca_static_base.c	efficient	LP64	SAFE	alloca bases start above the compile-ti
 char_literal_escapes.c	efficient	LP64	SAFE	character constant escapes, radixes and case
 static_local_storage.c	efficient	LP64	SAFE	static locals keep their value across calls (storage class no longer dropped)
 nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero
+nested_member_address.c	efficient	LP64	SAFE	the address of a nested struct or array member is its own base
+nested_mutex_address.c	efficient	LP64	SAFE	a mutex in a struct or an array is locked through its cell's address
 array_member_init.c	efficient	LP64	SAFE	array member is its own object; array elements and rows stay inline
 deref_dot_member.c	efficient	LP64	SAFE	(*p).field is one dereference, like p->field and p[0].field
 overflow_after_split.c	efficient	ILP32	UNSAFE:no-overflow	overflow checks survive the base/offset split (cType kept across the rebuild)
