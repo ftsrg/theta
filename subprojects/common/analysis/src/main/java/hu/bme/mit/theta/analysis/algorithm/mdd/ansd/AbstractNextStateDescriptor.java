@@ -127,8 +127,12 @@ public interface AbstractNextStateDescriptor {
         throw new IllegalStateException("Evaluated before reaching a terminal descriptor.");
     }
 
-    /** The source terminal restricted by what the relation leaves over at its terminal. */
-    default MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+    /**
+     * The terminal this descriptor yields from {@code terminal} when it fires: what the graph's
+     * {@link hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues} make of a step on
+     * the terminals, the terminal itself unless they act on terminals.
+     */
+    default MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
         return terminal;
     }
 

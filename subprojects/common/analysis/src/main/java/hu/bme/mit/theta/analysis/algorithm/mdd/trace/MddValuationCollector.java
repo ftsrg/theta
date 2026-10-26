@@ -22,7 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -79,6 +79,7 @@ public class MddValuationCollector {
      * values, the formula of its terminal.
      */
     public static Expr<BoolType> toExpr(MddHandle node) {
+        final MddValues values = MddValues.of(node.getVariableHandle().getMddGraph());
         final List<Expr<BoolType>> paths = new ArrayList<>();
         walk(
                 node,
@@ -86,14 +87,12 @@ public class MddValuationCollector {
                 (assignments, terminal) -> {
                     final List<Expr<BoolType>> conjuncts = new ArrayList<>();
                     for (Assignment ass : assignments) {
-                        if (LitExprConverter.isToken(ass.value)) continue;
+                        if (values.isToken(ass.value)) continue;
                         final Decl<?> decl = ass.variable.getTraceInfo(Decl.class);
                         conjuncts.add(
-                                Eq(
-                                        decl.getRef(),
-                                        LitExprConverter.toLitExpr(ass.value, decl.getType())));
+                                Eq(decl.getRef(), values.toLitExpr(ass.value, decl.getType())));
                     }
-                    conjuncts.add(SymbolicKeys.leafOf(terminal.getNode()));
+                    conjuncts.add(values.formulaOf(terminal.getNode()));
                     paths.add(And(conjuncts));
                 });
         return Or(paths);

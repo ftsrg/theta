@@ -27,8 +27,7 @@ import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicKeys;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import java.util.List;
@@ -57,8 +56,9 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return AbstractNextStateDescriptor.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom accepts everything below it
-            if (!isConstrained(node)) return AbstractNextStateDescriptor.terminalIdentity();
-            // a path condition has to reach the state terminals, so keep descending
+            if (!actsOnTerminals(node, variableHandle.getMddGraph()))
+                return AbstractNextStateDescriptor.terminalIdentity();
+            // a step on the terminals has to reach the state terminals, so keep descending
             return IdentityNextStateDescriptor.withChild(
                     of(node, variableHandle.getLower().orElseThrow().getLower().orElseThrow()));
         }
@@ -78,25 +78,16 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         return true;
     }
 
-    // only symbolic values leave a path condition at the bottom of a relation
-    private static boolean isConstrained(MddNode node) {
-        return LitExprConverter.isSymbolic()
-                && node instanceof MddNode.Terminal<?> terminal
-                && !(terminal.getTerminalData() instanceof TrueExpr);
+    private static boolean actsOnTerminals(MddNode node, MddGraph<?> graph) {
+        final MddValues values = MddValues.of(graph);
+        return values.actsOnTerminals() && !(values.formulaOf(node) instanceof TrueExpr);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
+    public MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
         final MddNode node = handle.getNode();
-        if (!isConstrained(node)) return terminal;
-        final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
-        final MddNode joined =
-                mddGraph.intersectionTerminal(
-                        terminal,
-                        mddGraph.getNodeFor(((MddNode.Terminal<?>) node).getTerminalData()));
-        if (joined == mddGraph.getTerminalZeroNode()) return joined;
-        return mddGraph.getNodeFor(SymbolicKeys.image(SymbolicKeys.leafOf(joined)));
+        if (!node.isTerminal()) return terminal;
+        return MddValues.of(graph).post(terminal, node, graph);
     }
 
     @Override

@@ -31,6 +31,8 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.ReverseNextStateDescrip
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SingleStepProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.TraceProvider
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddExplicitRepresentationExtractor
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.SymbolicValues
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.common.logging.Logger
@@ -82,7 +84,6 @@ internal fun generateTrace(
   traceTimeout: Long,
   logger: Logger,
   search: TraceSearch = TraceSearch.DFS,
-  solverPool: SolverPool? = null,
 ): Trace<ExplState, ExprAction>? {
   // an initially violating state must be the seed, or the collector may pick a non-initial one
   val initViolating = propViolating.intersection(initNode)
@@ -117,7 +118,8 @@ internal fun generateTrace(
               traceProvider.computeBreadthFirst(traceSeed, orReversed, initNode, top)
           }
         // with symbolic values the solver picks the valuations and the fired transitions at once
-        if (solverPool != null) return@submit concretize(layers, model, solverPool, logger)
+        val symbolic = MddValues.of(top.mddGraph) as? SymbolicValues
+        if (symbolic != null) return@submit concretize(layers, model, symbolic.solverPool, logger)
         // resolve the fired transition (and, for BFS_BACKWARD, the next state) by a forward step
         states.add(layers[0].satOne())
         for (k in 0 until layers.size - 1) {
@@ -195,7 +197,7 @@ private fun concretize(
     val expr = MddValuationCollector.toExpr(state)
     val atStep = BasicSubstitution.builder()
     for (c in ExprUtils.getConstants(expr)) {
-      if (c is IndexedConstDecl<*> && c.index == 0) {
+      if (c is IndexedConstDecl<*> && c.index == 0 && c.varDecl in model.vars) {
         atStep.put(c, c.varDecl.getConstDecl(indices[k][c.varDecl]).ref)
       } else {
         atStep.put(c, Decls.Const("${c.name}_$k", c.type).ref)

@@ -40,6 +40,10 @@ object MddExplicitRepresentationExtractor {
       .toList()
       .asReversed()
       .forEach { mirrorOrder.createOnTop(MddVariableDescriptor.copy(it)) }
+    // the extracted keys and terminals mean what they meant on the source graph
+    top.mddGraph.getAttribute(MddValues.KEY)?.let {
+      mirrorOrder.mddGraph.setAttribute(MddValues.KEY, it)
+    }
     return mirrorOrder.defaultSetSignature.topVariableHandle
   }
 

@@ -50,7 +50,8 @@ public class ExprLatticeDefinition {
      * both operands of an intersection stand for different values.
      */
     @SuppressWarnings("unchecked")
-    public static LatticeDefinition<Expr> forSymbolicExpr(SolverPool solverPool) {
+    public static LatticeDefinition<Expr> forSymbolicExpr(SymbolicValues values) {
+        final SolverPool solverPool = values.getSolverPool();
         final UnaryOperationCache<Expr<BoolType>, Boolean> satCache = new UnaryOperationCache<>();
         final BinaryOperationCache<Expr, Expr, Expr> unions = new BinaryOperationCache<>();
         final var lattice =
@@ -99,7 +100,7 @@ public class ExprLatticeDefinition {
                     }
                     return ret;
                 },
-                (a, b) -> lattice.feasible(And(a, SymbolicKeys.renamedApart(a, b))),
+                (a, b) -> lattice.feasible(And(a, values.renamedApart(a, b))),
                 (a, b) -> lattice.feasible(And(a, Not(b))));
     }
 }

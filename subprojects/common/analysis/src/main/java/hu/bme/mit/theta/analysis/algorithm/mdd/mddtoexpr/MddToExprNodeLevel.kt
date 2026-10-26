@@ -19,12 +19,11 @@ import hu.bme.mit.delta.java.mdd.BinaryOperationCache
 import hu.bme.mit.delta.java.mdd.MddHandle
 import hu.bme.mit.delta.java.mdd.MddNode
 import hu.bme.mit.delta.java.mdd.MddVariable
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*
 
@@ -76,19 +75,21 @@ object MddToExprNodeLevel : MddToExpr {
     }
     val constraints = visited.map { (n, v) -> constraintCache.getOrNull(n, v)!! }
 
-    val rootRepresentative = getRepresentativeForNode(root, variable)
+    val rootRepresentative =
+      getRepresentativeForNode(root, variable, MddValues.of(variable.mddGraph))
     val result: Expr<BoolType> = And(rootRepresentative, And(constraints))
 
     expressionCache.addToCache(root, variable, result)
     return result
   }
 
-  fun getRepresentativeForNode(node: MddNode, variable: MddVariable?): Expr<BoolType> {
+  fun getRepresentativeForNode(
+    node: MddNode,
+    variable: MddVariable?,
+    values: MddValues,
+  ): Expr<BoolType> {
     if (node.isTerminal) {
-      // in symbolic mode a terminal is the formula over the token values above it
-      @Suppress("UNCHECKED_CAST") val data = (node as MddNode.Terminal<*>).terminalData
-      return if (LitExprConverter.isSymbolic() && data is Expr<*>) data as Expr<BoolType>
-      else True()
+      return values.formulaOf(node)
     } else {
       auxvarCache.getOrNull(node, variable)?.let {
         return it.ref
@@ -107,7 +108,8 @@ object MddToExprNodeLevel : MddToExpr {
       return it
     }
 
-    val representative = getRepresentativeForNode(node, variable)
+    val values = MddValues.of(variable.mddGraph)
+    val representative = getRepresentativeForNode(node, variable, values)
 
     val definition: Expr<BoolType> =
       if (node.isTerminal) {
@@ -123,19 +125,19 @@ object MddToExprNodeLevel : MddToExpr {
           while (cursor.moveNext()) {
 
             val childRepresentative =
-              getRepresentativeForNode(cursor.value(), variable.lower.orElse(null))
+              getRepresentativeForNode(cursor.value(), variable.lower.orElse(null), values)
 
             val value = cursor.key()
             disjuncts +=
-              if (LitExprConverter.isToken(value)) childRepresentative
-              else And(Eq(x.ref, LitExprConverter.toExpr(value, x)), childRepresentative)
+              if (values.isToken(value)) childRepresentative
+              else And(Eq(x.ref, values.toExpr(value, x)), childRepresentative)
           }
 
           Eq(representative, Or(disjuncts))
         } else {
           Eq(
             representative,
-            getRepresentativeForNode(node.defaultValue(), variable.lower.orElseThrow()),
+            getRepresentativeForNode(node.defaultValue(), variable.lower.orElseThrow(), values),
           )
         }
       }

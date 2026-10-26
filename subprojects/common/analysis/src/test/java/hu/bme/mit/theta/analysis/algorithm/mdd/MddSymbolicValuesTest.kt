@@ -70,18 +70,22 @@ class MddSymbolicValuesTest {
     if (list.size <= 1) listOf(list)
     else list.flatMap { head -> permutations(list - head).map { listOf(head) + it } }
 
-  /** The outcome, which must be the same under every variable order. */
+  /** The outcome, which must be the same under every variable order and iteration strategy. */
   private fun check(init: Expr<BoolType>, vararg events: Expr<BoolType>, error: Int): Outcome {
     val monolithicExpr = MonolithicExpr(init, Or(events.toList()), Neq(loc.ref, Int(error)))
+    val runs =
+      IterationStrategy.entries.flatMap { strategy ->
+        permutations(monolithicExpr.vars).map { strategy to it }
+      }
     val outcomes =
-      permutations(monolithicExpr.vars).associateWith { order ->
+      runs.associateWith { (strategy, order) ->
         SolverPool(Z3LegacySolverFactory.getInstance()).use { solverPool ->
           val result =
             MddChecker(
                 monolithicExpr,
                 solverPool,
                 NullLogger.getInstance(),
-                IterationStrategy.GSAT,
+                strategy,
                 variableOrdering = order,
                 symbolicValues = true,
               )
@@ -93,7 +97,7 @@ class MddSymbolicValuesTest {
           }
         }
       }
-    assertEquals(1, outcomes.values.toSet().size, "outcome depends on the order: $outcomes")
+    assertEquals(1, outcomes.values.toSet().size, "outcome depends on the run: $outcomes")
     return outcomes.values.first()
   }
 

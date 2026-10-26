@@ -20,6 +20,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
@@ -40,6 +43,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -47,10 +51,16 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -59,44 +69,136 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.IntPredicate;
 
 /**
  * Symbolic values: a key is a literal or the token, which leaves the value of its variable to the
  * terminal below, a formula over the current values of the token variables. A step conjoins what
  * the relation leaves over and projects the overwritten values out; what cannot be eliminated is
- * kept under a name bound in that formula.
+ * kept under a name bound in that formula. One instance belongs to the diagrams of one check.
  */
-public final class SymbolicKeys {
+public final class SymbolicValues implements MddValues {
+
+    // a key no literal takes: interned keys and the literal keys of bools and enums are
+    // non-negative
+    private static final int TOKEN = -1;
+
+    private final BiMap<Object, Integer> interned = HashBiMap.create();
 
     // the decls that are diagram levels; other indexed decls are steps inside one transition
-    private static Set<Decl<?>> levels = Set.of();
+    private final Set<Decl<?>> levels;
+
+    // the solvers that check terminals and eliminate what the substitutions leave over
+    private final SolverPool solverPool;
 
     // a conjunct of a relation below a written next-state level, so its terminal knows the write
-    private static final Map<Decl<?>, ConstDecl<BoolType>> markers = new HashMap<>();
-    private static final Map<ConstDecl<BoolType>, Decl<?>> written = new HashMap<>();
+    private final Map<Decl<?>, ConstDecl<BoolType>> markers = new HashMap<>();
+    private final Map<ConstDecl<BoolType>, Decl<?>> written = new HashMap<>();
 
-    private static final Map<List<Object>, ConstDecl<?>> boundNames = new HashMap<>();
+    private final Map<List<Object>, ConstDecl<?>> boundNames = new HashMap<>();
     private static final String BOUND = "__theta_old_";
 
-    private SymbolicKeys() {}
+    private final Map<List<Object>, ParamDecl<?>> qeParams = new HashMap<>();
 
-    // the solvers that eliminate what the substitutions leave over
-    private static SolverPool qeSolvers;
-    private static final Map<List<Object>, ParamDecl<?>> qeParams = new HashMap<>();
+    private final UnaryOperationCache<Expr<BoolType>, Expr<BoolType>> images =
+            new UnaryOperationCache<>();
 
-    public static void setLevels(Set<Decl<?>> levels, SolverPool solverPool) {
-        SymbolicKeys.levels = levels;
-        qeSolvers = solverPool;
-        markers.clear();
-        written.clear();
-        images.clear();
+    public SymbolicValues(Set<Decl<?>> levels, SolverPool solverPool) {
+        this.levels = levels;
+        this.solverPool = solverPool;
     }
 
-    static boolean isIntermediate(Decl<?> decl) {
+    public SolverPool getSolverPool() {
+        return solverPool;
+    }
+
+    @Override
+    public int toInt(LitExpr<?> literal) {
+        if (!canBeToken(literal.getType())) return LitExprConverter.toInt(literal);
+        final Integer known = interned.get(literal);
+        if (known != null) return known;
+        final int key = interned.size();
+        interned.put(literal, key);
+        return key;
+    }
+
+    @Override
+    public LitExpr<?> toLitExpr(int key, Type type) {
+        if (!canBeToken(type)) return LitExprConverter.toLitExpr(key, type);
+        return interned.inverse().get(key) instanceof LitExpr<?> literal
+                ? literal
+                : new InvalidLitExpr<>(type);
+    }
+
+    @Override
+    public boolean isToken(int key) {
+        return key == TOKEN;
+    }
+
+    public int token() {
+        return TOKEN;
+    }
+
+    /** A literal whose key is not used yet, for a decl a model leaves free. */
+    public LitExpr<?> unusedValue(IntPredicate used, Type type, int fallback) {
+        if (!(type instanceof IntType || type instanceof BvType)) {
+            return toLitExpr(fallback, type);
+        }
+        for (int value = 0; ; value++) {
+            final LitExpr<?> literal =
+                    type instanceof IntType
+                            ? IntLitExpr.of(BigInteger.valueOf(value))
+                            : BvUtils.bigIntegerToNeutralBvLitExpr(
+                                    BigInteger.valueOf(value), ((BvType) type).getSize());
+            if (!used.test(toInt(literal))) return literal;
+        }
+    }
+
+    @Override
+    public boolean actsOnTerminals() {
+        return true;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Expr<BoolType> formulaOf(MddNode terminal) {
+        return ((MddNode.Terminal<?>) terminal).getTerminalData() instanceof Expr<?> e
+                ? (Expr<BoolType>) e
+                : True();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public MddNode post(MddNode source, MddNode step, MddGraph<?> graph) {
+        if (formulaOf(step) instanceof TrueExpr) return source;
+        final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
+        final MddNode joined =
+                mddGraph.intersectionTerminal(
+                        source,
+                        mddGraph.getNodeFor(((MddNode.Terminal<?>) step).getTerminalData()));
+        if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        return mddGraph.getNodeFor(image(formulaOf(joined)));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public MddNode pre(MddNode source, MddNode step, MddNode target, MddGraph<?> graph) {
+        final MddGraph<Object> mddGraph = (MddGraph<Object>) graph;
+        final MddNode joined =
+                mddGraph.intersectionTerminal(
+                        source,
+                        mddGraph.getNodeFor(((MddNode.Terminal<?>) step).getTerminalData()));
+        if (joined == mddGraph.getTerminalZeroNode()) return joined;
+        return mddGraph.intersectionTerminal(
+                mddGraph.getNodeFor(preImage(formulaOf(joined), formulaOf(target))),
+                mddGraph.getNodeFor(True()));
+    }
+
+    boolean isIntermediate(Decl<?> decl) {
         return decl instanceof IndexedConstDecl<?> && !levels.contains(decl);
     }
 
-    static boolean isTarget(Decl<?> decl) {
+    boolean isTarget(Decl<?> decl) {
         return levels.contains(decl) && ((IndexedConstDecl<?>) decl).getIndex() > 0;
     }
 
@@ -105,7 +207,7 @@ public final class SymbolicKeys {
         return !(type instanceof BoolType) && !(type instanceof EnumType);
     }
 
-    static Expr<BoolType> marker(Decl<?> target) {
+    Expr<BoolType> marker(Decl<?> target) {
         return markers.computeIfAbsent(
                         target,
                         d -> {
@@ -118,27 +220,26 @@ public final class SymbolicKeys {
     }
 
     /** Whether the next-state {@code decl}, {@code value} in {@code model}, takes the token. */
-    static boolean takesToken(
+    boolean takesToken(
             Expr<BoolType> expr,
             Decl<?> decl,
             LitExpr<?> value,
             Valuation model,
-            MddHandle lookAhead,
-            SolverPool solverPool) {
+            MddHandle lookAhead) {
         if (!canBeToken(decl.getType())) return false;
         final Map<Decl<?>, Expr<?>> keys = new HashMap<>();
         final Expr<BoolType> leaf = path(lookAhead, model, keys);
         final BasicSubstitution.Builder sub = BasicSubstitution.builder();
         keys.forEach(sub::put);
         final Expr<BoolType> onPath = ExprUtils.simplify(sub.build().apply(expr));
-        return !hasFewValues(And(onPath, leaf), decl, solverPool);
+        return !hasFewValues(And(onPath, leaf), decl);
     }
 
     // values with at most this many possibilities on a path stay literals
     private static final int FEW = 4;
 
     /** Whether {@code expr} leaves {@code decl} only a few values, which are then enumerated. */
-    static boolean hasFewValues(Expr<BoolType> expr, Decl<?> decl, SolverPool solverPool) {
+    boolean hasFewValues(Expr<BoolType> expr, Decl<?> decl) {
         final var solver = solverPool.requestSolver();
         try (var wpp = new WithPushPop(solver)) {
             solver.add(expr);
@@ -156,8 +257,7 @@ public final class SymbolicKeys {
 
     // the literal keys of the state the model is in, as far as look-ahead covers it, and its
     // terminal
-    private static Expr<BoolType> path(
-            MddHandle lookAhead, Valuation model, Map<Decl<?>, Expr<?>> keys) {
+    private Expr<BoolType> path(MddHandle lookAhead, Valuation model, Map<Decl<?>, Expr<?>> keys) {
         if (lookAhead == null) return True();
         MddNode node = lookAhead.getNode();
         MddVariable variable = lookAhead.getVariableHandle().getVariable().orElse(null);
@@ -176,8 +276,8 @@ public final class SymbolicKeys {
             final Expr<?> value = model.eval(d).orElse(null);
             MddNode next = null;
             for (var c = node.cursor(); c.moveNext(); ) {
-                final boolean token = LitExprConverter.isToken(c.key());
-                final Expr<?> key = LitExprConverter.toExpr(c.key(), d);
+                final boolean token = isToken(c.key());
+                final Expr<?> key = toExpr(c.key(), d);
                 if ((token || key.equals(value)) && taken(c.value(), lower, model)) {
                     if (!token) keys.put(d, key);
                     next = c.value();
@@ -187,26 +287,19 @@ public final class SymbolicKeys {
             node = next;
             variable = lower;
         }
-        return node != null && node.isTerminal() ? leafOf(node) : True();
+        return node != null && node.isTerminal() ? formulaOf(node) : True();
     }
 
-    @SuppressWarnings("unchecked")
-    public static Expr<BoolType> leafOf(MddNode terminal) {
-        return ((MddNode.Terminal<?>) terminal).getTerminalData() instanceof Expr<?> e
-                ? (Expr<BoolType>) e
-                : True();
-    }
-
-    private static boolean taken(MddNode node, MddVariable variable, Valuation model) {
+    private boolean taken(MddNode node, MddVariable variable, Valuation model) {
         if (node.isTerminal())
-            return !(ExprUtils.simplify(leafOf(node), model) instanceof FalseExpr);
+            return !(ExprUtils.simplify(formulaOf(node), model) instanceof FalseExpr);
         final Decl<BoolType> aux =
                 MddToExprNodeLevel.INSTANCE.getAuxvarCache().getOrNull(node, variable);
         return aux == null || !(model.eval(aux).orElse(null) instanceof FalseExpr);
     }
 
     /** What a relation leaves at its terminal, without its own steps where they are defined. */
-    static Expr<BoolType> withoutIntermediates(Expr<BoolType> residual) {
+    Expr<BoolType> withoutIntermediates(Expr<BoolType> residual) {
         final Set<Decl<?>> eliminated = new HashSet<>();
         for (ConstDecl<?> c : ExprUtils.getConstants(residual))
             if (isIntermediate(c)) eliminated.add(c);
@@ -218,7 +311,7 @@ public final class SymbolicKeys {
      * satisfiable; the values the step overwrote are projected out and the next-state values become
      * current.
      */
-    public static Expr<BoolType> image(Expr<BoolType> joined) {
+    public Expr<BoolType> image(Expr<BoolType> joined) {
         Expr<BoolType> ret = images.getOrNull(joined);
         if (ret == null) {
             ret = computeImage(joined);
@@ -227,15 +320,12 @@ public final class SymbolicKeys {
         return ret;
     }
 
-    private static final UnaryOperationCache<Expr<BoolType>, Expr<BoolType>> images =
-            new UnaryOperationCache<>();
-
     /**
      * The source terminal of a step back from {@code target}: {@code joined} is the source terminal
      * and what the relation left, satisfiable; the values the step wrote are next-state values in
      * the target and are projected out.
      */
-    public static Expr<BoolType> preImage(Expr<BoolType> joined, Expr<BoolType> target) {
+    private Expr<BoolType> preImage(Expr<BoolType> joined, Expr<BoolType> target) {
         final Set<Decl<?>> targets = new HashSet<>();
         final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
         final BasicSubstitution.Builder toNext = BasicSubstitution.builder();
@@ -261,7 +351,7 @@ public final class SymbolicKeys {
     }
 
     // what elimination left over of the eliminated decls is kept under bound names
-    private static Expr<BoolType> bindLeftovers(
+    private Expr<BoolType> bindLeftovers(
             Expr<BoolType> expr, Set<Decl<?>> eliminated, BasicSubstitution.Builder bind) {
         final Set<ConstDecl<?>> used = ExprUtils.getConstants(expr);
         int next = 0;
@@ -281,7 +371,7 @@ public final class SymbolicKeys {
         return ExprUtils.getConstants(result).isEmpty() ? True() : result;
     }
 
-    private static Expr<BoolType> computeImage(Expr<BoolType> joined) {
+    private Expr<BoolType> computeImage(Expr<BoolType> joined) {
         final Set<ConstDecl<?>> constants = ExprUtils.getConstants(joined);
         final Set<Decl<?>> targets = new HashSet<>();
         final BasicSubstitution.Builder unmark = BasicSubstitution.builder();
@@ -360,7 +450,7 @@ public final class SymbolicKeys {
         return (Expr<T>) result;
     }
 
-    private static Decl<?> targetOf(IndexedConstDecl<?> source) {
+    private Decl<?> targetOf(IndexedConstDecl<?> source) {
         for (Decl<?> d : levels) {
             if (d instanceof IndexedConstDecl<?> ic
                     && ic.getIndex() > 0
@@ -369,7 +459,7 @@ public final class SymbolicKeys {
         return null;
     }
 
-    private static ConstDecl<?> boundName(int index, Type type) {
+    private ConstDecl<?> boundName(int index, Type type) {
         return boundNames.computeIfAbsent(
                 List.of(index, type), k -> Decls.Const(BOUND + index, type));
     }
@@ -379,7 +469,7 @@ public final class SymbolicKeys {
     }
 
     /** {@code b} with its bound names renamed apart from those of {@code a}. */
-    static Expr<BoolType> renamedApart(Expr<BoolType> a, Expr<BoolType> b) {
+    Expr<BoolType> renamedApart(Expr<BoolType> a, Expr<BoolType> b) {
         final Set<ConstDecl<?>> inA = ExprUtils.getConstants(a);
         final Set<ConstDecl<?>> inB = ExprUtils.getConstants(b);
         final BasicSubstitution.Builder rename = BasicSubstitution.builder();
@@ -398,7 +488,7 @@ public final class SymbolicKeys {
     }
 
     // and what that leaves over by the solver's quantifier elimination, where it succeeds
-    private static Expr<BoolType> eliminate(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
+    private Expr<BoolType> eliminate(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
         if (eliminated.isEmpty()) return expr;
         return eliminateQuantifiers(eliminateCheaply(expr, eliminated), eliminated);
     }
@@ -451,8 +541,7 @@ public final class SymbolicKeys {
         return And(kept);
     }
 
-    private static Expr<BoolType> eliminateQuantifiers(
-            Expr<BoolType> expr, Set<Decl<?>> eliminated) {
+    private Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, Set<Decl<?>> eliminated) {
         final BasicSubstitution.Builder toParams = BasicSubstitution.builder();
         final List<ParamDecl<?>> params = new ArrayList<>();
         for (ConstDecl<?> c : ExprUtils.getConstants(expr)) {
@@ -465,20 +554,20 @@ public final class SymbolicKeys {
             toParams.put(c, p.getRef());
         }
         if (params.isEmpty()) return expr;
-        final var solver = qeSolvers.requestSolver();
+        final var solver = solverPool.requestSolver();
         try {
             final Expr<BoolType> result =
                     solver.eliminateQuantifiers(
                             Exists(params, toParams.build().apply(expr)), "qe2");
             return hasQuantifier(result) ? expr : ExprUtils.simplify(result);
         } finally {
-            qeSolvers.returnSolver(solver);
+            solverPool.returnSolver(solver);
         }
     }
 
     private static boolean hasQuantifier(Expr<?> expr) {
         return expr instanceof QuantifiedExpr
-                || expr.getOps().stream().anyMatch(SymbolicKeys::hasQuantifier);
+                || expr.getOps().stream().anyMatch(SymbolicValues::hasQuantifier);
     }
 
     private static int find(int[] parent, int i) {

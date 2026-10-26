@@ -103,10 +103,10 @@ public class MddExpressionTemplate implements MddNode.Template {
                 value instanceof LitExpr<?> lit
                         ? simplify(expr, ImmutableValuation.builder().put(decl, lit).build(), graph)
                         : expr;
-        if (LitExprConverter.isSymbolic()
-                && SymbolicKeys.isTarget(decl)
-                && SymbolicKeys.canBeToken(decl.getType())) {
-            return And(substituted, SymbolicKeys.marker(decl));
+        if (MddValues.of(graph) instanceof SymbolicValues symbolic
+                && symbolic.isTarget(decl)
+                && SymbolicValues.canBeToken(decl.getType())) {
+            return And(substituted, symbolic.marker(decl));
         }
         return substituted;
     }
@@ -190,10 +190,10 @@ public class MddExpressionTemplate implements MddNode.Template {
         }
 
         // a free next-state value takes the token
-        if (LitExprConverter.isSymbolic()
+        if (MddValues.of(mddVariable.getMddGraph()) instanceof SymbolicValues symbolic
                 && transExpr
-                && SymbolicKeys.isTarget(decl)
-                && SymbolicKeys.canBeToken(decl.getType())
+                && symbolic.isTarget(decl)
+                && SymbolicValues.canBeToken(decl.getType())
                 && !ExprUtils.getConstants(simplifiedExpr).contains(decl)) {
             final Expr<BoolType> childExpr =
                     simplify(simplifiedExpr, decl, decl.getRef(), mddVariable.getMddGraph());
@@ -206,7 +206,7 @@ public class MddExpressionTemplate implements MddNode.Template {
                     decl,
                     mddVariable,
                     solverPool,
-                    LitExprConverter.token(),
+                    symbolic.token(),
                     childNode,
                     transExpr);
         }
@@ -293,7 +293,7 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         final LitExpr<?> determinedValue = findDeterminedValue(simplifiedExpr, decl);
         if (determinedValue != null) {
-            final int key = LitExprConverter.toInt(determinedValue);
+            final int key = MddValues.of(mddVariable.getMddGraph()).toInt(determinedValue);
 
             final Expr<BoolType> substitutedExpr =
                     simplify(simplifiedExpr, decl, determinedValue, mddVariable.getMddGraph());
@@ -351,9 +351,10 @@ public class MddExpressionTemplate implements MddNode.Template {
     static MddNode terminalFor(
             MddGraph<?> graph, Expr<BoolType> residual, Expr<BoolType> otherwise) {
         final MddGraph<Expr> mddGraph = (MddGraph<Expr>) graph;
-        if (!LitExprConverter.isSymbolic()) return mddGraph.getNodeFor(otherwise);
+        if (!(MddValues.of(graph) instanceof SymbolicValues symbolic))
+            return mddGraph.getNodeFor(otherwise);
         final Expr<BoolType> projected =
-                ExprUtils.canonize(SymbolicKeys.withoutIntermediates(residual));
+                ExprUtils.canonize(symbolic.withoutIntermediates(residual));
         return mddGraph.getNodeFor(
                 ExprUtils.getConstants(projected).isEmpty() ? True() : projected);
     }

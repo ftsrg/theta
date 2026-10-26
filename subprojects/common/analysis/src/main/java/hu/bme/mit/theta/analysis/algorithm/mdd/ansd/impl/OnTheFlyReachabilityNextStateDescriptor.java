@@ -23,7 +23,7 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
-import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,8 +75,10 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
         this.wrapped = wrapped;
         this.target = Preconditions.checkNotNull(target);
         this.killSwitch = killSwitch;
-        // with symbolic values the image terminal decides, see constrainTerminal
-        if (target.isTerminal() && !target.isTerminalZero() && !LitExprConverter.isSymbolic()) {
+        // where steps act on terminals, the image terminal decides, see transformTerminal
+        if (target.isTerminal()
+                && !target.isTerminalZero()
+                && !MddValues.of(target.getVariableHandle().getMddGraph()).actsOnTerminals()) {
             stop();
         }
     }
@@ -150,9 +152,9 @@ public class OnTheFlyReachabilityNextStateDescriptor implements AbstractNextStat
 
     @Override
     @SuppressWarnings("unchecked")
-    public MddNode constrainTerminal(MddNode terminal, MddGraph<?> graph) {
-        final MddNode image = wrapped.constrainTerminal(terminal, graph);
-        if (LitExprConverter.isSymbolic()
+    public MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
+        final MddNode image = wrapped.transformTerminal(terminal, graph);
+        if (MddValues.of(graph).actsOnTerminals()
                 && target.isTerminal()
                 && !target.isTerminalZero()
                 && ((MddGraph<Object>) graph).intersectionTerminal(image, target.getNode())
