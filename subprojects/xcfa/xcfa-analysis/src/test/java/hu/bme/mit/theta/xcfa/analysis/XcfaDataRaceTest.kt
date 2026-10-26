@@ -70,6 +70,8 @@ class XcfaDataRaceTest {
         arrayOf("/05datarace.c", true, SafetyResult<*, *>::isUnsafe),
         arrayOf("/06ptrdatarace.c", true, SafetyResult<*, *>::isSafe),
         arrayOf("/07mutex.c", true, SafetyResult<*, *>::isSafe),
+        arrayOf("/25memset_race.c", true, SafetyResult<*, *>::isUnsafe),
+        arrayOf("/26memset_norace_join.c", false, SafetyResult<*, *>::isSafe),
       )
     }
 
@@ -234,8 +236,12 @@ class XcfaDataRaceTest {
     DataRaceToReachabilityPass.enabled = true
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
-    val xcfa = getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
-    DataRaceToReachabilityPass.enabled = false
+    val xcfa =
+      try {
+        getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
+      } finally {
+        DataRaceToReachabilityPass.enabled = false
+      }
 
     val ocChecker =
       XcfaOcChecker(
