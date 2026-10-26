@@ -94,3 +94,5 @@ typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list ha
 clang_c11_atomics.c	efficient	ILP32	SAFE	clang-preprocessed <stdatomic.h> operations (`__c11_atomic_*` builtins) are the C11 `atomic_*_explicit` calls
 atomic_load_by_pointer.c	efficient	LP64	SAFE	the generic `__atomic_load(p, &ret, order)` writes its result through `ret`
 typeof_storage_class.c	efficient	LP64	SAFE	`typeof(s)` of a `static` variable does not make the new variable static
+auto_type.c	efficient	LP64	SAFE	GNU `__auto_type x = e` declares x with the type of e
+gcc_stdatomic_expansion.c	efficient	LP64	SAFE	gcc-preprocessed <stdatomic.h> operations (`__auto_type`, `typeof((void)0, *p)`, generic `__atomic_*` builtins)

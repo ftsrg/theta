@@ -137,6 +137,15 @@ public abstract class CSimpleType {
         starPointers = Math.min(starPointers, pointerLevel);
     }
 
+    /** Lvalue conversion: the value read out of an atomic object is not itself atomic. */
+    public void clearOutermostAtomic() {
+        if (pointerLevel > 0) {
+            atomicPointers.set(pointerLevel - 1, false);
+        } else {
+            atomic = false;
+        }
+    }
+
     /** Whether the pointer at this level -- 0 being the innermost -- is itself atomic. */
     public boolean isAtomicPointer(int level) {
         return level < atomicPointers.size() && atomicPointers.get(level);

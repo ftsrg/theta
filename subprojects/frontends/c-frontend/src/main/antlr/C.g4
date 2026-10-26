@@ -56,7 +56,7 @@ grammar C;
                     "_Bool", "_Complex", "__int128", "__float128", "__m128", "__m128d", "__m128i", "__extension__",
                     "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
                     "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
-                    "typeof", "__typeof", "__typeof__", "static", "extern", "register", "auto", "inline",
+                    "typeof", "__typeof", "__typeof__", "__auto_type", "static", "extern", "register", "auto", "inline",
                     "_Alignas", "__inline__", "__attribute__"));
 
     public boolean isTypeStart(org.antlr.v4.runtime.Token token) {
@@ -420,7 +420,8 @@ typeSpecifier
     // Like sizeof: the type-name form is tried first, so `__typeof__(unsigned long)` reads as a
     // type; a bare identifier only matches typeName via the predicate-guarded typedefName, so
     // `typeof(expr)` still falls through to the expression form.
-    |   ('__typeof__' | '__typeof' | 'typeof') '(' (typeName | constantExpression) ')'        # typeSpecifierTypeof
+    |   ('__typeof__' | '__typeof' | 'typeof') '(' (typeName | expression) ')'        # typeSpecifierTypeof
+    |   '__auto_type'                                               # typeSpecifierAutoType
     |   typeSpecifier '*'? '(' pointer ')' '(' parameterTypeList?  ')'  # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;

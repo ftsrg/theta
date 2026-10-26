@@ -85,6 +85,33 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         this.scopedExpressionVisitor = supplier;
     }
 
+    /** What `__auto_type` names while a declaration's specifiers are visited; null elsewhere. */
+    private CSimpleType autoType = null;
+
+    /**
+     * The type [ctx] names when its `__auto_type` stands for [inferred], the type of the
+     * declaration's initializer; the other specifiers (`static`, `const`) still apply to it.
+     */
+    public CSimpleType visitWithAutoType(
+            CParser.DeclarationSpecifiersContext ctx, CSimpleType inferred) {
+        final CSimpleType saved = autoType;
+        autoType = inferred;
+        try {
+            return ctx.accept(this);
+        } finally {
+            autoType = saved;
+        }
+    }
+
+    @Override
+    public CSimpleType visitTypeSpecifierAutoType(CParser.TypeSpecifierAutoTypeContext ctx) {
+        if (autoType == null) {
+            throw new UnsupportedFrontendElementException(
+                    "__auto_type outside a single-variable declaration with an initializer");
+        }
+        return autoType.copyOf();
+    }
+
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
@@ -832,10 +859,19 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                                 typedefVisitor,
                                 this,
                                 uniqueWarningLogger));
+        // A comma expression has the type of its last operand after lvalue conversion: gcc's
+        // <stdatomic.h> writes `typeof((void)0, *p)` to get the unqualified type `*p` holds.
+        final List<CParser.AssignmentExpressionContext> operands =
+                ctx.expression().assignmentExpression();
+        final CParser.AssignmentExpressionContext last = operands.get(operands.size() - 1);
         for (java.util.function.Supplier<ExpressionVisitor> attempt : attempts) {
             try {
-                Expr<?> expr = ctx.constantExpression().accept(attempt.get());
-                return simpleTypeOf(CComplexType.getType(expr, parseContext));
+                Expr<?> expr = last.accept(attempt.get());
+                CSimpleType type = simpleTypeOf(CComplexType.getType(expr, parseContext));
+                if (operands.size() > 1) {
+                    type.clearOutermostAtomic();
+                }
+                return type;
             } catch (RuntimeException e) {
                 // try the next scope, then fall through to the unsupported report below
             }
@@ -852,7 +888,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
      * <p>Types the frontend makes up itself (for a literal, an arithmetic result, an address) have
      * no origin, and are spelled from their own shape instead.
      */
-    private CSimpleType simpleTypeOf(CComplexType type) {
+    CSimpleType simpleTypeOf(CComplexType type) {
         if (type.getOrigin() != null) {
             final CSimpleType copy = type.getOrigin().copyOf();
             copy.keepInnermostPointers(indirections(type));

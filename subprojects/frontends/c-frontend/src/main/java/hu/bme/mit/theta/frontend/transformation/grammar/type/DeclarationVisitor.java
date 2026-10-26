@@ -142,7 +142,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             CParser.InitDeclaratorListContext initDeclContext,
             boolean getInitExpr) {
         List<CDeclaration> ret = new ArrayList<>();
-        CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
+        final CStatement autoInitializer =
+                getInitExpr ? autoTypeInitializer(declSpecContext, initDeclContext) : null;
+        CSimpleType cSimpleType =
+                autoInitializer == null
+                        ? declSpecContext.accept(typeVisitor)
+                        : typeVisitor.visitWithAutoType(
+                                declSpecContext, autoTypeOf(autoInitializer));
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
@@ -172,7 +178,10 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 ownsSpecifierStars = false;
                 declaration.setType(declaredType);
                 CStatement initializerExpression;
-                if (context.initializer() != null && getInitExpr) {
+                if (autoInitializer != null) {
+                    // Visited already, before the variable was in scope: it cannot name itself.
+                    declaration.setInitExpr(autoInitializer);
+                } else if (context.initializer() != null && getInitExpr) {
                     // The name is in scope inside its own initializer (C: the declarator is
                     // complete at the `=`), so bring it into scope before visiting one.
                     if (functionVisitor != null) {
@@ -228,6 +237,46 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.get(0).incDerefCounter(cSimpleType.getPointerLevel());
         }
         return ret;
+    }
+
+    /**
+     * The visited initializer of `__auto_type x = e;`, whose type is that of `e`, or null when the
+     * specifiers have no `__auto_type` -- or one in a form other than that, which gcc's
+     * <stdatomic.h> never writes and the type visitor then reports as unsupported.
+     */
+    private CStatement autoTypeInitializer(
+            CParser.DeclarationSpecifiersContext specifiers,
+            CParser.InitDeclaratorListContext initDecls) {
+        final boolean autoType =
+                specifiers.declarationSpecifier().stream()
+                        .anyMatch(
+                                s ->
+                                        s.typeSpecifier()
+                                                instanceof CParser.TypeSpecifierAutoTypeContext);
+        if (!autoType
+                || functionVisitor == null
+                || initDecls == null
+                || initDecls.initDeclarator().size() != 1) {
+            return null;
+        }
+        final CParser.InitializerContext initializer = initDecls.initDeclarator(0).initializer();
+        if (initializer == null || initializer.assignmentExpression() == null) {
+            return null;
+        }
+        return initializer.assignmentExpression().accept(functionVisitor);
+    }
+
+    /** The type `__auto_type` takes from [initializer]: its value's, after lvalue conversion. */
+    private CSimpleType autoTypeOf(CStatement initializer) {
+        final CComplexType type = CComplexType.getType(initializer.getExpression(), parseContext);
+        // An array would have to decay to a pointer to its element, which is not modelled here.
+        if (type instanceof CArray) {
+            throw new UnsupportedFrontendElementException(
+                    "__auto_type over an initializer of type " + type);
+        }
+        final CSimpleType simple = typeVisitor.simpleTypeOf(type);
+        simple.clearOutermostAtomic();
+        return simple;
     }
 
     /**
