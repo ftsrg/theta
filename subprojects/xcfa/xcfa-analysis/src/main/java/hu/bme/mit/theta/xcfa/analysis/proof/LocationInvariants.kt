@@ -19,8 +19,13 @@ import hu.bme.mit.theta.analysis.algorithm.PartitionedInvariantProof
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
+/**
+ * Invariants per location. A transition invariant relates the current state to any earlier state at
+ * the same location.
+ */
 data class LocationInvariants(
-  private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>
+  private val locationInvariants: Map<XcfaLocation, Collection<ExprState>>,
+  val isTransitionInvariant: Boolean = false,
 ) : PartitionedInvariantProof<XcfaLocation> {
 
   constructor() : this(emptyMap())
