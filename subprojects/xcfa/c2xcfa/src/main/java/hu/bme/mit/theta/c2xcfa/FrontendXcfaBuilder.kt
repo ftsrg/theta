@@ -1211,6 +1211,22 @@ class FrontendXcfaBuilder(
         }
         return
       }
+      if (flatElement is CStruct && !flatElement.isUnion) {
+        // The remaining struct elements (nested aggregates, packed bitfields) are inline too, so
+        // each one is initialized in place; a nested aggregate still gets its own object there.
+        val initExprs = elementPositions(initExpr)
+        for (i in 0 until getArraySize(type, initExpr, declaration)) {
+          initializeStructCells(
+            builder,
+            flatElement,
+            initExprs[i],
+            initStmtList,
+            globalDeclaration,
+            i * flatElement.unitCount,
+          )
+        }
+        return
+      }
       initializeCompound(
         builder,
         getArraySize(type, initExpr, declaration),
@@ -1229,51 +1245,7 @@ class FrontendXcfaBuilder(
       )
       recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
-      // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
-      // struct every member is its own unit, so this is the historical field-indexed iteration.
-      val unitTypes =
-        (0 until type.unitCount).map { unit ->
-          type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
-        }
-      // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
-      // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
-      // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
-      // leaf) and every other member is zero. This was refused outright.
-      //
-      // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
-      // a nested struct or array at unit 0 applies the same elision one level down, and every other
-      // unit takes the `null` path, which assigns its zero value. Bitfields pack from bit 0, so a
-      // packed unit receiving the scalar sets the first member and zeroes the others -- the same
-      // rule again. An UnsupportedInitializer still falls through to the zero path below.
-      if (initExpr != null && initExpr !is CInitializerList) {
-        for (unit in 0 until type.unitCount) {
-          val et = unitTypes[unit]
-          val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), et.smtType)
-          parseContext.metadata.create(cell, "cType", et)
-          initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
-        }
-        return
-      }
-      if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
-        // A brace initializer names members, which no longer map one-to-one onto cells.
-        initializePackedStruct(
-          builder,
-          type,
-          { unitTypes[it] },
-          initExpr,
-          initStmtList,
-          globalDeclaration,
-        )
-      } else {
-        initializeCompound(
-          builder,
-          type.unitCount,
-          { unitTypes[it] },
-          initExpr,
-          initStmtList,
-          globalDeclaration,
-        )
-      }
+      initializeStructCells(builder, type, initExpr, initStmtList, globalDeclaration)
     } else {
       // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of
       // a
@@ -1288,6 +1260,59 @@ class FrontendXcfaBuilder(
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }
+    }
+  }
+
+  /**
+   * Initializes the cells of a struct value stored from cell [offset] of [obj]: the struct's own
+   * object (offset 0), or an element laid out inline in an array of structs.
+   */
+  private fun initializeStructCells(
+    builder: XcfaBuilder,
+    type: CStruct,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+    obj: Expr<*>,
+    offset: Int = 0,
+  ) {
+    // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
+    // struct every member is its own unit, so this is the historical field-indexed iteration.
+    val unitTypes =
+      (0 until type.unitCount).map { unit ->
+        type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
+      }
+    // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
+    // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
+    // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
+    // leaf) and every other member is zero. This was refused outright.
+    //
+    // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
+    // a nested struct or array at unit 0 applies the same elision one level down, and every other
+    // unit takes the `null` path, which assigns its zero value. Bitfields pack from bit 0, so a
+    // packed unit receiving the scalar sets the first member and zeroes the others -- the same
+    // rule again. An UnsupportedInitializer still falls through to the zero path below.
+    if (initExpr != null && initExpr !is CInitializerList) {
+      for (unit in 0 until type.unitCount) {
+        val et = unitTypes[unit]
+        val cell = Dereference(obj, offsetLiteral((offset + unit).toLong()), et.smtType)
+        parseContext.metadata.create(cell, "cType", et)
+        initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
+      }
+      return
+    }
+    if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
+      // A brace initializer names members, which no longer map one-to-one onto cells.
+      initializePackedStruct(builder, type, { unitTypes[it] }, initExpr, initStmtList, obj, offset)
+    } else {
+      initializeCompound(
+        builder,
+        type.unitCount,
+        { unitTypes[it] },
+        initExpr,
+        initStmtList,
+        obj,
+        offset,
+      )
     }
   }
 
@@ -1311,12 +1336,13 @@ class FrontendXcfaBuilder(
     initExpr: CStatement?,
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
+    offset: Int = 0,
   ) {
     val initExprs = elementPositions(initExpr)
     for (i in 0 until dimension) {
       val et = embeddedType(i)
       val embeddedDeclaration =
-        Dereference(globalDeclaration, offsetLiteral(i.toLong()), et.smtType)
+        Dereference(globalDeclaration, offsetLiteral((offset + i).toLong()), et.smtType)
       parseContext.metadata.create(embeddedDeclaration, "cType", et)
       initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
     }
@@ -1533,12 +1559,14 @@ class FrontendXcfaBuilder(
     initExpr: CInitializerList,
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
+    offset: Int = 0,
   ) {
     val initExprs = elementPositions(initExpr)
     val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
     for (unit in 0 until type.unitCount) {
       val cellType = unitType(unit)
-      val cell = Dereference(globalDeclaration, offsetLiteral(unit.toLong()), cellType.smtType)
+      val cell =
+        Dereference(globalDeclaration, offsetLiteral((offset + unit).toLong()), cellType.smtType)
       parseContext.metadata.create(cell, "cType", cellType)
       val members = type.fields.indices.filter { slotOf(it).unitIndex() == unit }
       if (members.size == 1 && !slotOf(members[0]).bitfield()) {
