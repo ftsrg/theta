@@ -79,3 +79,4 @@ unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
 sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
+fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double

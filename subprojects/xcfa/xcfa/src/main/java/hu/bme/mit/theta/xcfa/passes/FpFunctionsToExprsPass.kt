@@ -23,7 +23,11 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -308,11 +312,65 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun handleIsnormal(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException()
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val type = CSignedInt(null, parseContext)
+    val value = callStmt.params[1] as Expr<FpType>
+    return assignInt(
+      callStmt,
+      type,
+      AbstractExprs.Ite<Type>(isNormal(value), type.unitValue, type.nullValue),
+    )
   }
 
+  /** __fpclassify{,f,l}(x) yields glibc's FP_NAN, FP_INFINITE, FP_ZERO, FP_SUBNORMAL, FP_NORMAL. */
   private fun handleFpclassify(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException()
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val type = CSignedInt(null, parseContext)
+    val (nan, inf, zero, subnormal, normal) =
+      listOf("0", "1", "2", "3", "4").map { type.getValue(it) }
+    val value = callStmt.params[1] as Expr<FpType>
+    fun pick(e: Expr<*>) = TypeUtils.cast(e, type.smtType) as Expr<Type>
+    val result =
+      AbstractExprs.Ite<Type>(
+        FpExprs.IsNan(value),
+        pick(nan),
+        AbstractExprs.Ite<Type>(
+          FpExprs.IsInfinite(value),
+          pick(inf),
+          AbstractExprs.Ite<Type>(
+            FpExprs.Eq(value, FpExprs.PositiveZero(value.type)),
+            pick(zero),
+            AbstractExprs.Ite<Type>(isNormal(value), pick(normal), pick(subnormal)),
+          ),
+        ),
+      )
+    return assignInt(callStmt, type, result)
+  }
+
+  /** Finite, non-zero and at least the smallest normal number in magnitude. */
+  private fun isNormal(value: Expr<FpType>): Expr<BoolType> {
+    val fpType = value.type
+    val exponent = BooleanArray(fpType.exponent)
+    exponent[exponent.size - 1] = true
+    val minNormal =
+      FpExprs.Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(BooleanArray(fpType.significand - 1)))
+    return And(
+      FpExprs.Geq(FpExprs.Abs(value), minNormal),
+      Not(FpExprs.IsInfinite(value)),
+      Not(FpExprs.IsNan(value)),
+    )
+  }
+
+  private fun assignInt(callStmt: InvokeLabel, type: CComplexType, rhs: Expr<*>): XcfaLabel {
+    val expr = callStmt.params[0]
+    Preconditions.checkState(expr is RefExpr<*>)
+    val assign: AssignStmt<*> =
+      Stmts.Assign(
+        TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+        TypeUtils.cast(rhs as Expr<Type>, type.smtType),
+      )
+    parseContext.metadata.create(assign.expr, "cType", type)
+    return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
   private fun handleIsnan(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
