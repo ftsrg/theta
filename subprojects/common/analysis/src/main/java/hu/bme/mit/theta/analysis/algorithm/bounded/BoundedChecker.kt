@@ -326,7 +326,7 @@ constructor(
         itpSolver.pop()
         itpSolver.pop()
         return SafetyResult.safe(
-          PredState.of(extractModel(img, indices.subList(0, 1))),
+          PredState.of(PathUtils.foldin(img, indices[0])),
           BoundedStatistics(iteration),
         )
       }
