@@ -19,13 +19,12 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
-import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
-import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
+import hu.bme.mit.theta.solver.UserPropagator
 import java.util.*
-import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 
-class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
+class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheckerBase<E>() {
 
   private lateinit var writes: Map<VarDecl<*>, List<E>>
   private lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
@@ -36,8 +35,8 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
   private lateinit var interferenceCondToEvents: Map<Expr<BoolType>, List<Pair<E, E>>>
   private val partialAssignment = Stack<PropagatorOcAssignment<E>>()
 
-  private val userPropagator: JavaSMTUserPropagator =
-    object : JavaSMTUserPropagator() {
+  private val userPropagator: UserPropagator =
+    object : UserPropagator() {
       override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
         if (value) propagate(expr)
       }
@@ -92,8 +91,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     ) : this(stack, solverLevel, interference = i)
   }
 
-  override val solver: Solver =
-    JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
+  override val solver: Solver = solverFactory.createSolverWithPropagators(userPropagator)
   private var solverLevel: Int = 0
 
   override fun check(
