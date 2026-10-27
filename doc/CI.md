@@ -84,6 +84,7 @@ The primary CI/CD workflow orchestrates the entire build, test, and deployment p
 **On integration test runs (benchexec):**
 4. **create-archives** job: Builds tool distributions for each configured variant
    - Tasks defined in matrix: `buildArchiveTheta-svcomp`, `buildArchiveEmergenTheta-svcomp`, etc.
+   - Entries marked `native: true` (the xcfa-cli SV-COMP variants) also set up GraalVM 25, since those archives ship the native executable
    - Outputs ZIP files as artifacts
 
 5. **test-benchexec** job: Runs integration tests using BenchExec
@@ -248,6 +249,7 @@ archivePackaging {
 - `readmeTemplate`: Custom README template (optional, variables: `TOOL_NAME`, `TOOL_VERSION`, `INPUT_FLAG`, `CONTENTS`)
 - `smoketestSource`: Executable smoke test script (optional)
 - `inputSource`: Sample input file for smoke test (optional)
+- `nativeImage`: Ship the project's `nativeImage` task output as `theta` instead of `theta.jar` (default: false). Building the archive then needs a GraalVM, so mark its `create-archives` matrix entry `native: true`
 
 #### 2. Create Supporting Files (Optional)
 
@@ -304,10 +306,10 @@ test-benchexec:
 
 The `archive-packaging` plugin generates ZIP archives containing:
 
-- `theta.jar`: Main executable JAR
+- `theta.jar`: Main executable JAR, or `theta`, the native executable, for variants with `nativeImage = true`
 - `theta-smtlib.jar`: Solver installation utility (if includeSolverCli=true)
 - `solvers/`: Installed SMT solver binaries
-- `theta-start.sh`: Entry point script
+- `theta-start.sh`: Entry point script (runs `theta` when present, `theta.jar` otherwise)
 - `README.md`: Tool documentation
 - `GENERAL_README.md`: Theta project README
 - `LIB_LICENSES.md`: Third-party library licenses

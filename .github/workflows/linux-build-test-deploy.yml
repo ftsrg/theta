@@ -150,15 +150,18 @@ jobs:
     strategy:
       matrix:
         include:
-          # xcfa-cli
+          # xcfa-cli; `native` archives ship the native executable, which needs a GraalVM to build
           - toolName: Theta-svcomp
             gradleTask: buildArchiveTheta-svcomp
+            native: true
           - toolName: EmergenTheta-svcomp
             gradleTask: buildArchiveEmergenTheta-svcomp
+            native: true
           - toolName: SymbolicTheta-svcomp
             gradleTask: buildArchiveSymbolicTheta-svcomp
           - toolName: Thorn-svcomp
             gradleTask: buildArchiveThorn-svcomp
+            native: true
           - toolName: Theta-chccomp
             gradleTask: buildArchiveTheta-chccomp
           # xsts-cli
@@ -181,6 +184,14 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      # Gradle keeps running on Java 21; the nativeImage task finds this GraalVM via GRAALVM_HOME.
+      - name: Setup GraalVM 25
+        if: ${{ matrix.native }}
+        uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1.6.7
+        with:
+          distribution: graalvm
+          java-version: 25
+          set-java-home: false
       - name: Build archive variant
         uses: ./.github/actions/cache-build
         with:

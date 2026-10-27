@@ -17,12 +17,13 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
-import com.zaxxer.nuprocess.NuProcessBuilder
 import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.common.NativeImage
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.process.NuProcesses
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
@@ -101,25 +102,24 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
       "-Xmx${if(config.backendConfig.memlimit == 0L) 1420L else config.backendConfig.memlimit/1024/1024 }m"
     logger.write(Logger.Level.INFO, "Starting process with $heapSize of heap\n")
 
-    val pb =
-      NuProcessBuilder(
+    // A native image is its own launcher: it has no class path, and takes the same -X options.
+    val mainClass =
+      if (NativeImage.running) emptyList()
+      else
         listOf(
-            ProcessHandle.current().info().command().orElse("java"),
-            "-Xss120m",
-            heapSize,
-            heapSize,
-            "-cp",
-            File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
-            XcfaCli::class.qualifiedName,
-            "-c",
-            configJson.absolutePath,
-          )
-          .filterNotNull()
-      )
+          "-cp",
+          File(XcfaCli::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+          XcfaCli::class.java.name,
+        )
+    val command =
+      listOf(
+        ProcessHandle.current().info().command().orElse("java"),
+        "-Xss120m",
+        heapSize,
+        heapSize,
+      ) + mainClass + listOf("-c", configJson.absolutePath)
     val processHandler = ProcessHandler()
-    pb.setProcessListener(processHandler)
-    val process: NuProcess = pb.start()
-    pb.environment().putAll(System.getenv())
+    val process: NuProcess = checkNotNull(NuProcesses.start(command, processHandler))
 
     val retCode = process.waitFor(config.backendConfig.timeoutMs, TimeUnit.MILLISECONDS)
     val booleanSafetyResult =

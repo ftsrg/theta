@@ -55,11 +55,46 @@ dependencies {
     implementation(project(":theta-btor2-frontend"))
     implementation(project(":theta-btor2xcfa"))
     testImplementation(kotlin("script-runtime"))
+    // Only for ThetaNativeImageFeature, which native-image runs at build time.
+    compileOnly("org.graalvm.sdk:nativeimage:25.0.4")
 }
 
 application {
     mainClass.set("hu.bme.mit.theta.xcfa.cli.XcfaCli")
 }
+
+// A native executable built with GraalVM's native-image, outside `build`: point -Ptheta.graalvm (or
+// GRAALVM_HOME) at a GraalVM for JDK 25; -Ptheta.native.args adds options (e.g. `--gc=G1`). How to
+// build the image is in the jar, under META-INF/native-image.
+val nativeImage by
+    tasks.registering(Exec::class) {
+        group = "build"
+        description = "Builds build/native/theta from the shadow jar with GraalVM native-image."
+        val jar = tasks.named<Jar>("shadowJar").flatMap { it.archiveFile }
+        val output = layout.buildDirectory.dir("native")
+        val graalvm =
+            providers.gradleProperty("theta.graalvm").orElse(providers.environmentVariable("GRAALVM_HOME"))
+        val extraArgs = providers.gradleProperty("theta.native.args").orElse("")
+        inputs.file(jar)
+        inputs.property("extraArgs", extraArgs)
+        outputs.dir(output)
+        doFirst {
+            check(graalvm.isPresent) { "Set -Ptheta.graalvm or GRAALVM_HOME to a GraalVM installation" }
+            executable = graalvm.get() + "/bin/native-image"
+            args(
+                listOf(
+                    "-jar",
+                    jar.get().asFile.absolutePath,
+                    "-o",
+                    output
+                        .get()
+                        .file("theta")
+                        .asFile.absolutePath,
+                ) +
+                    extraArgs.get().split(' ').filter { it.isNotBlank() },
+            )
+        }
+    }
 
 // The hash an XCFA file starts with (XcfaSerialization.computeFormatHash). Computing it loads every
 // serialized class, so it is done once here and shipped as a resource next to XcfaFiles.
@@ -89,6 +124,7 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
+        nativeImage = true
     }
     variant {
         toolName = "EmergenTheta-svcomp"
@@ -97,6 +133,7 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
+        nativeImage = true
     }
     variant {
         toolName = "SymbolicTheta-svcomp"
@@ -113,6 +150,7 @@ archivePackaging {
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
+        nativeImage = true
     }
     variant {
         toolName = "Theta-chccomp"

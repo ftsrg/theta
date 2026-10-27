@@ -16,13 +16,13 @@
 package hu.bme.mit.theta.xta;
 
 import hu.bme.mit.theta.common.collection.CollectionUtil;
+import hu.bme.mit.theta.common.visualization.Color;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
-import java.awt.Color;
 import java.util.Map;
 import java.util.StringJoiner;
 

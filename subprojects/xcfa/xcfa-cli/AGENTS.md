@@ -2,7 +2,7 @@
 
 Gradle module: `:theta-xcfa-cli`; main class `hu.bme.mit.theta.xcfa.cli.XcfaCli`.
 
-- Build/tests: `./gradlew :theta-xcfa-cli:test` (unit and CLI tests; the suites are excluded) · fat jar `:theta-xcfa-cli:shadowJar` · distribution `buildArchiveTheta-svcomp`. The canary gate `:theta-xcfa-cli:canaryTest` (with `fixtureTest`) runs against the built distribution: [canaries/README.md](canaries/README.md).
+- Build/tests: `./gradlew :theta-xcfa-cli:test` (unit and CLI tests; the suites are excluded) · fat jar `:theta-xcfa-cli:shadowJar` · distribution `buildArchiveTheta-svcomp` (native: needs `-Ptheta.graalvm`, see [README.md](README.md#native-executable)). The canary gate `:theta-xcfa-cli:canaryTest` (with `fixtureTest`) runs against the built distribution: [canaries/README.md](canaries/README.md).
 - Options and the configuration entities: [README.md](README.md). Running and smoke-testing locally: root [AGENTS.md](../../../AGENTS.md).
 
 Paths below are relative to [src/main/java/hu/bme/mit/theta/xcfa/cli/](src/main/java/hu/bme/mit/theta/xcfa/cli/).
@@ -26,6 +26,7 @@ Paths below are relative to [src/main/java/hu/bme/mit/theta/xcfa/cli/](src/main/
 4. **The printed markers are an interface.** The suites and `InProcessChecker` (which reads a worker's verdict from its stdout) match `ParsingResult Success`, `Frontend failed!` and `(SafetyResult ...)`. Don't reword them; a failure that should fail the parse gate must print `Frontend failed!`.
 5. **An explicit option is never overridden.** The memory-model and arithmetic fallbacks in `frontend()` apply only to defaults (its KDoc and the c2xcfa README).
 6. **The format hash is built, not computed.** Computing it loads every serialized class, which would slow down every worker start. Run from a Gradle-built classpath: without the resource, encoding and decoding fail. `XcfaSerializationTest.theBuiltFormatHashIsCurrent` checks that the resource is up to date.
+7. **Reflection and JNI have to be declared for the native image.** Only JCommander (the options) and the solvers' native code (callbacks into their Java bindings) need them, and [nativeimage/ThetaNativeImageFeature.kt](src/main/java/hu/bme/mit/theta/xcfa/cli/nativeimage/ThetaNativeImageFeature.kt) registers both by rule: everything in `params`, every JCommander converter, the binding packages it lists. A new option needs nothing; a new native library needs its binding package listed; anything else reflective (prefer not to) needs an entry under `src/main/resources/META-INF/native-image/`. A missing one only fails in the native image, which is what the SV-COMP archives ship and what the canary gate runs; unit tests on the JVM do not catch it.
 
 ## Change recipes
 

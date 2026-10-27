@@ -59,7 +59,8 @@ internal object SuiteSupport {
         }
       }
     }
-    if (!File(distDir, "theta.jar").isFile) return null
+    // A native distribution has the executable `theta` instead of the jar.
+    if (!File(distDir, "theta.jar").isFile && !File(distDir, "theta").isFile) return null
     distDir
       .walkTopDown()
       .filter { it.isFile }
@@ -88,21 +89,27 @@ internal object SuiteSupport {
    *
    * The shipped `theta-start.sh` is the entry point SV-COMP itself uses, so prefer it and stay
    * faithful to how the tool is really invoked. Where there is no POSIX shell to run it, fall back
-   * to the jar it would have launched.
+   * to what it would have launched: the native executable, or else the jar.
    */
   fun thetaCommand(dist: File, input: File, options: List<String>): List<String> {
     val launcher = File(dist, "theta-start.sh")
     if (!System.getProperty("os.name").startsWith("Windows") && launcher.canExecute()) {
       return listOf(launcher.absolutePath, input.absolutePath) + options
     }
-    val java = File(File(System.getProperty("java.home"), "bin"), "java").absolutePath
-    return listOf(
-      java,
-      "-Xss120m",
-      "-Djava.library.path=${File(dist, "lib").absolutePath}",
-      "-jar",
-      File(dist, "theta.jar").absolutePath,
-    ) +
+    val native = File(dist, "theta")
+    val theta =
+      if (native.canExecute()) listOf(native.absolutePath, "-Xss120m")
+      else {
+        val java = File(File(System.getProperty("java.home"), "bin"), "java").absolutePath
+        listOf(
+          java,
+          "-Xss120m",
+          "-Djava.library.path=${File(dist, "lib").absolutePath}",
+          "-jar",
+          File(dist, "theta.jar").absolutePath,
+        )
+      }
+    return theta +
       listOf("--input", input.absolutePath) +
       options +
       listOf("--smt-home", File(dist, "solvers").absolutePath)
@@ -141,8 +148,8 @@ internal object SuiteSupport {
     }
     collector.isDaemon = true
     collector.start()
-    // theta-start.sh launches a child JVM rather than exec'ing one, so killing only the script
-    // leaves that JVM holding the pipe and the read would block long past the timeout.
+    // theta-start.sh launches the tool as a child rather than exec'ing it, so killing only the
+    // script leaves the tool holding the pipe and the read would block long past the timeout.
     if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
       process.descendants().forEach { it.destroyForcibly() }
       process.destroyForcibly()

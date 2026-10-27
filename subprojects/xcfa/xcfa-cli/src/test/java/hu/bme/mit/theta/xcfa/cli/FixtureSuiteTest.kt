@@ -167,8 +167,8 @@ class FixtureSuiteTest {
   /**
    * Runs [command] and returns everything it printed.
    *
-   * `theta-start.sh` launches a child JVM rather than exec'ing one, so killing the script on
-   * timeout leaves that JVM running and holding the pipe -- the read would then block forever, long
+   * `theta-start.sh` launches the tool as a child rather than exec'ing it, so killing the script on
+   * timeout leaves the tool running and holding the pipe -- the read would then block forever, long
    * after the timeout. Destroying the whole process tree is what actually releases it.
    */
 

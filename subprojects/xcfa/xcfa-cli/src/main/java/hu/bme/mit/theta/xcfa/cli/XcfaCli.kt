@@ -19,6 +19,7 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.CliUtils
+import hu.bme.mit.theta.common.NativeImage
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
@@ -141,8 +142,18 @@ class XcfaCli(private val args: Array<String>) {
 
     @JvmStatic
     fun main(args: Array<String>) {
-      val mainApp = XcfaCli(args)
-      mainApp.run()
+      if (!NativeImage.running) {
+        XcfaCli(args).run()
+        return
+      }
+      // A native image's main thread keeps the OS default stack; -Xss sizes only the threads it
+      // starts, and the frontend recurses as deep as the input nests.
+      var failure: Throwable? = null
+      val worker =
+        Thread(null, { runCatching { XcfaCli(args).run() }.onFailure { failure = it } }, "main")
+      worker.start()
+      worker.join()
+      failure?.let { throw it }
     }
   }
 }

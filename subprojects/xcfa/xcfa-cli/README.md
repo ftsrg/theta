@@ -21,6 +21,31 @@ example `java -jar theta-xcfa-cli.jar --input program.c --loglevel INFO` runs th
 with logging on
 the `program.c` input file.
 
+### Native executable
+
+The tool can also be built into a native executable with GraalVM's `native-image`, which starts in
+a fraction of the JVM's time and does not need a JVM to run:
+
+```
+./gradlew :theta-xcfa-cli:nativeImage -Ptheta.graalvm=<GraalVM for JDK 25>
+LD_LIBRARY_PATH=lib subprojects/xcfa/xcfa-cli/build/native/theta -Xss120m --input program.c
+```
+
+It takes the same arguments as the jar, `-X` options included. The `Theta-svcomp`,
+`EmergenTheta-svcomp` and `Thorn-svcomp` archives ship it instead of `theta.jar`, so building them
+needs a GraalVM (`-Ptheta.graalvm` or `GRAALVM_HOME`); their `theta-start.sh` runs `theta` when
+present and falls back to `theta.jar` otherwise. Kotlin script inputs (`--input-type DSL`) and
+portfolios given as script files need the JVM. `-Ptheta.native.args` passes further options to
+`native-image`, e.g. `-J-Xmx9g` on a machine short of memory.
+
+Prefer Oracle GraalVM (free to use and redistribute under the GraalVM Free Terms and Conditions)
+with its default serial GC: it produces a faster executable than the Community Edition. For a
+release, profile-guided optimization makes it faster still: build with
+`-Ptheta.native.args=--pgo-instrument`, run that executable on representative inputs (each run
+writes `default.iprof` into its working directory), then build again with
+`-Ptheta.native.args=--pgo=<comma-separated .iprof files>`. Both builds need more memory than a
+plain one (`-J-Xmx9g` to `-J-Xmx11g`), and a few dozen profiles are enough.
+
 ## Configuration
 
 <details><summary>UML Source</summary>

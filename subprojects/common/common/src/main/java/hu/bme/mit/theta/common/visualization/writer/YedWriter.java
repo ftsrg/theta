@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.common.visualization.writer;
 
+import hu.bme.mit.theta.common.visualization.Color;
 import hu.bme.mit.theta.common.visualization.CompositeNode;
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
@@ -23,7 +24,6 @@ import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.common.visualization.Shape;
-import java.awt.Color;
 
 /** Class for writing graphs in yED (GraphML) format. */
 public final class YedWriter extends AbstractGraphWriter {

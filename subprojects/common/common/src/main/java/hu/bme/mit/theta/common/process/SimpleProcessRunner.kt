@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
 package hu.bme.mit.theta.common.process
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
-import com.zaxxer.nuprocess.NuProcessBuilder
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
 object SimpleProcessRunner {
 
   fun run(cmd: String, timeout: Long = 0): String {
-    val processBuilder = NuProcessBuilder(cmd.split(" "))
     val handler = ProcessHandler()
-    processBuilder.setProcessListener(handler)
-    processBuilder.start().waitFor(timeout, TimeUnit.SECONDS)
+    NuProcesses.start(cmd.split(" "), handler)?.waitFor(timeout, TimeUnit.SECONDS)
     return handler.output
   }
 
