@@ -74,6 +74,7 @@ fun getSafetyChecker(
       Backend.CHC -> getHornChecker(xcfa, mcm, config, logger, parseContext)
       Backend.IC3 -> getIc3Checker(xcfa, parseContext, config, logger)
       Backend.LIVENESS_CEGAR -> getAsgCegarChecker(xcfa, parseContext, mcm, config, logger)
+      Backend.DSS -> getDssChecker(xcfa, mcm, config, parseContext, logger)
       Backend.TRACEGEN ->
         throw RuntimeException(
           "Trace generation is NOT safety analysis, can not return safety checker for trace generation"

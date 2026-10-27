@@ -102,9 +102,10 @@ fun XSTS.toRelations(): List<Relation> {
   val vars = vars.map { varChangeMap[it] ?: it }
 
   val types = vars.map { it.type }.toTypedArray()
-  val oldParams = vars.associateWith { Param("|" + it.name + "|", it.type) }
+  val oldParams = vars.withIndex().associate { (i, v) -> v to Param("|${v.name}_$i|", v.type) }
   val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
-  val newParams = vars.associateWith { Param("|" + it.name + "_new|", it.type) }
+  val newParams =
+    vars.withIndex().associate { (i, v) -> v to Param("|${v.name}_${i}_new|", v.type) }
 
   fun toRelation(
     rel: Relation,

@@ -65,13 +65,13 @@ class AmbiguousMutexPass : ProcedurePass {
     get() = this is FenceLabel && this.lock.unwrapTraceable() !is LitExpr<*>
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    builder.getEdges().toSet().forEach { edge ->
+    builder.getEdges().toSet().forEachIndexed { edgeIndex, edge ->
       if (!edge.getFlatLabels().any { it.fenceToSimplify }) {
-        return@forEach
+        return@forEachIndexed
       }
 
       val split = edge.splitIf { it.fenceToSimplify }
-      val namePrefix = "${edge.source.name}_${edge.target.name}_split"
+      val namePrefix = "${edge.source.name}_${edge.target.name}_e${edgeIndex}_split"
       var lastTarget: XcfaLocation? = null
       split.forEachIndexed { index, e ->
         val alternatives: List<List<XcfaLabel>> =
