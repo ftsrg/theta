@@ -3306,6 +3306,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * The lock-free queries, answered as GCC does on x86: an object of 1, 2, 4 or 8 bytes is
      * lock-free, any other size is not always lock-free. Whether it is lock-free at run time
      * depends on the processor, so {@code __atomic_is_lock_free} of such a size is refused.
+     *
+     * <p>The answer by size is the same under ILP32 and LP64 (as for GCC with -m32 and -m64); the
+     * data model only changes the size of a type, which is computed for the architecture.
      */
     private Expr<?> lockFree(String name, List<AssignmentExpressionContext> args) {
         BigInteger size;
