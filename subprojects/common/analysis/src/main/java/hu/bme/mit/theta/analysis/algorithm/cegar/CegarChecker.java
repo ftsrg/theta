@@ -150,9 +150,10 @@ public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex>
         assert abstractorResult.isSafe() || refinerResult.isUnsafe();
 
         if (abstractorResult.isSafe()) {
-            cegarResult = SafetyResult.safe(proof, stats);
+            cegarResult = SafetyResult.safe(proof, stats, prec);
         } else if (refinerResult.isUnsafe()) {
-            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), proof, stats);
+            cegarResult =
+                    SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), proof, stats, prec);
         }
 
         assert cegarResult != null;
