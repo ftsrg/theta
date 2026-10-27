@@ -151,10 +151,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return declaration.isFunc() ? new CPointer(null, actualType, parseContext) : actualType;
     }
 
-    /**
-     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
-     * where a value has to be captured before a later statement can invalidate it.
-     */
     /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
     private static boolean containsDereference(Expr<?> expr) {
         if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
@@ -168,22 +164,31 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return false;
     }
 
-    /** Whether [expr] reads a variable or memory anywhere inside it. */
-    private static boolean readsVariable(Expr<?> expr) {
-        if (expr instanceof RefExpr<?> ref && ref.getDecl() instanceof VarDecl<?>) {
+    /**
+     * Whether [expr] reads something another thread can write: memory, or a variable that is not
+     * one of the current procedure's own locals or parameters.
+     */
+    public boolean readsShared(Expr<?> expr) {
+        if (expr instanceof RefExpr<?> ref
+                && ref.getDecl() instanceof VarDecl<?> varDecl
+                && !flatVariables.contains(varDecl)) {
             return true;
         }
         if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
             return true;
         }
         for (Expr<?> op : expr.getOps()) {
-            if (readsVariable(op)) {
+            if (readsShared(op)) {
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
+     * where a value has to be captured before a later statement can invalidate it.
+     */
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -1985,7 +1990,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     (parseContext.isCheckMemsafety()
                                     && (containsDereference(lhs) || containsDereference(rhs)))
                             || (parseContext.isCheckDataRace()
-                                    && (readsVariable(lhs) || readsVariable(rhs)));
+                                    && (readsShared(lhs) || readsShared(rhs)));
             VarDecl<?> conditionalTmp = null;
             if (guardsAccess) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");

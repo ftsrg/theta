@@ -222,6 +222,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * Under the data-race check, an operand that reads shared state is evaluated into a temporary
+     * instead of staying inside the condition: the condition is a single expression, so every read
+     * in it would happen whether or not the short-circuit reaches it, and a read C never performs
+     * can race. The assignment then lands in {@link #preStatements}, where {@link
+     * #guardShortCircuited} guards it like any other effect of the operand.
+     */
+    private Expr<BoolType> captureIfShared(Expr<BoolType> holds, Expr<?> operand) {
+        if (!parseContext.isCheckDataRace()
+                || functionVisitor == null
+                || !functionVisitor.readsShared(operand)) {
+            return holds;
+        }
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> tmp = functionVisitor.createTempVar(signedInt, "shortcircuit");
+        Expr<?> value =
+                typed(Ite(holds, signedInt.getUnitValue(), signedInt.getNullValue()), signedInt);
+        preStatements.add(
+                new CAssignment(tmp.getRef(), new CExpr(value, parseContext), "=", parseContext));
+        return AbstractExprs.Neq(signedInt.getNullValue(), tmp.getRef());
+    }
+
+    /**
      * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled
      * in, or the builder falls back to a path that insists the compound's last statement be a
      * compound too.
@@ -243,10 +265,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // only if every earlier one came out false.
                 int before = preStatements.size();
                 Expr<?> expr = operand.accept(this);
-                guardShortCircuited(before, collect, true);
-                collect.add(
+                Expr<BoolType> holds =
                         AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                                CComplexType.getType(expr, parseContext).getNullValue(), expr);
+                holds = captureIfShared(holds, expr);
+                guardShortCircuited(before, collect, true);
+                collect.add(holds);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
@@ -266,10 +290,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // only if every earlier one held.
                 int before = preStatements.size();
                 Expr<?> expr = operand.accept(this);
-                guardShortCircuited(before, collect, false);
-                collect.add(
+                Expr<BoolType> holds =
                         AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                                CComplexType.getType(expr, parseContext).getNullValue(), expr);
+                holds = captureIfShared(holds, expr);
+                guardShortCircuited(before, collect, false);
+                collect.add(holds);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =

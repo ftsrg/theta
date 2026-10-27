@@ -79,3 +79,7 @@ unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 ternary_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the unselected operand of ?: is not read, so it cannot race
 ternary_race_read_unsafe.c	efficient	ILP32	UNSAFE:no-data-race	a racing read in the selected operand of ?: is still reported
+and_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the right operand of &&/|| is not read when short-circuited, so it cannot race
+ternary_overflow_guard.c	efficient	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported
+ternary_overflow_taken.c	efficient	ILP32	UNSAFE:no-overflow	an overflow in the selected operand of ?: is still reported
+ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported (bitvector)
