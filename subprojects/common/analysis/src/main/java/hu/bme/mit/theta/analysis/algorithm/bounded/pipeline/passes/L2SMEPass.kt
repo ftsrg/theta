@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.TransitionInvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.algorithm.bounded.action
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.DirectionalMonolithicExprPass
@@ -49,6 +50,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
   private lateinit var vars: List<VarDecl<*>>
   private lateinit var action: ExprAction
   private lateinit var savedVar: VarDecl<BoolType>
+  private lateinit var saveMap: Map<VarDecl<*>, VarDecl<*>>
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
     if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
@@ -58,7 +60,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     savedVar = Decls.Var("__saved_", BoolType.getInstance())
     vars = monolithicExpr.vars
     action = monolithicExpr.action()
-    val saveMap = vars.associateWith { Decls.Var("__saved_" + it.name, it.type) }
+    saveMap = vars.associateWith { Decls.Var("__saved_" + it.name, it.type) }
     val savedInitExpr = And(vars.map { reprEq(it.ref, saveMap[it]!!.ref) }.toList())
     val oneIndexing = VarIndexingFactory.indexing(1)
     val saveList =
@@ -96,7 +98,17 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
   override fun backward(
     safetyResult: SafetyResult<Pr, Trace<ExplState, ExprAction>>
   ): MonolithicExprPassResult<Pr> {
-    if (safetyResult.isSafe) return MonolithicExprPassResult(safetyResult)
+    if (safetyResult.isSafe) {
+      // The earlier state of a transition invariant is the saved one, so __saved_ holds
+      val invariant =
+        ExprUtils.simplify(
+          safetyResult.proof.getInvariant(),
+          ImmutableValuation.builder().put(savedVar, BoolExprs.True()).build(),
+        )
+      // Later passes and adapters use Pr only as an InvariantProof
+      @Suppress("UNCHECKED_CAST") val proof = TransitionInvariantProof(invariant, saveMap) as Pr
+      return MonolithicExprPassResult(SafetyResult.safe(proof, safetyResult.stats.orElse(null)))
+    }
     val trace = safetyResult.asUnsafe().cex
     val newStates = trace.states.map { ExplState.of(it.filterVars(vars)) }
     val hondaIndex = trace.states.indexOfLast { !(it.`val`.toMap()[savedVar] as BoolLitExpr).value }
