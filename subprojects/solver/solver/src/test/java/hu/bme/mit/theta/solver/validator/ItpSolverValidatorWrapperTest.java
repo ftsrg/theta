@@ -16,10 +16,12 @@
 package hu.bme.mit.theta.solver.validator;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,11 +29,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpMarkerTree;
@@ -44,6 +51,7 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import java.util.Collection;
+import java.util.List;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -136,6 +144,29 @@ public class ItpSolverValidatorWrapperTest {
         solver.pop(2);
         solver.add(b, Not(X.getRef()));
         assertThrows(RuntimeException.class, () -> solver.getInterpolant(pattern));
+    }
+
+    @Test
+    public void satModelWithArrayEqualityIsChecked() {
+        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+        final ArrayLitExpr<IntType, IntType> lit =
+                ArrayExprs.Array(List.of(Tuple2.of(Int(0), Int(1))), Int(7), Array(Int(), Int()));
+        final Expr<BoolType> eq = ArrayExprs.Eq(arr.getRef(), lit);
+
+        final ItpSolver backend = mock(ItpSolver.class);
+        when(backend.check()).thenReturn(SolverStatus.SAT);
+        when(backend.getAssertions()).thenReturn(List.of(eq));
+        inner = mock(SolverFactory.class);
+        when(inner.createItpSolver()).thenReturn(backend);
+        final ItpSolver solver = SolverValidatorWrapperFactory.create(NAME).createItpSolver();
+
+        when(backend.getModel()).thenReturn(ImmutableValuation.builder().put(arr, lit).build());
+        assertDoesNotThrow(solver::check);
+
+        final ArrayLitExpr<IntType, IntType> other =
+                ArrayExprs.Array(List.of(Tuple2.of(Int(0), Int(2))), Int(7), Array(Int(), Int()));
+        when(backend.getModel()).thenReturn(ImmutableValuation.builder().put(arr, other).build());
+        assertThrows(RuntimeException.class, solver::check);
     }
 
     /** Decides satisfiability by trying both values of {@link #X}. */

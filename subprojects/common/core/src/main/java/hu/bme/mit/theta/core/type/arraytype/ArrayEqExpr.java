@@ -62,7 +62,60 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public LitExpr<BoolType> eval(final Valuation val) {
-        throw new UnsupportedOperationException();
+        return Bool(evalEquals(getLeftOp(), getRightOp(), val));
+    }
+
+    static boolean evalEquals(
+            final Expr<? extends ArrayType<?, ?>> leftOp,
+            final Expr<? extends ArrayType<?, ?>> rightOp,
+            final Valuation val) {
+        final LitExpr<?> left = leftOp.eval(val);
+        final LitExpr<?> right = rightOp.eval(val);
+        if (!(left instanceof ArrayLitExpr<?, ?> leftArray)
+                || !(right instanceof ArrayLitExpr<?, ?> rightArray)) {
+            throw new UnsupportedOperationException(
+                    "Cannot evaluate equality of non-literal array values: " + left + ", " + right);
+        }
+        return literalsEqual(leftArray, rightArray);
+    }
+
+    /**
+     * Extensional equality of two array literals: the default elements agree and the elements agree
+     * at every index mentioned in either literal (a missing index reads as the default element; for
+     * a repeated index the first occurrence counts, as in {@link ArrayReadExpr#eval}).
+     */
+    private static boolean literalsEqual(
+            final ArrayLitExpr<?, ?> left, final ArrayLitExpr<?, ?> right) {
+        if (!valuesEqual(left.getElseElem(), right.getElseElem())) {
+            return false;
+        }
+        for (final var elem : left.getElements()) {
+            if (!valuesEqual(elem.get2(), readLit(right, elem.get1()))) {
+                return false;
+            }
+        }
+        for (final var elem : right.getElements()) {
+            if (!valuesEqual(readLit(left, elem.get1()), elem.get2())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static LitExpr<?> readLit(final ArrayLitExpr<?, ?> array, final LitExpr<?> index) {
+        for (final var elem : array.getElements()) {
+            if (elem.get1().equals(index)) {
+                return elem.get2();
+            }
+        }
+        return array.getElseElem();
+    }
+
+    private static boolean valuesEqual(final LitExpr<?> a, final LitExpr<?> b) {
+        if (a instanceof ArrayLitExpr<?, ?> aa && b instanceof ArrayLitExpr<?, ?> bb) {
+            return literalsEqual(aa, bb);
+        }
+        return a.equals(b);
     }
 
     @Override

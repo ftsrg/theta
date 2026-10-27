@@ -62,7 +62,7 @@ public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public LitExpr<BoolType> eval(final Valuation val) {
-        throw new UnsupportedOperationException();
+        return Bool(!ArrayEqExpr.evalEquals(getLeftOp(), getRightOp(), val));
     }
 
     @Override

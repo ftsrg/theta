@@ -69,6 +69,8 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
@@ -396,6 +398,48 @@ public class EvaluationTest {
         assertEquals(Int(2), evaluate(Read(arr2, Int(1))));
         assertEquals(Int(34), evaluate(Read(arr2, Int(2))));
         assertEquals(Int(100), evaluate(Read(arr2, Int(5))));
+    }
+
+    private static Expr<ArrayType<IntType, IntType>> intArray(
+            final int elseValue, final int... indexValuePairs) {
+        var elems = new ArrayList<Tuple2<? extends Expr<IntType>, ? extends Expr<IntType>>>();
+        for (int i = 0; i < indexValuePairs.length; i += 2) {
+            elems.add(Tuple2.of(Int(indexValuePairs[i]), Int(indexValuePairs[i + 1])));
+        }
+        return Array(elems, Int(elseValue), Array(Int(), Int()));
+    }
+
+    @Test
+    public void testArrayEqEqual() {
+        assertEquals(
+                True(), evaluate(ArrayExprs.Eq(intArray(7, 0, 1, 1, 2), intArray(7, 1, 2, 0, 1))));
+        assertEquals(False(), evaluate(ArrayExprs.Neq(intArray(7, 0, 1), intArray(7, 0, 1))));
+    }
+
+    @Test
+    public void testArrayEqDifferent() {
+        assertEquals(False(), evaluate(ArrayExprs.Eq(intArray(7, 0, 1), intArray(7, 0, 2))));
+        assertEquals(True(), evaluate(ArrayExprs.Neq(intArray(7, 0, 1), intArray(7, 0, 2))));
+        assertEquals(False(), evaluate(ArrayExprs.Eq(intArray(7, 0, 1), intArray(7))));
+    }
+
+    @Test
+    public void testArrayEqDifferentOnlyInElse() {
+        assertEquals(False(), evaluate(ArrayExprs.Eq(intArray(7, 0, 1), intArray(8, 0, 1))));
+    }
+
+    @Test
+    public void testArrayEqIndexInOneOnlyEqualToElse() {
+        assertEquals(True(), evaluate(ArrayExprs.Eq(intArray(7, 3, 7), intArray(7))));
+        assertEquals(True(), evaluate(ArrayExprs.Eq(intArray(7), intArray(7, 3, 7))));
+        assertEquals(False(), evaluate(ArrayExprs.Eq(intArray(7, 3, 8), intArray(7))));
+    }
+
+    @Test
+    public void testArrayEqWritten() {
+        assertEquals(
+                True(),
+                evaluate(ArrayExprs.Eq(Write(intArray(7, 0, 1), Int(0), Int(7)), intArray(7))));
     }
 
     @Test
