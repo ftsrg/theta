@@ -20,13 +20,17 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.unwrapTraceable
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.integerOf
 
 /**
  * Replaces mutexes (except the atomic block mutexes) with counting variables.
@@ -83,6 +87,25 @@ class MutexToVarPass : ProcedurePass {
     return when (this) {
       is SequenceLabel ->
         descartes(labels.map { it.replaceMutex() }).map { SequenceLabel(it, metadata) }.toSet()
+
+      is InvokeLabel ->
+        when {
+          !isLibraryFunction -> setOf(this)
+          name in
+            setOf("pthread_mutex_init", "pthread_mutexattr_init", "pthread_mutexattr_destroy") ->
+            setOf(NopLabel)
+          name == "pthread_mutexattr_settype" -> {
+            check(
+              ExprUtils.simplify(
+                Eq(params[2], params[2].type.integerOf(MutexType.NORMAL.constant))
+              ) == True()
+            ) {
+              "Only NORMAL mutexes are supported by mutex elimination."
+            }
+            setOf(NopLabel)
+          }
+          else -> setOf(this)
+        }
 
       is FenceLabel -> {
         val actions = mutableListOf<XcfaLabel>()

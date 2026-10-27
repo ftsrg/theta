@@ -232,11 +232,13 @@ fun getCegarChecker(
                 .toList()
             }
 
-        return SafetyResult.safe(LocationInvariants(locmap))
+        return SafetyResult.safe(LocationInvariants(locmap), null, ret.prec.orElse(null))
       } else {
         return SafetyResult.unsafe(
           ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
           LocationInvariants(),
+          null,
+          ret.prec.orElse(null),
         )
       }
     }

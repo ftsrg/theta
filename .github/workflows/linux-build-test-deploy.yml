@@ -84,6 +84,10 @@ jobs:
             config: "--svcomp --portfolio EMERGENT --loglevel RESULT"
             name: SV-COMP_Portfolio_Emergent
             input_type: software
+          - tool: SymbolicTheta-svcomp
+            config: "--svcomp --portfolio SYMBOLIC --loglevel RESULT"
+            name: SV-COMP_Portfolio_Symbolic
+            input_type: software
           - tool: Thorn-svcomp
             config: "--svcomp --portfolio HORN --loglevel RESULT"
             name: SV-COMP_Portfolio_Horn
@@ -153,6 +157,8 @@ jobs:
           - toolName: EmergenTheta-svcomp
             gradleTask: buildArchiveEmergenTheta-svcomp
             native: true
+          - toolName: SymbolicTheta-svcomp
+            gradleTask: buildArchiveSymbolicTheta-svcomp
           - toolName: Thorn-svcomp
             gradleTask: buildArchiveThorn-svcomp
             native: true
@@ -334,6 +340,8 @@ jobs:
           - tool: EmergenTheta
             artifact: EmergenTheta-svcomp
             record: 15536866
+          - tool: SymbolicTheta
+            artifact: SymbolicTheta-svcomp
           - tool: Thorn
             artifact: Thorn-svcomp
             record: 14194485

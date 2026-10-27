@@ -93,7 +93,7 @@ internal object SuiteSupport {
    */
   fun thetaCommand(dist: File, input: File, options: List<String>): List<String> {
     val launcher = File(dist, "theta-start.sh")
-    if (launcher.canExecute()) {
+    if (!System.getProperty("os.name").startsWith("Windows") && launcher.canExecute()) {
       return listOf(launcher.absolutePath, input.absolutePath) + options
     }
     val native = File(dist, "theta")
@@ -101,7 +101,13 @@ internal object SuiteSupport {
       if (native.canExecute()) listOf(native.absolutePath, "-Xss120m")
       else {
         val java = File(File(System.getProperty("java.home"), "bin"), "java").absolutePath
-        listOf(java, "-Xss120m", "-jar", File(dist, "theta.jar").absolutePath)
+        listOf(
+          java,
+          "-Xss120m",
+          "-Djava.library.path=${File(dist, "lib").absolutePath}",
+          "-jar",
+          File(dist, "theta.jar").absolutePath,
+        )
       }
     return theta +
       listOf("--input", input.absolutePath) +

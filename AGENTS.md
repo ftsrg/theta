@@ -62,7 +62,7 @@ Two doc systems exist. **Prefer per-subproject `README.md` / `AGENTS.md` for edi
 - `CEGAR-algorithms.md` — CEGAR configuration options + best practices. Read before touching `common/analysis`.
 - `Portfolio.md` — portfolio mechanism: automatic algorithm/config selection.
 - `LBE.md` — Large Block Encoding design note (+ `LBE-images/`), Dec 2021.
-- `Tools.md` — the competition tool variants (Theta / EmergenTheta / Thorn / ThetaCHC).
+- `Tools.md` — the competition tool variants (Theta / EmergenTheta / SymbolicTheta / Thorn / ThetaCHC).
 - `copyright-header.txt` — header prepended to every source file.
 
 ### `doc/wiki/` — MkDocs-Material site (published wiki)

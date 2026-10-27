@@ -1,0 +1,14 @@
+clock x;
+
+process P() {
+    state init0, err;
+
+    urgent init0;
+
+    init init0;
+
+    trans
+        init0 -> err { guard x > 0; };
+}
+
+system P;

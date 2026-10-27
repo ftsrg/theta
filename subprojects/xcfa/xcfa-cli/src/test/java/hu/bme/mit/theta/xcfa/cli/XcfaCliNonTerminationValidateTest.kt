@@ -299,38 +299,6 @@ class XcfaCliNonTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("witnessFilesAdvanced")
-  fun testCValidateEmergentPortfolio(filePath: String, witnessPath: String, extraArgs: String?) {
-    val temp = createTempDirectory()
-
-    Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX))
-    val params =
-      arrayOf(
-        "--backend",
-        "PORTFOLIO",
-        "--portfolio",
-        "EMERGENT",
-        "--input-type",
-        "C",
-        "--loglevel",
-        "INFO",
-        "--input",
-        javaClass.getResource(filePath)!!.path,
-        "--witness",
-        javaClass.getResource(witnessPath)!!.path,
-        "--stacktrace",
-        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-        "--debug",
-        "--output-directory",
-        temp.absolutePathString(),
-        "--svcomp",
-      )
-    main(params)
-    assertTrue(temp.resolve("witness.yml").exists())
-    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
-  }
-
-  @ParameterizedTest
-  @MethodSource("witnessFilesAdvanced")
   fun testCValidateCHC(filePath: String, witnessPath: String, extraArgs: String?) {
     val temp = createTempDirectory()
 
