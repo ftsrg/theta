@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,63 +17,63 @@ package hu.bme.mit.theta.frontend;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
 public class FrontendMetadata {
     private final Map<Integer, Map<String, Object>> lookupKeyValue;
-    private final Map<Tuple2<Expr<?>, Integer>, CComplexType> types;
+
+    // Keys of String owners: unlike identity hashes, these mean the same in another process.
+    private final Set<Integer> stringKeys;
 
     public FrontendMetadata() {
         this.lookupKeyValue = new LinkedHashMap<>();
-        this.types = new LinkedHashMap<>();
+        this.stringKeys = new LinkedHashSet<>();
     }
 
     public FrontendMetadata(@NotNull Map<Integer, Map<String, Object>> lookupKeyValue) {
         this.lookupKeyValue = new LinkedHashMap<>(lookupKeyValue);
-        this.types = new LinkedHashMap<>();
-    }
-
-    public <X> Map<String, ?> lookupMetadata(X owner) {
-        return lookupKeyValue.getOrDefault(getHashCode(owner), Map.of());
+        this.stringKeys = new LinkedHashSet<>();
     }
 
     public <X> Optional<Object> getMetadataValue(X owner, String key) {
-        if (owner instanceof Expr<?> && key.equals("cType")) {
-            Tuple2<Expr<?>, Integer> pair =
-                    Tuple2.of((Expr<?>) owner, System.identityHashCode(owner));
-            return Optional.ofNullable(types.get(pair));
-        }
         return Optional.ofNullable(
                 lookupKeyValue.getOrDefault(getHashCode(owner), Map.of()).get(key));
     }
 
     public <T, X> void create(X owner, String key, T value) {
         checkNotNull(value);
-        if (owner instanceof Expr<?> && key.equals("cType") && value instanceof CComplexType) {
-            Tuple2<Expr<?>, Integer> pair =
-                    Tuple2.of((Expr<?>) owner, System.identityHashCode(owner));
-            //            if (types.containsKey(pair) && types.get(pair).getClass() !=
-            // value.getClass()) {
-            //                throw new RuntimeException("Expression (" + owner + ") already has a
-            // different type: " + types.get(pair) + ". New type: " + value);
-            //            }
-            types.put(pair, (CComplexType) value);
-        } else {
-            Map<String, Object> keyvalues =
-                    lookupKeyValue.getOrDefault(getHashCode(owner), new LinkedHashMap<>());
-            keyvalues.put(key, value);
-            lookupKeyValue.put(getHashCode(owner), keyvalues);
+        Map<String, Object> keyvalues =
+                lookupKeyValue.getOrDefault(getHashCode(owner), new LinkedHashMap<>());
+        keyvalues.put(key, value);
+        lookupKeyValue.put(getHashCode(owner), keyvalues);
+        if (owner instanceof String) {
+            stringKeys.add(getHashCode(owner));
         }
     }
 
     public Map<Integer, Map<String, Object>> getLookupKeyValue() {
         return new LinkedHashMap<>(lookupKeyValue);
+    }
+
+    /** The keys of {@link #getLookupKeyValue()} that belong to String owners. */
+    public Set<Integer> getStringKeys() {
+        return new LinkedHashSet<>(stringKeys);
+    }
+
+    /**
+     * Adds {@code values} under {@code key}, as {@link #create} does for an owner with that key.
+     * Deserialization uses it, having re-keyed the owners to the decoded objects.
+     */
+    public void restore(int key, boolean stringOwner, Map<String, Object> values) {
+        lookupKeyValue.computeIfAbsent(key, k -> new LinkedHashMap<>()).putAll(values);
+        if (stringOwner) {
+            stringKeys.add(key);
+        }
     }
 
     private static int getHashCode(Object object) {

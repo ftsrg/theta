@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
+import static hu.bme.mit.theta.core.type.Traceability.unwrapTraceable;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.NotExpr;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,8 +37,8 @@ public final class SmartBoolExprs {
             return False();
         } else if (op.equals(False())) {
             return True();
-        } else if (op instanceof NotExpr) {
-            return ((NotExpr) op).getOp();
+        } else if (unwrapTraceable(op) instanceof NotExpr notExpr) {
+            return notExpr.getOp();
         } else {
             return BoolExprs.Not(op);
         }

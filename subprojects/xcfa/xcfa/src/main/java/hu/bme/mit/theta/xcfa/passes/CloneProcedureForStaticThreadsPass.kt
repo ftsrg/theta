@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -48,7 +49,7 @@ class CloneProcedureForStaticThreadsPass : ProcedurePass {
             val fixedArgs =
               procedure.getParams().mapIndexed { index, param ->
                 if (param.second != ParamDirection.OUT) {
-                  label.params[index] as? LitExpr<*>
+                  label.params[index].unwrapTraceable() as? LitExpr<*>
                 } else {
                   null
                 }

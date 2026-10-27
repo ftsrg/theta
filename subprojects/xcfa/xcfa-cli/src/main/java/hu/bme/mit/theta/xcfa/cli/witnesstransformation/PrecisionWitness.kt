@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
 import hu.bme.mit.theta.xcfa.cli.params.CFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.ExplPrecSerializer
@@ -37,8 +37,6 @@ import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.util.*
 import kotlin.collections.LinkedHashMap
-import kotlin.jvm.optionals.getOrDefault
-import kotlin.jvm.optionals.getOrNull
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 
@@ -231,13 +229,12 @@ private fun Collection<VarDecl<*>>.withScope(parseContext: ParseContext) =
       else -> {
         val functionName = scopes.first()
         val line =
-          parseContext.metadata.getMetadataValue(it.name, "locationLine").getOrNull() as? Int
+          parseContext.variableSources[it.name]?.line
             ?: return@associateWith PrecisionScope(
               PrecisionScopeType.FUNCTION,
               functionName = functionName,
             )
-        val column =
-          parseContext.metadata.getMetadataValue(it.name, "locationColumn").getOrNull() as? Int
+        val column = parseContext.variableSources[it.name]?.column
         PrecisionScope(
           PrecisionScopeType.LOCATION,
           location = Location(line = line, column = column, function = functionName),
@@ -247,7 +244,7 @@ private fun Collection<VarDecl<*>>.withScope(parseContext: ParseContext) =
   }
 
 fun VarDecl<*>.isInternal(parseContext: ParseContext): Boolean =
-  parseContext.metadata.getMetadataValue(this.name, "cName").isEmpty
+  this.name !in parseContext.variableSources
 
 private fun getMetadata(config: XcfaConfig<*, *>): Metadata {
   val inputFile = config.inputConfig.input
@@ -288,11 +285,8 @@ fun Iterable<VarDecl<*>>.filterInScope(
           if (varDecl.name.contains("${scope.functionName}::")) 1 else 0
         }
       else -> { varDecl, _ ->
-          val line =
-            parseContext.metadata.getMetadataValue(varDecl.name, "locationLine").getOrNull() as? Int
-          val column =
-            parseContext.metadata.getMetadataValue(varDecl.name, "locationColumn").getOrNull()
-              as? Int
+          val line = parseContext.variableSources[varDecl.name]?.line
+          val column = parseContext.variableSources[varDecl.name]?.column
           if (line != null && scope.location?.line == line)
             if (column != null && scope.location?.column == column) 3 else 2
           else if (varDecl.name.contains("${scope.functionName}::")) 1 else 0
@@ -301,8 +295,7 @@ fun Iterable<VarDecl<*>>.filterInScope(
 
   val varsInScope =
     fold(mutableMapOf<String, Pair<VarDecl<*>, Int>>()) { vars, it ->
-      val simpleName =
-        parseContext.metadata.getMetadataValue(it.name, "cName").getOrDefault(it.name) as String
+      val simpleName = parseContext.variableSources[it.name]?.cName ?: it.name
       val pref = preference(it, simpleName)
       if (!vars.containsKey(simpleName) || pref > vars.getValue(simpleName).second)
         vars[simpleName] = Pair(it, pref)

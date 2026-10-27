@@ -21,42 +21,43 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import hu.bme.mit.theta.core.type.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CDouble;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CFloat;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CLongDouble;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CSignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CSignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
     private final ParseContext parseContext;
@@ -103,12 +104,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), true));
                 } else {
-                    // Nothing to convert -- but the *caller* records the target C type on whatever
-                    // comes back, and types are keyed by the expression itself. Handing back
-                    // `param`
-                    // therefore rewrites the operand's own type: `a[j]` used to make `j` an array.
-                    // So the no-op gets a wrapper of its own to carry the new type, exactly as the
-                    // integer cast visitor already does.
+                    // Nothing to convert, but the caller types the result: typing a variable's own
+                    // reference would retype the variable (see CComplexType.withType), so the
+                    // no-op gets a node of its own.
                     return Pos(param);
                 }
             }
@@ -156,7 +154,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                             (Expr<BvType>) param,
                             BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
-                    return Pos(param); // see above: the no-op needs its own expression to be typed
+                    return Pos(param); // see above: the no-op needs its own node to be typed
                 }
             }
         } else {
@@ -185,7 +183,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return param;
         }
         final Expr<?> simplified = ExprUtils.simplify(param);
-        if (simplified instanceof IntLitExpr lit) {
+        if (Traceability.unwrapTraceable(simplified) instanceof IntLitExpr lit) {
             return that.getValue(lit.getValue().toString());
         }
         return param;

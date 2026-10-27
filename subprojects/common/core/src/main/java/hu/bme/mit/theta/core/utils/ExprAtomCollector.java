@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.core.type.AndExpr;
+import hu.bme.mit.theta.core.type.Dereference;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.IffExpr;
+import hu.bme.mit.theta.core.type.ImplyExpr;
+import hu.bme.mit.theta.core.type.NotExpr;
+import hu.bme.mit.theta.core.type.OrExpr;
+import hu.bme.mit.theta.core.type.PrimeExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.IffExpr;
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import java.util.Collection;
 
 final class ExprAtomCollector {

@@ -23,17 +23,27 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.AndExpr
 import hu.bme.mit.theta.core.type.BinaryExpr
+import hu.bme.mit.theta.core.type.EqExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.GeqExpr
+import hu.bme.mit.theta.core.type.GtExpr
+import hu.bme.mit.theta.core.type.IteExpr
+import hu.bme.mit.theta.core.type.LeqExpr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.LtExpr
+import hu.bme.mit.theta.core.type.ModExpr
+import hu.bme.mit.theta.core.type.NegExpr
+import hu.bme.mit.theta.core.type.NeqExpr
+import hu.bme.mit.theta.core.type.NotExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.anytype.IteExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.NotExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -52,7 +62,7 @@ class AmbiguousMutexPass : ProcedurePass {
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
 
   private val XcfaLabel.fenceToSimplify: Boolean
-    get() = this is FenceLabel && this.lock !is LitExpr<*>
+    get() = this is FenceLabel && this.lock.unwrapTraceable() !is LitExpr<*>
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     builder.getEdges().toSet().forEachIndexed { edgeIndex, edge ->
@@ -67,7 +77,7 @@ class AmbiguousMutexPass : ProcedurePass {
         val alternatives: List<List<XcfaLabel>> =
           e.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
             var newAccumulated = accumulated
-            if (label is FenceLabel && label.lock !is LitExpr<*>) {
+            if (label is FenceLabel && label.lock.unwrapTraceable() !is LitExpr<*>) {
               // lazy initialization of possible literal values for variables
               if (!this::possibleLiteralValues.isInitialized) {
                 possibleLiteralValues = collectPossibleLiteralValues(builder)
@@ -79,7 +89,8 @@ class AmbiguousMutexPass : ProcedurePass {
                   .ifEmpty { setOf(ImmutableValuation.empty()) }
                   .map { possibleValuation: Valuation ->
                     val simplified =
-                      ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
+                      ExprUtils.simplify(label.lock, possibleValuation).unwrapTraceable()
+                        as? LitExpr<*>
                     val guard =
                       simplified?.let {
                         And(possibleValuation.toMap().map { (v, value) -> Eq(v.ref, value) })
@@ -98,7 +109,7 @@ class AmbiguousMutexPass : ProcedurePass {
                   .flatMap { (guard, simplifiedLock) ->
                     val newLabels: List<XcfaLabel> =
                       if (simplifiedLock != label.lock) {
-                        listOf(StmtLabel(AssumeStmt.of(guard)), label.withLock(simplifiedLock))
+                        listOf(StmtLabel(AssumeStmt.of(guard!!)), label.withLock(simplifiedLock))
                       } else {
                         listOf(StmtLabel(AssumeStmt.of(elseGuard)), label)
                       }
@@ -176,14 +187,19 @@ class AmbiguousMutexPass : ProcedurePass {
                 when (val stmt = label.stmt) {
                   is AssignStmt<*> -> {
                     val e = stmt.expr
-                    if (e is RefExpr<*> && e.decl in pendingHavocs) {
+                    val bare = e.unwrapTraceable()
+                    if (bare is RefExpr<*> && bare.decl in pendingHavocs) {
                       pendingHavocs.add(stmt.varDecl)
                     } else {
                       assignments.getOrPut(stmt.varDecl) { mutableSetOf() }.add(e)
                     }
 
-                    if (e is IteExpr<*> && e.then is LitExpr<*> && e.`else` is LitExpr<*>) {
-                      conditions[stmt.varDecl] = e
+                    if (
+                      bare is IteExpr<*> &&
+                        bare.then.unwrapTraceable() is LitExpr<*> &&
+                        bare.`else`.unwrapTraceable() is LitExpr<*>
+                    ) {
+                      conditions[stmt.varDecl] = bare
                     }
                   }
 
@@ -205,6 +221,8 @@ class AmbiguousMutexPass : ProcedurePass {
                       }
                     }
                   }
+
+                  else -> {}
                 }
               } else if (label is FenceLabel) {
                 interestingToProcess.addAll(ExprUtils.getVars(label.lock))
@@ -229,7 +247,7 @@ class AmbiguousMutexPass : ProcedurePass {
         val dependencies = mutableSetOf<DependencyEdge>()
         result[v] = if (v in havocedVars) mutableSetOf(null) else mutableSetOf()
         assignments[v]?.forEach { expr ->
-          val simplified = ExprUtils.simplify(expr)
+          val simplified = ExprUtils.simplify(expr).unwrapTraceable()
           if (simplified is LitExpr<*>) {
             result[v]!!.add(simplified)
           } else {
@@ -253,7 +271,7 @@ class AmbiguousMutexPass : ProcedurePass {
     val addPossibleValues = { expr: Expr<*>, node: DependencyNode ->
       var changed = false
       expr.getPossibleValuations(result).forEach { valuation ->
-        val simplified = ExprUtils.simplify(expr, valuation) as? LitExpr<*>
+        val simplified = ExprUtils.simplify(expr, valuation).unwrapTraceable() as? LitExpr<*>
         if (addPossibleValue(node.variable, simplified)) {
           changed = true
         }
@@ -367,13 +385,13 @@ class AmbiguousMutexPass : ProcedurePass {
 
   private val Expr<*>.supportedInSccPropagation: Boolean
     get() =
-      when (this) {
+      when (val e = unwrapTraceable()) {
         is LitExpr<*>,
         is RefExpr<*> -> true
 
-        is PosExpr<*> -> op.supportedInSccPropagation
-        is NegExpr<*> -> op.supportedInSccPropagation
-        is ModExpr<*> -> leftOp.supportedInSccPropagation && rightOp.supportedInSccPropagation
+        is PosExpr<*> -> e.op.supportedInSccPropagation
+        is NegExpr<*> -> e.op.supportedInSccPropagation
+        is ModExpr<*> -> e.leftOp.supportedInSccPropagation && e.rightOp.supportedInSccPropagation
         else -> false
       }
 
@@ -407,12 +425,12 @@ class AmbiguousMutexPass : ProcedurePass {
   }
 
   private fun collectAssumptionValues(
-    cond: Expr<*>,
+    tracedCond: Expr<*>,
     assumption: Assumption,
     conditions: Map<VarDecl<*>, IteExpr<*>>,
     havocs: Set<VarDecl<*>>,
   ): Assumption =
-    when (cond) {
+    when (val cond = tracedCond.unwrapTraceable()) {
       is EqExpr<*> -> {
         val varAndValue =
           pairOfVarAndValue(cond.leftOp, cond.rightOp)
@@ -431,8 +449,9 @@ class AmbiguousMutexPass : ProcedurePass {
 
       is NeqExpr<*> -> collectIteOnlyNeq(cond, assumption, conditions, havocs)
       is NotExpr -> {
-        if (cond.op is EqExpr<*>) {
-          collectIteOnlyNeq(cond.op as BinaryExpr<*, *>, assumption, conditions, havocs)
+        val negated = cond.op.unwrapTraceable()
+        if (negated is EqExpr<*>) {
+          collectIteOnlyNeq(negated, assumption, conditions, havocs)
         } else assumption
       }
 
@@ -477,7 +496,7 @@ class AmbiguousMutexPass : ProcedurePass {
     havocs: Set<VarDecl<*>>,
   ): Assumption {
     val branch = if (isThen) ite.then else ite.`else`
-    return if (intVal == (branch as? LitExpr<*>)?.intValue) {
+    return if (intVal == (branch.unwrapTraceable() as? LitExpr<*>)?.intValue) {
       collectAssumptionValues(ite.cond, assumption, conditions, havocs)
     } else assumption
   }
@@ -509,7 +528,10 @@ class AmbiguousMutexPass : ProcedurePass {
   }
 
   private fun pairOfVarAndValue(ref: Expr<*>, value: Expr<*>): Pair<VarDecl<*>, LitExpr<*>>? =
-    pairIfBothNotNull((ref as? RefExpr<*>)?.decl as? VarDecl<*>, value as? LitExpr<*>)
+    pairIfBothNotNull(
+      (ref.unwrapTraceable() as? RefExpr<*>)?.decl as? VarDecl<*>,
+      value.unwrapTraceable() as? LitExpr<*>,
+    )
 
   private fun <A, B> pairIfBothNotNull(first: A?, second: B?): Pair<A, B>? =
     if (first != null && second != null) Pair(first, second) else null

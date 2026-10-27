@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,9 +70,9 @@ class VarCollectorStmtVisitor : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
   override fun visit(stmt: IfStmt, param: Set<VarDecl<*>>) =
     param + stmt.then.accept(this, param) + stmt.elze.accept(this, param)
 
-  override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?,
-    param: Set<VarDecl<*>>?,
+  override fun <PtrType : Type, OffsetType : Type, DeclType : Type> visit(
+    stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>,
+    param: Set<VarDecl<*>>,
   ): Set<VarDecl<*>> {
     TODO("Not yet implemented")
   }

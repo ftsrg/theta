@@ -37,13 +37,13 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.FalseExpr
+import hu.bme.mit.theta.core.type.FuncAppExpr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.TrueExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
-import hu.bme.mit.theta.core.type.booltype.FalseExpr
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
-import hu.bme.mit.theta.core.type.functype.FuncAppExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory

@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 abstract class MetaData {
 
   abstract fun combine(other: MetaData): MetaData
@@ -22,6 +26,8 @@ abstract class MetaData {
   abstract fun isSubstantial(): Boolean
 }
 
+@Serializable
+@SerialName("empty")
 data object EmptyMetaData : MetaData() {
 
   override fun combine(other: MetaData): MetaData {

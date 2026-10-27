@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,20 +34,20 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Pos;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
-import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.IntAddExpr;
+import hu.bme.mit.theta.core.type.IntDivExpr;
+import hu.bme.mit.theta.core.type.IntEqExpr;
+import hu.bme.mit.theta.core.type.IntGeqExpr;
+import hu.bme.mit.theta.core.type.IntGtExpr;
+import hu.bme.mit.theta.core.type.IntLeqExpr;
+import hu.bme.mit.theta.core.type.IntLtExpr;
+import hu.bme.mit.theta.core.type.IntModExpr;
+import hu.bme.mit.theta.core.type.IntMulExpr;
+import hu.bme.mit.theta.core.type.IntNegExpr;
+import hu.bme.mit.theta.core.type.IntNeqExpr;
+import hu.bme.mit.theta.core.type.IntPosExpr;
+import hu.bme.mit.theta.core.type.IntRemExpr;
+import hu.bme.mit.theta.core.type.IntSubExpr;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;

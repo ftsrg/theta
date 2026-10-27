@@ -17,6 +17,22 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntAddExpr;
+import hu.bme.mit.theta.core.type.IntDivExpr;
+import hu.bme.mit.theta.core.type.IntEqExpr;
+import hu.bme.mit.theta.core.type.IntGeqExpr;
+import hu.bme.mit.theta.core.type.IntGtExpr;
+import hu.bme.mit.theta.core.type.IntLeqExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.IntLtExpr;
+import hu.bme.mit.theta.core.type.IntModExpr;
+import hu.bme.mit.theta.core.type.IntMulExpr;
+import hu.bme.mit.theta.core.type.IntNegExpr;
+import hu.bme.mit.theta.core.type.IntNeqExpr;
+import hu.bme.mit.theta.core.type.IntPosExpr;
+import hu.bme.mit.theta.core.type.IntRemExpr;
+import hu.bme.mit.theta.core.type.IntSubExpr;
+import hu.bme.mit.theta.core.type.IntToRatExpr;
 import java.math.BigInteger;
 
 public final class IntExprs {

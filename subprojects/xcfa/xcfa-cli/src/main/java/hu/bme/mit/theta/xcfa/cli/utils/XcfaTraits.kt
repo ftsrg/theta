@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.type.rattype.RatType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.model.*
@@ -75,7 +76,7 @@ fun xcfaTraits(
   val derefs = labels.flatMap { it.dereferencesWithAccessType.entries }
   val derefReads = derefs.count { it.value.isRead }
   val derefWrites = derefs.count { it.value.isWritten }
-  val constOffsets = derefs.count { it.key.offset is LitExpr<*> }
+  val constOffsets = derefs.count { it.key.offset.unwrapTraceable() is LitExpr<*> }
   val refs = labels.sumOf { it.references.size }
 
   fun kind(l: XcfaLabel): String =

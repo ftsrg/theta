@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.type.Traceability.unwrapTraceable;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -37,15 +38,15 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.type.BoolLitExpr;
+import hu.bme.mit.theta.core.type.BvLitExpr;
+import hu.bme.mit.theta.core.type.Dereference;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,8 +106,7 @@ public class StmtSimplifier {
         public SimplifyResult visit(final AssumeStmt stmt, final MutableValuation valuation) {
             final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(stmt.getCond(), valuation);
             final Stmt simplifiedStmt = AssumeStmt.of(simplifiedExpr);
-            if (simplifiedExpr instanceof BoolLitExpr) {
-                final BoolLitExpr condLit = (BoolLitExpr) simplifiedExpr;
+            if (unwrapTraceable(simplifiedExpr) instanceof BoolLitExpr condLit) {
                 if (!condLit.getValue()) {
                     return SimplifyResult.of(simplifiedStmt, SimplifyStatus.BOTTOM);
                 }
@@ -119,8 +119,7 @@ public class StmtSimplifier {
                 final AssignStmt<DeclType> stmt, final MutableValuation valuation) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
-            if (expr instanceof LitExpr<?>) {
-                final LitExpr<?> lit = (LitExpr<?>) expr;
+            if (unwrapTraceable(expr) instanceof LitExpr<?> lit) {
                 valuation.put(varDecl, lit);
             } else {
                 valuation.remove(varDecl);
@@ -138,9 +137,9 @@ public class StmtSimplifier {
                     (Dereference<PtrType, OffsetType, DeclType>)
                             ExprUtils.simplify(stmt.getDeref(), valuation);
 
-            if (expr instanceof LitExpr<?> litExpr
-                    && deref.getOffset() instanceof LitExpr<OffsetType> litOffset
-                    && deref.getArray() instanceof RefExpr<PtrType> ref) {
+            if (unwrapTraceable(expr) instanceof LitExpr<?> litExpr
+                    && unwrapTraceable(deref.getOffset()) instanceof LitExpr<OffsetType> litOffset
+                    && unwrapTraceable(deref.getArray()) instanceof RefExpr<PtrType> ref) {
                 // The constant stands for the pointer variable, so it carries the *pointer's* type,
                 // while the value written through it has the pointed-to *element's* type. Those
                 // coincide only when a pointer is as wide as what it points at -- true under ILP32,
@@ -238,8 +237,8 @@ public class StmtSimplifier {
         public SimplifyResult visit(final LoopStmt stmt, final MutableValuation valuation) {
             var from = stmt.getFrom();
             var to = stmt.getTo();
-            var fromUnrolled = ExprUtils.simplify(from, valuation);
-            var toUnrolled = ExprUtils.simplify(to, valuation);
+            var fromUnrolled = unwrapTraceable(ExprUtils.simplify(from, valuation));
+            var toUnrolled = unwrapTraceable(ExprUtils.simplify(to, valuation));
             if (fromUnrolled instanceof IntLitExpr && toUnrolled instanceof IntLitExpr) {
                 var fromValue = ((IntLitExpr) fromUnrolled).getValue();
                 var toValue = ((IntLitExpr) toUnrolled).getValue();
@@ -264,7 +263,8 @@ public class StmtSimplifier {
         }
 
         public SimplifyResult visit(IfStmt stmt, MutableValuation valuation) {
-            final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), valuation);
+            final Expr<BoolType> cond =
+                    unwrapTraceable(ExprUtils.simplify(stmt.getCond(), valuation));
 
             if (cond instanceof BoolLitExpr) {
                 final BoolLitExpr condLit = (BoolLitExpr) cond;

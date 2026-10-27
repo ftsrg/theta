@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
             .reversed()
         for ((index, value) in reversed) {
           val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-          if (parseContext.metadata.getMetadataValue(varDecl.ref, "cType").isPresent) {
+          if (CComplexType.getKnownType(varDecl.ref) != null) {
             val type =
               CComplexType.getType(
                 varDecl.ref,

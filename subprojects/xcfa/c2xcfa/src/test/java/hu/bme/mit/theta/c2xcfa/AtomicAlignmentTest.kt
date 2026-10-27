@@ -18,7 +18,7 @@ package hu.bme.mit.theta.c2xcfa
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -45,7 +45,10 @@ class AtomicAlignmentTest {
       XcfaProperty(ErrorDetection.ERROR_LOCATION),
       NullLogger.getInstance(),
     )
-    val struct = requireNotNull(Struct.getByName(tag, false)) { "struct $tag was not registered" }
+    val struct =
+      requireNotNull(Struct.getByName(tag, false, parseContext)) {
+        "struct $tag was not registered"
+      }
     return ObjectLayout.of(struct.actualType as CStruct, arch)
   }
 

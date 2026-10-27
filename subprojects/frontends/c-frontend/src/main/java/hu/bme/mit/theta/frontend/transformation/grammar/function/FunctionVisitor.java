@@ -27,16 +27,17 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.Dereference;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.frontend.CVariableSource;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
@@ -50,11 +51,11 @@ import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.*;
@@ -157,7 +158,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
     private static boolean containsDereference(Expr<?> expr) {
-        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+        if (expr instanceof hu.bme.mit.theta.core.type.Dereference<?, ?, ?>) {
             return true;
         }
         for (Expr<?> op : expr.getOps()) {
@@ -171,7 +172,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
-        parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
+        CComplexType.withType(varDecl.getRef(), type);
         return varDecl;
     }
 
@@ -410,22 +411,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         if (type.isAtomic()) {
             atomicVariables.add(varDecl);
         }
-        parseContext.getMetadata().create(varDecl.getRef(), "cType", type);
-        parseContext.getMetadata().create(varDecl.getName(), "cName", name);
+        CComplexType.withType(varDecl.getRef(), type);
         if (declaration.isFuncPointer()) {
             // Marks the variable as holding a function id, so that a call through it is dispatched
             // over the candidate set instead of being treated as a data pointer.
-            parseContext.getMetadata().create(varDecl.getRef(), "isFunctionPointer", true);
+            parseContext.getFunctionPointerVariables().add(varDecl);
         }
+        // A redeclaration without a statement context keeps the position recorded before.
+        final CVariableSource previous = parseContext.getVariableSources().get(varDecl.getName());
+        Integer line = previous == null ? null : previous.getLine();
+        Integer column = previous == null ? null : previous.getColumn();
         if (!currentStatementContext.isEmpty()) {
             Token location = currentStatementContext.peek().get1().start;
-            parseContext
-                    .getMetadata()
-                    .create(varDecl.getName(), "locationLine", location.getLine());
-            parseContext
-                    .getMetadata()
-                    .create(varDecl.getName(), "locationColumn", location.getCharPositionInLine());
+            line = location.getLine();
+            column = location.getCharPositionInLine();
         }
+        parseContext
+                .getVariableSources()
+                .put(varDecl.getName(), new CVariableSource(name, line, column));
         declaration.addVarDecl(varDecl);
     }
 
@@ -476,10 +479,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     private void declareMallocReturnsPointer() {
         parseContext
-                .getMetadata()
-                .create(
+                .getFunctionReturnTypes()
+                .put(
                         "malloc",
-                        "cType",
                         new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext));
     }
 
@@ -519,12 +521,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             parseContext.setArithmeticAutoSelected(true);
         }
 
-        Set<CDeclaration> typedefs = ctx.accept(typedefVisitor);
-        for (CDeclaration typedef : typedefs) {
-            parseContext
-                    .getMetadata()
-                    .create(typedef.getName(), "cTypedefName", typedef.getActualType());
-        }
+        ctx.accept(typedefVisitor);
 
         // Introduce every function's name before any global declaration is processed. A function
         // has
@@ -550,8 +547,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 if (funcDecl.getName() != null
                         && !variables.peek().get2().containsKey(funcDecl.getName())) {
                     parseContext
-                            .getMetadata()
-                            .create(funcDecl.getName(), "cType", returnType.getActualType());
+                            .getFunctionReturnTypes()
+                            .put(funcDecl.getName(), returnType.getActualType());
                     createVars(funcDecl);
                     // Record it as a function too, not just as a name. Taking a function's address
                     // is recognised by looking the variable up in this map
@@ -609,11 +606,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         continue;
                     }
                     parseContext
-                            .getMetadata()
-                            .create(
-                                    declaration.getName(),
-                                    "cType",
-                                    declaration.getType().getActualType());
+                            .getFunctionReturnTypes()
+                            .put(declaration.getName(), declaration.getType().getActualType());
                     createVars(declaration);
                     for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                         functions.put(varDecl, declaration);
@@ -747,8 +741,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     declaration.setType(returnType);
                     if (!variables.peek().get2().containsKey(declaration.getName())) {
                         parseContext
-                                .getMetadata()
-                                .create(declaration.getName(), "cType", returnType.getActualType());
+                                .getFunctionReturnTypes()
+                                .put(declaration.getName(), returnType.getActualType());
                         createVars(declaration);
                         for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                             functions.put(varDecl, declaration);
@@ -769,8 +763,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         funcDecl.setType(returnType);
         if (!variables.peek().get2().containsKey(funcDecl.getName())) {
             parseContext
-                    .getMetadata()
-                    .create(funcDecl.getName(), "cType", returnType.getActualType());
+                    .getFunctionReturnTypes()
+                    .put(funcDecl.getName(), returnType.getActualType());
             createVars(funcDecl);
         } else {
             // The function was declared before it was defined -- a prototype, which is how a C file
@@ -987,9 +981,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CCompound newCCompound4 = new CCompound(parseContext);
             newCCompound1.addCStatement(newCCompound2);
             Expr<?> one = CComplexType.getSignedInt(parseContext).getUnitValue();
-            parseContext
-                    .getMetadata()
-                    .create(one, "cType", CComplexType.getSignedInt(parseContext));
+            one = CComplexType.withType(one, CComplexType.getSignedInt(parseContext));
             newCCompound2.addCStatement(new CExpr(one, parseContext));
             newCCompound2.setPreStatements(newCCompound3);
             newCCompound2.setPostStatements(newCCompound4);
@@ -1090,7 +1082,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CComplexType type = CComplexType.getType(lValue.getExpression(), parseContext);
             // A `__VERIFIER_nondet*` call is turned into a havoc of its return value by
             // NondetFunctionPass; the name must not collide with a function the program defines.
-            parseContext.getMetadata().create(ASM_NONDET, "cType", type);
+            parseContext.getFunctionReturnTypes().put(ASM_NONDET, type);
             CCall nondet = new CCall(ASM_NONDET, List.of(), parseContext);
             compound.addCStatement(nondet);
             CAssignment assignment =
@@ -1201,7 +1193,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         if (designator.isEmpty()) {
             return fallback;
         }
-        return ((IntLitExpr) designator.get().getExpression()).getValue().intValueExact();
+        return ((IntLitExpr) Traceability.unwrapTraceable(designator.get().getExpression()))
+                .getValue()
+                .intValueExact();
     }
 
     /**
@@ -1260,16 +1254,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /** The cell `arrays[base][offset]`, typed as {@code type}. */
-    private Dereference<?, ?, ?> cellOf(
-            Expr<?> base, int offset, CComplexType type, CComplexType ptrType) {
+    private Expr<?> cellOf(Expr<?> base, int offset, CComplexType type, CComplexType ptrType) {
         final var offsetLit = ptrType.getValue(String.valueOf(offset));
         final var deref =
                 Exprs.Dereference(
                         cast(base, offsetLit.getType()),
                         cast(offsetLit, offsetLit.getType()),
                         type.getSmtType());
-        parseContext.getMetadata().create(deref, "cType", type);
-        return deref;
+        return CComplexType.withType(deref, type);
     }
 
     /**
@@ -1551,11 +1543,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // double-free
             // for a returned-and-reused block and a bogus leak when the scope was a loop body.
             parseContext
-                    .getMetadata()
-                    .create(
-                            "alloca",
-                            "cType",
-                            new CPointer(null, cArray.getEmbeddedType(), parseContext));
+                    .getFunctionReturnTypes()
+                    .put("alloca", new CPointer(null, cArray.getEmbeddedType(), parseContext));
             // The block has to span the array's *flat cells*, not its element count: `a[i].f`
             // is addressed as `a[i * unitCount + f]` (see ExpressionVisitor#rowOf), so an
             // element occupying several cells makes the object that many times longer. Passing
@@ -1587,11 +1576,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (elementCells != 1) {
                 final var dimExpr = allocaSize.getExpression();
                 final CComplexType dimType = CComplexType.getType(dimExpr, parseContext);
-                final var scaled =
-                        AbstractExprs.Mul(
-                                dimType.castTo(dimExpr),
-                                dimType.getValue(String.valueOf(elementCells)));
-                parseContext.getMetadata().create(scaled, "cType", dimType);
+                final Expr<?> scaled =
+                        CComplexType.withType(
+                                AbstractExprs.Mul(
+                                        dimType.castTo(dimExpr),
+                                        dimType.getValue(String.valueOf(elementCells))),
+                                dimType);
                 allocaSize = new CExpr(scaled, parseContext);
             }
             final var alloca = new CCall("alloca", List.of(allocaSize), parseContext);
@@ -1619,8 +1609,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 } else {
                     Expr<?> expression = declaration.getInitExpr().getExpression();
                     final var initType = CComplexType.getType(expression, parseContext);
-                    if (expression instanceof RefExpr<?>
-                            || expression instanceof Dereference<?, ?, ?>
+                    if (Traceability.unwrapTraceable(expression) instanceof RefExpr<?>
+                            || Traceability.unwrapTraceable(expression)
+                                    instanceof Dereference<?, ?, ?>
                             || initType instanceof CStruct) {
                         // A struct value is its base id, whether read from a variable or out of
                         // another object's cell: `struct S s = *p;` and `= o.field` copy the
@@ -1657,7 +1648,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         // to fail parsing outright ("Initializer type not handled").
                         final VarDecl<?> varDecl = declaration.getVarDecls().get(0);
                         final var ptrType = CComplexType.getUnsignedLong(parseContext);
-                        final LitExpr<?> zero = ptrType.getNullValue();
+                        final Expr<?> zero = ptrType.getNullValue();
                         final var deref =
                                 Exprs.Dereference(
                                         cast(varDecl.getRef(), zero.getType()),
@@ -1970,9 +1961,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             VarDecl<?> conditionalTmp = null;
             if (guardsDereference) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");
-                parseContext
-                        .getMetadata()
-                        .create(conditionalTmp.getRef(), "cType", smallestCommonType);
+                CComplexType.withType(conditionalTmp.getRef(), smallestCommonType);
                 ifTruePre.addCStatement(
                         new CAssignment(
                                 conditionalTmp.getRef(),
@@ -1997,13 +1986,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 postStatements.addCStatement(postIf);
             }
 
-            IteExpr<?> ite =
-                    Ite(
-                            AbstractExprs.Neq(
-                                    CComplexType.getType(expr, parseContext).getNullValue(), expr),
-                            smallestCommonType.castTo(lhs),
-                            smallestCommonType.castTo(rhs));
-            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
+            Expr<?> ite =
+                    CComplexType.withType(
+                            Ite(
+                                    AbstractExprs.Neq(
+                                            CComplexType.getType(expr, parseContext).getNullValue(),
+                                            expr),
+                                    smallestCommonType.castTo(lhs),
+                                    smallestCommonType.castTo(rhs)),
+                            smallestCommonType);
             iteExpr = conditionalTmp == null ? ite : conditionalTmp.getRef();
         } else {
             iteExpr = ctx.logicalOrExpression().accept(expressionVisitor);

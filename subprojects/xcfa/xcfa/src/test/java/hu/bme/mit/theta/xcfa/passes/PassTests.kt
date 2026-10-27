@@ -27,8 +27,9 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CFloat
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -228,7 +229,7 @@ class PassTests {
           global = {
             "y" type BvType(32) init "0"
             ("x" type FpType(8, 24) init "0.0f").also {
-              fpParseContext.metadata.create(it.ref, "cType", CFloat(null, fpParseContext))
+              CComplexType.withType(it.ref, CFloat(null, fpParseContext))
             }
           },
           passes =
@@ -294,9 +295,8 @@ class PassTests {
             (init to final) {
               havoc("x")
               "y".assign("x").also {
-                parseContext.metadata.create(
+                CComplexType.withType(
                   ((it.labels.last() as StmtLabel).stmt as AssignStmt<*>).varDecl.ref,
-                  "cType",
                   CSignedInt(null, parseContext),
                 )
               }

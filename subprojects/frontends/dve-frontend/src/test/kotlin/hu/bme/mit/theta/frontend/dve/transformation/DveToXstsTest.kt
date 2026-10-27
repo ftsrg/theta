@@ -19,7 +19,7 @@ package hu.bme.mit.theta.frontend.dve.transformation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.TrueExpr
 import hu.bme.mit.theta.frontend.dve.DveParser
 import hu.bme.mit.theta.frontend.dve.model.*
 import hu.bme.mit.theta.xsts.XSTS

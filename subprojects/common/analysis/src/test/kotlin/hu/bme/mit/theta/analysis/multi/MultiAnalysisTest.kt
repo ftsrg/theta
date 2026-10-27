@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class MultiAnalysisTest {
 
   class NumberedState(val num: Int) : ExprState {
 
-    override fun toExpr(): Expr<BoolType?>? = True()
+    override fun toExpr(): Expr<BoolType> = True()
 
     override fun isBottom(): Boolean = false
   }

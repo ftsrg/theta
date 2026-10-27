@@ -92,6 +92,12 @@ data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
       .any { it }
 }
 
+/**
+ * An XCFA built under the frontend configuration that printed as [frontendConfig]: a configuration
+ * printing the same would build it again, so a worker process for it can be handed this one.
+ */
+class BuiltXcfa(val frontendConfig: String, val xcfa: XCFA, val parseContext: ParseContext)
+
 @Serializable
 data class InputConfig(
   @Parameter(names = ["--input"], description = "Path of the input model") var input: File? = null,
@@ -102,6 +108,13 @@ data class InputConfig(
   )
   @Transient
   var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
+  @Parameter(
+    names = ["--xcfa-file"],
+    description = "A built XCFA (as a worker process gets it), used instead of parsing --input",
+  )
+  var xcfaFile: File? = null,
+  /** The XCFA a portfolio has built, which its worker processes may reuse (see [BuiltXcfa]). */
+  @Transient var builtXcfa: BuiltXcfa? = null,
   @Parameter(
     names = ["--property"],
     description = "Path of the property file (will overwrite --property when given)",
@@ -902,6 +915,12 @@ data class DebugConfig(
       "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/",
   )
   var argToFile: Boolean = false,
+  @Parameter(
+    names = ["--serialization-roundtrip"],
+    description =
+      "Encode the parsed XCFA, decode it, check that it encodes the same again, and continue with the decoded one",
+  )
+  var serializationRoundTrip: Boolean = false,
 ) : Config
 
 @Serializable

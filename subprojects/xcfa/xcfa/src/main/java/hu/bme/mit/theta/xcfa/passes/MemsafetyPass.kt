@@ -22,23 +22,23 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.AndExpr
+import hu.bme.mit.theta.core.type.ArrayReadExpr
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.OrExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
-import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -296,7 +296,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val sizeVar = builder.parent.getPtrSizeVar()
     val anyBase =
       builder.parent.getVars().find { it.wrappedVar.name == "__ptr" }?.wrappedVar
-        ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
+        ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullLiteral)
           .also { builder.parent.addVar(it) }
           .wrappedVar
     val mallocBase = Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES")) // 3k+0: malloc

@@ -16,10 +16,11 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.type.BvLitExpr
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -111,26 +112,26 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   /** The variable an `x := ret` assignment binds the call's result to, if this label is one. */
   private fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
     val stmt = (label as? StmtLabel)?.stmt as? AssignStmt<*> ?: return null
-    if (ret !is RefExpr<*>) return null
+    val retRef = ret.unwrapTraceable() as? RefExpr<*> ?: return null
     // The binding is `p = (int *) tmp`, not a bare `p = tmp` -- the frontend casts the `void *`
     // result to the declared pointer type -- so match on the result being *referenced* rather than
     // on the right-hand side being exactly it.
-    if (ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
+    if (ExprUtils.getVars(stmt.expr).none { it == retRef.decl }) return null
     return stmt.varDecl.ref
   }
 
   /** Whether the frontend metadata gives this pointer a pointee we can lay out into cells. */
   private fun pointeeIsTyped(pointer: Expr<*>): Boolean =
     when (val type = CComplexType.getType(pointer, parseContext)) {
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct -> true
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray -> true
-      is hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer ->
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct -> true
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray -> true
+      is hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer ->
         type.embeddedType !is hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
       else -> false
     }
 
   private fun literalValue(expr: Expr<*>): BigInteger? =
-    when (val e = ExprUtils.simplify(expr)) {
+    when (val e = ExprUtils.simplify(expr).unwrapTraceable()) {
       is IntLitExpr -> e.value
       is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(e)
       else -> null

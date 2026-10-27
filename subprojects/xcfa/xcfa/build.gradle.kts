@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,4 +26,5 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-z3"))
+    testImplementation(Deps.kotlinxSerializationJson)
 }

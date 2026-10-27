@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.withoutTraceability
 
 fun getSafetyChecker(
   xcfa: XCFA?,
@@ -40,11 +41,14 @@ fun getSafetyChecker(
   uniqueLogger: Logger,
 ): SafetyChecker<*, *, *> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(config, logger)
+    InProcessChecker(config, logger, xcfa, parseContext)
   } else {
-    xcfa!!
     mcm!!
     parseContext!!
+    // A portfolio may still run passes, which need the C types; it strips per configuration.
+    val xcfa =
+      if (config.backendConfig.backend == Backend.PORTFOLIO) xcfa!!
+      else xcfa!!.withoutTraceability()
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.BMC,
@@ -87,10 +91,11 @@ fun getChecker(
   uniqueLogger: Logger,
 ): Checker<*, XcfaPrec<*>> =
   if (config.backendConfig.inProcess) {
-    InProcessChecker(config, logger)
+    InProcessChecker(config, logger, xcfa, parseContext)
   } else {
     when (config.backendConfig.backend) {
-      Backend.TRACEGEN -> getTracegenChecker(xcfa!!, parseContext!!, mcm, config, logger)
+      Backend.TRACEGEN ->
+        getTracegenChecker(xcfa!!.withoutTraceability(), parseContext!!, mcm, config, logger)
       Backend.NONE ->
         SafetyChecker<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,

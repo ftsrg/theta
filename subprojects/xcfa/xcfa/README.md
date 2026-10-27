@@ -58,6 +58,17 @@ The following labels are used:
   motivation. Support for this lable is experimental.
 * `StmtXcfaLabel`: Contains a single `Stmt`.
 
+### Serialization
+
+`model/serialization/XcfaSerialization` writes a built XCFA together with its parse context in any
+kotlinx-serialization format. Types, declarations, expressions, statements and C types are written
+once into an object table (`hu.bme.mit.theta.core.serialization.ObjectTable`) and referred to by
+index, so sharing and identity survive. The classes the table holds are listed explicitly
+(`tableClasses`), so that nothing is looked up by reflection. The output starts with a hash of the
+format (`computeFormatHash`, which xcfa-cli computes when it is built), and a build with a different
+format refuses it. xcfa-cli hands the XCFA to a worker process as ProtoBuf (`--xcfa-file`), and
+writes it as `xcfa.json` next to `xcfa.dot`.
+
 ### Related projects
 
 * [`cfa`](../../cfa/cfa/README.md): The ancestor project of the XCFA formalism, it can represent

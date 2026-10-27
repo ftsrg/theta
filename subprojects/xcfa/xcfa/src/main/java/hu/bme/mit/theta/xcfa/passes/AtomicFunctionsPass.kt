@@ -16,24 +16,25 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.Reference
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
 import hu.bme.mit.theta.xcfa.model.AtomicBeginLabel
 import hu.bme.mit.theta.xcfa.model.AtomicEndLabel
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
@@ -176,7 +177,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   /** The C type the pointer argument points at, i.e. the type of the cell the operation touches. */
   private fun pointeeOf(ptr: Expr<*>): CComplexType =
     when (val t = CComplexType.getType(ptr, parseContext)) {
-      is CPointer -> t.embeddedType
+      is CPointer -> t.embeddedType!!
       is CArray -> t.embeddedType
       else ->
         throw UnsupportedFrontendElementException(
@@ -195,7 +196,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
    * it can be read/assigned directly. Returns null otherwise (e.g. `&a->f`, `&a[i]`).
    */
   private fun directVar(ptr: Expr<*>): Expr<*>? =
-    if (ptr is Reference<*, *>) ptr.expr as? RefExpr<*> else null
+    (ptr.unwrapTraceable() as? Reference<*, *>)?.expr?.unwrapTraceable() as? RefExpr<*>
 
   /** The cell `*ptr`: the variable itself when `ptr` is the address of one, else a dereference. */
   private fun cell(ptr: Expr<*>, pointee: CComplexType = pointeeOf(ptr)): Expr<*> =

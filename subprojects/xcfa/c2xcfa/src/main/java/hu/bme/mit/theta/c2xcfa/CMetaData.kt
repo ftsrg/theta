@@ -15,11 +15,14 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
+@SerialName("c")
 data class CMetaData(
   val lineNumberStart: Int?,
   val colNumberStart: Int?,
@@ -28,13 +31,13 @@ data class CMetaData(
   val offsetStart: Int?,
   val offsetEnd: Int?,
   val sourceText: String?,
-  val astNodes: List<CStatement>,
+  val sourceStatements: List<SourceStatement> = emptyList(),
   val functionName: String?,
   // we only want to export metadata when we encounter the fist label for a statement
   val notStatementStart: Boolean = false,
 ) : MetaData() {
 
-  // AST nodes must be in order of combination!
+  // Source statements must be in order of combination!
   override fun combine(other: MetaData): MetaData =
     when (other) {
       is CMetaData ->
@@ -71,7 +74,7 @@ data class CMetaData(
               it > 0
             } ?: 0,
           sourceText = (sourceText ?: "") + (other.sourceText ?: ""),
-          astNodes = astNodes + other.astNodes,
+          sourceStatements = sourceStatements + other.sourceStatements,
           functionName = functionName ?: other.functionName,
         )
 
@@ -84,7 +87,7 @@ data class CMetaData(
     }
 
   override fun isSubstantial(): Boolean {
-    if (astNodes.isEmpty()) {
+    if (sourceStatements.isEmpty()) {
       return false
     }
     if (lineNumberStart == null || lineNumberStop == null) {
@@ -105,7 +108,8 @@ data class CMetaData(
     return true
   }
 
-  val asExportableCMetadata: CMetaData? = if (notStatementStart) null else this
+  val asExportableCMetadata: CMetaData?
+    get() = if (notStatementStart) null else this
 }
 
 fun XcfaLabel.getCMetaData(): CMetaData? = (metadata as? CMetaData)?.asExportableCMetadata

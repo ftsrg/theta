@@ -22,7 +22,8 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
@@ -34,11 +35,11 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,12 +147,6 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
-                            parseContext
-                                    .getMetadata()
-                                    .create(
-                                            initializerExpression.getExpression(),
-                                            "cType",
-                                            cSimpleType);
                         }
                     } else {
                         // `char s[8] = "ab"` is an aggregate initializer written without braces,
@@ -259,9 +254,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             return asString;
         }
         final Expr<?> expr =
-                type.castTo(
-                        initializer.assignmentExpression().accept(functionVisitor).getExpression());
-        parseContext.getMetadata().create(expr, "cType", type);
+                CComplexType.withType(
+                        type.castTo(
+                                initializer
+                                        .assignmentExpression()
+                                        .accept(functionVisitor)
+                                        .getExpression()),
+                        type);
         return new CExpr(expr, parseContext);
     }
 
@@ -407,17 +406,14 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     private CComplexType elementTypeAt(CComplexType containerType, int position) {
         if (containerType
                         instanceof
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                        .CStruct
-                                struct
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct struct
                 && position >= 0
                 && position < struct.getFields().size()) {
             return struct.getFields().get(position).get2();
         }
         if (containerType
                 instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-                        array) {
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray array) {
             return array.getEmbeddedType();
         }
         return containerType;
@@ -476,10 +472,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         final Expr<?> folded =
                 hu.bme.mit.theta.core.utils.ExprUtils.simplify(
                         designator.constantExpression().accept(functionVisitor).getExpression());
-        if (folded instanceof IntLitExpr intLit) {
+        if (Traceability.unwrapTraceable(folded) instanceof IntLitExpr intLit) {
             return List.of(intLit.getValue().intValueExact());
         }
-        if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+        if (Traceability.unwrapTraceable(folded)
+                instanceof hu.bme.mit.theta.core.type.BvLitExpr bvLit) {
             return List.of(
                     hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
                             .intValueExact());
@@ -565,10 +562,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             final Expr<?> folded =
                     hu.bme.mit.theta.core.utils.ExprUtils.simplify(
                             ctx.accept(functionVisitor).getExpression());
-            if (folded instanceof IntLitExpr intLit) {
+            if (Traceability.unwrapTraceable(folded) instanceof IntLitExpr intLit) {
                 return intLit.getValue().intValueExact();
             }
-            if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+            if (Traceability.unwrapTraceable(folded)
+                    instanceof hu.bme.mit.theta.core.type.BvLitExpr bvLit) {
                 return hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
                         .intValueExact();
             }

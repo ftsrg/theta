@@ -39,29 +39,29 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.type.ArrayInitExpr;
+import hu.bme.mit.theta.core.type.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.BvExtractExpr;
+import hu.bme.mit.theta.core.type.BvLitExpr;
+import hu.bme.mit.theta.core.type.BvSExtExpr;
+import hu.bme.mit.theta.core.type.BvZExtExpr;
+import hu.bme.mit.theta.core.type.EnumLitExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.FpLitExpr;
+import hu.bme.mit.theta.core.type.FpToBvExpr;
+import hu.bme.mit.theta.core.type.FpToFpExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
-import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.math.BigInteger;
@@ -116,33 +116,33 @@ final class JavaSMTTermTransformer {
         otherFuncs = CollectionUtil.createMap();
         addEnvFunc(
                 FunctionDeclarationKind.AND,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.AndExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.AndExpr::create));
         //        addEnvFunc("false",
-        // exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.FalseExpr::getInstance));
+        // exprNullaryOperator(hu.bme.mit.theta.core.type.FalseExpr::getInstance));
         //        addEnvFunc("true",
-        // exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.TrueExpr::getInstance));
+        // exprNullaryOperator(hu.bme.mit.theta.core.type.TrueExpr::getInstance));
         addEnvFunc(
                 FunctionDeclarationKind.IFF,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.IffExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.IffExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.NOT,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.booltype.NotExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.NotExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.IMPLIES,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.ImplyExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.ImplyExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.XOR,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.XorExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.XorExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.OR,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.OrExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.OrExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.ITE,
-                exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
+                exprTernaryOperator(hu.bme.mit.theta.core.type.IteExpr::create));
         //        addEnvFunc("if",
-        // exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
+        // exprTernaryOperator(hu.bme.mit.theta.core.type.IteExpr::create));
         //        addEnvFunc("prime",
-        // exprUnaryOperator(hu.bme.mit.theta.core.type.anytype.PrimeExpr::of));
+        // exprUnaryOperator(hu.bme.mit.theta.core.type.PrimeExpr::of));
         addEnvFunc(
                 FunctionDeclarationKind.EQ,
                 exprBinaryOperator(
@@ -182,188 +182,181 @@ final class JavaSMTTermTransformer {
                 exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Div));
         addEnvFunc(
                 FunctionDeclarationKind.FLOOR,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.rattype.RatToIntExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.RatToIntExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_ROUND_TO_INTEGRAL,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.rattype.RatToIntExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.RatToIntExpr::create));
         //        addEnvFunc("div",
-        // exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntDivExpr::create));
+        // exprBinaryOperator(hu.bme.mit.theta.core.type.IntDivExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.TO_REAL,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.inttype.IntToRatExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.IntToRatExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.MODULO,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntModExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.IntModExpr::create));
         //        addEnvFunc("rem",
-        // exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntRemExpr::create));
+        // exprBinaryOperator(hu.bme.mit.theta.core.type.IntRemExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_ADD,
-                exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpAddExpr::create));
+                exprFpMultiaryOperator(hu.bme.mit.theta.core.type.FpAddExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_SUB,
-                exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpSubExpr::create));
+                exprFpBinaryOperator(hu.bme.mit.theta.core.type.FpSubExpr::create));
         //        addEnvFunc("fp.pos",
-        // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpPosExpr::create));
+        // exprUnaryOperator(hu.bme.mit.theta.core.type.FpPosExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_NEG,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpNegExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.FpNegExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_MUL,
-                exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpMulExpr::create));
+                exprFpMultiaryOperator(hu.bme.mit.theta.core.type.FpMulExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_DIV,
-                exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpDivExpr::create));
-        addOtherFunc(
-                "fp.rem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
-        addOtherFunc(
-                "fprem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
+                exprFpBinaryOperator(hu.bme.mit.theta.core.type.FpDivExpr::create));
+        addOtherFunc("fp.rem", exprBinaryOperator(hu.bme.mit.theta.core.type.FpRemExpr::create));
+        addOtherFunc("fprem", exprBinaryOperator(hu.bme.mit.theta.core.type.FpRemExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_ABS,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpAbsExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.FpAbsExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_LE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpLeqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_LT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpLtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_GE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpGeqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_GT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpGtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_EQ,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpEqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpEqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_IS_NAN,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.FpIsNanExpr::create));
         //        addEnvFunc("fp.isNaN",
-        // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
+        // exprUnaryOperator(hu.bme.mit.theta.core.type.FpIsNanExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_IS_INF,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.FpIsInfiniteExpr::create));
         //        addEnvFunc("fp.isInfinite",
-        // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        // exprUnaryOperator(hu.bme.mit.theta.core.type.FpIsInfiniteExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_ROUND_TO_INTEGRAL,
-                exprFpUnaryOperator(
-                        hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
+                exprFpUnaryOperator(hu.bme.mit.theta.core.type.FpRoundToIntegralExpr::create));
         //        addEnvFunc("fp.roundToIntegral",
-        // exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
+        // exprFpUnaryOperator(hu.bme.mit.theta.core.type.FpRoundToIntegralExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_SQRT,
-                exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
+                exprFpUnaryOperator(hu.bme.mit.theta.core.type.FpSqrtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_MAX,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMaxExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpMaxExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.FP_MIN,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.FpMinExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_CONCAT,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvConcatExpr::create));
         //        addEnvFunc("concat",
-        // exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
+        // exprMultiaryOperator(hu.bme.mit.theta.core.type.BvConcatExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_ADD,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAddExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvAddExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SUB,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSubExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSubExpr::create));
         //        addEnvFunc("bvpos",
-        // exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvPosExpr::create));
+        // exprUnaryOperator(hu.bme.mit.theta.core.type.BvPosExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_NEG,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNegExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.BvNegExpr::create));
         addOtherFunc(
                 "bv2int",
-                exprUnaryOperator(
-                        t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
+                exprUnaryOperator(t -> hu.bme.mit.theta.core.type.BvToIntExpr.create(t, false)));
         addEnvFunc(
                 FunctionDeclarationKind.BV_MUL,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvMulExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_UDIV,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUDivExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvUDivExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SDIV,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSDivExpr::create));
-        addOtherFunc(
-                "bvsmod", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSModExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSDivExpr::create));
+        addOtherFunc("bvsmod", exprBinaryOperator(hu.bme.mit.theta.core.type.BvSModExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_UREM,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvURemExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvURemExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SREM,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSRemExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSRemExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_OR,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvOrExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvOrExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_AND,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAndExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvAndExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_XOR,
-                exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvXorExpr::create));
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.BvXorExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_NOT,
-                exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNotExpr::create));
+                exprUnaryOperator(hu.bme.mit.theta.core.type.BvNotExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SHL,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvShiftLeftExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_ASHR,
-                exprBinaryOperator(
-                        hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvArithShiftRightExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_LSHR,
-                exprBinaryOperator(
-                        hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvLogicShiftRightExpr::create));
         //        addEnvFunc("bvrol",
-        // exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
+        // exprBinaryOperator(hu.bme.mit.theta.core.type.BvRotateLeftExpr::create));
         addOtherFunc(
                 "ext_rotate_left",
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvRotateLeftExpr::create));
         //        addEnvFunc("bvror",
-        // exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
+        // exprBinaryOperator(hu.bme.mit.theta.core.type.BvRotateRightExpr::create));
         addOtherFunc(
                 "ext_rotate_right",
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvRotateRightExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_ULT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvULtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_ULE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvULeqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_UGT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvUGtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_UGE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvUGeqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SLT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSLtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SLE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSLeqExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SGT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGtExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSGtExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.BV_SGE,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.BvSGeqExpr::create));
         //        addEnvFunc("read",
-        // exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
+        // exprBinaryOperator(hu.bme.mit.theta.core.type.ArrayReadExpr::create));
         //        addEnvFunc("write",
-        // exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+        // exprTernaryOperator(hu.bme.mit.theta.core.type.ArrayWriteExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.SELECT,
-                exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
+                exprBinaryOperator(hu.bme.mit.theta.core.type.ArrayReadExpr::create));
         addEnvFunc(
                 FunctionDeclarationKind.STORE,
-                exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+                exprTernaryOperator(hu.bme.mit.theta.core.type.ArrayWriteExpr::create));
 
         environment.put(
                 Tuple2.of(FunctionDeclarationKind.FP_FROM_IEEEBV, 1),

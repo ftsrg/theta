@@ -25,10 +25,10 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import hu.bme.mit.theta.core.type.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
@@ -46,51 +46,11 @@ import java.util.List;
  * shift -- unlike a bit-sliced word, which would need {@code 2^(8*i)} for a variable byte index and
  * so only works under bitvector.
  *
- * <p>Metadata keys mirror {@link BitfieldSlice}'s: stamped on the <em>value</em> a read produces,
- * so that an assignment through it can find what to write back to. {@link #BASE}/{@link #OFFSET}/
- * {@link #WIDTH} mark a resolved (possibly multi-byte) member value. {@link #ARRAY_BASE}/{@link
- * #ARRAY_OFFSET}/{@link #ARRAY_ELEMENT_BYTES} mark an <em>array-typed</em> member accessed without
- * its subscript yet, so that the next {@code [i]} can compute {@code byteOff + i*elementSize}
- * before resolving to a member value in turn.
+ * <p>Like a bitfield read, the <em>value</em> a read produces records where it came from (see
+ * {@link StorageOrigin}), so that an assignment through it can find what to write back to: a
+ * resolved member value, or an array- or struct-typed member not yet subscripted or accessed.
  */
 public final class ByteUnionSlice {
-
-    /** Metadata: the union object's own base expression a resolved member value was read from. */
-    public static final String BASE = "byteUnionBase";
-
-    /**
-     * Metadata: the byte offset (an {@link Expr}, not a compile-time int -- a variable array index
-     * makes this a genuine expression) the resolved member starts at.
-     */
-    public static final String OFFSET = "byteUnionOffset";
-
-    /** Metadata: the resolved member's width in bytes (an {@code Integer}). */
-    public static final String WIDTH = "byteUnionWidthBytes";
-
-    /**
-     * Metadata on an array-typed union member accessed without a subscript yet: the union's base.
-     */
-    public static final String ARRAY_BASE = "byteUnionArrayBase";
-
-    /** Metadata: the array member's own starting byte offset within the union. */
-    public static final String ARRAY_OFFSET = "byteUnionArrayOffset";
-
-    /** Metadata: one element's width in bytes (an {@code Integer}). */
-    public static final String ARRAY_ELEMENT_BYTES = "byteUnionArrayElementBytes";
-
-    /**
-     * Metadata on a nested struct-typed union member accessed without a field yet: the union's own
-     * base expression. A subsequent {@code .field} resolves to a byte slice at {@link
-     * #STRUCT_OFFSET} plus the field's offset within the nested struct, exactly like {@link
-     * #ARRAY_BASE} does for a later {@code [i]}.
-     */
-    public static final String STRUCT_BASE = "byteUnionStructBase";
-
-    /**
-     * Metadata: the nested struct member's own starting byte offset within the union (an {@link
-     * Expr}).
-     */
-    public static final String STRUCT_OFFSET = "byteUnionStructOffset";
 
     private ByteUnionSlice() {}
 

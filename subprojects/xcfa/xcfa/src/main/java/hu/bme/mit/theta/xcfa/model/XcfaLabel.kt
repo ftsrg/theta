@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+@file:UseContextualSerialization(MetaData::class)
+
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.analysis.State
@@ -24,8 +26,8 @@ import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
@@ -33,12 +35,21 @@ import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.REA
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.util.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.UseContextualSerialization
 
-sealed class XcfaLabel(open val metadata: MetaData) {
+@Serializable
+sealed class XcfaLabel {
+
+  abstract val metadata: MetaData
 
   open fun toStmt(): Stmt = Skip()
 }
 
+@Serializable
+@SerialName("invoke")
 data class InvokeLabel
 @JvmOverloads
 constructor(
@@ -47,7 +58,7 @@ constructor(
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
   var isLibraryFunction: Boolean = false, // true means that passes/analyses should handle it
-) : XcfaLabel(metadata) {
+) : XcfaLabel() {
 
   override fun toString(): String {
     val sj = StringJoiner(", ", "(", ")")
@@ -69,21 +80,27 @@ constructor(
   }
 }
 
-data class ReturnLabel(val enclosedLabel: XcfaLabel) :
-  XcfaLabel(metadata = enclosedLabel.metadata) {
+@Serializable
+@SerialName("return")
+data class ReturnLabel(val enclosedLabel: XcfaLabel) : XcfaLabel() {
+
+  override val metadata: MetaData
+    get() = enclosedLabel.metadata
 
   override fun toStmt(): Stmt = enclosedLabel.toStmt()
 
   override fun toString(): String = "Return ($enclosedLabel)"
 }
 
+@Serializable
+@SerialName("start")
 data class StartLabel(
   val name: String,
   val params: List<Expr<*>>,
   val pidVar: VarDecl<*>,
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
-) : XcfaLabel(metadata = metadata) {
+) : XcfaLabel() {
 
   override fun toString(): String {
     val sj = StringJoiner(", ", "(", ")")
@@ -108,8 +125,9 @@ data class StartLabel(
   }
 }
 
-data class JoinLabel(val pidVar: VarDecl<*>, override val metadata: MetaData) :
-  XcfaLabel(metadata = metadata) {
+@Serializable
+@SerialName("join")
+data class JoinLabel(val pidVar: VarDecl<*>, override val metadata: MetaData) : XcfaLabel() {
 
   override fun toString(): String = "join $pidVar"
 
@@ -131,13 +149,15 @@ enum class ChoiceType {
   ALTERNATIVE_PATH,
 }
 
+@Serializable
+@SerialName("stmt")
 data class StmtLabel
 @JvmOverloads
 constructor(
   val stmt: Stmt,
   val choiceType: ChoiceType = ChoiceType.NONE,
   override val metadata: MetaData = EmptyMetaData,
-) : XcfaLabel(metadata = metadata) {
+) : XcfaLabel() {
 
   init {
     check(stmt !is NonDetStmt && stmt !is SequenceStmt) {
@@ -173,10 +193,11 @@ constructor(
   }
 }
 
-sealed class FenceLabel(open val lock: Expr<*>, override val metadata: MetaData = EmptyMetaData) :
-  XcfaLabel(metadata) {
-  open val acquiredMutexes: Set<MutexLock> = setOf()
-  open val releasedMutexes: Set<MutexLock> = setOf()
+@Serializable
+sealed class FenceLabel : XcfaLabel() {
+  abstract val lock: Expr<*>
+  @Transient open val acquiredMutexes: Set<MutexLock> = setOf()
+  @Transient open val releasedMutexes: Set<MutexLock> = setOf()
   val blockingMutexes: Set<MutexLock> // note: atomic implicitly blocks everything
     get() = acquiredMutexes.flatMap { it.blockingMutexLocks }.toSet()
 
@@ -196,8 +217,11 @@ sealed class FenceLabel(open val lock: Expr<*>, override val metadata: MetaData 
   override fun toString(): String = "F[$label(${lock})]"
 }
 
-sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
-  FenceLabel(lock = ATOMIC_MUTEX_EXPR, metadata) {
+@Serializable
+sealed class AtomicFenceLabel : FenceLabel() {
+
+  override val lock: Expr<*>
+    get() = ATOMIC_MUTEX_EXPR
 
   override fun toString(): String = "F[$label]"
 
@@ -209,11 +233,12 @@ sealed class AtomicFenceLabel(override val metadata: MetaData = EmptyMetaData) :
   }
 }
 
-data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
-  AtomicFenceLabel(metadata) {
+@Serializable
+@SerialName("atomicBegin")
+data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) : AtomicFenceLabel() {
 
-  override val acquiredMutexes = setOf(ATOMIC_MUTEX)
-  override val label = "ATOMIC_BEGIN"
+  @Transient override val acquiredMutexes = setOf(ATOMIC_MUTEX)
+  @Transient override val label = "ATOMIC_BEGIN"
 
   override fun withLock(newLock: Expr<*>): AtomicBeginLabel = this
 
@@ -231,13 +256,14 @@ data class AtomicBeginLabel(override val metadata: MetaData = EmptyMetaData) :
   }
 }
 
-data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
-  AtomicFenceLabel(metadata) {
+@Serializable
+@SerialName("atomicEnd")
+data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) : AtomicFenceLabel() {
 
   override fun withLock(newLock: Expr<*>): AtomicEndLabel = this
 
-  override val releasedMutexes = setOf(ATOMIC_MUTEX)
-  override val label = "ATOMIC_END"
+  @Transient override val releasedMutexes = setOf(ATOMIC_MUTEX)
+  @Transient override val label = "ATOMIC_END"
 
   override fun toString(): String = super.toString()
 
@@ -253,14 +279,16 @@ data class AtomicEndLabel(override val metadata: MetaData = EmptyMetaData) :
   }
 }
 
+@Serializable
+@SerialName("mutexLock")
 data class MutexLockLabel(
   override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
-  override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
+  @Transient override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
 
-  override val label = LABEL
+  @Transient override val label = LABEL
 
   override fun withLock(newLock: Expr<*>): MutexLockLabel = copy(lock = newLock)
 
@@ -279,13 +307,15 @@ data class MutexLockLabel(
   }
 }
 
+@Serializable
+@SerialName("mutexUnlock")
 data class MutexUnlockLabel(
   override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
-  override val releasedMutexes = setOf(SimpleMutexLock(lock))
-  override val label = LABEL
+  @Transient override val releasedMutexes = setOf(SimpleMutexLock(lock))
+  @Transient override val label = LABEL
 
   override fun withLock(newLock: Expr<*>): MutexUnlockLabel = copy(lock = newLock)
 
@@ -304,16 +334,18 @@ data class MutexUnlockLabel(
   }
 }
 
+@Serializable
+@SerialName("mutexTryLock")
 data class MutexTryLockLabel(
   override val lock: Expr<*>,
   val successVar: VarDecl<*>,
   override val metadata: MetaData = EmptyMetaData,
   val successful: Boolean? = null,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
-  override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
+  @Transient override val acquiredMutexes: Set<MutexLock> = setOf(SimpleMutexLock(lock))
 
-  override val label = LABEL
+  @Transient override val label = LABEL
 
   override fun withLock(newLock: Expr<*>): MutexTryLockLabel = copy(lock = newLock)
 
@@ -341,14 +373,16 @@ data class MutexTryLockLabel(
   }
 }
 
+@Serializable
+@SerialName("rWLockReadLock")
 data class RWLockReadLockLabel(
   override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
-  override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, READ))
+  @Transient override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, READ))
 
-  override val label = LABEL
+  @Transient override val label = LABEL
 
   override fun withLock(newLock: Expr<*>): RWLockReadLockLabel = copy(lock = newLock)
 
@@ -367,16 +401,18 @@ data class RWLockReadLockLabel(
   }
 }
 
+@Serializable
+@SerialName("rWLockWriteLock")
 data class RWLockWriteLockLabel(
   override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
   override fun withLock(newLock: Expr<*>): RWLockWriteLockLabel = copy(lock = newLock)
 
-  override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, WRITE))
+  @Transient override val acquiredMutexes: Set<MutexLock> = setOf(ReadWriteMutexLock(lock, WRITE))
 
-  override val label = LABEL
+  @Transient override val label = LABEL
 
   override fun toString(): String = super.toString()
 
@@ -393,15 +429,18 @@ data class RWLockWriteLockLabel(
   }
 }
 
+@Serializable
+@SerialName("rWLockUnlock")
 data class RWLockUnlockLabel(
   override val lock: Expr<*>,
   override val metadata: MetaData = EmptyMetaData,
-) : FenceLabel(lock, metadata) {
+) : FenceLabel() {
 
+  @Transient
   override val releasedMutexes =
     setOf(ReadWriteMutexLock(lock, READ), ReadWriteMutexLock(lock, WRITE))
 
-  override val label = LABEL
+  @Transient override val label = LABEL
 
   override fun withLock(newLock: Expr<*>): RWLockUnlockLabel = copy(lock = newLock)
 
@@ -420,10 +459,12 @@ data class RWLockUnlockLabel(
   }
 }
 
+@Serializable
+@SerialName("sequence")
 data class SequenceLabel
 @JvmOverloads
 constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = EmptyMetaData) :
-  XcfaLabel(metadata = metadata) {
+  XcfaLabel() {
 
   constructor(
     labels: Sequence<XcfaLabel>,
@@ -441,10 +482,12 @@ constructor(val labels: List<XcfaLabel>, override val metadata: MetaData = Empty
   }
 }
 
+@Serializable
+@SerialName("nondet")
 data class NondetLabel
 @JvmOverloads
 constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyMetaData) :
-  XcfaLabel(metadata = metadata) {
+  XcfaLabel() {
 
   override fun toStmt(): Stmt {
     return NonDetStmt(labels.map { it.toStmt() })
@@ -455,7 +498,12 @@ constructor(val labels: Set<XcfaLabel>, override val metadata: MetaData = EmptyM
   }
 }
 
-object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
+@Serializable
+@SerialName("nop")
+object NopLabel : XcfaLabel() {
+
+  override val metadata: MetaData
+    get() = EmptyMetaData
 
   override fun toString(): String {
     return "Nop"

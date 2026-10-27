@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.FalseExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import java.util.Collection;
 
