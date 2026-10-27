@@ -582,7 +582,6 @@ enum class Refinement(
   UNSAT_CORE(
     refiner = { s, _ ->
       ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
-        .withTracePositionIndices()
     },
     stopCriterion = StopCriterions.firstCex(),
   ),
