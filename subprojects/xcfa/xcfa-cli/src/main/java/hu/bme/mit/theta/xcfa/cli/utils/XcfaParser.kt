@@ -58,8 +58,8 @@ import org.antlr.v4.runtime.CommonTokenStream
  * wrap this in a `try`. The two failure modes a caller CAN recover from are therefore handed back
  * untouched when it asks for them, and only then:
  * - [rethrowPointerSplitLimitation]: the base/offset pointer splitting of `--memory-model multi`
- *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model bytes` when
- *   byte addressing is supported, and otherwise under `--memory-model flat`.
+ *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat` (and
+ *   then under `--memory-model bytes` if flat needs byte granularity).
  * - [rethrowByteGranularityLimitation]: a construct that needs byte granularity
  *   ([RequiresByteAddressedMemoryException]), recoverable under `--memory-model bytes`.
  *
