@@ -211,7 +211,7 @@ data class CFrontendConfig(
         " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
         " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
         " requires bitvector arithmetic. Left unset, the model is multi, but the frontend may" +
-        " fall back to bytes (or flat when bytes is unsupported) for programs multi cannot" +
+        " fall back to flat (then bytes, if flat is insufficient) for programs multi cannot" +
         " represent; passing this flag explicitly disables that fallback.",
   )
   var memoryModel: ArchitectureConfig.MemoryModelType? = null,
