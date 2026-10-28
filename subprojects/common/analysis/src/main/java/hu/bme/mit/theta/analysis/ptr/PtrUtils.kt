@@ -59,9 +59,10 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType
   get() =
     when (this) {
       is MemoryAssignStmt<*, *, *> ->
+        // The target address is read before the write: the write may overwrite a cell it reads.
         expr.dereferences.map { Pair(it, AccessType.READ) } +
-          listOf(Pair(deref, AccessType.WRITE)) +
-          deref.ops.flatMap { it.dereferences }.map { Pair(it, AccessType.READ) }
+          deref.ops.flatMap { it.dereferences }.map { Pair(it, AccessType.READ) } +
+          listOf(Pair(deref, AccessType.WRITE))
 
       is AssignStmt<*> -> expr.dereferences.map { Pair(it, AccessType.READ) }
       is AssumeStmt -> cond.dereferences.map { Pair(it, AccessType.READ) }
