@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -44,6 +45,8 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
+import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 /**
  * Adds assumptions to the XCFA if memory safety needs to be checked. Rules based on:
@@ -74,6 +77,12 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     if (!enabled) return builder
 
     breakUpErrors(builder)
+
+    // The deref check bounds addresses by the allocation counter, so it must exist even when the
+    // program allocates nothing at runtime; seeding it also registers the static slots.
+    if (parseContext.memoryModel.flatAddressing()) {
+      builder.parent.ensureMallocVar(parseContext, pointerType)
+    }
 
     annotateFree(builder)
 
@@ -135,15 +144,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   // be
                   // a different, narrower type under bitvector arithmetic.
                   Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
-                  // Only the heap (`3k+0`, see POINTER_BASE_CLASSES) may be freed; the size check
-                  // above cannot catch the rest, since an alloca'd block records a real size too.
-                  // `Rem`, not `Mod`: pointer types are unsigned bitvectors and Theta's `Mod` is
-                  // signed-only. The residue class survives flat addressing, where a base is
-                  // `id * FLAT_STRIDE` and FLAT_STRIDE = 1 mod 3.
-                  Neq(
-                    Rem(argument, pointerType.getValue("$POINTER_BASE_CLASSES")),
-                    pointerType.nullValue,
-                  ),
+                  // Only the heap may be freed; the size check above cannot catch the rest, since
+                  // an alloca'd block records a real size too.
+                  notHeap(builder, argument),
                 ),
               )
 
@@ -202,37 +205,18 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
               !builder.ptrSizeAssign(it.label.labels[0])
           ) {
             // if dereference is in a short-circuiting path, add prior assumptions as well.
+            val witnesses = mutableListOf<XcfaLabel>()
             val derefAssume =
               Or(
                 it.label.labels[0].derefsWithShortCircuitCond.map { (deref, shortCircuitConds) ->
                   val sizeVar = builder.parent.getPtrSizeVar()
-                  // Which address the object's size is filed under, and where inside the object
-                  // this access lands.
-                  //
-                  // The `array` slot is an object *base* under the multi model, but NOT under flat:
-                  // there `runFlatReferenceElimination` collapses `&(deref B O)` to the single
-                  // scalar `B + O`, so a legitimate mid-object address appears in that slot. The
-                  // size array only ever has an entry at `B`, so reading it at `B + O` returned 0
-                  // and `size <= offset` became a *tautology* -- the edge to __THETA_bad_deref was
-                  // enabled on every path, a guaranteed false valid-deref for any access through an
-                  // address with a nonzero offset (`&s.b`, `&a[2]`, `&l->owner`, ...). Recover the
-                  // base by truncating to the object's stride slice, and fold the truncated part
-                  // back into the index so the bound still covers the whole access.
-                  val flat = parseContext.memoryModel.flatAddressing()
-                  val strideLit = pointerType.getValue(FlatMemoryPass.FLAT_STRIDE.toString())
-                  val sizeKey =
-                    if (flat) Mul(Div(deref.array, strideLit), strideLit) else deref.array
-                  val indexInObject =
-                    if (flat) {
-                      // `addr - base`, not `addr mod stride`: pointer types are *unsigned*
-                      // bitvectors and Theta's `Mod` is signed-only ("Unsigned BvType cannot be
-                      // used here"). Subtracting the truncated base is the same value here and one
-                      // operation cheaper, which matters because this guard is emitted per
-                      // dereference.
-                      Add(Sub(deref.array, sizeKey).toFitsall(), deref.offset.toFitsall())
-                    } else {
-                      deref.offset.toFitsall()
-                    }
+                  if (parseContext.memoryModel.flatAddressing()) {
+                    val (witnessLabels, bad) = flatDerefCheck(builder, deref)
+                    witnesses.addAll(witnessLabels)
+                    return@map And(And(shortCircuitConds), bad)
+                  }
+                  val sizeKey = deref.array
+                  val indexInObject = deref.offset.toFitsall()
                   And(
                     And(shortCircuitConds),
                     Or(
@@ -252,10 +236,11 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             builder.addEdge(
               it.withLabel(
                 SequenceLabel(
-                  listOf(
-                    StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
-                    it.label,
-                  )
+                  witnesses +
+                    listOf(
+                      StmtLabel(Assume(Not(derefAssume)), metadata = it.label.labels[0].metadata),
+                      it.label,
+                    )
                 )
               )
             )
@@ -264,7 +249,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 it.source,
                 badDeref,
                 SequenceLabel(
-                  listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
+                  witnesses +
+                    listOf(StmtLabel(Assume(derefAssume), metadata = it.label.labels[0].metadata))
                 ), // deref(x a), x <= 0 || a >= sizeof(x)
                 it.metadata,
               )
@@ -280,6 +266,55 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     if (badDeref.incomingEdges.isNotEmpty()) {
       builder.addEdge(XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
     }
+  }
+
+  /**
+   * The valid-deref check of [deref] under flat addressing, which has no object base to read off
+   * the address. A fresh witness `w` is assumed to be the start of the slot containing the address
+   * `a` -- exactly one does when `a` is in `[FIRST, __malloc)`, as the slots tile that range -- and
+   * the access is bad when `a` is outside the range or past the live size of `w`'s object.
+   *
+   * Returns the labels introducing the witness, and the bad condition.
+   */
+  private fun flatDerefCheck(
+    builder: XcfaProcedureBuilder,
+    deref: Dereference<*, *, *>,
+  ): Pair<List<XcfaLabel>, Expr<BoolType>> {
+    val ptr = pointerType.smtType
+    val sizeVar = builder.parent.getPtrSizeVar()
+    val extentVar = builder.parent.getObjExtentVar()!!
+    val counter = builder.parent.mallocVar(parseContext)
+    val witness = Var("__theta_slot_${witnessCount++}", ptr)
+    builder.addVar(witness)
+    val addr =
+      Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
+    val inRange =
+      And(
+        Geq(addr, pointerType.getValue(FlatAddressSpace.FIRST.toString())),
+        Lt(addr, cast(counter.ref, ptr)),
+      )
+    val index = Sub(addr, witness.ref).toFitsall()
+    val extent = ArrayReadExpr.create<Type, Type>(extentVar.ref, witness.ref)
+    val inSlot =
+      And(listOf(Leq(witness.ref, addr), Lt(index, extent), Gt(extent, fitsall.nullValue)))
+    val size = ArrayReadExpr.create<Type, Type>(sizeVar.ref, witness.ref)
+    return Pair(
+      listOf(StmtLabel(HavocStmt.of(witness)), StmtLabel(Assume(Or(Not(inRange), inSlot)))),
+      Or(Not(inRange), Leq(size, index)),
+    )
+  }
+
+  private var witnessCount = 0
+
+  /** Whether [ptr] is not the start of a heap block, i.e. may not be freed. */
+  private fun notHeap(builder: XcfaProcedureBuilder, ptr: Expr<*>): Expr<BoolType> {
+    val heapVar = builder.parent.getObjHeapVar()
+    return if (heapVar != null)
+      Eq(ArrayReadExpr.create<Type, Type>(heapVar.ref, ptr), fitsall.nullValue)
+    else
+    // The `3k+0` class (see POINTER_BASE_CLASSES). `Rem`, not `Mod`: pointer types are unsigned
+    // bitvectors and Theta's `Mod` is signed-only.
+    Neq(Rem(ptr, pointerType.getValue("$POINTER_BASE_CLASSES")), pointerType.nullValue)
   }
 
   private fun Expr<*>.toFitsall(): Expr<*> =
@@ -299,9 +334,14 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         ?: XcfaGlobalVar(Var("__ptr", sizeVar.type.indexType), pointerType.nullValue)
           .also { builder.parent.addVar(it) }
           .wrappedVar
-    val mallocBase = Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES")) // 3k+0: malloc
+    // Ranges over heap block starts: the 3k+0 class under multi, the heap ghost under flat.
+    val heapVar = builder.parent.getObjHeapVar()
+    val mallocBase =
+      if (heapVar != null) anyBase.ref
+      else Mul(anyBase.ref, pointerType.getValue("$POINTER_BASE_CLASSES"))
+    val liveSize = Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
     val stillAllocated =
-      Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
+      if (heapVar != null) And(liveSize, Not(notHeap(builder, mallocBase))) else liveSize
 
     // valid-memtrack is "pointed to OR deallocated" -- Valgrind's *definitely* lost -- so a block a
     // live pointer still names is tracked, freed or not. Checking only whether everything was freed

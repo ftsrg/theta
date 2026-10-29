@@ -55,6 +55,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
@@ -312,32 +313,30 @@ class FrontendXcfaBuilder(
       notStatementStart = alreadyHandledStatements.contains(source),
     )
 
+  /** A pointer-indexed, Fitsall-valued memsafety ghost array, zero everywhere at the start. */
+  private fun addGhostArray(
+    builder: XcfaBuilder,
+    name: String,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val fitsall = Fitsall.getFitsall(parseContext)
+    val ptrType = CPointer(null, null, parseContext)
+    val arrayType = ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type)
+    val zero = ArrayLitExpr.of(listOf(), fitsall.nullValue as Expr<Type>, arrayType)
+    val ghost = XcfaGlobalVar(Var(name, arrayType), zero)
+    builder.addVar(ghost)
+    initStmtList.add(AssignStmtLabel(ghost.wrappedVar, zero))
+  }
+
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
     if (MemsafetyPass.enabled) {
-      val fitsall = Fitsall.getFitsall(parseContext)
-      val ptrType = CPointer(null, null, parseContext)
-      val ptrSize =
-        XcfaGlobalVar(
-          Var("__theta_ptr_size", ArrayType.of(ptrType.smtType, fitsall.smtType)),
-          ArrayLitExpr.of(
-            listOf(),
-            fitsall.nullValue as Expr<Type>,
-            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
-          ),
-        )
-      builder.addVar(ptrSize)
-      initStmtList.add(
-        AssignStmtLabel(
-          ptrSize.wrappedVar,
-          ArrayLitExpr.of(
-            listOf(),
-            fitsall.nullValue as Expr<Type>,
-            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
-          ),
-        )
-      )
+      val ghosts =
+        if (parseContext.memoryModel.flatAddressing())
+          listOf("__theta_ptr_size", OBJ_EXTENT_VAR, OBJ_HEAP_VAR)
+        else listOf("__theta_ptr_size")
+      ghosts.forEach { addGhostArray(builder, it, initStmtList) }
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
       initializeGlobalVariable(
@@ -591,6 +590,13 @@ class FrontendXcfaBuilder(
         ?: return true
     if (struct.isUnion || struct.unitCount == 0) return true
     val structUnit = if (type is CArray) unit % struct.unitCount else unit
+    if (struct.inlinesAggregates()) {
+      // A cell inside an inline member belongs to that member; keep it whole.
+      val field =
+        struct.fields.lastOrNull { struct.unitOffsetOf(it.get1()) <= structUnit } ?: return true
+      return CStruct.isInlineAggregate(field.get2()) ||
+        parseContext.isMemberAccessed(struct, field.get1())
+    }
     return struct.fields.any {
       struct.unitOffsetOf(it.get1()) == structUnit &&
         parseContext.isMemberAccessed(struct, it.get1())
@@ -616,11 +622,10 @@ class FrontendXcfaBuilder(
       initStmtList.add(builder.allocate(parseContext, objectExpr, fitsall.getValue("$size")))
     }
     if (type.isUnion) return
-    type.fields.forEach { field ->
-      val fieldType = field.get2()
+    // Arrays keep the historical path here: only a struct-typed cell gets a static sub-object.
+    subObjectCells(type).forEach { (unitOffset, fieldType) ->
       if (fieldType is CStruct) {
         val subObjectBase = ptrCnt // capture: reading ptrCnt advances it
-        val unitOffset = type.unitOffsetOf(field.get1())
         val deref =
           Dereference(
             cast(objectExpr, objectExpr.type),
@@ -633,7 +638,13 @@ class FrontendXcfaBuilder(
             MemoryAssignStmt.create(
               deref,
               cast(
-                fieldType.getValue(FlatMemoryPass.flatBaseValue(subObjectBase, parseContext)),
+                fieldType.getValue(
+                  FlatMemoryPass.flatBaseValue(
+                    subObjectBase,
+                    staticUnits(fieldType, 1),
+                    parseContext,
+                  )
+                ),
                 deref.type,
               ),
             )
@@ -686,13 +697,34 @@ class FrontendXcfaBuilder(
   private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
     labels.add(alloca(target, if (type.isUnion) unionCellCount(type) else type.unitCount))
     if (type.isUnion) return
-    type.fields.forEach { field ->
-      allocateStackSubobject(
-        subobjectCell(target, type, type.unitOffsetOf(field.get1()), field.get2()),
-        field.get2(),
-        labels,
-      )
+    subObjectCells(type).forEach { (offset, fieldType) ->
+      allocateStackSubobject(subobjectCell(target, type, offset, fieldType), fieldType, labels)
     }
+  }
+
+  /**
+   * The cells of [type] that hold the base of a sub-object, with the sub-object's type: every
+   * aggregate field, or under [CStruct.inlinesAggregates] only the unions, found through the inline
+   * structs and arrays around them.
+   */
+  private fun subObjectCells(type: CStruct): List<Pair<Int, CComplexType>> {
+    if (!type.inlinesAggregates()) {
+      return type.fields
+        .filter { it.get2() is CStruct || it.get2() is CArray }
+        .map { type.unitOffsetOf(it.get1()) to it.get2() }
+    }
+    fun walk(t: CComplexType, offset: Int): List<Pair<Int, CComplexType>> =
+      when {
+        t is CStruct && t.isUnion -> listOf(offset to t)
+        t is CStruct -> t.fields.flatMap { walk(it.get2(), offset + t.unitOffsetOf(it.get1())) }
+        t is CArray -> {
+          val count = ObjectLayout.constantDimension(t) ?: 0
+          val stride = CStruct.inlineCells(t.embeddedType)
+          (0 until count).flatMap { walk(t.embeddedType, offset + it * stride) }
+        }
+        else -> listOf()
+      }
+    return walk(type, 0)
   }
 
   /**
@@ -733,19 +765,15 @@ class FrontendXcfaBuilder(
     val elementType = type.embeddedType
     if (elementType !is CStruct || elementType.isUnion) return
     val cells = elementType.unitCount
-    // Only the fields that are themselves objects need anything; if none are, this loop body never
-    // runs and the whole array costs zero allocations however long it is.
-    val aggregateFields =
-      elementType.fields.withIndex().filter { (_, field) ->
-        field.get2() is CStruct || field.get2() is CArray
-      }
-    if (aggregateFields.isEmpty()) return
+    // Only the cells holding objects need anything; if there are none, this loop body never runs
+    // and the whole array costs zero allocations however long it is.
+    val subObjects = subObjectCells(elementType)
+    if (subObjects.isEmpty()) return
     for (index in 0 until size) {
-      aggregateFields.forEach { (fieldIndex, field) ->
-        val offset = index * cells + elementType.unitOffsetOf(field.get1())
+      subObjects.forEach { (cell, subType) ->
         allocateStackSubobject(
-          subobjectCell(target, type, offset, field.get2()),
-          field.get2(),
+          subobjectCell(target, type, index * cells + cell, subType),
+          subType,
           labels,
         )
       }
@@ -819,7 +847,7 @@ class FrontendXcfaBuilder(
       .map { it.withoutPos() }
       .firstOrNull {
         val type = runCatching { CComplexType.getType(it, parseContext) }.getOrNull()
-        type is CPointer || type is CArray
+        type is CPointer || type is CArray || (type is CStruct && type.inlinesAggregates())
       }
 
   /**
@@ -990,17 +1018,59 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel> =
+    if (type.inlinesAggregates()) inlineCopy(target, source, type, type, 0, metadata)
     // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
     // repeated -- idempotent, and it carries all the packed fields at once.
-    type.fields.flatMap { field ->
-      val fieldType = field.get2()
-      val unit = type.unitOffsetOf(field.get1())
-      copySubobject(
-        subobjectCell(target, type, unit, fieldType),
-        subobjectCell(source, type, unit, fieldType),
-        fieldType,
-        metadata,
-      )
+    else
+      type.fields.flatMap { field ->
+        val fieldType = field.get2()
+        val unit = type.unitOffsetOf(field.get1())
+        copySubobject(
+          subobjectCell(target, type, unit, fieldType),
+          subobjectCell(source, type, unit, fieldType),
+          fieldType,
+          metadata,
+        )
+      }
+
+  /**
+   * Copies the part of an inline-laid-out [parentType] object that holds a [type] at cell [offset]:
+   * leaf by leaf, since a nested struct or array has no base of its own to copy through. A union
+   * still keeps its own storage and is copied into it.
+   */
+  private fun inlineCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    parentType: CStruct,
+    type: CComplexType,
+    offset: Int,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    when {
+      type is CStruct && !type.isUnion ->
+        type.fields.flatMap {
+          inlineCopy(
+            target,
+            source,
+            parentType,
+            it.get2(),
+            offset + type.unitOffsetOf(it.get1()),
+            metadata,
+          )
+        }
+      type is CArray -> {
+        val stride = CStruct.inlineCells(type.embeddedType)
+        (0 until (ObjectLayout.constantDimension(type) ?: 0)).flatMap {
+          inlineCopy(target, source, parentType, type.embeddedType, offset + it * stride, metadata)
+        }
+      }
+      else ->
+        copySubobject(
+          subobjectCell(target, parentType, offset, type),
+          subobjectCell(source, parentType, offset, type),
+          type,
+          metadata,
+        )
     }
 
   /** Copies an array object's elements into another, element by element. */
@@ -1112,14 +1182,6 @@ class FrontendXcfaBuilder(
       )
     }
     if (type is CArray) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
-        )
-      )
-      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
       // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
       // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
@@ -1130,6 +1192,20 @@ class FrontendXcfaBuilder(
       // e.g. `extern unsigned char const _ctype[];`.
       val extentUnknown =
         declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
+      val units =
+        when {
+          !parseContext.memoryModel.flatAddressing() -> 0L // unused: multi bases are bare ids
+          extentUnknown -> FlatAddressSpace.UNKNOWN_EXTENT.toLong()
+          else -> staticUnits(type.embeddedType, getArraySize(type, initExpr, declaration).toLong())
+        }
+      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+      initStmtList.add(
+        AssignStmtLabel(
+          globalDeclaration,
+          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, units, parseContext)),
+        )
+      )
+      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
@@ -1143,17 +1219,11 @@ class FrontendXcfaBuilder(
         // accesses to later elements -- `struct Item arr[3]` recorded 3 for a 6-cell object, and
         // every `arr[2].b` was reported as an invalid dereference.
         //
-        // An object of unknown extent gets its whole slice of the address line instead. It has to
-        // get *something*: an unregistered base reads back as size 0 (the size array's default,
-        // which is also how a freed block is marked), and `size <= offset` is then a tautology --
-        // every access to it would be reported as an invalid dereference. Any concrete bound would
-        // be invented, and inventing a small one is how a wrong `false(valid-deref)` gets produced:
-        // `_ctype[c]` indexes a 256-entry table this file never sees the definition of. The slice
-        // width is the largest bound that cannot collide with the next object (bases are spaced by
-        // FLAT_STRIDE), and it says the only true thing this unit knows -- it cannot bound an index
-        // into an object it does not define.
+        // An object of unknown extent gets the whole slot reserved for it instead. Any concrete
+        // bound would be invented, and inventing a small one is how a wrong `false(valid-deref)`
+        // gets produced: `_ctype[c]` indexes a 256-entry table this file never sees defined.
         val cells =
-          if (extentUnknown) FlatMemoryPass.FLAT_STRIDE
+          if (extentUnknown) FlatAddressSpace.UNKNOWN_EXTENT.toLong()
           else getArraySize(type, initExpr, declaration).toLong() * cellsOf(type.embeddedType)
         val bounds = CComplexType.getUnsignedLong(parseContext).getValue(cells.toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
@@ -1168,6 +1238,11 @@ class FrontendXcfaBuilder(
         return
       }
       val flatElement = type.embeddedType
+      if (hasInlineAggregateMember(flatElement)) {
+        val count = getArraySize(type, initExpr, declaration)
+        initializeInline(builder, globalDeclaration, 0, type, initExpr, initStmtList, count)
+        return
+      }
       if (
         initExpr != null &&
           (flatElement is CArray || (flatElement is CStruct && isFlatScalarStruct(flatElement)))
@@ -1224,11 +1299,17 @@ class FrontendXcfaBuilder(
       initStmtList.add(
         AssignStmtLabel(
           globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+          type.getValue(
+            FlatMemoryPass.flatBaseValue(objectBase, staticUnits(type, 1), parseContext)
+          ),
         )
       )
       recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+      if (hasInlineAggregateMember(type)) {
+        initializeInline(builder, globalDeclaration, 0, type, initExpr, initStmtList)
+        return
+      }
       // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
       // struct every member is its own unit, so this is the historical field-indexed iteration.
       val unitTypes =
@@ -1304,6 +1385,88 @@ class FrontendXcfaBuilder(
     return current
   }
 
+  /** Whether [type] lays a nested struct or array out inline (see [CStruct.inlinesAggregates]). */
+  private fun hasInlineAggregateMember(type: CComplexType): Boolean =
+    when (type) {
+      is CArray -> hasInlineAggregateMember(type.embeddedType)
+      is CStruct ->
+        type.inlinesAggregates() && type.fields.any { CStruct.isInlineAggregate(it.get2()) }
+      else -> false
+    }
+
+  /**
+   * Initializes the [type]-typed part of the static object [base] at cell [offset], when nested
+   * aggregates are laid out inline: every scalar leaf is a cell of [base] itself, and a union keeps
+   * a sub-object of its own. [count] overrides the element count of an array whose declaration
+   * leaves it to the initializer.
+   */
+  private fun initializeInline(
+    builder: XcfaBuilder,
+    base: Expr<*>,
+    offset: Int,
+    type: CComplexType,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+    count: Int? = null,
+  ) {
+    // A bare scalar for an aggregate initializes its first leaf (brace elision, C17 6.7.9p20).
+    val positions =
+      if (initExpr != null && initExpr !is CInitializerList) mapOf(0 to initExpr)
+      else elementPositions(initExpr)
+    when {
+      type is CStruct && !type.isUnion -> {
+        val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
+        type.fields.indices
+          .groupBy { slotOf(it).unitIndex() }
+          .forEach { (unit, members) ->
+            val unitOffset = offset + type.cellOfUnit(unit)
+            val first = type.fields[members[0]].get2()
+            if (members.size == 1 && !slotOf(members[0]).bitfield()) {
+              initializeInline(
+                builder,
+                base,
+                unitOffset,
+                first,
+                positions[members[0]],
+                initStmtList,
+              )
+              return@forEach
+            }
+            // Packed bitfields share one cell: fold their values onto zero, as
+            // initializePackedStruct.
+            val cell = Dereference(base, offsetLiteral(unitOffset.toLong()), first.smtType)
+            parseContext.metadata.create(cell, "cType", first)
+            var value: Expr<*> = first.nullValue
+            for (field in members) {
+              val element = unwrapScalarInitializer(positions[field]) ?: continue
+              val slot = slotOf(field)
+              value =
+                BitfieldSlice.write(
+                  value,
+                  first.castTo(element.expression),
+                  slot.bitOffset(),
+                  slot.width(),
+                )
+            }
+            initStmtList.add(AssignStmtLabel(cell, first.castTo(value)))
+          }
+      }
+      type is CArray -> {
+        val stride = CStruct.inlineCells(type.embeddedType)
+        val elements = count ?: ObjectLayout.constantDimension(type) ?: 0
+        for (i in 0 until elements) {
+          val element = type.embeddedType
+          initializeInline(builder, base, offset + i * stride, element, positions[i], initStmtList)
+        }
+      }
+      else -> {
+        val cell = Dereference(base, offsetLiteral(offset.toLong()), type.smtType)
+        parseContext.metadata.create(cell, "cType", type)
+        initializeGlobalVariable(builder, cell, initStmtList, initExpr)
+      }
+    }
+  }
+
   private fun initializeCompound(
     builder: XcfaBuilder,
     dimension: Int,
@@ -1333,6 +1496,15 @@ class FrontendXcfaBuilder(
   private fun unionCellCount(type: CStruct): Int =
     if (type.unionCellWidth() == null) ObjectLayout.of(type, parseContext.architecture).bitSize / 8
     else 1
+
+  /**
+   * How many address units [count] consecutive objects of [type] span: bytes under the bytes model,
+   * cells otherwise.
+   */
+  private fun staticUnits(type: CComplexType, count: Long): Long =
+    if (parseContext.memoryModel.byteAddressed())
+      count * ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8)
+    else count * cellsOf(type)
 
   /**
    * How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`.

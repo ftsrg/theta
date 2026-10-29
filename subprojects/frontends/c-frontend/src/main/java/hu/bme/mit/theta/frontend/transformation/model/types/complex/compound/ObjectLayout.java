@@ -270,6 +270,31 @@ public final class ObjectLayout {
         return new Layout(roundUp(size, alignment), alignment, fields);
     }
 
+    /**
+     * The byte size `sizeof` reports outside the bytes model: what is in the type, unpadded (a
+     * union's, its largest member's). Under [flat] a fixed-size array counts every element, as it
+     * is laid out inline; otherwise it is the one cell holding its base.
+     */
+    public static int cellModelSize(CComplexType type, boolean flat) {
+        if (flat && type instanceof CArray array) {
+            final Integer count = constantDimension(array);
+            if (count != null) {
+                return Math.max(count * cellModelSize(array.getEmbeddedType(), true), 1);
+            }
+        }
+        if (type instanceof CStruct struct) {
+            final List<Integer> fieldSizes =
+                    struct.getFields().stream().map(f -> cellModelSize(f.get2(), flat)).toList();
+            if (fieldSizes.isEmpty()) {
+                return 1;
+            }
+            return struct.isUnion()
+                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
+                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
+        }
+        return Math.max(type.width() / 8, 1);
+    }
+
     /** The element count of a fixed-size array, or null when it has none (flexible member, VLA). */
     public static Integer constantDimension(CArray array) {
         if (array.getArrayDimension() == null) {

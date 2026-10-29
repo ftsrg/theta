@@ -470,7 +470,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    *
    * A nested aggregate member disqualifies the whole object: its parent cell holds the *base id* of
    * a separate object, so copying that cell would make the two objects share storage rather than
-   * copy it. A union likewise, whose cells mean different things to different members.
+   * copy it. A union likewise, whose cells mean different things to different members. Under
+   * [CStruct.inlinesAggregates] only a union member is such a separate object.
    */
   private fun aggregateOf(pointer: Expr<*>): Triple<CComplexType, Int, BigInteger>? {
     val pointee = pointeeOf(pointer) ?: return null
@@ -490,6 +491,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         if (dimension == null || element == null) null else dimension * element
       }
 
+      type is CStruct && type.inlinesAggregates() ->
+        if (type.fields.any { flatCells(it.get2()) == null }) null else type.unitCount
+
       type is CStruct ->
         if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
         else type.unitCount
@@ -503,6 +507,11 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       type is CArray -> {
         val stride = flatCells(type.embeddedType) ?: 1
         cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
+      }
+
+      type is CStruct && type.inlinesAggregates() -> {
+        val field = type.fields.lastOrNull { type.unitOffsetOf(it.get1()) <= index } ?: return type
+        cellTypeAt(field.get2(), index - type.unitOffsetOf(field.get1()))
       }
 
       type is CStruct ->

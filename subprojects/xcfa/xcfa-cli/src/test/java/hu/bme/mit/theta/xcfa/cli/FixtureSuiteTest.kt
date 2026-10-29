@@ -32,6 +32,8 @@ import org.junit.jupiter.api.fail
  *   these for changes that alter values rather than what parses: a miswritten memory cell parses
  *   perfectly and only shows up as a wrong answer.
  *
+ * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
+ *
  * Unlike [CanarySuiteTest] this **fails** rather than skips when its prerequisites are missing: the
  * fixtures are the part of the gate that must run everywhere, and a silent skip would let a change
  * through unguarded. It never fetches sv-benchmarks; it only says where it looked.
@@ -105,10 +107,12 @@ class FixtureSuiteTest {
     return rows.map { row ->
       val (fixture, arithmetic, architecture, expect) = row
       val feature = row.getOrElse(4) { "" }
-      DynamicTest.dynamicTest("fixture $fixture") {
+      val memoryModel = row.getOrElse(5) { "" }
+      val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
+      DynamicTest.dynamicTest("fixture $name") {
         val input = File(home, "fixtures/$fixture")
         check(input.isFile) { "fixture file not found: $input" }
-        val actual = run(theta, input, arithmetic, architecture, expect, properties)
+        val actual = run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
         if (actual != expect) fail("expected=$expect actual=$actual -- $feature")
       }
     }
@@ -120,6 +124,7 @@ class FixtureSuiteTest {
     input: File,
     arithmetic: String,
     architecture: String,
+    memoryModel: String,
     expect: String,
     properties: File,
   ): String {
@@ -139,6 +144,7 @@ class FixtureSuiteTest {
       addAll(listOf("--property", property.absolutePath))
       addAll(listOf("--architecture", architecture))
       addAll(listOf("--arithmetic", arithmetic))
+      if (memoryModel.isNotEmpty()) addAll(listOf("--memory-model", memoryModel))
     }
     val command = SuiteSupport.thetaCommand(theta, input, options)
     val timeout = if (isVerdictFixture) VERDICT_TIMEOUT_SECONDS else PARSE_TIMEOUT_SECONDS

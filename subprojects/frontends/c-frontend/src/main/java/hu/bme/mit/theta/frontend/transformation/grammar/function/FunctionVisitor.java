@@ -1218,7 +1218,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
             for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
                 final int unit = cStructType.unitOffsetOf(field.get1());
-                if (offset >= unit && offset < unit + cellsOf(field.get2())) {
+                final int span =
+                        cStructType.inlinesAggregates()
+                                ? CStruct.inlineCells(field.get2())
+                                : cellsOf(field.get2());
+                if (offset >= unit && offset < unit + span) {
                     return cellTypeAt(field.get2(), offset - unit);
                 }
             }
@@ -1233,12 +1237,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      * <p>Mirrors what the allocator actually does (FrontendXcfaBuilder#allocateStackStruct /
      * #allocateArrayElements), which is what the *read* path then addresses: a non-union struct
      * stores an aggregate field as a base id in one cell and gives it storage of its own, while an
-     * array's elements -- and a union's members -- live inline in the container's own cells.
+     * array's elements -- and a union's members -- live inline in the container's own cells. Under
+     * {@link CStruct#inlinesAggregates} only a union member has an object of its own.
      */
     private boolean ownsObject(CComplexType containerType, CComplexType memberType) {
-        return containerType instanceof CStruct container
-                && !container.isUnion()
-                && (memberType instanceof CStruct || memberType instanceof CArray);
+        if (!(containerType instanceof CStruct container) || container.isUnion()) {
+            return false;
+        }
+        if (container.inlinesAggregates()) {
+            return memberType instanceof CStruct member && member.isUnion();
+        }
+        return memberType instanceof CStruct || memberType instanceof CArray;
     }
 
     /**
@@ -1257,6 +1266,43 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     fields.get(Math.min(position, fields.size() - 1)).get1());
         }
         return position;
+    }
+
+    /**
+     * Where a non-list initializer entry for a member of {@code memberType} at cell {@code offset}
+     * goes. An inline aggregate member takes an aggregate value as a copy into its region, and a
+     * scalar (brace elision) into its first cell; any other member is the cell itself.
+     */
+    private Expr<?> memberTarget(
+            Expr<?> objectBase,
+            CComplexType containerType,
+            CComplexType memberType,
+            int offset,
+            int localOffset,
+            CStatement value,
+            CComplexType ptrType) {
+        final boolean aggregate = memberType instanceof CStruct || memberType instanceof CArray;
+        if (!aggregate) {
+            return cellOf(objectBase, offset, cellTypeAt(containerType, localOffset), ptrType);
+        }
+        if (ownsObject(containerType, memberType)
+                || !(containerType instanceof CStruct container)
+                || !container.inlinesAggregates()) {
+            return cellOf(objectBase, offset, memberType, ptrType);
+        }
+        final CComplexType valueType =
+                value instanceof CExpr expr
+                        ? CComplexType.getType(expr.getExpression(), parseContext)
+                        : null;
+        if (valueType instanceof CStruct || valueType instanceof CArray) {
+            final Expr<?> region =
+                    AbstractExprs.Add(
+                            cast(objectBase, ptrType.getSmtType()),
+                            ptrType.getValue(String.valueOf(offset)));
+            parseContext.getMetadata().create(region, "cType", memberType);
+            return region;
+        }
+        return cellOf(objectBase, offset, cellTypeAt(containerType, localOffset), ptrType);
     }
 
     /** The cell `arrays[base][offset]`, typed as {@code type}. */
@@ -1346,19 +1392,26 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             ctx);
                 }
             } else {
-                final CComplexType cellType =
-                        memberType instanceof CStruct || memberType instanceof CArray
-                                ? memberType
-                                : cellTypeAt(containerType, offset - baseOffset);
-                final CAssignment cAssignment =
-                        new CAssignment(
-                                cellOf(objectBase, offset, cellType, ptrType),
+                final Expr<?> target =
+                        memberTarget(
+                                objectBase,
+                                containerType,
+                                memberType,
+                                offset,
+                                offset - baseOffset,
                                 value,
-                                "=",
-                                parseContext);
+                                ptrType);
+                final CAssignment cAssignment = new CAssignment(target, value, "=", parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.addCStatement(cAssignment);
-                written.add(offset);
+                // An aggregate copied into an inline member fills all of the member's cells.
+                final int span =
+                        target instanceof Dereference<?, ?, ?>
+                                ? 1
+                                : CStruct.inlineCells(memberType);
+                for (int k = 0; k < span; k++) {
+                    written.add(offset + k);
+                }
             }
         }
     }

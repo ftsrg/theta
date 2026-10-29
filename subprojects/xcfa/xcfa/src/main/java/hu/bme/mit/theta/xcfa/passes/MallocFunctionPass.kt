@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -24,20 +25,26 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 /**
  * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
  * residue class (see `POINTER_BASE_CLASSES`).
  *
+ * Under flat addressing a block is instead the next slot of the address line, sized by the request
+ * (see `bumpAllocate`).
+ *
  * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
  * and the object's size becomes the new one. A program must use realloc's return value whether or
  * not the block moved, so returning the same base preserves the observable contents exactly and
  * still gives the new bound to the memsafety size domain. What it does not model is the
  * invalidation of the old pointer, the same imprecision the analysis already has around frees;
- * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize.
+ * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize. Under flat
+ * addressing a block grown past its slot overlaps the blocks allocated after it.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -82,6 +89,13 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   ): List<XcfaLabel> {
     val ret = invokeLabel.params[0] as RefExpr<*>
     val arg = invokeLabel.params[1]
+    val sizeLabels =
+      if (MemsafetyPass.enabled)
+        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
+      else listOf()
+    if (parseContext.memoryModel.flatAddressing()) {
+      return builder.parent.bumpAllocate(parseContext, ret, arg, heap = true) + sizeLabels
+    }
     val bump =
       AssignStmtLabel(
         mallocVar,
@@ -92,23 +106,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         ret.type,
         EmptyMetaData,
       )
-    val assignRet =
-      AssignStmtLabel(
-        ret,
-        cast(
-          FlatMemoryPass.flatBaseExpr(
-            mallocVar.ref,
-            CComplexType.getType(ret, parseContext),
-            parseContext,
-          ),
-          ret.type,
-        ),
-      )
-    return if (MemsafetyPass.enabled) {
-      listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))
-    } else {
-      listOf(bump, assignRet)
-    }
+    val assignRet = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+    return listOf(bump, assignRet) + sizeLabels
   }
 
   private fun reallocate(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): List<XcfaLabel> {
@@ -117,11 +116,17 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val newSize = invokeLabel.params[2]
     val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))
     return if (MemsafetyPass.enabled) {
-      listOf(keepBase, builder.parent.allocate(parseContext, ret, newSize))
+      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
     } else {
       listOf(keepBase)
     }
   }
+
+  /** The size recorded for memsafety: cells under flat addressing where known, else bytes. */
+  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
+    if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
+      builder.mallocCells(parseContext, ret, bytes) ?: bytes
+    else bytes
 
   private fun isMalloc(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "malloc"
 

@@ -38,7 +38,8 @@ Each file under `fixtures/` is a minimal program that isolates one frontend/gram
 so it builds **iff** that modification is present; reverting the fix flips its outcome and the task
 goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic, architecture, expected
 outcome (`PARSE-OK` / `FRONTEND-FAIL` / `SAFE` / `UNSAFE`, optionally `:property`) and the feature
-it guards.
+it guards. An optional sixth column pins the memory model (`multi`, `flat` or `bytes`); the same
+fixture may appear once per model.
 
 Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
 needs it, confirm it *fails* before the change and passes after, and add a row. A fixture that does

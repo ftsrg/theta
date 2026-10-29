@@ -86,6 +86,8 @@ public class ParseContext {
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
+    private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
+
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
     private boolean everyMemberAccessed = false;
@@ -190,6 +192,10 @@ public class ParseContext {
 
     public CStmtCounter getCStmtCounter() {
         return cStmtCounter;
+    }
+
+    public FlatAddressSpace getFlatAddressSpace() {
+        return flatAddressSpace;
     }
 
     /** Records that every cell of the object at base id [base] is `_Atomic`. */

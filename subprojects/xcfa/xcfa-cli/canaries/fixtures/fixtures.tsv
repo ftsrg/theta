@@ -1,4 +1,4 @@
-fixture	arithmetic	architecture	expect	feature
+fixture	arithmetic	architecture	expect	feature	memory_model
 union_punning.c	efficient	LP64	PARSE-OK	union punning: pointer + pointer-wide unsigned alias
 builtin_object_size.c	efficient	LP64	PARSE-OK	__builtin_object_size grammar + fallback
 typeof_type.c	efficient	LP64	PARSE-OK	__typeof__(type-name)
@@ -78,3 +78,32 @@ stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps th
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
+flat_member_pointer_alias.c	efficient	LP64	SAFE	a pointer to an inline struct member addresses the parent's own cells	flat
+flat_member_pointer_alias_write.c	efficient	LP64	UNSAFE	a write through a pointer to an inline member is seen through the parent	flat
+flat_linked_nodes_member_addresses.c	efficient	LP64	SAFE	inline members of distinct malloc'd objects have distinct addresses	flat
+flat_array_of_nested_structs.c	efficient	LP64	SAFE	an array element spans its inline member's cells; neighbours stay apart	flat
+flat_nested_struct_copy.c	efficient	LP64	SAFE	struct assignment copies inline members by value	flat
+flat_global_nested_init.c	efficient	LP64	SAFE	a global initializer writes an inline member at its offset in the parent	flat
+flat_local_nested_init.c	efficient	LP64	SAFE	local brace init fills inline members in place and zero-fills the rest	flat
+flat_struct_valued_member_init.c	efficient	LP64	SAFE	a struct-valued member initializer counts all of the member's cells as written	flat
+flat_nested_memcpy.c	efficient	LP64	SAFE	memcpy copies inline member cells without aliasing the source	flat
+flat_nested_calloc.c	efficient	LP64	SAFE	calloc zeroes inline member cells	flat
+flat_struct_in_union_member.c	efficient	LP64	SAFE	a union member keeps an object of its own inside an inline struct	flat
+flat_array_in_struct_member.c	efficient	LP64	SAFE	nondet index into an inline array-of-structs member stays inside it	flat
+large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	flat
+large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	bytes
+symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	flat
+symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	bytes
+vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	flat
+vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	bytes
+flat_oob_into_neighbour.c	efficient	LP64	UNSAFE:valid-memsafety	one-past-the-end write is invalid although the next block follows it	flat
+flat_nested_member_pointer_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a pointer into an inline member is in bounds of the enclosing block	flat
+flat_symbolic_size_oob.c	efficient	LP64	UNSAFE:valid-memsafety	out-of-bounds write on a symbolic-size block (size recorded in cells)	flat
+flat_flexible_member_malloc.c	efficient	LP64	SAFE:valid-memsafety	flexible array member indexed within its allocated room	flat
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints; the third overruns	flat
+flat_mixed_width_struct_malloc.c	efficient	LP64	SAFE:valid-memsafety	a mixed-width struct's recorded size is its cell count	flat
+malloc_nested_aggregate_pointer.c	efficient	ILP32	SAFE	malloc'd nested structs retain distinct subobject addresses	flat
+nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero	flat
+memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee copy every cell, not n/4 of them	flat
+flat_inline_bitfield_init.c	efficient	LP64	SAFE	packed bitfields of a nested struct laid out inline keep their static initializer	flat
+flat_inline_bitfield_init_unsafe.c	efficient	LP64	UNSAFE	initialized bitfields of an inline nested struct are read back, not zero	flat

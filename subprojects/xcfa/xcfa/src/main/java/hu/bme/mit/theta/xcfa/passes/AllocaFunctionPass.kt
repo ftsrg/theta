@@ -29,6 +29,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -46,10 +47,11 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
  * the same for every activation of the procedure, so two recursive frames or two threads running it
  * would alias; a runtime base from the shared counter cannot.
  *
- * The block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`), which the memcleanup
- * scan does not enumerate: `alloca` memory is released when the enclosing function returns, so
- * reporting it as a leak would be wrong. It still records a real size in `__theta_ptr_size`, so
- * out-of-bounds accesses to it are caught exactly as they are for heap memory.
+ * Under the multi model the block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`),
+ * which the memcleanup scan does not enumerate: `alloca` memory is released when the enclosing
+ * function returns, so reporting it as a leak would be wrong. It still records a real size in
+ * `__theta_ptr_size`, so out-of-bounds accesses to it are caught exactly as they are for heap
+ * memory.
  *
  * Known gaps (both are the pre-existing scope-lifetime limitation, not new to alloca): the block is
  * never invalidated at function return, so a dangling access to it afterwards is not caught, and
@@ -83,36 +85,30 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val ret = invokeLabel.params[0]
             val arg = invokeLabel.params[1]
             val retType = CComplexType.getType(ret, parseContext)
-            val bump =
-              AssignStmtLabel(
-                mallocVar,
-                Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
-                ret.type,
-                EmptyMetaData,
-              )
-            // 3k+1: the residue class the memcleanup scan does not enumerate.
-            val assignRet =
-              AssignStmtLabel(
-                ret,
-                cast(
-                  FlatMemoryPass.flatBaseExpr(
-                    Add(mallocVar.ref, retType.getValue("1")),
-                    retType,
-                    parseContext,
+            val addressLabels =
+              if (parseContext.memoryModel.flatAddressing()) {
+                builder.parent.bumpAllocate(parseContext, ret, arg, heap = false)
+              } else {
+                // 3k+1: the residue class the memcleanup scan does not enumerate.
+                listOf(
+                  AssignStmtLabel(
+                    mallocVar,
+                    Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
+                    ret.type,
+                    EmptyMetaData,
                   ),
-                  ret.type,
-                ),
-              )
+                  AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type)),
+                )
+              }
             val labels =
               if (MemsafetyPass.enabled) {
-                listOfNotNull(
-                  bump,
-                  assignRet,
-                  builder.parent.allocate(parseContext, ret, arg),
-                  probeFirstCell(builder, ret, arg, retType),
-                )
+                addressLabels +
+                  listOfNotNull(
+                    builder.parent.allocate(parseContext, ret, arg),
+                    probeFirstCell(builder, ret, arg, retType),
+                  )
               } else {
-                listOf(bump, assignRet)
+                addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
             allocated.add(ret)
