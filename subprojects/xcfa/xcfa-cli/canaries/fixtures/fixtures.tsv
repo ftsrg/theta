@@ -120,3 +120,4 @@ flat_flexible_member_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a flexible arra
 bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under bytes	bytes
 bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
 flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat
+flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat

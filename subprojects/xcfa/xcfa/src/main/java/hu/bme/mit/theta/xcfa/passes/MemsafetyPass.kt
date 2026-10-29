@@ -272,7 +272,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
    * The valid-deref check of [deref] under flat addressing, which has no object base to read off
    * the address. A fresh witness `w` is assumed to be the start of the slot containing the address
    * `a` -- exactly one does when `a` is in `[FIRST, __malloc)`, as the slots tile that range -- and
-   * the access is bad when `a` is outside the range or past the live size of `w`'s object.
+   * the access is bad when `a` is outside the range or past the live size of `w`'s object. When the
+   * dereference's base is itself a slot start holding `a`, `w` is that base, and the check reads it
+   * directly.
    *
    * Returns the labels introducing the witness, and the bad condition.
    */
@@ -298,9 +300,27 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val inSlot =
       And(listOf(Leq(witness.ref, addr), Lt(index, extent), Gt(extent, fitsall.nullValue)))
     val size = ArrayReadExpr.create<Type, Type>(sizeVar.ref, witness.ref)
+    // Fast path: the base is a slot start and the offset lies in its slot, so the witness can only
+    // be the base. Deciding that without the witness is what keeps the common access cheap.
+    val base = cast(pointerType.castTo(deref.array), ptr)
+    val offset = cast(pointerType.castTo(deref.offset), ptr).toFitsall()
+    val baseExtent = ArrayReadExpr.create<Type, Type>(extentVar.ref, base)
+    val direct =
+      And(
+        listOf(
+          Gt(baseExtent, fitsall.nullValue),
+          Geq(offset, fitsall.nullValue),
+          Lt(offset, baseExtent),
+        )
+      )
+    val baseSize = ArrayReadExpr.create<Type, Type>(sizeVar.ref, base)
+    @Suppress("UNCHECKED_CAST")
+    val bad =
+      Ite<BoolType>(direct, Leq(baseSize, offset), Or(Not(inRange), Leq(size, index)))
+        as Expr<BoolType>
     return Pair(
       listOf(StmtLabel(HavocStmt.of(witness)), StmtLabel(Assume(Or(Not(inRange), inSlot)))),
-      Or(Not(inRange), Leq(size, index)),
+      bad,
     )
   }
 
