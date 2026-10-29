@@ -65,6 +65,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteInitializer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -583,7 +584,9 @@ class FrontendXcfaBuilder(
   }
 
   private fun StaticObject.needsCell(unit: Int?): Boolean {
-    if (mode != InitMode.ACCESSED || unit == null) return mode != InitMode.NONE
+    // Under the bytes model the offset is a byte, not a unit: keep every write of a used object.
+    if (mode != InitMode.ACCESSED || unit == null || parseContext.memoryModel.byteAddressed())
+      return mode != InitMode.NONE
     val struct =
       type as? CStruct
         ?: ((type as? CArray)?.embeddedType as? CStruct)?.takeIf(::isFlatScalarStruct)
@@ -695,6 +698,11 @@ class FrontendXcfaBuilder(
    * so a constant base cannot alias anything.
    */
   private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
+    if (parseContext.memoryModel.byteAddressed()) {
+      // One object of the struct's bytes: nested aggregates are regions of it, not objects.
+      labels.add(alloca(target, staticUnits(type, 1).toInt()))
+      return
+    }
     labels.add(alloca(target, if (type.isUnion) unionCellCount(type) else type.unitCount))
     if (type.isUnion) return
     subObjectCells(type).forEach { (offset, fieldType) ->
@@ -740,8 +748,11 @@ class FrontendXcfaBuilder(
   private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
     // Sized by the whole object: a multi-dimensional array's dimensions multiply, since its rows
     // live in the same block rather than in objects of their own.
-    val size = flatArraySize(type) ?: return
-    labels.add(alloca(target, size))
+    val size =
+      if (parseContext.memoryModel.byteAddressed())
+        fixedArraySize(type)?.let { staticUnits(type.embeddedType, it.toLong()).toInt() }
+      else flatArraySize(type)
+    labels.add(alloca(target, size ?: return))
     allocateArrayElements(target, type, labels)
   }
 
@@ -761,7 +772,17 @@ class FrontendXcfaBuilder(
    * they have to be allocated after that base is assigned, not before.
    */
   private fun allocateArrayElements(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
+    if (parseContext.memoryModel.byteAddressed()) return // elements are regions of the array
     val size = fixedArraySize(type) ?: return
+    var leaf: CComplexType = type
+    while (leaf is CArray) leaf = leaf.embeddedType
+    if (leaf is CStruct && leaf.isUnion) {
+      // A union element is a cell holding its object's base, as a union member of a struct is.
+      for (index in 0 until (flatArraySize(type) ?: return)) {
+        allocateStackStruct(subobjectCell(target, type, index, leaf), leaf, labels)
+      }
+      return
+    }
     val elementType = type.embeddedType
     if (elementType !is CStruct || elementType.isUnion) return
     val cells = elementType.unitCount
@@ -985,6 +1006,7 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel>? {
+    if (parseContext.memoryModel.byteAddressed()) return byteCopy(target, source, type, metadata)
     val width = type.unionCellWidth()
     val cellType =
       if (width != null) unsignedTypeOfWidth(width) ?: return null
@@ -1018,7 +1040,8 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel> =
-    if (type.inlinesAggregates()) inlineCopy(target, source, type, type, 0, metadata)
+    if (parseContext.memoryModel.byteAddressed()) byteCopy(target, source, type, metadata)
+    else if (type.inlinesAggregates()) inlineCopy(target, source, type, type, 0, metadata)
     // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
     // repeated -- idempotent, and it carries all the packed fields at once.
     else
@@ -1071,6 +1094,24 @@ class FrontendXcfaBuilder(
           type,
           metadata,
         )
+    }
+
+  /**
+   * Copies an aggregate under the bytes model, where it is one object of bytes: every cell of its
+   * layout (see [ByteInitializer.cells]) at its byte offset, nested aggregates included.
+   */
+  private fun byteCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    ByteInitializer(parseContext).cells(type, null).flatMap {
+      copyScalar(
+        subobjectCell(target, type, it.byteOffset, it.type),
+        subobjectCell(source, type, it.byteOffset, it.type),
+        metadata,
+      )
     }
 
   /** Copies an array object's elements into another, element by element. */
@@ -1180,6 +1221,10 @@ class FrontendXcfaBuilder(
           pointsToAtomic = pointeeAtomic,
         )
       )
+    }
+    if (parseContext.memoryModel.byteAddressed() && (type is CArray || type is CStruct)) {
+      initializeByteObject(builder, globalDeclaration, type, initStmtList, initExpr, declaration)
+      return
     }
     if (type is CArray) {
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
@@ -1369,6 +1414,82 @@ class FrontendXcfaBuilder(
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }
+    }
+  }
+
+  /**
+   * A global aggregate under the bytes model: one object of its byte size, with nested aggregates
+   * as regions of it, whose initializer -- or the zero C gives it -- is written at the layout's
+   * byte offsets (see [ByteInitializer]).
+   */
+  private fun initializeByteObject(
+    builder: XcfaBuilder,
+    target: Expr<*>,
+    type: CComplexType,
+    initStmtList: MutableList<XcfaLabel>,
+    initExpr: CStatement?,
+    declaration: CDeclaration?,
+  ) {
+    // An `extern T a[];` declared here and defined elsewhere: see the CArray branch below.
+    val extentUnknown =
+      type is CArray &&
+        declaredElsewhere(declaration) &&
+        type.arrayDimension == null &&
+        initExpr == null
+    val count =
+      (type as? CArray)?.takeIf { !extentUnknown }?.let { getArraySize(it, initExpr, declaration) }
+    val bytes =
+      when {
+        extentUnknown -> FlatAddressSpace.UNKNOWN_EXTENT.toLong()
+        type is CArray -> staticUnits(type.embeddedType, count!!.toLong())
+        else -> staticUnits(type, 1)
+      }
+    val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+    initStmtList.add(
+      AssignStmtLabel(
+        target,
+        type.getValue(FlatMemoryPass.flatBaseValue(objectBase, bytes, parseContext)),
+      )
+    )
+    recordStaticObject(objectBase, type, target, parentCell(target))
+    if (MemsafetyPass.enabled) {
+      val size = CComplexType.getUnsignedLong(parseContext).getValue(bytes.toString())
+      initStmtList.add(builder.allocate(parseContext, target, size))
+    }
+    if (extentUnknown) return
+    val layout = ByteInitializer(parseContext)
+    val leaves = layout.leaves(type, initExpr)
+    val covered =
+      leaves
+        .filter { !it.isBitfield && it.type !is CStruct && it.type !is CArray }
+        .map { it.byteOffset to it.type.width() }
+        .toSet()
+    fun cell(offset: Int, cellType: CComplexType): Expr<*> =
+      Dereference(target, offsetLiteral(offset.toLong()), cellType.smtType).also {
+        parseContext.metadata.create(it, "cType", cellType)
+      }
+    layout
+      .cells(type, count)
+      .filter { (it.byteOffset to it.type.width()) !in covered }
+      .forEach {
+        initStmtList.add(AssignStmtLabel(cell(it.byteOffset, it.type), it.type.nullValue))
+      }
+    for (leaf in leaves) {
+      if (leaf.type is CStruct || leaf.type is CArray) {
+        throw UnsupportedFrontendElementException(
+          "A global initialized with a whole aggregate value is not supported under the bytes model."
+        )
+      }
+      val cell = cell(leaf.byteOffset, leaf.type)
+      val value = leaf.type.castTo(leaf.value.expression)
+      initStmtList.add(
+        AssignStmtLabel(
+          cell,
+          if (leaf.isBitfield)
+            leaf.type.castTo(BitfieldSlice.write(cell, value, leaf.bitInUnit, leaf.width))
+          else value,
+        )
+      )
     }
   }
 

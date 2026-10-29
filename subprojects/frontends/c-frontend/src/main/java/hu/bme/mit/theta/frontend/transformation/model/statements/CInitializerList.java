@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,13 +21,17 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 // TODO: designators
 public class CInitializerList extends CStatement {
     private final List<Tuple2<Optional<CStatement>, CStatement>> statements;
     private final CComplexType type;
+    // Entries whose position the source designated; the others carry the position they follow on.
+    private final Set<Integer> designated = new HashSet<>();
 
     public CInitializerList(CComplexType type, ParseContext parseContext) {
         super(parseContext);
@@ -48,6 +52,17 @@ public class CInitializerList extends CStatement {
 
     public void addStatement(CStatement index, CStatement value) {
         statements.add(Tuple2.of(Optional.ofNullable(index), value));
+    }
+
+    /** Adds an entry whose position [index] the source spelled out with a designator. */
+    public void addDesignatedStatement(CStatement index, CStatement value) {
+        designated.add(statements.size());
+        addStatement(index, value);
+    }
+
+    /** Whether entry [entry]'s position comes from a designator rather than from its order. */
+    public boolean isDesignated(int entry) {
+        return designated.contains(entry);
     }
 
     public List<Tuple2<Optional<CStatement>, CStatement>> getStatements() {

@@ -17,9 +17,13 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -28,8 +32,11 @@ import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+
+private const val REALLOCATES = "reallocates"
 
 /**
  * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
@@ -44,7 +51,9 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
  * still gives the new bound to the memsafety size domain. What it does not model is the
  * invalidation of the old pointer, the same imprecision the analysis already has around frees;
  * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize. Under flat
- * addressing a block grown past its slot overlaps the blocks allocated after it.
+ * addressing a block is grown in place, so when the program reallocates at all every heap block
+ * reserves at least [FlatAddressSpace.UNKNOWN_EXTENT] units; only growth beyond that overlaps the
+ * blocks allocated after it.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -53,6 +62,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
+    reallocates(builder.parent)
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
     // snapshot's init-procedure edges (see ensureMallocVar).
     builder.firstAllocationRetType(parseContext, this::isMalloc)?.let {
@@ -94,7 +104,13 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
       else listOf()
     if (parseContext.memoryModel.flatAddressing()) {
-      return builder.parent.bumpAllocate(parseContext, ret, arg, heap = true) + sizeLabels
+      val reserved =
+        if (reallocates(builder.parent)) {
+          val type = CComplexType.getType(arg, parseContext)
+          val minimum = type.getValue(FlatAddressSpace.UNKNOWN_EXTENT.toString())
+          Ite<Type>(Gt(type.castTo(arg), minimum), type.castTo(arg), minimum)
+        } else arg
+      return builder.parent.bumpAllocate(parseContext, ret, reserved, heap = true) + sizeLabels
     }
     val bump =
       AssignStmtLabel(
@@ -127,6 +143,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
       builder.mallocCells(parseContext, ret, bytes) ?: bytes
     else bytes
+
+  /** Whether any procedure calls `realloc`, decided before the first one is rewritten. */
+  private fun reallocates(xcfa: XcfaBuilder): Boolean =
+    xcfa.metaData.getOrPut(REALLOCATES) {
+      xcfa.getProcedures().any { proc ->
+        proc.getEdges().any { edge ->
+          edge.getFlatLabels().any { it is InvokeLabel && it.name == "realloc" }
+        }
+      }
+    } as Boolean
 
   private fun isMalloc(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "malloc"
 

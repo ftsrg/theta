@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -183,9 +184,10 @@ fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 
 /**
  * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
- * its result [ret] is bound to, each one [CStruct.inlineCells] cells. Null when there is no such
- * pointer, or its pointee has a flexible array member; the byte count, never fewer than the cells,
- * then stays the bound, which can miss an overrun but not invent one.
+ * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
+ * flexible array member its header and the whole trailing elements. Null when there is no such
+ * pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the cells, then
+ * stays the bound, which can miss an overrun but not invent one.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -198,13 +200,45 @@ fun XcfaProcedureBuilder.mallocCells(
     } ?: return null
   val pointee =
     (CComplexType.getType(target, parseContext) as? CPointer)?.embeddedType ?: return null
-  if (pointee is CVoid || pointee is CArray || hasFlexibleMember(pointee)) return null
+  if (pointee is CVoid || pointee is CArray) return null
+  flexibleMemberCells(parseContext, pointee, bytes)?.let {
+    return it
+  }
+  if (hasFlexibleMember(pointee)) return null
   val elementBytes = ObjectLayout.cellModelSize(pointee, true)
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)
   val count = Div(type.castTo(bytes), type.getValue("$elementBytes"))
   return if (elementCells == 1) count else Mul(count, type.getValue("$elementCells"))
+}
+
+/** [mallocCells] of a struct whose last member, and only that, is a flexible array. */
+private fun flexibleMemberCells(
+  parseContext: ParseContext,
+  pointee: CComplexType,
+  bytes: Expr<*>,
+): Expr<*>? {
+  val struct = (pointee as? CStruct)?.takeIf { !it.isUnion } ?: return null
+  val member =
+    (struct.fields.lastOrNull()?.get2() as? CArray)?.takeIf {
+      ObjectLayout.constantDimension(it) == null
+    } ?: return null
+  val element = member.embeddedType
+  if (struct.fields.dropLast(1).any { hasFlexibleMember(it.get2()) } || hasFlexibleMember(element))
+    return null
+  val type = CComplexType.getType(bytes, parseContext)
+  // The header's size is what `sizeof` gives the struct, which counts the member as nothing.
+  val header = ObjectLayout.cellModelSize(struct, true)
+  val elements =
+    Div(
+      Sub(type.castTo(bytes), type.getValue("$header")),
+      type.getValue("${ObjectLayout.cellModelSize(element, true)}"),
+    )
+  return Add(
+    type.getValue("${CStruct.inlineCells(struct)}"),
+    Mul(elements, type.getValue("${CStruct.inlineCells(element)}")),
+  )
 }
 
 private fun hasFlexibleMember(type: CComplexType): Boolean =

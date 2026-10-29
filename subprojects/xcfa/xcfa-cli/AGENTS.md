@@ -11,9 +11,8 @@
 - Semantic frontend changes need a discriminating verdict fixture under `canaries/fixtures/` and a
   matching row in `canaries/fixtures/fixtures.tsv`. Use `PARSE-OK` only for parse/build changes;
   use `SAFE` or `UNSAFE` when the change affects program meaning.
-- The canary suite uses the sibling `sv-benchmarks` checkout for property files. After rebuilding
-  the distribution, remove `build/distributions/Theta-svcomp` before rerunning tests so an older
-  extracted archive is not reused.
+- The canary suite uses the sibling `sv-benchmarks` checkout for property files. It re-extracts
+  `build/distributions/Theta-svcomp` when the zip is newer than the extracted `theta.jar`.
 
 ## Integration points and invariants
 

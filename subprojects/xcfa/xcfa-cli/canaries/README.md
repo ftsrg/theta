@@ -12,7 +12,7 @@ fix nothing will protect: when you add one, check that it *fails* before your ch
 after, or it guards nothing.
 
 Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
-full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing and
+full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing or older than it, and
 restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Java 21+ must be on
 `PATH`.
 

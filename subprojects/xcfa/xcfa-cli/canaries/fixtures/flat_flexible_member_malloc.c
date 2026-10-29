@@ -1,6 +1,5 @@
 // A struct with a flexible array member, allocated with room for three elements: indexing the
-// member inside that room is valid. Its cell count is not derivable from the byte size, so the
-// recorded size stays the byte count, which over-approximates and never invents an overrun.
+// member inside that room is valid.
 void *malloc(unsigned long);
 void free(void *);
 

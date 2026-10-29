@@ -33,7 +33,8 @@ internal data class RunResult(val output: String, val timedOut: Boolean)
 internal object SuiteSupport {
 
   /**
-   * The extracted distribution, unpacking `<name>.zip` beside it when the directory is missing.
+   * The extracted distribution, unpacking `<name>.zip` beside it when the directory is missing or
+   * older than the zip: a directory left from an earlier build would test that build instead.
    *
    * A zip stores no POSIX permissions, so every launcher and solver binary arrives non-executable.
    * That turns into "Permission denied" from whichever solver a task happens to need -- which looks
@@ -42,9 +43,12 @@ internal object SuiteSupport {
    */
   fun ensureDistribution(distDir: File): File? {
     val launcher = File(distDir, "theta-start.sh")
-    if (!launcher.isFile) {
-      val zip = File(distDir.parentFile, "${distDir.name}.zip")
+    val jar = File(distDir, "theta.jar")
+    val zip = File(distDir.parentFile, "${distDir.name}.zip")
+    val stale = zip.isFile && jar.isFile && zip.lastModified() > jar.lastModified()
+    if (!launcher.isFile || stale) {
       if (!zip.isFile) return null
+      distDir.deleteRecursively()
       ZipFile(zip).use { archive ->
         archive.entries().asSequence().forEach { entry ->
           val target = File(distDir.parentFile, entry.name)
@@ -59,7 +63,7 @@ internal object SuiteSupport {
         }
       }
     }
-    if (!File(distDir, "theta.jar").isFile) return null
+    if (!jar.isFile) return null
     distDir
       .walkTopDown()
       .filter { it.isFile }

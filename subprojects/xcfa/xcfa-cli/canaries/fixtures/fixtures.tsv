@@ -107,3 +107,16 @@ nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows th
 memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee copy every cell, not n/4 of them	flat
 flat_inline_bitfield_init.c	efficient	LP64	SAFE	packed bitfields of a nested struct laid out inline keep their static initializer	flat
 flat_inline_bitfield_init_unsafe.c	efficient	LP64	UNSAFE	initialized bitfields of an inline nested struct are read back, not zero	flat
+bytes_aggregate_init.c	efficient	LP64	SAFE	brace and zero initializers are written at byte offsets under bytes	bytes
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	multi
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	flat
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
+global_bitfield_init.c	efficient	LP64	SAFE	a global bitfield initializer is spliced into the unit at its byte offset	bytes
+union_array_elements.c	efficient	LP64	SAFE	each element of a local array of unions gets an object of its own	multi
+union_array_elements.c	efficient	LP64	SAFE	an array-of-unions element is a region of the array under bytes	bytes
+bytes_stack_objects_disjoint.c	efficient	LP64	SAFE	a stack struct is allocated by its byte size under bytes	bytes
+bytes_object_sizes.c	efficient	LP64	SAFE:valid-memsafety	static and stack object sizes are recorded in bytes under bytes	bytes
+flat_flexible_member_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a flexible array member malloc is bounded by its header and whole elements	flat
+bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under bytes	bytes
+bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
+flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat

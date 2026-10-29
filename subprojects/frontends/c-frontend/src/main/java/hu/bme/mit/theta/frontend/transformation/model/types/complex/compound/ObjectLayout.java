@@ -273,7 +273,8 @@ public final class ObjectLayout {
     /**
      * The byte size `sizeof` reports outside the bytes model: what is in the type, unpadded (a
      * union's, its largest member's). Under [flat] a fixed-size array counts every element, as it
-     * is laid out inline; otherwise it is the one cell holding its base.
+     * is laid out inline, and a flexible array member nothing; otherwise it is the one cell holding
+     * its base.
      */
     public static int cellModelSize(CComplexType type, boolean flat) {
         if (flat && type instanceof CArray array) {
@@ -284,7 +285,15 @@ public final class ObjectLayout {
         }
         if (type instanceof CStruct struct) {
             final List<Integer> fieldSizes =
-                    struct.getFields().stream().map(f -> cellModelSize(f.get2(), flat)).toList();
+                    struct.getFields().stream()
+                            .map(
+                                    f ->
+                                            flat
+                                                            && f.get2() instanceof CArray a
+                                                            && constantDimension(a) == null
+                                                    ? 0
+                                                    : cellModelSize(f.get2(), flat))
+                            .toList();
             if (fieldSizes.isEmpty()) {
                 return 1;
             }

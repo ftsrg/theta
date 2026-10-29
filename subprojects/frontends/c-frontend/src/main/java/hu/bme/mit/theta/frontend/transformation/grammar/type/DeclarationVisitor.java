@@ -209,6 +209,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         // consumed by the value that follows the designation (see buildDesignatedInner); null for a
         // direct field or an array index.
         List<Integer> pendingInnerPath = null;
+        boolean designated = false;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
                         ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
@@ -218,6 +219,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 nextPosition = path.get(0);
                 pendingInnerPath =
                         path.size() > 1 ? new ArrayList<>(path.subList(1, path.size())) : null;
+                designated = true;
                 continue;
             }
             if (!(child instanceof CParser.InitializerContext initializer)) {
@@ -235,11 +237,16 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                             ? buildLeafValue(elementType, initializer)
                             : buildDesignatedInner(elementType, pendingInnerPath, initializer);
             pendingInnerPath = null;
-            cInitializerList.addStatement(
+            final CExpr position =
                     new CExpr(
                             IntLitExpr.of(java.math.BigInteger.valueOf(nextPosition++)),
-                            parseContext),
-                    value);
+                            parseContext);
+            if (designated) {
+                cInitializerList.addDesignatedStatement(position, value);
+            } else {
+                cInitializerList.addStatement(position, value);
+            }
+            designated = false;
         }
         return cInitializerList;
     }
@@ -258,9 +265,16 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (asString != null) {
             return asString;
         }
-        final Expr<?> expr =
-                type.castTo(
-                        initializer.assignmentExpression().accept(functionVisitor).getExpression());
+        final Expr<?> raw =
+                initializer.assignmentExpression().accept(functionVisitor).getExpression();
+        // A scalar where an aggregate is expected starts brace elision (C17 6.7.9p20): it belongs
+        // to the aggregate's first leaf, so it keeps its own type rather than the aggregate's.
+        if ((type instanceof CStruct || type instanceof CArray)
+                && !(CComplexType.getType(raw, parseContext) instanceof CStruct
+                        || CComplexType.getType(raw, parseContext) instanceof CArray)) {
+            return new CExpr(raw, parseContext);
+        }
+        final Expr<?> expr = type.castTo(raw);
         parseContext.getMetadata().create(expr, "cType", type);
         return new CExpr(expr, parseContext);
     }
@@ -283,7 +297,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         elementTypeAt(type, position),
                         innerPath.subList(1, innerPath.size()),
                         initializer);
-        nested.addStatement(
+        nested.addDesignatedStatement(
                 new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(position)), parseContext),
                 inner);
         return nested;

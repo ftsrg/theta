@@ -1482,9 +1482,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
-        // ordinary cell read and is left to the caller's dereference.
+        // ordinary cell read and is left to the caller's dereference. Under the bytes model a union
+        // is a region too: it is laid out in place, not a cell holding a base.
         final boolean aggregate =
-                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && (!s.isUnion() || byteAddressed()));
         if (!aggregate) {
             return null;
         }
