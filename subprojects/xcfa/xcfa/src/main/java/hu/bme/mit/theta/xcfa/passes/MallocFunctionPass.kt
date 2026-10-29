@@ -22,13 +22,23 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.SubObjects
+import hu.bme.mit.theta.xcfa.utils.boundPointee
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
@@ -37,6 +47,9 @@ import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
 
 private const val REALLOCATES = "reallocates"
+
+/** The most elements of a struct with sub-objects one `malloc` allocates them for. */
+private const val MAX_HEAP_ELEMENTS = 64
 
 /**
  * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
@@ -54,6 +67,13 @@ private const val REALLOCATES = "reallocates"
  * addressing a block is grown in place, so when the program reallocates at all every heap block
  * reserves at least [FlatAddressSpace.UNKNOWN_EXTENT] units; only growth beyond that overlaps the
  * blocks allocated after it.
+ *
+ * A block of a struct type gets the sub-objects its cells hold (see [SubObjects]), as a stack
+ * object does, for each element when its size is a constant. When that is impossible -- the block
+ * is untyped, its element count is not constant, or it is reallocated -- and the program reaches
+ * sub-objects at all, the multi model refuses and the program is rebuilt under flat, which lays
+ * them out inline. The type is the one the result is first bound to; a block later used as an
+ * unrelated struct type is not covered.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -100,9 +120,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invokeLabel.params[0] as RefExpr<*>
     val arg = invokeLabel.params[1]
     val sizeLabels =
-      if (MemsafetyPass.enabled)
+      (if (MemsafetyPass.enabled)
         listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
-      else listOf()
+      else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
       val reserved =
         if (reallocates(builder.parent)) {
@@ -131,6 +151,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val oldPtr = invokeLabel.params[1]
     val newSize = invokeLabel.params[2]
     val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))
+    builder.boundPointee(parseContext, ret).let {
+      if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
+    }
     return if (MemsafetyPass.enabled) {
       listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
     } else {
@@ -143,6 +166,67 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
       builder.mallocCells(parseContext, ret, bytes) ?: bytes
     else bytes
+
+  /**
+   * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a
+   * struct that has any.
+   */
+  private fun subObjects(
+    builder: XcfaProcedureBuilder,
+    ret: Expr<*>,
+    bytes: Expr<*>,
+  ): List<XcfaLabel> {
+    if (parseContext.memoryModel.byteAddressed()) return listOf()
+    val pointee = builder.boundPointee(parseContext, ret)
+    if (pointee == null) {
+      refuseUnlessFlat("a block of unknown type")
+      return listOf()
+    }
+    if (!hasSubObjects(pointee)) return listOf()
+    val struct = pointee as? CStruct
+    val count = struct?.let { elementCount(bytes, it) }
+    if (struct == null || count == null) {
+      refuseUnlessFlat(if (struct == null) "a block of arrays" else "a block of unknown length")
+      return listOf()
+    }
+    val layout = SubObjects(parseContext)
+    val labels = mutableListOf<XcfaLabel>()
+    for (index in 0 until count) {
+      layout.allocateMembers(ret, struct, struct, index * struct.unitCount, labels, HEAP_SUBOBJECT)
+    }
+    return labels
+  }
+
+  private fun hasSubObjects(type: CComplexType): Boolean =
+    when (type) {
+      is CStruct -> !type.isUnion && SubObjects(parseContext).subObjectCells(type).isNotEmpty()
+      is CArray ->
+        hasSubObjects(type.embeddedType) || (type.embeddedType as? CStruct)?.isUnion == true
+      else -> false
+    }
+
+  /** How many [struct] elements a constant [bytes] holds, or null if not constant or too many. */
+  private fun elementCount(bytes: Expr<*>, struct: CStruct): Int? {
+    val value =
+      when (val size = ExprUtils.simplify(bytes)) {
+        is IntLitExpr -> size.value
+        is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(size)
+        else -> return null
+      }
+    val flat = parseContext.memoryModel.flatAddressing()
+    val count = value.toLong() / ObjectLayout.cellModelSize(struct, flat)
+    return count.takeIf { it <= MAX_HEAP_ELEMENTS }?.toInt()
+  }
+
+  /**
+   * Hands a block whose sub-objects cannot be allocated to `--memory-model flat`, when sub-objects
+   * are reached at all. Flat lays aggregates out inline, so only its unions are sub-objects; those
+   * stay unallocated there, as before.
+   */
+  private fun refuseUnlessFlat(what: String) {
+    if (parseContext.memoryModel.flatAddressing() || !parseContext.isAggregateMemberUsed) return
+    throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
+  }
 
   /** Whether any procedure calls `realloc`, decided before the first one is rewritten. */
   private fun reallocates(xcfa: XcfaBuilder): Boolean =

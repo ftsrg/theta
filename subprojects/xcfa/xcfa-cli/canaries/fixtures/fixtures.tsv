@@ -123,3 +123,10 @@ flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not over
 flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat
 typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an array typedef is laid out as that array
 typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
+malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
+malloc_subobject_copy.c	efficient	ILP32	SAFE	a struct copy into a malloc'd block writes its own sub-objects
+malloc_untyped_subobjects.c	efficient	ILP32	SAFE	an untyped malloc whose sub-objects are reached falls back to flat
+malloc_member_array_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	an array member of a malloc'd struct is a valid sub-object
+malloc_cell_subobjects.c	efficient	ILP32	SAFE	a malloc stored into a struct field is typed by it and gets its sub-objects
+malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated
+malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated under flat too	flat

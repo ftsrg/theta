@@ -28,6 +28,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
@@ -52,6 +53,10 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
  * function returns, so reporting it as a leak would be wrong. It still records a real size in
  * `__theta_ptr_size`, so out-of-bounds accesses to it are caught exactly as they are for heap
  * memory.
+ *
+ * A sub-object of a heap block ([HEAP_SUBOBJECT], see `MallocFunctionPass`) is allocated the same
+ * way but lives as long as its block, so it is not released at return. Like `alloca` memory it is
+ * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported.
  *
  * Known gaps (both are the pre-existing scope-lifetime limitation, not new to alloca): the block is
  * never invalidated at function return, so a dangling access to it afterwards is not caught, and
@@ -111,7 +116,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-            allocated.add(ret)
+            if (invokeLabel.name == "alloca") allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
@@ -225,7 +230,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   private var probeCnt = 0
 
   private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name == "alloca"
+    return it is InvokeLabel && (it.name == "alloca" || it.name == HEAP_SUBOBJECT)
   }
 
   private companion object {

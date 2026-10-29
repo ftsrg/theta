@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
@@ -91,6 +92,7 @@ public class ParseContext {
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
     private boolean everyMemberAccessed = false;
+    private boolean aggregateMemberCopied = false;
 
     public Map<String, Integer> getSourceTraits() {
         return sourceTraits;
@@ -281,6 +283,32 @@ public class ParseContext {
 
     public boolean isAnyMemberAccessed(CStruct type) {
         return everyMemberAccessed || accessedMembers.containsKey(type);
+    }
+
+    /** Records that a struct holding an aggregate member is copied member by member. */
+    public void markAggregateMemberCopied() {
+        aggregateMemberCopied = true;
+    }
+
+    /**
+     * Whether a struct, union or array member is accessed or copied anywhere: the only ways a
+     * sub-object held in a parent's cell is reached.
+     */
+    public boolean isAggregateMemberUsed() {
+        if (everyMemberAccessed || aggregateMemberCopied) {
+            return true;
+        }
+        return accessedMembers.entrySet().stream()
+                .anyMatch(
+                        entry ->
+                                entry.getKey().getFields().stream()
+                                        .anyMatch(
+                                                field ->
+                                                        entry.getValue().contains(field.get1())
+                                                                && (field.get2() instanceof CStruct
+                                                                        || field.get2()
+                                                                                instanceof
+                                                                                CArray)));
     }
 
     /**

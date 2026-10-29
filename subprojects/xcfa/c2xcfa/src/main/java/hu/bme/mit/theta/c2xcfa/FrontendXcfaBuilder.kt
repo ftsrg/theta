@@ -83,6 +83,7 @@ import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import java.math.BigInteger
 import java.util.IdentityHashMap
@@ -664,188 +665,28 @@ class FrontendXcfaBuilder(
     }
   }
 
-  /**
-   * Emits the `alloca(target, size)` marker [AllocaFunctionPass] lowers into a fresh runtime base.
-   *
-   * The size is the object's field/element count, recorded (under memsafety) so out-of-bounds
-   * accesses are caught; without memsafety it is ignored and only the fresh base is assigned. The
-   * target may be a variable or a memory cell -- the pass dispatches on which.
-   */
-  private fun alloca(target: Expr<*>, size: Int): XcfaLabel =
-    InvokeLabel(
-      "alloca",
-      listOf(target, Fitsall(null, parseContext).getValue("$size")),
-      metadata = EmptyMetaData,
-    )
+  private val subObjects = SubObjects(parseContext)
 
   /**
-   * Gives a *stack-allocated* struct a fresh runtime base -- for the object and, recursively, for
-   * every struct-typed field -- from the allocation counter, instead of a compile-time constant.
-   *
-   * A struct's value is its base id. When that base was a constant baked into the procedure's init,
-   * every activation of the procedure reused it: two recursive frames, or two threads running the
-   * function, shared one `arrays[base]`, so a write in one was seen by the other and a race-free
-   * program came back a false alarm (`mt_struct`: a thread-local struct, reported Unsafe). A base
-   * drawn from the runtime counter ([alloca]) is distinct per activation, which is what C
-   * guarantees.
-   *
-   * A struct-typed field is a subobject whose base lives in the cell `arrays[parent][i]`, so it is
-   * allocated in turn into that cell (the pass writes the fresh base there). C has no by-value
-   * self-containing struct, so this terminates. Unions keep the single object their offset-0 model
-   * needs, exactly as [giveStructObjectStorage] leaves them for globals.
-   *
-   * Globals stay on the compile-time path ([giveStructObjectStorage]): a global is a single object,
-   * so a constant base cannot alias anything.
+   * Gives a *stack-allocated* struct a fresh runtime base, and its sub-objects theirs (see
+   * [SubObjects.allocateStruct]). Globals stay on the compile-time path
+   * ([giveStructObjectStorage]): a global is a single object, so a constant base cannot alias
+   * anything.
    */
-  private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
-    if (parseContext.memoryModel.byteAddressed()) {
-      // One object of the struct's bytes: nested aggregates are regions of it, not objects.
-      labels.add(alloca(target, staticUnits(type, 1).toInt()))
-      return
-    }
-    labels.add(alloca(target, if (type.isUnion) unionCellCount(type) else type.unitCount))
-    if (type.isUnion) return
-    subObjectCells(type).forEach { (offset, fieldType) ->
-      allocateStackSubobject(subobjectCell(target, type, offset, fieldType), fieldType, labels)
-    }
-  }
+  private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) =
+    subObjects.allocateStruct(target, type, labels)
 
-  /**
-   * The cells of [type] that hold the base of a sub-object, with the sub-object's type: every
-   * aggregate field, or under [CStruct.inlinesAggregates] only the unions, found through the inline
-   * structs and arrays around them.
-   */
-  private fun subObjectCells(type: CStruct): List<Pair<Int, CComplexType>> {
-    if (!type.inlinesAggregates()) {
-      return type.fields
-        .filter { it.get2() is CStruct || it.get2() is CArray }
-        .map { type.unitOffsetOf(it.get1()) to it.get2() }
-    }
-    fun walk(t: CComplexType, offset: Int): List<Pair<Int, CComplexType>> =
-      when {
-        t is CStruct && t.isUnion -> listOf(offset to t)
-        t is CStruct -> t.fields.flatMap { walk(it.get2(), offset + t.unitOffsetOf(it.get1())) }
-        t is CArray -> {
-          val count = ObjectLayout.constantDimension(t) ?: 0
-          val stride = CStruct.inlineCells(t.embeddedType)
-          (0 until count).flatMap { walk(t.embeddedType, offset + it * stride) }
-        }
-        else -> listOf()
-      }
-    return walk(type, 0)
-  }
+  private fun allocateArrayElements(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) =
+    subObjects.allocateArrayElements(target, type, labels)
 
-  /**
-   * Gives a *stack-allocated* array a fresh runtime base, and -- if its elements are themselves
-   * aggregates -- allocates each of them in turn.
-   *
-   * An array of scalars is one block: the elements live directly in it (`arrays[a][k]`), so nothing
-   * more is allocated. An array of structs (or of arrays) holds a base per element in those cells,
-   * exactly like a struct holds one per field, so each element is allocated into its cell. A member
-   * array has a constant bound, so the element count is known; a flexible array member (no bound)
-   * is left unallocated, the pre-existing limitation for a member whose size the declaration omits.
-   */
-  private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
-    // Sized by the whole object: a multi-dimensional array's dimensions multiply, since its rows
-    // live in the same block rather than in objects of their own.
-    val size =
-      if (parseContext.memoryModel.byteAddressed())
-        fixedArraySize(type)?.let { staticUnits(type.embeddedType, it.toLong()).toInt() }
-      else flatArraySize(type)
-    labels.add(alloca(target, size ?: return))
-    allocateArrayElements(target, type, labels)
-  }
+  private fun subObjectCells(type: CStruct) = subObjects.subObjectCells(type)
 
-  /**
-   * Gives each element of [target] an object of its own, when the elements are themselves
-   * aggregates. Rows of `int a[3][4]` and elements of `struct S a[3]` are *not* such objects: both
-   * live inline in the array's own cells, addressed as `arrays[a][i*k + f]` (see
-   * `ExpressionVisitor#rowOf`), so they need no base and nothing is allocated for them.
-   *
-   * What still needs allocating is an aggregate *inside* an element -- `struct Outer { struct Inner
-   * i; } a[3]` keeps a base per `Inner` in the cell at `i*k + offsetof(i)`, because a nested struct
-   * field is still stored as a base id. An element of plain scalars, which is the overwhelmingly
-   * common case and the one that used to blow past the cap, allocates nothing at all.
-   *
-   * Split out from [allocateStackArray] because a *declared* local array already gets its own base
-   * from the `alloca` the frontend emits at the declaration; only its subobjects are missing, and
-   * they have to be allocated after that base is assigned, not before.
-   */
-  private fun allocateArrayElements(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
-    if (parseContext.memoryModel.byteAddressed()) return // elements are regions of the array
-    val size = fixedArraySize(type) ?: return
-    var leaf: CComplexType = type
-    while (leaf is CArray) leaf = leaf.embeddedType
-    if (leaf is CStruct && leaf.isUnion) {
-      // A union element is a cell holding its object's base, as a union member of a struct is.
-      for (index in 0 until (flatArraySize(type) ?: return)) {
-        allocateStackStruct(subobjectCell(target, type, index, leaf), leaf, labels)
-      }
-      return
-    }
-    val elementType = type.embeddedType
-    if (elementType !is CStruct || elementType.isUnion) return
-    val cells = elementType.unitCount
-    // Only the cells holding objects need anything; if there are none, this loop body never runs
-    // and the whole array costs zero allocations however long it is.
-    val subObjects = subObjectCells(elementType)
-    if (subObjects.isEmpty()) return
-    for (index in 0 until size) {
-      subObjects.forEach { (cell, subType) ->
-        allocateStackSubobject(
-          subobjectCell(target, type, index * cells + cell, subType),
-          subType,
-          labels,
-        )
-      }
-    }
-  }
-
-  private fun allocateStackSubobject(
-    cell: Expr<*>,
-    type: CComplexType,
-    labels: MutableList<XcfaLabel>,
-  ) {
-    when (type) {
-      is CStruct -> allocateStackStruct(cell, type, labels)
-      is CArray -> allocateStackArray(cell, type, labels)
-      else -> {} // a scalar field lives in its parent's cell; it needs no object of its own
-    }
-  }
-
-  /**
-   * The cell `arrays[parent][index]` a subobject (struct field, array element) lives at.
-   *
-   * When [parent] is itself an offset into an object -- `a[i]` on an array of structs is `a + i*k`,
-   * see `ExpressionVisitor#rowOf` -- the two offsets are added and the *object* stays the base, so
-   * the cell is `arrays[a][i*k + index]`. Leaving the sum in the base position would both name a
-   * different object (bases are three apart) and hand `ReferenceElimination` a shape it has never
-   * seen: it walks a dereference's base expecting a plain variable, and reports a bare use of a
-   * split variable when it finds arithmetic there instead.
-   */
   private fun subobjectCell(
     parent: Expr<*>,
     parentType: CComplexType,
     index: Int,
     subobjectType: CComplexType,
-  ): Dereference<*, *, *> {
-    val indexValue = parentType.getValue("$index")
-    val sum = parent.withoutPos() as? AddExpr<*>
-    val base = sum?.let { pointerOperandOf(it) }
-    return if (base == null) {
-        Dereference(cast(parent, parent.type), cast(indexValue, parent.type), subobjectType.smtType)
-      } else {
-        val offsets = sum.ops.filter { it.withoutPos() !== base } + indexValue
-        Dereference(
-          cast(base, base.type),
-          cast(AbstractExprs.Add(offsets.map { cast(it, base.type) }), base.type),
-          subobjectType.smtType,
-        )
-      }
-      .also { parseContext.metadata.create(it, "cType", subobjectType) }
-  }
-
-  private fun Expr<*>.withoutPos(): Expr<*> = if (this is PosExpr<*>) op.withoutPos() else this
+  ) = subObjects.subobjectCell(parent, parentType, index, subobjectType)
 
   /**
    * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
@@ -862,46 +703,9 @@ class FrontendXcfaBuilder(
     return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width)
   }
 
-  /** The pointer/array operand of a sum, i.e. the object the rest of it is an offset into. */
-  private fun pointerOperandOf(sum: AddExpr<*>): Expr<*>? =
-    sum.ops
-      .map { it.withoutPos() }
-      .firstOrNull {
-        val type = runCatching { CComplexType.getType(it, parseContext) }.getOrNull()
-        type is CPointer || type is CArray || (type is CStruct && type.inlinesAggregates())
-      }
+  private fun fixedArraySize(type: CArray) = subObjects.fixedArraySize(type)
 
-  /**
-   * An array's constant element count, or null when there isn't one: a flexible array member (no
-   * bound at all) or a variable-length array, whose length is only known at run time. Callers use
-   * it to decide how many subobjects to allocate, so "no constant count" has to be an answer rather
-   * than an error -- a VLA simply gets no per-element allocation.
-   */
-  private fun fixedArraySize(type: CArray): Int? {
-    val dimension = type.arrayDimension ?: return null
-    return when (val bounds = ExprUtils.simplify(dimension.expression)) {
-      is IntLitExpr -> bounds.value.toInt()
-      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bounds).toInt()
-      else -> null
-    }
-  }
-
-  /**
-   * The number of cells an array occupies. An array is contiguous, so the element's own cell count
-   * multiplies through: `int a[3][4]` is twelve cells addressed as `arrays[a][i*4 + j]`, and
-   * `struct S a[3]` with a two-cell `S` is six, addressed as `arrays[a][i*2 + f]`. Null when a
-   * dimension is not a compile-time constant.
-   */
-  private fun flatArraySize(type: CArray): Int? {
-    val size = fixedArraySize(type) ?: return null
-    return when (val elementType = type.embeddedType) {
-      is CArray -> flatArraySize(elementType)?.let { size * it }
-      // A struct element occupies its own cells inline rather than a single cell holding a base --
-      // see ExpressionVisitor#rowOf. A union keeps one cell: its members all share offset 0.
-      is CStruct -> if (elementType.isUnion) size else size * elementType.unitCount
-      else -> size
-    }
-  }
+  private fun flatArraySize(type: CArray) = subObjects.flatArraySize(type)
 
   /**
    * Whether assigning [rExpression] to a variable of this type is a struct copy.
@@ -1047,6 +851,7 @@ class FrontendXcfaBuilder(
     else
       type.fields.flatMap { field ->
         val fieldType = field.get2()
+        if (fieldType is CStruct || fieldType is CArray) parseContext.markAggregateMemberCopied()
         val unit = type.unitOffsetOf(field.get1())
         copySubobject(
           subobjectCell(target, type, unit, fieldType),
@@ -1606,36 +1411,11 @@ class FrontendXcfaBuilder(
     }
   }
 
-  /**
-   * How many cells a union occupies: the single placeholder cell every word-sliceable union gets,
-   * or -- for a byte-laid-out one (AD7, [CStruct.unionCellWidth] null: an array member or otherwise
-   * too wide/shaped for one packed word) -- its real [ObjectLayout] size in bytes, since that is
-   * the granularity [ExpressionVisitor]'s byte cells actually address it at. Getting this wrong
-   * either under- or over-sizes the allocation and `__theta_ptr_size`, so it must track
-   * [ExpressionVisitor]'s own byte-offset arithmetic exactly.
-   */
-  private fun unionCellCount(type: CStruct): Int =
-    if (type.unionCellWidth() == null) ObjectLayout.of(type, parseContext.architecture).bitSize / 8
-    else 1
+  private fun unionCellCount(type: CStruct) = subObjects.unionCellCount(type)
 
-  /**
-   * How many address units [count] consecutive objects of [type] span: bytes under the bytes model,
-   * cells otherwise.
-   */
-  private fun staticUnits(type: CComplexType, count: Long): Long =
-    if (parseContext.memoryModel.byteAddressed())
-      count * ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8)
-    else count * cellsOf(type)
+  private fun staticUnits(type: CComplexType, count: Long) = subObjects.staticUnits(type, count)
 
-  /**
-   * How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`.
-   */
-  private fun cellsOf(type: CComplexType): Int =
-    when (type) {
-      is CArray -> flatArraySize(type) ?: 1
-      is CStruct -> if (type.isUnion) unionCellCount(type) else type.unitCount
-      else -> 1
-    }
+  private fun cellsOf(type: CComplexType) = subObjects.cellsOf(type)
 
   /**
    * Whether [type]'s cells hold only plain scalars, one per unit: no bitfield packing (units would

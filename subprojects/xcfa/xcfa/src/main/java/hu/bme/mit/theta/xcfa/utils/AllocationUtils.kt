@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
@@ -183,6 +184,32 @@ fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
+ * The type of the block an allocation's result [ret] is bound to in this procedure: the pointee of
+ * the typed pointer variable or memory cell (`n->next = (T *) tmp`) it is stored into, or null when
+ * there is none or it points to `void`.
+ */
+fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>): CComplexType? {
+  val target =
+    getEdges().firstNotNullOfOrNull { e ->
+      e.getFlatLabels().firstNotNullOfOrNull { boundTarget(it, ret) ?: boundCell(it, ret) }
+    } ?: return null
+  val type = runCatching { CComplexType.getType(target, parseContext) }.getOrNull()
+  val pointee = (type as? CPointer)?.embeddedType ?: return null
+  return pointee.takeIf { it !is CVoid }
+}
+
+/**
+ * The value [label] stores an allocation's result [ret] into memory as, or null. The value, not the
+ * cell: the frontend converts it to the cell's pointer type, while the cell's own recorded type is
+ * its address.
+ */
+private fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
+  val stmt = (label as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *> ?: return null
+  if (ret !is RefExpr<*> || ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
+  return stmt.expr
+}
+
+/**
  * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
  * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
  * flexible array member its header and the whole trailing elements. Null when there is no such
@@ -194,13 +221,8 @@ fun XcfaProcedureBuilder.mallocCells(
   ret: Expr<*>,
   bytes: Expr<*>,
 ): Expr<*>? {
-  val target =
-    getEdges().firstNotNullOfOrNull { e ->
-      e.getFlatLabels().firstNotNullOfOrNull { boundTarget(it, ret) }
-    } ?: return null
-  val pointee =
-    (CComplexType.getType(target, parseContext) as? CPointer)?.embeddedType ?: return null
-  if (pointee is CVoid || pointee is CArray) return null
+  val pointee = boundPointee(parseContext, ret) ?: return null
+  if (pointee is CArray) return null
   flexibleMemberCells(parseContext, pointee, bytes)?.let {
     return it
   }
