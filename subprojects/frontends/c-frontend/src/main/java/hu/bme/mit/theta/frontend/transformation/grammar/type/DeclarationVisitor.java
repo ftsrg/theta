@@ -93,8 +93,10 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * array of the right total size, so only a multi-dimensional case can catch it -- which is what
      * the fixture pins.
      */
-    private static void inheritTypedefArrayDimensions(
-            CDeclaration declaration, CSimpleType cSimpleType) {
+    static void inheritTypedefArrayDimensions(CDeclaration declaration, CSimpleType cSimpleType) {
+        if (cSimpleType.getPointersToTypedefArray() > 0) {
+            return; // `arr_t *p` is a pointer; its type already holds the array (see CSimpleType)
+        }
         for (CStatement dimension : cSimpleType.getTypedefArrayDimensions()) {
             declaration.addArrayDimension(dimension);
         }

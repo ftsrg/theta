@@ -121,3 +121,5 @@ bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under
 bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
 flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat
 flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat
+typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an array typedef is laid out as that array
+typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
