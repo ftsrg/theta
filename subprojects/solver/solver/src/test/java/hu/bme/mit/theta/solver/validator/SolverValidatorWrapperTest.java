@@ -79,6 +79,9 @@ public class SolverValidatorWrapperTest {
         final SolverBase wrapped = create.apply(validating);
         final SolverBase wrappee = create.apply(inner);
 
+        for (int i = 0; i < 3; i++) {
+            wrapped.push();
+        }
         wrapped.pop(3);
 
         verify(wrappee).pop(3);
