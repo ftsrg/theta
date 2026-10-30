@@ -277,7 +277,7 @@ private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
     is RWLockUnlockLabel,
     is RWLockWriteLockLabel,
     is JoinLabel,
-    NopLabel -> return setOf()
+    is NopLabel -> return setOf()
     is InvokeLabel -> return params.flatMap { it.getExpressions(f) }.toSet()
     is NondetLabel -> return labels.flatMap { it.getExpressions(f) }.toSet()
     is ReturnLabel -> return enclosedLabel.getExpressions(f)

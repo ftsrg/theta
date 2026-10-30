@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
                 new XcfaEdge(
                         blockState.getLastLocation(),
                         errLoc,
-                        NopLabel.INSTANCE,
+                        new NopLabel(),
                         new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);

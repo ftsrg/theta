@@ -246,7 +246,7 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invoke.params[0] // params[0] is the (possibly unused, for void ops) return variable
     val args = invoke.params.drop(1)
 
-    if (name in fenceNames) return listOf(NopLabel)
+    if (name in fenceNames) return listOf(NopLabel(invoke.metadata))
 
     if (name in loadNames) {
       // ret = *p  -- a single memory read, already atomic; the block keeps it uniform.

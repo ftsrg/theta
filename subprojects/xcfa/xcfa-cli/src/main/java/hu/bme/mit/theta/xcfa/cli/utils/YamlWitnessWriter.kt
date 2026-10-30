@@ -26,6 +26,8 @@ import hu.bme.mit.theta.analysis.algorithm.asg.HackyAsgTrace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
+import hu.bme.mit.theta.c2xcfa.fullExpressionCol
+import hu.bme.mit.theta.c2xcfa.fullExpressionLine
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
@@ -61,6 +63,7 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
@@ -828,7 +831,10 @@ private fun reconstructDataRaceFromFlags(
   val errorActionIndex = actions.indexOfLast { it.pid == pidA }
   if (errorActionIndex < 0) return null
   val errorAction = actions[errorActionIndex]
-  val locA = nearestLocatedAction(actions, errorActionIndex, pidA, inputFile) ?: return null
+  val locA =
+    raceAccessLocation(errorAction.edge.source, inputFile)
+      ?: nearestLocatedAction(actions, errorActionIndex, pidA, inputFile)
+      ?: return null
 
   val raceFlagNames =
     errorAction.edge.label.collectVars().map { it.name }.filter(::isRaceFlagName).toMutableSet()
@@ -860,7 +866,10 @@ private fun reconstructDataRaceFromFlags(
     }
   if (flagSetActionIndex < 0) return null
   val pidB = actions[flagSetActionIndex].pid
-  val locB = nearestLocatedAction(actions, flagSetActionIndex, pidB, inputFile) ?: return null
+  val locB =
+    raceAccessLocation(actions[flagSetActionIndex].edge.source, inputFile)
+      ?: nearestLocatedAction(actions, flagSetActionIndex, pidB, inputFile)
+      ?: return null
 
   return listOf(
     Waypoint(
@@ -904,6 +913,39 @@ private fun targetWaypointAtViolation(
     location = loc,
     action = Action.FOLLOW,
     threadId = threadIds.ofPid(pidA),
+  )
+}
+
+/**
+ * The access guarded by the data race check at [checkLoc]: `DataRaceToReachabilityPass` leaves the
+ * check (next to the error edge) and the access on consecutive edges, and only the latter is
+ * located, so the location is taken from the first located label after [checkLoc].
+ */
+private fun raceAccessLocation(checkLoc: XcfaLocation, inputFile: File): Location? {
+  var frontier = checkLoc.outgoingEdges.filter { !it.target.error }
+  repeat(3) {
+    frontier
+      .flatMap { it.getFlatLabels() }
+      .firstNotNullOfOrNull { label ->
+        (label.metadata as? CMetaData)?.let { fullExpressionLocation(inputFile, it) }
+      }
+      ?.let {
+        return it
+      }
+    frontier = frontier.flatMap { it.target.outgoingEdges }.filter { !it.target.error }
+  }
+  return null
+}
+
+/** The start of the innermost full expression [metadata] belongs to. */
+private fun fullExpressionLocation(inputFile: File, metadata: CMetaData): Location? {
+  val node =
+    metadata.astNodes.firstOrNull { it.fullExpressionLine >= 0 && it.fullExpressionCol >= 0 }
+      ?: return null
+  return Location(
+    fileName = inputFile.name,
+    line = node.fullExpressionLine,
+    column = node.fullExpressionCol + 1,
   )
 }
 
@@ -1145,7 +1187,7 @@ private fun WitnessEdge.toSegment(
 
 /**
  * The target waypoint of a data race witness: one of the two conflicting accesses, located at the
- * accessing statement and executed by the racing thread.
+ * full expression of the access and executed by the racing thread.
  */
 private fun DataRaceAccess.toTargetWaypoint(
   inputFile: File,
@@ -1160,14 +1202,11 @@ private fun DataRaceAccess.toTargetWaypoint(
     listOfNotNull(label.metadata as? CMetaData, edge.metadata as? CMetaData).firstOrNull {
       it.lineNumberStart != null || it.lineNumberStop != null
     }
-  val line =
-    metadata?.lineNumberStart
-      ?: metadata?.lineNumberStop
-      ?: error("No source location for racing access $label")
   return WaypointContent(
     type = WaypointType.TARGET,
     location =
-      Location(fileName = inputFile.name, line = line, column = metadata?.colNumberStart?.plus(1)),
+      metadata?.let { fullExpressionLocation(inputFile, it) }
+        ?: error("No source location for racing access $label"),
     action = Action.FOLLOW,
     threadId = threadIds.ofPid(pid),
   )

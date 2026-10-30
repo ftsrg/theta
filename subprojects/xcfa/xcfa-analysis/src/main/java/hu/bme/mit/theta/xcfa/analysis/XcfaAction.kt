@@ -40,7 +40,7 @@ constructor(
     pid: Int,
     source: XcfaLocation,
     target: XcfaLocation,
-    label: XcfaLabel = NopLabel,
+    label: XcfaLabel = NopLabel(),
     metaData: MetaData = EmptyMetaData,
     lastWrites: WriteTriples = emptyMap(),
     nextCnt: Int = 0,

@@ -166,7 +166,7 @@ public class Btor2XcfaTraceConcretizer {
             }
             labels = groupedLabels;
             if (labels.isEmpty()) {
-                labels = List.of(NopLabel.INSTANCE);
+                labels = List.of(new NopLabel());
             }
 
             for (int j = 0; j < labels.size(); j++) {

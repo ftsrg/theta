@@ -45,12 +45,12 @@ class UtilsTest {
         ),
         Arguments.of(JoinLabel(x, EmptyMetaData), JoinLabel(xPrime, EmptyMetaData)),
         Arguments.of(
-          NondetLabel(setOf(NopLabel), EmptyMetaData),
-          NondetLabel(setOf(NopLabel), EmptyMetaData),
+          NondetLabel(setOf(NopLabel()), EmptyMetaData),
+          NondetLabel(setOf(NopLabel()), EmptyMetaData),
         ),
         Arguments.of(
-          SequenceLabel(listOf(NopLabel), EmptyMetaData),
-          SequenceLabel(listOf(NopLabel), EmptyMetaData),
+          SequenceLabel(listOf(NopLabel()), EmptyMetaData),
+          SequenceLabel(listOf(NopLabel()), EmptyMetaData),
         ),
         Arguments.of(AtomicBeginLabel(), AtomicBeginLabel()),
         Arguments.of(MutexLockLabel(x.ref), MutexLockLabel(xPrime.ref)),

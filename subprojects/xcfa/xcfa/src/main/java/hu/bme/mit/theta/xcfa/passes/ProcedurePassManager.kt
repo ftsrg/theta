@@ -101,13 +101,15 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
-    listOf(
+    listOfNotNull(
       // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),
       // handling remaining function calls
       MemsafetyPass(property, parseContext),
       NoSideEffectPass(parseContext),
-      LbePass(parseContext),
+      // a witness is matched on uncollapsed statements (e.g., inside atomic blocks): LBE then runs
+      // after it is applied
+      LbePass(parseContext).takeIf { property.witness == null },
       NormalizePass(), // needed after lbe, TODO
       DeterministicPass(), // needed after lbe, TODO
       EliminateSelfLoops(),

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -26,10 +27,16 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LAST_SEGMENT_PASSED
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LOGICAL_THREAD_ID
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -37,208 +44,263 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intersect
 import hu.bme.mit.theta.xcfa.utils.simplify
-import java.math.BigInteger
 
 /**
- * Optimizes witness-specific XCFA instrumentation after witness parsing.
+ * Prepares the witness instrumentation of one thread for the OC backend.
  *
- * The pass propagates literal input parameters through the procedure, keeps only values that agree
- * on all incoming edges at joins, and simplifies edge labels with the resulting valuation. It also
- * normalizes witness segment-counter updates by turning guarded counter assignments into explicit
- * assumptions followed by concrete assignments, removing duplicate segment updates and trivial
- * labels. Thread-start parameters guarded by the segment counter are rewritten similarly, by
- * extracting the guard as an assumption and passing the selected literal value to the start label.
+ * Literal input parameters (e.g., the logical thread id handed over by the spawning thread) are
+ * propagated through the procedure, keeping only values that agree on all incoming edges at joins,
+ * which drops the instrumentation meant for other threads.
+ *
+ * An update of an exclusive segment (see [exclusiveSegments]) that is the only update of that
+ * segment on every path through it is forced to happen: passing it with another counter value
+ * leaves the segment unpassable, so such a path cannot witness the violation. Every remaining
+ * guarded update of the segment counter or the last-segment flag is split into one branch per
+ * alternative plus a fall-through, so the shared counter is written only when a segment is actually
+ * passed.
  */
 class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
   ProcedurePass {
 
-  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val segmentVar: VarDecl<*>? =
-      builder.getEdges().firstNotNullOfOrNull { edge ->
-        edge.label.getFlatLabels().firstNotNullOfOrNull { label ->
-          label.collectVars().find { it.name == SEGMENT_COUNTER }
-        }
-      }
-    if (segmentVar == null) {
-      // This pass normalizes the segment counters ApplyWitnessPass inserts when *validating*
-      // an input witness; without a witness there are none, so we can return
-      return builder
-    }
+  companion object {
+    /** Segments passed at a single waypoint of a known thread; set when the witness is applied. */
+    var exclusiveSegments: Set<Int> = emptySet()
+  }
 
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val witnessVars =
+      builder
+        .getEdges()
+        .flatMap { edge -> edge.label.getFlatLabels().flatMap { it.collectVars() } }
+        .filter { it.name == SEGMENT_COUNTER || it.name == LAST_SEGMENT_PASSED }
+        .toSet()
+    // without a witness being validated there is no instrumentation
+    if (witnessVars.none { it.name == SEGMENT_COUNTER }) return builder
+
+    propagateParams(builder, witnessVars)
+    forceExclusiveUpdates(builder, witnessVars)
+    builder.getEdges().toList().forEach { splitAlternatives(builder, it, witnessVars) }
+    return builder
+  }
+
+  private fun propagateParams(builder: XcfaProcedureBuilder, witnessVars: Set<VarDecl<*>>) {
     val initialValuation = MutableValuation()
     builder.getParams().forEachIndexed { index, param ->
       if (param.second == ParamDirection.IN && index < params.size && params[index] is LitExpr<*>) {
         initialValuation.put(param.first, params[index] as LitExpr<*>)
       }
     }
+    val globals = builder.parent.getVars().map { it.wrappedVar }
 
     val waitlist =
-      mutableMapOf(builder.initLoc to mutableListOf(initialValuation to setOf<BigInteger>()))
+      mutableMapOf(builder.initLoc to mutableListOf<MutableValuation>(initialValuation))
     while (waitlist.isNotEmpty()) {
       val (loc, valuations) =
         waitlist.firstNotNullOf { (loc, valuations) ->
           if (valuations.size >= loc.incomingEdges.size) loc to valuations else null
         }
       waitlist.remove(loc)
-      val mergedValuation = MutableValuation.copyOf(valuations.map { it.first }.reduce(::intersect))
+      val merged = valuations.drop(1).fold(valuations.first() as Valuation, ::intersect)
 
       loc.outgoingEdges.toList().forEach { edge ->
-        val passedSegments = valuations.flatMap { it.second }.toMutableSet()
+        val valuation = MutableValuation.copyOf(merged)
         val oldLabels = edge.getFlatLabels()
-        val simplifiedLabels =
-          oldLabels.flatMap {
-            val simplified = it.simplify(mergedValuation, parseContext)
-            simplifyStartLabelLogicalThread(simplified, passedSegments) ?: listOf(simplified)
-          }
-        builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
-
         val newLabels =
-          simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, passedSegments).filter {
-            if (it is StmtLabel) {
-              if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
-                val expr = it.stmt.expr
-                if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
-                  return@filter false
-                } else if (expr is IntLitExpr) {
-                  var i = BigInteger.valueOf(0)
-                  while (i < expr.value) passedSegments.add(i++)
-                }
-              } else if (it.stmt is AssumeStmt && it.stmt.cond == True()) {
-                return@filter false
-              }
-            }
-            true
-          }
-
+          oldLabels
+            .map { it.simplify(valuation, parseContext) }
+            .filterNot { it.isTrivial(witnessVars) }
+        globals.forEach { valuation.remove(it) }
         if (newLabels != oldLabels) {
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
         }
-        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation to passedSegments)
+        waitlist.getOrPut(edge.target) { mutableListOf() }.add(valuation)
       }
     }
-
-    return builder
   }
 
-  private fun simplifySegmentCounterUpdates(
-    segmentVar: VarDecl<*>,
-    labels: List<XcfaLabel>,
-    passedSegmentValues: MutableSet<BigInteger>,
-  ): List<XcfaLabel> {
-    var updatedSegment = false
-    val newLabels = mutableListOf<XcfaLabel>()
-    labels.forEach { label ->
-      val segmentUpdates = getSegmentUpdates(label)
-      if (segmentUpdates.isNotEmpty()) {
-        val segmentUpdate = segmentUpdates.find { it.current.value !in passedSegmentValues }
-        if (updatedSegment || segmentUpdate == null) {
-          // do not add the segment update
-        } else {
-          passedSegmentValues.add(segmentUpdate.current.value)
-          updatedSegment = true
-          var insertIndex = newLabels.size
-          while (insertIndex > 0) {
-            val l = newLabels[insertIndex - 1]
-            if (l is StmtLabel && l.stmt is AssumeStmt) {
-              insertIndex--
-            } else {
-              break
-            }
-          }
-          newLabels.add(insertIndex, StmtLabel(AssumeStmt.of(segmentUpdate.cond)))
-          newLabels.add(AssignStmtLabel(segmentVar, segmentUpdate.next, segmentUpdate.metadata))
+  private fun forceExclusiveUpdates(builder: XcfaProcedureBuilder, witnessVars: Set<VarDecl<*>>) {
+    // only a thread knowing its own logical id sees just its own guards
+    val knowsTid =
+      builder.getEdges().any { edge ->
+        edge.getFlatLabels().any {
+          val stmt = (it as? StmtLabel)?.stmt as? AssignStmt<*>
+          stmt?.varDecl?.name == LOGICAL_THREAD_ID &&
+            ((stmt.expr as? IntLitExpr)?.value?.signum() ?: -1) >= 0
         }
-      } else {
-        newLabels.add(label)
       }
-    }
+    if (!knowsTid || exclusiveSegments.isEmpty()) return
 
-    val valuation = MutableValuation()
-    return newLabels.map {
-      val result = it.simplify(valuation, parseContext)
-      if (result is StmtLabel) {
-        val stmt = result.stmt
-        if (stmt is AssumeStmt) {
-          val cond = stmt.cond
-          if (cond is EqExpr<*>) {
-            val left = cond.leftOp
-            val right = cond.rightOp
-            if (left is RefExpr<*> && left.decl.name == SEGMENT_COUNTER && right is LitExpr<*>) {
-              valuation.put(left.decl, right)
-            } else if (
-              right is RefExpr<*> && right.decl.name == SEGMENT_COUNTER && left is LitExpr<*>
-            ) {
-              valuation.put(right.decl, left)
-            }
-          }
+    val sites =
+      builder.getEdges().flatMap { edge ->
+        edge.getFlatLabels().mapIndexedNotNull { index, label ->
+          label.updatedSegment(witnessVars)?.let { Triple(edge, index, it) }
         }
       }
-      result
+    val forced =
+      sites.filter { site ->
+        site.third in exclusiveSegments &&
+          sites.none { other ->
+            other != site &&
+              other.third == site.third &&
+              (other.first == site.first ||
+                reaches(site.first, other.first) ||
+                reaches(other.first, site.first))
+          }
+      }
+    for ((edge, sitesOnEdge) in forced.groupBy { it.first }) {
+      val indices = sitesOnEdge.map { it.second }.toSet()
+      val newLabels =
+        edge.getFlatLabels().flatMapIndexed { index, label ->
+          if (index in indices) label.forced() else listOf(label)
+        }
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
     }
   }
 
-  private data class SegmentAlternatives(
-    val cond: Expr<BoolType>,
-    val current: IntLitExpr,
-    val next: IntLitExpr,
-    val metadata: MetaData,
-  )
-
-  private fun getSegmentUpdates(label: XcfaLabel): List<SegmentAlternatives> =
-    ((label as? StmtLabel)?.stmt as? AssignStmt<*>)
-      ?.takeIf { stmt -> stmt.varDecl.name == SEGMENT_COUNTER }
-      ?.let { stmt ->
-        val updates = mutableSetOf<SegmentAlternatives>()
-        var expr = stmt.expr
-        while (expr is IteExpr<*>) {
-          segmentIteValues<IntLitExpr>(expr)?.let { (current, next) ->
-            updates.add(SegmentAlternatives(expr.cond, current, next, label.metadata))
-          }
-          expr = expr.`else`
-        }
-        updates.sortedBy { it.current }
-      } ?: emptyList()
-
-  private fun simplifyStartLabelLogicalThread(
-    label: XcfaLabel,
-    passedSegmentValues: Set<BigInteger>,
-  ): List<XcfaLabel>? {
-    if (label !is StartLabel) return null
-    var assumption: AssumeStmt? = null
-    val newParams =
-      label.params.map { param ->
-        var segmentCond: Expr<BoolType>? = null
-        var nextSegmentAlternative: LitExpr<*>? = null
-        var minNotPassedSegment: BigInteger? = null
-        var expr = param
-        while (expr is IteExpr<*>) {
-          segmentIteValues<LitExpr<*>>(expr)?.let { (segmentValue, paramValue) ->
-            if (segmentValue.value !in passedSegmentValues) {
-              if (minNotPassedSegment == null || segmentValue.value < minNotPassedSegment) {
-                segmentCond = expr.cond
-                nextSegmentAlternative = paramValue
-                minNotPassedSegment = segmentValue.value
-              }
-            }
-          }
-          expr = expr.`else`
-        }
-
-        if (nextSegmentAlternative != null) {
-          assumption = Assume(segmentCond)
-          nextSegmentAlternative
-        } else param
+  /** Whether [to] is reachable from [from] (the procedure is acyclic here). */
+  private fun reaches(from: XcfaEdge, to: XcfaEdge): Boolean {
+    val visited = mutableSetOf<XcfaLocation>()
+    val waitlist = mutableListOf(from.target)
+    while (waitlist.isNotEmpty()) {
+      val loc = waitlist.removeLast()
+      if (!visited.add(loc)) continue
+      for (edge in loc.outgoingEdges) {
+        if (edge == to) return true
+        waitlist.add(edge.target)
       }
-    return if (assumption == null) null
-    else listOf(StmtLabel(assumption), label.copy(params = newParams))
+    }
+    return false
   }
 
-  private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {
-    val eq = e.cond as? EqExpr<*> ?: return null
-    if ((eq.leftOp as? RefExpr<*>)?.decl?.name != SEGMENT_COUNTER) return null
-    val current = eq.rightOp as? IntLitExpr ?: return null
-    val next = e.then as? L ?: return null
-    return current to next
+  /** The segment a single-alternative guarded witness update or thread-id hand-over passes. */
+  private fun XcfaLabel.updatedSegment(witnessVars: Set<VarDecl<*>>): Int? {
+    val ite =
+      when {
+        this is StmtLabel && stmt is AssignStmt<*> && stmt.varDecl in witnessVars ->
+          (stmt.expr as? IteExpr<*>)?.takeIf { (it.`else` as? RefExpr<*>)?.decl == stmt.varDecl }
+        this is StartLabel ->
+          params.firstNotNullOfOrNull { param ->
+            (param as? IteExpr<*>)?.takeIf { it.`else` is IntLitExpr && segmentOf(it.cond) != null }
+          }
+        else -> null
+      } ?: return null
+    return segmentOf(ite.cond)
   }
+
+  /** k, if [cond] is exactly `segment counter == k`. */
+  private fun segmentOf(cond: Expr<BoolType>): Int? {
+    val eq = cond as? EqExpr<*> ?: return null
+    val (ref, lit) =
+      if (eq.leftOp is RefExpr<*>) eq.leftOp to eq.rightOp else eq.rightOp to eq.leftOp
+    if ((ref as? RefExpr<*>)?.decl?.name != SEGMENT_COUNTER) return null
+    return (lit as? IntLitExpr)?.value?.toInt()
+  }
+
+  /** The update of [updatedSegment] taking place: its guard is assumed, its new value assigned. */
+  private fun XcfaLabel.forced(): List<XcfaLabel> =
+    when {
+      this is StmtLabel && stmt is AssignStmt<*> -> {
+        val ite = stmt.expr as IteExpr<*>
+        listOf(
+          StmtLabel(Assume(ite.cond), ChoiceType.NONE, EmptyMetaData),
+          AssignStmtLabel(stmt.varDecl, ite.then, metadata),
+        )
+      }
+      this is StartLabel -> {
+        val index = params.indexOfFirst { it is IteExpr<*> && it.`else` is IntLitExpr }
+        val ite = params[index] as IteExpr<*>
+        listOf(
+          StmtLabel(Assume(ite.cond), ChoiceType.NONE, EmptyMetaData),
+          copy(params = params.toMutableList().also { it[index] = ite.then }),
+        )
+      }
+      else -> listOf(this)
+    }
+
+  private fun splitAlternatives(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    witnessVars: Set<VarDecl<*>>,
+  ) {
+    val labels = edge.getFlatLabels()
+    val alternatives = labels.map { it.alternatives(witnessVars) }
+    val lastSplit = alternatives.indexOfLast { it != null }
+    if (lastSplit == -1) return
+
+    builder.removeEdge(edge)
+    var source = edge.source
+    val pending = mutableListOf<XcfaLabel>()
+    fun newLoc() =
+      XcfaLocation("__loc_witness_" + XcfaLocation.uniqueCounter(), metadata = EmptyMetaData)
+    labels.forEachIndexed { index, label ->
+      val branches = alternatives[index]
+      if (branches == null) {
+        pending.add(label)
+        return@forEachIndexed
+      }
+      if (pending.isNotEmpty()) {
+        val loc = newLoc()
+        builder.addEdge(XcfaEdge(source, loc, SequenceLabel(pending.toList()), edge.metadata))
+        source = loc
+        pending.clear()
+      }
+      val join = if (index == labels.size - 1) edge.target else newLoc()
+      branches.forEach { (cond, branchLabels) ->
+        val guard = StmtLabel(Assume(cond), ChoiceType.NONE, EmptyMetaData)
+        builder.addEdge(
+          XcfaEdge(source, join, SequenceLabel(listOf(guard) + branchLabels), edge.metadata)
+        )
+      }
+      source = join
+    }
+    if (source != edge.target) {
+      builder.addEdge(XcfaEdge(source, edge.target, SequenceLabel(pending.toList()), edge.metadata))
+    }
+  }
+
+  /**
+   * The alternatives of a guarded witness update as (condition, labels) pairs, the fall-through
+   * last; null if the label is not such an update.
+   */
+  private fun XcfaLabel.alternatives(
+    witnessVars: Set<VarDecl<*>>
+  ): List<Pair<Expr<BoolType>, List<XcfaLabel>>>? =
+    when {
+      this is StmtLabel && stmt is AssignStmt<*> && stmt.varDecl in witnessVars -> {
+        val v = stmt.varDecl
+        cases(stmt.expr) { value ->
+          if (value is RefExpr<*> && value.decl == v) listOf()
+          else listOf(AssignStmtLabel(v, value, metadata))
+        }
+      }
+      else -> null
+    }
+
+  private fun cases(
+    expr: Expr<*>,
+    labelsOf: (Expr<*>) -> List<XcfaLabel>,
+  ): List<Pair<Expr<BoolType>, List<XcfaLabel>>>? {
+    if (expr !is IteExpr<*>) return null
+    val result = mutableListOf<Pair<Expr<BoolType>, List<XcfaLabel>>>()
+    val previous = mutableListOf<Expr<BoolType>>()
+    var e: Expr<*> = expr
+    while (e is IteExpr<*>) {
+      result.add(ExprUtils.simplify(And(previous.map { Not(it) } + e.cond)) to labelsOf(e.then))
+      previous.add(e.cond)
+      e = e.`else`
+    }
+    result.add(ExprUtils.simplify(And(previous.map { Not(it) })) to labelsOf(e))
+    return result.filter { it.first != False() }
+  }
+
+  private fun XcfaLabel.isTrivial(witnessVars: Set<VarDecl<*>>): Boolean =
+    this is StmtLabel &&
+      when (stmt) {
+        is AssignStmt<*> ->
+          stmt.varDecl in witnessVars && (stmt.expr as? RefExpr<*>)?.decl == stmt.varDecl
+        is AssumeStmt -> stmt.cond == True() && choiceType == ChoiceType.NONE
+        else -> false
+      }
 }

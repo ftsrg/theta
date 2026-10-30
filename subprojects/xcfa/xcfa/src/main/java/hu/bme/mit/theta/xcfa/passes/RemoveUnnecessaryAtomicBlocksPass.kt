@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,11 +44,13 @@ class RemoveUnnecessaryAtomicBlocksPass : ProcedurePass {
 
   private fun XcfaLabel.removeLabels(toRemove: Collection<XcfaLabel>): XcfaLabel =
     when {
-      toRemove.any { it === this } -> NopLabel
+      toRemove.any { it === this } -> NopLabel()
       this is SequenceLabel ->
-        SequenceLabel(labels.map { it.removeLabels(toRemove) }.filter { it !is NopLabel })
+        SequenceLabel(labels.map { it.removeLabels(toRemove) }.filter { !it.isDroppableNop() })
       this is NondetLabel ->
-        NondetLabel(labels.map { it.removeLabels(toRemove) }.filter { it !is NopLabel }.toSet())
+        NondetLabel(
+          labels.map { it.removeLabels(toRemove) }.filter { !it.isDroppableNop() }.toSet()
+        )
       else -> this
     }
 
