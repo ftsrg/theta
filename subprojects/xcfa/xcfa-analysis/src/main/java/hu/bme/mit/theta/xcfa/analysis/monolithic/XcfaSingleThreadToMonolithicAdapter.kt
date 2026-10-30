@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis.monolithic
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
+import hu.bme.mit.theta.analysis.algorithm.TransitionInvariantProof
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -36,6 +37,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -148,8 +150,9 @@ class XcfaSingleThreadToMonolithicAdapter(
     return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
   }
 
-  override fun proofToModelProof(proof: InvariantProof): LocationInvariants =
-    LocationInvariants(
+  override fun proofToModelProof(proof: InvariantProof): LocationInvariants {
+    if (proof is TransitionInvariantProof) return transitionProofToModelProof(proof)
+    return LocationInvariants(
       locations
         .mapIndexed { index, location ->
           Pair(
@@ -166,6 +169,50 @@ class XcfaSingleThreadToMonolithicAdapter(
         }
         .toMap()
     )
+  }
+
+  /**
+   * The earlier state is at the same location, so both edge variables hold the index of an incoming
+   * edge of that location; they are eliminated by enumerating these indices.
+   */
+  private fun transitionProofToModelProof(proof: TransitionInvariantProof): LocationInvariants {
+    // Earlier values keep the C name of their variable and are printed as \at(x, AnyPrev)
+    proof.anyPrev.forEach { (decl, prev) ->
+      parseContext.metadata.getMetadataValue(decl.name, "cName").ifPresent {
+        parseContext.metadata.create(prev.name, "cName", it)
+        parseContext.metadata.create(prev.name, "isAnyPrev", true)
+      }
+    }
+    val prevLocVar = proof.anyPrev.getValue(locVar)
+    val prevEdgeVar = proof.anyPrev.getValue(edgeVar)
+    return LocationInvariants(
+      locations
+        .mapIndexed { index, location ->
+          val edgeIndices =
+            location.incomingEdges.map(edges::indexOf) +
+              if (location.initial) listOf(-1) else listOf()
+          val invariant =
+            Or(
+              edgeIndices.flatMap { edge ->
+                edgeIndices.map { prevEdge ->
+                  ExprUtils.simplify(
+                    proof.getInvariant(),
+                    ImmutableValuation.builder()
+                      .put(locVar, smtInt(index))
+                      .put(prevLocVar, smtInt(index))
+                      .put(edgeVar, smtInt(edge))
+                      .put(prevEdgeVar, smtInt(prevEdge))
+                      .build(),
+                  )
+                }
+              }
+            )
+          Pair(location, listOf(PredState.of(ExprUtils.simplify(invariant))))
+        }
+        .toMap(),
+      true,
+    )
+  }
 
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()

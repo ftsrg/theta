@@ -353,7 +353,10 @@ fun IteExpr<*>.toC(parseContext: ParseContext): String =
 // nullary: ref + lit
 fun NullaryExpr<*>.toC(parseContext: ParseContext): String =
   when (this) {
-    is RefExpr<*> -> this.decl.name.toC()
+    is RefExpr<*> ->
+      if (parseContext.metadata.getMetadataValue(decl.name, "isAnyPrev").isPresent)
+        "\\at(${parseContext.metadata.getMetadataValue(decl.name, "cName").get()}, AnyPrev)"
+      else decl.name.toC()
     is LitExpr<*> -> (this as LitExpr<*>).toC(parseContext)
     else -> TODO("Not yet supported: $this")
   }
