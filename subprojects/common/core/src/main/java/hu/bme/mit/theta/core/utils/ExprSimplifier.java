@@ -25,12 +25,16 @@ import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -205,6 +209,7 @@ public final class ExprSimplifier {
 
                     .addCase(RefExpr.class, this::simplifyRef)
                     .addCase(IteExpr.class, this::simplifyIte)
+                    .addCase(PrimeExpr.class, this::simplifyPrime)
 
                     // Reference
 
@@ -269,6 +274,29 @@ public final class ExprSimplifier {
         }
 
         return expr.with(cond, then, elze);
+    }
+
+    /**
+     * A valuation binds the current state, so variables under a prime (the next state) must not be
+     * substituted: `x' = x + 1` with `x -> 2` is `x' = 3`, not `2' = 3`. Constants and params are
+     * time-independent and are still substituted.
+     */
+    private Expr<?> simplifyPrime(final PrimeExpr<?> expr, final Valuation val) {
+        final Valuation nextVal = withoutVars(val);
+        return expr.map(it -> simplify(it, nextVal));
+    }
+
+    private static Valuation withoutVars(final Valuation val) {
+        if (val.getDecls().stream().noneMatch(VarDecl.class::isInstance)) {
+            return val;
+        }
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final Decl<?> decl : val.getDecls()) {
+            if (!(decl instanceof VarDecl)) {
+                builder.put(decl, val.eval(decl).orElseThrow());
+            }
+        }
+        return builder.build();
     }
 
     private <ExprType extends Type> Expr<BoolType> unwrapIte(
