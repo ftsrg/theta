@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static hu.bme.mit.theta.frontend.stdlib.LibraryModelsKt.libraryModel;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
@@ -634,9 +635,29 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         // Collected while the function bodies were visited; appended last so a static local is
         // initialised after the file-scope globals, exactly as C orders them.
         program.getGlobalDeclarations().addAll(staticLocals);
+        addLibraryModels(program);
         collectFunctionDeclarations(program);
         recordMetadata(ctx, program);
         return program;
+    }
+
+    /**
+     * Defines every function the program declares but does not define and that has a library model
+     * ({@code LibraryModels.kt}). Each model is visited like a definition following its prototype,
+     * so it adopts the prototype's variable and every call already bound to it.
+     */
+    private void addLibraryModels(CProgram program) {
+        Set<VarDecl<?>> defined = new LinkedHashSet<>();
+        for (CFunction function : program.getFunctions()) {
+            defined.addAll(function.getFuncDecl().getVarDecls());
+        }
+        for (Map.Entry<VarDecl<?>, CDeclaration> entry : new ArrayList<>(functions.entrySet())) {
+            if (defined.contains(entry.getKey())) continue;
+            CParser.ExternalDeclarationContext model = libraryModel(entry.getValue().getName());
+            if (model != null && model.accept(this) instanceof CFunction function) {
+                program.getFunctions().add(function);
+            }
+        }
     }
 
     /**
