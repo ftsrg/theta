@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -104,9 +105,33 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
             } else {
                 final Collection<Expr<BoolType>> unsatCore = solver.getUnsatCore();
                 final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
-                return ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
+                return ExprTraceStatus.infeasible(
+                        VarsRefutation.create(toTracePositions(indexedVars, indexings)));
             }
         }
+    }
+
+    /**
+     * The unsat core names each variable by its SSA index (how many times it was written), but
+     * refutations index trace states, as the interpolating checkers do. A variable version is
+     * mapped to the first state at which the variable has reached that version.
+     */
+    private static IndexedVars toTracePositions(
+            final IndexedVars ssaVars, final List<VarIndexing> indexings) {
+        final IndexedVars.Builder builder = IndexedVars.builder();
+        for (final int ssaIndex : ssaVars.getNonEmptyIndexes()) {
+            for (final VarDecl<?> varDecl : ssaVars.getVars(ssaIndex)) {
+                int position = indexings.size() - 1;
+                for (int i = 0; i < indexings.size(); ++i) {
+                    if (indexings.get(i).get(varDecl) >= ssaIndex) {
+                        position = i;
+                        break;
+                    }
+                }
+                builder.add(position, varDecl);
+            }
+        }
+        return builder.build();
     }
 
     @Override
