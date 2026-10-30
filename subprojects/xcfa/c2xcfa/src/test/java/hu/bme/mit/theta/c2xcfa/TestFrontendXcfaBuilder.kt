@@ -17,6 +17,9 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import java.io.IOException
@@ -69,15 +72,27 @@ class TestFrontendXcfaBuilder {
   @MethodSource("data")
   @Throws(IOException::class)
   fun testReachability(filepath: String) {
-    val stream = javaClass.getResourceAsStream(filepath)
-    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
+    build(filepath)
   }
 
   @ParameterizedTest
   @MethodSource("data")
   @Throws(IOException::class)
   fun testOverflow(filepath: String) {
-    val stream = javaClass.getResourceAsStream(filepath)
-    getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
+    build(filepath)
+  }
+
+  /** Builds under the default model, retrying under bytes as xcfa-cli does when asked to. */
+  private fun build(filepath: String) {
+    try {
+      val stream = javaClass.getResourceAsStream(filepath)
+      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance())
+    } catch (_: RequiresByteAddressedMemoryException) {
+      val parseContext = ParseContext()
+      parseContext.arithmetic = ArithmeticType.bitvector
+      parseContext.memoryModel = MemoryModelType.bytes
+      val stream = javaClass.getResourceAsStream(filepath)
+      getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance())
+    }
   }
 }

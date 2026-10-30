@@ -139,3 +139,4 @@ bytes_wide_access_bounds.c	efficient	LP64	SAFE:valid-memsafety	a wide access who
 flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	a wide access running past the block end is invalid under bytes	bytes
 flat_nested_memcpy.c	efficient	ILP32	SAFE	memcpy copies byte by byte under bytes	bytes
 flat_nested_calloc.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
+byte_view_struct.c	efficient	LP64	SAFE	a byte-by-byte read of a struct moves the program to the bytes memory model
