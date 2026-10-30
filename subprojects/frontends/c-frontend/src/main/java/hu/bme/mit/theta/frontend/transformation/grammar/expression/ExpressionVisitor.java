@@ -56,6 +56,7 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -1070,17 +1071,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (byteAddressed()) {
             return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
         }
-        if (type instanceof CStruct cStruct) {
-            final List<Integer> fieldSizes =
-                    cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
-            if (fieldSizes.isEmpty()) {
-                return 1;
-            }
-            return cStruct.isUnion()
-                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
-                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
-        }
-        return Math.max(type.width() / 8, 1);
+        return ObjectLayout.cellModelSize(
+                type, parseContext.getMemoryModel() == MemoryModelType.flat);
     }
 
     @Override
@@ -2025,7 +2017,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private boolean isPointerArithmeticBase(CComplexType opType) {
         return opType instanceof CPointer
                 || opType instanceof CArray
-                || (byteAddressed() && opType instanceof CStruct);
+                || (opType instanceof CStruct s && (byteAddressed() || s.inlinesAggregates()));
     }
 
     /**
@@ -2244,6 +2236,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
         final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
+        if (structType.inlinesAggregates() && CStruct.isInlineAggregate(embeddedType)) {
+            // An inline member is the sub-region at its cell offset, as under the bytes model: the
+            // following `.field` or `[i]` folds back onto the object's base.
+            final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            parseContext.getMetadata().create(region, "cType", embeddedType);
+            return region;
+        }
         final Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
