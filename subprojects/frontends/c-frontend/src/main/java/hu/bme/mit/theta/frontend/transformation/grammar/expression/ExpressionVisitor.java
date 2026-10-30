@@ -237,6 +237,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * Under the data-race check, an operand that reads shared state is evaluated into a temporary
+     * instead of staying inside the condition: the condition is a single expression, so every read
+     * in it would happen whether or not the short-circuit reaches it, and a read C never performs
+     * can race. The assignment then lands in {@link #preStatements}, where {@link
+     * #guardShortCircuited} guards it like any other effect of the operand.
+     */
+    private Expr<BoolType> captureIfShared(Expr<BoolType> holds, Expr<?> operand) {
+        if (!parseContext.isCheckDataRace()
+                || functionVisitor == null
+                || !functionVisitor.readsShared(operand)) {
+            return holds;
+        }
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> tmp = functionVisitor.createTempVar(signedInt, "shortcircuit");
+        Expr<?> value =
+                typed(Ite(holds, signedInt.getUnitValue(), signedInt.getNullValue()), signedInt);
+        preStatements.add(
+                new CAssignment(tmp.getRef(), new CExpr(value, parseContext), "=", parseContext));
+        return AbstractExprs.Neq(signedInt.getNullValue(), tmp.getRef());
+    }
+
+    /**
      * Whether running these statements may change the value of an operand already evaluated. Only
      * the program's own variables and memory can change: call results and temporaries are written
      * where they are introduced, and nowhere else.
@@ -322,6 +344,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         Expr<?> expr = operand.accept(this);
         Expr<BoolType> value =
                 AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr);
+        value = captureIfShared(value, expr);
         if (!postStatements.isEmpty() && functionVisitor != null) {
             value = snapshot(value);
             preStatements.addAll(postStatements);

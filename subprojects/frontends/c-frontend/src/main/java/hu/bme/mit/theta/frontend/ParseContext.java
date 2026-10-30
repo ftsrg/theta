@@ -58,6 +58,13 @@ public class ParseContext {
      */
     private boolean checkMemsafety = false;
 
+    /**
+     * Whether the property being verified is no-data-race: a read C never performs (the unselected
+     * operand of {@code ?:}) must then not appear in the model, or it races. Set like {@link
+     * #checkMemsafety}.
+     */
+    private boolean checkDataRace = false;
+
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
     // --
@@ -104,6 +111,14 @@ public class ParseContext {
 
     public void setCheckMemsafety(boolean checkMemsafety) {
         this.checkMemsafety = checkMemsafety;
+    }
+
+    public boolean isCheckDataRace() {
+        return checkDataRace;
+    }
+
+    public void setCheckDataRace(boolean checkDataRace) {
+        this.checkDataRace = checkDataRace;
     }
 
     public ParseContext() {

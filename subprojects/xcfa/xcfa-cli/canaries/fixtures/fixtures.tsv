@@ -100,6 +100,12 @@ auto_type.c	efficient	LP64	SAFE	GNU `__auto_type x = e` declares x with the type
 gcc_stdatomic_expansion.c	efficient	LP64	SAFE	gcc-preprocessed <stdatomic.h> operations (`__auto_type`, `typeof((void)0, *p)`, generic `__atomic_*` builtins)
 statement_expression_order.c	efficient	LP64	SAFE	a statement expression as an initializer or assigned value runs its statements and their side effects in order
 parenthesized_postfix.c	efficient	LP64	SAFE	`(a++)` yields `a` and then increments it, in an initializer, a condition, a comma list and a `&&` operand
+ternary_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the unselected operand of ?: is not read, so it cannot race
+ternary_race_read_unsafe.c	efficient	ILP32	UNSAFE:no-data-race	a racing read in the selected operand of ?: is still reported
+and_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the right operand of &&/|| is not read when short-circuited, so it cannot race
+ternary_overflow_guard.c	efficient	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported
+ternary_overflow_taken.c	efficient	ILP32	UNSAFE:no-overflow	an overflow in the selected operand of ?: is still reported
+ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported (bitvector)
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
 size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64

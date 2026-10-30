@@ -158,10 +158,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return declaration.isFunc() ? new CPointer(null, actualType, parseContext) : actualType;
     }
 
-    /**
-     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
-     * where a value has to be captured before a later statement can invalidate it.
-     */
     /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
     private static boolean containsDereference(Expr<?> expr) {
         if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
@@ -175,6 +171,31 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return false;
     }
 
+    /**
+     * Whether [expr] reads something another thread can write: memory, or a variable that is not
+     * one of the current procedure's own locals or parameters.
+     */
+    public boolean readsShared(Expr<?> expr) {
+        if (expr instanceof RefExpr<?> ref
+                && ref.getDecl() instanceof VarDecl<?> varDecl
+                && !flatVariables.contains(varDecl)) {
+            return true;
+        }
+        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+            return true;
+        }
+        for (Expr<?> op : expr.getOps()) {
+            if (readsShared(op)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
+     * where a value has to be captured before a later statement can invalidate it.
+     */
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -1984,14 +2005,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // does not misreport: assign each branch's value to a temporary *inside* the guarded
             // branch, and let the conditional's value be that temporary.
             //
-            // Gated on memory-safety verification: for any other property the Ite is fine (it
-            // selects the right branch, and reading the unselected one has no observable effect),
-            // so the XCFA is left byte-for-byte unchanged there.
-            final boolean guardsDereference =
-                    parseContext.isCheckMemsafety()
-                            && (containsDereference(lhs) || containsDereference(rhs));
+            // Gated on memory-safety verification, and on data-race verification, where reading
+            // the unselected branch is an access that can race. For any other property the Ite is
+            // fine (it selects the right branch), so the XCFA is left byte-for-byte unchanged
+            // there.
+            final boolean guardsAccess =
+                    (parseContext.isCheckMemsafety()
+                                    && (containsDereference(lhs) || containsDereference(rhs)))
+                            || (parseContext.isCheckDataRace()
+                                    && (readsShared(lhs) || readsShared(rhs)));
             VarDecl<?> conditionalTmp = null;
-            if (guardsDereference) {
+            if (guardsAccess) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");
                 parseContext
                         .getMetadata()
@@ -2009,7 +2033,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 "=",
                                 parseContext));
             }
-            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsDereference) {
+            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsAccess) {
                 CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
                 recordMetadata(ctx, preIf);
                 preStatements.addCStatement(preIf);
