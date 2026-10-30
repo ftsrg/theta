@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
@@ -87,10 +89,14 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
     if (params.size <= 1) return false
     var handle = params[1]
     while (handle is Reference<*, *>) handle = handle.expr
-    if (handle !is Dereference<*, *, *>) return false
-    val offset = handle.offset
     // A literal index (`&t[0]`, or already unrolled) needs no unrolling; only a loop-variable index
-    // (`&t[i]`) does.
-    return offset !is IntLitExpr && offset !is BvLitExpr
+    // (`&t[i]`, or `t + i` beside the base itself) does.
+    return when (handle) {
+      is Dereference<*, *, *> -> !handle.offset.isLiteral()
+      is AddExpr<*> -> handle.ops.count { !it.isLiteral() } > 1
+      else -> false
+    }
   }
+
+  private fun Expr<*>.isLiteral() = this is IntLitExpr || this is BvLitExpr
 }

@@ -34,7 +34,8 @@ deref_dot_member.c	efficient	LP64	SAFE	(*p).field is one dereference, like p->fi
 overflow_after_split.c	efficient	ILP32	UNSAFE:no-overflow	overflow checks survive the base/offset split (cType kept across the rebuild)
 alloca_declared.c	efficient	ILP32	SAFE	alloca is declared by stdlib.h
 memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee copy every cell, not n/4 of them
-vla_zero_length.c	efficient	ILP32	UNSAFE:valid-memsafety	a VLA sized from an unconstrained nondet may be zero-length (C11 6.7.6.2p5)
+vla_zero_length.c	efficient	ILP32	SAFE:valid-memsafety	a zero-length VLA that is never accessed is allowed (GNU C)
+vla_oversize_length.c	efficient	ILP32	UNSAFE:valid-memsafety	a VLA larger than PTRDIFF_MAX bytes is undefined
 vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
 pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	p-- keeps its sign under integer arithmetic (backwards buffer walk)
 store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	storing a mid-object pointer is refused, not clobbered onto one cell
@@ -80,3 +81,10 @@ busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local c
 sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
 sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
 fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double
+stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
+size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
+size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64
+mutex_errorcheck_kind.c	efficient	LP64	SAFE	PTHREAD_MUTEX_ERRORCHECK resolves to the pthread.h constant (2), not an unsupported initializer
+pthread_create_pointer_sum.c	efficient	LP64	SAFE	pthread_create through `t + i` keys the same per-element handle as `&t[i]`
+split_pointer_compare.c	efficient	LP64	SAFE	a split pointer compares equal to the same address written as pointer + offset
+split_pointer_compare_unsafe.c	efficient	LP64	UNSAFE	a split pointer still compares unequal to a different pointer + offset

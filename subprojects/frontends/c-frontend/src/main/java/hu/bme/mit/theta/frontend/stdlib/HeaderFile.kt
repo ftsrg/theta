@@ -36,6 +36,7 @@ enum class HeaderFile(val filename: String, val content: String) {
   SIGNAL_H("signal.h", signal_h),
   STDARG_H("stdarg.h", stdarg_h),
   STDATOMIC_H("stdatomic.h", stdatomic_h),
+  STDBOOL_H("stdbool.h", stdbool_h),
   STDDEF_H("stddef.h", stddef_h),
   STDINT_H("stdint.h", stdint_h),
   STDIO_H("stdio.h", stdio_h),

@@ -22,8 +22,10 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
@@ -381,18 +383,31 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             // SimplifyExprsPass after it) before this pass runs.
             "Unsupported library parameter: non-constant dereference offset (${param.offset})"
           }
-        // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
-        // single-object cases -- while every higher element gets its own synthetic handle.
-        if (offset == BigInteger.ZERO) base
-        else
-          arrayElementHandles.getOrPut(base to offset) {
-            Decls.Var("${base.name}_$offset", base.type)
-          }
+        elementHandle(base, offset)
+      }
+
+      // `t + i`, the pointer-arithmetic spelling of `&t[i]`: one base variable plus constants.
+      is AddExpr<*> -> {
+        val ops = param.ops.map { it to it.asConstant() }
+        var base = ops.filter { it.second == null }.map { it.first }.singleOrNull()
+        while (base is PosExpr<*>) base = base.op
+        check(base is RefExpr<*> && base.decl is VarDecl<*>) {
+          "Unsupported library parameter: expected a reference base variable plus a constant " +
+            "offset, got $param"
+        }
+        elementHandle(base.decl as VarDecl<*>, ops.sumOf { it.second ?: BigInteger.ZERO })
       }
 
       else -> error("Unsupported library parameter expression: $param")
     }
   }
+
+  private fun elementHandle(base: VarDecl<*>, offset: BigInteger): VarDecl<*> =
+    // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
+    // single-object cases -- while every higher element gets its own synthetic handle.
+    if (offset == BigInteger.ZERO) base
+    else
+      arrayElementHandles.getOrPut(base to offset) { Decls.Var("${base.name}_$offset", base.type) }
 
   private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
 }

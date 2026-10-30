@@ -39,7 +39,6 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.dereferences
-import kotlin.random.Random
 
 fun getPathEnumerationChecker(
   xcfa: XCFA,
@@ -75,7 +74,7 @@ fun getPathEnumerationChecker(
       pathEnumerationConfig.validateAbstractionSolver,
     )
 
-  val random = Random.Default
+  val random = explorationRandom()
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
   val lts =
     pathEnumerationConfig.coi.getLts(
