@@ -16,8 +16,10 @@
 package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -30,19 +32,47 @@ fun XcfaBuilder.getPtrSizeVar(): VarDecl<ArrayType<*, *>> =
   getVars().find { it.wrappedVar.name == "__theta_ptr_size" }!!.wrappedVar
     as VarDecl<ArrayType<*, *>>
 
-fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel {
-  // `__theta_ptr_size` maps a pointer base to an object size, so it is *indexed* by the pointer
-  // type and *holds* Fitsall. The base must therefore be cast to the pointer type -- casting it to
-  // Fitsall (as the size is) makes the index too wide for the array. Under integer arithmetic both
-  // are the same unbounded Int and the casts are skipped, which is why this only ever showed up
-  // under bitvector arithmetic. Every read of the array (MemsafetyPass) already indexes with a
-  // pointer-typed expression.
+fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel =
+  writeGhost(parseContext, getPtrSizeVar(), base, size)
+
+/**
+ * The extent of each flat slot (size plus gap), keyed by its start; 0 for a non-start. Written once
+ * per slot and never cleared, so the slots tile the allocated address range even after a `free`.
+ * Present only under memsafety with flat addressing.
+ */
+fun XcfaBuilder.getObjExtentVar(): VarDecl<ArrayType<*, *>>? =
+  getVars().find { it.wrappedVar.name == OBJ_EXTENT_VAR }?.wrappedVar as VarDecl<ArrayType<*, *>>?
+
+/** Nonzero at the start of each heap block; the flat-addressing counterpart of the `3k+0` class. */
+fun XcfaBuilder.getObjHeapVar(): VarDecl<ArrayType<*, *>>? =
+  getVars().find { it.wrappedVar.name == OBJ_HEAP_VAR }?.wrappedVar as VarDecl<ArrayType<*, *>>?
+
+const val OBJ_EXTENT_VAR = "__theta_obj_extent"
+const val OBJ_HEAP_VAR = "__theta_obj_heap"
+
+private val GHOST_ARRAYS = setOf("__theta_ptr_size", OBJ_EXTENT_VAR, OBJ_HEAP_VAR)
+
+/** Whether this is the init procedure's zeroing of a memsafety ghost array. */
+fun XcfaLabel.isGhostArrayInit(): Boolean =
+  this is StmtLabel &&
+    stmt is AssignStmt<*> &&
+    (stmt as AssignStmt<*>).varDecl.let { it.name in GHOST_ARRAYS && it.type is ArrayType<*, *> } &&
+    (stmt as AssignStmt<*>).expr is ArrayLitExpr<*, *>
+
+/** Writes [value] at pointer [index] of a pointer-indexed, Fitsall-valued ghost array. */
+fun writeGhost(
+  parseContext: ParseContext,
+  arr: VarDecl<ArrayType<*, *>>,
+  index: Expr<*>,
+  value: Expr<*>,
+): StmtLabel {
+  // Indexed by the pointer type, holding Fitsall: casting the index to Fitsall would make it too
+  // wide for the array. Under integer arithmetic both are Int and the casts are skipped.
   val fitsall = Fitsall(null, parseContext)
   val pointerType = CPointer(null, null, parseContext)
-  val arr = getPtrSizeVar()
-  val baseCast = if (pointerType.smtType is IntType) base else pointerType.castTo(base)
-  val sizeCast = if (fitsall.smtType is IntType) size else fitsall.castTo(size)
-  val write = ArrayWriteExpr.create<Type, Type>(arr.ref, baseCast, sizeCast)
+  val indexCast = if (pointerType.smtType is IntType) index else pointerType.castTo(index)
+  val valueCast = if (fitsall.smtType is IntType) value else fitsall.castTo(value)
+  val write = ArrayWriteExpr.create<Type, Type>(arr.ref, indexCast, valueCast)
   return AssignStmtLabel(arr, write)
 }
 

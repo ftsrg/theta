@@ -56,6 +56,7 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -1071,17 +1072,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (byteAddressed()) {
             return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
         }
-        if (type instanceof CStruct cStruct) {
-            final List<Integer> fieldSizes =
-                    cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
-            if (fieldSizes.isEmpty()) {
-                return 1;
-            }
-            return cStruct.isUnion()
-                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
-                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
-        }
-        return Math.max(type.width() / 8, 1);
+        return ObjectLayout.cellModelSize(
+                type, parseContext.getMemoryModel() == MemoryModelType.flat);
     }
 
     @Override
@@ -1498,9 +1490,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
-        // ordinary cell read and is left to the caller's dereference.
+        // ordinary cell read and is left to the caller's dereference. Under the bytes model a union
+        // is a region too: it is laid out in place, not a cell holding a base.
         final boolean aggregate =
-                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && (!s.isUnion() || byteAddressed()));
         if (!aggregate) {
             return null;
         }
@@ -1530,18 +1524,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
-            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
-            // one word) needs its real ObjectLayout size in bytes instead, since that is the
-            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
-            final int cells =
-                    structType.isUnion()
-                            ? (structType.unionCellWidth() == null
-                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
-                                                    .bitSize()
-                                            / 8
-                                    : 1)
-                            : structType.getUnitCount();
+            // A union is one cell, holding its base: an element of an array of unions is an object
+            // of its own, as a union member of a struct is
+            // (FrontendXcfaBuilder#allocateArrayElements).
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {
@@ -2039,7 +2025,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private boolean isPointerArithmeticBase(CComplexType opType) {
         return opType instanceof CPointer
                 || opType instanceof CArray
-                || (byteAddressed() && opType instanceof CStruct);
+                || (opType instanceof CStruct s && (byteAddressed() || s.inlinesAggregates()));
     }
 
     /**
@@ -2258,6 +2244,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
         final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
+        if (structType.inlinesAggregates() && CStruct.isInlineAggregate(embeddedType)) {
+            // An inline member is the sub-region at its cell offset, as under the bytes model: the
+            // following `.field` or `[i]` folds back onto the object's base.
+            final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            parseContext.getMetadata().create(region, "cType", embeddedType);
+            return region;
+        }
         final Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),

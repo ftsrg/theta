@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmts
@@ -49,12 +50,14 @@ import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
@@ -64,6 +67,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteInitializer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -72,6 +76,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.Obj
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -81,6 +86,7 @@ import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import java.math.BigInteger
 import java.util.IdentityHashMap
@@ -312,32 +318,30 @@ class FrontendXcfaBuilder(
       notStatementStart = alreadyHandledStatements.contains(source),
     )
 
+  /** A pointer-indexed, Fitsall-valued memsafety ghost array, zero everywhere at the start. */
+  private fun addGhostArray(
+    builder: XcfaBuilder,
+    name: String,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val fitsall = Fitsall.getFitsall(parseContext)
+    val ptrType = CPointer(null, null, parseContext)
+    val arrayType = ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type)
+    val zero = ArrayLitExpr.of(listOf(), fitsall.nullValue as Expr<Type>, arrayType)
+    val ghost = XcfaGlobalVar(Var(name, arrayType), zero)
+    builder.addVar(ghost)
+    initStmtList.add(AssignStmtLabel(ghost.wrappedVar, zero))
+  }
+
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
     if (MemsafetyPass.enabled) {
-      val fitsall = Fitsall.getFitsall(parseContext)
-      val ptrType = CPointer(null, null, parseContext)
-      val ptrSize =
-        XcfaGlobalVar(
-          Var("__theta_ptr_size", ArrayType.of(ptrType.smtType, fitsall.smtType)),
-          ArrayLitExpr.of(
-            listOf(),
-            fitsall.nullValue as Expr<Type>,
-            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
-          ),
-        )
-      builder.addVar(ptrSize)
-      initStmtList.add(
-        AssignStmtLabel(
-          ptrSize.wrappedVar,
-          ArrayLitExpr.of(
-            listOf(),
-            fitsall.nullValue as Expr<Type>,
-            ArrayType.of(ptrType.smtType as Type, fitsall.smtType as Type),
-          ),
-        )
-      )
+      val ghosts =
+        if (parseContext.memoryModel.flatAddressing())
+          listOf("__theta_ptr_size", OBJ_EXTENT_VAR, OBJ_HEAP_VAR)
+        else listOf("__theta_ptr_size")
+      ghosts.forEach { addGhostArray(builder, it, initStmtList) }
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
       initializeGlobalVariable(
@@ -584,13 +588,22 @@ class FrontendXcfaBuilder(
   }
 
   private fun StaticObject.needsCell(unit: Int?): Boolean {
-    if (mode != InitMode.ACCESSED || unit == null) return mode != InitMode.NONE
+    // Under the bytes model the offset is a byte, not a unit: keep every write of a used object.
+    if (mode != InitMode.ACCESSED || unit == null || parseContext.memoryModel.byteAddressed())
+      return mode != InitMode.NONE
     val struct =
       type as? CStruct
         ?: ((type as? CArray)?.embeddedType as? CStruct)?.takeIf(::isFlatScalarStruct)
         ?: return true
     if (struct.isUnion || struct.unitCount == 0) return true
     val structUnit = if (type is CArray) unit % struct.unitCount else unit
+    if (struct.inlinesAggregates()) {
+      // A cell inside an inline member belongs to that member; keep it whole.
+      val field =
+        struct.fields.lastOrNull { struct.unitOffsetOf(it.get1()) <= structUnit } ?: return true
+      return CStruct.isInlineAggregate(field.get2()) ||
+        parseContext.isMemberAccessed(struct, field.get1())
+    }
     return struct.fields.any {
       struct.unitOffsetOf(it.get1()) == structUnit &&
         parseContext.isMemberAccessed(struct, it.get1())
@@ -616,11 +629,10 @@ class FrontendXcfaBuilder(
       initStmtList.add(builder.allocate(parseContext, objectExpr, fitsall.getValue("$size")))
     }
     if (type.isUnion) return
-    type.fields.forEach { field ->
-      val fieldType = field.get2()
+    // Arrays keep the historical path here: only a struct-typed cell gets a static sub-object.
+    subObjectCells(type).forEach { (unitOffset, fieldType) ->
       if (fieldType is CStruct) {
         val subObjectBase = ptrCnt // capture: reading ptrCnt advances it
-        val unitOffset = type.unitOffsetOf(field.get1())
         val deref =
           Dereference(
             cast(objectExpr, objectExpr.type),
@@ -633,7 +645,13 @@ class FrontendXcfaBuilder(
             MemoryAssignStmt.create(
               deref,
               cast(
-                fieldType.getValue(FlatMemoryPass.flatBaseValue(subObjectBase, parseContext)),
+                fieldType.getValue(
+                  FlatMemoryPass.flatBaseValue(
+                    subObjectBase,
+                    objectUnits(fieldType),
+                    parseContext,
+                  )
+                ),
                 deref.type,
               ),
             )
@@ -650,153 +668,28 @@ class FrontendXcfaBuilder(
     }
   }
 
-  /**
-   * Emits the `alloca(target, size)` marker [AllocaFunctionPass] lowers into a fresh runtime base.
-   *
-   * The size is the object's field/element count, recorded (under memsafety) so out-of-bounds
-   * accesses are caught; without memsafety it is ignored and only the fresh base is assigned. The
-   * target may be a variable or a memory cell -- the pass dispatches on which.
-   */
-  private fun alloca(target: Expr<*>, size: Int): XcfaLabel =
-    InvokeLabel(
-      "alloca",
-      listOf(target, Fitsall(null, parseContext).getValue("$size")),
-      metadata = EmptyMetaData,
-    )
+  private val subObjects = SubObjects(parseContext)
 
   /**
-   * Gives a *stack-allocated* struct a fresh runtime base -- for the object and, recursively, for
-   * every struct-typed field -- from the allocation counter, instead of a compile-time constant.
-   *
-   * A struct's value is its base id. When that base was a constant baked into the procedure's init,
-   * every activation of the procedure reused it: two recursive frames, or two threads running the
-   * function, shared one `arrays[base]`, so a write in one was seen by the other and a race-free
-   * program came back a false alarm (`mt_struct`: a thread-local struct, reported Unsafe). A base
-   * drawn from the runtime counter ([alloca]) is distinct per activation, which is what C
-   * guarantees.
-   *
-   * A struct-typed field is a subobject whose base lives in the cell `arrays[parent][i]`, so it is
-   * allocated in turn into that cell (the pass writes the fresh base there). C has no by-value
-   * self-containing struct, so this terminates. Unions keep the single object their offset-0 model
-   * needs, exactly as [giveStructObjectStorage] leaves them for globals.
-   *
-   * Globals stay on the compile-time path ([giveStructObjectStorage]): a global is a single object,
-   * so a constant base cannot alias anything.
+   * Gives a *stack-allocated* struct a fresh runtime base, and its sub-objects theirs (see
+   * [SubObjects.allocateStruct]). Globals stay on the compile-time path
+   * ([giveStructObjectStorage]): a global is a single object, so a constant base cannot alias
+   * anything.
    */
-  private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) {
-    labels.add(alloca(target, if (type.isUnion) unionCellCount(type) else type.unitCount))
-    if (type.isUnion) return
-    type.fields.forEach { field ->
-      allocateStackSubobject(
-        subobjectCell(target, type, type.unitOffsetOf(field.get1()), field.get2()),
-        field.get2(),
-        labels,
-      )
-    }
-  }
+  private fun allocateStackStruct(target: Expr<*>, type: CStruct, labels: MutableList<XcfaLabel>) =
+    subObjects.allocateStruct(target, type, labels)
 
-  /**
-   * Gives a *stack-allocated* array a fresh runtime base, and -- if its elements are themselves
-   * aggregates -- allocates each of them in turn.
-   *
-   * An array of scalars is one block: the elements live directly in it (`arrays[a][k]`), so nothing
-   * more is allocated. An array of structs (or of arrays) holds a base per element in those cells,
-   * exactly like a struct holds one per field, so each element is allocated into its cell. A member
-   * array has a constant bound, so the element count is known; a flexible array member (no bound)
-   * is left unallocated, the pre-existing limitation for a member whose size the declaration omits.
-   */
-  private fun allocateStackArray(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
-    // Sized by the whole object: a multi-dimensional array's dimensions multiply, since its rows
-    // live in the same block rather than in objects of their own.
-    val size = flatArraySize(type) ?: return
-    labels.add(alloca(target, size))
-    allocateArrayElements(target, type, labels)
-  }
+  private fun allocateArrayElements(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) =
+    subObjects.allocateArrayElements(target, type, labels)
 
-  /**
-   * Gives each element of [target] an object of its own, when the elements are themselves
-   * aggregates. Rows of `int a[3][4]` and elements of `struct S a[3]` are *not* such objects: both
-   * live inline in the array's own cells, addressed as `arrays[a][i*k + f]` (see
-   * `ExpressionVisitor#rowOf`), so they need no base and nothing is allocated for them.
-   *
-   * What still needs allocating is an aggregate *inside* an element -- `struct Outer { struct Inner
-   * i; } a[3]` keeps a base per `Inner` in the cell at `i*k + offsetof(i)`, because a nested struct
-   * field is still stored as a base id. An element of plain scalars, which is the overwhelmingly
-   * common case and the one that used to blow past the cap, allocates nothing at all.
-   *
-   * Split out from [allocateStackArray] because a *declared* local array already gets its own base
-   * from the `alloca` the frontend emits at the declaration; only its subobjects are missing, and
-   * they have to be allocated after that base is assigned, not before.
-   */
-  private fun allocateArrayElements(target: Expr<*>, type: CArray, labels: MutableList<XcfaLabel>) {
-    val size = fixedArraySize(type) ?: return
-    val elementType = type.embeddedType
-    if (elementType !is CStruct || elementType.isUnion) return
-    val cells = elementType.unitCount
-    // Only the fields that are themselves objects need anything; if none are, this loop body never
-    // runs and the whole array costs zero allocations however long it is.
-    val aggregateFields =
-      elementType.fields.withIndex().filter { (_, field) ->
-        field.get2() is CStruct || field.get2() is CArray
-      }
-    if (aggregateFields.isEmpty()) return
-    for (index in 0 until size) {
-      aggregateFields.forEach { (fieldIndex, field) ->
-        val offset = index * cells + elementType.unitOffsetOf(field.get1())
-        allocateStackSubobject(
-          subobjectCell(target, type, offset, field.get2()),
-          field.get2(),
-          labels,
-        )
-      }
-    }
-  }
+  private fun subObjectCells(type: CStruct) = subObjects.subObjectCells(type)
 
-  private fun allocateStackSubobject(
-    cell: Expr<*>,
-    type: CComplexType,
-    labels: MutableList<XcfaLabel>,
-  ) {
-    when (type) {
-      is CStruct -> allocateStackStruct(cell, type, labels)
-      is CArray -> allocateStackArray(cell, type, labels)
-      else -> {} // a scalar field lives in its parent's cell; it needs no object of its own
-    }
-  }
-
-  /**
-   * The cell `arrays[parent][index]` a subobject (struct field, array element) lives at.
-   *
-   * When [parent] is itself an offset into an object -- `a[i]` on an array of structs is `a + i*k`,
-   * see `ExpressionVisitor#rowOf` -- the two offsets are added and the *object* stays the base, so
-   * the cell is `arrays[a][i*k + index]`. Leaving the sum in the base position would both name a
-   * different object (bases are three apart) and hand `ReferenceElimination` a shape it has never
-   * seen: it walks a dereference's base expecting a plain variable, and reports a bare use of a
-   * split variable when it finds arithmetic there instead.
-   */
   private fun subobjectCell(
     parent: Expr<*>,
     parentType: CComplexType,
     index: Int,
     subobjectType: CComplexType,
-  ): Dereference<*, *, *> {
-    val indexValue = parentType.getValue("$index")
-    val sum = parent.withoutPos() as? AddExpr<*>
-    val base = sum?.let { pointerOperandOf(it) }
-    return if (base == null) {
-        Dereference(cast(parent, parent.type), cast(indexValue, parent.type), subobjectType.smtType)
-      } else {
-        val offsets = sum.ops.filter { it.withoutPos() !== base } + indexValue
-        Dereference(
-          cast(base, base.type),
-          cast(AbstractExprs.Add(offsets.map { cast(it, base.type) }), base.type),
-          subobjectType.smtType,
-        )
-      }
-      .also { parseContext.metadata.create(it, "cType", subobjectType) }
-  }
-
-  private fun Expr<*>.withoutPos(): Expr<*> = if (this is PosExpr<*>) op.withoutPos() else this
+  ) = subObjects.subobjectCell(parent, parentType, index, subobjectType)
 
   /**
    * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
@@ -813,46 +706,9 @@ class FrontendXcfaBuilder(
     return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width)
   }
 
-  /** The pointer/array operand of a sum, i.e. the object the rest of it is an offset into. */
-  private fun pointerOperandOf(sum: AddExpr<*>): Expr<*>? =
-    sum.ops
-      .map { it.withoutPos() }
-      .firstOrNull {
-        val type = runCatching { CComplexType.getType(it, parseContext) }.getOrNull()
-        type is CPointer || type is CArray
-      }
+  private fun fixedArraySize(type: CArray) = subObjects.fixedArraySize(type)
 
-  /**
-   * An array's constant element count, or null when there isn't one: a flexible array member (no
-   * bound at all) or a variable-length array, whose length is only known at run time. Callers use
-   * it to decide how many subobjects to allocate, so "no constant count" has to be an answer rather
-   * than an error -- a VLA simply gets no per-element allocation.
-   */
-  private fun fixedArraySize(type: CArray): Int? {
-    val dimension = type.arrayDimension ?: return null
-    return when (val bounds = ExprUtils.simplify(dimension.expression)) {
-      is IntLitExpr -> bounds.value.toInt()
-      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(bounds).toInt()
-      else -> null
-    }
-  }
-
-  /**
-   * The number of cells an array occupies. An array is contiguous, so the element's own cell count
-   * multiplies through: `int a[3][4]` is twelve cells addressed as `arrays[a][i*4 + j]`, and
-   * `struct S a[3]` with a two-cell `S` is six, addressed as `arrays[a][i*2 + f]`. Null when a
-   * dimension is not a compile-time constant.
-   */
-  private fun flatArraySize(type: CArray): Int? {
-    val size = fixedArraySize(type) ?: return null
-    return when (val elementType = type.embeddedType) {
-      is CArray -> flatArraySize(elementType)?.let { size * it }
-      // A struct element occupies its own cells inline rather than a single cell holding a base --
-      // see ExpressionVisitor#rowOf. A union keeps one cell: its members all share offset 0.
-      is CStruct -> if (elementType.isUnion) size else size * elementType.unitCount
-      else -> size
-    }
-  }
+  private fun flatArraySize(type: CArray) = subObjects.flatArraySize(type)
 
   /**
    * Whether assigning [rExpression] to a variable of this type is a struct copy.
@@ -957,6 +813,7 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel>? {
+    if (parseContext.memoryModel.byteAddressed()) return byteCopy(target, source, type, metadata)
     val width = type.unionCellWidth()
     val cellType =
       if (width != null) unsignedTypeOfWidth(width) ?: return null
@@ -990,15 +847,77 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): List<XcfaLabel> =
+    if (parseContext.memoryModel.byteAddressed()) byteCopy(target, source, type, metadata)
+    else if (type.inlinesAggregates()) inlineCopy(target, source, type, type, 0, metadata)
     // Bitfields sharing a storage unit map to the same cell, so the copy of that cell is simply
     // repeated -- idempotent, and it carries all the packed fields at once.
-    type.fields.flatMap { field ->
-      val fieldType = field.get2()
-      val unit = type.unitOffsetOf(field.get1())
-      copySubobject(
-        subobjectCell(target, type, unit, fieldType),
-        subobjectCell(source, type, unit, fieldType),
-        fieldType,
+    else
+      type.fields.flatMap { field ->
+        val fieldType = field.get2()
+        if (fieldType is CStruct || fieldType is CArray) parseContext.markAggregateMemberCopied()
+        val unit = type.unitOffsetOf(field.get1())
+        copySubobject(
+          subobjectCell(target, type, unit, fieldType),
+          subobjectCell(source, type, unit, fieldType),
+          fieldType,
+          metadata,
+        )
+      }
+
+  /**
+   * Copies the part of an inline-laid-out [parentType] object that holds a [type] at cell [offset]:
+   * leaf by leaf, since a nested struct or array has no base of its own to copy through. A union
+   * still keeps its own storage and is copied into it.
+   */
+  private fun inlineCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    parentType: CStruct,
+    type: CComplexType,
+    offset: Int,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    when {
+      type is CStruct && !type.isUnion ->
+        type.fields.flatMap {
+          inlineCopy(
+            target,
+            source,
+            parentType,
+            it.get2(),
+            offset + type.unitOffsetOf(it.get1()),
+            metadata,
+          )
+        }
+      type is CArray -> {
+        val stride = CStruct.inlineCells(type.embeddedType)
+        (0 until (ObjectLayout.constantDimension(type) ?: 0)).flatMap {
+          inlineCopy(target, source, parentType, type.embeddedType, offset + it * stride, metadata)
+        }
+      }
+      else ->
+        copySubobject(
+          subobjectCell(target, parentType, offset, type),
+          subobjectCell(source, parentType, offset, type),
+          type,
+          metadata,
+        )
+    }
+
+  /**
+   * Copies an aggregate under the bytes model, where it is one object of bytes: every cell of its
+   * layout (see [ByteInitializer.cells]) at its byte offset, nested aggregates included.
+   */
+  private fun byteCopy(
+    target: Expr<*>,
+    source: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): List<XcfaLabel> =
+    ByteInitializer(parseContext).cells(type, null).flatMap {
+      copyScalar(
+        subobjectCell(target, type, it.byteOffset, it.type),
+        subobjectCell(source, type, it.byteOffset, it.type),
         metadata,
       )
     }
@@ -1082,6 +1001,7 @@ class FrontendXcfaBuilder(
     initExpr: CStatement? = null,
     isAtomic: Boolean = false,
     declaration: CDeclaration? = null,
+    storageGiven: Boolean = false,
   ) {
     val type = CComplexType.getType(globalDeclaration, parseContext)
     if (type is CVoid) {
@@ -1111,15 +1031,11 @@ class FrontendXcfaBuilder(
         )
       )
     }
+    if (parseContext.memoryModel.byteAddressed() && (type is CArray || type is CStruct)) {
+      initializeByteObject(builder, globalDeclaration, type, initStmtList, initExpr, declaration)
+      return
+    }
     if (type is CArray) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
-        )
-      )
-      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       // `extern T a[];` is a *declaration*, not a definition: with `extern` and no initializer it
       // is not even a tentative definition (C17 6.9.2p2), and an array type with no size is
       // incomplete (6.7.6.2p4). The definition -- and with it the extent -- lives in another
@@ -1130,6 +1046,20 @@ class FrontendXcfaBuilder(
       // e.g. `extern unsigned char const _ctype[];`.
       val extentUnknown =
         declaredElsewhere(declaration) && type.arrayDimension == null && initExpr == null
+      val units =
+        when {
+          !parseContext.memoryModel.flatAddressing() -> 0L // unused: multi bases are bare ids
+          extentUnknown -> FlatAddressSpace.UNKNOWN_EXTENT.toLong()
+          else -> staticUnits(type.embeddedType, getArraySize(type, initExpr, declaration).toLong())
+        }
+      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+      initStmtList.add(
+        AssignStmtLabel(
+          globalDeclaration,
+          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, units, parseContext)),
+        )
+      )
+      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
       if (MemsafetyPass.enabled) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
@@ -1143,17 +1073,11 @@ class FrontendXcfaBuilder(
         // accesses to later elements -- `struct Item arr[3]` recorded 3 for a 6-cell object, and
         // every `arr[2].b` was reported as an invalid dereference.
         //
-        // An object of unknown extent gets its whole slice of the address line instead. It has to
-        // get *something*: an unregistered base reads back as size 0 (the size array's default,
-        // which is also how a freed block is marked), and `size <= offset` is then a tautology --
-        // every access to it would be reported as an invalid dereference. Any concrete bound would
-        // be invented, and inventing a small one is how a wrong `false(valid-deref)` gets produced:
-        // `_ctype[c]` indexes a 256-entry table this file never sees the definition of. The slice
-        // width is the largest bound that cannot collide with the next object (bases are spaced by
-        // FLAT_STRIDE), and it says the only true thing this unit knows -- it cannot bound an index
-        // into an object it does not define.
+        // An object of unknown extent gets the whole slot reserved for it instead. Any concrete
+        // bound would be invented, and inventing a small one is how a wrong `false(valid-deref)`
+        // gets produced: `_ctype[c]` indexes a 256-entry table this file never sees defined.
         val cells =
-          if (extentUnknown) FlatMemoryPass.FLAT_STRIDE
+          if (extentUnknown) FlatAddressSpace.UNKNOWN_EXTENT.toLong()
           else getArraySize(type, initExpr, declaration).toLong() * cellsOf(type.embeddedType)
         val bounds = CComplexType.getUnsignedLong(parseContext).getValue(cells.toString())
         initStmtList.add(builder.allocate(parseContext, globalDeclaration, bounds))
@@ -1168,6 +1092,17 @@ class FrontendXcfaBuilder(
         return
       }
       val flatElement = type.embeddedType
+      if (hasInlineAggregateMember(flatElement)) {
+        val count = getArraySize(type, initExpr, declaration)
+        initializeInline(builder, globalDeclaration, 0, type, initExpr, initStmtList, count)
+        return
+      }
+      val innermost = scalarElementOf(type)
+      if (innermost is CStruct && !isFlatScalarStruct(innermost)) {
+        val count = getArraySize(type, initExpr, declaration)
+        initializeInlineElements(builder, type, count, globalDeclaration, 0, initExpr, initStmtList)
+        return
+      }
       if (
         initExpr != null &&
           (flatElement is CArray || (flatElement is CStruct && isFlatScalarStruct(flatElement)))
@@ -1187,7 +1122,7 @@ class FrontendXcfaBuilder(
         // id
         // itself, and elements silently aliased (their bases happening to differ only by the base
         // counter). Restricted to structs of plain scalars so the flat cell types are unambiguous;
-        // bitfields, unions, and nested aggregates keep the per-object path.
+        // bitfields, nested aggregates and unions take [initializeInlineElements] above.
         initializeFlatArray(type, initExpr, globalDeclaration, initStmtList)
         return
       }
@@ -1211,22 +1146,6 @@ class FrontendXcfaBuilder(
         }
         return
       }
-      if (flatElement is CStruct && !flatElement.isUnion) {
-        // The remaining struct elements (nested aggregates, packed bitfields) are inline too, so
-        // each one is initialized in place; a nested aggregate still gets its own object there.
-        val initExprs = elementPositions(initExpr)
-        for (i in 0 until getArraySize(type, initExpr, declaration)) {
-          initializeStructCells(
-            builder,
-            flatElement,
-            initExprs[i],
-            initStmtList,
-            globalDeclaration,
-            i * flatElement.unitCount,
-          )
-        }
-        return
-      }
       initializeCompound(
         builder,
         getArraySize(type, initExpr, declaration),
@@ -1236,16 +1155,45 @@ class FrontendXcfaBuilder(
         globalDeclaration,
       )
     } else if (type is CStruct) {
-      val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
-      initStmtList.add(
-        AssignStmtLabel(
-          globalDeclaration,
-          type.getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext)),
+      // A struct field of a struct already got its base from [giveStructObjectStorage], which
+      // recorded it as the sub-object cell; minting another here would orphan that record.
+      if (!storageGiven) {
+        // reading ptrCnt hands out this base and advances it -- capture once
+        val objectBase = ptrCnt
+        initStmtList.add(
+          AssignStmtLabel(
+            globalDeclaration,
+            type.getValue(
+              FlatMemoryPass.flatBaseValue(objectBase, objectUnits(type), parseContext)
+            ),
+          )
         )
-      )
-      recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
-      giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
-      initializeStructCells(builder, type, initExpr, initStmtList, globalDeclaration)
+        recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
+        giveStructObjectStorage(builder, globalDeclaration, type, initStmtList, objectBase)
+      } else {
+        // This cell expression names the sub-object recorded there; register it so the writes
+        // through it can be dropped like those of any other unread member.
+        parentCell(globalDeclaration)?.let { (parent, unit) ->
+          parseContext.subObjectBaseAt(BigInteger.valueOf(parent.toLong()), unit)?.let {
+            staticObjectBases[globalDeclaration] = it.toInt()
+          }
+        }
+      }
+      if (hasInlineAggregateMember(type)) {
+        initializeInline(builder, globalDeclaration, 0, type, initExpr, initStmtList)
+        return
+      }
+      if (type.isUnion) initializeUnion(type, globalDeclaration, initExpr, initStmtList)
+      else
+        initializeStructUnits(
+          builder,
+          type,
+          globalDeclaration,
+          0,
+          initExpr,
+          initStmtList,
+          unitsHaveStorage = true,
+        )
     } else {
       // C permits a scalar to be braced -- `int x = {5}`, and, more to the point, a scalar leaf of
       // a
@@ -1264,54 +1212,77 @@ class FrontendXcfaBuilder(
   }
 
   /**
-   * Initializes the cells of a struct value stored from cell [offset] of [obj]: the struct's own
-   * object (offset 0), or an element laid out inline in an array of structs.
+   * A global aggregate under the bytes model: one object of its byte size, with nested aggregates
+   * as regions of it, whose initializer -- or the zero C gives it -- is written at the layout's
+   * byte offsets (see [ByteInitializer]).
    */
-  private fun initializeStructCells(
+  private fun initializeByteObject(
     builder: XcfaBuilder,
-    type: CStruct,
-    initExpr: CStatement?,
+    target: Expr<*>,
+    type: CComplexType,
     initStmtList: MutableList<XcfaLabel>,
-    obj: Expr<*>,
-    offset: Int = 0,
+    initExpr: CStatement?,
+    declaration: CDeclaration?,
   ) {
-    // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
-    // struct every member is its own unit, so this is the historical field-indexed iteration.
-    val unitTypes =
-      (0 until type.unitCount).map { unit ->
-        type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
+    // An `extern T a[];` declared here and defined elsewhere: see the CArray branch below.
+    val extentUnknown =
+      type is CArray &&
+        declaredElsewhere(declaration) &&
+        type.arrayDimension == null &&
+        initExpr == null
+    val count =
+      (type as? CArray)?.takeIf { !extentUnknown }?.let { getArraySize(it, initExpr, declaration) }
+    val bytes =
+      when {
+        extentUnknown -> FlatAddressSpace.UNKNOWN_EXTENT.toLong()
+        type is CArray -> staticUnits(type.embeddedType, count!!.toLong())
+        else -> staticUnits(type, 1)
       }
-    // **Brace elision.** `const fms_info_t x[6] = { 0 };` gives the whole array a single
-    // initializer, so its first element -- a struct -- receives a bare scalar rather than a list.
-    // C 6.7.10p17 says that scalar initialises the first member (recursively, the first scalar
-    // leaf) and every other member is zero. This was refused outright.
-    //
-    // Routing the scalar to unit 0 and `null` to the rest gets the whole rule right by recursion:
-    // a nested struct or array at unit 0 applies the same elision one level down, and every other
-    // unit takes the `null` path, which assigns its zero value. Bitfields pack from bit 0, so a
-    // packed unit receiving the scalar sets the first member and zeroes the others -- the same
-    // rule again. An UnsupportedInitializer still falls through to the zero path below.
-    if (initExpr != null && initExpr !is CInitializerList) {
-      for (unit in 0 until type.unitCount) {
-        val et = unitTypes[unit]
-        val cell = Dereference(obj, offsetLiteral((offset + unit).toLong()), et.smtType)
-        parseContext.metadata.create(cell, "cType", et)
-        initializeGlobalVariable(builder, cell, initStmtList, if (unit == 0) initExpr else null)
-      }
-      return
+    val objectBase = ptrCnt // reading ptrCnt hands out this base and advances it -- capture once
+    initStmtList.add(
+      AssignStmtLabel(
+        target,
+        type.getValue(FlatMemoryPass.flatBaseValue(objectBase, bytes, parseContext)),
+      )
+    )
+    recordStaticObject(objectBase, type, target, parentCell(target))
+    if (MemsafetyPass.enabled) {
+      val size = CComplexType.getUnsignedLong(parseContext).getValue(bytes.toString())
+      initStmtList.add(builder.allocate(parseContext, target, size))
     }
-    if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
-      // A brace initializer names members, which no longer map one-to-one onto cells.
-      initializePackedStruct(builder, type, { unitTypes[it] }, initExpr, initStmtList, obj, offset)
-    } else {
-      initializeCompound(
-        builder,
-        type.unitCount,
-        { unitTypes[it] },
-        initExpr,
-        initStmtList,
-        obj,
-        offset,
+    if (extentUnknown) return
+    val layout = ByteInitializer(parseContext)
+    val leaves = layout.leaves(type, initExpr)
+    val covered =
+      leaves
+        .filter { !it.isBitfield && it.type !is CStruct && it.type !is CArray }
+        .map { it.byteOffset to it.type.width() }
+        .toSet()
+    fun cell(offset: Int, cellType: CComplexType): Expr<*> =
+      Dereference(target, offsetLiteral(offset.toLong()), cellType.smtType).also {
+        parseContext.metadata.create(it, "cType", cellType)
+      }
+    layout
+      .cells(type, count)
+      .filter { (it.byteOffset to it.type.width()) !in covered }
+      .forEach {
+        initStmtList.add(AssignStmtLabel(cell(it.byteOffset, it.type), it.type.nullValue))
+      }
+    for (leaf in leaves) {
+      if (leaf.type is CStruct || leaf.type is CArray) {
+        throw UnsupportedFrontendElementException(
+          "A global initialized with a whole aggregate value is not supported under the bytes model."
+        )
+      }
+      val cell = cell(leaf.byteOffset, leaf.type)
+      val value = leaf.type.castTo(leaf.value.expression)
+      initStmtList.add(
+        AssignStmtLabel(
+          cell,
+          if (leaf.isBitfield)
+            leaf.type.castTo(BitfieldSlice.write(cell, value, leaf.bitInUnit, leaf.width))
+          else value,
+        )
       )
     }
   }
@@ -1329,6 +1300,340 @@ class FrontendXcfaBuilder(
     return current
   }
 
+  /** Whether [type] lays a nested struct or array out inline (see [CStruct.inlinesAggregates]). */
+  private fun hasInlineAggregateMember(type: CComplexType): Boolean =
+    when (type) {
+      is CArray -> hasInlineAggregateMember(type.embeddedType)
+      is CStruct ->
+        type.inlinesAggregates() && type.fields.any { CStruct.isInlineAggregate(it.get2()) }
+      else -> false
+    }
+
+  /**
+   * Initializes the [type]-typed part of the static object [base] at cell [offset], when nested
+   * aggregates are laid out inline: every scalar leaf is a cell of [base] itself, and a union keeps
+   * a sub-object of its own. [count] overrides the element count of an array whose declaration
+   * leaves it to the initializer.
+   */
+  private fun initializeInline(
+    builder: XcfaBuilder,
+    base: Expr<*>,
+    offset: Int,
+    type: CComplexType,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+    count: Int? = null,
+  ) {
+    // A bare scalar for an aggregate initializes its first leaf (brace elision, C17 6.7.9p20).
+    val positions =
+      if (initExpr != null && initExpr !is CInitializerList) mapOf(0 to initExpr)
+      else elementPositions(initExpr)
+    when {
+      type is CStruct && !type.isUnion -> {
+        val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
+        type.fields.indices
+          .groupBy { slotOf(it).unitIndex() }
+          .forEach { (unit, members) ->
+            val unitOffset = offset + type.cellOfUnit(unit)
+            val first = type.fields[members[0]].get2()
+            if (members.size == 1 && !slotOf(members[0]).bitfield()) {
+              initializeInline(
+                builder,
+                base,
+                unitOffset,
+                first,
+                positions[members[0]],
+                initStmtList,
+              )
+              return@forEach
+            }
+            // Packed bitfields share one cell: fold their values onto zero, as
+            // initializePackedStruct.
+            val cell = Dereference(base, offsetLiteral(unitOffset.toLong()), first.smtType)
+            parseContext.metadata.create(cell, "cType", first)
+            var value: Expr<*> = first.nullValue
+            for (field in members) {
+              val element = unwrapScalarInitializer(positions[field]) ?: continue
+              val slot = slotOf(field)
+              value =
+                BitfieldSlice.write(
+                  value,
+                  first.castTo(element.expression),
+                  slot.bitOffset(),
+                  slot.width(),
+                )
+            }
+            initStmtList.add(AssignStmtLabel(cell, first.castTo(value)))
+          }
+      }
+      type is CArray -> {
+        val stride = CStruct.inlineCells(type.embeddedType)
+        val elements = count ?: ObjectLayout.constantDimension(type) ?: 0
+        for (i in 0 until elements) {
+          val element = type.embeddedType
+          initializeInline(builder, base, offset + i * stride, element, positions[i], initStmtList)
+        }
+      }
+      else -> {
+        val cell = Dereference(base, offsetLiteral(offset.toLong()), type.smtType)
+        parseContext.metadata.create(cell, "cType", type)
+        initializeGlobalVariable(builder, cell, initStmtList, initExpr)
+      }
+    }
+  }
+
+  /**
+   * Initializes the units of a struct stored from cell [firstCell] of [target] on: 0 for a struct
+   * object of its own, `i*unitCount` for element `i` of an array the struct is laid inline in.
+   */
+  private fun initializeStructUnits(
+    builder: XcfaBuilder,
+    type: CStruct,
+    target: Expr<*>,
+    firstCell: Int,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+    unitsHaveStorage: Boolean = false,
+  ) {
+    // Storage is per unit, not per member: packed bitfields share a cell. For a bitfield-free
+    // struct every member is its own unit, so this is the historical field-indexed iteration.
+    val unitTypes =
+      (0 until type.unitCount).map { unit ->
+        type.fields.first { type.unitOffsetOf(it.get1()) == unit }.get2()
+      }
+    // Brace elision has already given every struct element its own list (CInitializerList#braced).
+    if (type.unitCount != type.fields.size && initExpr is CInitializerList) {
+      // A brace initializer names members, which no longer map one-to-one onto cells.
+      initializePackedStruct(
+        builder,
+        type,
+        { unitTypes[it] },
+        initExpr,
+        initStmtList,
+        target,
+        firstCell,
+        unitsHaveStorage,
+      )
+    } else {
+      initializeCompound(
+        builder,
+        type.unitCount,
+        { unitTypes[it] },
+        initExpr,
+        initStmtList,
+        target,
+        firstCell,
+        unitsHaveStorage,
+      )
+    }
+  }
+
+  /**
+   * Scalar bits an initializer stores into a union: [width] bits at [bitOffset], null if unknown.
+   */
+  private data class UnionLeaf(val bitOffset: Int, val width: Int, val value: Expr<*>?)
+
+  /**
+   * Initializes a union in the cells its members are read from, the ones [unionCopy] copies: the
+   * single word of a word-sliceable union, or the byte cells of a byte-laid-out one. The storage
+   * starts out zero (C17 6.7.10p10), then the scalars of the initialized member are placed at the
+   * bit offsets the member reads use.
+   *
+   * The bytes of a non-zero floating-point member are left unwritten, i.e. unconstrained: storing
+   * its bits needs the IEEE reinterpretation that byte-laid-out unions refuse.
+   */
+  private fun initializeUnion(
+    type: CStruct,
+    target: Expr<*>,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val wordWidth = type.unionCellWidth()
+    val leaves = mutableListOf<UnionLeaf>()
+    collectUnionLeaves(type, initExpr, 0, 0, wordWidth != null, leaves)
+    val (cellType, cells) =
+      if (wordWidth != null) unionWordCell(wordWidth, leaves) else unionByteCells(type, leaves)
+    cells.forEachIndexed { i, value ->
+      if (value == null) return@forEachIndexed
+      val offset = offsetLiteral(i.toLong())
+      val cell = Dereference(cast(target, target.type), cast(offset, target.type), cellType.smtType)
+      parseContext.metadata.create(cell, "cType", cellType)
+      initStmtList.add(AssignStmtLabel(cell, cast(value, cell.type)))
+    }
+  }
+
+  private fun unionWordCell(
+    wordWidth: Int,
+    leaves: List<UnionLeaf>,
+  ): Pair<CComplexType, List<Expr<*>?>> {
+    // The type ExpressionVisitor#unsignedIntegerOfWidth reads a union's word at.
+    val wordType =
+      unsignedTypeOfWidth(wordWidth)
+        ?: CComplexType.getUnsignedLong(parseContext).takeIf { it.width() >= wordWidth }
+        ?: CComplexType.getUnsignedLongLong(parseContext)
+    // A member filling the whole word keeps its own representation, which a read of a member
+    // sharing it takes as is (the two differ for a negative value under integer arithmetic).
+    val whole =
+      leaves.singleOrNull()?.value?.takeIf {
+        leaves[0].bitOffset == 0 && leaves[0].width == wordWidth && it.type == wordType.smtType
+      }
+    val value =
+      whole
+        ?: wordType.castTo(
+          leaves.fold(wordType.nullValue as Expr<*>) { word, leaf ->
+            val bits = wordType.castTo(checkNotNull(leaf.value))
+            BitfieldSlice.write(word, bits, leaf.bitOffset, leaf.width)
+          }
+        )
+    return wordType to listOf(value)
+  }
+
+  private fun unionByteCells(
+    type: CStruct,
+    leaves: List<UnionLeaf>,
+  ): Pair<CComplexType, List<Expr<*>?>> {
+    val byteType = CUnsignedChar(null, parseContext)
+    val bytes = MutableList<Expr<*>?>(unionCellCount(type)) { byteType.nullValue }
+    for (leaf in leaves) {
+      val first = leaf.bitOffset / 8
+      val last = (leaf.bitOffset + leaf.width - 1) / 8
+      if (leaf.value == null) {
+        for (k in first..last) bytes[k] = null
+      } else if (leaf.bitOffset % 8 == 0 && leaf.width % 8 == 0) {
+        // Widened to its storage first: a `_Bool` is one bit wide, but takes a whole byte.
+        val value = unsignedTypeOfWidth(leaf.width)?.castTo(leaf.value) ?: leaf.value
+        ByteUnionSlice.toBytes(value, leaf.width / 8).forEachIndexed { j, byte ->
+          bytes[first + j] = byte
+        }
+      } else {
+        // A bitfield: splice its bits into each byte it spans.
+        for (k in first..last) {
+          val from = maxOf(leaf.bitOffset, 8 * k)
+          val until = minOf(leaf.bitOffset + leaf.width, 8 * k + 8)
+          val part = BitfieldSlice.read(leaf.value, from - leaf.bitOffset, until - from, false)
+          bytes[k] =
+            bytes[k]?.let {
+              BitfieldSlice.write(it, byteType.castTo(part), from - 8 * k, until - from)
+            }
+        }
+      }
+    }
+    return byteType to bytes
+  }
+
+  /**
+   * Collects the scalars [init] stores into a [type] object lying [bitOffset] bits into a union's
+   * storage, [width] bits wide. Offsets follow the member reads: the slices of the word for a
+   * word-sliceable union ([CStruct.unionSlotOf], [CStruct.overlaySlotOf]), the [ObjectLayout]
+   * offsets for a byte-laid-out one.
+   */
+  private fun collectUnionLeaves(
+    type: CComplexType,
+    init: CStatement?,
+    bitOffset: Int,
+    width: Int,
+    word: Boolean,
+    out: MutableList<UnionLeaf>,
+  ) {
+    if (init == null) return
+    // A bare scalar for a whole aggregate (`union U u = raw;`) initializes its first leaf.
+    val entries =
+      if (init is CInitializerList) elementPositions(init).toList() else listOf(0 to init)
+    when (type) {
+      is CStruct -> {
+        // Of a union's members only the last one initialized is stored (C17 6.7.10p19).
+        for ((position, value) in if (type.isUnion) entries.takeLast(1) else entries) {
+          if (position !in type.fields.indices) continue
+          val name = type.fields[position].get1()
+          val (offset, memberWidth) =
+            if (word) {
+              val slot = if (type.isUnion) type.unionSlotOf(name) else type.overlaySlotOf(name)
+              slot.bitOffset() to slot.width()
+            } else {
+              val field =
+                ObjectLayout.of(type, parseContext.architecture).field(name)
+                  ?: throw UnsupportedFrontendElementException(
+                    "Initializing a union: the layout of member [$name] could not be determined."
+                  )
+              field.bitOffset() to field.bitWidth()
+            }
+          val memberType = type.fields[position].get2()
+          collectUnionLeaves(memberType, value, bitOffset + offset, memberWidth, word, out)
+        }
+      }
+      is CArray -> {
+        val count = ObjectLayout.constantDimension(type) ?: return
+        val elementBits = ObjectLayout.sizeBits(type.embeddedType, parseContext.architecture)
+        for ((index, value) in entries) {
+          if (index !in 0 until count) continue
+          val elementOffset = bitOffset + index * elementBits
+          collectUnionLeaves(type.embeddedType, value, elementOffset, elementBits, word, out)
+        }
+      }
+      else -> {
+        val scalar = unwrapScalarInitializer(init)?.expression ?: return
+        if (scalar is UnsupportedInitializer) return
+        if (type is CReal) {
+          if (!isZeroBitsLiteral(scalar)) out.add(UnionLeaf(bitOffset, width, null))
+          return
+        }
+        out.add(UnionLeaf(bitOffset, width, type.castTo(scalar)))
+      }
+    }
+  }
+
+  /** Whether [expr] is a constant whose representation is all zero bits: `0`, `0.0`, not `-0.0`. */
+  private fun isZeroBitsLiteral(expr: Expr<*>): Boolean =
+    when (val literal = ExprUtils.simplify(expr)) {
+      is FpLitExpr -> literal.isPositiveZero
+      is IntLitExpr -> literal.value.signum() == 0
+      is BvLitExpr -> literal.value.none { it }
+      else -> false
+    }
+
+  /**
+   * Initializes an array whose innermost elements are structs laid inline -- `a[i].f` at cell
+   * `i*unitCount + f`, see `ExpressionVisitor#rowOf` -- but not cell by cell as
+   * [initializeFlatArray] does, because a unit packs bitfields or holds the base of a nested
+   * struct/array. Each element's units are written in place, so such a base is minted into the very
+   * cell accesses read, as [allocateArrayElements] does for a local array. A union element is such
+   * a base itself, in the element's one cell.
+   */
+  private fun initializeInlineElements(
+    builder: XcfaBuilder,
+    type: CArray,
+    count: Int,
+    target: Expr<*>,
+    firstCell: Int,
+    initExpr: CStatement?,
+    initStmtList: MutableList<XcfaLabel>,
+  ) {
+    val elementType = type.embeddedType
+    val stride = cellsOf(elementType)
+    val initExprs = elementPositions(initExpr)
+    for (i in 0 until count) {
+      val start = firstCell + i * stride
+      if (elementType is CArray) {
+        val rowCount = fixedArraySize(elementType) ?: 0
+        initializeInlineElements(
+          builder,
+          elementType,
+          rowCount,
+          target,
+          start,
+          initExprs[i],
+          initStmtList,
+        )
+      } else if ((elementType as CStruct).isUnion) {
+        val cell = Dereference(target, offsetLiteral(start.toLong()), elementType.smtType)
+        parseContext.metadata.create(cell, "cType", elementType)
+        initializeGlobalVariable(builder, cell, initStmtList, initExprs[i])
+      } else {
+        initializeStructUnits(builder, elementType, target, start, initExprs[i], initStmtList)
+      }
+    }
+  }
+
   private fun initializeCompound(
     builder: XcfaBuilder,
     dimension: Int,
@@ -1336,46 +1641,39 @@ class FrontendXcfaBuilder(
     initExpr: CStatement?,
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
-    offset: Int = 0,
+    firstCell: Int = 0,
+    storageGiven: Boolean = false,
   ) {
     val initExprs = elementPositions(initExpr)
     for (i in 0 until dimension) {
       val et = embeddedType(i)
       val embeddedDeclaration =
-        Dereference(globalDeclaration, offsetLiteral((offset + i).toLong()), et.smtType)
+        Dereference(globalDeclaration, offsetLiteral((firstCell + i).toLong()), et.smtType)
       parseContext.metadata.create(embeddedDeclaration, "cType", et)
-      initializeGlobalVariable(builder, embeddedDeclaration, initStmtList, initExprs[i])
+      initializeGlobalVariable(
+        builder,
+        embeddedDeclaration,
+        initStmtList,
+        initExprs[i],
+        storageGiven = storageGiven,
+      )
     }
   }
 
-  /**
-   * How many cells a union occupies: the single placeholder cell every word-sliceable union gets,
-   * or -- for a byte-laid-out one (AD7, [CStruct.unionCellWidth] null: an array member or otherwise
-   * too wide/shaped for one packed word) -- its real [ObjectLayout] size in bytes, since that is
-   * the granularity [ExpressionVisitor]'s byte cells actually address it at. Getting this wrong
-   * either under- or over-sizes the allocation and `__theta_ptr_size`, so it must track
-   * [ExpressionVisitor]'s own byte-offset arithmetic exactly.
-   */
-  private fun unionCellCount(type: CStruct): Int =
-    if (type.unionCellWidth() == null) ObjectLayout.of(type, parseContext.architecture).bitSize / 8
-    else 1
+  private fun unionCellCount(type: CStruct) = subObjects.unionCellCount(type)
 
-  /**
-   * How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`.
-   */
-  private fun cellsOf(type: CComplexType): Int =
-    when (type) {
-      is CArray -> flatArraySize(type) ?: 1
-      is CStruct -> if (type.isUnion) unionCellCount(type) else type.unitCount
-      else -> 1
-    }
+  private fun staticUnits(type: CComplexType, count: Long) = subObjects.staticUnits(type, count)
+
+  private fun objectUnits(type: CComplexType) = subObjects.objectUnits(type)
+
+  private fun cellsOf(type: CComplexType) = subObjects.cellsOf(type)
 
   /**
    * Whether [type]'s cells hold only plain scalars, one per unit: no bitfield packing (units would
    * not map one-to-one to fields), no union (members overlap at offset 0), and no nested aggregate
    * field (which takes its own base id rather than an inline cell). Only such a struct can be
-   * initialized flat cell-by-cell to match how its array elements are accessed inline; anything
-   * else keeps the per-object initialization path.
+   * initialized flat cell-by-cell to match how its array elements are accessed inline; any other
+   * non-union struct is initialized unit by unit in place ([initializeInlineElements]).
    */
   private fun isFlatScalarStruct(type: CStruct): Boolean =
     !type.isUnion &&
@@ -1418,11 +1716,9 @@ class FrontendXcfaBuilder(
   /**
    * Writes a multi-dimensional array's brace initializer into its flat cells.
    *
-   * The walk carries a single running cursor rather than indexing row by row, which is what makes
-   * both spellings C allows come out the same: `float w[2][3] = {{1,2,3},{4,5,6}}` and the
-   * brace-elided `float w[2][3] = {1,2,3,4,5,6}` both fill cells 0..5. A designator resets the
-   * cursor to that element's start. Cells the initializer does not reach keep the zero C promises
-   * them.
+   * Brace elision has already been resolved ([CInitializerList.braced]), so `float w[2][3] =
+   * {{1,2,3},{4,5,6}}` and the brace-elided `float w[2][3] = {1,2,3,4,5,6}` arrive identical and
+   * fill cells 0..5. Cells the initializer does not reach keep the zero C promises them.
    */
   private fun initializeFlatArray(
     type: CArray,
@@ -1432,7 +1728,7 @@ class FrontendXcfaBuilder(
   ) {
     val total = flatArraySize(type) ?: return
     val values = LinkedHashMap<Int, CStatement>()
-    fillFlat(type, initExpr, intArrayOf(0), values)
+    fillFlat(type, initExpr, 0, values)
     for (index in 0 until total) {
       val cellType = cellTypeAt(type, index)
       val cell = Dereference(target, offsetLiteral(index.toLong()), cellType.smtType)
@@ -1448,73 +1744,31 @@ class FrontendXcfaBuilder(
   }
 
   /**
-   * Walks an initializer with a single running scalar cursor -- the "current object" of C's
-   * initialization rules -- so both spellings come out identical. A **scalar** value is placed at
-   * the cursor and advances it by one cell; that alone makes `{1,2,3,4,5,6}` (brace elision) fill
-   * cells 0..5. A **braced sub-list** initializes one whole sub-object: it is positioned at the
-   * next element boundary (or where a designator points), filled recursively, and then the cursor
-   * jumps past the entire sub-object, so a short row like `{1}` in `{{1},{4}}` still leaves the
-   * rest of its row zero. Only the multiply by the element stride is what a sub-list does that a
-   * scalar does not, which is exactly the distinction the earlier version got wrong.
+   * Collects the scalars of a fully braced initializer by the flat cell they land in: an array
+   * element at `start + i*stride`, and a field of a struct laid inline in an array's cells at
+   * `start + unitOffset(f)` -- the very cell `arr[i].f` reads. Only reached for the scalar-field
+   * structs the routing allows (bitfields and nested aggregates take initializeInlineElements).
    */
   private fun fillFlat(
     type: CComplexType,
     init: CStatement?,
-    cursor: IntArray,
+    start: Int,
     out: MutableMap<Int, CStatement>,
   ) {
-    if (init == null) return
-    if (init !is CInitializerList) {
-      out[cursor[0]] = init
-      cursor[0]++
-      return
-    }
-    if (type is CStruct && !type.isUnion) {
-      // A struct laid inline in an array's flat cells (see the routing in
-      // initializeGlobalVariable):
-      // place each field's initializer at (struct start + the field's unit offset), so `arr[i].f`
-      // lands at `arr[i*stride + unitOffset(f)]` -- the very cell an access reads -- instead of
-      // giving the element its own base id, which the access (being inline) never dereferences.
-      // Only reached for the scalar-field structs the routing allows (bitfields/unions/nested
-      // structs keep the per-object path), so a field's own fill is always a scalar leaf.
-      val structStart = cursor[0]
-      val positions = elementPositions(init)
-      type.fields.forEachIndexed { idx, field ->
-        cursor[0] = structStart + type.unitOffsetOf(field.get1())
-        fillFlat(field.get2(), positions[idx], cursor, out)
+    val positions = elementPositions(init)
+    when {
+      type is CStruct && !type.isUnion ->
+        positions.forEach { (idx, value) ->
+          val field = type.fields.getOrNull(idx) ?: return@forEach
+          fillFlat(field.get2(), value, start + type.unitOffsetOf(field.get1()), out)
+        }
+      type is CArray -> {
+        val stride = cellsOf(type.embeddedType)
+        positions.forEach { (idx, value) ->
+          fillFlat(type.embeddedType, value, start + idx * stride, out)
+        }
       }
-      cursor[0] = structStart + cellsOf(type)
-      return
-    }
-    if (type !is CArray) {
-      return // a union member's own initializer keeps the per-unit path
-    }
-    val elementType = type.embeddedType
-    val stride = cellsOf(elementType)
-    val base = cursor[0]
-    init.statements.forEach { entry ->
-      val designated = designatedIndex(entry.get1())
-      val value = entry.get2()
-      if (value is CInitializerList) {
-        // A braced sub-object: place it at its element boundary and skip the whole thing after.
-        val elementStart =
-          when {
-            designated != null -> base + designated * stride
-            (cursor[0] - base) % stride == 0 -> cursor[0]
-            else -> base + ((cursor[0] - base) / stride + 1) * stride
-          }
-        cursor[0] = elementStart
-        fillFlat(elementType, value, cursor, out)
-        cursor[0] = elementStart + stride
-      } else {
-        // A scalar where a sub-object was expected: brace elision. It descends to the next cell of
-        // the flattened array at the running cursor. The frontend stamps every element with its
-        // per-level position, but for a descending scalar that index is not a cell offset (element
-        // k of `int[2][3]` is row k, three cells wide), so it is deliberately not consulted here --
-        // the running cursor is the current object, exactly as C defines it.
-        out[cursor[0]] = value
-        cursor[0]++
-      }
+      else -> unwrapScalarInitializer(init)?.let { out[start] = it }
     }
   }
 
@@ -1559,18 +1813,25 @@ class FrontendXcfaBuilder(
     initExpr: CInitializerList,
     initStmtList: MutableList<XcfaLabel>,
     globalDeclaration: Expr<*>,
-    offset: Int = 0,
+    firstCell: Int = 0,
+    storageGiven: Boolean = false,
   ) {
     val initExprs = elementPositions(initExpr)
     val slotOf = { field: Int -> type.slotOf(type.fields[field].get1())!! }
     for (unit in 0 until type.unitCount) {
       val cellType = unitType(unit)
-      val cell =
-        Dereference(globalDeclaration, offsetLiteral((offset + unit).toLong()), cellType.smtType)
+      val offset = offsetLiteral((firstCell + unit).toLong())
+      val cell = Dereference(globalDeclaration, offset, cellType.smtType)
       parseContext.metadata.create(cell, "cType", cellType)
       val members = type.fields.indices.filter { slotOf(it).unitIndex() == unit }
       if (members.size == 1 && !slotOf(members[0]).bitfield()) {
-        initializeGlobalVariable(builder, cell, initStmtList, initExprs[members[0]])
+        initializeGlobalVariable(
+          builder,
+          cell,
+          initStmtList,
+          initExprs[members[0]],
+          storageGiven = storageGiven,
+        )
         continue
       }
       // Fold onto zero rather than onto a read of the cell: the object was just created, and none
@@ -1656,6 +1917,15 @@ class FrontendXcfaBuilder(
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
     initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
+    // A local union's initializer (see FunctionVisitor#initializeObject), written as a global's.
+    val unionType = (CComplexType.getType(lValue, parseContext) as? CStruct)?.takeIf { it.isUnion }
+    if (rValue is CInitializerList && unionType != null) {
+      val labels = mutableListOf<XcfaLabel>()
+      initializeUnion(unionType, lValue, rValue, labels)
+      val label = SequenceLabel(labels, metadata = getMetadata(statement))
+      builder.addEdge(XcfaEdge(initLoc, location, label, metadata = getMetadata(statement)))
+      return location
+    }
     val rExpression = statement.getrExpression()
     // Assigning to a packed bitfield writes only its own bits: read the shared cell, splice the
     // new value in, and store the cell back. Without this the neighbouring fields in the same
@@ -1964,17 +2234,20 @@ class FrontendXcfaBuilder(
     builder.addEdge(xcfaEdge)
     val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(location)
-    xcfaEdge =
-      XcfaEdge(
-        initLoc,
-        location,
-        StmtLabel(
-          statement.assumeStmt,
-          choiceType = ChoiceType.NONE,
-          metadata = getMetadata(statement),
-        ),
+    val assume =
+      StmtLabel(
+        statement.assumeStmt,
+        choiceType = ChoiceType.NONE,
         metadata = getMetadata(statement),
       )
+    val label =
+      statement.havocked
+        .map<XcfaLabel> {
+          val havoc = StmtLabel(HavocStmt.of(it), metadata = getMetadata(statement))
+          SequenceLabel(listOf(havoc, assume), metadata = getMetadata(statement))
+        }
+        .orElse(assume)
+    xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     return location
   }

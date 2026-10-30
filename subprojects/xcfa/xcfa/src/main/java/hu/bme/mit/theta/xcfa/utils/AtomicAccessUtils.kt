@@ -26,7 +26,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
-import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import java.math.BigInteger
 
 /**
@@ -57,15 +56,15 @@ fun Dereference<*, *, *>.addressesAtomicData(
 ): Boolean {
   if (parseContext.memoryModel.flatAddressing()) {
     // FlatMemoryPass folded the base into the offset: array is a bare 0 and offset is the flat
-    // address objectBase*STRIDE + cell. Decode it back to (base, cell) and ask directly; the
+    // address. Decode it back to (static object, cell) and ask directly; the
     // multi-model branches below must not run, because their array-based resolution (a RefExpr
     // pointer, or `initValue == array`) would spuriously match the folded 0 and mark a racy access
     // atomic -- missing a real race. When the address is not a compile-time constant we cannot
     // resolve the object, so we answer "not atomic": that keeps the access in the race check
     // (sound; at worst over-reports), never excludes it.
     val flatAddr = offset.asConstantBigInteger() ?: return false
-    val stride = BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE)
-    return parseContext.isAtomicObjectCell(flatAddr.divide(stride), flatAddr.mod(stride).toInt())
+    val slot = parseContext.flatAddressSpace.slotAt(flatAddr) ?: return false
+    return parseContext.isAtomicObjectCell(slot.id(), flatAddr.subtract(slot.start()).toInt())
   }
   // The object being accessed, identified by the base id its dereference resolves to.
   array.resolveObjectBase(parseContext)?.let { base ->

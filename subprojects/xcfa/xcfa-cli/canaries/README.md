@@ -12,7 +12,7 @@ fix nothing will protect: when you add one, check that it *fails* before your ch
 after, or it guards nothing.
 
 Fast checks run after a Theta-svcomp build to catch frontend/analysis regressions before a
-full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing and
+full benchmark. The task extracts the sibling `Theta-svcomp.zip` when the directory is missing or older than it, and
 restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Java 21+ must be on
 `PATH`.
 
@@ -38,7 +38,8 @@ Each file under `fixtures/` is a minimal program that isolates one frontend/gram
 so it builds **iff** that modification is present; reverting the fix flips its outcome and the task
 goes red. `fixtures/fixtures.tsv` maps each fixture to its arithmetic, architecture, expected
 outcome (`PARSE-OK` / `FRONTEND-FAIL` / `SAFE` / `UNSAFE`, optionally `:property`) and the feature
-it guards.
+it guards. An optional sixth column pins the memory model (`multi`, `flat` or `bytes`); the same
+fixture may appear once per model.
 
 Add a fixture whenever a change adds a frontend/grammar capability: write the smallest program that
 needs it, confirm it *fails* before the change and passes after, and add a row. A fixture that does
