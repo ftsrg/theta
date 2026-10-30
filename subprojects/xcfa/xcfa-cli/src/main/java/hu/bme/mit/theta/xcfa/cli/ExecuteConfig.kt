@@ -340,6 +340,15 @@ private fun buildFrontend(
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
     parseContext.memoryModel = cConfig.effectiveMemoryModel
+    if (parseContext.memoryModel == ArchitectureConfig.MemoryModelType.bytes) {
+      // Byte cells split and recombine values, which only bitvectors express; over integers a wide
+      // access is one unsplit cell, so an overrun past its first byte goes unchecked.
+      check(cConfig.arithmetic != ArchitectureConfig.ArithmeticType.integer) {
+        "--memory-model bytes requires bitvector arithmetic, not --arithmetic integer"
+      }
+      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      parseContext.arithmetic = cConfig.arithmetic
+    }
     // Mirrors `MemsafetyPass.enabled` on the frontend side, from the same property: the c-frontend
     // module cannot see the pass. Anything the frontend emits solely for the memory-safety checks
     // is gated on this, so the XCFA for every other property is byte-for-byte what it was.

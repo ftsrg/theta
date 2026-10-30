@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
@@ -269,6 +270,16 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   }
 
   /**
+   * The offset of [deref]'s last byte from its first under the bytes model, from the width of the
+   * value it accesses (its recorded C type is its address); 0 elsewhere.
+   */
+  private fun lastByte(deref: Dereference<*, *, *>): Int {
+    if (!parseContext.memoryModel.byteAddressed()) return 0
+    val bits = (deref.type as? BvType)?.size ?: return 0
+    return maxOf((bits + 7) / 8 - 1, 0)
+  }
+
+  /**
    * The valid-deref check of [deref] under flat addressing, which has no object base to read off
    * the address. A fresh witness `w` is assumed to be the start of the slot containing the address
    * `a` -- exactly one does when `a` is in `[FIRST, __malloc)`, as the slots tile that range -- and
@@ -314,9 +325,15 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         )
       )
     val baseSize = ArrayReadExpr.create<Type, Type>(sizeVar.ref, base)
+    // Under bytes the access spans its value's bytes, all of which must be in the object.
+    val last = fitsall.getValue("${lastByte(deref)}")
     @Suppress("UNCHECKED_CAST")
     val bad =
-      Ite<BoolType>(direct, Leq(baseSize, offset), Or(Not(inRange), Leq(size, index)))
+      Ite<BoolType>(
+        direct,
+        Leq(baseSize, Add(offset, last)),
+        Or(Not(inRange), Leq(size, Add(index, last))),
+      )
         as Expr<BoolType>
     return Pair(
       listOf(StmtLabel(HavocStmt.of(witness)), StmtLabel(Assume(Or(Not(inRange), inSlot)))),
@@ -384,7 +401,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
           .getVars()
           .map { it.wrappedVar }
           .filter { it != anyBase && it != sizeVar }
-          .filter { CComplexType.getType(it.ref, parseContext) is CPointer }
+          // A ghost (`__malloc`, the slot arrays) may have no C type at all; it is not a pointer.
+          .filter {
+            runCatching { CComplexType.getType(it.ref, parseContext) }.getOrNull() is CPointer
+          }
     val pointedTo = globalPointers.map { Eq(cast(it.ref, mallocBase.type), mallocBase) }
     val remained =
       if (pointedTo.isEmpty()) stillAllocated else And(stillAllocated, Not(Or(pointedTo)))

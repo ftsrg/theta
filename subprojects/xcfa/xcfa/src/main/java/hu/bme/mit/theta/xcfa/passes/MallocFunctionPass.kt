@@ -70,10 +70,10 @@ private const val MAX_HEAP_ELEMENTS = 64
  *
  * A block of a struct type gets the sub-objects its cells hold (see [SubObjects]), as a stack
  * object does, for each element when its size is a constant. When that is impossible -- the block
- * is untyped, its element count is not constant, or it is reallocated -- and the program reaches
- * sub-objects at all, the multi model refuses and the program is rebuilt under flat, which lays
- * them out inline. The type is the one the result is first bound to; a block later used as an
- * unrelated struct type is not covered.
+ * is untyped, its element count is not constant, it ends in a flexible array member, or it is
+ * reallocated -- and the program reaches sub-objects at all, the multi model refuses and the
+ * program is rebuilt under flat, which lays them out inline. The type is the one the result is
+ * first bound to; a block later used as an unrelated struct type is not covered.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -190,6 +190,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       return listOf()
     }
     val layout = SubObjects(parseContext)
+    if (
+      layout.subObjectCells(struct).any { (_, t) ->
+        t is CArray && layout.fixedArraySize(t) == null
+      }
+    ) {
+      refuseUnlessFlat("a flexible array member")
+      return listOf()
+    }
     val labels = mutableListOf<XcfaLabel>()
     for (index in 0 until count) {
       layout.allocateMembers(ret, struct, struct, index * struct.unitCount, labels, HEAP_SUBOBJECT)

@@ -432,9 +432,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     embeddedType: CComplexType,
   ): StmtLabel {
     val cells =
-      when (embeddedType) {
-        is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
-        is CArray -> flatCellCount(embeddedType)
+      when {
+        // In bytes, as the object's own initialization records it; cells would shrink it.
+        parseContext.memoryModel.byteAddressed() -> referencedUnits(embeddedType).toInt()
+        embeddedType is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
+        embeddedType is CArray -> flatCellCount(embeddedType)
         else -> 1
       }
     return if (cells != null)
