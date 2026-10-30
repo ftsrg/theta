@@ -1,4 +1,4 @@
-fixture	arithmetic	architecture	expect	feature
+fixture	arithmetic	architecture	expect	feature	memory_model
 union_punning.c	efficient	LP64	PARSE-OK	union punning: pointer + pointer-wide unsigned alias
 builtin_object_size.c	efficient	LP64	PARSE-OK	__builtin_object_size grammar + fallback
 typeof_type.c	efficient	LP64	PARSE-OK	__typeof__(type-name)
