@@ -92,6 +92,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      // after inlining, so a read through a callee's parameter is a read through the literal here
+      StringLiteralInitPass(),
       SimplifyExprsPass(parseContext, property), // before unroll to have more chance of unrolling
       UnrollPass(specificRecursionUnrollLimit = -1),
       EmptyEdgeRemovalPass(),
