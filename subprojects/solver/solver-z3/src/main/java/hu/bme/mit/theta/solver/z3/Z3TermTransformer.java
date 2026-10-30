@@ -558,34 +558,21 @@ final class Z3TermTransformer {
     private Expr<?> transformFpLit(final com.microsoft.z3.Expr term) {
         FPNum fpTerm = (FPNum) term;
         FpType type = FpType.of((fpTerm).getEBits(), (fpTerm).getSBits());
-        String printed = term.toString();
-        if (printed.equals("+oo")) {
-            return FpUtils.bigFloatToFpLitExpr(
-                    BigFloat.positiveInfinity(type.getSignificand()), type);
-        } else if (printed.equals("-oo")) {
-            return FpUtils.bigFloatToFpLitExpr(
-                    BigFloat.negativeInfinity(type.getSignificand()), type);
-        } else if (printed.equals("NaN")) {
+        // toString() prints special values as rationals and getSignificand()/getExponent() drop
+        // the sign, so the IEEE fields are read back directly; only infinities lack a usable one.
+        if (fpTerm.isNaN()) {
             return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
-        } else if (printed.equals("+zero")) {
-            return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
-        } else if (printed.equals("-zero")) {
-            return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
+        } else if (fpTerm.isInf()) {
+            return FpUtils.bigFloatToFpLitExpr(
+                    fpTerm.getSign()
+                            ? BigFloat.negativeInfinity(type.getSignificand())
+                            : BigFloat.positiveInfinity(type.getSignificand()),
+                    type);
         }
-        BigFloat bigFloat =
-                new BigFloat(
-                                (fpTerm).getSignificand(),
-                                FpUtils.getMathContext(type, FpRoundingMode.RNE))
-                        .multiply(
-                                new BigFloat("2", FpUtils.getMathContext(type, FpRoundingMode.RNE))
-                                        .pow(
-                                                new BigFloat(
-                                                        (fpTerm).getExponent(true),
-                                                        FpUtils.getMathContext(
-                                                                type, FpRoundingMode.RNE)),
-                                                FpUtils.getMathContext(type, FpRoundingMode.RNE)),
-                                FpUtils.getMathContext(type, FpRoundingMode.RNE));
-        return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
+        return FpLitExpr.of(
+                fpTerm.getSign(),
+                (BvLitExpr) transformBvLit(fpTerm.getExponentBV(true).simplify()),
+                (BvLitExpr) transformBvLit(fpTerm.getSignificandBV().simplify()));
     }
 
     private Expr<EnumType> transformEnumLit(
