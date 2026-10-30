@@ -252,6 +252,8 @@ private class MemoryAccessWithMutexes(
    * evaluated in the state before the label.
    */
   val addressAfterMemoryWrite: Boolean,
+  /** An earlier statement of the label wrote memory, so the precondition reads changed memory. */
+  val afterMemoryWrite: Boolean,
   access: AccessType,
   acquiredMutexes: Set<MutexLock>,
   blockingMutexes: Set<MutexLock>,
@@ -344,6 +346,7 @@ private fun XcfaLabel.getMemoryAccessesWithMutexes(
               deref.offset,
               deref.addressesAtomicData(xcfa.globalVars, parseContext),
               addressAfterMemoryWrite,
+              memoryWritten,
               access,
               acquiredMutexes.toSet(),
               blockingMutexes.toSet(),
@@ -387,8 +390,9 @@ private fun mayBeSameMemoryLocation(
     if (simplified == False()) return false
   }
 
-  // Nested dereferences in the addresses read the current memory contents, which abstract states
-  // name by uniqueness index 0 (see `repatch`); the refiner hands over patched states.
+  // Nested dereferences in the addresses and the preconditions read the current memory contents,
+  // which abstract states name by uniqueness index 0 (see `repatch`); the refiner hands over
+  // patched states. A precondition after a memory write reads changed memory, so it is left out.
   val array1 = access1.array.readingCurrentMemory()
   val offset1 = access1.offset.readingCurrentMemory()
   val array2 = access2.array.readingCurrentMemory()
@@ -403,8 +407,8 @@ private fun mayBeSameMemoryLocation(
             ExprUtils.simplify(
               And(
                 PathUtils.unfold(state.sGlobal.innerState.repatch().toExpr(), zeroIndexing),
-                PathUtils.unfold(precondition1, zeroIndexing),
-                PathUtils.unfold(precondition2, zeroIndexing),
+                PathUtils.unfold(access1.queryPrecondition(precondition1), zeroIndexing),
+                PathUtils.unfold(access2.queryPrecondition(precondition2), zeroIndexing),
                 Eq(PathUtils.unfold(array1, indexing1), PathUtils.unfold(array2, indexing2)),
                 Eq(PathUtils.unfold(offset1, indexing1), PathUtils.unfold(offset2, indexing2)),
               )
@@ -426,6 +430,10 @@ private fun mayBeSameMemoryLocation(
   if (partition1 == -1 || partition2 == -1) return true // cannot decide
   return partition1 == partition2
 }
+
+private fun MemoryAccessWithMutexes.queryPrecondition(
+  precondition: Expr<BoolType>
+): Expr<BoolType> = if (afterMemoryWrite) True() else precondition.readingCurrentMemory()
 
 private fun <T : Type> Expr<T>.readingCurrentMemory(): Expr<T> =
   when (this) {
