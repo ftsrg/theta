@@ -40,7 +40,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
@@ -68,9 +67,9 @@ public class XcfaTraceConcretizer {
         return revLookup;
     }
 
-    /** Whether `decl` corresponds to a named C variable (carries a `cName` metadata entry). */
+    /** Whether `decl` corresponds to a named C variable (has a recorded C source). */
     private static boolean hasCName(VarDecl<?> decl, ParseContext parseContext) {
-        return parseContext.getMetadata().getMetadataValue(decl.getName(), "cName").isPresent();
+        return parseContext.getVariableSources().containsKey(decl.getName());
     }
 
     /**
@@ -165,11 +164,12 @@ public class XcfaTraceConcretizer {
                     currentList.add(label);
                 } else {
                     final var otherMetadata = getCMetaData(currentList.get(0));
-                    final var otherAstNodes =
-                            otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
+                    final var otherStatements =
+                            otherMetadata == null ? List.of() : otherMetadata.getSourceStatements();
                     final var metadata = getCMetaData(label);
-                    final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
-                    if (otherAstNodes.equals(astNodes)) {
+                    final var statements =
+                            metadata == null ? List.of() : metadata.getSourceStatements();
+                    if (otherStatements.equals(statements)) {
                         currentList.add(label);
                     } else {
                         if (currentList.size() == 1) {
@@ -281,11 +281,12 @@ public class XcfaTraceConcretizer {
                     // its written variable is the nondet result and must be kept (see nondetVars).
                     final var meta = getCMetaData(flatLabel);
                     if (meta != null
-                            && meta.getAstNodes().stream()
+                            && meta.getSourceStatements().stream()
                                     .anyMatch(
                                             n ->
-                                                    n instanceof CCall cc
-                                                            && cc.getFunctionId()
+                                                    n.getCall() != null
+                                                            && n.getCall()
+                                                                    .getFunctionId()
                                                                     .contains(
                                                                             "__VERIFIER_nondet_"))) {
                         nondetVars.addAll(written);

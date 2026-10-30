@@ -24,7 +24,17 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.DivExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.IteExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.MulExpr;
+import hu.bme.mit.theta.core.type.NegExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.SubExpr;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
@@ -37,26 +47,29 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CSignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CSignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
 import java.math.BigInteger;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
@@ -73,9 +86,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
      * width-preserving cast transparent: a pointer cast to `unsigned long` and back stays the very
      * same expression, so a pointer routed through an integer is still recognisable as one.
      *
-     * <p>A distinct {@code Pos} wrapper is returned rather than the bare operand, so that recording
-     * the target type on the result (see {@code CComplexType.castTo}) does not overwrite the
-     * operand's own recorded type.
+     * <p>A distinct {@code Pos} node is returned rather than the bare operand: the caller types the
+     * result, and typing a variable's own reference would retype the variable (see {@code
+     * CComplexType.withType}).
      */
     private Expr<?> widthPreserving(CInteger type, Expr<?> param) {
         CComplexType source = CComplexType.getType(param, parseContext);
@@ -101,6 +114,10 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
      * cannot leave its type's range in the first place -- a variable, a literal, a pointer id, a
      * value already wrapped into [0, rangeEnd) -- may skip it.
      */
+    private boolean cannotLeaveItsRange(Expr<?> param) {
+        Expr<?> expr = Traceability.unwrapTraceable(param);
+        while (expr instanceof PosExpr<?> pos) {
+            expr = Traceability.unwrapTraceable(pos.getOp());
     private boolean cannotLeaveItsRange(Expr<?> param, BigInteger rangeEnd) {
         Expr<?> expr = withoutPos(param);
         if (expr instanceof ModExpr<?>) {

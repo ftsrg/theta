@@ -21,9 +21,10 @@ import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IteExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
-import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.CStatistics
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.getStatistics
@@ -38,7 +39,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.InputStream
 import java.util.ArrayDeque
-import kotlin.jvm.optionals.getOrDefault
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -103,12 +103,7 @@ fun getExpressionFromC(
   val context = parser.logicalOrExpression()
 
   val variables =
-    Tuple2.of(
-      "",
-      vars.associateBy {
-        parseContext.metadata.getMetadataValue(it.name, "cName").getOrDefault(it.name) as String
-      },
-    )
+    Tuple2.of("", vars.associateBy { parseContext.variableSources[it.name]?.cName ?: it.name })
 
   val expr =
     context.accept(
@@ -140,10 +135,11 @@ fun getBoolExpressionFromC(
     getExpressionFromC(value, parseContext, collectStatistics, checkOverflow, warningLogger, vars)
   val signedType = CComplexType.getSignedInt(parseContext)
 
+  val bare = expr.unwrapTraceable()
   return if (
-    expr is IteExpr<*> && expr.then == signedType.unitValue && expr.`else` == signedType.nullValue
+    bare is IteExpr<*> && bare.then == signedType.unitValue && bare.`else` == signedType.nullValue
   ) {
-    expr.cond
+    bare.cond
   } else {
     Neq(expr, signedType.nullValue)
   }

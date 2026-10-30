@@ -20,9 +20,9 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
@@ -74,7 +74,7 @@ class CTypeDeclarationTest {
   /** e.g. `CPointer<CStruct>`, `CPointer<CPointer<CSignedInt>>`. */
   private fun describe(type: CComplexType): String =
     when (type) {
-      is CPointer -> "CPointer<${describe(type.embeddedType)}>"
+      is CPointer -> "CPointer<${describe(type.embeddedType!!)}>"
       is CArray -> "CArray<${describe(type.embeddedType)}>"
       else -> type.javaClass.simpleName
     }

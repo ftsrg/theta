@@ -43,8 +43,7 @@ internal fun DssInvariants.toContent(
   inputFile: File,
   parseContext: ParseContext,
 ): List<ContentItem> {
-  fun cNameOf(decl: VarDecl<*>) =
-    parseContext.metadata.getMetadataValue(decl.name, "cName").orElse(null) as? String
+  fun cNameOf(decl: VarDecl<*>) = parseContext.variableSources[decl.name]?.cName
   // A C name shared by several variables (shadowing, same-named locals) cannot be resolved
   val edges = invariants.keys.flatMap { it.outgoingEdges }
   val shared =
@@ -59,7 +58,7 @@ internal fun DssInvariants.toContent(
   val inside = HashSet<Pair<Int, Int>>()
   for (edge in edges) {
     edge.label.getFlatLabels().forEachIndexed { index, label ->
-      for (statement in (label.metadata as? CMetaData)?.astNodes.orEmpty()) {
+      for (statement in (label.metadata as? CMetaData)?.sourceStatements.orEmpty()) {
         if (statement.lineNumberStart < 0 || statement.colNumberStart < 0) continue
         val position = statement.lineNumberStart to statement.colNumberStart + 1
         if (index == 0) sources.getOrPut(position) { linkedSetOf() } += edge.source

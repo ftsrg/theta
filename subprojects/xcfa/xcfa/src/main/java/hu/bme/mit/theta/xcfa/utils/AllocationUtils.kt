@@ -18,10 +18,12 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
@@ -88,7 +90,7 @@ fun XcfaBuilder.ensureMallocVar(parseContext: ParseContext, retType: CComplexTyp
   val mallocVar = mallocVar(parseContext)
   if (getVars().any { it.wrappedVar == mallocVar }) return
   val seed = retType.getValue(allocationSeed().toString())
-  addVar(XcfaGlobalVar(mallocVar, seed, atomic = true))
+  addVar(XcfaGlobalVar(mallocVar, seed.unwrapTraceable() as LitExpr<*>, atomic = true))
   val initProc = getInitProcedures().map { it.first }
   check(initProc.size == 1) { "Multiple start procedure are not handled well" }
   initProc.forEach { proc ->

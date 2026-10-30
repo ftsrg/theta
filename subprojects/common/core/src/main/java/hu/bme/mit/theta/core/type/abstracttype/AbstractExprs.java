@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,15 +16,30 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.Traceability.unwrapTraceable;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Try;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.DivExpr;
+import hu.bme.mit.theta.core.type.EqExpr;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.GeqExpr;
+import hu.bme.mit.theta.core.type.GtExpr;
+import hu.bme.mit.theta.core.type.IteExpr;
+import hu.bme.mit.theta.core.type.LeqExpr;
+import hu.bme.mit.theta.core.type.LtExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.MulExpr;
+import hu.bme.mit.theta.core.type.NegExpr;
+import hu.bme.mit.theta.core.type.NeqExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.RemExpr;
+import hu.bme.mit.theta.core.type.SubExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
-import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import java.util.List;
 
@@ -82,8 +97,9 @@ public final class AbstractExprs {
     }
 
     private static <T extends Additive<T>> List<Expr<T>> getAddOps(final Expr<T> expr) {
-        if (expr instanceof AddExpr) {
-            final AddExpr<T> addExpr = (AddExpr<T>) expr;
+        // A traced operand is flattened too: its traceability info does not survive the merge.
+        if (unwrapTraceable(expr) instanceof AddExpr) {
+            final AddExpr<T> addExpr = (AddExpr<T>) unwrapTraceable(expr);
             return addExpr.getOps();
         } else {
             return ImmutableList.of(expr);
@@ -150,8 +166,9 @@ public final class AbstractExprs {
     }
 
     private static <T extends Multiplicative<T>> List<Expr<T>> getMulOps(final Expr<T> expr) {
-        if (expr instanceof MulExpr) {
-            final MulExpr<T> mulExpr = (MulExpr<T>) expr;
+        // A traced operand is flattened too: its traceability info does not survive the merge.
+        if (unwrapTraceable(expr) instanceof MulExpr) {
+            final MulExpr<T> mulExpr = (MulExpr<T>) unwrapTraceable(expr);
             return mulExpr.getOps();
         } else {
             return ImmutableList.of(expr);

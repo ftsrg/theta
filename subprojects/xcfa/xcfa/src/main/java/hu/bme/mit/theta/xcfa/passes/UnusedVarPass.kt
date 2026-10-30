@@ -23,12 +23,13 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -94,7 +95,11 @@ class UnusedVarPass(
         }
         if (isOverflow) {
           for (label in edge.getFlatLabels()) {
-            if (label is StmtLabel && label.stmt is AssignStmt<*> && label.stmt.expr !is RefExpr) {
+            if (
+              label is StmtLabel &&
+                label.stmt is AssignStmt<*> &&
+                label.stmt.expr.unwrapTraceable() !is RefExpr
+            ) {
               usedVars.add(label.stmt.varDecl)
             }
           }
@@ -263,7 +268,8 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
     reads.any { (base, offsets) -> mayEqual(base, cell.base) && offsets.mayContain(cell.offset) }
 
   private fun literalOf(expr: Expr<*>): Lit? {
-    val simplified = if (expr is LitExpr<*>) expr else ExprUtils.simplify(expr)
+    val simplified =
+      expr.unwrapTraceable().let { if (it is LitExpr<*>) it else ExprUtils.simplify(expr) }
     return simplified.asConstantBigInteger()?.let { literalOf(simplified.type, it) }
   }
 
@@ -304,8 +310,9 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
       val cellTypes = cell.base?.type to cell.offset?.type
       if (cell.isKnown && types.all { it == cellTypes }) values.remove(cell)
       else values.keys.removeIf { mayAlias(it, cell) }
-      if (value is LitExpr<*> && cell.isKnown) {
-        values[cell] = value
+      val literal = value.unwrapTraceable()
+      if (literal is LitExpr<*> && cell.isKnown) {
+        values[cell] = literal
         types.add(cellTypes)
       }
     }

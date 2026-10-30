@@ -396,7 +396,7 @@ class UnrollPass(
       if (!substituteLoopVar || parseContext == null || loopVar == null) return label
       val valuation = MutableValuation()
       valuation.put(loopVar, loopVarValues[index])
-      return label.simplify(valuation, parseContext)
+      return label.simplify(valuation)
     }
 
     private fun copyBody(

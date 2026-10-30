@@ -16,7 +16,8 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.type.booltype.FalseExpr
+import hu.bme.mit.theta.core.type.FalseExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -29,7 +30,7 @@ class AssumeFalseRemovalPass(private val property: XcfaProperty) : ProcedurePass
     builder.getEdges().toSet().forEach { edge ->
       if (
         edge.getFlatLabels().any {
-          it is StmtLabel && it.stmt is AssumeStmt && it.stmt.cond is FalseExpr
+          it is StmtLabel && it.stmt is AssumeStmt && it.stmt.cond.unwrapTraceable() is FalseExpr
         }
       ) {
         builder.removeEdge(edge)

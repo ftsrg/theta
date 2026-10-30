@@ -99,7 +99,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         val oldLabels = edge.getFlatLabels()
         val newLabels =
           oldLabels.map { old ->
-            val new = old.simplify(localValuation, parseContext)
+            val new = old.simplify(localValuation)
             if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, globalVars)) {
               old
             } else {
@@ -228,7 +228,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
       potentialConsts.removeIf { v ->
         writes[v]?.let { write ->
           val valuation = MutableValuation.copyOf(constValuation)
-          write.simplify(valuation, parseContext)
+          write.simplify(valuation)
           valuation.toMap()[v]?.let {
             if (v !in constValuation.decls) {
               constValuation.put(v, it)

@@ -25,10 +25,10 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
+import hu.bme.mit.theta.core.type.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import java.math.BigInteger;
@@ -43,34 +43,6 @@ import java.util.List;
  * {@code / 2^o mod 2^w} / place-and-recombine arithmetic.
  */
 public final class BitfieldSlice {
-
-    /**
-     * Metadata stamped on a bitfield member's *read* expression, naming the cell it was sliced out
-     * of. An assignment whose left-hand side carries this must not overwrite the whole cell: it
-     * read-modify-writes just the field's bits (see {@link #write}).
-     */
-    public static final String CELL = "bitfieldCell";
-
-    /** Metadata: the field's bit offset within its cell. */
-    public static final String OFFSET = "bitfieldOffset";
-
-    /** Metadata: the field's width in bits. */
-    public static final String WIDTH = "bitfieldWidth";
-
-    /**
-     * Metadata marking a union member whose cell holds a floating-point value as its raw IEEE-754
-     * bit pattern. The read is a reinterpretation ({@code FpFromIeeeBv}); an assignment through it
-     * must splice {@code FpToIeeeBv} of the right-hand side, not a plain integer cast.
-     */
-    public static final String IEEE_FLOAT = "ieeeFloatCell";
-
-    /**
-     * Metadata marking an expression as the *cell* of a union member that is one packed unit of
-     * bitfields (see {@code CStruct#isPackedScalar}). Reading a member of such a struct slices this
-     * cell instead of dereferencing it again, which is what makes the bitfield view and a sibling
-     * integer member (`raw`) name the same storage.
-     */
-    public static final String PACKED_CELL = "packedScalarCell";
 
     private BitfieldSlice() {}
 

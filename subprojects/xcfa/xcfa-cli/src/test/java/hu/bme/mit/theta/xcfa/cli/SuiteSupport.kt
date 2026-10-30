@@ -108,6 +108,18 @@ internal object SuiteSupport {
       listOf("--smt-home", File(dist, "solvers").absolutePath)
   }
 
+  /** Options added to every task (`-Ptheta.canary.extraArgs`), e.g. `--serialization-roundtrip`. */
+  val extraArgs: List<String> =
+    System.getProperty("theta.canary.extraArgs")?.split(' ')?.filter { it.isNotBlank() }
+      ?: emptyList()
+
+  /** Keeps a task's output under `-Ptheta.canary.outputDir`, when it is set. */
+  fun keepOutput(task: String, output: String) {
+    val dir = System.getProperty("theta.canary.outputDir")?.let(::File) ?: return
+    dir.mkdirs()
+    File(dir, task.replace(Regex("[^A-Za-z0-9._-]+"), "_") + ".log").writeText(output)
+  }
+
   /** Runs [command], returning everything it printed and whether it had to be killed. */
   fun execute(
     command: List<String>,

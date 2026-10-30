@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
@@ -44,11 +45,11 @@ data class MutexAttribute(val type: MutexType = MutexType.NORMAL)
 fun Collection<MutexLock>.known(): Set<MutexLock> = filter { it.isKnown() }.toSet()
 
 fun Expr<*>.simplify(s: State): LitExpr<*>? =
-  this as? LitExpr<*>
+  this.unwrapTraceable() as? LitExpr<*>
     ?: when (s) {
       is WrapperState -> simplify(s.wrappedState)
-      is ExplState -> ExprUtils.simplify(this, s.`val`) as? LitExpr<*>
-      else -> ExprUtils.simplify(this) as? LitExpr<*>
+      is ExplState -> ExprUtils.simplify(this, s.`val`).unwrapTraceable() as? LitExpr<*>
+      else -> ExprUtils.simplify(this).unwrapTraceable() as? LitExpr<*>
     }
 
 sealed interface MutexLock {
@@ -60,7 +61,7 @@ sealed interface MutexLock {
   val uniqueId: String
     get() = lock.toString()
 
-  fun isKnown(): Boolean = lock is LitExpr<*>
+  fun isKnown(): Boolean = lock.unwrapTraceable() is LitExpr<*>
 
   fun simplify(s: State): MutexLock
 

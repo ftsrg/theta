@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
@@ -45,7 +46,9 @@ class MutexToVarPass : ProcedurePass {
 
     private val MutexLock.mutexFlag: VarDecl<IntType>
       get() {
-        check(lock is LitExpr<*>) { "Unknown mutex not supported by mutex elimination." }
+        check(lock.unwrapTraceable() is LitExpr<*>) {
+          "Unknown mutex not supported by mutex elimination."
+        }
         return mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_${this.uniqueId}", Int()) }
       }
   }

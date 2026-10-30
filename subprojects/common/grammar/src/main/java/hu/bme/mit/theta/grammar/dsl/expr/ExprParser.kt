@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,33 +27,49 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.dsl.DeclSymbol
 import hu.bme.mit.theta.core.dsl.ParseException
+import hu.bme.mit.theta.core.type.AddExpr
+import hu.bme.mit.theta.core.type.ArrayInitExpr
+import hu.bme.mit.theta.core.type.ArrayReadExpr
+import hu.bme.mit.theta.core.type.ArrayWriteExpr
+import hu.bme.mit.theta.core.type.BvAddExpr
+import hu.bme.mit.theta.core.type.BvConcatExpr
+import hu.bme.mit.theta.core.type.BvLitExpr
+import hu.bme.mit.theta.core.type.BvMulExpr
+import hu.bme.mit.theta.core.type.BvSDivExpr
+import hu.bme.mit.theta.core.type.BvSModExpr
+import hu.bme.mit.theta.core.type.BvSRemExpr
+import hu.bme.mit.theta.core.type.BvSubExpr
+import hu.bme.mit.theta.core.type.BvUDivExpr
+import hu.bme.mit.theta.core.type.BvURemExpr
+import hu.bme.mit.theta.core.type.DivExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.FalseExpr
+import hu.bme.mit.theta.core.type.FpLitExpr
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.ModExpr
+import hu.bme.mit.theta.core.type.MulExpr
+import hu.bme.mit.theta.core.type.RatLitExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.RemExpr
+import hu.bme.mit.theta.core.type.SubExpr
+import hu.bme.mit.theta.core.type.TrueExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.FalseExpr
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
 import hu.bme.mit.theta.core.type.fptype.FpExprs
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.functype.FuncExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.rattype.RatExprs
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -504,7 +520,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         REM -> createRemExpr(leftOp, rightOp)
         BV_UREM -> createBvURemExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
         BV_SREM -> createBvSRemExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-        FPREM -> FpExprs.Rem(leftOp as Expr<FpType?>, rightOp as Expr<FpType?>)
+        FPREM -> FpExprs.Rem(leftOp as Expr<FpType>, rightOp as Expr<FpType>)
         FPMUL ->
           FpExprs.Mul(
             getRoundingMode(ctx.oper.text),
@@ -514,8 +530,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         FPDIV ->
           FpExprs.Div(
             getRoundingMode(ctx.oper.text),
-            leftOp as Expr<FpType?>,
-            rightOp as Expr<FpType?>,
+            leftOp as Expr<FpType>,
+            rightOp as Expr<FpType>,
           )
 
         else -> throw ParseException(ctx, "Unknown operator '" + oper.text + "'")
@@ -648,17 +664,17 @@ class ExpressionWrapper(scope: Scope, content: String) {
         when (ctx.oper.getType()) {
           PLUS -> AbstractExprs.Pos(op)
           MINUS -> AbstractExprs.Neg(op)
-          FP_ABS -> FpExprs.Abs(op as Expr<FpType?>)
-          FP_IS_INF -> FpExprs.IsInfinite(op as Expr<FpType?>)
-          FP_IS_NAN -> FpExprs.IsNan(op as Expr<FpType?>)
+          FP_ABS -> FpExprs.Abs(op as Expr<FpType>)
+          FP_IS_INF -> FpExprs.IsInfinite(op as Expr<FpType>)
+          FP_IS_NAN -> FpExprs.IsNan(op as Expr<FpType>)
           FPROUNDTOINT ->
-            FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text), op as Expr<FpType?>)
+            FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text), op as Expr<FpType>)
 
-          FPSQRT -> FpExprs.Sqrt(getRoundingMode(ctx.oper.text), op as Expr<FpType?>)
+          FPSQRT -> FpExprs.Sqrt(getRoundingMode(ctx.oper.text), op as Expr<FpType>)
           FPTOFP ->
             FpExprs.ToFp(
               getRoundingMode(ctx.oper.text),
-              op as Expr<FpType?>,
+              op as Expr<FpType>,
               getExp(ctx.oper.getText()),
               getSignificand(ctx.oper.getText()),
             )
@@ -666,7 +682,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
           FPTOBV ->
             FpExprs.ToBv(
               getRoundingMode(ctx.oper.text),
-              op as Expr<FpType?>,
+              op as Expr<FpType>,
               getBvSize(ctx.oper.getText()),
               isSignedBv(ctx.oper.getText()),
             )
@@ -674,13 +690,13 @@ class ExpressionWrapper(scope: Scope, content: String) {
           FP_FROM_BV ->
             FpExprs.FromBv(
               getRoundingMode(ctx.oper.text),
-              op as Expr<BvType?>,
+              op as Expr<BvType>,
               FpType.of(getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText())),
               isSignedFp(ctx.oper.getText()),
             )
 
-          FPNEG -> FpExprs.Neg(op as Expr<FpType?>)
-          FPPOS -> FpExprs.Pos(op as Expr<FpType?>)
+          FPNEG -> FpExprs.Neg(op as Expr<FpType>)
+          FPPOS -> FpExprs.Pos(op as Expr<FpType>)
           BV_POS -> BvExprs.Pos(op as Expr<BvType>)
           BV_NEG -> BvExprs.Neg(op as Expr<BvType>)
           else -> throw ParseException(ctx, "Unknown operator")

@@ -18,45 +18,86 @@ package hu.bme.mit.theta.xcfa
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.*
+import hu.bme.mit.theta.core.type.AndExpr
+import hu.bme.mit.theta.core.type.ArrayInitExpr
+import hu.bme.mit.theta.core.type.ArrayReadExpr
+import hu.bme.mit.theta.core.type.ArrayWriteExpr
+import hu.bme.mit.theta.core.type.BvAddExpr
+import hu.bme.mit.theta.core.type.BvAndExpr
+import hu.bme.mit.theta.core.type.BvLitExpr
+import hu.bme.mit.theta.core.type.BvMulExpr
+import hu.bme.mit.theta.core.type.BvNegExpr
+import hu.bme.mit.theta.core.type.BvNotExpr
+import hu.bme.mit.theta.core.type.BvOrExpr
+import hu.bme.mit.theta.core.type.BvPosExpr
+import hu.bme.mit.theta.core.type.BvSignChangeExpr
+import hu.bme.mit.theta.core.type.BvSubExpr
+import hu.bme.mit.theta.core.type.BvToIntExpr
+import hu.bme.mit.theta.core.type.BvUGeqExpr
+import hu.bme.mit.theta.core.type.BvUGtExpr
+import hu.bme.mit.theta.core.type.BvULeqExpr
+import hu.bme.mit.theta.core.type.BvULtExpr
+import hu.bme.mit.theta.core.type.BvXorExpr
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.DivExpr
+import hu.bme.mit.theta.core.type.EqExpr
+import hu.bme.mit.theta.core.type.FalseExpr
+import hu.bme.mit.theta.core.type.FpAbsExpr
+import hu.bme.mit.theta.core.type.FpAddExpr
+import hu.bme.mit.theta.core.type.FpAssignExpr
+import hu.bme.mit.theta.core.type.FpFromBvExpr
+import hu.bme.mit.theta.core.type.FpIsInfiniteExpr
+import hu.bme.mit.theta.core.type.FpIsNanExpr
+import hu.bme.mit.theta.core.type.FpLitExpr
+import hu.bme.mit.theta.core.type.FpMaxExpr
+import hu.bme.mit.theta.core.type.FpMinExpr
+import hu.bme.mit.theta.core.type.FpMulExpr
+import hu.bme.mit.theta.core.type.FpNegExpr
+import hu.bme.mit.theta.core.type.FpPosExpr
+import hu.bme.mit.theta.core.type.FpSqrtExpr
+import hu.bme.mit.theta.core.type.FpToBvExpr
+import hu.bme.mit.theta.core.type.FpToFpExpr
+import hu.bme.mit.theta.core.type.ImplyExpr
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.IntModExpr
+import hu.bme.mit.theta.core.type.IntToRatExpr
+import hu.bme.mit.theta.core.type.IteExpr
+import hu.bme.mit.theta.core.type.ModExpr
+import hu.bme.mit.theta.core.type.NeqExpr
+import hu.bme.mit.theta.core.type.NotExpr
+import hu.bme.mit.theta.core.type.OrExpr
+import hu.bme.mit.theta.core.type.PosExpr
+import hu.bme.mit.theta.core.type.PrimeExpr
+import hu.bme.mit.theta.core.type.RatLitExpr
+import hu.bme.mit.theta.core.type.RatToIntExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.RemExpr
+import hu.bme.mit.theta.core.type.TraceableWrapperExpr
+import hu.bme.mit.theta.core.type.TrueExpr
+import hu.bme.mit.theta.core.type.XorExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.IteExpr
-import hu.bme.mit.theta.core.type.anytype.PrimeExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.booltype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntModExpr
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr
-import hu.bme.mit.theta.core.type.rattype.RatToIntExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.CComplexTypeVisitor
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CLongLong
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CLongLong
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
@@ -182,7 +223,7 @@ private fun VarDecl<*>.unsafeBounds(parseContext: ParseContext) =
           return Or(Leq(ref, Int(-1_000_000_000)), Geq(ref, Int(1_000_000_000)))
         }
 
-        override fun visit(type: CBool?, param: Unit?): Expr<BoolType>? {
+        override fun visit(type: CBool, param: Unit): Expr<BoolType>? {
           return null
         }
       },
@@ -326,8 +367,9 @@ private fun CComplexType.toC(): String =
   }
 
 // below functions implement the serialization of expressions to C-style expressions
-fun Expr<*>.toC(parseContext: ParseContext) =
+fun Expr<*>.toC(parseContext: ParseContext): String =
   when (this) {
+    is TraceableWrapperExpr<*> -> this.expr.toC(parseContext)
     is NullaryExpr<*> -> this.toC(parseContext)
     is UnaryExpr<*, *> -> this.toC(parseContext)
     is BinaryExpr<*, *> -> this.toC(parseContext)
@@ -376,7 +418,7 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // Emulate SMT-LIB semantics, which rounds towards negative infinity
       val rat = this.op.toC(parseContext)
       val castRat = "((int) $rat)"
-      (this.op as? RatLitExpr)?.run {
+      (this.op.unwrapTraceable() as? RatLitExpr)?.run {
         if (num.signum() != denom.signum() && num % denom != BigInteger.ZERO) "($castRat - 1)"
         else castRat
       } ?: "($rat < 0.0 && $rat - $castRat < 0 ? $castRat - 1 : $castRat)"
@@ -443,7 +485,7 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
         // -5 mod -3 = 1
         val lhs = leftOp.toC(parseContext)
         val rhs = rightOp.toC(parseContext)
-        (rightOp as? IntLitExpr)?.run {
+        (rightOp.unwrapTraceable() as? IntLitExpr)?.run {
           if (value < BigInteger.ZERO) "( ($lhs % $rhs - $rhs) % $rhs )"
           else "( ($lhs % $rhs + $rhs) % $rhs )"
         } ?: "( ($lhs % $rhs + ($rhs < 0 ? - $rhs : $rhs)) % $rhs )"
@@ -457,8 +499,9 @@ fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
       // -5 rem -3 = -1
       val rhs = rightOp.toC(parseContext)
       val mod = ModExpr.create2(leftOp, rightOp).toC(parseContext)
-      (rightOp as? IntLitExpr)?.run { if (value < BigInteger.ZERO) "(- $mod)" else mod }
-        ?: "($rhs < 0 ? - $mod : $mod)"
+      (rightOp.unwrapTraceable() as? IntLitExpr)?.run {
+        if (value < BigInteger.ZERO) "(- $mod)" else mod
+      } ?: "($rhs < 0 ? - $mod : $mod)"
     }
     this is DivExpr<*> -> "(${leftOp.toC(parseContext)} / ${rightOp.toC(parseContext)})"
     this is ImplyExpr -> "(! ${leftOp.toC(parseContext)} || ${rightOp.toC(parseContext)})"
@@ -514,7 +557,7 @@ fun Expr<*>.arrayCOperator() =
 fun String.toC() = this.replace(Regex("[^A-Za-z_0-9$]"), "_")
 
 private fun IntModExpr.isDomainBound(parseContext: ParseContext): Boolean {
-  val m = rightOp as? IntLitExpr ?: return false
+  val m = rightOp.unwrapTraceable() as? IntLitExpr ?: return false
 
   val type =
     try {

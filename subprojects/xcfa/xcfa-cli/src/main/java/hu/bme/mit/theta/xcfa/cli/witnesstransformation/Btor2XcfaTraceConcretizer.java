@@ -89,8 +89,8 @@ public class Btor2XcfaTraceConcretizer {
                                                                                             .filter(
                                                                                                     declLitExprEntry ->
                                                                                                             parseContext
-                                                                                                                    .getMetadata()
-                                                                                                                    .getMetadataValue(
+                                                                                                                    .getVariableSources()
+                                                                                                                    .containsKey(
                                                                                                                             revLookup
                                                                                                                                     .getOrDefault(
                                                                                                                                             (VarDecl<
@@ -101,9 +101,7 @@ public class Btor2XcfaTraceConcretizer {
                                                                                                                                                             ?>)
                                                                                                                                                     declLitExprEntry
                                                                                                                                                             .getKey())
-                                                                                                                                    .getName(),
-                                                                                                                            "cName")
-                                                                                                                    .isPresent())
+                                                                                                                                    .getName()))
                                                                                             .collect(
                                                                                                     Collectors
                                                                                                             .toMap(
@@ -137,11 +135,12 @@ public class Btor2XcfaTraceConcretizer {
                     currentList.add(label);
                 } else {
                     final var otherMetadata = getCMetaData(currentList.get(0));
-                    final var otherAstNodes =
-                            otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
+                    final var otherStatements =
+                            otherMetadata == null ? List.of() : otherMetadata.getSourceStatements();
                     final var metadata = getCMetaData(label);
-                    final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
-                    if (otherAstNodes.equals(astNodes)) {
+                    final var statements =
+                            metadata == null ? List.of() : metadata.getSourceStatements();
+                    if (otherStatements.equals(statements)) {
                         currentList.add(label);
                     } else {
                         if (currentList.size() == 1) {

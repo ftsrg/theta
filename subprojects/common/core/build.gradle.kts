@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,18 @@ plugins {
     id("antlr-grammar")
     id("java-test-fixtures")
     id("kotlin-common")
+    kotlin("plugin.serialization")
 }
 
 dependencies {
     implementation(project(":theta-common"))
+    api(Deps.kotlinxSerializationCore)
+    testImplementation(Deps.kotlinxSerializationJson)
     testFixturesImplementation(project(":theta-common"))
     testFixturesImplementation(Deps.guava)
     testFixturesImplementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
+}
+
+kotlin {
+    compilerOptions { optIn.add("kotlinx.serialization.ExperimentalSerializationApi") }
 }

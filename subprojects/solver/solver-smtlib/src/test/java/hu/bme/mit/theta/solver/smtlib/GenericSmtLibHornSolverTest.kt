@@ -22,10 +22,10 @@ import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
 import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.FuncLitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.functype.FuncExprs.App
-import hu.bme.mit.theta.core.type.functype.FuncLitExpr
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -205,10 +205,10 @@ class GenericSmtLibHornSolverTest {
     val cd = Const("c", Int())
     val dd = Const("d", Int())
 
-    val a = ad.getRef()
-    val b = bd.getRef()
-    val c = cd.getRef()
-    val d = dd.getRef()
+    val a = ad.ref
+    val b = bd.ref
+    val c = cd.ref
+    val d = dd.ref
 
     solver.use { hornSolver ->
       val A = ArrayList<Expr<BoolType>>(2)
@@ -238,9 +238,9 @@ class GenericSmtLibHornSolverTest {
     val bd = Const("b", Int())
     val cd = Const("c", Int())
 
-    val a = ad.getRef()
-    val b = bd.getRef()
-    val c = cd.getRef()
+    val a = ad.ref
+    val b = bd.ref
+    val c = cd.ref
 
     solver.use { hornSolver ->
       val A = ArrayList<Expr<BoolType>>(2)

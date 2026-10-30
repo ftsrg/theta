@@ -16,8 +16,9 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -80,7 +81,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     invokeLabel: InvokeLabel,
     mallocVar: VarDecl<*>,
   ): List<XcfaLabel> {
-    val ret = invokeLabel.params[0] as RefExpr<*>
+    val ret = invokeLabel.params[0].unwrapTraceable() as RefExpr<*>
     val arg = invokeLabel.params[1]
     val bump =
       AssignStmtLabel(
@@ -112,7 +113,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun reallocate(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): List<XcfaLabel> {
-    val ret = invokeLabel.params[0] as RefExpr<*>
+    val ret = invokeLabel.params[0].unwrapTraceable() as RefExpr<*>
     val oldPtr = invokeLabel.params[1]
     val newSize = invokeLabel.params[2]
     val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))

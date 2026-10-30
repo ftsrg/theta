@@ -18,11 +18,11 @@ package hu.bme.mit.theta.frontend
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CDouble
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedShort
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
  */
 class ObjectLayoutTest {
 
-  private fun ctx(arch: ArchitectureType) = ParseContext().apply { setArchitecture(arch) }
+  private fun ctx(arch: ArchitectureType) = ParseContext().apply { architecture = arch }
 
   private fun struct(
     parseContext: ParseContext,

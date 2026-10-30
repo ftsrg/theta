@@ -20,10 +20,15 @@ gets a **base id** and a run of **cells**.
 - A global is only **initialized in the members the program accesses** (by `.` or `->` anywhere, or
   by passing a pointer to the struct to `memcmp`) and in everything those contain; a union as a whole if any of its members is accessed. Its storage and
   base ids are still created, so a member no access names (e.g. a mutex's internals) costs nothing.
-- `FrontendMetadata` is **identity-keyed**. A rebuilt expression is a different object and carries no
-  `cType`, so any pass that reconstructs an lvalue loses its type unless it re-stamps it. Several
-  recovery paths here exist only because of this; prefer re-stamping over re-deriving a type from an
-  SMT sort, which cannot distinguish `struct S *` from `unsigned int`.
+- An expression carries its C type in a `TraceableWrapperExpr` (`CComplexType.withType`; a
+  variable's canonical ref in `VarDecl.traceability`, so typing that ref retypes the variable: a
+  use typed differently, e.g. a no-op cast, goes through a `Pos` node). `withOps` keeps the type, a newly built
+  expression has none until wrapped, and a match on an expression class must look through the
+  wrapper (`unwrapTraceable()`). Prefer wrapping over re-deriving a type from an SMT sort, which
+  cannot distinguish `struct S *` from `unsigned int`.
+- A value read from shared storage (a bitfield's cell, a byte-laid-out union) also records where
+  it was read from (`LaidOutValue`), which an assignment through it needs. A rebuilt expression
+  keeps only the type, so the lvalue's shape is a fallback (`structuralBitfieldWrites`).
 
 ## Memory models
 

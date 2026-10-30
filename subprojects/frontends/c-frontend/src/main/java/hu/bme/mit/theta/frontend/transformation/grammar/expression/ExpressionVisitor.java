@@ -32,22 +32,24 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.AddExpr;
+import hu.bme.mit.theta.core.type.BvLitExpr;
+import hu.bme.mit.theta.core.type.Dereference;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.IntLitExpr;
+import hu.bme.mit.theta.core.type.ModExpr;
+import hu.bme.mit.theta.core.type.PosExpr;
+import hu.bme.mit.theta.core.type.RefExpr;
+import hu.bme.mit.theta.core.type.Reference;
+import hu.bme.mit.theta.core.type.Traceability;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.anytype.*;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -69,14 +71,16 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.LaidOutValue;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.StorageOrigin;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -124,11 +128,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     protected VarDecl<?> getVar(String name) {
         for (Tuple2<String, Map<String, VarDecl<?>>> variableList : variables) {
             if (variableList.get2().containsKey(name)) {
-                VarDecl<?> varDecl = variableList.get2().get(name);
-                if (functions.containsKey(varDecl)) {
-                    parseContext.getMetadata().create(name, "shouldInline", false);
-                }
-                return varDecl;
+                return variableList.get2().get(name);
             }
         }
         return null;
@@ -186,7 +186,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         Expr<?> guard =
                 Ite(BoolExprs.And(reached), signedInt.getUnitValue(), signedInt.getNullValue());
-        parseContext.getMetadata().create(guard, "cType", signedInt);
+        guard = CComplexType.withType(guard, signedInt);
         CCompound guardCompound = compoundOf(List.of(new CExpr(guard, parseContext)));
         preStatements.add(new CIf(guardCompound, body, null, parseContext));
     }
@@ -249,9 +249,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 CComplexType.getType(expr, parseContext).getNullValue(), expr));
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-            IteExpr<?> ite =
+            Expr<?> ite =
                     Ite(BoolExprs.Or(collect), signedInt.getUnitValue(), signedInt.getNullValue());
-            parseContext.getMetadata().create(ite, "cType", signedInt);
+            ite = CComplexType.withType(ite, signedInt);
             return ite;
         }
         return ctx.logicalAndExpression(0).accept(this);
@@ -272,9 +272,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 CComplexType.getType(expr, parseContext).getNullValue(), expr));
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-            IteExpr<?> ite =
+            Expr<?> ite =
                     Ite(BoolExprs.And(collect), signedInt.getUnitValue(), signedInt.getNullValue());
-            parseContext.getMetadata().create(ite, "cType", signedInt);
+            ite = CComplexType.withType(ite, signedInt);
             return ite;
         }
         return ctx.inclusiveOrExpression(0).accept(this);
@@ -304,8 +304,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                         return (Expr<BvType>) ret;
                                     })
                             .collect(Collectors.toList());
-            BvOrExpr or = BvExprs.Or(collect);
-            parseContext.getMetadata().create(or, "cType", smallestCommonType);
+            Expr<?> or = BvExprs.Or(collect);
+            or = CComplexType.withType(or, smallestCommonType);
             return or;
         }
         return ctx.exclusiveOrExpression(0).accept(this);
@@ -335,8 +335,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                         return (Expr<BvType>) ret;
                                     })
                             .collect(Collectors.toList());
-            BvXorExpr xor = BvExprs.Xor(collect);
-            parseContext.getMetadata().create(xor, "cType", smallestCommonType);
+            Expr<?> xor = BvExprs.Xor(collect);
+            xor = CComplexType.withType(xor, smallestCommonType);
             return xor;
         }
         return ctx.andExpression(0).accept(this);
@@ -366,8 +366,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                         return (Expr<BvType>) ret;
                                     })
                             .collect(Collectors.toList());
-            BvAndExpr and = BvExprs.And(collect);
-            parseContext.getMetadata().create(and, "cType", smallestCommonType);
+            Expr<?> and = BvExprs.And(collect);
+            and = CComplexType.withType(and, smallestCommonType);
             return and;
         }
         return ctx.equalityExpression(0).accept(this);
@@ -403,7 +403,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     AbstractExprs.Neq(leftExpr, rightExpr),
                                     signedInt.getUnitValue(),
                                     signedInt.getNullValue());
-                parseContext.getMetadata().create(expr, "cType", signedInt);
+                expr = CComplexType.withType(expr, signedInt);
             }
             return expr;
         }
@@ -450,7 +450,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // dependency
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 expr = Ite(guard, signedInt.getUnitValue(), signedInt.getNullValue());
-                parseContext.getMetadata().create(expr, "cType", signedInt);
+                expr = CComplexType.withType(expr, signedInt);
             }
             return expr;
         }
@@ -508,7 +508,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 } else {
                     expr = BvExprs.ShiftLeft(leftExpr, rightExpr);
                 }
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
+                expr = CComplexType.withType(expr, smallestCommonType);
             }
             return expr;
         }
@@ -533,12 +533,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
-                parseContext
-                        .getMetadata()
-                        .create(
-                                exprs.get(i),
-                                "cType",
-                                CComplexType.getType(exprs.get(i), parseContext));
+                exprs.set(
+                        i,
+                        CComplexType.withType(
+                                exprs.get(i), CComplexType.getType(exprs.get(i), parseContext)));
                 Expr<?> castTo = smallestCommonType.castTo(exprs.get(i));
                 if (i != 0 && ctx.signs.get(i - 1).getText().equals("-")) {
                     castTo = AbstractExprs.Neg(castTo);
@@ -546,9 +544,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 collect.add(castTo);
             }
             Expr<?> add = AbstractExprs.Add(collect);
-            parseContext.getMetadata().create(add, "cType", smallestCommonType);
+            add = CComplexType.withType(add, smallestCommonType);
             add = smallestCommonType.castTo(add);
-            parseContext.getMetadata().create(add, "cType", smallestCommonType);
+            add = CComplexType.withType(add, smallestCommonType);
             return add;
         }
         return ctx.multiplicativeExpression(0).accept(this);
@@ -641,8 +639,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         addOps.add(base); // pointer operand kept intact -- its CPointer/CArray cType is what the
         // `*(p + i)` and subscript folds classify as the object being indexed.
         addOps.addAll(indexTerms);
-        final Expr<?> ptrArith = Add(addOps);
-        parseContext.getMetadata().create(ptrArith, "cType", pointerType);
+        Expr<?> ptrArith = Add(addOps);
+        ptrArith = CComplexType.withType(ptrArith, pointerType);
         return ptrArith;
     }
 
@@ -670,16 +668,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     case "/":
                         if (leftExpr.getType() instanceof IntType
                                 && rightExpr.getType() instanceof IntType) {
-                            expr = createIntDiv(leftExpr, rightExpr);
                             // The division itself is buried inside the Ite that adjusts the
-                            // solver's
-                            // rounding to C's; only that Ite is given a type below. Type the
-                            // division
-                            // too, so that OverflowDetectionPass can find it -- it is the operation
-                            // that can overflow (INT_MIN / -1), not the Ite around it.
-                            parseContext
-                                    .getMetadata()
-                                    .create(innerDiv(expr), "cType", smallestCommonType);
+                            // solver's rounding to C's; only that Ite is given a type below. Type
+                            // the division too, so that OverflowDetectionPass can find it -- it is
+                            // the operation that can overflow (INT_MIN / -1), not the Ite around
+                            // it.
+                            expr = createIntDiv(leftExpr, rightExpr, smallestCommonType);
                         } else {
                             expr = AbstractExprs.Div(leftExpr, rightExpr);
                         }
@@ -700,27 +694,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 "Unexpected multiplicative expression sign: "
                                         + ctx.signs.get(i).getText());
                 }
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
+                expr = CComplexType.withType(expr, smallestCommonType);
                 expr = smallestCommonType.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", smallestCommonType);
+                expr = CComplexType.withType(expr, smallestCommonType);
             }
             return expr;
         }
         return ctx.castExpression(0).accept(this);
-    }
-
-    /** The {@code Div} that {@link #createIntDiv} wrapped in its rounding-adjustment Ite. */
-    private static Expr<?> innerDiv(Expr<?> intDiv) {
-        if (intDiv instanceof DivExpr<?>) {
-            return intDiv;
-        }
-        for (Expr<?> op : intDiv.getOps()) {
-            Expr<?> found = innerDiv(op);
-            if (found != null) {
-                return found;
-            }
-        }
-        return null;
     }
 
     /**
@@ -728,10 +708,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      *
      * @param a dividend
      * @param b divisor
+     * @param divType the C type of the division itself, or null
      * @return expression representing C division semantics with solver operations
      */
-    private Expr<?> createIntDiv(Expr<?> a, Expr<?> b) {
-        DivExpr<?> aDivB = Div(a, b);
+    private Expr<?> createIntDiv(Expr<?> a, Expr<?> b, CComplexType divType) {
+        Expr<?> aDivB = Div(a, b);
+        if (divType != null) {
+            aDivB = CComplexType.withType(aDivB, divType);
+        }
         return Ite(
                 Geq(a, Int(0)), // if (a >= 0)
                 aDivB, //   a div b
@@ -791,9 +775,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return operand;
         }
         Expr<?> expr = actualType.castTo(operand);
-        parseContext.getMetadata().create(expr, "cType", actualType);
+        expr = CComplexType.withType(expr, actualType);
         expr = actualType.castTo(expr);
-        parseContext.getMetadata().create(expr, "cType", actualType);
+        expr = CComplexType.withType(expr, actualType);
         return expr;
     }
 
@@ -838,7 +822,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 / 8
                         : memberOffset((CStruct) type, memberName);
         Expr<?> ret = resultType.getValue(String.valueOf(offset));
-        parseContext.getMetadata().create(ret, "cType", resultType);
+        ret = CComplexType.withType(ret, resultType);
         return ret;
     }
 
@@ -877,8 +861,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                             + "\n");
         }
         final CComplexType resultType = CComplexType.getSignedInt(parseContext);
-        final Expr<?> ret = resultType.getValue(value);
-        parseContext.getMetadata().create(ret, "cType", resultType);
+        Expr<?> ret = resultType.getValue(value);
+        ret = CComplexType.withType(ret, resultType);
         return ret;
     }
 
@@ -898,9 +882,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final Expr<?> folded =
                     hu.bme.mit.theta.core.utils.ExprUtils.simplify(
                             ctx.constantExpression().accept(this));
-            if (folded instanceof IntLitExpr intLit) {
+            if (bare(folded) instanceof IntLitExpr intLit) {
                 type = intLit.getValue().intValueExact();
-            } else if (folded instanceof hu.bme.mit.theta.core.type.bvtype.BvLitExpr bvLit) {
+            } else if (bare(folded) instanceof hu.bme.mit.theta.core.type.BvLitExpr bvLit) {
                 type =
                         hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger(bvLit)
                                 .intValueExact();
@@ -915,8 +899,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                 .shiftLeft(sizeType.width())
                                 .subtract(java.math.BigInteger.ONE)
                                 .toString();
-        final Expr<?> ret = sizeType.getValue(value);
-        parseContext.getMetadata().create(ret, "cType", sizeType);
+        Expr<?> ret = sizeType.getValue(value);
+        ret = CComplexType.withType(ret, sizeType);
         return ret;
     }
 
@@ -965,7 +949,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 Level.INFO,
                 "WARNING: __builtin_va_arg yields a nondeterministic value; the variadic argument"
                         + " list is not modeled.\n");
-        parseContext.getMetadata().create(VA_ARG, "cType", type);
+        parseContext.getFunctionReturnTypes().put(VA_ARG, type);
         CCall cCall = new CCall(VA_ARG, List.of(), parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
@@ -979,8 +963,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     Level.INFO,
                     "WARNING: alignof is not yet implemented, using a literal 0 instead.\n");
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-            LitExpr<?> zero = signedInt.getNullValue();
-            parseContext.getMetadata().create(zero, "cType", signedInt);
+            Expr<?> zero = signedInt.getNullValue();
+            zero = CComplexType.withType(zero, signedInt);
             return zero;
         } else if (ctx.typeName() != null) {
             final Optional<CComplexType> type =
@@ -992,14 +976,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                     CComplexType.getType(
                                                             ctx.typeName().getText(),
                                                             parseContext)))
-                            .or(
-                                    () ->
-                                            parseContext
-                                                    .getMetadata()
-                                                    .getMetadataValue(
-                                                            ctx.typeName().getText(),
-                                                            "cTypedefName")
-                                                    .map(it -> (CComplexType) it))
                             .or(
                                     () ->
                                             Optional.ofNullable(getVar(ctx.typeName().getText()))
@@ -1026,7 +1002,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     });
 
             if (type.isPresent()) {
-                LitExpr<?> value =
+                Expr<?> value =
                         CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type.get()));
                 return value;
             } else {
@@ -1034,8 +1010,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         Level.INFO,
                         "WARNING: sizeof got unknown type, using a literal 0 instead.\n");
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> zero = signedInt.getNullValue();
-                parseContext.getMetadata().create(zero, "cType", signedInt);
+                Expr<?> zero = signedInt.getNullValue();
+                zero = CComplexType.withType(zero, signedInt);
                 return zero;
             }
         } else { // expr != null
@@ -1043,7 +1019,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
             final var type = CComplexType.getType(expr, parseContext);
-            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
+            Expr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
             return value;
         }
     }
@@ -1103,9 +1079,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (increment < 0) expr = AbstractExprs.Sub(expr, type.getUnitValue());
                 else expr = AbstractExprs.Add(expr, type.getUnitValue());
             }
-            parseContext.getMetadata().create(expr, "cType", type);
+            expr = CComplexType.withType(expr, type);
             expr = type.castTo(expr);
-            parseContext.getMetadata().create(expr, "cType", type);
+            expr = CComplexType.withType(expr, type);
             Expr<?> wrappedExpr = type.castTo(expr);
             CExpr cexpr = new CExpr(wrappedExpr, parseContext);
             CAssignment cAssignment = new CAssignment(ret, cexpr, "=", parseContext);
@@ -1122,12 +1098,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         CComplexType type = CComplexType.getType(originalOperand, parseContext);
         type = getSmallestCommonType(List.of(type), parseContext);
         Expr<?> promotedOperand = type.castTo(originalOperand);
-        parseContext.getMetadata().create(promotedOperand, "cType", type);
+        promotedOperand = CComplexType.withType(promotedOperand, type);
         switch (ctx.unaryOperator().getText()) {
             case "-":
                 {
                     Expr<?> negExpr = AbstractExprs.Neg(promotedOperand);
-                    parseContext.getMetadata().create(negExpr, "cType", type);
+                    negExpr = CComplexType.withType(negExpr, type);
                     return negExpr;
                 }
             case "+":
@@ -1142,12 +1118,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                                 .getNullValue()),
                                 signedInt.getUnitValue(),
                                 signedInt.getNullValue());
-                parseContext.getMetadata().create(promotedOperand, "cType", signedInt);
+                promotedOperand = CComplexType.withType(promotedOperand, signedInt);
                 return promotedOperand;
             case "~":
                 //noinspection unchecked
                 Expr<?> expr = BvExprs.Not(cast(promotedOperand, BvType.of(type.width())));
-                parseContext.getMetadata().create(expr, "cType", type);
+                expr = CComplexType.withType(expr, type);
                 return expr;
             case "&":
                 // `&f` and `f` denote the same thing for a function: its address (id).
@@ -1161,42 +1137,30 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // value
                 // is correct; dereferencing it back as the aggregate is a separate concern (not
                 // reached by the TDX invariants, which only pass such an address to a stub).
-                final var structMarkerBaseAmp =
-                        parseContext
-                                .getMetadata()
-                                .getMetadataValue(originalOperand, ByteUnionSlice.STRUCT_BASE);
-                if (structMarkerBaseAmp.isPresent()) {
-                    final Expr<?> markerBase = (Expr<?>) structMarkerBaseAmp.get();
-                    final Expr<?> markerOffset =
-                            (Expr<?>)
-                                    parseContext
-                                            .getMetadata()
-                                            .getMetadataValue(
-                                                    originalOperand, ByteUnionSlice.STRUCT_OFFSET)
-                                            .orElseThrow();
+                if (LaidOutValue.originOf(originalOperand)
+                        instanceof StorageOrigin.ByteUnionStruct structMarker) {
+                    final Expr<?> markerBase = structMarker.getBase();
+                    final Expr<?> markerOffset = structMarker.getOffset();
                     final CComplexType markerType =
                             CComplexType.getType(originalOperand, parseContext);
-                    final Expr<?> cell =
+                    Expr<?> cell =
                             Exprs.Dereference(
                                     cast(markerBase, markerBase.getType()),
                                     cast(markerOffset, markerBase.getType()),
                                     unsignedIntegerOfWidth(8).getSmtType());
-                    parseContext.getMetadata().create(cell, "cType", unsignedIntegerOfWidth(8));
+                    cell = CComplexType.withType(cell, unsignedIntegerOfWidth(8));
                     final CPointer subPtr = new CPointer(null, markerType, parseContext);
-                    final Reference<Type, ?> subAddr = Reference(cell, subPtr.getSmtType());
-                    parseContext.getMetadata().create(subAddr, "cType", subPtr);
+                    Expr<?> subAddr = Reference(cell, subPtr.getSmtType());
+                    subAddr = CComplexType.withType(subAddr, subPtr);
                     return subAddr;
                 }
                 // A byte-laid-out union member wider than one cell (`&u.qwords[0]`): the resulting
                 // pointer would have to know it reads several byte-cells as one value, which no
                 // pointer in this model can express. A single byte (`&u.bytes[i]`) is a bare
                 // Dereference and never reaches here (see ByteUnionSlice#WIDTH / byteScalarRead).
-                final var byteUnionWidth =
-                        parseContext
-                                .getMetadata()
-                                .getMetadataValue(originalOperand, ByteUnionSlice.WIDTH);
-                if (byteUnionWidth.isPresent()
-                        && ((Number) byteUnionWidth.get()).intValue() > 1
+                if (LaidOutValue.originOf(originalOperand)
+                                instanceof StorageOrigin.ByteUnionValue byteUnionValue
+                        && byteUnionValue.getWidthBytes() > 1
                         && !byteAddressed()) {
                     // Under the bytes memory model this restriction does not apply: every object is
                     // a run of byte cells and a pointer is a plain byte address, so `&u.qwords[0]`
@@ -1215,19 +1179,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
                 if ((ampType instanceof CStruct || ampType instanceof CArray)
-                        && !(originalOperand instanceof RefExpr<?>)
-                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
-                    final Expr<?> address = Pos(originalOperand);
-                    parseContext
-                            .getMetadata()
-                            .create(address, "cType", new CPointer(null, ampType, parseContext));
+                        && !(bare(originalOperand) instanceof RefExpr<?>)
+                        && !(bare(originalOperand) instanceof Dereference<?, ?, ?>)) {
+                    Expr<?> address = Pos(originalOperand);
+                    address =
+                            CComplexType.withType(
+                                    address, new CPointer(null, ampType, parseContext));
                     return address;
                 }
                 // Taking a *scalar* local's address is what makes its storage observable after the
                 // block ends, and such a scalar is not an alloca -- ReferenceElimination gives it a
                 // compile-time base -- so nothing else would ever release it. Tell the function
                 // visitor, which releases it at the end of the block that DECLARED it.
-                if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
+                if (functionVisitor != null && bare(originalOperand) instanceof RefExpr<?> ref) {
                     final Expr<?> address = reference(originalOperand);
                     functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
                     return address;
@@ -1251,8 +1215,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return reference(wholeCell);
                 }
                 checkState(
-                        originalOperand instanceof RefExpr<?>
-                                || originalOperand instanceof Dereference<?, ?, ?>,
+                        bare(originalOperand) instanceof RefExpr<?>
+                                || bare(originalOperand) instanceof Dereference<?, ?, ?>,
                         "Referencing non-lvalue expressions is not allowed! Got a %s [%s] of type"
                                 + " %s",
                         originalOperand.getClass().getSimpleName(),
@@ -1269,12 +1233,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // the pointer value itself -- there is no cell to read (the same rule `p[0]` uses
                 // for a pointer to a struct). Reading a cell here would hand back the array's
                 // first element as if it were the array's base, so `(*p)[i]` addressed the wrong
-                // object. Wrap in Pos so the array cType lands on a fresh node, not on p's shared
-                // RefExpr.
+                // object. Pos gives it a node of its own: typing p's own reference would retype
+                // p, and the result must not pass for p's lvalue when its address is taken.
                 if (type instanceof CPointer pointerToArray
                         && pointerToArray.getEmbeddedType() instanceof CArray pointeeArray) {
                     Expr<?> arrayObject = Pos(originalOperand);
-                    parseContext.getMetadata().create(arrayObject, "cType", pointeeArray);
+                    arrayObject = CComplexType.withType(arrayObject, pointeeArray);
                     return arrayObject;
                 }
                 // The same rule for a pointer to a *struct*: a struct's value is its base id, so
@@ -1286,7 +1250,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 if (type instanceof CPointer pointerToStruct
                         && pointerToStruct.getEmbeddedType() instanceof CStruct pointeeStruct) {
                     Expr<?> structObject = Pos(originalOperand);
-                    parseContext.getMetadata().create(structObject, "cType", pointeeStruct);
+                    structObject = CComplexType.withType(structObject, pointeeStruct);
                     return structObject;
                 }
                 if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
@@ -1296,7 +1260,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // every such access read an unallocated object and look out of bounds.
                 Expr<?> base = originalOperand;
                 Expr<?> offset = CComplexType.getUnsignedLong(parseContext).getNullValue();
-                if (stripPos(originalOperand) instanceof AddExpr<?> addExpr) {
+                if (bare(stripPos(originalOperand)) instanceof AddExpr<?> addExpr) {
                     final List<Expr<?>> pointerOps = new ArrayList<>();
                     final List<Expr<?>> indexOps = new ArrayList<>();
                     for (Expr<?> rawOp : addExpr.getOps()) {
@@ -1320,17 +1284,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * Removes the identity ("unary plus") casts the frontend wraps around promoted operands, so
-     * that the underlying expression -- and the C type recorded for it -- can be inspected.
+     * that the underlying expression -- and the C type recorded for it -- can be inspected. The
+     * result keeps its own traceability wrapper, which holds that type.
      */
     private static Expr<?> stripPos(Expr<?> expr) {
-        while (expr instanceof PosExpr<?> pos) {
+        while (bare(expr) instanceof PosExpr<?> pos) {
             expr = pos.getOp();
         }
         return expr;
     }
 
+    /** The expression itself, without the wrapper recording its C type: what to match on. */
+    private static Expr<?> bare(Expr<?> expr) {
+        return Traceability.unwrapTraceable(expr);
+    }
+
     private static boolean isLiteralZero(Expr<?> expr) {
-        Expr<?> stripped = stripPos(expr);
+        Expr<?> stripped = bare(stripPos(expr));
         if (stripped instanceof IntLitExpr intLit) {
             return intLit.getValue().signum() == 0;
         }
@@ -1341,7 +1311,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private static boolean isLiteralOne(Expr<?> expr) {
-        Expr<?> stripped = stripPos(ExprUtils.simplify(expr));
+        Expr<?> stripped = bare(stripPos(ExprUtils.simplify(expr)));
         if (stripped instanceof IntLitExpr intLit) {
             return intLit.getValue().equals(BigInteger.ONE);
         }
@@ -1410,7 +1380,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * indexed.
      */
     private Expr<?> foldPointerArithmetic(Expr<?> base, Expr<?> offset) {
-        if (!(stripPos(base) instanceof AddExpr<?> addExpr)) {
+        if (!(bare(stripPos(base)) instanceof AddExpr<?> addExpr)) {
             return null;
         }
         final List<Expr<?>> pointerOps = new ArrayList<>();
@@ -1446,7 +1416,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> pointerBaseOf(Expr<?> sum) {
         Expr<?> pointerBase = null;
-        for (Expr<?> rawOp : ((AddExpr<?>) stripPos(sum)).getOps()) {
+        for (Expr<?> rawOp : ((AddExpr<?>) bare(stripPos(sum))).getOps()) {
             Expr<?> op = stripPos(rawOp);
             CComplexType opType = CComplexType.getType(op, parseContext);
             if (isPointerArithmeticBase(opType)) {
@@ -1506,8 +1476,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final Expr<?> scaled =
                 Mul(List.of(indexType.castTo(index), indexType.castTo(elementCells)));
-        final Expr<?> row = Add(List.of(base, scaled));
-        parseContext.getMetadata().create(row, "cType", elemType);
+        Expr<?> row = Add(List.of(base, scaled));
+        row = CComplexType.withType(row, elemType);
         return row;
     }
 
@@ -1586,16 +1556,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // so `a[j]` quietly recorded `j` itself as an array, and every later `j++` was read as
         // pointer arithmetic and refused. Nothing about `j` is a pointer.
         Expr<?> index = CComplexType.getUnsignedLong(parseContext).castTo(offset);
-        Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, index, type.getSmtType());
-        parseContext.getMetadata().create(of, "cType", type);
+        Expr<?> of = Exprs.Dereference((Expr<T>) accept, index, type.getSmtType());
+        of = CComplexType.withType(of, type);
         return of;
     }
 
     private Expr<?> reference(Expr<?> accept) {
         final var newType =
                 new CPointer(null, CComplexType.getType(accept, parseContext), parseContext);
-        Reference<Type, ?> of = Reference(accept, newType.getSmtType());
-        parseContext.getMetadata().create(of, "cType", newType);
+        Expr<?> of = Reference(accept, newType.getSmtType());
+        of = CComplexType.withType(of, newType);
         return of;
     }
 
@@ -1637,7 +1607,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         VarDecl<?> variable = getVar(name);
         if (variable != null && functions.containsKey(variable)) {
             FunctionIds.idOf(name);
-            parseContext.getMetadata().create(variable.getRef(), "isFunctionPointer", true);
+            parseContext.getFunctionPointerVariables().add(variable);
         }
     }
 
@@ -1646,7 +1616,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * function's address taken directly (e.g. {@code (&f)(x)}).
      */
     private boolean isCallableFunctionPointer(Expr<?> expr) {
-        if (parseContext.getMetadata().getMetadataValue(expr, "isFunctionPointer").isPresent()) {
+        if (bare(expr) instanceof RefExpr<?> ref
+                && ref == ref.getDecl().getRef()
+                && ref.getDecl() instanceof VarDecl<?> varDecl
+                && parseContext.getFunctionPointerVariables().contains(varDecl)) {
             return true;
         }
         // Carried on the type, so that function pointers reached through a struct field, an array
@@ -1683,7 +1656,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 pointerType instanceof CPointer cPointer
                         ? cPointer.getEmbeddedType()
                         : CComplexType.getSignedInt(parseContext);
-        parseContext.getMetadata().create(INDIRECT_CALL, "cType", returnType);
+        parseContext.getFunctionReturnTypes().put(INDIRECT_CALL, returnType);
         CCall cCall = new CCall(INDIRECT_CALL, arguments, parseContext);
         preStatements.add(cCall);
         if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
@@ -1771,22 +1744,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     + " models only round-to-nearest-even.");
                 }
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> success = signedInt.getNullValue();
-                parseContext.getMetadata().create(success, "cType", signedInt);
+                Expr<?> success = signedInt.getNullValue();
+                success = CComplexType.withType(success, signedInt);
                 return success;
             }
             case "fegetround" -> {
                 // Always the default mode, which is the only one that can be in effect: any
                 // fesetround that changed it was refused above. FE_TONEAREST is 0.
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> toNearest = signedInt.getNullValue();
-                parseContext.getMetadata().create(toNearest, "cType", signedInt);
+                Expr<?> toNearest = signedInt.getNullValue();
+                toNearest = CComplexType.withType(toNearest, signedInt);
                 return toNearest;
             }
             case "__builtin_constant_p" -> {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> zero = signedInt.getNullValue();
-                parseContext.getMetadata().create(zero, "cType", signedInt);
+                Expr<?> zero = signedInt.getNullValue();
+                zero = CComplexType.withType(zero, signedInt);
                 return zero;
             }
             case "__builtin_isinf", "__builtin_isinf_sign" -> {
@@ -1841,8 +1814,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     arg.accept(this);
                 }
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> unused = signedInt.getNullValue();
-                parseContext.getMetadata().create(unused, "cType", signedInt);
+                Expr<?> unused = signedInt.getNullValue();
+                unused = CComplexType.withType(unused, signedInt);
                 return unused;
             }
             case "__builtin_alloca", "__builtin_alloca_with_align" -> {
@@ -1859,8 +1832,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     arg.accept(functionVisitor); // for any side effects the operands have
                 }
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> unused = signedInt.getNullValue();
-                parseContext.getMetadata().create(unused, "cType", signedInt);
+                Expr<?> unused = signedInt.getNullValue();
+                unused = CComplexType.withType(unused, signedInt);
                 return unused;
             }
             case "__builtin_unreachable" -> {
@@ -2064,16 +2037,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> accessBase = folded == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = folded == null ? memberByteOffset : folded;
         if (embeddedType instanceof CStruct || embeddedType instanceof CArray) {
-            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
-            parseContext.getMetadata().create(region, "cType", embeddedType);
+            Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            region = CComplexType.withType(region, embeddedType);
             return region;
         }
-        final Expr<?> access =
+        Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
                         embeddedType.getSmtType());
-        parseContext.getMetadata().create(access, "cType", embeddedType);
+        access = CComplexType.withType(access, embeddedType);
         return access;
     }
 
@@ -2109,46 +2082,29 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
         final Expr<?> accessBase = folded == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = folded == null ? unitOffset : folded;
-        final Expr<?> cell =
+        Expr<?> cell =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
                         declaredType.getSmtType());
-        parseContext.getMetadata().create(cell, "cType", declaredType);
+        cell = CComplexType.withType(cell, declaredType);
         final boolean signed =
                 declaredType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
-        final Expr<?> value =
+        Expr<?> value =
                 declaredType.castTo(
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
                                 .BitfieldSlice.read(
                                 cell, bitInUnit, field.bitfieldWidth(), signed));
-        parseContext.getMetadata().create(value, "cType", declaredType);
-        parseContext
-                .getMetadata()
-                .create(
+        value =
+                LaidOutValue.of(
                         value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.CELL,
-                        cell);
-        parseContext
-                .getMetadata()
-                .create(
-                        value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.OFFSET,
-                        bitInUnit);
-        parseContext
-                .getMetadata()
-                .create(
-                        value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.WIDTH,
-                        field.bitfieldWidth());
+                        declaredType,
+                        new StorageOrigin.Bitfield(cell, bitInUnit, field.bitfieldWidth(), false));
         return value;
     }
 
@@ -2170,22 +2126,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // marker: the marker carries the union's own base and the nested struct's byte offset, so
         // continue the byte-slice resolution at (that offset + this field's offset) instead of
         // treating the marker (a mere placeholder) as a real object base.
-        final var structMarkerBase =
-                parseContext.getMetadata().getMetadataValue(base, ByteUnionSlice.STRUCT_BASE);
-        if (structMarkerBase.isPresent()) {
+        if (LaidOutValue.originOf(base) instanceof StorageOrigin.ByteUnionStruct structMarker) {
             // Works for a nested union too: its members all share offset 0, so ObjectLayout gives
             // the
             // field a byte offset of 0 within it, and the slice lands at the union's own offset --
             // exactly the punning `u.nested.asA` / `u.nested.asB` expect (they read the same bytes
             // at
             // different widths).
-            final Expr<?> unionBase = (Expr<?>) structMarkerBase.get();
-            final Expr<?> structOffset =
-                    (Expr<?>)
-                            parseContext
-                                    .getMetadata()
-                                    .getMetadataValue(base, ByteUnionSlice.STRUCT_OFFSET)
-                                    .orElseThrow();
+            final Expr<?> unionBase = structMarker.getBase();
+            final Expr<?> structOffset = structMarker.getOffset();
             return byteLaidOutMemberAccess(
                     unionBase, structType, memberName, embeddedType, structOffset);
         }
@@ -2215,13 +2164,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // which `base` already is, so slice that cell rather than dereferencing into a new object.
         // Slicing the same cell the sibling integer member reads is what makes the overlay alias.
         if (structType.overlayWidth() != null
-                && parseContext
-                        .getMetadata()
-                        .getMetadataValue(
-                                base,
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex
-                                        .compound.BitfieldSlice.PACKED_CELL)
-                        .isPresent()) {
+                && LaidOutValue.originOf(base) instanceof StorageOrigin.PackedCell) {
             return sliceOf(base, structType.overlaySlotOf(memberName), embeddedType);
         }
 
@@ -2250,7 +2193,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
         final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
-        final Expr<?> access =
+        Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
@@ -2259,13 +2202,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // member's: an assignment through it casts the right-hand side to this type before
         // splicing, so recording the narrower member type here hands a 32-bit value to a 64-bit
         // cell. `sliceOf` stamps the member's own type onto the slice, which is where it belongs.
-        parseContext
-                .getMetadata()
-                .create(access, "cType", slicedUnionMember ? cellType : embeddedType);
+        access = CComplexType.withType(access, slicedUnionMember ? cellType : embeddedType);
         if (slicedUnionMember
                 && embeddedType
                         instanceof
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
+                        hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal
                 && embeddedType.width() == structType.unionCellWidth()) {
             // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is
             // the
@@ -2275,41 +2216,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // so
             // an assignment splices FpToIeeeBv of the value back (see FrontendXcfaBuilder).
             final FpType fpType = (FpType) embeddedType.getSmtType();
-            final Expr<?> value =
+            Expr<?> value =
                     hu.bme.mit.theta.core.type.fptype.FpExprs.FromIeeeBv(
                             cast(access, (BvType) cellType.getSmtType()), fpType);
-            parseContext.getMetadata().create(value, "cType", embeddedType);
             // The whole cell is the float's pattern: an assignment read-modify-writes bits [0,
-            // width) -- i.e. all of them -- with FpToIeeeBv of the value (see the IEEE_FLOAT path
+            // width) -- i.e. all of them -- with FpToIeeeBv of the value (see the ieeeFloat path
             // in FrontendXcfaBuilder).
-            parseContext
-                    .getMetadata()
-                    .create(
+            value =
+                    LaidOutValue.of(
                             value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.CELL,
-                            access);
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.OFFSET,
-                            0);
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.WIDTH,
-                            structType.unionCellWidth());
-            parseContext
-                    .getMetadata()
-                    .create(
-                            value,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.IEEE_FLOAT,
-                            true);
+                            embeddedType,
+                            new StorageOrigin.Bitfield(
+                                    access, 0, structType.unionCellWidth(), true));
             return value;
         }
         if (slicedUnionMember
@@ -2323,36 +2241,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // cell to slice, and a sliceOf wrapper (an Ite/arithmetic expression) is not one. A
             // narrower packed member is genuinely a slice.
             final var slot = structType.unionSlotOf(memberName);
-            final Expr<?> cellExpr =
+            Expr<?> cellExpr =
                     slot.bitOffset() == 0 && slot.width() == structType.unionCellWidth()
                             ? access
                             : sliceOf(access, slot, unsignedIntegerOfWidth(packed.overlayWidth()));
-            parseContext.getMetadata().create(cellExpr, "cType", embeddedType);
-            parseContext
-                    .getMetadata()
-                    .create(
-                            cellExpr,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.PACKED_CELL,
-                            true);
+            cellExpr = LaidOutValue.of(cellExpr, embeddedType, StorageOrigin.PackedCell.INSTANCE);
             return cellExpr;
         }
         if (slicedUnionMember) {
-            // A plain-integer member: its value is a slice of the union's word. `sliceOf` carries
-            // the cell along as metadata, so assigning to it read-modify-writes just its bits and
+            // A plain-integer member: its value is a slice of the union's word. `sliceOf` records
+            // the cell as the value's origin, so assigning to it read-modify-writes just its bits
+            // and
             // leaves the rest of the word -- whatever the sibling members hold -- intact.
             return sliceOf(access, structType.unionSlotOf(memberName), embeddedType);
         }
         if (cellType != embeddedType) {
             // The union's cell, read at the packed view's integer width: mark it so member
             // accesses on it slice instead of dereferencing.
-            parseContext
-                    .getMetadata()
-                    .create(
+            access =
+                    LaidOutValue.of(
                             access,
-                            hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                    .BitfieldSlice.PACKED_CELL,
-                            true);
+                            CComplexType.getKnownType(access),
+                            StorageOrigin.PackedCell.INSTANCE);
             return access;
         }
 
@@ -2432,8 +2342,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (embeddedType instanceof CArray arrayType) {
             final CComplexType elemType = arrayType.getEmbeddedType();
             if (elemType
-                    instanceof
-                    hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                    instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal) {
                 throw unsupportedByteLaidOutMember(
                         memberName, "a floating-point element is not supported");
             }
@@ -2445,21 +2354,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (elemBytes <= 0) {
                 throw unsupportedByteLaidOutMember(memberName, "its element has no static size");
             }
-            // A marker for the next `[i]`: wrapped in Pos so the metadata lands on a fresh node,
-            // not
-            // on `base`'s own (which already carries the union's cType and must keep it).
-            final Expr<?> marker = Pos(base);
-            parseContext.getMetadata().create(marker, "cType", embeddedType);
-            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_BASE, base);
-            parseContext.getMetadata().create(marker, ByteUnionSlice.ARRAY_OFFSET, byteOffset);
-            parseContext
-                    .getMetadata()
-                    .create(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES, elemBytes);
+            // A marker for the next `[i]`: wrapped in Pos so that, unwrapped, it is not mistaken
+            // for `base` itself.
+            Expr<?> marker = Pos(base);
+            marker =
+                    LaidOutValue.of(
+                            marker,
+                            embeddedType,
+                            new StorageOrigin.ByteUnionArray(base, byteOffset, elemBytes));
             return marker;
         }
         if (embeddedType
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
+                instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CReal) {
             // The NaN gate on fpToIEEEBV stands here too, not just on the word-sliceable path: a
             // floating-point member is refused rather than reopening the unsound round-trip.
             // Deliberately NOT the recoverable exception: the byte-addressed model refuses floats
@@ -2480,10 +2386,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // above. For a union, member resolution stays refused (see directMemberAccess), so its
             // marker is only useful for taking the member's address (`&u.sub`), which maps to the
             // sub-region's byte location.
-            final Expr<?> marker = Pos(base);
-            parseContext.getMetadata().create(marker, "cType", embeddedType);
-            parseContext.getMetadata().create(marker, ByteUnionSlice.STRUCT_BASE, base);
-            parseContext.getMetadata().create(marker, ByteUnionSlice.STRUCT_OFFSET, byteOffset);
+            Expr<?> marker = Pos(base);
+            marker =
+                    LaidOutValue.of(
+                            marker,
+                            embeddedType,
+                            new StorageOrigin.ByteUnionStruct(base, byteOffset));
             return marker;
         }
         if (!isByteAddressableScalar(embeddedType)) {
@@ -2551,8 +2459,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 };
         final BigFloat value =
                 infinite ? BigFloat.positiveInfinity(significand) : BigFloat.NaN(significand);
-        final FpLitExpr literal = FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
-        parseContext.getMetadata().create(literal, "cType", type);
+        Expr<?> literal = FpUtils.bigFloatToFpLitExpr(value, FpType(exponent, significand));
+        literal = CComplexType.withType(literal, type);
         return literal;
     }
 
@@ -2567,9 +2475,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private static Expr<?> wholeCellOf(Expr<?> operand) {
         Expr<?> current = operand;
         for (int depth = 0; depth < 8; depth++) {
-            if (current instanceof hu.bme.mit.theta.core.type.bvtype.BvExtractExpr extract) {
+            if (bare(current) instanceof hu.bme.mit.theta.core.type.BvExtractExpr extract) {
                 final Expr<?> inner = peelCasts(extract.getBitvec());
-                if (!(inner instanceof Dereference<?, ?, ?>)) {
+                if (!(bare(inner) instanceof Dereference<?, ?, ?>)) {
                     return null;
                 }
                 if (!(inner.getType() instanceof BvType bv)) {
@@ -2602,10 +2510,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /** Strips one width/signedness wrapper, or returns the expression unchanged. */
     private static Expr<?> peelOnce(Expr<?> expr) {
-        if (expr instanceof hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
-                || expr instanceof hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
-                || expr instanceof PosExpr<?>) {
-            return expr.getOps().get(0);
+        final Expr<?> bare = bare(expr);
+        if (bare instanceof hu.bme.mit.theta.core.type.BvZExtExpr
+                || bare instanceof hu.bme.mit.theta.core.type.BvSExtExpr
+                || bare instanceof PosExpr<?>) {
+            return bare.getOps().get(0);
         }
         return expr;
     }
@@ -2667,9 +2576,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed = !effectivelyUnsigned(memberType);
         final CComplexType byteType = unsignedIntegerOfWidth(8);
         if (widthBytes == 1 && !signed) {
-            final Expr<?> cell = byteCellAt(base, byteOffset, 0, byteType);
-            parseContext.getMetadata().create(cell, "cType", memberType);
-            stampByteUnionMetadata(cell, base, byteOffset, 1);
+            Expr<?> cell = byteCellAt(base, byteOffset, 0, byteType);
+            cell =
+                    LaidOutValue.of(
+                            cell,
+                            memberType,
+                            new StorageOrigin.ByteUnionValue(base, byteOffset, 1));
             return cell;
         }
         final List<Expr<?>> cells = new ArrayList<>(widthBytes);
@@ -2677,9 +2589,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             cells.add(byteCellAt(base, byteOffset, j, byteType));
         }
         final Expr<?> combined = ByteUnionSlice.read(cells, signed);
-        final Expr<?> value = memberType.castTo(combined);
-        parseContext.getMetadata().create(value, "cType", memberType);
-        stampByteUnionMetadata(value, base, byteOffset, widthBytes);
+        Expr<?> value = memberType.castTo(combined);
+        value =
+                LaidOutValue.of(
+                        value,
+                        memberType,
+                        new StorageOrigin.ByteUnionValue(base, byteOffset, widthBytes));
         return value;
     }
 
@@ -2720,15 +2635,15 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed =
                 memberType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
-        final Expr<?> value =
+        Expr<?> value =
                 memberType.castTo(
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
                                 .BitfieldSlice.read(cell, bitInByte, width, signed));
-        parseContext.getMetadata().create(value, "cType", memberType);
+        value = CComplexType.withType(value, memberType);
         return value;
     }
 
@@ -2739,23 +2654,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 j == 0
                         ? byteOffset
                         : Add(indexType.castTo(byteOffset), indexType.castTo(indexLiteral(j)));
-        final Expr<?> deref =
+        Expr<?> deref =
                 Exprs.Dereference(
                         cast(base, base.getType()),
                         cast(off, base.getType()),
                         byteType.getSmtType());
-        parseContext.getMetadata().create(deref, "cType", byteType);
+        deref = CComplexType.withType(deref, byteType);
         return deref;
-    }
-
-    /**
-     * Stamps the metadata an assignment through [value] needs to write its cells back individually.
-     */
-    private void stampByteUnionMetadata(
-            Expr<?> value, Expr<?> base, Expr<?> byteOffset, int widthBytes) {
-        parseContext.getMetadata().create(value, ByteUnionSlice.BASE, base);
-        parseContext.getMetadata().create(value, ByteUnionSlice.OFFSET, byteOffset);
-        parseContext.getMetadata().create(value, ByteUnionSlice.WIDTH, widthBytes);
     }
 
     /**
@@ -2768,24 +2673,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private Expr<?> byteLaidOutArraySubscript(Expr<?> marker, Expr<?> indexExpr) {
         final CComplexType arrayCType = CComplexType.getType(marker, parseContext);
         final CComplexType elemType = ((CArray) arrayCType).getEmbeddedType();
-        final Expr<?> base =
-                (Expr<?>)
-                        parseContext
-                                .getMetadata()
-                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_BASE)
-                                .orElseThrow();
-        final Expr<?> startOffset =
-                (Expr<?>)
-                        parseContext
-                                .getMetadata()
-                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_OFFSET)
-                                .orElseThrow();
-        final int elemBytes =
-                (Integer)
-                        parseContext
-                                .getMetadata()
-                                .getMetadataValue(marker, ByteUnionSlice.ARRAY_ELEMENT_BYTES)
-                                .orElseThrow();
+        final StorageOrigin.ByteUnionArray arrayMarker =
+                (StorageOrigin.ByteUnionArray) LaidOutValue.originOf(marker);
+        final Expr<?> base = arrayMarker.getBase();
+        final Expr<?> startOffset = arrayMarker.getOffset();
+        final int elemBytes = arrayMarker.getElementBytes();
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final Expr<?> byteOffset =
                 Add(
@@ -2798,10 +2690,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // `[j]` descends into it exactly as it does for a directly named nested member. Only a
         // scalar element is an actual read.
         if (elemType instanceof CStruct) {
-            final Expr<?> sub = Pos(base);
-            parseContext.getMetadata().create(sub, "cType", elemType);
-            parseContext.getMetadata().create(sub, ByteUnionSlice.STRUCT_BASE, base);
-            parseContext.getMetadata().create(sub, ByteUnionSlice.STRUCT_OFFSET, byteOffset);
+            Expr<?> sub = Pos(base);
+            sub =
+                    LaidOutValue.of(
+                            sub, elemType, new StorageOrigin.ByteUnionStruct(base, byteOffset));
             return sub;
         }
         if (elemType instanceof CArray innerArray) {
@@ -2810,13 +2702,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     innerArray.getEmbeddedType(), parseContext.getArchitecture())
                             / 8;
             if (innerBytes > 0) {
-                final Expr<?> sub = Pos(base);
-                parseContext.getMetadata().create(sub, "cType", elemType);
-                parseContext.getMetadata().create(sub, ByteUnionSlice.ARRAY_BASE, base);
-                parseContext.getMetadata().create(sub, ByteUnionSlice.ARRAY_OFFSET, byteOffset);
-                parseContext
-                        .getMetadata()
-                        .create(sub, ByteUnionSlice.ARRAY_ELEMENT_BYTES, innerBytes);
+                Expr<?> sub = Pos(base);
+                sub =
+                        LaidOutValue.of(
+                                sub,
+                                elemType,
+                                new StorageOrigin.ByteUnionArray(base, byteOffset, innerBytes));
                 return sub;
             }
         }
@@ -2832,11 +2723,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private CComplexType unsignedIntegerOfWidth(int bits) {
         return switch (bits) {
             case 8 ->
-                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar
-                            .CUnsignedChar(null, parseContext);
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedChar(
+                            null, parseContext);
             case 16 ->
-                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort
-                            .CUnsignedShort(null, parseContext);
+                    new hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort(
+                            null, parseContext);
             case 32 -> CComplexType.getUnsignedInt(parseContext);
             // `unsigned long` is 64 bits only under LP64; under ILP32 it is 32, so a 64-bit cell
             // came back HALF its width and the union's own layout then addressed past its end:
@@ -2866,39 +2757,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final boolean signed =
                 memberType
                                 instanceof
-                                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
+                                hu.bme.mit.theta.frontend.transformation.model.types.complex
                                                 .CInteger
                                         integer
                         && integer.isSsigned();
         // The slice comes back in the *cell's* width; a member narrower than the cell it shares --
         // `lo` in a 64-bit word, say -- has to be brought down to its own type, or every later use
         // of it compares a 64-bit value against a 32-bit one.
-        final Expr<?> value =
+        Expr<?> value =
                 memberType.castTo(
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
                                 .BitfieldSlice.read(cell, slot.bitOffset(), slot.width(), signed));
-        parseContext.getMetadata().create(value, "cType", memberType);
-        parseContext
-                .getMetadata()
-                .create(
+        value =
+                LaidOutValue.of(
                         value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.CELL,
-                        cell);
-        parseContext
-                .getMetadata()
-                .create(
-                        value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.OFFSET,
-                        slot.bitOffset());
-        parseContext
-                .getMetadata()
-                .create(
-                        value,
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
-                                .BitfieldSlice.WIDTH,
-                        slot.width());
+                        memberType,
+                        new StorageOrigin.Bitfield(cell, slot.bitOffset(), slot.width(), false));
         return value;
     }
 
@@ -2997,10 +2871,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private static boolean isPlainInteger(CComplexType type) {
-        return type
-                        instanceof
-                        hu.bme.mit.theta.frontend.transformation.model.types.complex.integer
-                                .CInteger
+        return type instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger
                 && !(type instanceof CStruct)
                 && !(type instanceof CArray)
                 && !(type instanceof CPointer);
@@ -3010,14 +2881,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * A pointer is an unsigned address; an integer's signedness is its own; else unsigned=false.
      */
     private static boolean effectivelyUnsigned(CComplexType t) {
-        if (t
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer) {
+        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer) {
             return true;
         }
-        if (t
-                instanceof
-                hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger ci) {
+        if (t instanceof hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger ci) {
             return !ci.isSsigned();
         }
         return false;
@@ -3037,7 +2904,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         arguments.add(args.get(0).accept(functionVisitor));
         CComplexType pointerType =
                 new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext);
-        parseContext.getMetadata().create(ALLOCA, "cType", pointerType);
+        parseContext.getFunctionReturnTypes().put(ALLOCA, pointerType);
         CCall cCall = new CCall(ALLOCA, arguments, parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
@@ -3098,7 +2965,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     typed(
                             wrapped.getType() instanceof IntType
                                             && left.getType() instanceof IntType
-                                    ? createIntDiv(wrapped, left)
+                                    ? createIntDiv(wrapped, left, null)
                                     : Div(wrapped, left),
                             type);
             overflowed =
@@ -3129,7 +2996,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> typed(Expr<?> expr, CComplexType type) {
-        parseContext.getMetadata().create(expr, "cType", type);
+        expr = CComplexType.withType(expr, type);
         return expr;
     }
 
@@ -3252,7 +3119,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // compare-exchange returns a bool (int); store and fence are void (value unused).
             returnType = CComplexType.getSignedInt(parseContext);
         }
-        parseContext.getMetadata().create(name, "cType", returnType);
+        parseContext.getFunctionReturnTypes().put(name, returnType);
         CCall cCall = new CCall(name, arguments, parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
@@ -3283,7 +3150,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             bytes.add(BvExprs.Extract(bits, Int(low), Int(low + 8)));
         }
         Expr<?> swapped = BvExprs.Concat(bytes);
-        parseContext.getMetadata().create(swapped, "cType", type);
+        swapped = CComplexType.withType(swapped, type);
         return swapped;
     }
 
@@ -3336,7 +3203,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (returnsFirstArgType) {
             CComplexType returnType =
                     CComplexType.getType(arguments.get(0).getExpression(), parseContext);
-            parseContext.getMetadata().create(functionName, "cType", returnType);
+            parseContext.getFunctionReturnTypes().put(functionName, returnType);
         }
         markComparedObjects(functionName, arguments);
         CCall cCall = new CCall(functionName, arguments, parseContext);
@@ -3356,8 +3223,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 "WARNING: gcc intrinsic encountered in place of an expression, using a literal 0"
                         + " instead.\n");
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-        LitExpr<?> zero = signedInt.getNullValue();
-        parseContext.getMetadata().create(zero, "cType", signedInt);
+        Expr<?> zero = signedInt.getNullValue();
+        zero = CComplexType.withType(zero, signedInt);
         return zero;
     }
 
@@ -3377,8 +3244,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                             .getConstantValue(name);
             if (enumValue != null) {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> litExpr = signedInt.getValue(Long.toString(enumValue));
-                parseContext.getMetadata().create(litExpr, "cType", signedInt);
+                Expr<?> litExpr = signedInt.getValue(Long.toString(enumValue));
+                litExpr = CComplexType.withType(litExpr, signedInt);
                 return litExpr;
             }
             // Reaching here means `name` was used as a VALUE and resolved to nothing -- not a
@@ -3469,9 +3336,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             } else {
                 bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
             }
-            FpLitExpr fpLitExpr =
+            Expr<?> fpLitExpr =
                     FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
-            parseContext.getMetadata().create(fpLitExpr, "cType", type);
+            fpLitExpr = CComplexType.withType(fpLitExpr, type);
             return fpLitExpr;
 
         } else {
@@ -3538,7 +3405,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             else if (isUnsigned) type = unsignedInt;
             else type = signedInt;
 
-            LitExpr<?> litExpr =
+            Expr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
                             ? isUnsigned
                                     ? BvUtils.bigIntegerToUnsignedBvLitExpr(
@@ -3546,7 +3413,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                                     : BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
                             : Int(bigInteger);
 
-            parseContext.getMetadata().create(litExpr, "cType", type);
+            litExpr = CComplexType.withType(litExpr, type);
             return litExpr;
         }
     }
@@ -3634,10 +3501,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // A byte-laid-out union's array member, not yet subscripted (see
                 // ByteUnionSlice#ARRAY_BASE): resolve straight to its byte cells instead of the
                 // generic array/pointer path below, which knows nothing about byte granularity.
-                if (parseContext
-                        .getMetadata()
-                        .getMetadataValue(primary, ByteUnionSlice.ARRAY_BASE)
-                        .isPresent()) {
+                if (LaidOutValue.originOf(primary) instanceof StorageOrigin.ByteUnionArray) {
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
                     return byteLaidOutArraySubscript(primary, index);
                 }
@@ -3652,7 +3516,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         return row;
                     }
                     primary = dereference(primary, indexToOffset(index, elemType), elemType);
-                    parseContext.getMetadata().create(primary, "cType", elemType);
+                    primary = CComplexType.withType(primary, elemType);
                     return primary;
                 } else if (arrayType instanceof CPointer) {
                     CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
@@ -3667,14 +3531,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         // p[0] on a pointer-to-struct IS the pointee object, and a struct's value
                         // is its base id -- so the element's value is the pointer itself. A cell
                         // read here would treat field 0's *content* as the object's base (the
-                        // p->field double-deref bug, one production over). Wrap in Pos so the
-                        // struct cType lands on a fresh node, not on p's shared RefExpr.
+                        // p->field double-deref bug, one production over). Pos gives it a node of
+                        // its own: typing p's own reference would retype p.
                         Expr<?> element = Pos(primary);
-                        parseContext.getMetadata().create(element, "cType", elemType);
+                        element = CComplexType.withType(element, elemType);
                         return element;
                     }
                     primary = dereference(primary, indexToOffset(index, elemType), elemType);
-                    parseContext.getMetadata().create(primary, "cType", elemType);
+                    primary = CComplexType.withType(primary, elemType);
                     return primary;
                 } else {
                     // Say WHAT was indexed. Subscripting dispatches on the operand's C type --
@@ -3704,14 +3568,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // defined here and a library function (malloc, __VERIFIER_nondet_int, ...), which
                 // is not in `functions` because it is resolved by name much later.
                 boolean isDefinedFunction =
-                        expr instanceof RefExpr<?> refExpr
+                        bare(expr) instanceof RefExpr<?> refExpr
                                 && refExpr.getDecl() instanceof VarDecl<?> varDecl
                                 && functions.containsKey(varDecl);
                 if (!isDefinedFunction && isCallableFunctionPointer(expr)) {
                     return indirectCall(ctx, expr);
                 }
                 checkState(
-                        expr instanceof RefExpr<?>,
+                        bare(expr) instanceof RefExpr<?>,
                         "Only variable-backed functions are callable, but the callee is a %s whose"
                             + " C type is %s (recognized as a function pointer: %s). A call through"
                             + " a function POINTER is dispatched over the candidate set instead;"
@@ -3728,7 +3592,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // therefore both meaningless and harmful: `for (...) { pthread_t t;
                 // pthread_create(&t, ...); }` had its handle freed on every iteration and the next
                 // access reported a false `valid-deref`.
-                final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
+                final String calleeName = ((RefExpr<?>) bare(expr)).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
@@ -3753,7 +3617,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 markComparedObjects(calleeName, arguments);
                 CCall cCall =
-                        new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
+                        new CCall(
+                                ((RefExpr<?>) bare(expr)).getDecl().getName(),
+                                arguments,
+                                parseContext);
                 if (cCall.getFunctionId().contains("pthread")) parseContext.setMultiThreading(true);
                 preStatements.add(cCall);
                 if (functionVisitor != null) functionVisitor.recordMetadata(ctx, cCall);
@@ -3810,16 +3677,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
                 expr = AbstractExprs.Add(expr, type.getUnitValue());
-                parseContext.getMetadata().create(expr, "cType", type);
+                expr = CComplexType.withType(expr, type);
                 expr = type.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", type);
+                expr = CComplexType.withType(expr, type);
                 CExpr cexpr;
                 cexpr = new CExpr(expr, parseContext);
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                if (primary instanceof RefExpr
-                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                if (bare(primary) instanceof RefExpr<?> primaryRef
+                        && atomicVars.contains(primaryRef.getDecl())) {
                     preStatements.add(
                             new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
                     postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));
@@ -3837,16 +3704,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
                 expr = AbstractExprs.Sub(expr, type.getUnitValue());
-                parseContext.getMetadata().create(expr, "cType", type);
+                expr = CComplexType.withType(expr, type);
                 expr = type.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", type);
+                expr = CComplexType.withType(expr, type);
                 CExpr cexpr;
                 cexpr = new CExpr(expr, parseContext);
                 // no need to truncate here, as left and right side types are the same
                 CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
                 postStatements.add(0, cAssignment);
-                if (primary instanceof RefExpr
-                        && atomicVars.contains(((RefExpr<?>) primary).getDecl())) {
+                if (bare(primary) instanceof RefExpr<?> primaryRef
+                        && atomicVars.contains(primaryRef.getDecl())) {
                     preStatements.add(
                             new CCall("__VERIFIER_atomic_begin", List.of(), parseContext));
                     postStatements.add(new CCall("__VERIFIER_atomic_end", List.of(), parseContext));

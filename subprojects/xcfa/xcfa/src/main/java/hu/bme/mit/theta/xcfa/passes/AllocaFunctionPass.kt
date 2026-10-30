@@ -16,10 +16,12 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
@@ -31,7 +33,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
@@ -209,7 +211,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     size: Expr<*>,
     retType: CComplexType,
   ): XcfaLabel? {
-    if (ExprUtils.simplify(size) is LitExpr<*>) return null
+    if (ExprUtils.simplify(size).unwrapTraceable() is LitExpr<*>) return null
     val element = (retType as? CPointer)?.embeddedType ?: return null
     val sizeType = CComplexType.getType(size, parseContext)
     val ulong = CComplexType.getUnsignedLong(parseContext)
@@ -220,6 +222,15 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       Or(Lt(size, sizeType.nullValue), Gt(ulong.castTo(size), ulong.getValue(maxLength.toString())))
     val probe = Var("__theta_vla_probe_${probeCnt++}", Bool())
     builder.addVar(probe)
+    CComplexType.withType(probe.ref, element)
+    val offset = CComplexType.getUnsignedLong(parseContext).nullValue
+    @Suppress("UNCHECKED_CAST")
+    val cell =
+      CComplexType.withType(
+        Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type),
+        element,
+      )
+    return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
     @Suppress("UNCHECKED_CAST")
     val cell =
       Dereference.of(ret as Expr<Type>, ulong.castTo(size) as Expr<Type>, element.smtType as Type)

@@ -99,15 +99,22 @@ class UnusedMemoryWriteTest {
       """
       #include <pthread.h>
       extern void reach_error();
+      extern int __VERIFIER_nondet_int();
       pthread_mutex_t m[$mutexes];
-      int x = 1;
+      int x = 1, y = 1;
       void *thr(void *arg) {
         if (*(int *)arg != 1) reach_error();
         pthread_mutex_lock(&m[0]);
         pthread_mutex_unlock(&m[0]);
         return 0;
       }
-      int main() { pthread_t t; pthread_create(&t, 0, thr, &x); pthread_join(t, 0); return 0; }
+      int main() {
+        pthread_t t;
+        // Either address: a constant one would let the thread be specialized and the read resolved.
+        pthread_create(&t, 0, thr, __VERIFIER_nondet_int() ? &x : &y);
+        pthread_join(t, 0);
+        return 0;
+      }
       """
     val oneMutex = memoryWrites(program(1), MemoryModelType.flat)
     val tenMutexes = memoryWrites(program(10), MemoryModelType.flat)

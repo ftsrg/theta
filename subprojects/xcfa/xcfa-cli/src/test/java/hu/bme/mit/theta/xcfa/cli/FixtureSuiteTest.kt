@@ -139,10 +139,12 @@ class FixtureSuiteTest {
       addAll(listOf("--property", property.absolutePath))
       addAll(listOf("--architecture", architecture))
       addAll(listOf("--arithmetic", arithmetic))
+      addAll(SuiteSupport.extraArgs)
     }
     val command = SuiteSupport.thetaCommand(theta, input, options)
     val timeout = if (isVerdictFixture) VERDICT_TIMEOUT_SECONDS else PARSE_TIMEOUT_SECONDS
     val output = SuiteSupport.execute(command, theta, timeout).output
+    SuiteSupport.keepOutput("fixture-${input.name}-$arithmetic-$architecture-$expect", output)
 
     if (!isVerdictFixture) {
       return when {

@@ -17,7 +17,8 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -233,7 +234,7 @@ class BitfieldAndAnonymousMemberTest {
       )
     assertTrue(derefs.isNotEmpty(), "member writes must lower to memory assignments")
     assertTrue(
-      derefs.any { it.array is Dereference<*, *, *> },
+      derefs.any { it.array.unwrapTraceable() is Dereference<*, *, *> },
       "s.a must go through the anonymous member's base (a two-step access)",
     )
   }

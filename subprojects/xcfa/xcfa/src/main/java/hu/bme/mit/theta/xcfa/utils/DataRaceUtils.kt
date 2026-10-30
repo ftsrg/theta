@@ -20,7 +20,8 @@ import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.MAINSTEP
 import hu.bme.mit.theta.common.logging.Logger.Level.VERBOSE
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.RefExpr
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.loopEdges
 
@@ -71,7 +72,8 @@ fun isDataRacePossible(xcfa: XCFA, logger: Logger? = null): Boolean {
             val partition =
               pointerPartitions
                 .indexOfFirst {
-                  ((deref.array as? RefExpr<*>)?.decl in it.first) || deref.array in it.second
+                  ((deref.array.unwrapTraceable() as? RefExpr<*>)?.decl in it.first) ||
+                    deref.array in it.second
                 }
                 .let { if (it == -1) n else it } // if not found, put in "other" partition
             accessedPartitions.add(partition)

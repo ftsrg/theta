@@ -27,17 +27,16 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.RefExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
@@ -126,45 +125,32 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
   return atomicLocations
 }
 
-fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel =
+fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel =
   when (this) {
     is StmtLabel -> {
       val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
       when (stmt) {
         is MemoryAssignStmt<*, *, *> -> {
           simplified as MemoryAssignStmt<*, *, *>
-          if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-            parseContext.metadata.create(
-              simplified.expr,
-              "cType",
-              CComplexType.getType(stmt.expr, parseContext),
-            )
-          if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-            parseContext.metadata.create(
-              simplified.deref,
-              "cType",
-              CComplexType.getType(stmt.deref, parseContext),
-            )
-          StmtLabel(simplified, metadata = metadata)
+          val deref = simplified.tracedDeref.typedLike(stmt.tracedDeref)
+          val expr = simplified.expr.typedLike(stmt.expr)
+          val typed =
+            if (deref === simplified.tracedDeref && expr === simplified.expr) simplified
+            else MemoryAssignStmt.create(deref, expr)
+          StmtLabel(typed, metadata = metadata)
         }
 
         is AssignStmt<*> -> {
           simplified as AssignStmt<*>
-          val expr = simplified.expr.withMetadata(parseContext, stmt.expr)
+          val expr = simplified.expr.typedLike(stmt.expr)
           AssignStmtLabel(simplified.varDecl, expr, metadata = metadata)
         }
 
         is AssumeStmt -> {
           simplified as AssumeStmt
-          if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
-            parseContext.metadata.create(
-              simplified.cond,
-              "cType",
-              CComplexType.getType(stmt.cond, parseContext),
-            )
-          }
-          parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
-          StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+          val cond = simplified.cond.typedLike(stmt.cond)
+          val typed = if (cond === simplified.cond) simplified else AssumeStmt.of(cond)
+          StmtLabel(typed, metadata = metadata, choiceType = choiceType)
         }
 
         else -> this
@@ -174,7 +160,7 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     is StartLabel ->
       StartLabel(
         name,
-        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+        params.map { ExprUtils.simplify(it, valuation).typedLike(it) },
         pidVar,
         metadata,
         tempLookup,
@@ -186,38 +172,50 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
       // CLibraryFunctionsPass keys each handle on.
       InvokeLabel(
         name,
-        // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
-        // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
-        // SMT type instead -- carry it over, as the statement branches above do.
-        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+        // A rebuilt argument would lose its C type, and a later frontend pass reading it
+        // (AtomicFunctionsPass wants the pointee of its pointer argument) would see a bare SMT
+        // type instead -- carry it over, as the statement branches above do.
+        params.map { ExprUtils.simplify(it, valuation).typedLike(it) },
         metadata,
         tempLookup,
         isLibraryFunction,
       )
 
-    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
+    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation) }, metadata)
 
     is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
 
     else -> this
   }
 
-private fun <T : Type> Expr<T>.withMetadata(
-  parseContext: ParseContext,
-  metadataSource: Expr<*>,
-): Expr<T> {
-  if (!parseContext.metadata.getMetadataValue(metadataSource, "cType").isPresent) return this
-  val type = CComplexType.getType(metadataSource, parseContext)
-  val thisTypeOpt = parseContext.metadata.getMetadataValue(this, "cType")
-  return if (thisTypeOpt.isPresent && thisTypeOpt.get() != type) {
-    val newExpr = Pos(this)
-    parseContext.metadata.create(newExpr, "cType", type)
-    newExpr as Expr<T>
-  } else {
-    if (!thisTypeOpt.isPresent) parseContext.metadata.create(this, "cType", type)
-    this
+/**
+ * This expression typed [type]. A variable's own reference that already has another type gets a
+ * `Pos` node to carry [type]: typing the reference itself would retype the variable (see
+ * [CComplexType.withType]).
+ */
+fun <T : Type> Expr<T>.typedAs(type: CComplexType): Expr<T> {
+  val known = CComplexType.getKnownType(this)
+  val bare = unwrapTraceable()
+  @Suppress("UNCHECKED_CAST")
+  return when {
+    known == type -> this
+    known != null && bare is RefExpr<*> && bare === bare.decl.ref ->
+      CComplexType.withType(Pos(this) as Expr<T>, type)
+    else -> CComplexType.withType(this, type)
   }
 }
+
+/** This assignment with its right-hand side typed as [type]. */
+fun AssignStmt<*>.withExprType(type: CComplexType): AssignStmt<*> =
+  AssignStmt.create<Type>(varDecl, expr.typedAs(type))
+
+/** This assignment with its right-hand side typed like [source], if [source] has a C type. */
+fun AssignStmt<*>.withExprTypeOf(source: Expr<*>): AssignStmt<*> =
+  CComplexType.getKnownType(source)?.let { withExprType(it) } ?: this
+
+/** This expression with the C type of [source], if [source] has one (see [typedAs]). */
+fun <T : Type> Expr<T>.typedLike(source: Expr<*>): Expr<T> =
+  CComplexType.getKnownType(source)?.let { typedAs(it) } ?: this
 
 /**
  * Returns the set of edges that are before any thread start in the init procedure or after all
@@ -364,10 +362,9 @@ fun <T1 : Type, T2 : Type> AssignStmtLabel(
   rhs: Expr<T2>,
   metadata: MetaData = EmptyMetaData,
 ): StmtLabel =
-  when (lhs) {
-    is RefExpr<*> -> AssignStmtLabel(lhs as RefExpr<T1>, rhs, metadata)
-    is Dereference<*, *, *> ->
-      StmtLabel(MemoryAssignStmt.create(lhs as Dereference<*, *, *>, rhs), metadata = metadata)
+  when (val bare = lhs.unwrapTraceable()) {
+    is RefExpr<*> -> AssignStmtLabel(bare as RefExpr<T1>, rhs, metadata)
+    is Dereference<*, *, *> -> StmtLabel(MemoryAssignStmt.create(lhs, rhs), metadata = metadata)
     else -> throw IllegalArgumentException("LHS of assignment must be a reference expression.")
   }
 

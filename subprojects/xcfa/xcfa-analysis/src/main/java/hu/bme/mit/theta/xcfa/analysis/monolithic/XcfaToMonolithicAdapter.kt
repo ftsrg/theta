@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.NO_ASSERTION_VIOLATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
@@ -59,7 +59,7 @@ abstract class XcfaToMonolithicAdapter(
 
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
-  protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
+  protected val intType: Type = CComplexType.getUnsignedInt(parseContext).smtType
 
   init {
     check(
@@ -79,8 +79,7 @@ abstract class XcfaToMonolithicAdapter(
     }
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
-    if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
-    else Eq(e1, e2)
+    if (e1.type is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>) else Eq(e1, e2)
 
   protected fun Stmt.getDefaultValues(excludedVars: Collection<VarDecl<*>>): Expr<BoolType> =
     StmtUtils.getVars(this)

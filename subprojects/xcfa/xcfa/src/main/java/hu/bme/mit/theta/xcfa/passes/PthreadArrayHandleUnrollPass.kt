@@ -15,6 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.type.BvLitExpr
+import hu.bme.mit.theta.core.type.Dereference
+import hu.bme.mit.theta.core.type.IntLitExpr
+import hu.bme.mit.theta.core.type.Reference
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -87,6 +92,10 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
    */
   private fun InvokeLabel.hasArrayElementHandle(): Boolean {
     if (params.size <= 1) return false
+    var handle = params[1].unwrapTraceable()
+    while (handle is Reference<*, *>) handle = handle.expr.unwrapTraceable()
+    if (handle !is Dereference<*, *, *>) return false
+    val offset = handle.offset.unwrapTraceable()
     var handle = params[1]
     while (handle is Reference<*, *>) handle = handle.expr
     // A literal index (`&t[0]`, or already unrolled) needs no unrolling; only a loop-variable index

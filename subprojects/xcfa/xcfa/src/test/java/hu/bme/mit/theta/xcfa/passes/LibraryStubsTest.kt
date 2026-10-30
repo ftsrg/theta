@@ -21,8 +21,9 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -54,17 +55,11 @@ class LibraryStubsTest {
   }
 
   private fun XcfaProcedureBuilderContext.intVar(parseContext: ParseContext, name: String) =
-    (name type Int()).also {
-      parseContext.metadata.create(it.ref, "cType", CSignedInt(null, parseContext))
-    }
+    (name type Int()).also { CComplexType.withType(it.ref, CSignedInt(null, parseContext)) }
 
   private fun XcfaProcedureBuilderContext.ptrVar(parseContext: ParseContext, name: String) =
     (name type Int()).also {
-      parseContext.metadata.create(
-        it.ref,
-        "cType",
-        CPointer(null, CSignedInt(null, parseContext), parseContext),
-      )
+      CComplexType.withType(it.ref, CPointer(null, CSignedInt(null, parseContext), parseContext))
     }
 
   @Test

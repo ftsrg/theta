@@ -19,12 +19,13 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.Dereference
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.type.unwrapTraceable
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
@@ -108,10 +109,11 @@ class NarrowCellRangePass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun collect(expr: Expr<*>, out: MutableSet<Expr<*>>) {
-    if (expr is Dereference<*, *, *>) {
-      collect(expr.array, out)
-      collect(expr.offset, out)
-      if (isNarrowCell(expr)) out.add(expr)
+    val deref = expr.unwrapTraceable()
+    if (deref is Dereference<*, *, *>) {
+      collect(deref.array, out)
+      collect(deref.offset, out)
+      if (isNarrowCell(expr, deref)) out.add(expr)
       return
     }
     expr.ops.forEach { collect(it, out) }
@@ -123,9 +125,9 @@ class NarrowCellRangePass(val parseContext: ParseContext) : ProcedurePass {
    * nothing to state; a cell whose C type was lost to a rebuild falls back to `int` and is skipped,
    * which only ever means constraining less.
    */
-  private fun isNarrowCell(deref: Dereference<*, *, *>): Boolean {
+  private fun isNarrowCell(tracedDeref: Expr<*>, deref: Dereference<*, *, *>): Boolean {
     if (deref.type !is IntType) return false
-    val type = CComplexType.getType(deref, parseContext)
+    val type = CComplexType.getType(tracedDeref, parseContext)
     if (type !is CInteger) return false
     return type.width() < CComplexType.getSignedInt(parseContext).width()
   }

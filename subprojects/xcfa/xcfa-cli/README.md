@@ -98,6 +98,7 @@ entity  DebugConfig << data >> {
    debug: Boolean
    argToFile: Boolean
    stacktrace: Boolean
+   serializationRoundTrip: Boolean
 }
 entity  FrontendConfig<T> << data >> {
    lbeLevel: LbeLevel
@@ -118,6 +119,7 @@ entity  InputConfig << data >> {
    propertyFile: File?
    input: File?
    xcfaWCtx: Triple<XCFA, Collection<GraphConstraint>, ParseContext>?
+   xcfaFile: File?
 }
 entity  InterpolationConfig << data >> {
    disable: Boolean

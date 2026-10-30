@@ -19,17 +19,17 @@ package hu.bme.mit.theta.frontend.dve.transformation
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.type.EnumLitExpr
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.IntLitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
-import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr
 import hu.bme.mit.theta.core.type.enumtype.EnumType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.dve.model.*
 import hu.bme.mit.theta.xsts.XSTS
@@ -771,6 +771,6 @@ private class TransformContext(
       return if (index != null) "${base}[$index]" else base
     }
 
-    fun iLit(value: Int): hu.bme.mit.theta.core.type.inttype.IntLitExpr = IntExprs.Int(value)
+    fun iLit(value: Int): hu.bme.mit.theta.core.type.IntLitExpr = IntExprs.Int(value)
   }
 }
