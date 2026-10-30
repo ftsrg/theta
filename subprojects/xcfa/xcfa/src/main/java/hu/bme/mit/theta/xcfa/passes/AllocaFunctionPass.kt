@@ -117,7 +117,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 addressLabels +
                   listOfNotNull(
                     builder.parent.allocate(parseContext, ret, arg),
-                    probeFirstCell(builder, ret, arg, retType),
+                    probeInvalidLength(builder, ret, arg, retType),
                   )
               } else {
                 addressLabels
