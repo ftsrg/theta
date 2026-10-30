@@ -20,7 +20,13 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -35,6 +41,7 @@ import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import java.math.BigInteger
 
 /**
  * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
@@ -186,30 +193,18 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * Reads the first cell of a *runtime-sized* stack object, so that the existing valid-deref guard
-   * sees a zero-length one.
+   * Reads one past the end of a *runtime-sized* stack object whose length is invalid, so that the
+   * existing valid-deref guard reports it. SV-COMP programs are GNU C, where a zero-length array is
+   * allowed and only an access to it is not, so a zero length is accepted; a negative length, or
+   * one whose size exceeds `PTRDIFF_MAX` bytes (GCC's maximum object size), is undefined.
    *
-   * C11 6.7.6.2p5: a variably-modified type's size "shall evaluate to a value greater than zero",
-   * so `unsigned n = __VERIFIER_nondet_uint(); int a[n];` is undefined for `n == 0`, and
-   * sv-benchmarks files that under `valid-deref`. Nothing could see it: with `n == 0` the object is
-   * given size 0, every `for (i = 0; i < n; i++)` runs zero times, so **no dereference happens at
-   * all** and no access guard can fire. Seven `loops/` tasks -- `sum_array-1`/`-2`, `matrix-2`,
-   * `insertion_sort-1`/`-2`, `invert_string-2`, `bubble_sort-1` -- are exactly this shape and
-   * nothing else, and theta proved every one of them safe.
-   *
-   * Stated as a *read of cell 0* rather than as an error edge of its own, because
-   * [MemsafetyPass.annotateDeref] already draws precisely the right conclusion from one: its guard
-   * is `ptr_size[base] <= index`, which at index 0 is `size <= 0` -- true exactly when the
-   * declaration was undefined, and false for every `n >= 1`. Emitting the error edge here instead
-   * does not work: [MemsafetyPass.breakUpErrors] runs ten pass-groups later and begins by
-   * redirecting *every* incoming edge of the error location to the final location (that is how
-   * `reach_error()` is disabled under memsafety), so the check was silently neutralised.
-   *
-   * Only for a size that is not a literal, so a declared `int a[10]` and the constant-sized
-   * subobject allocations cost nothing; and only under memsafety, so no other property sees a read
-   * the program never performed.
+   * The read sits behind `bad &&`, which [MemsafetyPass.annotateDeref] treats as a short-circuit
+   * guard, so the access only exists when the length is invalid. An error edge emitted here would
+   * be redirected by [MemsafetyPass.breakUpErrors]. Only for a size that is not a literal, and only
+   * under memsafety, so no other property sees a read the program never performed. The size counts
+   * cells, so for struct elements the bound is stricter than the byte limit it stands for.
    */
-  private fun probeFirstCell(
+  private fun probeInvalidLength(
     builder: XcfaProcedureBuilder,
     ret: Expr<*>,
     size: Expr<*>,
@@ -217,14 +212,21 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   ): XcfaLabel? {
     if (ExprUtils.simplify(size) is LitExpr<*>) return null
     val element = (retType as? CPointer)?.embeddedType ?: return null
-    val probe = Var("__theta_vla_probe_${probeCnt++}", element.smtType)
+    val sizeType = CComplexType.getType(size, parseContext)
+    val ulong = CComplexType.getUnsignedLong(parseContext)
+    val elementBytes = maxOf(1, element.width() / 8)
+    val maxLength =
+      (BigInteger.ONE.shiftLeft(ulong.width() - 1) - BigInteger.ONE) / elementBytes.toBigInteger()
+    val bad =
+      Or(Lt(size, sizeType.nullValue), Gt(ulong.castTo(size), ulong.getValue(maxLength.toString())))
+    val probe = Var("__theta_vla_probe_${probeCnt++}", Bool())
     builder.addVar(probe)
-    parseContext.metadata.create(probe.ref, "cType", element)
-    val offset = CComplexType.getUnsignedLong(parseContext).nullValue
     @Suppress("UNCHECKED_CAST")
-    val cell = Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
+    val cell =
+      Dereference.of(ret as Expr<Type>, ulong.castTo(size) as Expr<Type>, element.smtType as Type)
     parseContext.metadata.create(cell, "cType", element)
-    return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
+    @Suppress("UNCHECKED_CAST") val read = Eq(cell as Expr<Type>, element.nullValue as Expr<Type>)
+    return AssignStmtLabel(probe, And(bad, read), probe.type)
   }
 
   private var probeCnt = 0

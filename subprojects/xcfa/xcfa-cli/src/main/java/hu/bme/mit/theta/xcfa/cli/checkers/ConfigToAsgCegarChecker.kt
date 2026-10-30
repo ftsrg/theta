@@ -45,7 +45,6 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.function.Predicate
-import kotlin.random.Random
 
 fun getAsgCegarChecker(
   xcfa: XCFA,
@@ -77,7 +76,7 @@ fun getAsgCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val random = Random.Default
+  val random = explorationRandom()
   val lts =
     ConeOfInfluenceMode.NO_COI.getLts(xcfa, parseContext, POR.NOPOR, ignoredVarRegistry, random)
 
