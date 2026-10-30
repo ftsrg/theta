@@ -49,6 +49,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -60,6 +61,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import java.util.*;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.*;
@@ -92,6 +95,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         flatVariables.clear();
         functions.clear();
         staticLocals.clear();
+        initializedGlobals.clear();
         currentStatementContext.clear();
     }
 
@@ -102,6 +106,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private int anonCnt = 0;
     private final List<VarDecl<?>> flatVariables;
     private final Map<VarDecl<?>, CDeclaration> functions;
+
+    /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
+    private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
 
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
@@ -156,10 +163,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return declaration.isFunc() ? new CPointer(null, actualType, parseContext) : actualType;
     }
 
-    /**
-     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
-     * where a value has to be captured before a later statement can invalidate it.
-     */
     /** Whether [expr] reads memory anywhere inside it (see visitConditionalExpression). */
     private static boolean containsDereference(Expr<?> expr) {
         if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
@@ -173,6 +176,31 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return false;
     }
 
+    /**
+     * Whether [expr] reads something another thread can write: memory, or a variable that is not
+     * one of the current procedure's own locals or parameters.
+     */
+    public boolean readsShared(Expr<?> expr) {
+        if (expr instanceof RefExpr<?> ref
+                && ref.getDecl() instanceof VarDecl<?> varDecl
+                && !flatVariables.contains(varDecl)) {
+            return true;
+        }
+        if (expr instanceof hu.bme.mit.theta.core.type.anytype.Dereference<?, ?, ?>) {
+            return true;
+        }
+        for (Expr<?> op : expr.getOps()) {
+            if (readsShared(op)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * A fresh unnamed local, registered like any other variable so that it reaches the XCFA. Used
+     * where a value has to be captured before a later statement can invalidate it.
+     */
     public VarDecl<?> createTempVar(CComplexType type, String hint) {
         VarDecl<?> varDecl = Var("__theta_" + hint + anonCnt++, type.getSmtType());
         flatVariables.add(varDecl);
@@ -494,9 +522,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         scopedAllocas.clear();
         scopedRegistered.clear();
         atomicVariables.clear();
+        initializedGlobals.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
         flatVariables.clear();
         functions.clear();
+        // These registries are static, and one JVM can build the same input more than once (the
+        // memory-model and arithmetic fallbacks, the portfolio): each build starts from none.
+        Struct.resetRegistry();
+        Enum.resetRegistry();
+        FunctionIds.reset();
         declareMallocReturnsPointer();
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
@@ -743,9 +777,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (!declaration.getType().isTypedef()) {
                 if (!declaration
                         .isFunc()) { // functions should not be interpreted as global variables
+                    // A redeclaration without an initializer after the definition (`int x = 5;
+                    // extern int x, y;` lists this context for y) must not re-initialize x.
+                    if (declaration.getInitExpr() == null
+                            && initializedGlobals.contains(
+                                    variables.peek().get2().get(declaration.getName()))) {
+                        continue;
+                    }
                     createVars(declaration);
                     for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                         decls.getcDeclarations().add(Tuple2.of(declaration, varDecl));
+                        if (declaration.getInitExpr() != null) {
+                            initializedGlobals.add(varDecl);
+                        }
                     }
                 } else {
                     CSimpleType returnType = declaration.getType();
@@ -2057,7 +2101,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
-    private void resetPostStatements(CStatement statement) {
+    public void resetPostStatements(CStatement statement) {
         if (statement instanceof CCompound compound) {
             compound.setPostStatements(null);
             for (CStatement cStatement : compound.getcStatementList()) {
@@ -2066,10 +2110,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
     }
 
-    private List<CStatement> getStatementList(CStatement statement) {
+    /** Every statement `statement` runs, in order: a compound's pre-statements, body, then post. */
+    private List<CStatement> linearize(CStatement statement) {
         if (statement instanceof CCompound compound) {
-            return compound.getcStatementList().stream()
-                    .flatMap(i -> getStatementList(i).stream())
+            return Stream.of(
+                            linearize(compound.getPreStatements()).stream(),
+                            compound.getcStatementList().stream()
+                                    .flatMap(i -> linearize(i).stream()),
+                            linearize(compound.getPostStatements()).stream())
+                    .flatMap(i -> i)
                     .toList();
         } else if (statement != null) {
             return List.of(statement);
@@ -2080,16 +2129,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     /*
     This collects the following:
-        - the current compound's pre-statement
-        - all pre-statements of the pre-statement (before the pre-statement)
+        - the current compound's pre-statement, in the order it runs (a statement expression in it
+          is a sequence: each of its statements' side effects stays next to that statement)
         - all the pre-statement of every cStatement
      */
     private List<CStatement> collectPreStatements(CStatement cStatement) {
         if (cStatement instanceof CCompound) {
             return Stream.concat(
-                            Stream.concat(
-                                    collectPreStatements(cStatement.getPreStatements()).stream(),
-                                    getStatementList(cStatement.getPreStatements()).stream()),
+                            linearize(cStatement.getPreStatements()).stream(),
                             ((CCompound) cStatement)
                                     .getcStatementList().stream()
                                             .flatMap(
@@ -2104,10 +2151,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /*
     This collects the following:
         - all the post-statements of every cStatement
-        - the current compound's post-statement
-        - all post-statements of the post-statement (after the post-statement)
+        - the current compound's post-statement, in the order it runs
      */
-    private List<CStatement> collectPostStatements(CStatement cStatement) {
+    public List<CStatement> collectPostStatements(CStatement cStatement) {
         if (cStatement instanceof CCompound) {
             return Stream.concat(
                             ((CCompound) cStatement)
@@ -2116,9 +2162,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                                     cStatement1 ->
                                                             collectPostStatements(cStatement1)
                                                                     .stream()),
-                            Stream.concat(
-                                    getStatementList(cStatement.getPostStatements()).stream(),
-                                    collectPostStatements(cStatement.getPostStatements()).stream()))
+                            linearize(cStatement.getPostStatements()).stream())
                     .filter(i -> !(i instanceof CExpr))
                     .toList();
         } else return List.of();
@@ -2145,7 +2189,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         uniqueWarningLogger);
 
         Expr<?> iteExpr;
-        if (!ctx.expression().isEmpty()) {
+        if (ctx.ifFalse != null) {
             // GNU `a ?: b`: the middle operand is omitted, its value is the guard itself.
             CStatement ifTrue = ctx.ifTrue == null ? null : ctx.ifTrue.accept(this);
             CStatement ifFalse = ctx.ifFalse.accept(this);
@@ -2201,14 +2245,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             // does not misreport: assign each branch's value to a temporary *inside* the guarded
             // branch, and let the conditional's value be that temporary.
             //
-            // Gated on memory-safety verification: for any other property the Ite is fine (it
-            // selects the right branch, and reading the unselected one has no observable effect),
-            // so the XCFA is left byte-for-byte unchanged there.
-            final boolean guardsDereference =
-                    parseContext.isCheckMemsafety()
-                            && (containsDereference(lhs) || containsDereference(rhs));
+            // Gated on memory-safety verification, and on data-race verification, where reading
+            // the unselected branch is an access that can race. For any other property the Ite is
+            // fine (it selects the right branch), so the XCFA is left byte-for-byte unchanged
+            // there.
+            final boolean guardsAccess =
+                    (parseContext.isCheckMemsafety()
+                                    && (containsDereference(lhs) || containsDereference(rhs)))
+                            || (parseContext.isCheckDataRace()
+                                    && (readsShared(lhs) || readsShared(rhs)));
             VarDecl<?> conditionalTmp = null;
-            if (guardsDereference) {
+            if (guardsAccess) {
                 conditionalTmp = createTempVar(smallestCommonType, "ternary");
                 parseContext
                         .getMetadata()
@@ -2226,7 +2273,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                                 "=",
                                 parseContext));
             }
-            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsDereference) {
+            if (!ifTruePreList.isEmpty() || !ifFalsePreList.isEmpty() || guardsAccess) {
                 CIf preIf = new CIf(guardCompound, ifTruePre, ifFalsePre, parseContext);
                 recordMetadata(ctx, preIf);
                 preStatements.addCStatement(preIf);

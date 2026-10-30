@@ -37,8 +37,22 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVis
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.C128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CLongLong;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import java.util.*;
@@ -69,6 +83,33 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     public void setScopedExpressionVisitor(
             java.util.function.Supplier<ExpressionVisitor> supplier) {
         this.scopedExpressionVisitor = supplier;
+    }
+
+    /** What `__auto_type` names while a declaration's specifiers are visited; null elsewhere. */
+    private CSimpleType autoType = null;
+
+    /**
+     * The type [ctx] names when its `__auto_type` stands for [inferred], the type of the
+     * declaration's initializer; the other specifiers (`static`, `const`) still apply to it.
+     */
+    public CSimpleType visitWithAutoType(
+            CParser.DeclarationSpecifiersContext ctx, CSimpleType inferred) {
+        final CSimpleType saved = autoType;
+        autoType = inferred;
+        try {
+            return ctx.accept(this);
+        } finally {
+            autoType = saved;
+        }
+    }
+
+    @Override
+    public CSimpleType visitTypeSpecifierAutoType(CParser.TypeSpecifierAutoTypeContext ctx) {
+        if (autoType == null) {
+            throw new UnsupportedFrontendElementException(
+                    "__auto_type outside a single-variable declaration with an initializer");
+        }
+        return autoType.copyOf();
     }
 
     private static final List<String> standardTypes =
@@ -493,17 +534,25 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                     } else {
                         final var declarators =
                                 structDeclarationContext.structDeclaratorList().structDeclarator();
+                        boolean ownsSpecifierStars = true;
                         for (CParser.StructDeclaratorContext structDeclaratorContext :
                                 declarators) {
                             CDeclaration declaration =
                                     structDeclaratorContext.accept(declarationVisitor);
+                            final boolean first = ownsSpecifierStars;
+                            ownsSpecifierStars = false;
                             if (declaration == null) {
                                 continue;
                             }
                             if (declaration.getType() == null) {
-                                declaration.setType(cSimpleType);
                                 DeclarationVisitor.inheritTypedefArrayDimensions(
                                         declaration, cSimpleType);
+                                declaration.setType(
+                                        declarationVisitor.declaratorType(
+                                                cSimpleType,
+                                                declaration,
+                                                declaratorOf(structDeclaratorContext),
+                                                first));
                             }
                             if (declaration.getName() == null) {
                                 // An unnamed bitfield (`int : 3;`, `int : 0;`): padding, not
@@ -532,6 +581,15 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             }
             return struct;
         }
+    }
+
+    private static CParser.DeclaratorContext declaratorOf(CParser.StructDeclaratorContext ctx) {
+        if (ctx instanceof CParser.StructDeclaratorSimpleContext simple) {
+            return simple.declarator();
+        } else if (ctx instanceof CParser.StructDeclaratorConstantContext bitfield) {
+            return bitfield.declarator();
+        }
+        return null;
     }
 
     @Override
@@ -650,7 +708,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
             // A qualifier written *after* a star qualifies that star's pointer, not the type it
             // points at: `int * _Atomic p` is an atomic pointer to a plain int. Each star's
             // qualifiers are the ones written between it and the next.
-            if (qualifiersAfter(ctx, stars, i).contains("_Atomic")) {
+            if (qualifiersAfter(ctx.pointer(), i).contains("_Atomic")) {
                 subtype.markLastPointerAtomic();
             }
         }
@@ -658,11 +716,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     }
 
     /** The type qualifiers written after the i-th star, i.e. before the star that follows it. */
-    private String qualifiersAfter(
-            CParser.TypeSpecifierPointerContext ctx, List<Token> stars, int i) {
+    static String qualifiersAfter(CParser.PointerContext pointer, int i) {
+        final List<Token> stars = pointer.stars;
         final int from = stars.get(i).getTokenIndex();
         final int to = i + 1 < stars.size() ? stars.get(i + 1).getTokenIndex() : Integer.MAX_VALUE;
-        return ctx.pointer().typeQualifierList().stream()
+        return pointer.typeQualifierList().stream()
                 .filter(
                         list -> {
                             int at = list.getStart().getTokenIndex();
@@ -768,9 +826,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
     /**
      * `typeof(expr)` for expressions that need no variable context -- which covers the macro idiom
      * it exists for: `container_of` expands to `typeof(((struct T*)0)->field)`, a member access on
-     * a null literal. The expression is built only to ask its type; it is never emitted. An
-     * expression that references variables (a plain `typeof(x)`) is out of reach here -- the type
-     * visitor has no scope -- and is reported as unsupported rather than mistyped.
+     * a null literal. The expression is built only to ask its type; it is never emitted. Variables
+     * resolve only inside a function (see {@link #scopedExpressionVisitor}).
      */
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {
@@ -809,19 +866,100 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                                 typedefVisitor,
                                 this,
                                 uniqueWarningLogger));
+        // A comma expression has the type of its last operand after lvalue conversion: gcc's
+        // <stdatomic.h> writes `typeof((void)0, *p)` to get the unqualified type `*p` holds.
+        final List<CParser.AssignmentExpressionContext> operands =
+                ctx.expression().assignmentExpression();
+        final CParser.AssignmentExpressionContext last = operands.get(operands.size() - 1);
         for (java.util.function.Supplier<ExpressionVisitor> attempt : attempts) {
             try {
-                Expr<?> expr = ctx.constantExpression().accept(attempt.get());
-                CSimpleType origin = CComplexType.getType(expr, parseContext).getOrigin();
-                if (origin != null) {
-                    return origin.copyOf();
+                Expr<?> expr = last.accept(attempt.get());
+                CSimpleType type = simpleTypeOf(CComplexType.getType(expr, parseContext));
+                if (operands.size() > 1) {
+                    type.clearOutermostAtomic();
                 }
+                return type;
             } catch (RuntimeException e) {
                 // try the next scope, then fall through to the unsupported report below
             }
         }
         throw new UnsupportedFrontendElementException(
                 "typeof over an expression whose type could not be determined: " + ctx.getText());
+    }
+
+    /**
+     * The simple type spelling [type]. An origin is the declaration a type was built from, and
+     * every layer of `struct S *p` shares the origin `struct S *` -- so the `struct S` that `*p`
+     * yields keeps only as many of the origin's pointer levels as it has layers of its own.
+     *
+     * <p>Types the frontend makes up itself (for a literal, an arithmetic result, an address) have
+     * no origin, and are spelled from their own shape instead.
+     */
+    CSimpleType simpleTypeOf(CComplexType type) {
+        if (type.getOrigin() != null) {
+            final CSimpleType copy = type.getOrigin().copyOf();
+            copy.keepInnermostPointers(indirections(type));
+            // The origin is the declaration's whole specifier list, but its storage class is not
+            // part of the type: `typeof(s)` of a `static int s` declares an ordinary int.
+            copy.setExtern(false);
+            copy.setStaticStorage(false);
+            copy.setTypedef(false);
+            return copy;
+        }
+        final CComplexType pointee = pointeeOf(type);
+        if (pointee != null) {
+            final CSimpleType pointer = simpleTypeOf(pointee);
+            pointer.incrementPointer();
+            return pointer;
+        }
+        if (type instanceof CVoid) {
+            return NamedType("void", parseContext, uniqueWarningLogger);
+        } else if (type instanceof CFloat) {
+            return NamedType("float", parseContext, uniqueWarningLogger);
+        } else if (type instanceof CDouble || type instanceof CLongDouble) {
+            final CSimpleType real = NamedType("double", parseContext, uniqueWarningLogger);
+            real.setLong(type instanceof CLongDouble);
+            return real;
+        } else if (type instanceof CBool
+                || type instanceof CChar
+                || type instanceof CShort
+                || type instanceof CInt
+                || type instanceof CLong
+                || type instanceof CLongLong
+                || type instanceof C128) {
+            final CSimpleType integer =
+                    NamedType(
+                            type instanceof CChar ? "char" : "int",
+                            parseContext,
+                            uniqueWarningLogger);
+            integer.setSigned(((CInteger) type).isSsigned());
+            integer.setBool(type instanceof CBool);
+            integer.setShort(type instanceof CShort);
+            integer.setLong(type instanceof CLong);
+            integer.setLongLong(type instanceof CLongLong);
+            integer.set128(type instanceof C128);
+            return integer;
+        }
+        throw new UnsupportedFrontendElementException(
+                "typeof over an expression of type " + type.getClass().getSimpleName());
+    }
+
+    private static CComplexType pointeeOf(CComplexType type) {
+        if (type instanceof CPointer pointer) {
+            return pointer.getEmbeddedType();
+        } else if (type instanceof CArray array) {
+            return array.getEmbeddedType();
+        }
+        return null;
+    }
+
+    /** How many pointer (or array) layers [type] has before its base type. */
+    private static int indirections(CComplexType type) {
+        int layers = 0;
+        for (CComplexType t = pointeeOf(type); t != null; t = pointeeOf(t)) {
+            layers++;
+        }
+        return layers;
     }
 
     @Override

@@ -29,7 +29,10 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
-/** XcfaEdge must be in a `deterministic` ProcedureBuilder */
+/**
+ * Splits the edge around the labels [function] accepts. A label that is not a [SequenceLabel]
+ * counts as a sequence of one: inlining and recursion expansion leave such edges behind.
+ */
 fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
   val newLabels = ArrayList<SequenceLabel>()
   var current = ArrayList<XcfaLabel>()

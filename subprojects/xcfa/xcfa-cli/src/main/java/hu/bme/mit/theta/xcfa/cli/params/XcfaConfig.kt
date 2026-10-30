@@ -430,7 +430,7 @@ data class CegarRefinerConfig(
   @Parameter(
     names = ["--validate-refinement-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateRefinementSolver: Boolean = false,
   @Parameter(names = ["--refinement"], description = "Refinement strategy")
@@ -476,7 +476,7 @@ data class AsgCegarRefinerConfig(
   @Parameter(
     names = ["--validate-refinement-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateRefinementSolver: Boolean = false,
   @Parameter(names = ["--refinement"], description = "Refinement strategy")
@@ -588,7 +588,7 @@ data class InterpolationConfig(
   @Parameter(
     names = ["--validate-interpolation-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateItpSolver: Boolean = false,
 ) : Config

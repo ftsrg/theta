@@ -79,6 +79,29 @@ class AtomicBuiltinsTest {
   }
 
   @Test
+  fun flagBuiltinsAreLoweredAway() {
+    val labels =
+      labelsOf(
+        """
+        #include <stdatomic.h>
+        atomic_flag f;
+        unsigned char b;
+        int main() {
+          int r = __atomic_test_and_set(&b, 5) + atomic_flag_test_and_set(&f);
+          __atomic_clear(&b, 3);
+          atomic_flag_clear_explicit(&f, memory_order_release);
+          return r + __atomic_always_lock_free(sizeof(int), 0);
+        }
+        """
+          .trimIndent()
+      )
+    assertFalse(
+      labels.any { it is InvokeLabel && it.name.contains("atomic") },
+      "no flag operation may survive lowering: ${labels.filterIsInstance<InvokeLabel>().map { it.name }}",
+    )
+  }
+
+  @Test
   fun concurrentReadModifyWriteBecomesAnAtomicBlock() {
     val labels =
       labelsOf(

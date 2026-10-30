@@ -102,12 +102,55 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         }
     }
 
+    /**
+     * The type one declarator of a declaration list declares: the specifiers' type plus the stars
+     * written in the declarator itself.
+     *
+     * <p>The grammar folds the stars of the *first* declarator into the specifiers (`int *a, b`
+     * reads as `int *` followed by `a, b`), so every later declarator sheds them, and its own stars
+     * (the `*PP` of `typedef struct P {...} P, *PP`) are added here. Stars around array dimensions
+     * are left to {@link CDeclaration#getActualType()}, which places them.
+     */
+    CSimpleType declaratorType(
+            CSimpleType specifierType,
+            CDeclaration declaration,
+            CParser.DeclaratorContext declarator,
+            boolean ownsSpecifierStars) {
+        final CParser.PointerContext pointer =
+                declarator != null && declaration.getArrayDimensions().isEmpty()
+                        ? declarator.pointer()
+                        : null;
+        final boolean shedStars = !ownsSpecifierStars && specifierType.getStarPointers() > 0;
+        if (pointer == null && !shedStars) {
+            return specifierType;
+        }
+        final CSimpleType type = specifierType.copyOf();
+        if (shedStars) {
+            type.dropStarPointers();
+        }
+        if (pointer != null) {
+            for (int i = 0; i < pointer.stars.size(); i++) {
+                type.incrementPointer();
+                if (TypeVisitor.qualifiersAfter(pointer, i).contains("_Atomic")) {
+                    type.markLastPointerAtomic();
+                }
+            }
+        }
+        return type;
+    }
+
     public List<CDeclaration> getDeclarations(
             CParser.DeclarationSpecifiersContext declSpecContext,
             CParser.InitDeclaratorListContext initDeclContext,
             boolean getInitExpr) {
         List<CDeclaration> ret = new ArrayList<>();
-        CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
+        final CStatement autoInitializer =
+                getInitExpr ? autoTypeInitializer(declSpecContext, initDeclContext) : null;
+        CSimpleType cSimpleType =
+                autoInitializer == null
+                        ? declSpecContext.accept(typeVisitor)
+                        : typeVisitor.visitWithAutoType(
+                                declSpecContext, autoTypeOf(autoInitializer));
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
@@ -116,6 +159,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.add(cDeclaration);
         }
         if (initDeclContext != null) {
+            boolean ownsSpecifierStars = cSimpleType.getAssociatedName() == null;
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
                 // The initializer's container is the *declared* type, dimensions and all: for
@@ -130,8 +174,16 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 // the specifier.
                 declaration.setType(cSimpleType);
                 inheritTypedefArrayDimensions(declaration, cSimpleType);
+                final CSimpleType declaredType =
+                        declaratorType(
+                                cSimpleType, declaration, context.declarator(), ownsSpecifierStars);
+                ownsSpecifierStars = false;
+                declaration.setType(declaredType);
                 CStatement initializerExpression;
-                if (context.initializer() != null && getInitExpr) {
+                if (autoInitializer != null) {
+                    // Visited already, before the variable was in scope: it cannot name itself.
+                    declaration.setInitExpr(autoInitializer);
+                } else if (context.initializer() != null && getInitExpr) {
                     // The name is in scope inside its own initializer (C: the declarator is
                     // complete at the `=`), so bring it into scope before visiting one.
                     if (functionVisitor != null) {
@@ -154,7 +206,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                     .create(
                                             initializerExpression.getExpression(),
                                             "cType",
-                                            cSimpleType);
+                                            declaredType);
                         }
                     } else {
                         // `char s[8] = "ab"` is an aggregate initializer written without braces,
@@ -178,7 +230,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
-                declaration.setType(cSimpleType);
+                declaration.setType(declaredType);
                 ret.add(declaration);
             }
         }
@@ -188,6 +240,46 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.get(0).incDerefCounter(cSimpleType.getPointerLevel());
         }
         return ret;
+    }
+
+    /**
+     * The visited initializer of `__auto_type x = e;`, whose type is that of `e`, or null when the
+     * specifiers have no `__auto_type` -- or one in a form other than that, which gcc's
+     * <stdatomic.h> never writes and the type visitor then reports as unsupported.
+     */
+    private CStatement autoTypeInitializer(
+            CParser.DeclarationSpecifiersContext specifiers,
+            CParser.InitDeclaratorListContext initDecls) {
+        final boolean autoType =
+                specifiers.declarationSpecifier().stream()
+                        .anyMatch(
+                                s ->
+                                        s.typeSpecifier()
+                                                instanceof CParser.TypeSpecifierAutoTypeContext);
+        if (!autoType
+                || functionVisitor == null
+                || initDecls == null
+                || initDecls.initDeclarator().size() != 1) {
+            return null;
+        }
+        final CParser.InitializerContext initializer = initDecls.initDeclarator(0).initializer();
+        if (initializer == null || initializer.assignmentExpression() == null) {
+            return null;
+        }
+        return initializer.assignmentExpression().accept(functionVisitor);
+    }
+
+    /** The type `__auto_type` takes from [initializer]: its value's, after lvalue conversion. */
+    private CSimpleType autoTypeOf(CStatement initializer) {
+        final CComplexType type = CComplexType.getType(initializer.getExpression(), parseContext);
+        // An array would have to decay to a pointer to its element, which is not modelled here.
+        if (type instanceof CArray) {
+            throw new UnsupportedFrontendElementException(
+                    "__auto_type over an initializer of type " + type);
+        }
+        final CSimpleType simple = typeVisitor.simpleTypeOf(type);
+        simple.clearOutermostAtomic();
+        return simple;
     }
 
     /**
