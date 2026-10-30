@@ -60,7 +60,7 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         }
 
         final var binary = findBinary(installDir);
-        binary.toFile().setExecutable(true, true);
+        makeExecutable(binary);
 
         logger.write(Logger.Level.MAINSTEP, "Download finished (%s)\n", binary);
     }

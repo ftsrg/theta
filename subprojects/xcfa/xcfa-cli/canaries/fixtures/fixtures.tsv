@@ -38,6 +38,7 @@ memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee cop
 vla_zero_length.c	efficient	ILP32	SAFE:valid-memsafety	a zero-length VLA that is never accessed is allowed (GNU C)
 vla_oversize_length.c	efficient	ILP32	UNSAFE:valid-memsafety	a VLA larger than PTRDIFF_MAX bytes is undefined
 vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	a VLA with a known-positive length is not flagged, and a fixed array costs nothing
+race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
 pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	p-- keeps its sign under integer arithmetic (backwards buffer walk)
 store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	storing a mid-object pointer is refused, not clobbered onto one cell
 alloca_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	alloca memory is released at function return (use-after-return is caught)
@@ -52,6 +53,9 @@ narrow_cell_range.c	efficient	ILP32	SAFE:no-overflow	a narrow memory cell reads 
 undeclared_memory_functions.c	efficient	ILP32	SAFE	undeclared malloc/free/memcpy/memset are routed to the modeled ones
 own_memory_function_wins.c	efficient	ILP32	SAFE	a program-supplied memcpy definition wins over the model
 builtin_infinity.c	efficient	ILP32	SAFE	GCC infinity builtins are exact (__builtin_inf/inff/infl, huge_val*)
+string_literal_read.c	efficient	ILP32	SAFE	a string literal whose characters are read keeps its initialization
+strcpy_terminator.c	efficient	ILP32	SAFE	strcpy copies the terminating null byte, not only the characters before it
+pthread_array_handle_global_index.c	efficient	ILP32	SAFE	thread handle array indexed by a file-scope loop counter
 builtin_prefetch.c	efficient	ILP32	SAFE	__builtin_prefetch is dropped but its operands are still evaluated
 builtin_nan_compare.c	efficient	ILP32	SAFE	GCC NaN builtin + NaN-safe comparison builtins alias to the modeled ones
 typedef_array_extent.c	efficient	ILP32	SAFE:valid-memsafety	an array declared through a typedef keeps its extent (and its dimension order)
@@ -68,6 +72,7 @@ calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the
 memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
+redeclaration_after_definition.c	efficient	ILP32	SAFE	a redeclaration without an initializer (extern, tentative, or in a multi-declarator list) does not replace the definition that has one
 union_wide_cell_halves.c	efficient	ILP32	SAFE	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)
 union_bitfield_overlay_write.c	efficient	LP64	PARSE-OK	a bitfield write to a union splices at the cell width, not the aggregate placeholder
 global_struct_brace_elision.c	efficient	LP64	SAFE	brace elision: { 0 } over an array of structs zero-initialises every member
@@ -79,6 +84,38 @@ stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps th
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
+ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
+ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
+typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
+typeof_rvalue.c	efficient	LP64	SAFE	typeof over a literal or an arithmetic result
+short_circuit_postfix.c	efficient	LP64	SAFE	a postfix ++/-- in a && / || operand runs only if the operand does, before the next operand
+short_circuit_operand_value.c	efficient	LP64	SAFE	&& / || combine operand values taken before a later operand's side effect
+recursive_struct_depth2.c	efficient	LP64	SAFE	a recursive struct is typed correctly beyond one hop through its self-pointer (p->next->next->data)
+recursive_struct_sizeof_depth2.c	efficient	LP64	SAFE	sizeof two hops through a recursive struct self-pointer is the struct size, not the int placeholder
+recursive_struct_byvalue_cycle.c	efficient	LP64	SAFE	a pointer cycle through a by-value member (A holds B, B points to A) is typed beyond one hop
+hex_literal_unsigned_add.c	efficient	LP64	SAFE:no-overflow	a hex constant that does not fit in int is unsigned int (no signed overflow on i + 0x80000000)
+hex_literal_values_bv.c	bitvector	LP64	SAFE	hex constants follow the C11 int/unsigned/long/... candidate list, width and sign kept in bitvector
+rebuild_struct_registry.c	bitvector	ILP32	SAFE	an in-process frontend rebuild (multi -> flat fallback) starts from an empty struct registry
+typedef_declarator_list_stars.c	efficient	LP64	SAFE	each declarator of a list has its own stars: typedef struct P {...} P, *PP makes PP a pointer
+clang_c11_atomics.c	efficient	ILP32	SAFE	clang-preprocessed <stdatomic.h> operations (`__c11_atomic_*` builtins) are the C11 `atomic_*_explicit` calls
+atomic_load_by_pointer.c	efficient	LP64	SAFE	the generic `__atomic_load(p, &ret, order)` writes its result through `ret`
+typeof_storage_class.c	efficient	LP64	SAFE	`typeof(s)` of a `static` variable does not make the new variable static
+auto_type.c	efficient	LP64	SAFE	GNU `__auto_type x = e` declares x with the type of e
+gcc_stdatomic_expansion.c	efficient	LP64	SAFE	gcc-preprocessed <stdatomic.h> operations (`__auto_type`, `typeof((void)0, *p)`, generic `__atomic_*` builtins)
+statement_expression_order.c	efficient	LP64	SAFE	a statement expression as an initializer or assigned value runs its statements and their side effects in order
+parenthesized_postfix.c	efficient	LP64	SAFE	`(a++)` yields `a` and then increments it, in an initializer, a condition, a comma list and a `&&` operand
+ternary_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the unselected operand of ?: is not read, so it cannot race
+ternary_race_read_unsafe.c	efficient	ILP32	UNSAFE:no-data-race	a racing read in the selected operand of ?: is still reported
+and_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the right operand of &&/|| is not read when short-circuited, so it cannot race
+ternary_overflow_guard.c	efficient	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported
+ternary_overflow_taken.c	efficient	ILP32	UNSAFE:no-overflow	an overflow in the selected operand of ?: is still reported
+ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported (bitvector)
+atomic_flag_builtins.c	efficient	LP64	SAFE	__atomic_test_and_set/__atomic_clear, the atomic_flag operations (on the struct's flag byte) and the lock-free queries
+atomic_pointer_step.c	efficient	LP64	SAFE	GCC __atomic_* add/sub step a pointer by bytes, C11 atomic_fetch_add/sub by elements
+atomic_user_defined.c	efficient	LP64	SAFE	a defined function named like a C11 atomic operation is called, not modelled
+sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
+sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
+fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
 size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64

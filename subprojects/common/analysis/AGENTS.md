@@ -53,4 +53,4 @@ Everything is generic over `<S extends State, A extends Action, P extends Prec>`
 
 ## Build-level notes (dependency audit, grep-verified)
 
-Direct deps and why: `Deps.delta` (BME MDD library) → `algorithm/mdd` + MDD visualizers; `graph-solver` → `algorithm/mcm`; `javasmt` → `algorithm/oc/UserPropagatorOcChecker` only (Z3 user propagators).
+Direct deps and why: `Deps.delta` (BME MDD library) → `algorithm/mdd` + MDD visualizers; `graph-solver` → `algorithm/mcm`. `algorithm/oc/UserPropagatorOcChecker` uses the solver-agnostic `UserPropagator` from `theta-solver`; the caller supplies a factory that supports it.

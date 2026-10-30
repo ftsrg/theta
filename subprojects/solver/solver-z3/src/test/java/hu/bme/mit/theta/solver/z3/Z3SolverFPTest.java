@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,20 +18,31 @@ package hu.bme.mit.theta.solver.z3;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeInfinity;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeZero;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveInfinity;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.PositiveZero;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
 import static org.junit.jupiter.api.Assertions.*;
 
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -101,6 +112,40 @@ public class Z3SolverFPTest {
         }
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
+    }
+
+    public static Collection<FpLitExpr> modelValues() {
+        final FpType type = FpType.of(11, 53);
+        return List.of(
+                PositiveInfinity(type),
+                NegativeInfinity(type),
+                PositiveZero(type),
+                NegativeZero(type),
+                NaN(type),
+                FpUtils.bigFloatToFpLitExpr(
+                        new BigFloat("-1.5", FpUtils.getMathContext(type, RNE)), type),
+                FpUtils.bigFloatToFpLitExpr(
+                        new BigFloat("1e300", FpUtils.getMathContext(type, RNE)), type),
+                FpLitExpr.of(
+                        true,
+                        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 11),
+                        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, 52)));
+    }
+
+    @MethodSource("modelValues")
+    @ParameterizedTest(name = "value: {0}")
+    public void testModelValue(FpLitExpr value) {
+        final ConstDecl<FpType> x = Decls.Const("x", value.getType());
+        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        solver.add(value.isNaN() ? IsNan(x.getRef()) : FpAssignExpr.of(x.getRef(), value));
+        assertTrue(solver.check().isSat());
+
+        final FpLitExpr modelValue = (FpLitExpr) solver.getModel().eval(x).orElseThrow();
+        if (value.isNaN()) {
+            assertTrue(modelValue.isNaN());
+        } else {
+            assertEquals(value, modelValue);
+        }
     }
 
     public void initZ3SolverFPTest(Class<?> exprType, Expr<?> expected, Expr<?> actual) {

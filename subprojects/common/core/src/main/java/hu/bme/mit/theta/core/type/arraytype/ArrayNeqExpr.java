@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public LitExpr<BoolType> eval(final Valuation val) {
-        throw new UnsupportedOperationException();
+        return Bool(!ArrayEqExpr.evalEquals(getLeftOp(), getRightOp(), val));
     }
 
     @Override

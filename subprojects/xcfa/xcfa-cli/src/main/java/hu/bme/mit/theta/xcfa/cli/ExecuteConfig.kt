@@ -328,6 +328,8 @@ private fun buildFrontend(
     parseContext.isCheckMemsafety =
       config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
+    parseContext.isCheckDataRace =
+      config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE
   }
 
   val xcfa =

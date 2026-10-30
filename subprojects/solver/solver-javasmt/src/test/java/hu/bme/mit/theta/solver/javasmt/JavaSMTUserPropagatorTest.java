@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.solver.UserPropagator;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -103,7 +104,7 @@ public class JavaSMTUserPropagatorTest {
         }
     }
 
-    private static class TestConsequencePropagator extends JavaSMTUserPropagator {
+    private static class TestConsequencePropagator extends UserPropagator {
         @Override
         public void onKnownValue(Expr<BoolType> expr, boolean value) {
             System.err.printf("%s := %s\n", expr, value);
@@ -123,7 +124,7 @@ public class JavaSMTUserPropagatorTest {
         }
     }
 
-    private static class TestKnownValuePropagator extends JavaSMTUserPropagator {
+    private static class TestKnownValuePropagator extends UserPropagator {
 
         private final Map<Expr<BoolType>, Boolean> setExpressions = new LinkedHashMap<>();
 
