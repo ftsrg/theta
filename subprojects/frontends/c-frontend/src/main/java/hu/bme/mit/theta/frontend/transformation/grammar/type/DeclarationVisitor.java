@@ -142,7 +142,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         try {
                             initializerExpression =
                                     buildInitializerList(
-                                            initializerList, declaration.getActualType());
+                                                    initializerList, declaration.getActualType())
+                                            .braced();
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
@@ -197,9 +198,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * unconditionally, so a nested brace (a `bracedPrimaryExpression`, not an assignment
      * expression) made it NPE and the whole initializer was dropped as unsupported.
      *
-     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the
-     * flat version did; the c2xcfa side re-casts to the true cell type when it writes the flat
-     * object, so the outer type here only has to be consistent, not exact.
+     * <p>The list is built as written; {@link CInitializerList#braced} then restores the braces the
+     * source elided and casts each scalar to the member it initializes.
      */
     private CInitializerList buildInitializerList(
             CParser.InitializerListContext initializerList, CComplexType containerType) {
@@ -209,6 +209,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         // consumed by the value that follows the designation (see buildDesignatedInner); null for a
         // direct field or an array index.
         List<Integer> pendingInnerPath = null;
+        boolean designated = false;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
                         ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
@@ -218,6 +219,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 nextPosition = path.get(0);
                 pendingInnerPath =
                         path.size() > 1 ? new ArrayList<>(path.subList(1, path.size())) : null;
+                designated = true;
                 continue;
             }
             if (!(child instanceof CParser.InitializerContext initializer)) {
@@ -235,18 +237,23 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                             ? buildLeafValue(elementType, initializer)
                             : buildDesignatedInner(elementType, pendingInnerPath, initializer);
             pendingInnerPath = null;
-            cInitializerList.addStatement(
+            final CExpr position =
                     new CExpr(
                             IntLitExpr.of(java.math.BigInteger.valueOf(nextPosition++)),
-                            parseContext),
-                    value);
+                            parseContext);
+            if (designated) {
+                cInitializerList.addDesignatedStatement(position, value);
+            } else {
+                cInitializerList.addStatement(position, value);
+            }
+            designated = false;
         }
         return cInitializerList;
     }
 
     /**
      * One initializer element's value at [type]: a nested list for a braced element (`{ ... }`),
-     * otherwise the folded scalar cast to [type].
+     * otherwise the folded scalar.
      */
     private CStatement buildLeafValue(CComplexType type, CParser.InitializerContext initializer) {
         if (initializer.bracedPrimaryExpression() != null) {
@@ -258,11 +265,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (asString != null) {
             return asString;
         }
-        final Expr<?> expr =
-                type.castTo(
-                        initializer.assignmentExpression().accept(functionVisitor).getExpression());
-        parseContext.getMetadata().create(expr, "cType", type);
-        return new CExpr(expr, parseContext);
+        // Not cast to [type]: brace elision (C17 6.7.9p20) can move a scalar to another member
+        // than the one at its position here. CInitializerList#braced casts it once that is known.
+        return new CExpr(
+                initializer.assignmentExpression().accept(functionVisitor).getExpression(),
+                parseContext);
     }
 
     /**
@@ -283,7 +290,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         elementTypeAt(type, position),
                         innerPath.subList(1, innerPath.size()),
                         initializer);
-        nested.addStatement(
+        nested.addDesignatedStatement(
                 new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(position)), parseContext),
                 inner);
         return nested;

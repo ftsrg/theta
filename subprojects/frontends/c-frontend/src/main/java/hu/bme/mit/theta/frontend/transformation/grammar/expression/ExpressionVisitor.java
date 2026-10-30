@@ -1490,9 +1490,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
-        // ordinary cell read and is left to the caller's dereference.
+        // ordinary cell read and is left to the caller's dereference. Under the bytes model a union
+        // is a region too: it is laid out in place, not a cell holding a base.
         final boolean aggregate =
-                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && (!s.isUnion() || byteAddressed()));
         if (!aggregate) {
             return null;
         }
@@ -1522,18 +1524,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
-            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
-            // one word) needs its real ObjectLayout size in bytes instead, since that is the
-            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
-            final int cells =
-                    structType.isUnion()
-                            ? (structType.unionCellWidth() == null
-                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
-                                                    .bitSize()
-                                            / 8
-                                    : 1)
-                            : structType.getUnitCount();
+            // A union is one cell, holding its base: an element of an array of unions is an object
+            // of its own, as a union member of a struct is
+            // (FrontendXcfaBuilder#allocateArrayElements).
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {

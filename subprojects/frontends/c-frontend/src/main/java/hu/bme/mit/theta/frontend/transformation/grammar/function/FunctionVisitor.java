@@ -1262,13 +1262,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * <p>Mirrors what the allocator actually does (FrontendXcfaBuilder#allocateStackStruct /
      * #allocateArrayElements), which is what the *read* path then addresses: a non-union struct
-     * stores an aggregate field as a base id in one cell and gives it storage of its own, while an
-     * array's elements -- and a union's members -- live inline in the container's own cells.
+     * stores an aggregate field as a base id in one cell and gives it storage of its own, as an
+     * array does for a union element, while other array elements -- and a union's members -- live
+     * inline in the container's own cells.
      */
     private boolean ownsObject(CComplexType containerType, CComplexType memberType) {
-        return containerType instanceof CStruct container
-                && !container.isUnion()
-                && (memberType instanceof CStruct || memberType instanceof CArray);
+        if (containerType instanceof CStruct container && container.isUnion()) {
+            return false;
+        }
+        return memberType instanceof CStruct member && member.isUnion()
+                || containerType instanceof CStruct
+                        && (memberType instanceof CStruct || memberType instanceof CArray);
     }
 
     /**
@@ -1316,7 +1320,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * <p>C11 6.7.9p21 also requires the members the braces do not reach to be zero, including the
      * members of an aggregate member that is not mentioned at all; each object is filled in its own
-     * right, and the cells holding subobject bases are left alone.
+     * right, and the cells holding subobject bases are left alone. A union is assigned its whole
+     * initializer list, which c2xcfa writes as it writes a global union's.
      */
     private void initializeObject(
             Expr<?> objectBase,
@@ -1325,6 +1330,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CComplexType ptrType,
             CCompound compound,
             ParserRuleContext ctx) {
+        if (objectType instanceof CStruct struct && struct.isUnion()) {
+            final CAssignment cAssignment =
+                    new CAssignment(
+                            objectBase,
+                            list != null ? list : new CInitializerList(objectType, parseContext),
+                            "=",
+                            parseContext);
+            recordMetadata(ctx, cAssignment);
+            compound.addCStatement(cAssignment);
+            return;
+        }
         final Set<Integer> written = new LinkedHashSet<>();
         if (list != null) {
             writeMembers(objectBase, objectType, list, 0, written, ptrType, compound, ctx);
@@ -1426,7 +1442,20 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             return;
         }
-        if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
+        if (type instanceof CStruct cStructType && cStructType.isUnion()) {
+            // Reached as an array element (a struct field is handled below): an object of its own.
+            if (written.add(offset)) {
+                initializeObject(
+                        cellOf(objectBase, offset, type, ptrType),
+                        type,
+                        null,
+                        ptrType,
+                        compound,
+                        ctx);
+            }
+            return;
+        }
+        if (type instanceof CStruct cStructType) {
             for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
                 final int fieldOffset = offset + cStructType.unitOffsetOf(field.get1());
                 if (ownsObject(cStructType, field.get2())) {
@@ -1447,7 +1476,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             return;
         }
-        // A scalar, or a union (whose members share its cells, so it is filled as one).
         for (int cell = 0; cell < cellsOf(type); cell++) {
             if (!written.add(offset + cell)) {
                 continue;
@@ -1500,8 +1528,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             return count * cellsOf(cArrayType.getEmbeddedType());
         } else if (type instanceof CStruct cStructType) {
             if (cStructType.isUnion()) {
+                // In the cell models a union is an object of its own, its container's cell
+                // holding its base.
                 final Integer width = cStructType.unionCellWidth();
-                return width == null
+                return width == null && parseContext.getMemoryModel().byteAddressed()
                         ? ObjectLayout.of(cStructType, parseContext.getArchitecture()).bitSize() / 8
                         : 1;
             }
