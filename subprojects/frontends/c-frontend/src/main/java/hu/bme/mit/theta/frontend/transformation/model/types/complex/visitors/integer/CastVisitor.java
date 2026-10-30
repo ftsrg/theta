@@ -35,6 +35,17 @@ import hu.bme.mit.theta.core.type.NegExpr;
 import hu.bme.mit.theta.core.type.PosExpr;
 import hu.bme.mit.theta.core.type.SubExpr;
 import hu.bme.mit.theta.core.type.Traceability;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -54,6 +65,10 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedLon
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CUnsignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
 import java.math.BigInteger;
 
@@ -83,7 +98,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         if (source.width() > type.width()) {
             return null; // narrowing: the modulo is a real truncation
         }
-        if (!cannotLeaveItsRange(param)) {
+        if (!cannotLeaveItsRange(param, BigInteger.TWO.pow(type.width()))) {
             return null;
         }
         return Pos(param);
@@ -91,18 +106,22 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     /**
      * Whether this operand's value is already inside its own type's range, so that a modulo against
-     * that range would do nothing.
+     * that range would do nothing. {@code rangeEnd} is the first value above the target's range.
      *
      * <p>The modulo is not merely a truncation: for an *arithmetic result* it is what performs the
      * unsigned wraparound. `(unsigned)(UINT_MAX + 1)` must come out 0, and in the unbounded
      * integers the sum stands at 2^32 until the modulo brings it back. So only an operand that
-     * cannot leave its type's range in the first place -- a variable, a literal, a pointer id;
-     * anything that is not an arithmetic result -- may skip it.
+     * cannot leave its type's range in the first place -- a variable, a literal, a pointer id, a
+     * value already wrapped into [0, rangeEnd) -- may skip it.
      */
     private boolean cannotLeaveItsRange(Expr<?> param) {
         Expr<?> expr = Traceability.unwrapTraceable(param);
         while (expr instanceof PosExpr<?> pos) {
             expr = Traceability.unwrapTraceable(pos.getOp());
+    private boolean cannotLeaveItsRange(Expr<?> param, BigInteger rangeEnd) {
+        Expr<?> expr = withoutPos(param);
+        if (expr instanceof ModExpr<?>) {
+            return isWrappedBelow(expr, rangeEnd);
         }
         return !(expr instanceof AddExpr
                 || expr instanceof SubExpr
@@ -110,6 +129,23 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 || expr instanceof DivExpr
                 || expr instanceof ModExpr
                 || expr instanceof NegExpr);
+    }
+
+    /** Whether a modulo by a literal already keeps this value within [0, rangeEnd). */
+    private static boolean isWrappedBelow(Expr<?> expr, BigInteger rangeEnd) {
+        if (expr instanceof ModExpr<?> mod && mod.getRightOp() instanceof IntLitExpr divisor) {
+            BigInteger bound = divisor.getValue().abs();
+            return bound.signum() > 0 && bound.compareTo(rangeEnd) <= 0;
+        }
+        return false;
+    }
+
+    private static Expr<?> withoutPos(Expr<?> param) {
+        Expr<?> expr = param;
+        while (expr instanceof PosExpr<?> pos) {
+            expr = pos.getOp();
+        }
+        return expr;
     }
 
     private IteExpr<?> handleUnsignedSameSize(CInteger type, Expr<?> param) {
@@ -131,6 +167,18 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         int width = parseContext.getArchitecture().getBitWidth(widthName);
         BigInteger halfMod = BigInteger.TWO.pow(width - 1);
         BigInteger upperLimit = BigInteger.TWO.pow(width);
+        // Already in the target's range: wrapped below 2^(w-1), or a variable or literal of a type
+        // that fits. Not any other non-arithmetic operand: a division's Ite is cast unwrapped.
+        Expr<?> operand = withoutPos(param);
+        CComplexType source = CComplexType.getType(param, parseContext);
+        boolean fits =
+                source instanceof Signed
+                        ? source.width() <= width
+                        : source instanceof Unsigned && source.width() < width;
+        if (isWrappedBelow(operand, halfMod)
+                || (fits && (operand instanceof RefExpr || operand instanceof LitExpr))) {
+            return Pos(param);
+        }
         // two's complement wraparound: ((param + 2^(w-1)) mod 2^w) - 2^(w-1)
         return Sub(Mod(Add(param, Int(halfMod)), Int(upperLimit)), Int(halfMod));
     }

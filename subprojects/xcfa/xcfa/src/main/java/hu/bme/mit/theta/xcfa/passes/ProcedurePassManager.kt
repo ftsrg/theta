@@ -125,7 +125,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
         SimplifyExprsPass(parseContext, property),
       )
     } ?: emptyList(),
-    listOf(DataRaceToReachabilityPass(property, parseContext)),
     listOf(OverflowDetectionPass(property, parseContext)),
     // spells out the mem* copies before anything below havocs the same objects
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
@@ -144,6 +143,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
+    // on the finished XCFA, as the portfolio applies it: the mem* calls are spelled out and every
+    // other unresolved call is havoced by now, so their accesses are instrumented too
+    listOf(DataRaceToReachabilityPass(property, parseContext)),
   )
 
 class NontermValidationPasses(
