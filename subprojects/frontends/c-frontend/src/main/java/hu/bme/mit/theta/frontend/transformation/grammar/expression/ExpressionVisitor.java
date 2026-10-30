@@ -31,6 +31,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -68,6 +69,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CNullStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -82,6 +84,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -177,6 +180,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 new ArrayList<>(preStatements.subList(from, preStatements.size()));
         preStatements.subList(from, preStatements.size()).clear();
 
+        // The operator's value re-reads the earlier operands only after these statements ran, so
+        // if they may change what those operands read, their outcome is taken now and used instead.
+        if (functionVisitor != null && mayChange(guarded, alreadyEvaluated)) {
+            Expr<BoolType> outcome =
+                    snapshot(
+                            stopWhenTrue
+                                    ? BoolExprs.Or(alreadyEvaluated)
+                                    : BoolExprs.And(alreadyEvaluated));
+            alreadyEvaluated.clear();
+            alreadyEvaluated.add(outcome);
+        }
+
         CCompound body = compoundOf(guarded);
 
         List<Expr<BoolType>> reached =
@@ -222,6 +237,101 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * Whether running these statements may change the value of an operand already evaluated. Only
+     * the program's own variables and memory can change: call results and temporaries are written
+     * where they are introduced, and nowhere else.
+     *
+     * <p>An assignment to a plain variable writes that variable (or memory, if its address is
+     * taken), and a nondet call writes only its own result. Anything else may write any variable or
+     * memory.
+     */
+    private boolean mayChange(List<CStatement> statements, List<Expr<BoolType>> evaluated) {
+        Set<VarDecl<?>> read =
+                ExprUtils.getVars(evaluated).stream()
+                        .filter(this::isProgramVariable)
+                        .collect(Collectors.toSet());
+        boolean readsMemory = evaluated.stream().anyMatch(ExpressionVisitor::readsMemory);
+        return (!read.isEmpty() || readsMemory)
+                && statements.stream().anyMatch(s -> mayWrite(s, read, readsMemory));
+    }
+
+    private boolean mayWrite(CStatement statement, Set<VarDecl<?>> read, boolean readsMemory) {
+        if (statement == null) {
+            return false;
+        }
+        if (mayWrite(statement.getPreStatements(), read, readsMemory)
+                || mayWrite(statement.getPostStatements(), read, readsMemory)) {
+            return true;
+        }
+        if (statement instanceof CExpr || statement instanceof CNullStatement) {
+            return false;
+        }
+        if (statement instanceof CCompound compound) {
+            return compound.getcStatementList().stream()
+                    .anyMatch(s -> mayWrite(s, read, readsMemory));
+        }
+        if (statement instanceof CIf cIf) {
+            return mayWrite(cIf.getGuard(), read, readsMemory)
+                    || mayWrite(cIf.getBody(), read, readsMemory)
+                    || mayWrite(cIf.getElseStatement(), read, readsMemory);
+        }
+        if (statement instanceof CAssignment assignment
+                && assignment.getlValue() instanceof RefExpr<?> target) {
+            return read.contains(target.getDecl())
+                    || (readsMemory && isProgramVariable(target.getDecl()))
+                    || mayWrite(assignment.getrValue(), read, readsMemory);
+        }
+        if (statement instanceof CCall call
+                && call.getParams().isEmpty()
+                && call.getFunctionId().startsWith("__VERIFIER_nondet_")) {
+            return false;
+        }
+        return true; // any other call, or something unrecognised
+    }
+
+    private boolean isProgramVariable(Decl<?> decl) {
+        return variables.stream().anyMatch(scope -> scope.get2().containsValue(decl));
+    }
+
+    private static boolean readsMemory(Expr<?> expr) {
+        return expr instanceof Dereference<?, ?, ?>
+                || expr.getOps().stream().anyMatch(ExpressionVisitor::readsMemory);
+    }
+
+    /** Stores a truth value in a fresh variable, so that later statements cannot change it. */
+    private Expr<BoolType> snapshot(Expr<BoolType> value) {
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> tmp = functionVisitor.createTempVar(signedInt, "shortcircuit");
+        Expr<?> asInt = Ite(value, signedInt.getUnitValue(), signedInt.getNullValue());
+        parseContext.getMetadata().create(asInt, "cType", signedInt);
+        preStatements.add(
+                new CAssignment(tmp.getRef(), new CExpr(asInt, parseContext), "=", parseContext));
+        return AbstractExprs.Neq(tmp.getRef(), signedInt.getNullValue());
+    }
+
+    /**
+     * Evaluates one operand of `&&` / `||` to its truth value. There is a sequence point after it,
+     * and it runs only if the short-circuit lets it, so a postfix `++`/`--` in it cannot wait in
+     * {@link #postStatements} for the end of the full expression: its update is emitted right after
+     * the operand (where {@link #guardShortCircuited} can guard it), behind a snapshot of the
+     * value.
+     */
+    private Expr<BoolType> shortCircuitOperand(ParseTree operand) {
+        List<CStatement> enclosing = new ArrayList<>(postStatements);
+        postStatements.clear();
+        Expr<?> expr = operand.accept(this);
+        Expr<BoolType> value =
+                AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr);
+        if (!postStatements.isEmpty() && functionVisitor != null) {
+            value = snapshot(value);
+            preStatements.addAll(postStatements);
+            postStatements.clear();
+        }
+        postStatements.addAll(0, enclosing);
+        return value;
+    }
+
+    /**
      * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled
      * in, or the builder falls back to a path that insists the compound's last statement be a
      * compound too.
@@ -242,11 +352,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // `||` stops at the first operand that holds, so anything a later one needs runs
                 // only if every earlier one came out false.
                 int before = preStatements.size();
-                Expr<?> expr = operand.accept(this);
+                Expr<BoolType> value = shortCircuitOperand(operand);
                 guardShortCircuited(before, collect, true);
-                collect.add(
-                        AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                collect.add(value);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
@@ -265,11 +373,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // `&&` stops at the first operand that fails, so anything a later one needs runs
                 // only if every earlier one held.
                 int before = preStatements.size();
-                Expr<?> expr = operand.accept(this);
+                Expr<BoolType> value = shortCircuitOperand(operand);
                 guardShortCircuited(before, collect, false);
-                collect.add(
-                        AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                collect.add(value);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
@@ -3160,7 +3266,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private static final java.util.Set<String> ATOMIC_RETURNS_POINTEE =
             java.util.Set.of(
                     "__atomic_load_n",
-                    "__atomic_load",
                     "atomic_load",
                     "atomic_load_explicit",
                     "__atomic_exchange_n",
@@ -3192,6 +3297,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             java.util.Set.of(
                     "__atomic_store_n",
                     "__atomic_store",
+                    "__atomic_load", // ret is by pointer, the call value is unused
                     "atomic_store",
                     "atomic_store_explicit",
                     "atomic_init",
@@ -3209,12 +3315,35 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "atomic_compare_exchange_strong_explicit",
                     "atomic_compare_exchange_weak_explicit");
 
+    // Clang's <stdatomic.h> expands each C11 operation to a `__c11_atomic_*` builtin that takes
+    // the arguments of the `atomic_*_explicit` function it implements, so it is emitted as that.
+    private static final java.util.Map<String, String> CLANG_C11_ATOMICS =
+            java.util.Map.ofEntries(
+                    java.util.Map.entry("__c11_atomic_init", "atomic_init"),
+                    java.util.Map.entry("__c11_atomic_load", "atomic_load_explicit"),
+                    java.util.Map.entry("__c11_atomic_store", "atomic_store_explicit"),
+                    java.util.Map.entry("__c11_atomic_exchange", "atomic_exchange_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_strong",
+                            "atomic_compare_exchange_strong_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_weak",
+                            "atomic_compare_exchange_weak_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_add", "atomic_fetch_add_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_sub", "atomic_fetch_sub_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_or", "atomic_fetch_or_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_and", "atomic_fetch_and_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_xor", "atomic_fetch_xor_explicit"),
+                    java.util.Map.entry("__c11_atomic_thread_fence", "atomic_thread_fence"),
+                    java.util.Map.entry("__c11_atomic_signal_fence", "atomic_signal_fence"));
+
     /**
      * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower
      * it) with its return variable typed correctly, and return the call's value. Returns null
      * otherwise, so ordinary builtin handling proceeds.
      */
     private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
+        name = CLANG_C11_ATOMICS.getOrDefault(name, name);
         if (ATOMIC_RETURNS_POINTEE.contains(name)) {
             return atomicCall(name, args, AtomicReturn.POINTEE);
         }
@@ -3476,8 +3605,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
         } else {
 
-            boolean negativeIsUnaryMinus = false;
-
             // Integer suffixes u and l come in any order (ul, lu, llu, ull, ...); one trailing 'l'
             // may already have been stripped for the shared long/float check above. Strip whatever
             // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the
@@ -3497,8 +3624,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 text = text.substring(0, text.length() - 1);
             }
-            boolean isLongLong = longCount >= 2;
 
+            // C11 6.4.4.1p5: a hexadecimal, octal or binary constant may also take the unsigned
+            // type of each rank, a decimal one only with a u suffix.
+            boolean unsignedAllowed = isUnsigned;
             BigInteger bigInteger;
             if (isCharLiteral) {
                 // Every character constant -- plain, escaped, hex, octal, multi-character -- goes
@@ -3509,41 +3638,45 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf(charLiteralValue);
             } else if (text.startsWith("0x")) {
                 bigInteger = new BigInteger(text.substring(2), 16);
+                unsignedAllowed = true;
             } else if (text.startsWith("0b")) {
                 bigInteger = new BigInteger(text.substring(2), 2);
+                unsignedAllowed = true;
             } else if (text.startsWith("0") && text.length() > 1) {
                 bigInteger = new BigInteger(text.substring(1), 8);
+                unsignedAllowed = true;
             } else {
                 bigInteger = new BigInteger(text, 10);
-                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
-            final var size = bigInteger.bitLength();
+            // The candidate list of C11 6.4.4.1p5; the first one that can represent the value wins.
+            final List<CComplexType> candidates = new ArrayList<>();
+            if (longCount == 0) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedInt(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedInt(parseContext));
+            }
+            if (longCount <= 1) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedLong(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLong(parseContext));
+            }
+            if (!isUnsigned) candidates.add(CComplexType.getSignedLongLong(parseContext));
+            if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLongLong(parseContext));
 
-            CComplexType unsignedLongLong = CComplexType.getUnsignedLongLong(parseContext);
-            CComplexType signedLongLong = CComplexType.getSignedLongLong(parseContext);
-            CComplexType unsignedLong = CComplexType.getUnsignedLong(parseContext);
-            CComplexType signedLong = CComplexType.getSignedLong(parseContext);
-            CComplexType unsignedInt = CComplexType.getUnsignedInt(parseContext);
-            CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-
-            CComplexType type;
-            if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (!isUnsigned
-                    && (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus))
-                type = signedLongLong;
-            else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (!isUnsigned && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
-                type = signedLong;
-            else if (isUnsigned) type = unsignedInt;
-            else type = signedInt;
+            CComplexType type = candidates.get(candidates.size() - 1);
+            for (CComplexType candidate : candidates) {
+                if (canRepresent((CInteger) candidate, bigInteger)) {
+                    type = candidate;
+                    break;
+                }
+            }
+            final boolean signedType = ((CInteger) type).isSsigned();
 
             LitExpr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
-                            ? isUnsigned
-                                    ? BvUtils.bigIntegerToUnsignedBvLitExpr(
+                            ? signedType
+                                    ? BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
+                                    : BvUtils.bigIntegerToUnsignedBvLitExpr(
                                             bigInteger, type.width())
-                                    : BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
                             : Int(bigInteger);
 
             parseContext.getMetadata().create(litExpr, "cType", type);
@@ -3551,12 +3684,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
     }
 
+    private static boolean canRepresent(CInteger type, BigInteger value) {
+        return type.isSsigned()
+                ? value.bitLength() < type.width()
+                : value.signum() >= 0 && value.bitLength() <= type.width();
+    }
+
     @Override
     public Expr<?> visitPrimaryExpressionBraceExpression(
             CParser.PrimaryExpressionBraceExpressionContext ctx) {
         if (functionVisitor != null) {
             CStatement statement = ctx.expression().accept(functionVisitor);
-            preStatements.add(statement);
+            queueValueStatement(statement);
             return statement.getExpression();
         } else {
             return getConstExpr(ctx);
@@ -3593,8 +3732,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     Level.INFO, "WARNING: statement expression yields no value\n");
             return null;
         }
-        preStatements.add(statement);
+        queueValueStatement(statement);
         return value;
+    }
+
+    /**
+     * Queues a parenthesised or statement expression to run first, except for the post-statements
+     * of its last item -- the one yielding the value: `(a++)` reads `a` before incrementing it,
+     * just like `a++`. The earlier items are sequenced before the value and run in full.
+     */
+    private void queueValueStatement(CStatement statement) {
+        if (statement instanceof CCompound compound && !compound.getcStatementList().isEmpty()) {
+            List<CStatement> items = compound.getcStatementList();
+            CStatement value = items.get(items.size() - 1);
+            postStatements.addAll(functionVisitor.collectPostStatements(value));
+            functionVisitor.resetPostStatements(value);
+        }
+        preStatements.add(statement);
     }
 
     @Override
