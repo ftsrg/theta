@@ -66,6 +66,32 @@ float_subnormal_order.c	efficient	ILP32	SAFE	subnormal floats decode below the s
 bv_sub_intmin.c	bitvector	ILP32	SAFE:no-overflow	subtracting INT_MIN: the negation is widened before it wraps (bitvector overflow check)
 calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the fill placed at the typed binding
 memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
+global_nested_struct_array.c	efficient	ILP32	SAFE	a global struct array's nested-struct cells hold distinct bases, and its scalar cells are zero
+global_nested_struct_array_init.c	efficient	ILP32	SAFE	a global struct array with nested struct/array fields is initialized in its inline cells
+global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct and 2-D nested-struct arrays are initialized in their inline cells
+uninit_local_per_call.c	efficient	ILP32	UNSAFE	an uninitialized local gets a fresh value at each declaration, not the previous inlined call's
+global_union_zero_init.c	efficient	LP64	SAFE	a global union without an initializer reads back zero through every member view, also with a struct first member
+global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is stored in the byte cells / word its members are read from
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's	flat
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's	bytes
+local_union_designated_init_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a local union's designated initializer is read back through another member
+local_union_designated_init_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a local union's designated initializer is read back through another member	bytes
+local_union_member_init.c	efficient	ILP32	SAFE	union members of local structs and local union array elements are initialized as local unions
+local_union_member_init.c	efficient	ILP32	SAFE	union members of local structs and local union array elements are initialized as local unions	flat
+brace_elision_struct_array.c	efficient	ILP32	SAFE	brace elision fills every leaf of a struct array element, local and global; 2-D designators land in place
+brace_elision_struct_array.c	efficient	ILP32	SAFE	brace elision fills every leaf of a struct array element, local and global; 2-D designators land in place	flat
+brace_elision_struct_array_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a brace-elided struct array element holds its initializer
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects	flat
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects	bytes
+union_2d_array_unsafe.c	efficient	ILP32	UNSAFE	planted bug: an element of a local 2-D array of unions keeps what was written to it
+union_2d_array_global.c	efficient	ILP32	SAFE	the elements of a global 2-D array of unions are distinct objects, zero or initialized
+union_2d_array_global.c	efficient	ILP32	SAFE	the elements of a global 2-D array of unions are distinct objects, zero or initialized	flat
+union_2d_array_init.c	efficient	ILP32	SAFE	a brace-elided local 2-D array of unions initializes each element's first member
+union_2d_array_init.c	efficient	ILP32	SAFE	a brace-elided local 2-D array of unions initializes each element's first member	flat
+union_in_struct_arrays.c	efficient	ILP32	SAFE	union members of 2-D struct array elements, local and global, are distinct objects
+union_in_struct_arrays.c	efficient	ILP32	SAFE	union members of 2-D struct array elements, local and global, are distinct objects	flat
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
 union_wide_cell_halves.c	efficient	ILP32	SAFE	a 64-bit union cell is read at its full width under ILP32 (unsigned long is 32 there)

@@ -144,7 +144,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         try {
                             initializerExpression =
                                     buildInitializerList(
-                                            initializerList, declaration.getActualType());
+                                                    initializerList, declaration.getActualType())
+                                            .braced();
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
@@ -199,9 +200,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * unconditionally, so a nested brace (a `bracedPrimaryExpression`, not an assignment
      * expression) made it NPE and the whole initializer was dropped as unsupported.
      *
-     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the
-     * flat version did; the c2xcfa side re-casts to the true cell type when it writes the flat
-     * object, so the outer type here only has to be consistent, not exact.
+     * <p>The list is built as written; {@link CInitializerList#braced} then restores the braces the
+     * source elided and casts each scalar to the member it initializes.
      */
     private CInitializerList buildInitializerList(
             CParser.InitializerListContext initializerList, CComplexType containerType) {
@@ -255,7 +255,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
 
     /**
      * One initializer element's value at [type]: a nested list for a braced element (`{ ... }`),
-     * otherwise the folded scalar cast to [type].
+     * otherwise the folded scalar.
      */
     private CStatement buildLeafValue(CComplexType type, CParser.InitializerContext initializer) {
         if (initializer.bracedPrimaryExpression() != null) {
@@ -267,18 +267,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (asString != null) {
             return asString;
         }
-        final Expr<?> raw =
-                initializer.assignmentExpression().accept(functionVisitor).getExpression();
-        // A scalar where an aggregate is expected starts brace elision (C17 6.7.9p20): it belongs
-        // to the aggregate's first leaf, so it keeps its own type rather than the aggregate's.
-        if ((type instanceof CStruct || type instanceof CArray)
-                && !(CComplexType.getType(raw, parseContext) instanceof CStruct
-                        || CComplexType.getType(raw, parseContext) instanceof CArray)) {
-            return new CExpr(raw, parseContext);
-        }
-        final Expr<?> expr = type.castTo(raw);
-        parseContext.getMetadata().create(expr, "cType", type);
-        return new CExpr(expr, parseContext);
+        // Not cast to [type]: brace elision (C17 6.7.9p20) can move a scalar to another member
+        // than the one at its position here. CInitializerList#braced casts it once that is known.
+        return new CExpr(
+                initializer.assignmentExpression().accept(functionVisitor).getExpression(),
+                parseContext);
     }
 
     /**

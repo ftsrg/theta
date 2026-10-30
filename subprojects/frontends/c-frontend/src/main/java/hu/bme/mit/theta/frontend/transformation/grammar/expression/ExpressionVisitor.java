@@ -1516,18 +1516,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
-            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
-            // one word) needs its real ObjectLayout size in bytes instead, since that is the
-            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
-            final int cells =
-                    structType.isUnion()
-                            ? (structType.unionCellWidth() == null
-                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
-                                                    .bitSize()
-                                            / 8
-                                    : 1)
-                            : structType.getUnitCount();
+            // A union is one cell, holding its base: an element of an array of unions is an object
+            // of its own, as a union member of a struct is
+            // (FrontendXcfaBuilder#allocateArrayElements).
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {

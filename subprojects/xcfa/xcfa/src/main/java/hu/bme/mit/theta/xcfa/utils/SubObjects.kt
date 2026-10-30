@@ -120,20 +120,21 @@ class SubObjects(private val parseContext: ParseContext) {
     marker: String = "alloca",
   ) {
     if (parseContext.memoryModel.byteAddressed()) return // elements are regions of the array
-    val size = fixedArraySize(type) ?: return
     var leaf: CComplexType = type
     while (leaf is CArray) leaf = leaf.embeddedType
-    if (leaf is CStruct && leaf.isUnion) {
+    if (leaf !is CStruct) return
+    // Rows are inline too, so the innermost elements are what holds objects, at every dimension.
+    val cells = flatArraySize(type) ?: return
+    if (leaf.isUnion) {
       // A union element is a cell holding its object's base, as a union member of a struct is.
-      for (index in 0 until (flatArraySize(type) ?: return)) {
+      for (index in 0 until cells) {
         allocateStruct(subobjectCell(target, type, index, leaf), leaf, labels, marker)
       }
       return
     }
-    val elementType = type.embeddedType
-    if (elementType !is CStruct || elementType.isUnion) return
-    for (index in 0 until size) {
-      allocateMembers(target, type, elementType, index * elementType.unitCount, labels, marker)
+    val stride = leaf.unitCount.coerceAtLeast(1)
+    for (index in 0 until cells / stride) {
+      allocateMembers(target, type, leaf, index * stride, labels, marker)
     }
   }
 
@@ -277,13 +278,23 @@ class SubObjects(private val parseContext: ParseContext) {
       count * ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8)
     else count * cellsOf(type)
 
+  /** How many address units an object of [type] of its own spans, as [staticUnits] for one. */
+  fun objectUnits(type: CComplexType): Long =
+    if (type is CStruct && type.isUnion && !parseContext.memoryModel.byteAddressed())
+      unionCellCount(type).toLong()
+    else staticUnits(type, 1)
+
   /**
    * How many storage cells one value of [type] occupies; mirrors `ExpressionVisitor#cellCountExpr`.
+   * In the cell models a union is an object of its own, its container's cell holding its base.
    */
   fun cellsOf(type: CComplexType): Int =
     when (type) {
       is CArray -> flatArraySize(type) ?: 1
-      is CStruct -> if (type.isUnion) unionCellCount(type) else type.unitCount
+      is CStruct ->
+        if (!type.isUnion) type.unitCount
+        else if (parseContext.memoryModel.byteAddressed()) unionCellCount(type)
+        else 1
       else -> 1
     }
 }
