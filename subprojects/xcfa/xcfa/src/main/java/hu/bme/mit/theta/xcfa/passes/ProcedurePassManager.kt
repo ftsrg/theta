@@ -91,10 +91,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // this pass could not see, and no reference may survive into the analyses
       ReferenceElimination(parseContext)
     ),
-    // after inlining, so the object behind a pointer parameter is visible, and before the cleanup
-    // below folds pointers into base ids and drops the accesses' C types; may throw to have the
-    // frontend rebuilt under the bytes model
-    listOf(ByteViewPass(parseContext)),
     listOf(
       SimplifyExprsPass(parseContext, property), // before unroll to have more chance of unrolling
       UnrollPass(specificRecursionUnrollLimit = -1),

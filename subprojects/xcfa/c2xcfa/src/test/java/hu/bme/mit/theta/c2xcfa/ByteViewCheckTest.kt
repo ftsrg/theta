@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
-/** `ByteViewPass` asks for the bytes model exactly when a known object is read byte by byte. */
-class ByteViewPassTest {
+/** `ByteViewCheck` asks for the bytes model exactly when a known object is read byte by byte. */
+class ByteViewCheckTest {
 
   private fun build(src: String) {
     getXcfaFromC(

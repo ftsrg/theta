@@ -36,12 +36,14 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /**
- * Asks for the bytes memory model when a program reads or writes an object byte by byte.
+ * Asks for the bytes memory model when a program reads or writes an object byte by byte. Run by
+ * [ReferenceElimination] under the multi model, which is the only one with this limit.
  *
  * Under the multi model a cell holds one *value* of the object, whatever its C width, so a `char`
  * access through `(unsigned char *)&x` names cell `i` of `x`, not byte `i`: after `memset(&x, 0,
@@ -49,22 +51,20 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * reads a cell nothing wrote. Such a program gets no faithful model here, so this pass throws
  * [RequiresByteAddressedMemoryException] and the frontend is rebuilt under `bytes`.
  *
- * It runs after inlining, where the object behind a pointer parameter is visible, and decides from
- * a flow-insensitive closure over pointer copies seeded by the objects' naming variables (`x*`, see
- * [ReferenceElimination]). A one-byte access trips it only where the object's cell at that offset
- * is not one byte wide; an object whose layout or origin is unknown (heap blocks, unions) is left
- * alone, as before this pass.
+ * It decides from a flow-insensitive closure over pointer copies, seeded by the objects whose
+ * naming variables [recordNamedObject] registered. A one-byte access trips it only where the
+ * object's cell at that offset is not one byte wide; an object whose layout or origin is unknown
+ * (heap blocks, unions) is left alone. After inlining it also sees the object behind a pointer
+ * parameter, which is why the second run of [ReferenceElimination] matters here.
  */
-class ByteViewPass(val parseContext: ParseContext) : ProcedurePass {
+internal class ByteViewCheck(val parseContext: ParseContext) {
 
-  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val model = parseContext.memoryModel
-    if (model.flatAddressing() || model.byteAddressed()) return builder
+  fun check(builder: XcfaProcedureBuilder) {
     val byteAccesses =
       builder.getEdges().flatMap { edge ->
         edge.getFlatLabels().flatMap { it.dereferences }.filter { isByteAccess(it) }
       }
-    if (byteAccesses.isEmpty()) return builder
+    if (byteAccesses.isEmpty()) return
     val origins = Origins(builder)
     for (access in byteAccesses) {
       for (objectType in origins.objectsOf(access.array)) {
@@ -81,7 +81,6 @@ class ByteViewPass(val parseContext: ParseContext) : ProcedurePass {
         }
       }
     }
-    return builder
   }
 
   /**
@@ -153,15 +152,16 @@ class ByteViewPass(val parseContext: ParseContext) : ProcedurePass {
           .flatMap { it.getEdges() }
           .flatMap { it.getFlatLabels() }
           .mapNotNull { ((it as? StmtLabel)?.stmt as? AssignStmt<*>) }
+      val named = xcfa.namedObjects()
       for (global in xcfa.getVars()) {
-        val type = namedObjectType(global.wrappedVar) ?: continue
+        val type = named[global.wrappedVar] ?: continue
         varObjects.getOrPut(global.wrappedVar) { mutableSetOf() }.add(type)
         global.initValue?.let {
           literalObjects.getOrPut(it.toString()) { mutableSetOf() }.add(type)
         }
       }
       for (assign in assignments) {
-        val type = namedObjectType(assign.varDecl) ?: continue
+        val type = named[assign.varDecl] ?: continue
         varObjects.getOrPut(assign.varDecl) { mutableSetOf() }.add(type)
         (ExprUtils.simplify(assign.expr) as? LitExpr<*>)?.let {
           literalObjects.getOrPut(it.toString()) { mutableSetOf() }.add(type)
@@ -187,13 +187,6 @@ class ByteViewPass(val parseContext: ParseContext) : ProcedurePass {
             ?: emptySet()
       }
 
-    /** The object an `x*` naming variable of [ReferenceElimination] holds the base of. */
-    private fun namedObjectType(v: VarDecl<*>): CComplexType? {
-      if (!v.name.endsWith("*")) return null
-      val pointer = parseContext.metadata.getMetadataValue(v.ref, "cType").orElse(null)
-      return (pointer as? CPointer)?.embeddedType
-    }
-
     private fun unbox(e: Expr<*>): Expr<*> =
       when {
         e.ops.size == 1 && e !is Dereference<*, *, *> && e !is RefExpr<*> -> unbox(e.ops[0])
@@ -207,3 +200,15 @@ class ByteViewPass(val parseContext: ParseContext) : ProcedurePass {
     const val MAX_CELLS = 1 shl 16
   }
 }
+
+private const val NAMED_OBJECTS = "namedObjects"
+
+/** Registers [type] as the object whose base the naming variable [pointer] holds. */
+internal fun XcfaBuilder.recordNamedObject(pointer: VarDecl<*>, type: CComplexType) {
+  namedObjects()[pointer] = type
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun XcfaBuilder.namedObjects(): MutableMap<VarDecl<*>, CComplexType> =
+  metaData.getOrPut(NAMED_OBJECTS) { LinkedHashMap<VarDecl<*>, CComplexType>() }
+    as MutableMap<VarDecl<*>, CComplexType>

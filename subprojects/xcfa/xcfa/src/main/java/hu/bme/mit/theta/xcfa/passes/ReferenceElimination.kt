@@ -104,6 +104,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
   private var tmpRefCnt = 0
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val result = eliminate(builder)
+    val model = parseContext.memoryModel
+    if (!model.flatAddressing() && !model.byteAddressed()) ByteViewCheck(parseContext).check(result)
+    return result
+  }
+
+  private fun eliminate(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     currentBuilder = builder
     val references =
       builder.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } }
@@ -216,7 +223,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           }
       }
     checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
-    return globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+    val referred = globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>
+    // outside computeIfAbsent: recording writes the same metaData map
+    referred.forEach { (v, ptr) ->
+      builder.parent.recordNamedObject(ptr.first, CComplexType.getType(v.ref, parseContext))
+    }
+    return referred
   }
 
   private fun cellsAreAtomic(type: CComplexType): Boolean =
@@ -305,6 +317,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
+          builder.parent.recordNamedObject(varDecl, ptrType.embeddedType)
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
