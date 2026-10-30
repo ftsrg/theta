@@ -1071,6 +1071,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     splitVars: Map<VarDecl<*>, SplitVarPair>,
     baseType: Type,
   ): Expr<*> {
+    pointerSum(splitVars)?.let { (pointer, _) ->
+      return pointer.pointerBaseChannel(splitVars, baseType)
+    }
     val split = splitPairOf(splitVars)
     return if (split != null) cast(split.base.ref, baseType)
     else cast(this.changeComplexReferredVars(splitVars), baseType)
@@ -1084,8 +1087,34 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     splitVars: Map<VarDecl<*>, SplitVarPair>,
     offsetType: Type,
   ): Expr<*> {
+    pointerSum(splitVars)?.let { (pointer, steps) ->
+      val summands =
+        listOf(pointer.pointerOffsetChannel(splitVars, offsetType)) +
+          steps.map { cast(it.changeComplexReferredVars(splitVars), offsetType) }
+      return Add(summands)
+    }
     val split = splitPairOf(splitVars)
     return if (split != null) cast(split.offset.ref, offsetType) else getDefaultValue(offsetType)
+  }
+
+  /**
+   * An inline pointer step `p + k` (the frontend's pointer arithmetic: one pointer operand, the
+   * rest integer terms already scaled to cells), as the pointer and its steps. Its value is not
+   * `p`'s value plus `k` here but `p` moved `k` cells within its object, so a comparison against a
+   * split pointer (`&a[2] == a + 2`) has to take its base from `p` and add `k` to the offset.
+   */
+  private fun Expr<*>.pointerSum(
+    splitVars: Map<VarDecl<*>, SplitVarPair>
+  ): Pair<Expr<*>, List<Expr<*>>>? {
+    val sum = stripPos() as? AddExpr<*> ?: return null
+    val subtracted = sum.ops.mapNotNull { (it.stripPos() as? NegExpr<*>)?.op }
+    if (subtracted.any { it.isPointerOperand(splitVars) || it.pointerSum(splitVars) != null }) {
+      return null // a pointer difference, not a pointer
+    }
+    val pointers =
+      sum.ops.filter { it.isPointerOperand(splitVars) || it.pointerSum(splitVars) != null }
+    if (pointers.size != 1) return null
+    return pointers[0] to sum.ops.filter { it !== pointers[0] }
   }
 
   /**
@@ -1119,7 +1148,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     ) {
       val left = ops[0]
       val right = ops[1]
-      val ref = left.splitPairOf(splitVars) ?: right.splitPairOf(splitVars) ?: return null
+      fun splitPairIn(e: Expr<*>): SplitVarPair? =
+        e.splitPairOf(splitVars) ?: e.pointerSum(splitVars)?.let { splitPairIn(it.first) }
+      val ref = splitPairIn(left) ?: splitPairIn(right) ?: return null
       val baseType = ref.base.type
       val offsetType = ref.offset.type
       val baseL = left.pointerBaseChannel(splitVars, baseType)
@@ -1134,7 +1165,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       // that onto the offset read the integer bound as "a pointer at offset 0" and collapsed the
       // assume to `us_offset in [0,0]`, pinning the offset instead of stating a tautology. Such a
       // constraint belongs on the base, the pointer's principal component.
-      val bothPointers = left.isPointerOperand(splitVars) && right.isPointerOperand(splitVars)
+      fun isPointer(e: Expr<*>) = e.isPointerOperand(splitVars) || e.pointerSum(splitVars) != null
+      val bothPointers = isPointer(left) && isPointer(right)
       val ordL = if (bothPointers) offL else baseL
       val ordR = if (bothPointers) offR else baseR
       val decomposed: Expr<BoolType> =
