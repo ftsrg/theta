@@ -959,6 +959,20 @@ public final class ExprSimplifier {
         } else if (leftOp instanceof IntModExpr
                 && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
             return leftOp;
+        } else if (leftOp instanceof IntModExpr inner
+                && inner.getRightOp() instanceof IntLitExpr innerLit
+                && rightOp instanceof IntLitExpr outerLit) {
+            // A remainder is never negative: one below |b| is already reduced mod b, and
+            // reducing mod a multiple of |b| first leaves the result mod b unchanged.
+            final BigInteger a = innerLit.getValue().abs();
+            final BigInteger b = outerLit.getValue().abs();
+            if (a.signum() > 0 && b.signum() > 0) {
+                if (a.compareTo(b) <= 0) {
+                    return leftOp;
+                } else if (a.mod(b).signum() == 0) {
+                    return expr.with(inner.getLeftOp(), rightOp);
+                }
+            }
         }
 
         return expr.with(leftOp, rightOp);
