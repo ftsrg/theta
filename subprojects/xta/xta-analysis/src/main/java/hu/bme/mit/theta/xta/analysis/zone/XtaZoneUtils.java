@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -245,11 +245,11 @@ public final class XtaZoneUtils {
 
     ////
 
-    private static boolean shouldApplyDelay(final List<Loc> locs) {
+    static boolean shouldApplyDelay(final List<Loc> locs) {
         return locs.stream().allMatch(l -> l.getKind() == LocKind.NORMAL);
     }
 
-    private static void applyDelay(final ZoneState.Builder builder) {
+    static void applyDelay(final ZoneState.Builder builder) {
         builder.nonnegative();
         builder.up();
     }
