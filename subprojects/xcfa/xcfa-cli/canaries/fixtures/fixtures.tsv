@@ -110,6 +110,9 @@ and_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the right operand of &&/|
 ternary_overflow_guard.c	efficient	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported
 ternary_overflow_taken.c	efficient	ILP32	UNSAFE:no-overflow	an overflow in the selected operand of ?: is still reported
 ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported (bitvector)
+atomic_flag_builtins.c	efficient	LP64	SAFE	__atomic_test_and_set/__atomic_clear, the atomic_flag operations (on the struct's flag byte) and the lock-free queries
+atomic_pointer_step.c	efficient	LP64	SAFE	GCC __atomic_* add/sub step a pointer by bytes, C11 atomic_fetch_add/sub by elements
+atomic_user_defined.c	efficient	LP64	SAFE	a defined function named like a C11 atomic operation is called, not modelled
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
 size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64
