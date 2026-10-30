@@ -50,7 +50,9 @@ class FlatAtomicAccessTest {
     }
 
   private fun slot(id: Long, size: Long) =
-    parseContext.flatAddressSpace.allocate(BigInteger.valueOf(id), BigInteger.valueOf(size)).toLong()
+    parseContext.flatAddressSpace
+      .allocate(BigInteger.valueOf(id), BigInteger.valueOf(size))
+      .toLong()
 
   private val obj1 = slot(1, 4)
   private val obj4 = slot(4, 4)

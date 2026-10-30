@@ -646,11 +646,7 @@ class FrontendXcfaBuilder(
               deref,
               cast(
                 fieldType.getValue(
-                  FlatMemoryPass.flatBaseValue(
-                    subObjectBase,
-                    objectUnits(fieldType),
-                    parseContext,
-                  )
+                  FlatMemoryPass.flatBaseValue(subObjectBase, objectUnits(fieldType), parseContext)
                 ),
                 deref.type,
               ),
@@ -1158,9 +1154,7 @@ class FrontendXcfaBuilder(
         initStmtList.add(
           AssignStmtLabel(
             globalDeclaration,
-            type.getValue(
-              FlatMemoryPass.flatBaseValue(objectBase, objectUnits(type), parseContext)
-            ),
+            type.getValue(FlatMemoryPass.flatBaseValue(objectBase, objectUnits(type), parseContext)),
           )
         )
         recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))

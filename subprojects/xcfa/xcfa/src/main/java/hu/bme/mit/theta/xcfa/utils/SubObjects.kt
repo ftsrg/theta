@@ -293,8 +293,7 @@ class SubObjects(private val parseContext: ParseContext) {
       is CArray -> flatArraySize(type) ?: 1
       is CStruct ->
         if (!type.isUnion) type.unitCount
-        else if (parseContext.memoryModel.byteAddressed()) unionCellCount(type)
-        else 1
+        else if (parseContext.memoryModel.byteAddressed()) unionCellCount(type) else 1
       else -> 1
     }
 }
