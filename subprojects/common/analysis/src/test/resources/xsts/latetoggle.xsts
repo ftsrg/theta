@@ -1,0 +1,11 @@
+var p: boolean = false
+var q: boolean = false
+
+trans {
+    p := p || q;
+    q := !q;
+}
+
+init {}
+
+env {}
