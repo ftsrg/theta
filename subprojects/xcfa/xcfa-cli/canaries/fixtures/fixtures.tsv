@@ -113,6 +113,9 @@ ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the 
 atomic_flag_builtins.c	efficient	LP64	SAFE	__atomic_test_and_set/__atomic_clear, the atomic_flag operations (on the struct's flag byte) and the lock-free queries
 atomic_pointer_step.c	efficient	LP64	SAFE	GCC __atomic_* add/sub step a pointer by bytes, C11 atomic_fetch_add/sub by elements
 atomic_user_defined.c	efficient	LP64	SAFE	a defined function named like a C11 atomic operation is called, not modelled
+sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
+sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
+fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
 size_t_stddef_h.c	efficient	LP64	SAFE	size_t from the <stddef.h> model is 64 bits wide on LP64
