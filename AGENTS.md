@@ -78,7 +78,7 @@ If a task has a trivial, direct need for a specific paper, the publication list 
 
 ## Formatting
 
-Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `\format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
+Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `/format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
 
 Spotless is configured `ratchetFrom("origin/master")` (`buildSrc/src/main/kotlin/java-common.gradle.kts`), so it only formats files that differ from `origin/master` — running `spotlessApply` is safe and does not reformat the whole repo. Do not defeat the ratchet to format everything.
 

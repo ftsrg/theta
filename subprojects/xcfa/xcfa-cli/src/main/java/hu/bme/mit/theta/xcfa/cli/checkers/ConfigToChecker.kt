@@ -31,6 +31,13 @@ import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.withoutTraceability
+import kotlin.random.Random
+
+/**
+ * Seeds the order in which the LTSs offer enabled actions. That order steers the exploration, so
+ * unseeded, identical runs can take very different times.
+ */
+internal fun explorationRandom() = Random(-1)
 
 fun getSafetyChecker(
   xcfa: XCFA?,

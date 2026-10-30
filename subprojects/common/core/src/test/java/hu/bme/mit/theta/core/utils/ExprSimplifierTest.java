@@ -310,6 +310,13 @@ public class ExprSimplifierTest {
         assertEquals(Int(0), simplify(Mod(Int(-3), Int(-3))));
         assertEquals(Int(0), simplify(Mod(Int(-3), Int(3))));
         assertEquals(Int(0), simplify(Mod(Int(3), Int(3))));
+
+        assertEquals(Mod(a, Int(4)), simplify(Mod(Mod(a, Int(4)), Int(16))));
+        assertEquals(Mod(a, Int(-4)), simplify(Mod(Mod(a, Int(-4)), Int(4))));
+        assertEquals(Mod(a, Int(3)), simplify(Mod(Mod(a, Int(3)), Int(5))));
+        assertEquals(Mod(a, Int(4)), simplify(Mod(Mod(a, Int(16)), Int(4))));
+        assertEquals(Mod(Mod(a, Int(6)), Int(4)), simplify(Mod(Mod(a, Int(6)), Int(4))));
+        assertEquals(Mod(Mod(a, Int(0)), Int(4)), simplify(Mod(Mod(a, Int(0)), Int(4))));
     }
 
     @Test
