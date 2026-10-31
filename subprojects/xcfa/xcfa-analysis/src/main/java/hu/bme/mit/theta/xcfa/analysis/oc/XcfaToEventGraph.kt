@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.integerOf
 import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
 
@@ -627,7 +628,10 @@ internal class XcfaToEventGraph(
           newHistory,
           lastWrites,
         )
-      last.first().assignment = Eq(last.first().const.ref, Int(newPid))
+      // a literal of the handle's own type: Eq(bv, Int) would cast the handle to Int, which some
+      // solvers (e.g. Yices) do not support
+      val handle = last.first().const
+      last.first().assignment = Eq(handle.ref, handle.type.integerOf(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
       // the parameters written above are locals of the new thread
       ThreadProcessor(newThread, initialLocalValues = localValues.toMap()).process()
