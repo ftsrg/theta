@@ -622,6 +622,18 @@ data class OcConfig(
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
   @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the OC solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--oc-unsat-reference-solver"],
+    description =
+      "Cross-checks every UNSAT answer of the OC solver by asking this solver the same question, and fails on a disagreement (implies --validate-solver). Slow; for diagnosing solver issues.",
+  )
+  var unsatReferenceSolver: String = "",
+  @Parameter(
     names = ["--oc-unroll-start"],
     description = "First force loop unrolling bound for OC checker",
   )

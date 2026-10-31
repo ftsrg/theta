@@ -26,12 +26,12 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 
-class IDLOcChecker<E : Event>(smtSolver: String, private val isSc: Boolean = false) :
+class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Boolean = false) :
   OcChecker<E>() {
-  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
+  override val solver: Solver = solverFactory.createSolver()
 
   private var clkGlobalCnt = 0
   private val clkGlobalVars: MutableMap<Int, ConstDecl<IntType>> = mutableMapOf()
