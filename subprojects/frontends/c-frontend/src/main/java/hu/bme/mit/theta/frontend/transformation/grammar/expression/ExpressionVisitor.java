@@ -3252,8 +3252,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * Emits the `alloca(size)` call that {@code AllocaFunctionPass} lowers into a stack allocation.
-     * The {@code __builtin_} form has no declaration, so the pointer return type is supplied here
-     * (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
+     * The {@code __builtin_} form has no declaration, so its {@code void *} return type is supplied
+     * here (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
      * alignment argument, which does not affect the modelled size, so it is dropped.
      */
     private Expr<?> callAlloca(List<AssignmentExpressionContext> args) {
@@ -3262,8 +3262,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         List<CStatement> arguments = new ArrayList<>();
         arguments.add(args.get(0).accept(functionVisitor));
-        CComplexType pointerType =
-                new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext);
+        CComplexType pointerType = new CPointer(null, new CVoid(null, parseContext), parseContext);
         parseContext.getMetadata().create(ALLOCA, "cType", pointerType);
         CCall cCall = new CCall(ALLOCA, arguments, parseContext);
         preStatements.add(cCall);
