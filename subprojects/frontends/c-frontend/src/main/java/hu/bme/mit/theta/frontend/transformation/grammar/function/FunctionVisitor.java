@@ -259,6 +259,23 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return suppressScopedRelease;
     }
 
+    /**
+     * Set while the arguments of a mutex/condition/rwlock call (`pthread_mutex_lock(&m[1])`) are
+     * visited. The sync objects are unions, and under the cell models the address of a union
+     * element is the base its cell holds -- a memory read, while mutex elimination needs a constant
+     * handle. There the cell address stays the handle; a handle held in a pointer is refused
+     * further down either way. Lives here for the same reason as {@link #suppressScopedRelease}.
+     */
+    private boolean syncHandleArguments = false;
+
+    public void setSyncHandleArguments(boolean value) {
+        this.syncHandleArguments = value;
+    }
+
+    public boolean isVisitingSyncHandleArguments() {
+        return syncHandleArguments;
+    }
+
     private void registerScoped(VarDecl<?> varDecl) {
         if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
             if (scopedRegistered.peek().add(varDecl)) {

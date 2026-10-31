@@ -214,3 +214,11 @@ mutex_errorcheck_kind.c	efficient	LP64	SAFE	PTHREAD_MUTEX_ERRORCHECK resolves to
 pthread_create_pointer_sum.c	efficient	LP64	SAFE	pthread_create through `t + i` keys the same per-element handle as `&t[i]`
 split_pointer_compare.c	efficient	LP64	SAFE	a split pointer compares equal to the same address written as pointer + offset
 split_pointer_compare_unsafe.c	efficient	LP64	UNSAFE	a split pointer still compares unequal to a different pointer + offset
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell	flat
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell	bytes
+union_member_address.c	efficient	LP64	SAFE	`&s.u` of a union member is the member's base (global and local)
+union_member_address.c	efficient	LP64	SAFE	`&s.u` of a union member is the member's base (global and local)	flat
+union_member_address_unsafe.c	efficient	LP64	UNSAFE	planted bug: a write through `&s.u` is read back through another member
+mutex_array_distinct.c	efficient	LP64	UNSAFE	planted bug: distinct elements of a mutex array are distinct locks	flat
+unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped	bytes

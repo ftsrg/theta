@@ -1378,10 +1378,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
                 // A nested member (`&s.inner`) is a cell holding the member's own base, so its
                 // address is that value too -- unless the cell is a packed struct's storage. Unions
-                // are left out: the pthread sync objects are unions whose handle is the cell
-                // address.
+                // follow the same rule: under the cell models a union element or member is an
+                // object of its own whose base the cell holds, and under bytes it is a region. The
+                // exception is a sync handle (a union) under the cell models, see
+                // FunctionVisitor#isVisitingSyncHandleArguments.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
-                if ((ampType instanceof CArray || (ampType instanceof CStruct s && !s.isUnion()))
+                final boolean syncHandle =
+                        ampType instanceof CStruct s
+                                && s.isUnion()
+                                && !byteAddressed()
+                                && functionVisitor != null
+                                && functionVisitor.isVisitingSyncHandleArguments();
+                if ((ampType instanceof CArray || ampType instanceof CStruct)
+                        && !syncHandle
                         && !(originalOperand instanceof RefExpr<?>)
                         && parseContext
                                 .getMetadata()
@@ -4090,8 +4099,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
+                final boolean wasSyncHandles =
+                        functionVisitor != null && functionVisitor.isVisitingSyncHandleArguments();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
                     functionVisitor.setSuppressScopedRelease(true);
+                if (functionVisitor != null)
+                    functionVisitor.setSyncHandleArguments(
+                            calleeName.matches("pthread_(mutex|cond|rwlock|spin|barrier)_.*"));
                 try {
                     if (exprList == null) arguments = List.of();
                     else {
@@ -4107,8 +4121,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         arguments = list;
                     }
                 } finally {
-                    if (functionVisitor != null)
+                    if (functionVisitor != null) {
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);
+                        functionVisitor.setSyncHandleArguments(wasSyncHandles);
+                    }
                 }
                 markComparedObjects(calleeName, arguments);
                 CCall cCall =
