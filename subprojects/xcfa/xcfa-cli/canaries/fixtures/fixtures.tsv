@@ -222,5 +222,6 @@ union_member_address.c	efficient	LP64	SAFE	`&s.u` of a union member is the membe
 union_member_address_unsafe.c	efficient	LP64	UNSAFE	planted bug: a write through `&s.u` is read back through another member
 mutex_array_distinct.c	efficient	LP64	UNSAFE	planted bug: distinct elements of a mutex array are distinct locks	flat
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped	bytes
+sizeof_is_size_t.c	bitvector	LP64	SAFE	sizeof is a size_t: no 32-bit wraparound, never negative
 char_view_of_int.c	efficient	LP64	SAFE	a char view of an int object addresses bytes (falls back to bytes)
 char_view_of_int.c	efficient	LP64	FRONTEND-FAIL	a char view of an int object is refused under the cell models	flat

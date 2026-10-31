@@ -1169,8 +1169,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 for (int dimension : dimensions == null ? List.<Integer>of() : dimensions) {
                     size *= dimension;
                 }
-                LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + size);
-                return value;
+                return sizeOfValue(size);
             } else {
                 uniqueWarningLogger.write(
                         Level.INFO,
@@ -1185,8 +1184,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
             final var type = CComplexType.getType(expr, parseContext);
-            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
-            return value;
+            return sizeOfValue(sizeOf(type));
         }
     }
 
@@ -1251,6 +1249,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
         }
         return dimensions;
+    }
+
+    /**
+     * `sizeof` is a `size_t`, i.e. `unsigned long` on both LP64 and ILP32. As a signed int it made
+     * `sizeof(int) * 1073741824` wrap to 0 under bitvector arithmetic instead of being 2^32.
+     */
+    private LitExpr<?> sizeOfValue(long size) {
+        final CComplexType sizeType = CComplexType.getUnsignedLong(parseContext);
+        final LitExpr<?> value = sizeType.getValue("" + size);
+        parseContext.getMetadata().create(value, "cType", sizeType);
+        return value;
     }
 
     /**
