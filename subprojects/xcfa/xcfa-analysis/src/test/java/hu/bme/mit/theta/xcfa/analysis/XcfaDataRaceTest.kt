@@ -452,7 +452,7 @@ class XcfaDataRaceTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = OcDecisionProcedureType.BASIC,
-        smtSolver = "Z3:4.13",
+        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,

@@ -18,12 +18,12 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
-  override val solver: Solver = SolverManager.resolveSolverFactory(smtSolver).createSolver()
+class BasicOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheckerBase<E>() {
+  override val solver: Solver = solverFactory.createSolver()
   private var relations: GlobalRelation? = null
 
   override fun check(

@@ -32,6 +32,30 @@ public final class SolverValidatorWrapperFactory implements SolverFactory {
         return new SolverValidatorWrapperFactory(solverName);
     }
 
+    /**
+     * Solvers of {@code solverFactory} whose SAT answers are validated by their model, and whose
+     * UNSAT answers are cross-checked by a solver of {@code unsatReference} (if not null). Only
+     * plain solvers are supported.
+     */
+    public static SolverFactory create(SolverFactory solverFactory, SolverFactory unsatReference) {
+        return new SolverFactory() {
+            @Override
+            public Solver createSolver() {
+                return new SolverValidatorWrapper(solverFactory.createSolver(), unsatReference);
+            }
+
+            @Override
+            public UCSolver createUCSolver() {
+                throw new UnsupportedOperationException("Only plain solvers are validated");
+            }
+
+            @Override
+            public ItpSolver createItpSolver() {
+                throw new UnsupportedOperationException("Only plain solvers are validated");
+            }
+        };
+    }
+
     @Override
     public Solver createSolver() {
         try {
