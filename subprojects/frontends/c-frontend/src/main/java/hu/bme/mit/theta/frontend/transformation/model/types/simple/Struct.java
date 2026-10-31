@@ -356,7 +356,7 @@ public class Struct extends NamedType {
             }
         }
 
-        return type;
+        return withPointersToTypedefArray(type, parseContext);
     }
 
     /**

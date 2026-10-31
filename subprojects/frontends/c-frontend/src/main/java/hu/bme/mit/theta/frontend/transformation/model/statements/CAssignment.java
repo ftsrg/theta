@@ -36,7 +36,8 @@ public class CAssignment extends CStatement {
     public CAssignment(
             Expr<?> lValue, CStatement rValue, String operator, ParseContext parseContext) {
         super(parseContext);
-        checkNotNull(rValue.getExpression());
+        // A local union is assigned its whole brace list (FunctionVisitor#initializeObject).
+        checkNotNull(rValue instanceof CInitializerList ? rValue : rValue.getExpression());
         this.lValue = lValue;
         this.rValue = rValue;
         rValue.setParent(this);

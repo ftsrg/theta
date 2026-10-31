@@ -21,26 +21,26 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
+import java.math.BigInteger
 
 /**
  * Collapses the 2-D `(base, offset)` address of every dereference into a single flat address, as if
  * every object's base were 0: `(deref base offset t)` becomes `(deref 0 (+ base offset) t)`.
  *
  * This is the second half of the [MemoryModelType.flat] model. The first half lives at object
- * creation: an object's base value is minted as `id * `[FLAT_STRIDE] (see [flatBaseValue]) rather
- * than a small consecutive id, so each object owns a disjoint `[id*STRIDE, id*STRIDE + STRIDE)`
- * slice of the one address line and `base + offset` never collides across objects (as long as no
- * object is larger than [FLAT_STRIDE] cells). Because a pointer is then a single scalar address
- * (`base + offset` folded together), storing one into a memory cell needs no duplication -- the
- * offset rides along inside the value -- which is the whole point of the flat model.
+ * creation: every object owns its own slot `[start, start + size + gap)` of the one address line --
+ * static objects from [FlatAddressSpace], runtime ones from the bump counter (see
+ * [hu.bme.mit.theta.xcfa.utils.bumpAllocate]) -- so `base + offset` never collides across objects.
+ * Because a pointer is then a single scalar address, storing one into a memory cell needs no
+ * duplication -- the offset rides along inside the value -- which is the whole point of the flat
+ * model.
  *
  * Folding here, downstream of [ReferenceElimination], means every memory backend (the monolithic
  * [DereferenceToArrayPass], the ordering-consistency event graph, the CEGAR pointer analysis) sees
@@ -53,43 +53,17 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   companion object {
 
     /**
-     * Width of each object's slice of the flat address line. An object's base is `id * FLAT_STRIDE`
-     * and its cells occupy offsets `0 until size`, so this bounds the largest addressable object
-     * (and, together with the pointer width under bitvector arithmetic, the number of objects).
+     * The base value to mint for the static object with raw id [rawId], occupying [size] address
+     * units: its slot's start in [FlatAddressSpace] under flat addressing, the bare id otherwise.
+     * Returned as a decimal string for `CComplexType.getValue`.
      */
-    const val FLAT_STRIDE: Long = 1L shl 16
-
-    /**
-     * The base value to mint for the object with raw id [rawId]: spaced by [FLAT_STRIDE] under the
-     * flat model, the bare id otherwise. Returned as a decimal string for `CComplexType.getValue`,
-     * which types it for the decided arithmetic.
-     */
-    fun flatBaseValue(rawId: Int, parseContext: ParseContext): String =
+    fun flatBaseValue(rawId: Int, size: Long, parseContext: ParseContext): String =
       if (parseContext.memoryModel.flatAddressing()) {
-        (rawId.toLong() * FLAT_STRIDE).toString()
+        parseContext.flatAddressSpace
+          .allocate(BigInteger.valueOf(rawId.toLong()), BigInteger.valueOf(size))
+          .toString()
       } else {
         rawId.toString()
-      }
-
-    /**
-     * Spaces a *runtime* base id (the `alloca`/`malloc` counter value, not a compile-time constant)
-     * onto the flat address line under the flat model: `rawBase` becomes `rawBase * `[FLAT_STRIDE].
-     * The residue class of `rawBase` (mod 3: heap / alloca / address-taken) survives division by
-     * the stride, so the memsafety partitioning still recovers it as `base / FLAT_STRIDE`. A no-op
-     * under the multi model.
-     */
-    fun <T : Type> flatBaseExpr(
-      rawBase: Expr<T>,
-      retType: CComplexType,
-      parseContext: ParseContext,
-    ): Expr<T> =
-      if (parseContext.memoryModel.flatAddressing()) {
-        cast(
-          Mul(rawBase, cast(retType.getValue(FLAT_STRIDE.toString()), rawBase.type)),
-          rawBase.type,
-        )
-      } else {
-        rawBase
       }
   }
 

@@ -57,6 +57,7 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -73,6 +74,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CNullStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -919,11 +921,44 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
+        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
         return expr;
+    }
+
+    /**
+     * Under the cell models a pointer steps over whole values, one cell each, so viewing a scalar
+     * object through a pointer to a scalar of another size (`(char *)int_ptr`, `(long *)int_arr`)
+     * reads and writes whole cells where the program addresses a part or a span of them: `c[1]`
+     * lands on the second int instead of the first one's second byte. That would give wrong
+     * verdicts, so it is refused; the bytes model addresses such views faithfully.
+     */
+    private void refuseResizingPointerCast(CComplexType from, CComplexType to) {
+        if (byteAddressed() || !(to instanceof CPointer toPtr) || toPtr.isFunctionPointer()) return;
+        // An array operand decays to a pointer to its first element.
+        final CComplexType fromPointee;
+        if (from instanceof CArray fromArray) fromPointee = fromArray.getEmbeddedType();
+        else if (from instanceof CPointer fromPtr && !fromPtr.isFunctionPointer())
+            fromPointee = fromPtr.getEmbeddedType();
+        else return;
+        final CComplexType toPointee = toPtr.getEmbeddedType();
+        if (!isScalarPointee(fromPointee) || !isScalarPointee(toPointee)) return;
+        if ((fromPointee.width() + 7) / 8 != (toPointee.width() + 7) / 8) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Viewing a %s through a %s pointer is not supported."
+                            .formatted(fromPointee.getTypeName(), toPointee.getTypeName()));
+        }
+    }
+
+    private static boolean isScalarPointee(CComplexType type) {
+        return type != null
+                && !(type instanceof CVoid)
+                && !(type instanceof CArray)
+                && !(type instanceof CStruct)
+                && !(type instanceof CPointer p && p.isFunctionPointer());
     }
 
     /**
@@ -1134,8 +1169,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 for (int dimension : dimensions == null ? List.<Integer>of() : dimensions) {
                     size *= dimension;
                 }
-                LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + size);
-                return value;
+                return sizeOfValue(size);
             } else {
                 uniqueWarningLogger.write(
                         Level.INFO,
@@ -1150,8 +1184,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
             final var type = CComplexType.getType(expr, parseContext);
-            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
-            return value;
+            return sizeOfValue(sizeOf(type));
         }
     }
 
@@ -1219,6 +1252,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * `sizeof` is a `size_t`, i.e. `unsigned long` on both LP64 and ILP32. As a signed int it made
+     * `sizeof(int) * 1073741824` wrap to 0 under bitvector arithmetic instead of being 2^32.
+     */
+    private LitExpr<?> sizeOfValue(long size) {
+        final CComplexType sizeType = CComplexType.getUnsignedLong(parseContext);
+        final LitExpr<?> value = sizeType.getValue("" + size);
+        parseContext.getMetadata().create(value, "cType", sizeType);
+        return value;
+    }
+
+    /**
      * How many bytes a value of this type occupies.
      *
      * <p>A struct's {@code width()} is not its size -- it is pointer-wide, like the handle a struct
@@ -1240,17 +1284,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (byteAddressed()) {
             return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
         }
-        if (type instanceof CStruct cStruct) {
-            final List<Integer> fieldSizes =
-                    cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
-            if (fieldSizes.isEmpty()) {
-                return 1;
-            }
-            return cStruct.isUnion()
-                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
-                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
-        }
-        return Math.max(type.width() / 8, 1);
+        return ObjectLayout.cellModelSize(
+                type, parseContext.getMemoryModel() == MemoryModelType.flat);
     }
 
     @Override
@@ -1383,10 +1418,26 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // &a[0]`). Taking its address is then the identity -- re-typed to a pointer to the
                 // element -- not a `reference()` of a bare lvalue, which is why the libvsync
                 // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
+                // A nested member (`&s.inner`) is a cell holding the member's own base, so its
+                // address is that value too -- unless the cell is a packed struct's storage. Unions
+                // follow the same rule: under the cell models a union element or member is an
+                // object of its own whose base the cell holds, and under bytes it is a region. The
+                // exception is a sync handle (a union) under the cell models, see
+                // FunctionVisitor#isVisitingSyncHandleArguments.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
-                if ((ampType instanceof CStruct || ampType instanceof CArray)
+                final boolean syncHandle =
+                        ampType instanceof CStruct s
+                                && s.isUnion()
+                                && !byteAddressed()
+                                && functionVisitor != null
+                                && functionVisitor.isVisitingSyncHandleArguments();
+                if ((ampType instanceof CArray || ampType instanceof CStruct)
+                        && !syncHandle
                         && !(originalOperand instanceof RefExpr<?>)
-                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
+                        && parseContext
+                                .getMetadata()
+                                .getMetadataValue(originalOperand, BitfieldSlice.PACKED_CELL)
+                                .isEmpty()) {
                     final Expr<?> address = Pos(originalOperand);
                     parseContext
                             .getMetadata()
@@ -1660,9 +1711,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
-        // ordinary cell read and is left to the caller's dereference.
+        // ordinary cell read and is left to the caller's dereference. Under the bytes model a union
+        // is a region too: it is laid out in place, not a cell holding a base.
         final boolean aggregate =
-                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && (!s.isUnion() || byteAddressed()));
         if (!aggregate) {
             return null;
         }
@@ -1692,18 +1745,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
-            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
-            // one word) needs its real ObjectLayout size in bytes instead, since that is the
-            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
-            final int cells =
-                    structType.isUnion()
-                            ? (structType.unionCellWidth() == null
-                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
-                                                    .bitSize()
-                                            / 8
-                                    : 1)
-                            : structType.getUnitCount();
+            // A union is one cell, holding its base: an element of an array of unions is an object
+            // of its own, as a union member of a struct is
+            // (FrontendXcfaBuilder#allocateArrayElements).
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {
@@ -2205,7 +2250,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private boolean isPointerArithmeticBase(CComplexType opType) {
         return opType instanceof CPointer
                 || opType instanceof CArray
-                || (byteAddressed() && opType instanceof CStruct);
+                || (opType instanceof CStruct s && (byteAddressed() || s.inlinesAggregates()));
     }
 
     /**
@@ -2424,6 +2469,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
         final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
+        if (structType.inlinesAggregates() && CStruct.isInlineAggregate(embeddedType)) {
+            // An inline member is the sub-region at its cell offset, as under the bytes model: the
+            // following `.field` or `[i]` folds back onto the object's base.
+            final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            parseContext.getMetadata().create(region, "cType", embeddedType);
+            return region;
+        }
         final Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
@@ -3199,8 +3252,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * Emits the `alloca(size)` call that {@code AllocaFunctionPass} lowers into a stack allocation.
-     * The {@code __builtin_} form has no declaration, so the pointer return type is supplied here
-     * (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
+     * The {@code __builtin_} form has no declaration, so its {@code void *} return type is supplied
+     * here (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
      * alignment argument, which does not affect the modelled size, so it is dropped.
      */
     private Expr<?> callAlloca(List<AssignmentExpressionContext> args) {
@@ -3209,8 +3262,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         List<CStatement> arguments = new ArrayList<>();
         arguments.add(args.get(0).accept(functionVisitor));
-        CComplexType pointerType =
-                new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext);
+        CComplexType pointerType = new CPointer(null, new CVoid(null, parseContext), parseContext);
         parseContext.getMetadata().create(ALLOCA, "cType", pointerType);
         CCall cCall = new CCall(ALLOCA, arguments, parseContext);
         preStatements.add(cCall);
@@ -4088,8 +4140,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
+                final boolean wasSyncHandles =
+                        functionVisitor != null && functionVisitor.isVisitingSyncHandleArguments();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
                     functionVisitor.setSuppressScopedRelease(true);
+                if (functionVisitor != null)
+                    functionVisitor.setSyncHandleArguments(
+                            calleeName.matches("pthread_(mutex|cond|rwlock|spin|barrier)_.*"));
                 try {
                     if (exprList == null) arguments = List.of();
                     else {
@@ -4105,8 +4162,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         arguments = list;
                     }
                 } finally {
-                    if (functionVisitor != null)
+                    if (functionVisitor != null) {
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);
+                        functionVisitor.setSyncHandleArguments(wasSyncHandles);
+                    }
                 }
                 markComparedObjects(calleeName, arguments);
                 CCall cCall =
