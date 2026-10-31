@@ -33,6 +33,7 @@ class BasicOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheckerBase<E>
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
+    setProgramOrder(pos)
     var modifiableRels = rfs.values.flatten() // modifiable relation vars
     val flatEvents = events.values.flatMap { it.values.flatten() }
     val decisionStack = Stack<OcAssignment<E>>()
