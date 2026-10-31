@@ -328,6 +328,11 @@ private fun buildFrontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
+    // Yices divides integers only by constants
+    parseContext.isConstantIntDivisorsOnly =
+      (config.backendConfig.specConfig?.solverNames().orEmpty() +
+          config.outputConfig.witnessConfig.concretizerSolver)
+        .any { it.contains("yices", ignoreCase = true) }
     parseContext.memoryModel = cConfig.effectiveMemoryModel
     // Mirrors `MemsafetyPass.enabled` on the frontend side, from the same property: the c-frontend
     // module cannot see the pass. Anything the frontend emits solely for the memory-safety checks

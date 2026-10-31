@@ -43,6 +43,13 @@ public class ParseContext {
      */
     private boolean arithmeticAutoSelected = false;
 
+    /**
+     * Whether a solver in use divides integers only by constants (Yices): integer arithmetic cannot
+     * then encode a `/` or `%` by a variable, so `efficient` resolves to bitvectors for such a
+     * program.
+     */
+    private boolean constantIntDivisorsOnly = false;
+
     private Boolean signedWraparound = false;
     private MemoryModelType memoryModel = MemoryModelType.multi;
 
@@ -185,6 +192,14 @@ public class ParseContext {
 
     public void setArithmeticAutoSelected(boolean arithmeticAutoSelected) {
         this.arithmeticAutoSelected = arithmeticAutoSelected;
+    }
+
+    public boolean isConstantIntDivisorsOnly() {
+        return constantIntDivisorsOnly;
+    }
+
+    public void setConstantIntDivisorsOnly(boolean constantIntDivisorsOnly) {
+        this.constantIntDivisorsOnly = constantIntDivisorsOnly;
     }
 
     public Boolean getSignedWraparound() {
