@@ -348,6 +348,9 @@ class XcfaOcChecker(
     // Branching conditions
     eg.branchingConditions.forEach { solver.add(it) }
 
+    // Local data flow
+    eg.localFlows.forEach { solver.add(it) }
+
     // RF
     eg.rfs.forEach { (v, list) ->
       list
