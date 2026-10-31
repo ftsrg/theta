@@ -169,6 +169,7 @@ class XcfaOcChecker(
     init {
       logger.mainStep("Creating event graph...")
       eg = XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty).create()
+      logSizes()
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
         this.ppos = ppos
         this.wss = wss
@@ -177,6 +178,24 @@ class XcfaOcChecker(
 
     override fun close() {
       checker.solver.close()
+    }
+
+    private fun logSizes() {
+      val globals = xcfa.globalVars.map { it.wrappedVar }.toSet()
+      val kinds =
+        eg.events.keys.groupBy {
+          when (it) {
+            in eg.memoryDecls -> "memory"
+            in globals -> "global"
+            else -> "local"
+          }
+        }
+      for ((kind, decls) in kinds) {
+        val events = decls.sumOf { d -> eg.events.getValue(d).values.sumOf { it.size } }
+        val rfs = decls.sumOf { eg.rfs[it]?.size ?: 0 }
+        val wss = decls.sumOf { eg.wss[it]?.size ?: 0 }
+        logger.info("Event graph ($kind): ${decls.size} decls, $events events, $rfs rf, $wss ws")
+      }
     }
 
     private fun <T> query(block: (OcChecker<E>) -> T): T {
