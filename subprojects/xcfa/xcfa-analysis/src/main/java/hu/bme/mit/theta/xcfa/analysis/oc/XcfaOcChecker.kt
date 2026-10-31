@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -53,7 +54,7 @@ class XcfaOcChecker(
   private val property: XcfaProperty,
   private val parseContext: ParseContext,
   private val decisionProcedure: OcDecisionProcedureType,
-  private val smtSolver: String,
+  private val solverFactory: SolverFactory,
   private val logger: Logger,
   private val outputConflictClauses: Boolean,
   autoConflictConfig: AutoConflictFinderConfig,
@@ -164,7 +165,7 @@ class XcfaOcChecker(
     /** Ordering conflicts of this event graph, valid for every query of the round. */
     private val lemmas = linkedSetOf<Expr<BoolType>>()
 
-    private val checker = decisionProcedure.checker(smtSolver, memoryModel)
+    private val checker = decisionProcedure.checker(solverFactory, memoryModel)
 
     init {
       logger.mainStep("Creating event graph...")
