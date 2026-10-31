@@ -24,6 +24,10 @@ Required env: `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (for native solvers). Some set
 
 If your local `.idea/workspace.xml` has IntelliJ run configurations (it's gitignored and per-developer — not in a fresh clone), they're a useful source of example invocations: read a config's main class + program args + JVM args and replicate on the command line.
 
+## Soundness
+
+A wrong verdict is never acceptable, in any configuration: non-default options (`--memory-model flat|bytes`, `--arithmetic bitvector`, a specific backend) count as much as the default portfolio path. Give a verdict only when it is certainly right. If an encoding cannot model a construct faithfully, throw (e.g. `UnsupportedFrontendElementException`) so the run fails loudly instead of answering Safe or Unsafe.
+
 ## Local verification loop
 
 Warning: **`timeout N theta-start.sh …` does NOT kill the verifier.** The script does not `exec` — it launches a child JVM — so the timeout kills the *script* and leaves the JVM orphaned, still holding the pipe. Any caller reading that pipe (a `$(...)` capture, a `while read` loop) then hangs **forever**, long after the timeout should have fired, and the run looks stuck rather than timed out. Kill the JVM itself (`pkill -f 'theta.jar.*<input path>'`) to release it. This is why a batched local suite appears to wedge on one task — it is not the task being slow.
