@@ -40,6 +40,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -396,6 +397,16 @@ final class Z3TermTransformer {
 
     public Expr<?> toArrayLitExpr(
             final FuncDecl funcDecl, final Model model, final List<Decl<?>> vars) {
+        if (funcDecl.getArity() != 0) {
+            checkState(funcDecl.getArity() == 1, "Array interpretations must be unary");
+            final var function = model.getFuncInterp(funcDecl);
+            if (function == null) return null;
+            return createIndexValueArrayLitExpr(
+                    transformSort(funcDecl.getDomain()[0]),
+                    transformSort(funcDecl.getRange()),
+                    createEntryExprs(function, model, vars),
+                    defaultingTransform(function.getElse(), model, vars));
+        }
         com.microsoft.z3.Expr constInterp = model.getConstInterp(funcDecl);
         if (constInterp == null) {
             return null;
@@ -403,7 +414,7 @@ final class Z3TermTransformer {
 
         final ImmutableList.Builder<Tuple2<List<Expr<?>>, Expr<?>>> builder =
                 ImmutableList.builder();
-        while (constInterp.getNumArgs() == 3) {
+        while (constInterp.isStore()) {
             var args = constInterp.getArgs();
             var index = defaultingTransform(args[1], model, vars);
             var value = defaultingTransform(args[2], model, vars);
@@ -412,7 +423,18 @@ final class Z3TermTransformer {
         }
         var entryExprs = builder.build();
 
-        checkState(constInterp.getNumArgs() == 1);
+        if (constInterp.isAsArray()) {
+            Expr<?> result = defaultingTransform(constInterp, model, vars);
+            for (int i = entryExprs.size() - 1; i >= 0; --i) {
+                final var entry = entryExprs.get(i);
+                result =
+                        ArrayWriteExpr.create(result, entry.get1().get(0), entry.get2())
+                                .eval(ImmutableValuation.empty());
+            }
+            return result;
+        }
+
+        checkState(constInterp.isConstantArray(), "Unsupported array model: %s", constInterp);
         var elseExpr = defaultingTransform(constInterp.getArgs()[0], model, vars);
 
         if (funcDecl.getRange() instanceof ArraySort sort) {
@@ -504,6 +526,10 @@ final class Z3TermTransformer {
         } else if (term.isConstantArray()) {
             return transformArrLit(term, model, vars);
 
+        } else if (term.isAsArray()) {
+            final FuncDecl function = term.getFuncDecl().getParameters()[0].getFuncDecl();
+            return toArrayLitExpr(function, model, vars);
+
         } else if (term.isApp()) {
             return transformApp(term, model, vars);
 
@@ -544,7 +570,7 @@ final class Z3TermTransformer {
         final ArrayExpr arrayExpr = (ArrayExpr) term;
         final ArraySort sort = (ArraySort) arrayExpr.getSort();
         return createArrayLitExpr(
-                sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
+                sort, Arrays.asList(), defaultingTransform(arrayExpr.getArgs()[0], model, vars));
     }
 
     private Expr<?> transformBvLit(final com.microsoft.z3.Expr term) {
@@ -667,11 +693,11 @@ final class Z3TermTransformer {
             checkArgument(entry.getArgs().length >= 1);
             final List<Expr<?>> args = new ArrayList<>();
             for (com.microsoft.z3.Expr argTerm : entry.getArgs()) {
-                final Expr<?> argExpr = transform(argTerm, model, vars);
+                final Expr<?> argExpr = defaultingTransform(argTerm, model, vars);
                 args.add(argExpr);
             }
             final com.microsoft.z3.Expr term2 = entry.getValue();
-            final Expr<?> expr2 = transform(term2, model, vars);
+            final Expr<?> expr2 = defaultingTransform(term2, model, vars);
             builder.add(Tuple2.of(args, expr2));
         }
         return builder.build();

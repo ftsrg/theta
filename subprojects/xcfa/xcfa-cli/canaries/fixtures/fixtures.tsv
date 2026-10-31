@@ -123,3 +123,8 @@ mutex_errorcheck_kind.c	efficient	LP64	SAFE	PTHREAD_MUTEX_ERRORCHECK resolves to
 pthread_create_pointer_sum.c	efficient	LP64	SAFE	pthread_create through `t + i` keys the same per-element handle as `&t[i]`
 split_pointer_compare.c	efficient	LP64	SAFE	a split pointer compares equal to the same address written as pointer + offset
 split_pointer_compare_unsafe.c	efficient	LP64	UNSAFE	a split pointer still compares unequal to a different pointer + offset
+symbolic_mutex_trylock.c	efficient	LP64	SAFE	unresolved mutex handles use symbolic ownership, including trylock success and failure
+symbolic_mutex_trylock_unsafe.c	efficient	LP64	UNSAFE	failed symbolic trylock returns instead of blocking, making the error reachable
+symbolic_mutex_threads.c	efficient	LP64	SAFE	threads sharing a symbolic mutex receive distinct ownership IDs
+symbolic_mutex_recursive.c	efficient	LP64	SAFE	symbolic recursive mutexes retain ownership until the last matching unlock
+symbolic_rwlock_readers.c	efficient	LP64	SAFE	symbolic read-write locks count repeated readers and block writers until every read is released
