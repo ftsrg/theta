@@ -346,6 +346,11 @@ private fun buildFrontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
+    // Yices divides integers only by constants
+    parseContext.isConstantIntDivisorsOnly =
+      (config.backendConfig.specConfig?.solverNames().orEmpty() +
+          config.outputConfig.witnessConfig.concretizerSolver)
+        .any { it.contains("yices", ignoreCase = true) }
     parseContext.memoryModel = cConfig.effectiveMemoryModel
     if (parseContext.memoryModel == ArchitectureConfig.MemoryModelType.bytes) {
       // Byte cells split and recombine values, which only bitvectors express; over integers a wide

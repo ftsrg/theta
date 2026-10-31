@@ -18,6 +18,8 @@ package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 public enum ArithmeticTrait {
     LIN_INT,
     NONLIN_INT,
+    /** A `/` or `%` whose divisor is not an integer literal (a subset of {@link #NONLIN_INT}). */
+    NONCONST_DIV,
     BITWISE,
     FLOAT,
     ARR
