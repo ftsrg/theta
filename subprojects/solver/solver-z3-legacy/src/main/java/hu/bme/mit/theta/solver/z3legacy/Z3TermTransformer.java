@@ -556,7 +556,7 @@ final class Z3TermTransformer {
                                                                 type, FpRoundingMode.RNE)),
                                                 FpUtils.getMathContext(type, FpRoundingMode.RNE)),
                                 FpUtils.getMathContext(type, FpRoundingMode.RNE));
-        return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
+        return FpUtils.bigFloatToFpLitExpr(fpTerm.getSign() ? bigFloat.negate() : bigFloat, type);
     }
 
     private Expr<EnumType> transformEnumLit(

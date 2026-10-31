@@ -224,6 +224,44 @@ class PassTests {
             ("L1_loop2" to final) { nop() }
           },
         ),
+        // The loop variable's initialization sharing its edge with an unrelated assignment
+        // (a global counter beside the allocation counter, say) must not stop the unrolling.
+        PassTestData(
+          global = {
+            "x" type Int() init "0"
+            "y" type Int() init "0"
+          },
+          passes = listOf(UnrollPass()),
+          input = {
+            (init to "L1") {
+              "y".assign("7")
+              "x".assign("0")
+            }
+            ("L1" to "L2") {
+              assume("(< x 2)")
+              "x".assign("(+ x 1)")
+            }
+            ("L2" to "L1") { skip() }
+            ("L1" to final) { assume("(= x 2)") }
+          },
+          output = {
+            (init to "L1") {
+              "y".assign("7")
+              "x".assign("0")
+            }
+            ("L1" to "L2_loop0") {
+              nop()
+              "x".assign("(+ x 1)")
+            }
+            ("L2_loop0" to "L1_loop0") { skip() }
+            ("L1_loop0" to "L2_loop1") {
+              nop()
+              "x".assign("(+ x 1)")
+            }
+            ("L2_loop1" to "L1_loop1") { skip() }
+            ("L1_loop1" to final) { nop() }
+          },
+        ),
         PassTestData(
           global = {
             "y" type BvType(32) init "0"
@@ -784,5 +822,23 @@ class PassTests {
 
     val newEdges = edge.splitIf { it is InvokeLabel }
     assertTrue(newEdges.size == 3)
+  }
+
+  @Test
+  fun testSplitSingleLabel() {
+    // Inlining and recursion expansion leave edges whose label is not a SequenceLabel.
+    val call = InvokeLabel("proc1", listOf(), EmptyMetaData)
+    val edge =
+      XcfaEdge(
+        XcfaLocation("L0", metadata = EmptyMetaData),
+        XcfaLocation("L1", metadata = EmptyMetaData),
+        call,
+        EmptyMetaData,
+      )
+
+    val split = edge.splitIf { it is InvokeLabel }
+    assertEquals(listOf(SequenceLabel(listOf(call))), split.map { it.label })
+    assertEquals(listOf(edge.source to edge.target), split.map { it.source to it.target })
+    assertEquals(listOf(call), edge.splitIf { false }.single().label.getFlatLabels())
   }
 }

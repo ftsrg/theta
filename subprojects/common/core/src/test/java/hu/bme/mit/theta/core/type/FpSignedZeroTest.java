@@ -61,6 +61,23 @@ public class FpSignedZeroTest {
     }
 
     @Test
+    public void testZerosAreEqual() {
+        final FpLitExpr positive = floatBits(Float.floatToRawIntBits(0.0f));
+        final FpLitExpr negative = floatBits(Float.floatToRawIntBits(-0.0f));
+
+        assertTrue(positive.eq(negative).getValue());
+        assertFalse(positive.neq(negative).getValue());
+    }
+
+    @Test
+    public void testNanIsUnequalToItself() {
+        final FpLitExpr nan = floatBits(Float.floatToRawIntBits(Float.NaN));
+
+        assertFalse(nan.eq(nan).getValue());
+        assertTrue(nan.neq(nan).getValue());
+    }
+
+    @Test
     public void testDivisionByZeroTakesItsSign() {
         final FpLitExpr one = floatBits(Float.floatToRawIntBits(1.0f));
 

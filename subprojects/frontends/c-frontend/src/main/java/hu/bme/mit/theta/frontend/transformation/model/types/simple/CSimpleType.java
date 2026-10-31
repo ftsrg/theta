@@ -15,8 +15,11 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,6 +89,36 @@ public abstract class CSimpleType {
     }
 
     /**
+     * Stars written after an array typedef's name (`arr_t *p`). They point to the whole array, so
+     * they cannot go on {@link #getPointerLevel}, which is applied to the element inside it.
+     */
+    private int pointersToTypedefArray = 0;
+
+    public int getPointersToTypedefArray() {
+        return pointersToTypedefArray;
+    }
+
+    public void incrementPointerToTypedefArray() {
+        ++pointersToTypedefArray;
+    }
+
+    /** {@code element} wrapped into this typedef's array and the pointers written to it, if any. */
+    protected CComplexType withPointersToTypedefArray(
+            CComplexType element, ParseContext parseContext) {
+        if (pointersToTypedefArray == 0) {
+            return element;
+        }
+        CComplexType type = element;
+        for (int i = typedefArrayDimensions.size() - 1; i >= 0; i--) {
+            type = new CArray(this, type, parseContext, typedefArrayDimensions.get(i));
+        }
+        for (int i = 0; i < pointersToTypedefArray; i++) {
+            type = new CPointer(this, type, parseContext);
+        }
+        return type;
+    }
+
+    /**
      * Which pointer levels are atomic, innermost first -- one entry per `*`. `_Atomic` attaches to
      * a *level* of a type, not to a declaration, and the level is what decides what may be raced
      * on: an access *through* `p` touches what `p` points at, so `_Atomic int *p` makes `p[i]`
@@ -109,6 +142,41 @@ public abstract class CSimpleType {
         ++pointerLevel;
         atomicPointers.add(false);
         ++starPointers;
+    }
+
+    public int getStarPointers() {
+        return starPointers;
+    }
+
+    /**
+     * Drops the pointer levels written as stars in this declaration's specifiers, keeping the ones
+     * the named type came with. In `int *a, b` the grammar folds `a`'s star into the specifiers `b`
+     * shares, so `b` has to shed it.
+     */
+    public void dropStarPointers() {
+        keepInnermostPointers(pointerLevel - starPointers);
+        starPointers = 0;
+    }
+
+    /**
+     * Drops outermost pointer levels until at most [levels] remain, i.e. what dereferencing a value
+     * of this type yields. Their atomicity goes with them.
+     */
+    public void keepInnermostPointers(int levels) {
+        while (pointerLevel > levels) {
+            --pointerLevel;
+            atomicPointers.remove(atomicPointers.size() - 1);
+        }
+        starPointers = Math.min(starPointers, pointerLevel);
+    }
+
+    /** Lvalue conversion: the value read out of an atomic object is not itself atomic. */
+    public void clearOutermostAtomic() {
+        if (pointerLevel > 0) {
+            atomicPointers.set(pointerLevel - 1, false);
+        } else {
+            atomic = false;
+        }
     }
 
     /** Whether the pointer at this level -- 0 being the innermost -- is itself atomic. */
@@ -332,5 +400,6 @@ public abstract class CSimpleType {
         copy.setFunctionPointer(this.isFunctionPointer());
         // resolveTypedefName hands users a copyOf(), so a typedef's dimensions must survive it.
         copy.setTypedefArrayDimensions(this.getTypedefArrayDimensions());
+        copy.pointersToTypedefArray = this.pointersToTypedefArray;
     }
 }

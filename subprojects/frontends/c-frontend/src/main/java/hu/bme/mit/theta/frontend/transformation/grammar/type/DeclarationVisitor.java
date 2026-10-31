@@ -93,11 +93,50 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * array of the right total size, so only a multi-dimensional case can catch it -- which is what
      * the fixture pins.
      */
-    private static void inheritTypedefArrayDimensions(
-            CDeclaration declaration, CSimpleType cSimpleType) {
+    static void inheritTypedefArrayDimensions(CDeclaration declaration, CSimpleType cSimpleType) {
+        if (cSimpleType.getPointersToTypedefArray() > 0) {
+            return; // `arr_t *p` is a pointer; its type already holds the array (see CSimpleType)
+        }
         for (CStatement dimension : cSimpleType.getTypedefArrayDimensions()) {
             declaration.addArrayDimension(dimension);
         }
+    }
+
+    /**
+     * The type one declarator of a declaration list declares: the specifiers' type plus the stars
+     * written in the declarator itself.
+     *
+     * <p>The grammar folds the stars of the *first* declarator into the specifiers (`int *a, b`
+     * reads as `int *` followed by `a, b`), so every later declarator sheds them, and its own stars
+     * (the `*PP` of `typedef struct P {...} P, *PP`) are added here. Stars around array dimensions
+     * are left to {@link CDeclaration#getActualType()}, which places them.
+     */
+    CSimpleType declaratorType(
+            CSimpleType specifierType,
+            CDeclaration declaration,
+            CParser.DeclaratorContext declarator,
+            boolean ownsSpecifierStars) {
+        final CParser.PointerContext pointer =
+                declarator != null && declaration.getArrayDimensions().isEmpty()
+                        ? declarator.pointer()
+                        : null;
+        final boolean shedStars = !ownsSpecifierStars && specifierType.getStarPointers() > 0;
+        if (pointer == null && !shedStars) {
+            return specifierType;
+        }
+        final CSimpleType type = specifierType.copyOf();
+        if (shedStars) {
+            type.dropStarPointers();
+        }
+        if (pointer != null) {
+            for (int i = 0; i < pointer.stars.size(); i++) {
+                type.incrementPointer();
+                if (TypeVisitor.qualifiersAfter(pointer, i).contains("_Atomic")) {
+                    type.markLastPointerAtomic();
+                }
+            }
+        }
+        return type;
     }
 
     public List<CDeclaration> getDeclarations(
@@ -105,7 +144,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             CParser.InitDeclaratorListContext initDeclContext,
             boolean getInitExpr) {
         List<CDeclaration> ret = new ArrayList<>();
-        CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
+        final CStatement autoInitializer =
+                getInitExpr ? autoTypeInitializer(declSpecContext, initDeclContext) : null;
+        CSimpleType cSimpleType =
+                autoInitializer == null
+                        ? declSpecContext.accept(typeVisitor)
+                        : typeVisitor.visitWithAutoType(
+                                declSpecContext, autoTypeOf(autoInitializer));
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
@@ -114,6 +159,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             ret.add(cDeclaration);
         }
         if (initDeclContext != null) {
+            boolean ownsSpecifierStars = cSimpleType.getAssociatedName() == null;
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
                 // The initializer's container is the *declared* type, dimensions and all: for
@@ -128,8 +174,16 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 // the specifier.
                 declaration.setType(cSimpleType);
                 inheritTypedefArrayDimensions(declaration, cSimpleType);
+                final CSimpleType declaredType =
+                        declaratorType(
+                                cSimpleType, declaration, context.declarator(), ownsSpecifierStars);
+                ownsSpecifierStars = false;
+                declaration.setType(declaredType);
                 CStatement initializerExpression;
-                if (context.initializer() != null && getInitExpr) {
+                if (autoInitializer != null) {
+                    // Visited already, before the variable was in scope: it cannot name itself.
+                    declaration.setInitExpr(autoInitializer);
+                } else if (context.initializer() != null && getInitExpr) {
                     // The name is in scope inside its own initializer (C: the declarator is
                     // complete at the `=`), so bring it into scope before visiting one.
                     if (functionVisitor != null) {
@@ -142,7 +196,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         try {
                             initializerExpression =
                                     buildInitializerList(
-                                            initializerList, declaration.getActualType());
+                                                    initializerList, declaration.getActualType())
+                                            .braced();
                         } catch (NullPointerException e) {
                             initializerExpression =
                                     new CExpr(new UnsupportedInitializer(), parseContext);
@@ -151,7 +206,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                                     .create(
                                             initializerExpression.getExpression(),
                                             "cType",
-                                            cSimpleType);
+                                            declaredType);
                         }
                     } else {
                         // `char s[8] = "ab"` is an aggregate initializer written without braces,
@@ -175,7 +230,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
-                declaration.setType(cSimpleType);
+                declaration.setType(declaredType);
                 ret.add(declaration);
             }
         }
@@ -188,6 +243,46 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     }
 
     /**
+     * The visited initializer of `__auto_type x = e;`, whose type is that of `e`, or null when the
+     * specifiers have no `__auto_type` -- or one in a form other than that, which gcc's
+     * <stdatomic.h> never writes and the type visitor then reports as unsupported.
+     */
+    private CStatement autoTypeInitializer(
+            CParser.DeclarationSpecifiersContext specifiers,
+            CParser.InitDeclaratorListContext initDecls) {
+        final boolean autoType =
+                specifiers.declarationSpecifier().stream()
+                        .anyMatch(
+                                s ->
+                                        s.typeSpecifier()
+                                                instanceof CParser.TypeSpecifierAutoTypeContext);
+        if (!autoType
+                || functionVisitor == null
+                || initDecls == null
+                || initDecls.initDeclarator().size() != 1) {
+            return null;
+        }
+        final CParser.InitializerContext initializer = initDecls.initDeclarator(0).initializer();
+        if (initializer == null || initializer.assignmentExpression() == null) {
+            return null;
+        }
+        return initializer.assignmentExpression().accept(functionVisitor);
+    }
+
+    /** The type `__auto_type` takes from [initializer]: its value's, after lvalue conversion. */
+    private CSimpleType autoTypeOf(CStatement initializer) {
+        final CComplexType type = CComplexType.getType(initializer.getExpression(), parseContext);
+        // An array would have to decay to a pointer to its element, which is not modelled here.
+        if (type instanceof CArray) {
+            throw new UnsupportedFrontendElementException(
+                    "__auto_type over an initializer of type " + type);
+        }
+        final CSimpleType simple = typeVisitor.simpleTypeOf(type);
+        simple.clearOutermostAtomic();
+        return simple;
+    }
+
+    /**
      * Builds a (possibly nested) brace initializer into a {@link CInitializerList}.
      *
      * <p>Each element is placed C-style: a designator sets the position, otherwise it takes the
@@ -197,9 +292,8 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
      * unconditionally, so a nested brace (a `bracedPrimaryExpression`, not an assignment
      * expression) made it NPE and the whole initializer was dropped as unsupported.
      *
-     * <p>Leaf scalars are still cast to {@code cSimpleType} and stamped with it, exactly as the
-     * flat version did; the c2xcfa side re-casts to the true cell type when it writes the flat
-     * object, so the outer type here only has to be consistent, not exact.
+     * <p>The list is built as written; {@link CInitializerList#braced} then restores the braces the
+     * source elided and casts each scalar to the member it initializes.
      */
     private CInitializerList buildInitializerList(
             CParser.InitializerListContext initializerList, CComplexType containerType) {
@@ -209,6 +303,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         // consumed by the value that follows the designation (see buildDesignatedInner); null for a
         // direct field or an array index.
         List<Integer> pendingInnerPath = null;
+        boolean designated = false;
         for (org.antlr.v4.runtime.tree.ParseTree child :
                 initializerList == null
                         ? List.<org.antlr.v4.runtime.tree.ParseTree>of()
@@ -218,6 +313,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                 nextPosition = path.get(0);
                 pendingInnerPath =
                         path.size() > 1 ? new ArrayList<>(path.subList(1, path.size())) : null;
+                designated = true;
                 continue;
             }
             if (!(child instanceof CParser.InitializerContext initializer)) {
@@ -235,18 +331,23 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                             ? buildLeafValue(elementType, initializer)
                             : buildDesignatedInner(elementType, pendingInnerPath, initializer);
             pendingInnerPath = null;
-            cInitializerList.addStatement(
+            final CExpr position =
                     new CExpr(
                             IntLitExpr.of(java.math.BigInteger.valueOf(nextPosition++)),
-                            parseContext),
-                    value);
+                            parseContext);
+            if (designated) {
+                cInitializerList.addDesignatedStatement(position, value);
+            } else {
+                cInitializerList.addStatement(position, value);
+            }
+            designated = false;
         }
         return cInitializerList;
     }
 
     /**
      * One initializer element's value at [type]: a nested list for a braced element (`{ ... }`),
-     * otherwise the folded scalar cast to [type].
+     * otherwise the folded scalar.
      */
     private CStatement buildLeafValue(CComplexType type, CParser.InitializerContext initializer) {
         if (initializer.bracedPrimaryExpression() != null) {
@@ -258,11 +359,11 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
         if (asString != null) {
             return asString;
         }
-        final Expr<?> expr =
-                type.castTo(
-                        initializer.assignmentExpression().accept(functionVisitor).getExpression());
-        parseContext.getMetadata().create(expr, "cType", type);
-        return new CExpr(expr, parseContext);
+        // Not cast to [type]: brace elision (C17 6.7.9p20) can move a scalar to another member
+        // than the one at its position here. CInitializerList#braced casts it once that is known.
+        return new CExpr(
+                initializer.assignmentExpression().accept(functionVisitor).getExpression(),
+                parseContext);
     }
 
     /**
@@ -283,7 +384,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         elementTypeAt(type, position),
                         innerPath.subList(1, innerPath.size()),
                         initializer);
-        nested.addStatement(
+        nested.addDesignatedStatement(
                 new CExpr(IntLitExpr.of(java.math.BigInteger.valueOf(position)), parseContext),
                 inner);
         return nested;

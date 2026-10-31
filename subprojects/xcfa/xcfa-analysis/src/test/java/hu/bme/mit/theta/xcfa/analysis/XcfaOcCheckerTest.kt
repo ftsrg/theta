@@ -39,17 +39,24 @@ class XcfaOcCheckerTest {
 
   companion object {
 
-    private val program = "/04multithread.c"
+    private val programs = listOf("/04multithread.c", "/16shortcircuit_call_or.c")
     private val verdict = SafetyResult<*, *>::isUnsafe
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
     @JvmStatic
     fun data(): Collection<Array<Any?>> {
-      return listOf(
-        arrayOf(OcDecisionProcedureType.IDL, AutoConflictFinderConfig.NONE, null),
-        arrayOf(OcDecisionProcedureType.PROPAGATOR, AutoConflictFinderConfig.SIMPLE, null),
-        arrayOf(OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.GENERIC, 3),
-      )
+      return programs.flatMap { program ->
+        listOf(
+          arrayOf(program, OcDecisionProcedureType.IDL, AutoConflictFinderConfig.NONE, null),
+          arrayOf(
+            program,
+            OcDecisionProcedureType.PROPAGATOR,
+            AutoConflictFinderConfig.SIMPLE,
+            null,
+          ),
+          arrayOf(program, OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.GENERIC, 3),
+        )
+      }
     }
 
     /** Verdicts depending on the unroll exits and on cell-sensitive ordering constraints. */
@@ -95,6 +102,7 @@ class XcfaOcCheckerTest {
   @ParameterizedTest
   @MethodSource("data")
   fun testOcChecker(
+    program: String,
     decisionProcedure: OcDecisionProcedureType,
     autoConflictFinderConfig: AutoConflictFinderConfig,
     autoConflictBound: Int?,

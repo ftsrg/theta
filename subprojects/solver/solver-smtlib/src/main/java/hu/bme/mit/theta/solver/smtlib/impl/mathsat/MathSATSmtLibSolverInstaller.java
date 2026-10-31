@@ -43,11 +43,12 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         super(logger);
 
         versions = new ArrayList<>();
+        // 5.6.12 dropped the -msvc suffix of the Windows archive; 5.6.11 still has it
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.12"))
                         .addString(LINUX, X64, "linux-x86_64")
                         .addString(MAC, X64, "macos")
-                        .addString(WINDOWS, X64, "win64-msvc")
+                        .addString(WINDOWS, X64, "win64")
                         .build());
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.7"))
@@ -114,6 +115,25 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     protected void installSolver(Path installDir, String version)
             throws SmtLibSolverInstallerException {
+        final var downloadUrl = getDownloadUrl(version);
+
+        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+
+        try (final var inputStream = downloadUrl.toURL().openStream()) {
+            if (OsHelper.getOs().equals(WINDOWS)) {
+                Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
+            } else {
+                Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
+            }
+            makeExecutable(installDir.resolve("bin").resolve(getSolverBinaryName()));
+        } catch (IOException e) {
+            throw new SmtLibSolverInstallerException(e);
+        }
+
+        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+    }
+
+    URI getDownloadUrl(final String version) throws SmtLibSolverInstallerException {
         final var semVer = SemVer.of(version);
         String archStr = null;
 
@@ -130,32 +150,10 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
                             OsHelper.getOs(), OsHelper.getArch()));
         }
 
-        final var downloadUrl =
-                URI.create(
-                        String.format(
-                                "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
-                                version,
-                                archStr,
-                                OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
-
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
-
-        try (final var inputStream = downloadUrl.toURL().openStream()) {
-            if (OsHelper.getOs().equals(WINDOWS)) {
-                Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-            } else {
-                Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
-            }
-            installDir
-                    .resolve("bin")
-                    .resolve(getSolverBinaryName())
-                    .toFile()
-                    .setExecutable(true, true);
-        } catch (IOException e) {
-            throw new SmtLibSolverInstallerException(e);
-        }
-
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        return URI.create(
+                String.format(
+                        "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
+                        version, archStr, OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
     }
 
     @Override

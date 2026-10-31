@@ -194,10 +194,18 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         if (left.isNaN() || right.isNaN()) {
             return BoolExprs.False();
         }
+        // IEEE equality, as fp.eq: the two zeros are equal although their sign bits differ.
+        if (isZero() && that.isZero()) {
+            return BoolExprs.True();
+        }
         return BoolExprs.Bool(
                 this.hidden == that.hidden
                         && this.exponent.equals(that.exponent)
                         && this.significand.equals(that.significand));
+    }
+
+    private boolean isZero() {
+        return isPositiveZero() || isNegativeZero();
     }
 
     public BoolLitExpr assign(final FpLitExpr that) {
@@ -266,17 +274,9 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         }
     }
 
+    /** The negation of {@link #eq}, as the solvers encode it: a NaN is unequal to everything. */
     public BoolLitExpr neq(final FpLitExpr that) {
-        checkArgument(this.getType().equals(that.getType()));
-        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
-        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
-        if (left.isNaN() || right.isNaN()) {
-            return BoolExprs.False();
-        }
-        return BoolExprs.Bool(
-                !(this.hidden == that.hidden
-                        && this.exponent.equals(that.exponent)
-                        && this.significand.equals(that.significand)));
+        return BoolExprs.Bool(!eq(that).getValue());
     }
 
     @Override

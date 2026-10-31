@@ -23,11 +23,13 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
@@ -40,7 +42,11 @@ enum class OcDecisionProcedureType(
     { property, mcm -> property == ERROR_LOCATION || (property == DATA_RACE && mcm == SC) },
   ),
   BASIC({ solver, _ -> BasicOcChecker(solver) }, { property, _ -> property == ERROR_LOCATION }),
-  PROPAGATOR({ _, _ -> UserPropagatorOcChecker() }, { property, _ -> property == ERROR_LOCATION }),
+  // The propagator API is implemented by JavaSMT; the CLI requires `Z3:new` for this procedure.
+  PROPAGATOR(
+    { _, _ -> UserPropagatorOcChecker(JavaSMTSolverFactory.create(Z3, arrayOf())) },
+    { property, _ -> property == ERROR_LOCATION },
+  ),
 }
 
 internal class XcfaEvent(

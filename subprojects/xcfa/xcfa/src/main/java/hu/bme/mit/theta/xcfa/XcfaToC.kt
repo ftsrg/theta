@@ -76,6 +76,7 @@ fun XCFA.toC(
     extern short __VERIFIER_nondet_short();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();
+    ${nondetDecls(parseContext)}
     extern void reach_error();
     
     ${
@@ -288,8 +289,8 @@ private fun XcfaLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
 private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolean): String =
   when (stmt) {
     is HavocStmt<*> ->
-      "${stmt.varDecl.name.toC()} = __VERIFIER_nondet_${
-            CComplexType.getType(stmt.varDecl.ref, parseContext).toC()
+      "${stmt.varDecl.name.toC()} = ${
+            nondetName(CComplexType.getType(stmt.varDecl.ref, parseContext))
         }(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
 
     is AssignStmt<*> -> "${stmt.varDecl.name.toC()} = ${stmt.expr.toC(parseContext)};"
@@ -308,6 +309,19 @@ fun Pair<VarDecl<*>, ParamDirection>.decl(parseContext: ParseContext): String =
 
 fun VarDecl<*>.decl(parseContext: ParseContext): String =
   "${CComplexType.getType(ref, parseContext).toC()} ${name.toC()}"
+
+private fun nondetName(type: CComplexType) = "__VERIFIER_nondet_${type.toC().toC()}"
+
+// Every havocked type needs a declared nondet function, not only the ones the preamble lists.
+private fun XCFA.nondetDecls(parseContext: ParseContext): String =
+  procedures
+    .flatMap { it.edges }
+    .flatMap { it.getFlatLabels() }
+    .mapNotNull { ((it as? StmtLabel)?.stmt as? HavocStmt<*>)?.varDecl }
+    .map { CComplexType.getType(it.ref, parseContext) }
+    .filter { it.toC() !in setOf("char", "short", "int", "_Bool") }
+    .distinctBy { it.toC() }
+    .joinToString("\n") { "extern ${it.toC()} ${nondetName(it)}();" }
 
 private fun CComplexType.toC(): String =
   when (this) {

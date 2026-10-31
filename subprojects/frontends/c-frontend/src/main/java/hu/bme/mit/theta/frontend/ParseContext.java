@@ -20,6 +20,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
@@ -58,6 +59,13 @@ public class ParseContext {
      */
     private boolean checkMemsafety = false;
 
+    /**
+     * Whether the property being verified is no-data-race: a read C never performs (the unselected
+     * operand of {@code ?:}) must then not appear in the model, or it races. Set like {@link
+     * #checkMemsafety}.
+     */
+    private boolean checkDataRace = false;
+
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
     // --
@@ -86,9 +94,12 @@ public class ParseContext {
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
+    private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
+
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
     private boolean everyMemberAccessed = false;
+    private boolean aggregateMemberCopied = false;
 
     public Map<String, Integer> getSourceTraits() {
         return sourceTraits;
@@ -104,6 +115,14 @@ public class ParseContext {
 
     public void setCheckMemsafety(boolean checkMemsafety) {
         this.checkMemsafety = checkMemsafety;
+    }
+
+    public boolean isCheckDataRace() {
+        return checkDataRace;
+    }
+
+    public void setCheckDataRace(boolean checkDataRace) {
+        this.checkDataRace = checkDataRace;
     }
 
     public ParseContext() {
@@ -192,6 +211,10 @@ public class ParseContext {
         return cStmtCounter;
     }
 
+    public FlatAddressSpace getFlatAddressSpace() {
+        return flatAddressSpace;
+    }
+
     /** Records that every cell of the object at base id [base] is `_Atomic`. */
     public void markObjectFullyAtomic(BigInteger base) {
         fullyAtomicObjects.add(base);
@@ -275,6 +298,32 @@ public class ParseContext {
 
     public boolean isAnyMemberAccessed(CStruct type) {
         return everyMemberAccessed || accessedMembers.containsKey(type);
+    }
+
+    /** Records that a struct holding an aggregate member is copied member by member. */
+    public void markAggregateMemberCopied() {
+        aggregateMemberCopied = true;
+    }
+
+    /**
+     * Whether a struct, union or array member is accessed or copied anywhere: the only ways a
+     * sub-object held in a parent's cell is reached.
+     */
+    public boolean isAggregateMemberUsed() {
+        if (everyMemberAccessed || aggregateMemberCopied) {
+            return true;
+        }
+        return accessedMembers.entrySet().stream()
+                .anyMatch(
+                        entry ->
+                                entry.getKey().getFields().stream()
+                                        .anyMatch(
+                                                field ->
+                                                        entry.getValue().contains(field.get1())
+                                                                && (field.get2() instanceof CStruct
+                                                                        || field.get2()
+                                                                                instanceof
+                                                                                CArray)));
     }
 
     /**

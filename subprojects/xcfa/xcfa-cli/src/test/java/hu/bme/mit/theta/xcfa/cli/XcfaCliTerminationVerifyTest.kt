@@ -241,6 +241,32 @@ class XcfaCliTerminationVerifyTest {
         "INFO",
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+class XcfaCliTerminationVerifyTest {
+
+  /** A read of an address-taken variable has to see its earlier write when a lasso is checked. */
+  @Test
+  fun testAsgCegarAddressTakenGuard() {
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource("/c/termination/address_taken_terminates.c")!!.path,
+        "--property",
+        javaClass.getResource("/c/nontermination/prop/termination.prp")!!.path,
+        "--backend",
+        "LIVENESS_CEGAR",
+        "--domain",
+        "PRED_CART",
+        "--stacktrace",
         "--debug",
         "--output-directory",
         temp.absolutePathString(),
@@ -250,5 +276,8 @@ class XcfaCliTerminationVerifyTest {
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
     assertTrue(isWitnessCorrectness(temp), "No violation witness was produced!")
+    val witness = temp.resolve("witness.yml").readText()
+    assertTrue("invariant_set" in witness, "Expected a correctness witness, got:\n$witness")
+    temp.toFile().deleteRecursively()
   }
 }

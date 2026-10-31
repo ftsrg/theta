@@ -31,6 +31,9 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -144,6 +147,25 @@ public final class BitfieldSlice {
             return Add(below, Add(newField, above));
         }
         throw new IllegalArgumentException("Unsupported cell type for a bitfield: " + type);
+    }
+
+    /**
+     * The {@code memberType} value of the field at {@code bitOffset} of {@code cell}, stamped with
+     * the metadata that makes an assignment to it splice only the field's bits.
+     */
+    public static Expr<?> member(
+            Expr<?> cell,
+            int bitOffset,
+            int width,
+            CComplexType memberType,
+            ParseContext parseContext) {
+        final boolean signed = memberType instanceof CInteger integer && integer.isSsigned();
+        final Expr<?> value = memberType.castTo(read(cell, bitOffset, width, signed));
+        parseContext.getMetadata().create(value, "cType", memberType);
+        parseContext.getMetadata().create(value, CELL, cell);
+        parseContext.getMetadata().create(value, OFFSET, bitOffset);
+        parseContext.getMetadata().create(value, WIDTH, width);
+        return value;
     }
 
     private static Expr<IntType> pow2(int exponent) {
