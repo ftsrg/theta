@@ -1,4 +1,4 @@
-fixture	arithmetic	architecture	expect	feature
+fixture	arithmetic	architecture	expect	feature	memory_model
 union_punning.c	efficient	LP64	PARSE-OK	union punning: pointer + pointer-wide unsigned alias
 builtin_object_size.c	efficient	LP64	PARSE-OK	__builtin_object_size grammar + fallback
 typeof_type.c	efficient	LP64	PARSE-OK	__typeof__(type-name)
@@ -30,6 +30,9 @@ alloca_static_base.c	efficient	LP64	SAFE	alloca bases start above the compile-ti
 char_literal_escapes.c	efficient	LP64	SAFE	character constant escapes, radixes and case
 static_local_storage.c	efficient	LP64	SAFE	static locals keep their value across calls (storage class no longer dropped)
 nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero
+nested_member_address.c	efficient	LP64	SAFE	the address of a nested struct or array member is its own base
+nested_mutex_address.c	efficient	LP64	SAFE	a mutex in a struct or an array is locked through its cell's address
+global_array_nested_member.c	efficient	LP64	SAFE	a global struct array's nested members are initialized inline and get their own storage
 array_member_init.c	efficient	LP64	SAFE	array member is its own object; array elements and rows stay inline
 deref_dot_member.c	efficient	LP64	SAFE	(*p).field is one dereference, like p->field and p[0].field
 overflow_after_split.c	efficient	ILP32	UNSAFE:no-overflow	overflow checks survive the base/offset split (cType kept across the rebuild)
@@ -41,6 +44,7 @@ vla_guarded_length.c	efficient	ILP32	SAFE:valid-memsafety	a VLA with a known-pos
 race_index_through_pointer.c	efficient	LP64	UNSAFE:no-data-race	SPOR keeps a write whose index is read through a pointer dependent on other writes to the array
 pointer_backwards_walk.c	efficient	ILP32	SAFE:valid-memsafety	p-- keeps its sign under integer arithmetic (backwards buffer walk)
 store_split_pointer.c	efficient	ILP32	SAFE:valid-memsafety	storing a mid-object pointer is refused, not clobbered onto one cell
+malloc_nested_aggregate_pointer.c	efficient	ILP32	SAFE	malloc'd nested structs retain distinct subobject addresses
 alloca_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	alloca memory is released at function return (use-after-return is caught)
 alloca_lifetime_ok.c	efficient	ILP32	SAFE:valid-memsafety	a stack block used within its own function is not released early
 scope_end_release.c	efficient	ILP32	UNSAFE:valid-memsafety	a block-local object dies at block exit (use-after-scope is caught)
@@ -70,6 +74,32 @@ float_subnormal_order.c	efficient	ILP32	SAFE	subnormal floats decode below the s
 bv_sub_intmin.c	bitvector	ILP32	SAFE:no-overflow	subtracting INT_MIN: the negation is widened before it wraps (bitvector overflow check)
 calloc_zeroes.c	efficient	LP64	SAFE	calloc is lowered to malloc+memset, with the fill placed at the typed binding
 memset_symbolic.c	efficient	LP64	SAFE	memset with a symbolic byte count is lowered to a loop over n/sizeof elements
+global_nested_struct_array.c	efficient	ILP32	SAFE	a global struct array's nested-struct cells hold distinct bases, and its scalar cells are zero
+global_nested_struct_array_init.c	efficient	ILP32	SAFE	a global struct array with nested struct/array fields is initialized in its inline cells
+global_inline_struct_array_init.c	efficient	ILP32	SAFE	global bitfield-struct and 2-D nested-struct arrays are initialized in their inline cells
+uninit_local_per_call.c	efficient	ILP32	UNSAFE	an uninitialized local gets a fresh value at each declaration, not the previous inlined call's
+global_union_zero_init.c	efficient	LP64	SAFE	a global union without an initializer reads back zero through every member view, also with a struct first member
+global_union_list_init.c	efficient	LP64	SAFE	a global union brace initializer is stored in the byte cells / word its members are read from
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's	flat
+local_union_designated_init.c	efficient	ILP32	SAFE	a local union's designated initializer is written where its members are read, as a global's	bytes
+local_union_designated_init_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a local union's designated initializer is read back through another member
+local_union_designated_init_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a local union's designated initializer is read back through another member	bytes
+local_union_member_init.c	efficient	ILP32	SAFE	union members of local structs and local union array elements are initialized as local unions
+local_union_member_init.c	efficient	ILP32	SAFE	union members of local structs and local union array elements are initialized as local unions	flat
+brace_elision_struct_array.c	efficient	ILP32	SAFE	brace elision fills every leaf of a struct array element, local and global; 2-D designators land in place
+brace_elision_struct_array.c	efficient	ILP32	SAFE	brace elision fills every leaf of a struct array element, local and global; 2-D designators land in place	flat
+brace_elision_struct_array_unsafe.c	efficient	ILP32	UNSAFE	planted bug: a brace-elided struct array element holds its initializer
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects	flat
+union_2d_array.c	efficient	ILP32	SAFE	the elements of a local 2-D array of unions are distinct objects	bytes
+union_2d_array_unsafe.c	efficient	ILP32	UNSAFE	planted bug: an element of a local 2-D array of unions keeps what was written to it
+union_2d_array_global.c	efficient	ILP32	SAFE	the elements of a global 2-D array of unions are distinct objects, zero or initialized
+union_2d_array_global.c	efficient	ILP32	SAFE	the elements of a global 2-D array of unions are distinct objects, zero or initialized	flat
+union_2d_array_init.c	efficient	ILP32	SAFE	a brace-elided local 2-D array of unions initializes each element's first member
+union_2d_array_init.c	efficient	ILP32	SAFE	a brace-elided local 2-D array of unions initializes each element's first member	flat
+union_in_struct_arrays.c	efficient	ILP32	SAFE	union members of 2-D struct array elements, local and global, are distinct objects
+union_in_struct_arrays.c	efficient	ILP32	SAFE	union members of 2-D struct array elements, local and global, are distinct objects	flat
 compound_bitwise_encoding.c	efficient	ILP32	SAFE	compound bitwise assignment selects the bitvector encoding
 extern_array_no_extent.c	efficient	LP64	SAFE:valid-memsafety	extern array of unspecified extent is a declaration, not a sizing failure
 redeclaration_after_definition.c	efficient	ILP32	SAFE	a redeclaration without an initializer (extern, tentative, or in a multi-declarator list) does not replace the definition that has one
@@ -84,6 +114,67 @@ stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps th
 unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
+flat_member_pointer_alias.c	efficient	LP64	SAFE	a pointer to an inline struct member addresses the parent's own cells	flat
+flat_member_pointer_alias_write.c	efficient	LP64	UNSAFE	a write through a pointer to an inline member is seen through the parent	flat
+flat_linked_nodes_member_addresses.c	efficient	LP64	SAFE	inline members of distinct malloc'd objects have distinct addresses	flat
+flat_array_of_nested_structs.c	efficient	LP64	SAFE	an array element spans its inline member's cells; neighbours stay apart	flat
+flat_nested_struct_copy.c	efficient	LP64	SAFE	struct assignment copies inline members by value	flat
+flat_global_nested_init.c	efficient	LP64	SAFE	a global initializer writes an inline member at its offset in the parent	flat
+flat_local_nested_init.c	efficient	LP64	SAFE	local brace init fills inline members in place and zero-fills the rest	flat
+flat_struct_valued_member_init.c	efficient	LP64	SAFE	a struct-valued member initializer counts all of the member's cells as written	flat
+flat_nested_memcpy.c	efficient	LP64	SAFE	memcpy copies inline member cells without aliasing the source	flat
+flat_nested_calloc.c	efficient	LP64	SAFE	calloc zeroes inline member cells	flat
+flat_struct_in_union_member.c	efficient	LP64	SAFE	a union member keeps an object of its own inside an inline struct	flat
+flat_array_in_struct_member.c	efficient	LP64	SAFE	nondet index into an inline array-of-structs member stays inside it	flat
+large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	flat
+large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	bytes
+symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	flat
+symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	bytes
+vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	flat
+vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	bytes
+flat_oob_into_neighbour.c	efficient	LP64	UNSAFE:valid-memsafety	one-past-the-end write is invalid although the next block follows it	flat
+flat_nested_member_pointer_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a pointer into an inline member is in bounds of the enclosing block	flat
+flat_symbolic_size_oob.c	efficient	LP64	UNSAFE:valid-memsafety	out-of-bounds write on a symbolic-size block (size recorded in cells)	flat
+flat_flexible_member_malloc.c	efficient	LP64	SAFE:valid-memsafety	flexible array member indexed within its allocated room	flat
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints; the third overruns	flat
+flat_mixed_width_struct_malloc.c	efficient	LP64	SAFE:valid-memsafety	a mixed-width struct's recorded size is its cell count	flat
+malloc_nested_aggregate_pointer.c	efficient	ILP32	SAFE	malloc'd nested structs retain distinct subobject addresses	flat
+nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero	flat
+memcpy_struct_cells.c	efficient	ILP32	SAFE	memcpy/memset on a struct pointee copy every cell, not n/4 of them	flat
+flat_inline_bitfield_init.c	efficient	LP64	SAFE	packed bitfields of a nested struct laid out inline keep their static initializer	flat
+flat_inline_bitfield_init_unsafe.c	efficient	LP64	UNSAFE	initialized bitfields of an inline nested struct are read back, not zero	flat
+bytes_aggregate_init.c	efficient	LP64	SAFE	a global brace initializer is written at byte offsets under bytes	bytes
+bytes_zero_init.c	efficient	LP64	SAFE	a global without an initializer is zero at every byte under bytes	bytes
+bytes_local_aggregate_init.c	efficient	LP64	SAFE	a local brace initializer is written at byte offsets under bytes	bytes
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	multi
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	flat
+local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
+global_bitfield_init.c	efficient	LP64	SAFE	a global bitfield initializer is spliced into the unit at its byte offset	bytes
+union_array_elements.c	efficient	LP64	SAFE	each element of a local array of unions gets an object of its own	multi
+union_array_elements.c	efficient	LP64	SAFE	an array-of-unions element is a region of the array under bytes	bytes
+bytes_stack_objects_disjoint.c	efficient	LP64	SAFE	a stack struct is allocated by its byte size under bytes	bytes
+bytes_object_sizes.c	efficient	LP64	SAFE:valid-memsafety	static and stack object sizes are recorded in bytes under bytes	bytes
+flat_flexible_member_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a flexible array member malloc is bounded by its header and whole elements	flat
+bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under bytes	bytes
+bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
+bytes_brace_elision_local.c	efficient	LP64	SAFE	brace elision in a local array of structs under bytes	bytes
+flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat
+flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat
+typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an array typedef is laid out as that array
+typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
+malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
+malloc_subobject_copy.c	efficient	ILP32	SAFE	a struct copy into a malloc'd block writes its own sub-objects
+malloc_untyped_subobjects.c	efficient	ILP32	SAFE	an untyped malloc whose sub-objects are reached falls back to flat
+malloc_member_array_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	an array member of a malloc'd struct is a valid sub-object
+malloc_cell_subobjects.c	efficient	ILP32	SAFE	a malloc stored into a struct field is typed by it and gets its sub-objects
+malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated
+malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated under flat too	flat
+flat_flexible_member_malloc.c	efficient	LP64	SAFE:valid-memsafety	a malloc'd struct with a flexible array member falls back from multi to flat
+bytes_pointer_to_array.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken array is sized in bytes under bytes	bytes
+bytes_wide_access_bounds.c	efficient	LP64	SAFE:valid-memsafety	a wide access whose bytes all lie in the block is valid under bytes	bytes
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	a wide access running past the block end is invalid under bytes	bytes
+flat_nested_memcpy.c	efficient	ILP32	SAFE	memcpy copies byte by byte under bytes	bytes
+flat_nested_calloc.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
 ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
 typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
@@ -123,3 +214,14 @@ mutex_errorcheck_kind.c	efficient	LP64	SAFE	PTHREAD_MUTEX_ERRORCHECK resolves to
 pthread_create_pointer_sum.c	efficient	LP64	SAFE	pthread_create through `t + i` keys the same per-element handle as `&t[i]`
 split_pointer_compare.c	efficient	LP64	SAFE	a split pointer compares equal to the same address written as pointer + offset
 split_pointer_compare_unsafe.c	efficient	LP64	UNSAFE	a split pointer still compares unequal to a different pointer + offset
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell	flat
+union_element_address.c	efficient	LP64	SAFE	`&m[i]` of a union array element is the element's base, not its cell	bytes
+union_member_address.c	efficient	LP64	SAFE	`&s.u` of a union member is the member's base (global and local)
+union_member_address.c	efficient	LP64	SAFE	`&s.u` of a union member is the member's base (global and local)	flat
+union_member_address_unsafe.c	efficient	LP64	UNSAFE	planted bug: a write through `&s.u` is read back through another member
+mutex_array_distinct.c	efficient	LP64	UNSAFE	planted bug: distinct elements of a mutex array are distinct locks	flat
+unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped	bytes
+sizeof_is_size_t.c	bitvector	LP64	SAFE	sizeof is a size_t: no 32-bit wraparound, never negative
+char_view_of_int.c	efficient	LP64	SAFE	a char view of an int object addresses bytes (falls back to bytes)
+char_view_of_int.c	efficient	LP64	FRONTEND-FAIL	a char view of an int object is refused under the cell models	flat

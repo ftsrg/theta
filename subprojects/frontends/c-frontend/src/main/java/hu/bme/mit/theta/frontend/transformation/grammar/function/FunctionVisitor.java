@@ -53,6 +53,9 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds;
 import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldLayout;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteInitializer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
@@ -97,6 +100,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
+    private int loopDepth = 0;
+    private String currentFunction;
     private final Set<VarDecl<?>> atomicVariables;
     private int anonCnt = 0;
     private final List<VarDecl<?>> flatVariables;
@@ -252,6 +257,23 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     public boolean isSuppressingScopedRelease() {
         return suppressScopedRelease;
+    }
+
+    /**
+     * Set while the arguments of a mutex/condition/rwlock call (`pthread_mutex_lock(&m[1])`) are
+     * visited. The sync objects are unions, and under the cell models the address of a union
+     * element is the base its cell holds -- a memory read, while mutex elimination needs a constant
+     * handle. There the cell address stays the handle; a handle held in a pointer is refused
+     * further down either way. Lives here for the same reason as {@link #suppressScopedRelease}.
+     */
+    private boolean syncHandleArguments = false;
+
+    public void setSyncHandleArguments(boolean value) {
+        this.syncHandleArguments = value;
+    }
+
+    public boolean isVisitingSyncHandleArguments() {
+        return syncHandleArguments;
     }
 
     private void registerScoped(VarDecl<?> varDecl) {
@@ -834,6 +856,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
             if (functionParam.getName() != null) createVars(functionParam);
@@ -993,6 +1016,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitWhileStatement(CParser.WhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopWhileStatement(CParser.WhileStatementContext ctx) {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
         final int whileMark = scopeMark();
@@ -1008,6 +1040,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopDoWhileStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
         final int doWhileMark = scopeMark();
         CDoWhile cDoWhile =
@@ -1022,6 +1063,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitForStatement(CParser.ForStatementContext ctx) {
+        loopDepth++;
+        try {
+            return visitLoopForStatement(ctx);
+        } finally {
+            loopDepth--;
+        }
+    }
+
+    private CStatement visitLoopForStatement(CParser.ForStatementContext ctx) {
         parseContext.getCStmtCounter().incrementForLoops();
         pushScope(Tuple2.of("for" + anonCnt++, new LinkedHashMap<>()));
         CStatement init = ctx.forCondition().forInit().accept(this);
@@ -1264,7 +1314,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
             for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
                 final int unit = cStructType.unitOffsetOf(field.get1());
-                if (offset >= unit && offset < unit + cellsOf(field.get2())) {
+                final int span =
+                        cStructType.inlinesAggregates()
+                                ? CStruct.inlineCells(field.get2())
+                                : cellsOf(field.get2());
+                if (offset >= unit && offset < unit + span) {
                     return cellTypeAt(field.get2(), offset - unit);
                 }
             }
@@ -1278,13 +1332,22 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * <p>Mirrors what the allocator actually does (FrontendXcfaBuilder#allocateStackStruct /
      * #allocateArrayElements), which is what the *read* path then addresses: a non-union struct
-     * stores an aggregate field as a base id in one cell and gives it storage of its own, while an
-     * array's elements -- and a union's members -- live inline in the container's own cells.
+     * stores an aggregate field as a base id in one cell and gives it storage of its own, as an
+     * array does for a union element, while other array elements -- and a union's members -- live
+     * inline in the container's own cells. Under {@link CStruct#inlinesAggregates} only a union
+     * member has an object of its own.
      */
     private boolean ownsObject(CComplexType containerType, CComplexType memberType) {
-        return containerType instanceof CStruct container
-                && !container.isUnion()
-                && (memberType instanceof CStruct || memberType instanceof CArray);
+        if (containerType instanceof CStruct container && container.isUnion()) {
+            return false;
+        }
+        if (memberType instanceof CStruct member && member.isUnion()) {
+            return true;
+        }
+        if (!(containerType instanceof CStruct container) || container.inlinesAggregates()) {
+            return false;
+        }
+        return memberType instanceof CStruct || memberType instanceof CArray;
     }
 
     /**
@@ -1303,6 +1366,43 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     fields.get(Math.min(position, fields.size() - 1)).get1());
         }
         return position;
+    }
+
+    /**
+     * Where a non-list initializer entry for a member of {@code memberType} at cell {@code offset}
+     * goes. An inline aggregate member takes an aggregate value as a copy into its region, and a
+     * scalar (brace elision) into its first cell; any other member is the cell itself.
+     */
+    private Expr<?> memberTarget(
+            Expr<?> objectBase,
+            CComplexType containerType,
+            CComplexType memberType,
+            int offset,
+            int localOffset,
+            CStatement value,
+            CComplexType ptrType) {
+        final boolean aggregate = memberType instanceof CStruct || memberType instanceof CArray;
+        if (!aggregate) {
+            return cellOf(objectBase, offset, cellTypeAt(containerType, localOffset), ptrType);
+        }
+        if (ownsObject(containerType, memberType)
+                || !(containerType instanceof CStruct container)
+                || !container.inlinesAggregates()) {
+            return cellOf(objectBase, offset, memberType, ptrType);
+        }
+        final CComplexType valueType =
+                value instanceof CExpr expr
+                        ? CComplexType.getType(expr.getExpression(), parseContext)
+                        : null;
+        if (valueType instanceof CStruct || valueType instanceof CArray) {
+            final Expr<?> region =
+                    AbstractExprs.Add(
+                            cast(objectBase, ptrType.getSmtType()),
+                            ptrType.getValue(String.valueOf(offset)));
+            parseContext.getMetadata().create(region, "cType", memberType);
+            return region;
+        }
+        return cellOf(objectBase, offset, cellTypeAt(containerType, localOffset), ptrType);
     }
 
     /** The cell `arrays[base][offset]`, typed as {@code type}. */
@@ -1332,7 +1432,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      *
      * <p>C11 6.7.9p21 also requires the members the braces do not reach to be zero, including the
      * members of an aggregate member that is not mentioned at all; each object is filled in its own
-     * right, and the cells holding subobject bases are left alone.
+     * right, and the cells holding subobject bases are left alone. A union is assigned its whole
+     * initializer list, which c2xcfa writes as it writes a global union's.
      */
     private void initializeObject(
             Expr<?> objectBase,
@@ -1341,6 +1442,21 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             CComplexType ptrType,
             CCompound compound,
             ParserRuleContext ctx) {
+        if (parseContext.getMemoryModel().byteAddressed()) {
+            initializeBytes(objectBase, objectType, list, ptrType, compound, ctx);
+            return;
+        }
+        if (objectType instanceof CStruct struct && struct.isUnion()) {
+            final CAssignment cAssignment =
+                    new CAssignment(
+                            objectBase,
+                            list != null ? list : new CInitializerList(objectType, parseContext),
+                            "=",
+                            parseContext);
+            recordMetadata(ctx, cAssignment);
+            compound.addCStatement(cAssignment);
+            return;
+        }
         final Set<Integer> written = new LinkedHashSet<>();
         if (list != null) {
             writeMembers(objectBase, objectType, list, 0, written, ptrType, compound, ctx);
@@ -1391,22 +1507,133 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             compound,
                             ctx);
                 }
+            } else if (bitfieldSlot(containerType, position) instanceof BitfieldLayout.Slot slot) {
+                // Bitfields sharing a cell: zero it once, then splice each field into its bits.
+                final Dereference<?, ?, ?> cell =
+                        cellOf(
+                                objectBase,
+                                offset,
+                                cellTypeAt(containerType, offset - baseOffset),
+                                ptrType);
+                if (written.add(offset)) {
+                    addAssignment(
+                            cell,
+                            new CExpr(
+                                    CComplexType.getType(cell, parseContext).getNullValue(),
+                                    parseContext),
+                            compound,
+                            ctx);
+                }
+                addAssignment(
+                        BitfieldSlice.member(
+                                cell, slot.bitOffset(), slot.width(), memberType, parseContext),
+                        value,
+                        compound,
+                        ctx);
             } else {
-                final CComplexType cellType =
-                        memberType instanceof CStruct || memberType instanceof CArray
-                                ? memberType
-                                : cellTypeAt(containerType, offset - baseOffset);
-                final CAssignment cAssignment =
-                        new CAssignment(
-                                cellOf(objectBase, offset, cellType, ptrType),
+                final Expr<?> target =
+                        memberTarget(
+                                objectBase,
+                                containerType,
+                                memberType,
+                                offset,
+                                offset - baseOffset,
                                 value,
-                                "=",
-                                parseContext);
+                                ptrType);
+                final CAssignment cAssignment = new CAssignment(target, value, "=", parseContext);
                 recordMetadata(ctx, cAssignment);
                 compound.addCStatement(cAssignment);
-                written.add(offset);
+                // An aggregate copied into an inline member fills all of the member's cells.
+                final int span =
+                        target instanceof Dereference<?, ?, ?>
+                                ? 1
+                                : CStruct.inlineCells(memberType);
+                for (int k = 0; k < span; k++) {
+                    written.add(offset + k);
+                }
             }
         }
+    }
+
+    /** The packed bitfield slot member {@code position} of {@code containerType} is, if any. */
+    private BitfieldLayout.Slot bitfieldSlot(CComplexType containerType, int position) {
+        if (!(containerType instanceof CStruct struct) || struct.isUnion()) {
+            return null;
+        }
+        final List<Tuple2<String, CComplexType>> fields = struct.getFields();
+        if (position >= fields.size()) {
+            return null;
+        }
+        final BitfieldLayout.Slot slot = struct.slotOf(fields.get(position).get1());
+        return slot != null && slot.bitfield() ? slot : null;
+    }
+
+    private void addAssignment(
+            Expr<?> target, CStatement value, CCompound compound, ParserRuleContext ctx) {
+        final CAssignment cAssignment = new CAssignment(target, value, "=", parseContext);
+        recordMetadata(ctx, cAssignment);
+        compound.addCStatement(cAssignment);
+    }
+
+    /**
+     * {@link #initializeObject} under the bytes model, where a nested aggregate is no object of its
+     * own: every value is stored at its byte offset in the one object (see {@link
+     * ByteInitializer}), after the cells no value covers are zeroed.
+     */
+    private void initializeBytes(
+            Expr<?> objectBase,
+            CComplexType objectType,
+            CInitializerList list,
+            CComplexType ptrType,
+            CCompound compound,
+            ParserRuleContext ctx) {
+        final ByteInitializer layout = new ByteInitializer(parseContext);
+        final List<ByteInitializer.Leaf> leaves = layout.leaves(objectType, list);
+        final Integer count =
+                objectType instanceof CArray array && ObjectLayout.constantDimension(array) == null
+                        ? ByteInitializer.elementCount(list)
+                        : null;
+        final Set<List<Integer>> covered = new HashSet<>();
+        for (ByteInitializer.Leaf leaf : leaves) {
+            if (!leaf.isBitfield() && !isAggregate(leaf.type())) {
+                covered.add(List.of(leaf.byteOffset(), leaf.type().width()));
+            }
+        }
+        for (ByteInitializer.Cell cell : layout.cells(objectType, count)) {
+            if (!covered.contains(List.of(cell.byteOffset(), cell.type().width()))) {
+                addAssignment(
+                        cellOf(objectBase, cell.byteOffset(), cell.type(), ptrType),
+                        new CExpr(cell.type().getNullValue(), parseContext),
+                        compound,
+                        ctx);
+            }
+        }
+        for (ByteInitializer.Leaf leaf : leaves) {
+            final Expr<?> target;
+            if (leaf.isBitfield()) {
+                target =
+                        BitfieldSlice.member(
+                                cellOf(objectBase, leaf.byteOffset(), leaf.type(), ptrType),
+                                leaf.bitInUnit(),
+                                leaf.width(),
+                                leaf.type(),
+                                parseContext);
+            } else if (isAggregate(leaf.type())) {
+                // A whole struct or array value: copied into the member's region.
+                target =
+                        AbstractExprs.Add(
+                                cast(objectBase, ptrType.getSmtType()),
+                                ptrType.getValue(String.valueOf(leaf.byteOffset())));
+                parseContext.getMetadata().create(target, "cType", leaf.type());
+            } else {
+                target = cellOf(objectBase, leaf.byteOffset(), leaf.type(), ptrType);
+            }
+            addAssignment(target, leaf.value(), compound, ctx);
+        }
+    }
+
+    private static boolean isAggregate(CComplexType type) {
+        return type instanceof CStruct || type instanceof CArray;
     }
 
     /**
@@ -1442,7 +1669,20 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             return;
         }
-        if (type instanceof CStruct cStructType && !cStructType.isUnion()) {
+        if (type instanceof CStruct cStructType && cStructType.isUnion()) {
+            // Reached as an array element (a struct field is handled below): an object of its own.
+            if (written.add(offset)) {
+                initializeObject(
+                        cellOf(objectBase, offset, type, ptrType),
+                        type,
+                        null,
+                        ptrType,
+                        compound,
+                        ctx);
+            }
+            return;
+        }
+        if (type instanceof CStruct cStructType) {
             for (Tuple2<String, CComplexType> field : cStructType.getFields()) {
                 final int fieldOffset = offset + cStructType.unitOffsetOf(field.get1());
                 if (ownsObject(cStructType, field.get2())) {
@@ -1463,7 +1703,6 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             return;
         }
-        // A scalar, or a union (whose members share its cells, so it is filled as one).
         for (int cell = 0; cell < cellsOf(type); cell++) {
             if (!written.add(offset + cell)) {
                 continue;
@@ -1516,8 +1755,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             return count * cellsOf(cArrayType.getEmbeddedType());
         } else if (type instanceof CStruct cStructType) {
             if (cStructType.isUnion()) {
+                // In the cell models a union is an object of its own, its container's cell
+                // holding its base.
                 final Integer width = cStructType.unionCellWidth();
-                return width == null
+                return width == null && parseContext.getMemoryModel().byteAddressed()
                         ? ObjectLayout.of(cStructType, parseContext.getArchitecture()).bitSize() / 8
                         : 1;
             }
@@ -1612,7 +1853,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             //
             // Built as an expression, not folded to an int: the dimension may be a VLA's
             // runtime value, so the scale factor is multiplied in rather than computed here.
-            final int elementCells = cellsOf(cArray.getEmbeddedType());
+            // Under the bytes model accesses index in bytes, so an element spans its byte size.
+            final int elementCells =
+                    parseContext.getMemoryModel().byteAddressed()
+                            ? Math.max(
+                                    ObjectLayout.sizeBits(
+                                                    cArray.getEmbeddedType(),
+                                                    parseContext.getArchitecture())
+                                            / 8,
+                                    1)
+                            : cellsOf(cArray.getEmbeddedType());
             CStatement allocaSize = cArray.getArrayDimension();
             if (allocaSize == null) {
                 // `char a[] = {0,1,2};` takes its extent from the initializer, so the
@@ -1762,7 +2012,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     AssumeStmt assumeStmt =
                             CComplexType.getType(varDecl.getRef(), parseContext)
                                     .limit(varDecl.getRef());
-                    CAssume cAssume = new CAssume(assumeStmt, parseContext);
+                    // A re-executed declaration (a loop body, or a callee that is inlined or
+                    // called again) must havoc, or it reads the previous activation's value. An
+                    // array variable holds its alloca base, assigned just above, so it keeps it.
+                    boolean mayRepeat = loopDepth > 0 || !"main".equals(currentFunction);
+                    CAssume cAssume =
+                            declaration.getActualType() instanceof CArray || !mayRepeat
+                                    ? new CAssume(assumeStmt, parseContext)
+                                    : new CAssume(varDecl, assumeStmt, parseContext);
                     recordMetadata(ctx, cAssume);
                     cAssume.setFunctionName("NotC");
                     // assumption is not in C file

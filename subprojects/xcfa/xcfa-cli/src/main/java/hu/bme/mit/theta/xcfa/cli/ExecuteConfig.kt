@@ -226,9 +226,8 @@ private fun parseInputFiles(
  *
  * The default `multi` memory model splits a pointer into a base and an offset channel, and there
  * are local-variable patterns its splitting machinery cannot represent -- those make the frontend
- * throw [UnsupportedPointerSplitException]. The `flat` model has no splitting at all (a pointer is
- * a single scalar address), so the very same program builds there; when the model was left at its
- * default we therefore rebuild the whole frontend under `flat` rather than failing.
+ * throw [UnsupportedPointerSplitException]. The frontend then retries under `flat`, and if that
+ * needs byte granularity too, under `bytes`.
  *
  * A union punned through members of different widths is the mirror image: the cell models must lay
  * it out as bytes by hand and run out of room (a pointer cannot cover several cells, a member whose
@@ -286,25 +285,44 @@ private fun frontend(
       allowBytesFallback = false,
     )
   } catch (e: UnsupportedPointerSplitException) {
+    logger.info("%s", "Pointer-splitting limitation was: ${e.message}")
+    val cFrontendConfig = checkNotNull(cConfig)
     logger.write(
       Logger.Level.RESULT,
       "%s%n",
       "note: frontend build failed due to a pointer-splitting limitation under --memory-model" +
-        " ${cConfig!!.effectiveMemoryModel}; retrying with --memory-model flat",
+        " ${cFrontendConfig.effectiveMemoryModel}; retrying with --memory-model flat",
     )
-    logger.info("%s", "Pointer-splitting limitation was: ${e.message}")
     // Pin the model for everything downstream too: the portfolio re-runs the frontend once per
     // configuration it tries (in-process runs re-parse from this very config), and they must all
     // agree with the XCFA we return here.
-    cConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
-    // No fallback left to offer: whatever this attempt throws is reported as a real failure.
-    buildFrontend(
-      config,
-      logger,
-      uniqueLogger,
-      allowFlatFallback = false,
-      allowBytesFallback = false,
-    )
+    cFrontendConfig.memoryModel = ArchitectureConfig.MemoryModelType.flat
+    try {
+      buildFrontend(
+        config,
+        logger,
+        uniqueLogger,
+        allowFlatFallback = false,
+        allowBytesFallback = mayFallBackToBytes,
+      )
+    } catch (flatException: RequiresByteAddressedMemoryException) {
+      logger.write(
+        Logger.Level.RESULT,
+        "%s%n",
+        "note: flat memory cannot represent this construct; retrying with --memory-model bytes",
+      )
+      logger.info("%s", "Byte-granularity limitation was: ${flatException.message}")
+      cFrontendConfig.memoryModel = ArchitectureConfig.MemoryModelType.bytes
+      cFrontendConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      // No fallback left to offer: whatever this attempt throws is reported as a real failure.
+      buildFrontend(
+        config,
+        logger,
+        uniqueLogger,
+        allowFlatFallback = false,
+        allowBytesFallback = false,
+      )
+    }
   }
 }
 
@@ -334,6 +352,15 @@ private fun buildFrontend(
           config.outputConfig.witnessConfig.concretizerSolver)
         .any { it.contains("yices", ignoreCase = true) }
     parseContext.memoryModel = cConfig.effectiveMemoryModel
+    if (parseContext.memoryModel == ArchitectureConfig.MemoryModelType.bytes) {
+      // Byte cells split and recombine values, which only bitvectors express; over integers a wide
+      // access is one unsplit cell, so an overrun past its first byte goes unchecked.
+      check(cConfig.arithmetic != ArchitectureConfig.ArithmeticType.integer) {
+        "--memory-model bytes requires bitvector arithmetic, not --arithmetic integer"
+      }
+      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      parseContext.arithmetic = cConfig.arithmetic
+    }
     // Mirrors `MemsafetyPass.enabled` on the frontend side, from the same property: the c-frontend
     // module cannot see the pass. Anything the frontend emits solely for the memory-safety checks
     // is gated on this, so the XCFA for every other property is byte-for-byte what it was.

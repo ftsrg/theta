@@ -110,21 +110,23 @@ class UnusedMemoryWriteRemovalTest {
   fun writesInNondetBranchesAreRemovedUnderFlatAddressing() {
     val parseContext = ParseContext().static(1).static(2)
     parseContext.memoryModel = MemoryModelType.flat
+    val first = parseContext.flatAddressSpace.allocate(1.toBigInteger(), 2.toBigInteger())
+    val second = parseContext.flatAddressSpace.allocate(2.toBigInteger(), 2.toBigInteger())
     val cells =
       writtenCells(parseContext) {
         "m" type Int()
         (init to "L1") {
           nondet {
-            sequence { "(deref 0 65536 Int)".memassign("1") }
-            sequence { "(deref 0 131072 Int)".memassign("2") }
+            sequence { "(deref 0 $first Int)".memassign("1") }
+            sequence { "(deref 0 ${second + 1.toBigInteger()} Int)".memassign("2") }
           }
         }
         ("L1" to final) {
           mutex_lock("m")
-          assume("(= (deref 0 65536 Int) 1)")
+          assume("(= (deref 0 $first Int) 1)")
         }
       }
-    assertEquals(listOf("(deref 0 65536 Int)"), cells)
+    assertEquals(listOf("(deref 0 $first Int)"), cells)
   }
 
   @Test

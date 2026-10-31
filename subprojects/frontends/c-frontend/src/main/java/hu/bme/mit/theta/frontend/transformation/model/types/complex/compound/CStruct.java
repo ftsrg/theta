@@ -17,6 +17,8 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
@@ -48,6 +50,8 @@ public class CStruct extends CInteger {
     private final List<BitfieldLayout.Slot> slots;
 
     private final int unitCount;
+
+    private int[] cellOffsets;
 
     /** Declared bitfield width per field (-1 for an ordinary member); see {@link #overlayWidth}. */
     private final List<Integer> bitfieldWidths;
@@ -153,7 +157,64 @@ public class CStruct extends CInteger {
 
     /** The number of storage cells the struct occupies (units, not members). */
     public int getUnitCount() {
-        return union ? 1 : unitCount;
+        if (union) {
+            return 1;
+        }
+        return inlinesAggregates() ? cellOffsets()[unitCount] : unitCount;
+    }
+
+    /**
+     * Whether nested aggregates are laid out inline: under the flat memory model a non-union struct
+     * or array member occupies its own cells within this struct, at a cell offset that counts every
+     * cell before it, instead of one cell holding the base of a separate sub-object. A union member
+     * still keeps a sub-object of its own.
+     */
+    public boolean inlinesAggregates() {
+        return !union && parseContext.getMemoryModel() == MemoryModelType.flat;
+    }
+
+    /** Whether [type] is laid out inline when it is a member, under [inlinesAggregates]. */
+    public static boolean isInlineAggregate(CComplexType type) {
+        return type instanceof CArray || (type instanceof CStruct s && !s.isUnion());
+    }
+
+    /**
+     * The cells a member of [type] spans when it is laid out inline; a union member is the one cell
+     * holding its sub-object's base. An array of unions is laid out in place, not as sub-objects,
+     * so it is left to the bytes model.
+     */
+    public static int inlineCells(CComplexType type) {
+        if (type instanceof CArray array) {
+            if (array.getEmbeddedType() instanceof CStruct element && element.isUnion()) {
+                throw new RequiresByteAddressedMemoryException(
+                        "An array of unions inside a struct laid out inline is not supported.");
+            }
+            final Integer count = ObjectLayout.constantDimension(array);
+            // A flexible array member takes no cells of its own: it continues past the struct.
+            return count == null ? 0 : count * inlineCells(array.getEmbeddedType());
+        }
+        if (type instanceof CStruct struct && !struct.isUnion()) {
+            return struct.getUnitCount();
+        }
+        return 1;
+    }
+
+    /** The first cell of each storage unit under [inlinesAggregates], and the total at the end. */
+    private int[] cellOffsets() {
+        if (cellOffsets == null) {
+            final int[] unitCells = new int[unitCount];
+            for (int i = 0; i < fields.size(); i++) {
+                final BitfieldLayout.Slot slot = slots.get(i);
+                final int cells = slot.bitfield() ? 1 : inlineCells(fields.get(i).get2());
+                unitCells[slot.unitIndex()] = Math.max(unitCells[slot.unitIndex()], cells);
+            }
+            final int[] offsets = new int[unitCount + 1];
+            for (int unit = 0; unit < unitCount; unit++) {
+                offsets[unit + 1] = offsets[unit] + unitCells[unit];
+            }
+            cellOffsets = offsets;
+        }
+        return cellOffsets;
     }
 
     /**
@@ -333,7 +394,12 @@ public class CStruct extends CInteger {
     /** The storage cell index for [memberName], or -1 if it has no field. */
     public int unitOffsetOf(String memberName) {
         final int i = fieldIndexOf(memberName);
-        return i < 0 ? -1 : slots.get(i).unitIndex();
+        return i < 0 ? -1 : cellOfUnit(slots.get(i).unitIndex());
+    }
+
+    /** The first cell of storage unit [unit] (see [inlinesAggregates]). */
+    public int cellOfUnit(int unit) {
+        return inlinesAggregates() ? cellOffsets()[unit] : unit;
     }
 
     /** The full slice descriptor for [memberName] (unit, bit offset, width, bitfield?), or null. */

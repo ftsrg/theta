@@ -545,6 +545,8 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                                 continue;
                             }
                             if (declaration.getType() == null) {
+                                DeclarationVisitor.inheritTypedefArrayDimensions(
+                                        declaration, cSimpleType);
                                 declaration.setType(
                                         declarationVisitor.declaratorType(
                                                 cSimpleType,
@@ -697,6 +699,11 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         final List<Token> stars = ctx.pointer().stars;
         for (int i = 0; i < stars.size(); i++) {
             subtype = subtype.copyOf();
+            // `arr_t *p` with `typedef T arr_t[N]` points to the whole array, not to an element.
+            if (!subtype.getTypedefArrayDimensions().isEmpty()) {
+                subtype.incrementPointerToTypedefArray();
+                continue;
+            }
             subtype.incrementPointer();
             // A qualifier written *after* a star qualifies that star's pointer, not the type it
             // points at: `int * _Atomic p` is an atomic pointer to a plain int. Each star's
