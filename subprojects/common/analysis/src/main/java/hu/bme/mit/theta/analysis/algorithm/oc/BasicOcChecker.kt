@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
     dpllLoop@ while (solver.check().isSat) { // DPLL loop
       val valuation = solver.model.toMap()
 
-      val disabledRels = modifiableRels.filter { it.enabled(valuation) != true }
-      val disabledEvents = flatEvents.filter { it.enabled(solver.model) != true }
+      // hash sets instead of scanning the decision stack: the scans dominated the check time
+      val disabledRels = modifiableRels.filterTo(HashSet()) { it.enabled(valuation) != true }
+      val disabledEvents = flatEvents.filterTo(HashSet()) { it.enabled(solver.model) != true }
       val firstDisabled =
         decisionStack.indexOfFirst { d ->
           d.relation?.let { it in disabledRels } == true ||
@@ -52,21 +53,22 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
       if (firstDisabled >= 0) {
         while (decisionStack.size > firstDisabled) decisionStack.pop()
       }
+      val stackRels = decisionStack.mapNotNullTo(HashSet()) { it.relation }
+      val stackEvents = decisionStack.mapNotNullTo(HashSet()) { it.event }
 
       val enabledRels =
-        modifiableRels.filter { rel ->
-          rel.enabled(valuation) == true && decisionStack.none { it.relation == rel }
-        }
+        modifiableRels.filter { rel -> rel.enabled(valuation) == true && rel !in stackRels }
       val enabledEvents =
         flatEvents.filter { ev ->
           if (ev.type != EventType.WRITE || !rfs.containsKey(ev.const.varDecl)) return@filter false
-          ev.enabled(solver.model) == true && decisionStack.none { it.event == ev }
+          ev.enabled(solver.model) == true && ev !in stackEvents
         }
 
       // propagate
       for (rel in enabledRels) {
         val assignment = OcAssignment(decisionStack.peek().rels, rel)
         decisionStack.push(assignment)
+        stackRels.add(rel)
         val reason0 = setAndClose(assignment.rels, rel)
         if (propagate(reason0)) continue@dpllLoop
 
@@ -74,7 +76,7 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
           RelationType.RF -> {
             val writes =
               events[rel.from.const.varDecl]!!.values.flatten().filter { w ->
-                w.type == EventType.WRITE && decisionStack.any { it.event == w }
+                w.type == EventType.WRITE && w in stackEvents
               }
             for (w in writes) {
               val reason = derive(assignment.rels, rel, w)
@@ -84,9 +86,8 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
 
           RelationType.WS -> {
             val matchingRfs =
-              rfs[rel.from.const.varDecl]?.filter { rf ->
-                rf.from == rel.from && decisionStack.any { it.relation == rf }
-              } ?: emptyList()
+              rfs[rel.from.const.varDecl]?.filter { rf -> rf.from == rel.from && rf in stackRels }
+                ?: emptyList()
             for (rf in matchingRfs) {
               val reason = derive(assignment.rels, rf, rel.to)
               if (propagate(reason)) continue@dpllLoop
@@ -100,8 +101,8 @@ class BasicOcChecker<E : Event>(smtSolver: String) : OcCheckerBase<E>() {
       for (w in enabledEvents) {
         val decision = OcAssignment(decisionStack.peek().rels, w)
         decisionStack.push(decision)
-        for (rf in
-          rfs[w.const.varDecl]!!.filter { rf -> decisionStack.any { it.relation == rf } }) {
+        stackEvents.add(w)
+        for (rf in rfs[w.const.varDecl]!!.filter { rf -> rf in stackRels }) {
           val reason = derive(decision.rels, rf, w)
           if (propagate(reason)) continue@dpllLoop
         }
