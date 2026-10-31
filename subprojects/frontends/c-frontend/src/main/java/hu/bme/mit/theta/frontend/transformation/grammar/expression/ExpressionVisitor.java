@@ -921,11 +921,44 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
+        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
         return expr;
+    }
+
+    /**
+     * Under the cell models a pointer steps over whole values, one cell each, so viewing a scalar
+     * object through a pointer to a scalar of another size (`(char *)int_ptr`, `(long *)int_arr`)
+     * reads and writes whole cells where the program addresses a part or a span of them: `c[1]`
+     * lands on the second int instead of the first one's second byte. That would give wrong
+     * verdicts, so it is refused; the bytes model addresses such views faithfully.
+     */
+    private void refuseResizingPointerCast(CComplexType from, CComplexType to) {
+        if (byteAddressed() || !(to instanceof CPointer toPtr) || toPtr.isFunctionPointer()) return;
+        // An array operand decays to a pointer to its first element.
+        final CComplexType fromPointee;
+        if (from instanceof CArray fromArray) fromPointee = fromArray.getEmbeddedType();
+        else if (from instanceof CPointer fromPtr && !fromPtr.isFunctionPointer())
+            fromPointee = fromPtr.getEmbeddedType();
+        else return;
+        final CComplexType toPointee = toPtr.getEmbeddedType();
+        if (!isScalarPointee(fromPointee) || !isScalarPointee(toPointee)) return;
+        if ((fromPointee.width() + 7) / 8 != (toPointee.width() + 7) / 8) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Viewing a %s through a %s pointer is not supported."
+                            .formatted(fromPointee.getTypeName(), toPointee.getTypeName()));
+        }
+    }
+
+    private static boolean isScalarPointee(CComplexType type) {
+        return type != null
+                && !(type instanceof CVoid)
+                && !(type instanceof CArray)
+                && !(type instanceof CStruct)
+                && !(type instanceof CPointer p && p.isFunctionPointer());
     }
 
     /**
