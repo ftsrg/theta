@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,30 @@ public final class SolverValidatorWrapperFactory implements SolverFactory {
 
     public static SolverValidatorWrapperFactory create(String solverName) {
         return new SolverValidatorWrapperFactory(solverName);
+    }
+
+    /**
+     * Solvers of {@code solverFactory} whose SAT answers are validated by their model, and whose
+     * UNSAT answers are cross-checked by a solver of {@code unsatReference} (if not null). Only
+     * plain solvers are supported.
+     */
+    public static SolverFactory create(SolverFactory solverFactory, SolverFactory unsatReference) {
+        return new SolverFactory() {
+            @Override
+            public Solver createSolver() {
+                return new SolverValidatorWrapper(solverFactory.createSolver(), unsatReference);
+            }
+
+            @Override
+            public UCSolver createUCSolver() {
+                throw new UnsupportedOperationException("Only plain solvers are validated");
+            }
+
+            @Override
+            public ItpSolver createItpSolver() {
+                throw new UnsupportedOperationException("Only plain solvers are validated");
+            }
+        };
     }
 
     @Override

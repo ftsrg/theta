@@ -567,6 +567,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             parseContext.setArithmetic(
                     arithmeticTraits.contains(ArithmeticTrait.BITWISE)
                                     || arithmeticTraits.contains(ArithmeticTrait.FLOAT)
+                                    || (arithmeticTraits.contains(ArithmeticTrait.NONCONST_DIV)
+                                            && parseContext.isConstantIntDivisorsOnly())
                             ? ArithmeticType.bitvector
                             : ArithmeticType.integer);
             // Remembered so a later failure can still fall back to bitvectors: once `efficient` is

@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.integerOf
 import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
 
@@ -69,6 +70,7 @@ internal class XcfaToEventGraph(
     val wss: Map<VarDecl<*>, Set<R>>,
     val violations: List<Violation>, // OR!
     val branchingConditions: List<Expr<BoolType>>,
+    val localFlows: List<Expr<BoolType>>, // data flow of thread-local variables (no rf)
     val memoryDecls: Set<VarDecl<*>>,
     val memoryGarbages: Set<IndexedConstDecl<*>>,
     val unrollExits: List<UnrollExit>,
@@ -102,6 +104,7 @@ internal class XcfaToEventGraph(
   private var wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
   private val violations: MutableList<Violation> = mutableListOf()
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
+  private val localFlows: MutableList<Expr<BoolType>> = mutableListOf()
   private val unrollExits: MutableList<UnrollExit> = mutableListOf()
 
   private val racingGlobals: Set<VarDecl<*>> =
@@ -138,6 +141,7 @@ internal class XcfaToEventGraph(
       wss,
       violations,
       branchingConditions,
+      localFlows,
       memoryDeclSet,
       memoryGarbages.values.toSet(),
       unrollExits,
@@ -197,9 +201,12 @@ internal class XcfaToEventGraph(
         ?: exit("dereference of an unregistered type: $memoryTypeKey ($this)")
 
   private fun addCrossThreadRelations() {
+    val locals = localVars.values.flatMap { it.values }.toSet()
     for ((v, map) in events) {
       if (map.values.all { it.all { e -> e.assignment == null } })
         exit("variable $v is not initialized")
+      // the only cross-thread local accesses are thread parameters, passed in localFlows
+      if (v in locals) continue
       for ((pid1, list1) in map) for ((pid2, list2) in map) if (pid1 != pid2)
         for (e1 in list1.filter { it.type == WRITE }) for (e2 in list2) {
           // statically different addresses never alias: no relation between them
@@ -213,12 +220,16 @@ internal class XcfaToEventGraph(
   private inner class ThreadProcessor(
     private val thread: Thread,
     addMemoryGarbage: Boolean = false,
+    private val initialLocalValues: Map<VarDecl<*>, IndexedConstDecl<*>> = mapOf(),
   ) {
 
     private val pid = thread.pid
     private var last = listOf<E>()
     private var guard = setOf<Expr<BoolType>>()
     private lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
+
+    // SSA value of each thread-local variable: local reads are bound to it instead of rf edges
+    private lateinit var localValues: MutableMap<VarDecl<*>, IndexedConstDecl<*>>
     private val memoryWrites = mutableMapOf<MemoryTypeKey, MutableSet<E>>()
     private lateinit var edge: XcfaEdge
     private var inEdge = false
@@ -259,9 +270,18 @@ internal class XcfaToEventGraph(
       e.raceCandidate = property == DATA_RACE && !inLibraryCall && d in racingGlobals
       last.forEach { po(it, e) }
       inEdge = true
+      val local = decl != d
       when (type) {
-        READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
-        WRITE -> lastWrites[decl] = setOf(e)
+        READ ->
+          if (local) {
+            localValues[decl]?.let { localFlows.add(Imply(e.guardExpr, Eq(e.const.ref, it.ref))) }
+          } else {
+            lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
+          }
+        WRITE -> {
+          lastWrites[decl] = setOf(e)
+          if (local) localValues[decl] = e.const
+        }
       }
       events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
       return listOf(e)
@@ -337,6 +357,7 @@ internal class XcfaToEventGraph(
             guards.add(thread.guard)
             thread.startEvent?.let { lastEvents.add(it) }
             this.lastWrites.add(thread.lastWrites)
+            localValues.add(initialLocalValues)
             lastEvents.addAll(last)
           }
         )
@@ -373,6 +394,7 @@ internal class XcfaToEventGraph(
         }
 
         val mergedGuard = current.guards.toOrInSet()
+        val mergedLocalValues = mergeLocalValues(current)
         val assumeConsts = mutableMapOf<Any, MutableList<ConstDecl<*>>>()
 
         for (e in current.loc.outgoingEdges) {
@@ -382,6 +404,7 @@ internal class XcfaToEventGraph(
           // intersection of guards of incoming edges:
           guard = mergedGuard
           lastWrites = current.lastWrites.merge().toMutableMap()
+          localValues = mergedLocalValues.toMutableMap()
           val threadLookup =
             current.threadLookups
               .merge { s1, s2 ->
@@ -421,6 +444,7 @@ internal class XcfaToEventGraph(
           searchItem.guards.add(guard)
           searchItem.lastEvents.addAll(last)
           searchItem.lastWrites.add(lastWrites)
+          searchItem.localValues.add(localValues)
           searchItem.threadLookups.add(threadLookup)
           searchItem.atomics.add(atomicBlock)
           searchItem.incoming++
@@ -458,6 +482,34 @@ internal class XcfaToEventGraph(
             "${item.loc.name}[${item.incoming}/${item.loc.incomingEdges.size}]"
           }})"
         )
+    }
+
+    /**
+     * Phi of the local values reaching [current]: a variable whose value differs on the incoming
+     * paths gets a fresh constant equal to the value of an incoming path that is taken. A path on
+     * which the variable is unassigned leaves the constant unconstrained.
+     */
+    private fun mergeLocalValues(current: SearchItem): Map<VarDecl<*>, IndexedConstDecl<*>> {
+      val incoming = current.localValues
+      if (incoming.size <= 1) return incoming.firstOrNull() ?: mapOf()
+      check(incoming.size == current.guards.size)
+      val merged = mutableMapOf<VarDecl<*>, IndexedConstDecl<*>>()
+      for (v in incoming.flatMap { it.keys }.toSet()) {
+        val values = incoming.map { it[v] }
+        val first = values.first()
+        if (first != null && values.all { it == first }) {
+          merged[v] = first
+          continue
+        }
+        val phi = v.getNewIndexed()
+        val options =
+          current.guards.zip(values).map { (g, value) ->
+            if (value == null) g.toAnd() else And(g.toAnd(), Eq(phi.ref, value.ref))
+          }
+        localFlows.add(Imply(current.guards.toOrInSet().toAnd(), Or(options)))
+        merged[v] = phi
+      }
+      return merged
     }
 
     /**
@@ -576,9 +628,13 @@ internal class XcfaToEventGraph(
           newHistory,
           lastWrites,
         )
-      last.first().assignment = Eq(last.first().const.ref, Int(newPid))
+      // a literal of the handle's own type: Eq(bv, Int) would cast the handle to Int, which some
+      // solvers (e.g. Yices) do not support
+      val handle = last.first().const
+      last.first().assignment = Eq(handle.ref, handle.type.integerOf(newPid))
       threadLookup[pidVar] = setOf(Pair(guard, newThread))
-      ThreadProcessor(newThread).process()
+      // the parameters written above are locals of the new thread
+      ThreadProcessor(newThread, initialLocalValues = localValues.toMap()).process()
     }
 
     private fun JoinLabel.process(

@@ -59,7 +59,10 @@ class XcfaOcCheckerTest {
       }
     }
 
-    /** Verdicts depending on the unroll exits and on cell-sensitive ordering constraints. */
+    /**
+     * Verdicts depending on the unroll exits, on cell-sensitive ordering constraints and on the
+     * program order within atomic units.
+     */
     @JvmStatic
     fun unrollData(): Collection<Array<Any>> =
       OcDecisionProcedureType.entries.flatMap { dp ->
@@ -69,6 +72,8 @@ class XcfaOcCheckerTest {
           arrayOf("/15sequential_loops_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/20mutex_counter_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/23atomic_loop_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/27overwrite_in_atomic_safe.c", dp, SafetyResult<*, *>::isSafe),
+          arrayOf("/28overwrite_in_atomic_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
         )
       }
 
@@ -120,7 +125,7 @@ class XcfaOcCheckerTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        smtSolver = "Z3:4.13",
+        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = autoConflictFinderConfig,
@@ -163,7 +168,7 @@ class XcfaOcCheckerTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        smtSolver = "Z3:4.13",
+        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,

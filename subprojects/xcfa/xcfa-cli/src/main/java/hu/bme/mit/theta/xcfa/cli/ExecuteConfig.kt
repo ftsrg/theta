@@ -184,6 +184,13 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
         OcDecisionProcedureType.PROPAGATOR &&
       (config.backendConfig.specConfig as? OcConfig)?.smtSolver != "Z3:new"
   }
+  rule("OcPropagatorNotValidated") {
+    // the propagator procedure builds its own solver, which the validator cannot wrap
+    val ocConfig = config.backendConfig.specConfig as? OcConfig
+    config.backendConfig.backend == Backend.OC &&
+      ocConfig?.decisionProcedure == OcDecisionProcedureType.PROPAGATOR &&
+      (ocConfig.validateSolver || ocConfig.unsatReferenceSolver.isNotEmpty())
+  }
   rule("NoSignedWraparoundWithOverflowCheck") {
     // Modeling signed overflow as wraparound makes overflow detection vacuous.
     (config.frontendConfig.specConfig as? CFrontendConfig)?.enableSignedWraparound == true &&
@@ -339,6 +346,11 @@ private fun buildFrontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
+    // Yices divides integers only by constants
+    parseContext.isConstantIntDivisorsOnly =
+      (config.backendConfig.specConfig?.solverNames().orEmpty() +
+          config.outputConfig.witnessConfig.concretizerSolver)
+        .any { it.contains("yices", ignoreCase = true) }
     parseContext.memoryModel = cConfig.effectiveMemoryModel
     if (parseContext.memoryModel == ArchitectureConfig.MemoryModelType.bytes) {
       // Byte cells split and recombine values, which only bitvectors express; over integers a wide

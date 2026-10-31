@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -53,7 +54,7 @@ class XcfaOcChecker(
   private val property: XcfaProperty,
   private val parseContext: ParseContext,
   private val decisionProcedure: OcDecisionProcedureType,
-  private val smtSolver: String,
+  private val solverFactory: SolverFactory,
   private val logger: Logger,
   private val outputConflictClauses: Boolean,
   autoConflictConfig: AutoConflictFinderConfig,
@@ -164,11 +165,12 @@ class XcfaOcChecker(
     /** Ordering conflicts of this event graph, valid for every query of the round. */
     private val lemmas = linkedSetOf<Expr<BoolType>>()
 
-    private val checker = decisionProcedure.checker(smtSolver, memoryModel)
+    private val checker = decisionProcedure.checker(solverFactory, memoryModel)
 
     init {
       logger.mainStep("Creating event graph...")
       eg = XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty).create()
+      logSizes()
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
         this.ppos = ppos
         this.wss = wss
@@ -177,6 +179,24 @@ class XcfaOcChecker(
 
     override fun close() {
       checker.solver.close()
+    }
+
+    private fun logSizes() {
+      val globals = xcfa.globalVars.map { it.wrappedVar }.toSet()
+      val kinds =
+        eg.events.keys.groupBy {
+          when (it) {
+            in eg.memoryDecls -> "memory"
+            in globals -> "global"
+            else -> "local"
+          }
+        }
+      for ((kind, decls) in kinds) {
+        val events = decls.sumOf { d -> eg.events.getValue(d).values.sumOf { it.size } }
+        val rfs = decls.sumOf { eg.rfs[it]?.size ?: 0 }
+        val wss = decls.sumOf { eg.wss[it]?.size ?: 0 }
+        logger.info("Event graph ($kind): ${decls.size} decls, $events events, $rfs rf, $wss ws")
+      }
     }
 
     private fun <T> query(block: (OcChecker<E>) -> T): T {
@@ -328,6 +348,9 @@ class XcfaOcChecker(
 
     // Branching conditions
     eg.branchingConditions.forEach { solver.add(it) }
+
+    // Local data flow
+    eg.localFlows.forEach { solver.add(it) }
 
     // RF
     eg.rfs.forEach { (v, list) ->

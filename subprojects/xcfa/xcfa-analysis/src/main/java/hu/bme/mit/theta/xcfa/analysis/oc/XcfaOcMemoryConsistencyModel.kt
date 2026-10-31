@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,8 +49,38 @@ enum class XcfaOcMemoryConsistencyModel(internal val filter: MemoryConsistencyMo
 
 private fun getClosedPo(pos: List<R>): BooleanGlobalRelation {
   val globalPos = pos.filter { it.from.clkId != it.to.clkId }
-  val rels = BooleanGlobalRelation(Event.clkSize) { false }
-  rels.closeNoCycle(globalPos.map { Triple(it.from.clkId, it.to.clkId, true) })
+  // po is acyclic: closing it in reverse topological order with bitsets avoids the cubic worklist
+  // closure of GlobalRelationBase.close
+  val n = Event.clkSize
+  val rels = BooleanGlobalRelation(n) { false }
+  val succ = Array(n) { mutableListOf<Int>() }
+  val indeg = IntArray(n)
+  globalPos.forEach {
+    succ[it.from.clkId].add(it.to.clkId)
+    indeg[it.to.clkId]++
+  }
+  val order = ArrayList<Int>(n)
+  val queue = ArrayDeque((0 until n).filter { indeg[it] == 0 })
+  while (queue.isNotEmpty()) {
+    val v = queue.removeFirst()
+    order.add(v)
+    succ[v].forEach { if (--indeg[it] == 0) queue.add(it) }
+  }
+  check(order.size == n) { "Self-loop not allowed." }
+  val reach = arrayOfNulls<java.util.BitSet>(n)
+  for (v in order.asReversed()) {
+    val r = java.util.BitSet(n)
+    succ[v].forEach {
+      r.set(it)
+      r.or(reach[it]!!)
+    }
+    reach[v] = r
+    var j = r.nextSetBit(0)
+    while (j >= 0) {
+      rels[v, j] = true
+      j = r.nextSetBit(j + 1)
+    }
+  }
   return rels
 }
 

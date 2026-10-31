@@ -101,6 +101,7 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
+    setProgramOrder(pos)
     writes =
       events.keys.associateWith { v ->
         events[v]!!.values.flatten().filter { it.type == EventType.WRITE }

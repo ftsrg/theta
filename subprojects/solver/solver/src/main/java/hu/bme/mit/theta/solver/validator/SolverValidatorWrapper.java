@@ -21,15 +21,28 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 
+/**
+ * Checks the answers of a solver: a SAT answer by evaluating every assertion over the model, and --
+ * if an {@code unsatReference} solver is given -- an UNSAT answer by asking that (independent)
+ * solver the same question. A disagreement is a {@link SolverValidationException}, never a silently
+ * wrong answer.
+ */
 public class SolverValidatorWrapper implements Solver {
     private final Solver solver;
+    private final SolverFactory unsatReference;
 
     SolverValidatorWrapper(String solver) throws Exception {
-        this.solver = SolverManager.resolveSolverFactory(solver).createSolver();
+        this(SolverManager.resolveSolverFactory(solver).createSolver(), null);
+    }
+
+    SolverValidatorWrapper(Solver solver, SolverFactory unsatReference) {
+        this.solver = solver;
+        this.unsatReference = unsatReference;
     }
 
     @Override
@@ -47,6 +60,20 @@ public class SolverValidatorWrapper implements Solver {
                     throw new SolverValidationException(
                             "Solver problem: " + assertion + " not True over {" + model + "}");
                 }
+            }
+        } else if (check.isUnsat() && unsatReference != null) {
+            try (Solver reference = unsatReference.createSolver()) {
+                solver.getAssertions().forEach(reference::add);
+                if (reference.check().isSat()) {
+                    throw new SolverValidationException(
+                            "Solver problem: UNSAT, but the reference solver found a model: {"
+                                    + reference.getModel()
+                                    + "}");
+                }
+            } catch (SolverValidationException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException("Reference solver failed", e);
             }
         }
         return check;

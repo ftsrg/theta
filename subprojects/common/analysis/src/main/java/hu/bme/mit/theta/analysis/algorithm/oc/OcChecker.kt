@@ -99,14 +99,45 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E>() {
 
   protected abstract fun propagate(reason: Reason?): Boolean
 
+  /** Program-order successors of each event within its own atomic unit (clkId). */
+  private var poInClk: Map<E, List<E>> = mapOf()
+  private val poAfterInClk = mutableMapOf<E, Set<E>>()
+
+  /** Has to be called with the program order relation before [derive] is used. */
+  protected fun setProgramOrder(pos: List<Relation<E>>) {
+    poInClk = pos.filter { it.from.clkId == it.to.clkId }.groupBy({ it.from }, { it.to })
+    poAfterInClk.clear()
+  }
+
+  private fun E.poBeforeInClk(other: E): Boolean =
+    other in
+      poAfterInClk.getOrPut(this) {
+        val after = mutableSetOf<E>()
+        val todo = ArrayDeque(poInClk[this].orEmpty())
+        while (todo.isNotEmpty()) {
+          val e = todo.removeFirst()
+          if (after.add(e)) todo.addAll(poInClk[e].orEmpty())
+        }
+        after
+      }
+
   protected fun derive(rels: GlobalRelation, rf: Relation<E>, w: E): Reason? =
     when {
-      rf.from.clkId == rf.to.clkId -> null
-      // rf within an atomic block
-      w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null
-      // w within an atomic block with one of the rf ends
+      w == rf.from -> null
       !rf.to.sameMemory(w) -> null
       // different memory locations (checking with rf.to due to common memory garbage event)
+
+      // Within an atomic unit, only program order decides: w overwrites rf.from before rf.to reads
+      // it (rf.to then precedes or follows the unit of both writes, and cannot see rf.from)...
+      rf.from.clkId == rf.to.clkId ->
+        if (w.clkId == rf.from.clkId && rf.from.poBeforeInClk(w) && w.poBeforeInClk(rf.to)) {
+          FromReadReason(rf, w, PoReason)
+        } else null
+      w.clkId == rf.from.clkId ->
+        if (rf.from.poBeforeInClk(w)) FromReadReason(rf, w, PoReason) else null
+      // ... or rf.to reads after w in its own unit (so w would have to precede rf.from)
+      w.clkId == rf.to.clkId ->
+        if (w.poBeforeInClk(rf.to)) WriteSerializationReason(rf, w, PoReason) else null
 
       rels[w.clkId, rf.to.clkId] != null -> { // WS derivation
         val reason = WriteSerializationReason(rf, w, rels[w.clkId, rf.to.clkId]!!)
