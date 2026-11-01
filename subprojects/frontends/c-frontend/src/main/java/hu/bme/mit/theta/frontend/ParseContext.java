@@ -23,9 +23,12 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTra
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ParseContext {
@@ -127,6 +130,31 @@ public class ParseContext {
     public ParseContext() {
         metadata = new FrontendMetadata();
         cStmtCounter = new CStmtCounter();
+    }
+
+    /**
+     * Starts of the C full expressions being visited, innermost first. Every {@code CStatement}
+     * built meanwhile records the innermost one, which is where a witness locates a violation
+     * inside it. An empty entry hides the enclosing ones.
+     */
+    private final Deque<Optional<SourcePosition>> fullExpressions = new ArrayDeque<>();
+
+    public void pushFullExpression(SourcePosition start) {
+        fullExpressions.push(Optional.of(start));
+    }
+
+    /** Hides the enclosing full expressions until the matching {@link #popFullExpression()}. */
+    public void pushNoFullExpression() {
+        fullExpressions.push(Optional.empty());
+    }
+
+    public void popFullExpression() {
+        fullExpressions.pop();
+    }
+
+    /** The start of the innermost full expression, empty if there is none or it is hidden. */
+    public Optional<SourcePosition> getFullExpression() {
+        return fullExpressions.isEmpty() ? Optional.empty() : fullExpressions.peek();
     }
 
     public ParseContext(
