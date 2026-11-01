@@ -55,7 +55,8 @@ object Deps {
         "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4" to setOf("libcvc4.so", "libcvc4jni.so", "libcvc4parser.so"),
         "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc" to setOf("libcvc5jni.dll", "libcvc5jni.so"),
         "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae" to setOf("libbitwuzlaj.dll", "libbitwuzlaj.so"),
-        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08" to setOf() // no deps
+        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08" to setOf(), // no deps
+        "org.sosy-lab:javasmt-solver-yices2:2.6.4-264-g553897f5" to setOf("libyices2j.so")
     )
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 
