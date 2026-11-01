@@ -249,12 +249,23 @@ fun multithreadPortfolio27(
               checker,
             )
 
-          val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 150_000)
-          val config_OC_BASIC =
-            oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.multi, 100_000)
-
-          edges.add(Edge(config_OC_IDL, config_OC_BASIC, anyError))
-          edges.add(Edge(config_OC_BASIC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+          // Overflows arrive here as reachability of the instrumented checks. Only the flat memory
+          // model gave no wrong overflow verdicts, and one slice solves nearly all it can.
+          val config_OC =
+            if (baseConfig.inputConfig.property.inputProperty == OVERFLOW) {
+              val config_OC_OVERFLOW =
+                oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.flat, 100_000)
+              edges.add(Edge(config_OC_OVERFLOW, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              config_OC_OVERFLOW
+            } else {
+              val config_OC_IDL =
+                oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 150_000)
+              val config_OC_BASIC =
+                oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.multi, 100_000)
+              edges.add(Edge(config_OC_IDL, config_OC_BASIC, anyError))
+              edges.add(Edge(config_OC_BASIC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              config_OC_IDL
+            }
 
           edges.add(
             Edge(
@@ -280,7 +291,7 @@ fun multithreadPortfolio27(
             )
           )
 
-          config_OC_IDL
+          config_OC
         }
 
         DATA_RACE -> {
@@ -358,12 +369,7 @@ fun multithreadPortfolio27(
             )
           )
 
-          if (verifiedProperty == OVERFLOW) {
-            val config_OC_OVERFLOW =
-              oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.flat, 100_000)
-            edges.add(Edge(config_OC_OVERFLOW, config_MULTITHREAD_EXPL_SEQ_ITP, anyError))
-            config_OC_OVERFLOW
-          } else config_MULTITHREAD_EXPL_SEQ_ITP
+          config_MULTITHREAD_EXPL_SEQ_ITP
         }
       }
 
