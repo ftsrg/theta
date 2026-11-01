@@ -41,13 +41,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
@@ -61,7 +58,6 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
@@ -71,6 +67,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
@@ -921,6 +918,10 @@ private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
 
+/** The C type of [decl], or null if the frontend recorded none. */
+private fun cTypeOf(decl: Decl<*>, parseContext: ParseContext): CComplexType? =
+  runCatching { CComplexType.getType(decl.ref, parseContext) }.getOrNull()
+
 private fun getStopLocation(inputFile: File, statement: CStatement): Location {
   val line = statement.lineNumberStop
   val column = statement.colNumberStop
@@ -996,40 +997,22 @@ private fun WitnessNode.toSegment(
       threadId = threadId,
     )
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
-    // TODO this will very much break if we have 1+ nondet call on the edge or 1+ variable or .....
-    if (
-      (outgoingEdge.edge?.metadata as CMetaData).astNodes.any {
-        it is CCall && it.functionId.contains("__VERIFIER_nondet_")
-      } &&
-        outgoingEdge.edge?.label is SequenceLabel &&
-        (outgoingEdge.edge?.label as SequenceLabel).labels.any {
-          it is StmtLabel && it.stmt is HavocStmt<*>
-        }
-    ) {
-      val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
-      check(varsOnEdge.size == 1) // this has to be the havoced variable
-      val varOnEdge = varsOnEdge.first()
-      val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
-      val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
-      val (cast, valueString) =
-        when (assignedValue) {
-          is BvLitExpr -> "" to assignedValue.toString().replace("#", "0")
-          is FpLitExpr ->
-            (typeName?.let { "($it)" } ?: "") to
-              FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
-                .toString()
-
-          else -> "" to assignedValue.toString()
-        }
-
-      val constraint = "\\result == $cast$valueString"
-      loc =
-        getStopLocation(
-          inputFile,
-          (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
-            it is CCall && it.functionId.contains("__VERIFIER_nondet_")
-          },
-        )
+    val edgeMetadata = outgoingEdge.edge?.metadata as? CMetaData ?: return null
+    val nondetCalls =
+      edgeMetadata.astNodes.filter { it is CCall && it.functionId.contains("__VERIFIER_nondet_") }
+    val havocs =
+      (outgoingEdge.edge?.label as? SequenceLabel)?.labels?.mapNotNull {
+        (it as? StmtLabel)?.stmt as? HavocStmt<*>
+      } ?: emptyList()
+    if (nondetCalls.isNotEmpty() && havocs.isNotEmpty()) {
+      // with several nondet calls on one edge, values and calls cannot be paired up reliably
+      if (nondetCalls.size > 1 || havocs.size > 1) return null
+      val varOnEdge = havocs.first().varDecl
+      val assignedValue =
+        outgoingEdge.target.globalState?.`val`?.toMap()?.get(varOnEdge) ?: return null
+      val constraint =
+        assignedValue.toCConstraint("\\result", cTypeOf(varOnEdge, parseContext)) ?: return null
+      loc = getStopLocation(inputFile, nondetCalls.first())
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
         location = loc,
@@ -1037,11 +1020,9 @@ private fun WitnessNode.toSegment(
         constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
         threadId = threadId,
       )
-    } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
-      val constraintValue =
-        if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
-          "false"
-        else "true"
+    } else if (edgeMetadata.astNodes.any { it is CIf }) {
+      val choiceType = (outgoingEdge.edge?.label as? StmtLabel)?.choiceType ?: return null
+      val constraintValue = if (choiceType == ChoiceType.ALTERNATIVE_PATH) "false" else "true"
       return WaypointContent(
         type = WaypointType.BRANCHING,
         location = loc,
@@ -1051,7 +1032,7 @@ private fun WitnessNode.toSegment(
       )
     } else {
       // we only want assumptions that are actually about something in a function
-      if ((outgoingEdge.edge!!.metadata as CMetaData).functionName == "NotC") {
+      if (edgeMetadata.functionName == "NotC") {
         return null
       } else {
         val constraint =
@@ -1065,9 +1046,7 @@ private fun WitnessNode.toSegment(
                   splitName.subList(2, splitName.size).joinToString("::")
                 else varDecl.name
               if (
-                splitName.size > 1 &&
-                  splitName[splitName.size - 2] !=
-                    (outgoingEdge.edge!!.metadata as CMetaData).functionName
+                splitName.size > 1 && splitName[splitName.size - 2] != edgeMetadata.functionName
               ) {
                 null
               } else if (
@@ -1078,13 +1057,11 @@ private fun WitnessNode.toSegment(
                 // the original program, so it must not appear in a c_expression constraint.
                 null
               } else {
-                if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
-                  "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-                    printLit(value)
-                  })"
-                } else {
-                  null
-                }
+                parseContext.metadata
+                  .getMetadataValue(rootName, "cName")
+                  .orElse(null)
+                  ?.let { value.toCConstraint(it as String, cTypeOf(varDecl, parseContext)) }
+                  ?.let { "($it)" }
               }
             }
             ?.joinToString("&&")
