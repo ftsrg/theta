@@ -236,6 +236,7 @@ barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until 
 barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
 barrier_serial_once.c	efficient	ILP32	SAFE	one waiter per barrier round gets PTHREAD_BARRIER_SERIAL_THREAD
 barrier_through_pointer.c	efficient	ILP32	FRONTEND-FAIL	a barrier behind a pointer is refused
+atexit_handler_refused.c	efficient	ILP32	FRONTEND-FAIL	an atexit handler, which would run after main, is refused
 spin_lock_mutual_exclusion.c	efficient	ILP32	SAFE	pthread_spin_lock excludes like a mutex
 mutex_timedlock_free.c	efficient	ILP32	SAFE	pthread_mutex_timedlock acquires a free mutex
 mutex_trylock_held.c	efficient	ILP32	SAFE	pthread_mutex_trylock on a held mutex fails

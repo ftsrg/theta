@@ -24,12 +24,14 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.withinTypeRange
 import java.math.BigInteger
 
@@ -40,8 +42,9 @@ import java.math.BigInteger
  * change the verdict:
  * - the callee must not be flagged [InvokeLabel.isLibraryFunction] (those are handled at analysis
  *   time),
- * - the callee must not be a control-flow function (setjmp/longjmp family), `fork`, or an operation
- *   on a synchronization object that no earlier pass modeled (e.g. a spin lock),
+ * - the callee must not be a control-flow function (setjmp/longjmp family), `fork`, an exit handler
+ *   registration (the handler would never run), or an operation on a synchronization object that no
+ *   earlier pass modeled (e.g. a spin lock),
  * - the return value must be a plain integer scalar (or void): havocing a returned pointer produces
  *   arbitrary-base dereferences downstream, and float-returning math functions (ceil, sin, ...)
  *   have value semantics that a havoc misrepresents in both verdict directions,
@@ -69,6 +72,9 @@ class UnresolvedInvokeToHavocPass(
     /** Process creation, whose second process no havoc can stand in for. */
     private val PROCESS_FUNCTIONS = setOf("fork", "vfork")
 
+    /** Exit handler registrations: the handlers run at exit, which no havoc can stand in for. */
+    private val EXIT_HANDLER_FUNCTIONS = setOf("atexit", "on_exit", "at_quick_exit")
+
     /**
      * Operations on synchronization objects: their handles are integers, so they would pass for
      * havoc-safe, yet a lock or wait that does nothing loses behavior. Only state-free ones may.
@@ -82,14 +88,21 @@ class UnresolvedInvokeToHavocPass(
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val definedProcedures = builder.parent.getProcedures().map { it.name }.toSet()
+    val unresolved: (XcfaLabel) -> Boolean = {
+      it is InvokeLabel && !it.isLibraryFunction && it.name !in definedProcedures
+    }
+    // Refused outright: left in place, such a call is only noticed if the analysis reaches it.
+    builder
+      .getEdges()
+      .flatMap { it.getFlatLabels() }
+      .filter(unresolved)
+      .map { (it as InvokeLabel).name }
+      .firstOrNull {
+        it in PROCESS_FUNCTIONS || it in EXIT_HANDLER_FUNCTIONS || isUnmodeledSync(it)
+      }
+      ?.let { throw UnsupportedFrontendElementException("Unmodeled call to $it") }
     val pred: (XcfaLabel) -> Boolean = {
-      it is InvokeLabel &&
-        !it.isLibraryFunction &&
-        it.name !in definedProcedures &&
-        it.name !in CONTROL_FLOW_FUNCTIONS &&
-        it.name !in PROCESS_FUNCTIONS &&
-        !isUnmodeledSync(it.name) &&
-        isHavocSafe(it)
+      unresolved(it) && (it as InvokeLabel).name !in CONTROL_FLOW_FUNCTIONS && isHavocSafe(it)
     }
 
     for (edge in ArrayList(builder.getEdges())) {
