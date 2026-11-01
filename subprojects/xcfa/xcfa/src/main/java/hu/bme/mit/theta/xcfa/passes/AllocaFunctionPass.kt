@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -212,6 +213,9 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   ): XcfaLabel? {
     if (ExprUtils.simplify(size) is LitExpr<*>) return null
     val element = (retType as? CPointer)?.embeddedType ?: return null
+    // An explicit `alloca` returns `void *`: its byte count has no sign, and a size too large for
+    // the stack is an overflow, which SV-COMP assumes never happens.
+    if (element is CVoid) return null
     val sizeType = CComplexType.getType(size, parseContext)
     val ulong = CComplexType.getUnsignedLong(parseContext)
     val elementBytes = maxOf(1, element.width() / 8)
