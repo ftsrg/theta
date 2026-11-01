@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -151,9 +152,11 @@ class XcfaOcCheckerTest {
     decisionProcedure: OcDecisionProcedureType,
     maxExitQueries: Int = -1,
     forceUnrollBoundEnd: Int = -1,
+    arithmetic: ArithmeticType = ArithmeticType.efficient,
   ): SafetyResult<*, *> {
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
+    parseContext.arithmetic = arithmetic
     // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
     // detected between, and keeping every global access for a data race check.
     val lbeLevel = LbePass.defaultLevel
@@ -205,6 +208,19 @@ class XcfaOcCheckerTest {
     println("Testing $program for data races with IDL...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     Assertions.assertTrue(verdict(check(program, property, OcDecisionProcedureType.IDL)))
+  }
+
+  @Test
+  fun testBitvectorStartArgumentWidth() {
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
+    val result =
+      check(
+        "/35start_arg_width_race.c",
+        property,
+        OcDecisionProcedureType.IDL,
+        arithmetic = ArithmeticType.bitvector,
+      )
+    Assertions.assertTrue(result.isUnsafe)
   }
 
   @Test
