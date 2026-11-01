@@ -982,23 +982,17 @@ private fun getStopLocation(inputFile: File, statement: CStatement): Location {
 }
 
 /**
- * The location of the opening parenthesis of the `pthread_create` call on [edge] -- the call-site
- * anchor for the thread-registering `function_enter` waypoint. Returns null when the call (or its
- * `(`) cannot be located on a single source line, in which case the caller omits the column and the
- * validator falls back to the leftmost suitable position on the line.
+ * The location of the closing parenthesis of the `pthread_create` call on [edge], where the format
+ * anchors a `function_enter` waypoint. Returns null when the call cannot be located.
  */
 private fun threadCreateLocation(edge: WitnessEdge, inputFile: File): Location? {
   val call =
     edge.edge?.getCMetaData()?.astNodes?.filterIsInstance<CCall>()?.firstOrNull {
       it.functionId == "pthread_create"
     } ?: return null
-  val line = call.lineNumberStart.takeIf { it > 0 } ?: return null
-  val colStart = call.colNumberStart.takeIf { it >= 0 } ?: return null
-  val parenIndex = call.sourceText.indexOf('(')
-  // the column is only well-defined if the '(' sits on the call's start line
-  if (parenIndex < 0 || call.sourceText.substring(0, parenIndex).contains('\n')) return null
-  // +1: Theta's columns are 0-based, witness columns are 1-based
-  return Location(fileName = inputFile.name, line = line, column = colStart + parenIndex + 1)
+  if (call.lineNumberStop <= 0 || call.colNumberStop < 0) return null
+  if (!call.sourceText.trimEnd().endsWith(")")) return null
+  return getStopLocation(inputFile, call)
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -1251,7 +1245,7 @@ private class ThreadIdEmission(
   /**
    * The thread-registering `function_enter` waypoints for the threads spawned by this step (a new
    * process in the target state), also assigning the spawned threads' ids. The waypoint belongs to
-   * the spawning thread and is located at the opening parenthesis of the thread-creating call (the
+   * the spawning thread and is located at the closing parenthesis of the thread-creating call (the
    * call-site anchor that the format expects for `function_enter`).
    */
   fun registrations(edge: WitnessEdge, inputFile: File): List<WaypointContent> {
@@ -1259,11 +1253,10 @@ private class ThreadIdEmission(
     val newPids = edge.target.xcfaLocations.keys - edge.source.xcfaLocations.keys
     return newPids.mapNotNull { pid ->
       threadIds["$pid"] = nextThreadId++
-      // anchor to the thread-creating call's '('; fall back to the bare line if it cannot be
-      // located
+      // without a column, validators take the first matching call on the line
       val location =
         threadCreateLocation(edge, inputFile)
-          ?: (edge.startline ?: edge.endline)?.let {
+          ?: (edge.endline ?: edge.startline)?.let {
             Location(fileName = inputFile.name, line = it)
           }
           ?: return@mapNotNull null

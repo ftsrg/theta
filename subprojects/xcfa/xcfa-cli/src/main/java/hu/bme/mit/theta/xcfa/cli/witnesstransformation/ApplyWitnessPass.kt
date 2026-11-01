@@ -373,6 +373,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                   label is StmtLabel &&
                   label.stmt is HavocStmt<*>
               } else if (
+                wp.waypoint.type == WaypointType.FUNCTION_ENTER &&
+                  statement is CCall &&
+                  statement.lineNumberStop == loc.line &&
+                  statement.colNumberStop + 1 == loc.column
+              ) {
+                // the format anchors function_enter at the call's closing parenthesis
+                true
+              } else if (
                 wp.waypoint.type == WaypointType.TARGET &&
                   label.metadata.targetPosition()?.let {
                     it.line == loc.line && (loc.column == null || it.column + 1 == loc.column)
@@ -695,9 +703,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     wp: WaypointContent,
     segmentIndex: Int,
   ): Boolean =
-    instrumentation.registrations.any {
-      it.segmentIndex == segmentIndex && it.locationLine == wp.location.line
-    }
+    // a registering segment holds exactly one follow waypoint, the registration itself
+    wp.type == WaypointType.FUNCTION_ENTER &&
+      instrumentation.registrations.any { it.segmentIndex == segmentIndex }
 
   /**
    * Augments every thread-creating [StartLabel] of [builder] so that the spawned thread receives a
@@ -841,7 +849,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val startedProcedures =
       parent.getProcedures().flatMap { procedure ->
         getStatementToEdge(procedure).mapNotNull { (statement, label, _) ->
-          if (label is StartLabel) Pair(statement.lineNumberStart, label.name) else null
+          if (label is StartLabel)
+            Triple(statement.lineNumberStart, statement.lineNumberStop, label.name)
+          else null
         }
       }
 
@@ -852,14 +862,16 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       for (waypoint in segment) {
         val wp = waypoint.waypoint
         if (wp.type == WaypointType.FUNCTION_ENTER && wp.action != Action.AVOID) {
-          val started = startedProcedures.firstOrNull { it.first == wp.location.line }?.second
+          // the waypoint sits at the call's closing parenthesis, possibly on a later line
+          val started =
+            startedProcedures.firstOrNull { (start, stop, _) -> wp.location.line in start..stop }
           if (started != null) {
             registrations.add(
               ThreadRegistration(
                 nextThreadId++,
                 segmentIndex,
-                wp.location.line,
-                started,
+                started.first,
+                started.third,
                 wp.threadId,
               )
             )

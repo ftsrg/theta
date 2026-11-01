@@ -31,15 +31,17 @@ import kotlin.io.path.createTempDirectory
 import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 /**
  * Source positions in violation witnesses, as the format defines them: a target is the first
- * character of the innermost full expression containing the violation. Validators other than Theta
- * match these positions exactly, so a round trip through Theta's own validator is not enough. Each
- * input marks its violation with a `// target: <code>` comment.
+ * character of the innermost full expression containing the violation, and a thread-registering
+ * `function_enter` is the closing parenthesis of the `pthread_create` call. Validators other than
+ * Theta match these positions exactly, so a round trip through Theta's own validator is not enough.
+ * Each input of the target test marks its violation with a `// target: <code>` comment.
  */
 class XcfaCliWitnessLocationTest {
   companion object {
@@ -107,6 +109,47 @@ class XcfaCliWitnessLocationTest {
           witness.absolutePath
       )
     assertEquals(output.getVerdict(), validation.getVerdict())
+  }
+
+  @Test
+  fun testThreadRegistrationAtClosingParenthesis() {
+    val input = File(javaClass.getResource("/c/witness-validation/concurrent-unreach.i")!!.path)
+    val temp = createTempDirectory()
+    val output =
+      runCatchingOutput(
+        arrayOf(
+          "--input-type",
+          "C",
+          "--input",
+          input.path,
+          "--stacktrace",
+          "--domain",
+          "EXPL",
+          "--output-directory",
+          temp.absolutePathString(),
+          "--svcomp",
+          "--backend",
+          "CEGAR",
+          "--search",
+          "DFS",
+          "--por",
+          "SPOR",
+        )
+      )
+    assertTrue(output.getVerdict().contains("Unsafe")) {
+      "Expected Unsafe, got ${output.getVerdict()}"
+    }
+
+    val registrations =
+      temp.getWitness().waypoints().filter { it.type == WaypointType.FUNCTION_ENTER }
+    assertTrue(registrations.isNotEmpty()) { "Expected a thread-registering function_enter" }
+    for (registration in registrations) {
+      val source = input.readLines()[registration.location.line - 1]
+      assertTrue("pthread_create" in source) { "function_enter is not on a pthread_create line" }
+      assertEquals(source.lastIndexOf(')') + 1, registration.location.column) {
+        "function_enter must point at the closing parenthesis of: $source"
+      }
+    }
   }
 
   private fun File.waypoints(): List<WaypointContent> =
