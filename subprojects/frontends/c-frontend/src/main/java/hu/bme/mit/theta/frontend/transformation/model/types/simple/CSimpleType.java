@@ -15,8 +15,11 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,6 +86,36 @@ public abstract class CSimpleType {
 
     public void setTypedefArrayDimensions(List<CStatement> dimensions) {
         this.typedefArrayDimensions = new ArrayList<>(dimensions);
+    }
+
+    /**
+     * Stars written after an array typedef's name (`arr_t *p`). They point to the whole array, so
+     * they cannot go on {@link #getPointerLevel}, which is applied to the element inside it.
+     */
+    private int pointersToTypedefArray = 0;
+
+    public int getPointersToTypedefArray() {
+        return pointersToTypedefArray;
+    }
+
+    public void incrementPointerToTypedefArray() {
+        ++pointersToTypedefArray;
+    }
+
+    /** {@code element} wrapped into this typedef's array and the pointers written to it, if any. */
+    protected CComplexType withPointersToTypedefArray(
+            CComplexType element, ParseContext parseContext) {
+        if (pointersToTypedefArray == 0) {
+            return element;
+        }
+        CComplexType type = element;
+        for (int i = typedefArrayDimensions.size() - 1; i >= 0; i--) {
+            type = new CArray(this, type, parseContext, typedefArrayDimensions.get(i));
+        }
+        for (int i = 0; i < pointersToTypedefArray; i++) {
+            type = new CPointer(this, type, parseContext);
+        }
+        return type;
     }
 
     /**
@@ -367,5 +400,6 @@ public abstract class CSimpleType {
         copy.setFunctionPointer(this.isFunctionPointer());
         // resolveTypedefName hands users a copyOf(), so a typedef's dimensions must survive it.
         copy.setTypedefArrayDimensions(this.getTypedefArrayDimensions());
+        copy.pointersToTypedefArray = this.pointersToTypedefArray;
     }
 }

@@ -27,7 +27,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
-import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import java.math.BigInteger
 
 /**
@@ -64,8 +63,8 @@ fun Dereference<*, *, *>.addressesAtomicData(
       (array.asConstantBigInteger() ?: return false) +
         (offset.asConstantBigInteger() ?: return false)
     val flatAddr = (array.type as? BvType)?.let { sum.mod(BigInteger.TWO.pow(it.size)) } ?: sum
-    val stride = BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE)
-    return parseContext.isAtomicObjectCell(flatAddr.divide(stride), flatAddr.mod(stride).toInt())
+    val slot = parseContext.flatAddressSpace.slotAt(flatAddr) ?: return false
+    return parseContext.isAtomicObjectCell(slot.id(), flatAddr.subtract(slot.start()).toInt())
   }
   // The object being accessed, identified by the base id its dereference resolves to.
   array.resolveObjectBase(parseContext)?.let { base ->

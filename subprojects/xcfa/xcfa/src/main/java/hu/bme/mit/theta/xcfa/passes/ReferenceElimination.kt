@@ -43,8 +43,6 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -54,6 +52,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -64,8 +63,11 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fits
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mallocVar
 import hu.bme.mit.theta.xcfa.utils.references
 import java.math.BigInteger
 
@@ -176,7 +178,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val objectBase = cnt // capture: reading cnt hands out this base and advances it
             val lit =
               CComplexType.getType(varDecl.ref, parseContext)
-                .getValue(FlatMemoryPass.flatBaseValue(objectBase, parseContext))
+                .getValue(
+                  FlatMemoryPass.flatBaseValue(
+                    objectBase,
+                    referencedUnits(ptrType.embeddedType),
+                    parseContext,
+                  )
+                )
             // The referred object is atomic when the *variable's own type* is (`_Atomic int v`,
             // `int * _Atomic p`); the global var already carries that flag, which is more reliable
             // than the referred ref's recorded C type (address-taken scalars can lose the atomic
@@ -252,21 +260,31 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         .associateWith { v ->
           val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
+          if (parseContext.memoryModel.flatAddressing()) {
+            // Each activation takes the next runtime slot, so recursive frames and threads get
+            // distinct addresses.
+            builder.parent.ensureMallocVar(parseContext, ptrType)
+            val varDecl = Var(v.name + "*", ptrType.smtType)
+            builder.addVar(varDecl)
+            parseContext.metadata.create(varDecl.ref, "cType", ptrType)
+            val units = ptrType.getValue(referencedUnits(ptrType.embeddedType).toString())
+            val labels =
+              builder.parent.bumpAllocate(parseContext, varDecl.ref, units, heap = false) +
+                if (MemsafetyPass.enabled)
+                  listOf(
+                    builder.parent.allocateReferenced(
+                      parseContext,
+                      varDecl.ref,
+                      ptrType.embeddedType,
+                    )
+                  )
+                else listOf()
+            return@associateWith Pair(varDecl, SequenceLabel(labels))
+          }
           if (builder.parent.getVars().none { it.wrappedVar == ptrVar }) { // initial creation
-            // Address-taken locals are handed bases from this counter. Under flat addressing they
-            // must be spaced by FLAT_STRIDE like every other object, for two reasons: unscaled,
-            // they all land inside the *first* stride slice only 3 apart, so two distinct objects
-            // whose size exceeds 3 overlap on the flat address line (a latent aliasing
-            // unsoundness); and recovering an object's base from a mid-object address by
-            // `addr / FLAT_STRIDE` -- which the valid-deref check now does -- would otherwise map
-            // every one of them to base 0, i.e. NULL.
+            // Address-taken locals are handed bases from this counter (multi model only).
             val rawId = cnt // reading hands out this id and advances the counter
-            val initVal =
-              if (parseContext.memoryModel.flatAddressing()) {
-                ptrType.getValue(FlatMemoryPass.flatBaseValue(rawId, parseContext))
-              } else {
-                ptrType.getValue("$rawId")
-              }
+            val initVal = ptrType.getValue("$rawId")
             builder.parent.addVar(XcfaGlobalVar(ptrVar, initVal, atomic = true))
             val initProc = builder.parent.getInitProcedures().map { it.first }
             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
@@ -282,14 +300,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
               newEdges.forEach(proc::addEdge)
             }
           }
-          // Step by the same unit the init above uses, so consecutive objects stay one stride apart
-          // under flat and three raw ids apart under multi (the 3k+2 residue class).
-          val step =
-            if (parseContext.memoryModel.flatAddressing()) {
-              ptrType.getValue((POINTER_BASE_CLASSES * FlatMemoryPass.FLAT_STRIDE).toString())
-            } else {
-              ptrType.getValue("$POINTER_BASE_CLASSES")
-            }
+          // Three raw ids apart: the 3k+2 residue class.
+          val step = ptrType.getValue("$POINTER_BASE_CLASSES")
           val assign1 = AssignStmtLabel(ptrVar, Add(ptrVar.ref, step), ptrType.smtType)
           val varDecl = Var(v.name + "*", ptrType.smtType)
           builder.addVar(varDecl)
@@ -335,19 +347,13 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val newInitEdges =
       initEdges.map {
         val labels = it.label.getFlatLabels()
-        val sizeInit =
-          labels.find {
-            it is StmtLabel &&
-              it.stmt is AssignStmt<*> &&
-              it.stmt.varDecl.let { it.name == "__theta_ptr_size" && it.type is ArrayType<*, *> } &&
-              it.stmt.expr is ArrayLitExpr<*, *>
-          }
+        val sizeInit = labels.filter { it.isGhostArrayInit() }
+        // The counter the allocations below draw from: `__malloc` under flat addressing.
+        val counter =
+          if (parseContext.memoryModel.flatAddressing()) builder.parent.mallocVar(parseContext)
+          else builder.parent.ptrVar(parseContext)
         val spInit =
-          labels.find {
-            it is StmtLabel &&
-              it.stmt is AssignStmt<*> &&
-              it.stmt.varDecl == builder.parent.ptrVar(parseContext)
-          }
+          labels.find { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == counter }
         val touchedParams =
           builder.getParams().filter {
             it.second != ParamDirection.OUT && referredVars.containsKey(it.first)
@@ -370,10 +376,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           } else listOf()
         val newLabelOrder =
           listOfNotNull(spInit) +
-            listOfNotNull(sizeInit) +
+            sizeInit +
             initLabels +
             paramMapping +
-            labels.filter { it != sizeInit && it != spInit }
+            labels.filter { it !in sizeInit && it != spInit }
         it.withLabel(SequenceLabel(newLabelOrder, it.label.metadata))
       }
     initEdges.forEach(builder::removeEdge)
@@ -389,6 +395,19 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * element's cell count -- matching `FrontendXcfaBuilder.flatArraySize` and
    * `ExpressionVisitor#rowOf`, which lay `int a[3][4]` out as twelve cells `arrays[a][i*4 + j]`.
    */
+  /**
+   * How many address units an address-taken object of [type] spans under flat addressing: bytes
+   * under the bytes model, cells otherwise. A statically unsized one gets the unknown-extent slot.
+   */
+  private fun referencedUnits(type: CComplexType): Long =
+    if (parseContext.memoryModel.byteAddressed())
+      ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8).toLong()
+    else
+      when (type) {
+        is CStruct -> if (type.isUnion) 1L else type.unitCount.toLong()
+        else -> flatCellCount(type)?.toLong() ?: FlatAddressSpace.UNKNOWN_EXTENT.toLong()
+      }
+
   private fun flatCellCount(type: CComplexType): Int? =
     when (type) {
       is CArray -> {
@@ -413,9 +432,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     embeddedType: CComplexType,
   ): StmtLabel {
     val cells =
-      when (embeddedType) {
-        is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
-        is CArray -> flatCellCount(embeddedType)
+      when {
+        // In bytes, as the object's own initialization records it; cells would shrink it.
+        parseContext.memoryModel.byteAddressed() -> referencedUnits(embeddedType).toInt()
+        embeddedType is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
+        embeddedType is CArray -> flatCellCount(embeddedType)
         else -> 1
       }
     return if (cells != null)

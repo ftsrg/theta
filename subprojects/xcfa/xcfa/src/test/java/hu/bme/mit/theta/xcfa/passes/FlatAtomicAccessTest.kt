@@ -40,8 +40,6 @@ import org.junit.jupiter.api.Test
  */
 class FlatAtomicAccessTest {
 
-  private val stride = FlatMemoryPass.FLAT_STRIDE
-
   // Object 1 is atomic as a whole, object 4 only in cell 2 (FrontendXcfaBuilder mints 3k+1 ids).
   private val parseContext =
     ParseContext().also {
@@ -51,6 +49,15 @@ class FlatAtomicAccessTest {
       it.markObjectAtomicCell(BigInteger.valueOf(4), 2)
     }
 
+  private fun slot(id: Long, size: Long) =
+    parseContext.flatAddressSpace
+      .allocate(BigInteger.valueOf(id), BigInteger.valueOf(size))
+      .toLong()
+
+  private val obj1 = slot(1, 4)
+  private val obj4 = slot(4, 4)
+  private val obj7 = slot(7, 1)
+
   private fun deref(array: Long, offset: Long) =
     Dereference.of(Int(array.toInt()), Int(offset.toInt()), Int())
 
@@ -58,27 +65,27 @@ class FlatAtomicAccessTest {
 
   @Test
   fun unflattenedAddressIsDecoded() {
-    assertTrue(deref(stride, 0).atomic())
-    assertTrue(deref(stride, 3).atomic())
-    assertTrue(deref(4 * stride, 2).atomic())
-    assertFalse(deref(4 * stride, 1).atomic())
-    assertFalse(deref(7 * stride, 0).atomic())
+    assertTrue(deref(obj1, 0).atomic())
+    assertTrue(deref(obj1, 3).atomic())
+    assertTrue(deref(obj4, 2).atomic())
+    assertFalse(deref(obj4, 1).atomic())
+    assertFalse(deref(obj7, 0).atomic())
     assertFalse(Dereference.of(Var("p", Int()).ref, Int(0), Int()).atomic())
   }
 
   @Test
   fun flattenedAddressIsDecoded() {
-    assertTrue(deref(0, stride).atomic())
-    assertTrue(deref(0, 4 * stride + 2).atomic())
-    assertFalse(deref(0, 4 * stride + 1).atomic())
+    assertTrue(deref(0, obj1).atomic())
+    assertTrue(deref(0, obj4 + 2).atomic())
+    assertFalse(deref(0, obj4 + 1).atomic())
   }
 
-  /** 5*STRIDE + (-4*STRIDE) wraps to STRIDE, as FlatMemoryPass folds it: a cell of object 1. */
+  /** obj7 + (obj1 - obj7) wraps to obj1, as FlatMemoryPass folds it: a cell of object 1. */
   @Test
   fun bitvectorAddressWraps() {
     fun bv(value: Long) = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value), 32)
-    val folded = ExprUtils.simplify(BvExprs.Add(listOf(bv(5 * stride), bv(-4 * stride))))
-    assertTrue(Dereference.of(bv(5 * stride), bv(-4 * stride), BvType.of(32)).atomic())
+    val folded = ExprUtils.simplify(BvExprs.Add(listOf(bv(obj7), bv(obj1 - obj7))))
+    assertTrue(Dereference.of(bv(obj7), bv(obj1 - obj7), BvType.of(32)).atomic())
     assertTrue(Dereference.of(bv(0), folded, BvType.of(32)).atomic())
   }
 
@@ -108,13 +115,13 @@ class FlatAtomicAccessTest {
 
   @Test
   fun atomicCellIsNotInstrumented() {
-    assertFalse(raceReachable("$stride 0"))
-    assertFalse(raceReachable("${4 * stride} 2"))
+    assertFalse(raceReachable("$obj1 0"))
+    assertFalse(raceReachable("$obj4 2"))
   }
 
   @Test
   fun plainCellIsInstrumented() {
-    assertTrue(raceReachable("${4 * stride} 1"))
-    assertTrue(raceReachable("${7 * stride} 0"))
+    assertTrue(raceReachable("$obj4 1"))
+    assertTrue(raceReachable("$obj7 0"))
   }
 }

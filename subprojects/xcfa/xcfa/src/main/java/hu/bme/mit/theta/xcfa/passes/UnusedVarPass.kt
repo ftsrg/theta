@@ -285,7 +285,7 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
     get() = offset != null && (flat || base != null)
 
   private fun objectOf(cell: Cell): BigInteger? =
-    if (flat) cell.offset?.value?.divide(BigInteger.valueOf(FlatMemoryPass.FLAT_STRIDE))
+    if (flat) cell.offset?.value?.let { parseContext.flatAddressSpace.slotAt(it)?.id() }
     else cell.base?.value
 
   /** The values of the cells written earlier in the edge. */

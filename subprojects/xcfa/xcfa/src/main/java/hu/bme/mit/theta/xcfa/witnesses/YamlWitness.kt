@@ -332,6 +332,8 @@ data class Invariant(
 enum class InvariantType {
   @SerialName("loop_invariant") LOOP_INVARIANT,
   @SerialName("location_invariant") LOCATION_INVARIANT,
+  @SerialName("loop_transition_invariant") LOOP_TRANSITION_INVARIANT,
+  @SerialName("location_transition_invariant") LOCATION_TRANSITION_INVARIANT,
 }
 
 @Serializable
