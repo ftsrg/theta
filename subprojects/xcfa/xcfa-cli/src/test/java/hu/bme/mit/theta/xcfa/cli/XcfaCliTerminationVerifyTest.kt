@@ -23,10 +23,12 @@ import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -241,14 +243,16 @@ class XcfaCliTerminationVerifyTest {
         "INFO",
         "--stacktrace",
         *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.readText
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-
-class XcfaCliTerminationVerifyTest {
+        "--debug",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+      )
+    main(params)
+    assertTrue(temp.resolve("witness.yml").exists())
+    val witnessContents = temp.resolve("witness.yml").toFile().readText()
+    assertTrue(isWitnessCorrectness(temp), "No violation witness was produced!")
+  }
 
   /** A read of an address-taken variable has to see its earlier write when a lasso is checked. */
   @Test
@@ -273,9 +277,6 @@ class XcfaCliTerminationVerifyTest {
         "--svcomp",
       )
     main(params)
-    assertTrue(temp.resolve("witness.yml").exists())
-    val witnessContents = temp.resolve("witness.yml").toFile().readText()
-    assertTrue(isWitnessCorrectness(temp), "No violation witness was produced!")
     val witness = temp.resolve("witness.yml").readText()
     assertTrue("invariant_set" in witness, "Expected a correctness witness, got:\n$witness")
     temp.toFile().deleteRecursively()
