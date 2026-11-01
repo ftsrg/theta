@@ -36,7 +36,7 @@ Each phase below is one group in `CPasses`, in order.
 | | the witness pass, if a witness is being applied or validated | | after `LbePass`'s re-normalization |
 | | `DataRaceToReachabilityPass`, `OverflowDetectionPass` | reduce the data-race and overflow properties to reachability | **after every pass that creates a memory access**, or that access is not instrumented and the property is silently under-checked |
 | | `MemoryFunctionsPass` | spell out `memcpy`/`memset`/`memmove` over the destination's cells | before anything that havocs the same objects, i.e. before `UnresolvedInvokeToHavocPass` |
-| | `UnresolvedInvokeToHavocPass` | havoc whatever calls are left | **last** of the call-consuming passes, by definition |
+| | `UnresolvedInvokeToHavocPass` | havoc whatever calls are left, except those a havoc misrepresents (`fork`, unmodeled synchronization, pointer-writing calls), which fail loudly | **last** of the call-consuming passes, by definition |
 | memory model | `FlatMemoryPass`, `ByteMemoryPass` | fold `(base, offset)` to one flat address, then split wide cells into bytes; both no-ops unless their `--memory-model` is selected | after every pass that creates or rewrites a dereference; `ByteMemoryPass` after `FlatMemoryPass` |
 | final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead, and the writes to global objects that nothing reads (a union only as a whole) | last |
 

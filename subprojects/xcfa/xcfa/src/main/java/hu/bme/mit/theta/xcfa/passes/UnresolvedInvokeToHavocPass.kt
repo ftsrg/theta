@@ -40,7 +40,8 @@ import java.math.BigInteger
  * change the verdict:
  * - the callee must not be flagged [InvokeLabel.isLibraryFunction] (those are handled at analysis
  *   time),
- * - the callee must not be a control-flow function (setjmp/longjmp family),
+ * - the callee must not be a control-flow function (setjmp/longjmp family), `fork`, or an operation
+ *   on a synchronization object that no earlier pass modeled (e.g. a spin lock),
  * - the return value must be a plain integer scalar (or void): havocing a returned pointer produces
  *   arbitrary-base dereferences downstream, and float-returning math functions (ceil, sin, ...)
  *   have value semantics that a havoc misrepresents in both verdict directions,
@@ -64,6 +65,19 @@ class UnresolvedInvokeToHavocPass(
     /** Functions with control-flow semantics that must never be modeled as a havoc. */
     private val CONTROL_FLOW_FUNCTIONS =
       setOf("setjmp", "_setjmp", "sigsetjmp", "__sigsetjmp", "longjmp", "siglongjmp", "_longjmp")
+
+    /** Process creation, whose second process no havoc can stand in for. */
+    private val PROCESS_FUNCTIONS = setOf("fork", "vfork")
+
+    /**
+     * Operations on synchronization objects: their handles are integers, so they would pass for
+     * havoc-safe, yet a lock or wait that does nothing loses behavior. Only state-free ones may.
+     */
+    private val SYNC_FUNCTION = Regex("pthread_(mutex|cond|rwlock|spin|barrier)(attr)?_\\w+")
+    private val STATELESS_SYNC_FUNCTION = Regex(".*(_destroy|attr_init)|pthread_rwlock_init")
+
+    private fun isUnmodeledSync(name: String) =
+      SYNC_FUNCTION.matches(name) && !STATELESS_SYNC_FUNCTION.matches(name)
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -73,6 +87,8 @@ class UnresolvedInvokeToHavocPass(
         !it.isLibraryFunction &&
         it.name !in definedProcedures &&
         it.name !in CONTROL_FLOW_FUNCTIONS &&
+        it.name !in PROCESS_FUNCTIONS &&
+        !isUnmodeledSync(it.name) &&
         isHavocSafe(it)
     }
 
