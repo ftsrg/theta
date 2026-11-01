@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.prod2.Prod2State
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
@@ -42,11 +43,20 @@ fun Valuation.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Valuation {
   return builder.build()
 }
 
+private val generalizedVariables = mutableMapOf<Pair<Int, VarDecl<*>>, VarDecl<*>>()
+
 internal fun <S : ExprState> XcfaState<S>.withGeneralizedVars(): S {
-  val varLookup =
-    processes
-      .mapNotNull { (_, process) -> process.varLookup.peek()?.reverseMapping() }
-      .reduceOrNull(Map<VarDecl<*>, VarDecl<*>>::plus) ?: mapOf()
+  val varLookup = mutableMapOf<VarDecl<*>, VarDecl<*>>()
+  xcfa?.globalVars?.forEach { varLookup[it.wrappedVar] = it.wrappedVar }
+  processes.forEach { (pid, process) ->
+    process.varLookup.peek()?.forEach { (original, instance) ->
+      // Forget frame identities, while retaining globals and each thread's separate locals.
+      varLookup[instance] =
+        generalizedVariables.getOrPut(pid to original) {
+          Var("T$pid::${original.name}", original.type)
+        }
+    }
+  }
   return if (sGlobal.isBottom) sGlobal else sGlobal.getState(varLookup)
 }
 

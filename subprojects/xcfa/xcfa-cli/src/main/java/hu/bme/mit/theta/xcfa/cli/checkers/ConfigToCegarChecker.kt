@@ -199,43 +199,12 @@ fun getCegarChecker(
                 .filter {
                   (it.state as XcfaState<PtrState<*>>).processes.any { it.value.locs.peek() == loc }
                 }
-                .map {
-                  (it.state as XcfaState<PtrState<*>>).sGlobal.innerState.let { s ->
-                    val declMap =
-                      (it.state as XcfaState<PtrState<*>>)
-                        .processes
-                        .map {
-                          it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
-                        }
-                        .reduce { a, b -> a + b }
-                    when (s) {
-                      is ExplState -> {
-                        if (s.isBottom) {
-                          ExplState.bottom()
-                        } else {
-                          ExplState.of(s.`val`.changeVars(declMap))
-                        }
-                      }
-                      is PredState -> {
-                        PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
-                      }
-                      is Prod2State<*, *> -> {
-                        if (s.state1.isBottom) ExplState.bottom()
-                        else
-                          Prod2State.of(
-                            ExplState.of((s.state1 as ExplState).`val`.changeVars(declMap)),
-                            PredState.of(
-                              (s.state2 as PredState).preds.map {
-                                ExprUtils.changeDecls(it, declMap)
-                              }
-                            ),
-                          )
-                      }
-                      else -> {
-                        error("Unknown state: ${s}")
-                      }
-                    }
-                  }
+                .flatMap { node ->
+                  val state = node.state as XcfaState<PtrState<*>>
+                  state.processes.values
+                    .filter { it.locs.peek() == loc }
+                    .map { process -> generalizeProofState(state.sGlobal.innerState, process) }
+                    .stream()
                 }
                 .toList()
             }
@@ -255,5 +224,24 @@ fun getCegarChecker(
       SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
       return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
     }
+  }
+}
+
+// Generalize each process separately: two instances of one procedure can have different values
+// for the same source parameter, in particular their generated thread IDs.
+internal fun generalizeProofState(state: ExprState, process: XcfaProcessState): ExprState {
+  val declMap = process.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
+  return when (state) {
+    is ExplState ->
+      if (state.isBottom) ExplState.bottom() else ExplState.of(state.`val`.changeVars(declMap))
+    is PredState -> PredState.of(state.preds.map { ExprUtils.changeDecls(it, declMap) })
+    is Prod2State<*, *> ->
+      if (state.state1.isBottom) ExplState.bottom()
+      else
+        Prod2State.of(
+          generalizeProofState(state.state1 as ExprState, process),
+          generalizeProofState(state.state2 as ExprState, process),
+        )
+    else -> error("Unknown state: $state")
   }
 }
