@@ -21,12 +21,14 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
@@ -34,8 +36,11 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -154,12 +159,14 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val initEdge = XcfaEdge(it.source, loc, SequenceLabel(listOf(initLabel)), metadata)
                 builder.addEdge(initEdge)
 
-                val sourceDeref = Dereference.of(copySource, indexVar.ref, copySource.type)
-                val targetDeref = Dereference.of(copyTarget, indexVar.ref, copyTarget.type)
+                // the cells are `char`s: with the pointer type, bitvector cells were read in a
+                // partition of their own, never written by the string's initialisation
+                val sourceDeref = Dereference.of(copySource, indexVar.ref, charType(copySource))
+                val targetDeref = Dereference.of(copyTarget, indexVar.ref, charType(copyTarget))
 
                 val continueAssume =
                   StmtLabel(
-                    AssumeStmt.of(NeqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                    AssumeStmt.of(NeqExpr.create2(sourceDeref, sourceDeref.type.integerOf(0)))
                   )
                 val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
                 val increment =
@@ -170,7 +177,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                 val exitAssume =
                   StmtLabel(
-                    AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                    AssumeStmt.of(EqExpr.create2(sourceDeref, sourceDeref.type.integerOf(0)))
                   )
                 // copy the terminating null byte as well
                 val exitLabel = SequenceLabel(listOf(exitAssume, copyCurrent))
@@ -299,7 +306,21 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 addSingle(NopLabel)
               }
 
-              "pthread_key_create",
+              "pthread_key_create" -> {
+                // `*key = <fresh key>`, and the call keeps only the key value: the thread-specific
+                // slots are addressed by it, like by the key argument of pthread_{get,set}specific
+                val key = pointee(invokeLabel.params[1])
+                val id = key.type.integerOf(++uniqueCounter)
+                val params = invokeLabel.params.toMutableList()
+                params[1] = id
+                addSeq(
+                  listOf(
+                    AssignStmtLabel(key, id, metadata),
+                    invokeLabel.copy(params = params, isLibraryFunction = true),
+                  )
+                )
+              }
+
               "pthread_getspecific",
               "pthread_setspecific" -> {
                 invokeLabel.isLibraryFunction = true
@@ -315,6 +336,24 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       }
     }
     return builder
+  }
+
+  /** The SMT type of the `char`s that [ptr] (a `char *` or `char[]`) points to. */
+  private fun charType(ptr: Expr<*>): Type =
+    when (val t = CComplexType.getType(ptr, parseContext)) {
+      is CPointer -> t.embeddedType.smtType
+      is CArray -> t.embeddedType.smtType
+      else -> error("strcpy on a non-pointer argument of type $t: $ptr")
+    }
+
+  /** `*ptr`: the variable itself for `&x`, otherwise a [Dereference] at offset 0. */
+  private fun pointee(ptr: Expr<*>): Expr<*> {
+    if (ptr is Reference<*, *> && ptr.expr is RefExpr<*>) return ptr.expr
+    val pointee =
+      (CComplexType.getType(ptr, parseContext) as? CPointer)?.embeddedType
+        ?: error("pthread_key_create on a non-pointer argument: $ptr")
+    val offset = CComplexType.getSignedLong(parseContext).nullValue
+    return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
   }
 
   private fun checkMutexDecl(mutex: Decl<*>, builder: XcfaProcedureBuilder) {

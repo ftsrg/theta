@@ -21,9 +21,12 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -48,7 +51,9 @@ class AtomicReadsOneWritePass : ProcedurePass {
     this.builder = builder
 
     builder.getEdges().toSet().forEach { edge ->
-      if (edge.getFlatLabels().any { it is AtomicBeginLabel }) {
+      // Only a block left open at the end of the edge spans edges; one closed within the edge (e.g.
+      // the checked writes of SpinLoopEffectPass) is part of the edge's unit, handled below.
+      if (edge.openAtomicBlockStart() >= 0) {
         val toReplace =
           edge.countAtomicBlockAccesses().mapNotNull { (v, ao) -> if (ao.wrongWrite) v else null }
         if (toReplace.isNotEmpty()) {
@@ -58,19 +63,25 @@ class AtomicReadsOneWritePass : ProcedurePass {
               v.localVersion(indexing, builder)
             }
 
+          // The edge is atomic with the block it opens, so its labels before the begin are
+          // localized too, and the copy-in has to precede the first of them that accesses a
+          // localized variable. A leading branch guard stays first (see the prefix below).
+          val oldLabels = edge.getFlatLabels()
+          val copyInIndex =
+            if (oldLabels.take(edge.openAtomicBlockStart()).none { it.accesses(toReplace) })
+              edge.openAtomicBlockStart() + 1
+            else oldLabels.takeWhile { it.isAssume() && !it.accesses(toReplace) }.size
           val newStartEdge = edge.replaceAccesses(localVersions)
           val initialAssigns =
             SequenceLabel(
-              localVersions.map { (v, local) ->
-                StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
-              }
+              localVersions
+                .filter { (v, _) -> !oldLabels.writtenBeforeRead(v) }
+                .map { (v, local) ->
+                  StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
+                }
             )
-          val atomicBeginIndex =
-            newStartEdge.getFlatLabels().indexOfFirst { it is AtomicBeginLabel }
           val newLabels =
-            newStartEdge.getFlatLabels().toMutableList().apply {
-              add(atomicBeginIndex + 1, initialAssigns)
-            }
+            newStartEdge.getFlatLabels().toMutableList().apply { add(copyInIndex, initialAssigns) }
           builder.removeEdge(newStartEdge)
           builder.addEdge(newStartEdge.withLabel(SequenceLabel(newLabels)))
         }
@@ -162,11 +173,13 @@ class AtomicReadsOneWritePass : ProcedurePass {
             indexing = indexing.inc(v)
             v.localVersion(indexing, builder)
           }
-        val initialAssigns =
-          localVersions.map { (v, local) ->
-            StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
-          }
         val oldLabels = edge.getFlatLabels()
+        val initialAssigns =
+          localVersions
+            .filter { (v, _) -> !oldLabels.writtenBeforeRead(v) }
+            .map { (v, local) ->
+              StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
+            }
         val newLabels = oldLabels.map { it.replaceAccesses(localVersions) }
         val finalAssigns =
           localVersions.map { (v, local) ->
@@ -202,6 +215,36 @@ class AtomicReadsOneWritePass : ProcedurePass {
     return builder
   }
 
+  /**
+   * The index of the begin of the atomic block that is still open at the end of this edge, or -1 if
+   * every block it begins also ends in it.
+   */
+  private fun XcfaEdge.openAtomicBlockStart(): Int {
+    val labels = getFlatLabels()
+    val lastFence = labels.indexOfLast { it is AtomicBeginLabel || it is AtomicEndLabel }
+    return if (lastFence >= 0 && labels[lastFence] is AtomicBeginLabel) lastFence else -1
+  }
+
+  /**
+   * Whether the first of these labels that accesses [v] overwrites it without reading it. The
+   * copy-in is then dead, and harmful: it reads the global before its first write -- e.g. in the
+   * initialization of the entry thread, where no write precedes it, so the read could only read
+   * from another thread's later write, and every execution became infeasible.
+   */
+  private fun List<XcfaLabel>.writtenBeforeRead(v: VarDecl<*>): Boolean {
+    val first = firstOrNull { it.accesses(listOf(v)) } as? StmtLabel ?: return false
+    return when (val stmt = first.stmt) {
+      is HavocStmt<*> -> stmt.varDecl == v
+      is AssignStmt<*> -> stmt.varDecl == v && v !in ExprUtils.getVars(stmt.expr)
+      else -> false
+    }
+  }
+
+  private fun XcfaLabel.isAssume() = this is StmtLabel && stmt is AssumeStmt
+
+  private fun XcfaLabel.accesses(vars: Collection<VarDecl<*>>) =
+    collectVarsWithAccessType().any { (v, _) -> v in vars }
+
   private fun <T : Type> VarDecl<T>.localVersion(
     indexing: VarIndexing,
     builder: XcfaProcedureBuilder,
@@ -212,18 +255,34 @@ class AtomicReadsOneWritePass : ProcedurePass {
   private fun XcfaEdge.countAtomicBlockAccesses(): Map<VarDecl<*>, AccessOrder> {
     val accesses =
       mutableMapOf<VarDecl<*>, AccessOrder>() // over-approximation of writePrecedesRead
+    atomicBlockEdges().forEach { (edge, _) ->
+      edge.getFlatLabels().forEach { it.countAccesses(accesses) }
+    }
+    return accesses
+  }
+
+  /**
+   * The edges of the atomic block this edge leaves open, each once (a location where branches of
+   * the block join is reached on several paths), with the index of the label ending the block, or
+   * -1 on the edges the block continues past.
+   */
+  private fun XcfaEdge.atomicBlockEdges(): List<Pair<XcfaEdge, Int>> {
+    val visited = mutableSetOf(this)
     val toVisit = mutableListOf(this)
+    val result = mutableListOf<Pair<XcfaEdge, Int>>()
     while (toVisit.isNotEmpty()) {
       val current = toVisit.removeAt(0)
-      var atomicEnd = false
-      current.getFlatLabels().forEach {
-        it.countAccesses(accesses)
-        atomicEnd = atomicEnd || it is AtomicEndLabel
-      }
-      if (!atomicEnd) toVisit.addAll(current.target.outgoingEdges)
+      val start = if (current === this) openAtomicBlockStart() else -1
+      val end =
+        current
+          .getFlatLabels()
+          .withIndex()
+          .firstOrNull { (i, it) -> it is AtomicEndLabel && i > start }
+          ?.index ?: -1
+      result.add(current to end)
+      if (end < 0) current.target.outgoingEdges.filter(visited::add).let(toVisit::addAll)
     }
-
-    return accesses
+    return result
   }
 
   /** The variables this edge reads or writes *after* having written them (see [AccessOrder]). */
@@ -247,44 +306,28 @@ class AtomicReadsOneWritePass : ProcedurePass {
       }
   }
 
-  private fun XcfaEdge.replaceAccesses(localVersions: Map<VarDecl<*>, VarDecl<*>>): XcfaEdge {
-    val toVisit = mutableListOf(this)
-    var first: XcfaEdge? = null
-    while (toVisit.isNotEmpty()) {
-      val current = toVisit.removeAt(0)
-      var atomicEnd = false
-      val newLabels =
-        current
-          .getFlatLabels()
-          .map {
-            atomicEnd = atomicEnd || it is AtomicEndLabel
-            if (atomicEnd) it else it.replaceAccesses(localVersions)
-          }
-          .toMutableList()
-
-      if (current in builder.getEdges()) {
-        builder.removeEdge(current)
-      }
-
-      if (!atomicEnd) {
-        toVisit.addAll(current.target.outgoingEdges)
-      } else {
-        val atomicEndIndex = newLabels.indexOfFirst { it is AtomicEndLabel }
-        val finalAssigns =
-          SequenceLabel(
-            localVersions.map { (v, local) ->
-              StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
-            }
+  private fun XcfaEdge.replaceAccesses(localVersions: Map<VarDecl<*>, VarDecl<*>>): XcfaEdge =
+    atomicBlockEdges()
+      .map { (current, end) ->
+        val newLabels =
+          current
+            .getFlatLabels()
+            .mapIndexed { i, it -> if (end in 0..<i) it else it.replaceAccesses(localVersions) }
+            .toMutableList()
+        if (end >= 0) {
+          newLabels.add(
+            end,
+            SequenceLabel(
+              localVersions.map { (v, local) ->
+                StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
+              }
+            ),
           )
-        newLabels.add(atomicEndIndex, finalAssigns)
+        }
+        builder.removeEdge(current)
+        current.withLabel(SequenceLabel(newLabels)).also(builder::addEdge)
       }
-
-      val newEdge = current.withLabel(SequenceLabel(newLabels))
-      builder.addEdge(newEdge)
-      first = first ?: newEdge
-    }
-    return first!!
-  }
+      .first()
 
   private fun XcfaLabel.replaceAccesses(localVersions: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel {
     return when (this) {
@@ -300,10 +343,27 @@ class AtomicReadsOneWritePass : ProcedurePass {
 
           is AssumeStmt -> StmtLabel(AssumeStmt.of(stmt.cond.replace(localVersions)))
           is HavocStmt<*> -> StmtLabel(HavocStmt.of(localVersions[stmt.varDecl] ?: stmt.varDecl))
-          else -> this
+          is MemoryAssignStmt<*, *, *> ->
+            StmtLabel(
+              MemoryAssignStmt.create(
+                stmt.deref.replace(localVersions) as Dereference<*, *, *>,
+                stmt.expr.replace(localVersions),
+              )
+            )
+          else -> {
+            check(!accesses(localVersions.keys)) {
+              "Unsupported statement at global var atomic localization: $this"
+            }
+            this
+          }
         }
 
       is SequenceLabel -> SequenceLabel(labels.map { it.replaceAccesses(localVersions) }, metadata)
+      is StartLabel ->
+        copy(
+          params = params.map { it.replace(localVersions) },
+          pidVar = localVersions[pidVar] ?: pidVar,
+        )
       is FenceLabel -> this
       is NopLabel -> this
       else -> error("Unsupported label type at global var atomic localization: $this")
