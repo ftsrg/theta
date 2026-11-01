@@ -1039,7 +1039,11 @@ private fun WitnessNode.toSegment(
       )
     } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
       val constraintValue =
-        if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
+        if (
+          outgoingEdge.edge!!.label.getFlatLabels().any {
+            it is StmtLabel && it.choiceType == ChoiceType.ALTERNATIVE_PATH
+          }
+        )
           "false"
         else "true"
       return WaypointContent(

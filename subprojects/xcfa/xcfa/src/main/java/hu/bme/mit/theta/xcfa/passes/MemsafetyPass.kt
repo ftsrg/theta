@@ -277,10 +277,11 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
    */
   private fun blockNullDerefs(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     for (edge in ArrayList(builder.getEdges())) {
-      val label = SequenceLabel(guardNullDerefs(edge.label), edge.label.metadata)
-      if (label == edge.label) continue
+      val guarded = guardNullDerefs(edge.label)
+      if (guarded == listOf(edge.label) || guarded == (edge.label as? SequenceLabel)?.labels)
+        continue
       builder.removeEdge(edge)
-      builder.addEdge(edge.withLabel(label))
+      builder.addEdge(edge.withLabel(SequenceLabel(guarded, edge.label.metadata)))
     }
     return builder
   }
@@ -289,13 +290,15 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private fun guardNullDerefs(label: XcfaLabel): List<XcfaLabel> =
     when (label) {
       is SequenceLabel -> label.labels.flatMap(::guardNullDerefs)
-      is NondetLabel ->
-        listOf(
-          NondetLabel(
-            label.labels.map { SequenceLabel(guardNullDerefs(it)) }.toSet(),
-            label.metadata,
-          )
-        )
+      is NondetLabel -> {
+        val branches =
+          label.labels.map { branch ->
+            val guarded = guardNullDerefs(branch)
+            if (guarded == listOf(branch)) branch else SequenceLabel(guarded)
+          }
+        if (branches.toSet() == label.labels) listOf(label)
+        else listOf(NondetLabel(branches.toSet(), label.metadata))
+      }
       else -> {
         // A literal base is a static object, or left unguarded as before.
         val derefs = label.derefsWithShortCircuitCond.filter { it.first.array !is LitExpr<*> }
