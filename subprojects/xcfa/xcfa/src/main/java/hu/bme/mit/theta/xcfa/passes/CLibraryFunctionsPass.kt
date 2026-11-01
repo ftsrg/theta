@@ -246,11 +246,17 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               "pthread_create" -> {
                 val handle = invokeLabel.getParam(1)
                 val funcptr = invokeLabel.getParam(3)
-                check(builder.parent.getProcedures().any { it.name == funcptr.name }) {
-                  "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
-                    "Only direct function symbols are supported as thread entry points."
-                }
-                val param = invokeLabel.params[4]
+                val startRoutine =
+                  checkNotNull(builder.parent.getProcedures().find { it.name == funcptr.name }) {
+                    "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
+                      "Only direct function symbols are supported as thread entry points."
+                  }
+                // the argument keeps its own C type (e.g. an int-typed NULL), whose width can
+                // differ from the routine's `void *` parameter under LP64
+                val param =
+                  startRoutine.getParams().getOrNull(1)?.first?.let {
+                    CComplexType.getType(it.ref, parseContext).castTo(invokeLabel.params[4])
+                  } ?: invokeLabel.params[4]
                 // int(0) to solve StartLabel not handling return params
                 addSeq(
                   listOf(
@@ -450,7 +456,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
-
   private fun choiceVar(builder: XcfaProcedureBuilder): VarDecl<BoolType> =
     Decls.Var("__theta_pthread_choice_${uniqueCounter++}", Bool()).also(builder::addVar)
 
@@ -471,7 +476,6 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     val offset = CComplexType.getSignedLong(parseContext).nullValue
     return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
   }
-
 
   private fun checkMutexDecl(mutex: Decl<*>, builder: XcfaProcedureBuilder) {
     check(mutex is VarDecl<*> && mutex in builder.parent.getVars().map { it.wrappedVar }) {
