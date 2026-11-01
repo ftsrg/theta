@@ -1924,41 +1924,33 @@ public final class ExprSimplifier {
     }
 
     private Expr<FpType> simplifyFpAdd(final FpAddExpr expr, final Valuation val) {
+        // An n-ary addition is a left fold, and IEEE addition is neither associative nor has 0.0
+        // as identity (-0.0 + 0.0 is 0.0): only a left-nested addition and a leading run of
+        // literals may be folded.
         final List<Expr<FpType>> ops = new ArrayList<>();
-
         for (final Expr<FpType> op : expr.getOps()) {
-            final Expr<FpType> opVisited = simplify(op, val);
-            if (opVisited instanceof FpAddExpr) {
-                final FpAddExpr addOp = (FpAddExpr) opVisited;
-                ops.addAll(addOp.getOps());
-            } else {
-                ops.add(opVisited);
-            }
+            ops.add(simplify(op, val));
         }
-        final FpLitExpr zero =
-                FpUtils.bigFloatToFpLitExpr(
-                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-        FpLitExpr value = zero;
-
-        for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-            final Expr<FpType> op = iterator.next();
-            if (op instanceof FpLitExpr) {
-                final FpLitExpr litOp = (FpLitExpr) op;
-                value = value.add(expr.getRoundingMode(), litOp);
-                iterator.remove();
-            }
+        if (ops.get(0) instanceof FpAddExpr first
+                && first.getRoundingMode() == expr.getRoundingMode()) {
+            ops.remove(0);
+            ops.addAll(0, first.getOps());
         }
 
-        if (!value.equals(zero)) {
-            ops.add(value);
+        FpLitExpr value = null;
+        int literals = 0;
+        while (literals < ops.size() && ops.get(literals) instanceof FpLitExpr litOp) {
+            value = value == null ? litOp : value.add(expr.getRoundingMode(), litOp);
+            literals++;
         }
-
-        if (ops.isEmpty()) {
-            return zero;
-        } else if (ops.size() == 1) {
-            return Utils.singleElementOf(ops);
+        if (literals == ops.size()) {
+            return value;
+        } else if (literals > 1) {
+            final List<Expr<FpType>> rest = new ArrayList<>();
+            rest.add(value);
+            rest.addAll(ops.subList(literals, ops.size()));
+            return expr.with(rest);
         }
-
         return expr.with(ops);
     }
 
@@ -1972,13 +1964,7 @@ public final class ExprSimplifier {
             return leftLit.sub(expr.getRoundingMode(), rightLit);
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return FpUtils.bigFloatToFpLitExpr(
-                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-            }
-        }
-
+        // x - x is not 0.0 for NaN and infinities
         return expr.with(leftOp, rightOp);
     }
 
@@ -2229,12 +2215,9 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
             return lLit.neq(rLit);
-        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-                return False();
-            }
         }
 
+        // x != x holds for NaN, so it must not fold to false
         return expr.with(leftOp, rightOp);
     }
 
