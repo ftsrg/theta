@@ -29,12 +29,17 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
@@ -54,6 +59,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -61,6 +67,7 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
@@ -1273,5 +1280,78 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
     return invs
   }
   if (this is DssInvariants) return toContent(inputFile, parseContext)
+  if (this is LocationInvariants && isTransitionInvariant)
+    return transitionInvariantContent(inputFile, parseContext)
   return listOf()
+}
+
+/**
+ * Transition invariants at the C statements that start an outgoing edge, as violation witnesses
+ * place states. Unlike state invariants, they cannot be joined over several XCFA locations, so
+ * positions shared by several, or also reached inside an edge, are skipped.
+ */
+private fun LocationInvariants.transitionInvariantContent(
+  inputFile: File,
+  parseContext: ParseContext,
+): List<ContentItem> {
+  fun cNameOf(decl: VarDecl<*>) =
+    parseContext.metadata.getMetadataValue(decl.name, "cName").orElse(null) as? String
+  // A C name shared by several variables (shadowing, same-named locals) cannot be resolved
+  val shared =
+    partitions.keys
+      .flatMap { it.outgoingEdges }
+      .flatMap { it.label.collectVars() }
+      .toSet()
+      .groupBy(::cNameOf)
+      .filter { (name, vars) -> name != null && vars.size > 1 }
+      .keys
+  fun isCVar(decl: VarDecl<*>) = cNameOf(decl)?.let { it !in shared } ?: false
+  fun isAnyPrev(decl: VarDecl<*>) =
+    parseContext.metadata.getMetadataValue(decl.name, "isAnyPrev").isPresent
+  val sources = LinkedHashMap<Location, MutableSet<XcfaLocation>>()
+  val inside = HashSet<Location>()
+  for (edge in partitions.keys.flatMap { it.outgoingEdges }) {
+    edge.label.getFlatLabels().forEachIndexed { index, label ->
+      val location = getLocation(inputFile, label.metadata) ?: return@forEachIndexed
+      if (index == 0) sources.getOrPut(location) { linkedSetOf() } += edge.source
+      else inside += location
+    }
+  }
+  return sources
+    .filterKeys { it !in inside }
+    .mapNotNull { (location, locs) ->
+      val states = locs.singleOrNull()?.let { partitions[it] } ?: return@mapNotNull null
+      // Dropping conjuncts over non-C variables only weakens the relation
+      val value =
+        ExprUtils.simplify(
+          Or(
+            states.map { state ->
+              SmartBoolExprs.And(
+                ExprUtils.getConjuncts(state.toExpr()).filter {
+                  ExprUtils.getVars(it).all(::isCVar)
+                }
+              )
+            }
+          )
+        )
+      if (value == True()) return@mapNotNull null
+      val inC =
+        BasicSubstitution.builder()
+          .apply {
+            ExprUtils.getVars(value).filterNot(::isAnyPrev).forEach {
+              put(it, Var(cNameOf(it)!!, it.type).ref)
+            }
+          }
+          .build()
+          .apply(value)
+      ContentItem(
+        invariant =
+          Invariant(
+            type = InvariantType.LOCATION_TRANSITION_INVARIANT,
+            location = location,
+            value = inC.toC(parseContext),
+            format = Format.EXT_C_EXPRESSION,
+          )
+      )
+    }
 }
