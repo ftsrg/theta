@@ -228,3 +228,9 @@ char_view_of_int.c	efficient	LP64	FRONTEND-FAIL	a char view of an int object is 
 fp_self_neq_nan.c	efficient	LP64	UNSAFE	x != x on a double is not folded to false: it holds for NaN
 fp_add_zero_sign.c	efficient	LP64	SAFE	x + 0.0 is not folded to x: the sign of a zero sum differs for x = -0.0
 fp_add_no_reassoc.c	efficient	LP64	SAFE	floating-point literals are not summed across other operands of an addition
+malloc_may_fail.c	efficient	ILP32	UNSAFE	malloc may return NULL
+realloc_failure_keeps_block.c	efficient	ILP32	SAFE:valid-memsafety	a failed realloc returns NULL and keeps the old block
+calloc_failure_skips_fill.c	efficient	ILP32	SAFE:valid-memsafety	the zero-fill of calloc is skipped when it returns NULL
+calloc_into_member.c	efficient	ILP32	SAFE	calloc bound to a struct member is zero-filled
+malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a dereference is not blocked
+malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
