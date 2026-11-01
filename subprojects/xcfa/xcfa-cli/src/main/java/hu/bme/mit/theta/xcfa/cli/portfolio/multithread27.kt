@@ -22,6 +22,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelTy
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
+import hu.bme.mit.theta.xcfa.ErrorDetection.OVERFLOW
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -52,8 +53,8 @@ private val anythingButTimeout =
 
 /**
  * The SV-COMP 2027 multithreaded portfolio. It differs from [multithreadPortfolio] in its OC
- * configurations, chosen on the ConcurrencySafety category: two OC time slices lead both the
- * reachability and the data race chains.
+ * configurations, chosen on the ConcurrencySafety category: OC time slices lead the reachability,
+ * data race and overflow chains.
  */
 @Suppress("LocalVariableName")
 fun multithreadPortfolio27(
@@ -357,7 +358,12 @@ fun multithreadPortfolio27(
             )
           )
 
-          config_MULTITHREAD_EXPL_SEQ_ITP
+          if (verifiedProperty == OVERFLOW) {
+            val config_OC_OVERFLOW =
+              oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.flat, 100_000)
+            edges.add(Edge(config_OC_OVERFLOW, config_MULTITHREAD_EXPL_SEQ_ITP, anyError))
+            config_OC_OVERFLOW
+          } else config_MULTITHREAD_EXPL_SEQ_ITP
         }
       }
 
