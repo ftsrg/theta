@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -109,6 +111,28 @@ class MutexToVarPass : ProcedurePass {
 
         when (this) {
           is AtomicFenceLabel -> actions.add(this)
+
+          // Acquires a free mutex and reports success, or reports failure on a held one.
+          is MutexTryLockLabel -> {
+            val flags = blockingMutexes.map { it.mutexFlag }
+            val acquire =
+              acquiredMutexes.map { StmtLabel(AssignStmt.of(it.mutexFlag, Inc(it.mutexFlag.ref))) }
+            return setOf(
+              SequenceLabel(
+                listOf(StmtLabel(AssumeStmt.of(And(flags.map { Eq(it.ref, Int(0)) })))) +
+                  acquire +
+                  StmtLabel(copy(successful = true).toStmt()),
+                metadata,
+              ),
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Or(flags.map { Neq(it.ref, Int(0)) }))),
+                  StmtLabel(copy(successful = false).toStmt()),
+                ),
+                metadata,
+              ),
+            )
+          }
 
           is RWLockUnlockLabel -> {
             // this is a hack because RWLockUnlock unlocks both read and write locks

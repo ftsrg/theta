@@ -236,6 +236,10 @@ barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until 
 barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
 barrier_serial_once.c	efficient	ILP32	SAFE	one waiter per barrier round gets PTHREAD_BARRIER_SERIAL_THREAD
 barrier_through_pointer.c	efficient	ILP32	FRONTEND-FAIL	a barrier behind a pointer is refused
+spin_lock_mutual_exclusion.c	efficient	ILP32	SAFE	pthread_spin_lock excludes like a mutex
+mutex_timedlock_free.c	efficient	ILP32	SAFE	pthread_mutex_timedlock acquires a free mutex
+mutex_trylock_held.c	efficient	ILP32	SAFE	pthread_mutex_trylock on a held mutex fails
 calloc_into_member.c	efficient	ILP32	SAFE	calloc bound to a struct member is zero-filled
+cond_timedwait_may_time_out.c	efficient	ILP32	UNSAFE	pthread_cond_timedwait may return ETIMEDOUT
 malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a dereference is not blocked
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked

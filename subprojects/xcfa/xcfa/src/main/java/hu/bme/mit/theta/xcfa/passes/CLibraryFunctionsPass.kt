@@ -20,8 +20,12 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
@@ -29,6 +33,9 @@ import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -87,7 +94,12 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       "pthread_key_create",
       "pthread_getspecific",
       "pthread_setspecific",
-    )
+      "pthread_mutex_timedlock",
+      "pthread_cond_timedwait",
+      "pthread_spin_lock",
+      "pthread_spin_unlock",
+      "pthread_spin_trylock",
+    ) + NO_EFFECT_FUNCTIONS
 
   companion object {
 
@@ -100,6 +112,30 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
 
     private var uniqueCounter = 0
+
+    /** glibc's `ETIMEDOUT`. */
+    private const val ETIMEDOUT = 110
+
+    /**
+     * Initialization and attributes whose only effects are process sharing, which matters only
+     * across `fork` (never modeled), and scheduling, which constrains no interleaving.
+     */
+    private val NO_EFFECT_FUNCTIONS =
+      setOf(
+        "pthread_spin_init",
+        "pthread_spin_destroy",
+        "pthread_mutexattr_setpshared",
+        "pthread_mutexattr_setprotocol",
+        "pthread_mutexattr_setprioceiling",
+        "pthread_condattr_init",
+        "pthread_condattr_destroy",
+        "pthread_condattr_setpshared",
+        "pthread_condattr_setclock",
+        "pthread_rwlockattr_init",
+        "pthread_rwlockattr_destroy",
+        "pthread_rwlockattr_setpshared",
+        "pthread_rwlockattr_setkind_np",
+      )
   }
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
@@ -133,10 +169,19 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             val addSingle = { label: XcfaLabel ->
               builder.addEdge(XcfaEdge(it.source, target, SequenceLabel(listOf(label)), metadata))
             }
-            val addSeq = { labels: List<XcfaLabel> ->
-              XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
+            val addSeqFrom = { source: XcfaLocation, labels: List<XcfaLabel> ->
+              XcfaEdge(source, target, SequenceLabel(labels), metadata)
                 .splitIf { label -> label is MutexUnlockLabel || label is MutexLockLabel }
                 .forEach(builder::addEdge)
+            }
+            val addSeq = { labels: List<XcfaLabel> -> addSeqFrom(it.source, labels) }
+            val assignRet = { value: Int ->
+              val ret = invokeLabel.params[0]
+              AssignStmtLabel(
+                ret as RefExpr<*>,
+                CComplexType.getType(ret, parseContext).getValue("$value"),
+                metadata,
+              )
             }
 
             // list of edges, where an edge consists of a list of labels (for a SequenceLabel)
@@ -229,6 +274,74 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 addSingle(MutexTryLockLabel(handle, ret, metadata))
               }
 
+              // Timing out is possible exactly when the mutex is held, as a failing trylock is.
+              "pthread_mutex_timedlock" -> {
+                val handle = invokeLabel.getMutexHandle()
+                val choice = choiceVar(builder)
+                val choose =
+                  XcfaLocation(
+                    "${it.source.name}_timedlock${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                builder.addEdge(
+                  XcfaEdge(
+                    it.source,
+                    choose,
+                    SequenceLabel(listOf(StmtLabel(Havoc(choice)))),
+                    metadata,
+                  )
+                )
+                addSeqFrom(
+                  choose,
+                  listOf(
+                    StmtLabel(Assume(choice.ref)),
+                    MutexLockLabel(handle, metadata),
+                    assignRet(0),
+                  ),
+                )
+                val tryLock = MutexTryLockLabel(handle, invokeLabel.getParam(0), metadata)
+                addSeqFrom(choose, listOf(StmtLabel(Assume(Not(choice.ref))), tryLock))
+              }
+
+              "pthread_cond_timedwait" -> {
+                invokeLabel.markSyncParam(1)
+                val handle = invokeLabel.getMutexHandle(2)
+                val choice = choiceVar(builder)
+                val ret = invokeLabel.params[0]
+                val retType = CComplexType.getType(ret, parseContext)
+                val timedOut =
+                  Ite<Type>(choice.ref, retType.getValue("$ETIMEDOUT"), retType.nullValue)
+                addSeq(
+                  listOf(
+                    MutexUnlockLabel(handle, metadata),
+                    MutexLockLabel(handle, metadata),
+                    StmtLabel(Havoc(choice)),
+                    AssignStmtLabel(ret as RefExpr<*>, timedOut, metadata),
+                  )
+                )
+              }
+
+              // A spin lock is a mutex that busy-waits, which no interleaving tells apart.
+              "pthread_spin_lock" -> {
+                addSeq(listOf(MutexLockLabel(invokeLabel.getMutexHandle(), metadata), assignRet(0)))
+              }
+
+              "pthread_spin_unlock" -> {
+                addSeq(
+                  listOf(MutexUnlockLabel(invokeLabel.getMutexHandle(), metadata), assignRet(0))
+                )
+              }
+
+              "pthread_spin_trylock" -> {
+                val ret = invokeLabel.getParam(0)
+                addSingle(MutexTryLockLabel(invokeLabel.getMutexHandle(), ret, metadata))
+              }
+
+              in NO_EFFECT_FUNCTIONS -> {
+                invokeLabel.markSyncParam(1)
+                addSingle(assignRet(0))
+              }
+
               "pthread_rwlock_rdlock" -> {
                 val handle = invokeLabel.getMutexHandle()
                 addSingle(RWLockReadLockLabel(handle, metadata))
@@ -316,6 +429,9 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
     return builder
   }
+
+  private fun choiceVar(builder: XcfaProcedureBuilder): VarDecl<BoolType> =
+    Decls.Var("__theta_pthread_choice_${uniqueCounter++}", Bool()).also(builder::addVar)
 
   private fun checkMutexDecl(mutex: Decl<*>, builder: XcfaProcedureBuilder) {
     check(mutex is VarDecl<*> && mutex in builder.parent.getVars().map { it.wrappedVar }) {
