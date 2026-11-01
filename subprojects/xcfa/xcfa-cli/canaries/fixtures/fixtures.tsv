@@ -225,3 +225,6 @@ unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex
 sizeof_is_size_t.c	bitvector	LP64	SAFE	sizeof is a size_t: no 32-bit wraparound, never negative
 char_view_of_int.c	efficient	LP64	SAFE	a char view of an int object addresses bytes (falls back to bytes)
 char_view_of_int.c	efficient	LP64	FRONTEND-FAIL	a char view of an int object is refused under the cell models	flat
+fp_self_neq_nan.c	efficient	LP64	UNSAFE	x != x on a double is not folded to false: it holds for NaN
+fp_add_zero_sign.c	efficient	LP64	SAFE	x + 0.0 is not folded to x: the sign of a zero sum differs for x = -0.0
+fp_add_no_reassoc.c	efficient	LP64	SAFE	floating-point literals are not summed across other operands of an addition
