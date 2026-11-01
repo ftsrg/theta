@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
+import java.util.Map;
 
 public class CWhile extends CStatement {
 
@@ -37,6 +39,17 @@ public class CWhile extends CStatement {
 
     public CStatement getGuard() {
         return guard;
+    }
+
+    // the variables in scope where the controlling expression is evaluated, by C name
+    private Map<String, VarDecl<?>> variablesAtGuard = Map.of();
+
+    public Map<String, VarDecl<?>> getVariablesAtGuard() {
+        return variablesAtGuard;
+    }
+
+    public void setVariablesAtGuard(Map<String, VarDecl<?>> variablesAtGuard) {
+        this.variablesAtGuard = variablesAtGuard;
     }
 
     @Override

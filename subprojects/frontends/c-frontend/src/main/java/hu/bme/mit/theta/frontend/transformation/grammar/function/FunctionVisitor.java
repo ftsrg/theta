@@ -238,6 +238,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         scopedRegistered.pop();
     }
 
+    /** The variable each C name refers to here: the innermost declaration, if not a function. */
+    private Map<String, VarDecl<?>> variablesInScope() {
+        final Map<String, VarDecl<?>> innermost = new LinkedHashMap<>();
+        for (Tuple2<String, Map<String, VarDecl<?>>> scope : variables) {
+            scope.get2().forEach(innermost::putIfAbsent);
+        }
+        innermost.values().removeIf(functions::containsKey);
+        return innermost;
+    }
+
     /**
      * Records that {@code varDecl} names a stack object whose lifetime ends with the current scope.
      */
@@ -1048,9 +1058,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
         final int whileMark = scopeMark();
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement body = withScopeReleases(ctx.statement().accept(this), whileMark);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CWhile cWhile = new CWhile(body, guard, parseContext);
+        cWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cWhile);
         popScope();
         return cWhile;
@@ -1069,9 +1081,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
         final int doWhileMark = scopeMark();
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement body = withScopeReleases(ctx.statement().accept(this), doWhileMark);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CDoWhile cDoWhile = new CDoWhile(body, guard, parseContext);
+        cDoWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cDoWhile);
         popScope();
         return cDoWhile;
@@ -1093,6 +1107,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         final var forCondition = ctx.forCondition();
         CStatement init =
                 inFullExpression(forCondition.forInit(), () -> forCondition.forInit().accept(this));
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement test =
                 inFullExpression(forCondition.forTest(), () -> forCondition.forTest().accept(this));
         if (test == null) {
@@ -1121,6 +1136,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         test,
                         incr,
                         parseContext);
+        cFor.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cFor);
         popScope();
         return cFor;
