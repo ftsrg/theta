@@ -410,7 +410,7 @@ final class Z3TermTransformer {
                 createEntryExprs(funcInterp, model, vars);
         final Expr<?> elseExpr = defaultingTransform(funcInterp.getElse(), model, vars);
 
-        if (funcDecl.getRange() instanceof ArraySort sort) {
+        if (funcDecl.getArity() == 0 && funcDecl.getRange() instanceof ArraySort sort) {
             return createArrayLitExpr(sort, entryExprs, elseExpr);
         } else {
             return this.createIndexValueArrayLitExpr(
@@ -470,6 +470,10 @@ final class Z3TermTransformer {
         } else if (term.isConstantArray()) {
             return transformArrLit(term, model, vars);
 
+        } else if (term.isAsArray()) {
+            final FuncDecl function = term.getFuncDecl().getParameters()[0].getFuncDecl();
+            return toArrayLitExpr(function, model, vars);
+
         } else if (term.isApp()) {
             if (term.getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR)) {
                 final EnumType enumType = (EnumType) transformSort(term.getSort());
@@ -515,7 +519,7 @@ final class Z3TermTransformer {
         final ArrayExpr arrayExpr = (ArrayExpr) term;
         final ArraySort sort = (ArraySort) arrayExpr.getSort();
         return createArrayLitExpr(
-                sort, Arrays.asList(), transform(arrayExpr.getArgs()[0], model, vars));
+                sort, Arrays.asList(), defaultingTransform(arrayExpr.getArgs()[0], model, vars));
     }
 
     private Expr<?> transformBvLit(final com.microsoft.z3legacy.Expr term) {
