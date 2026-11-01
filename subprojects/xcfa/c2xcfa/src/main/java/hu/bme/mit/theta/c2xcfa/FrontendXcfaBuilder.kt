@@ -82,7 +82,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
-import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -336,7 +335,7 @@ class FrontendXcfaBuilder(
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val ghosts =
         if (parseContext.memoryModel.flatAddressing())
           listOf("__theta_ptr_size", OBJ_EXTENT_VAR, OBJ_HEAP_VAR)
@@ -623,7 +622,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     parentBase: Int,
   ) {
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val fitsall = Fitsall(null, parseContext)
       val size = if (type.isUnion) unionCellCount(type) else type.unitCount
       initStmtList.add(builder.allocate(parseContext, objectExpr, fitsall.getValue("$size")))
@@ -1051,7 +1050,7 @@ class FrontendXcfaBuilder(
         )
       )
       recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
-      if (MemsafetyPass.enabled) {
+      if (parseContext.isCheckMemsafety) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
         // expression cannot be used directly: types registered by the early typedef pass carry
@@ -1235,7 +1234,7 @@ class FrontendXcfaBuilder(
       )
     )
     recordStaticObject(objectBase, type, target, parentCell(target))
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val size = CComplexType.getUnsignedLong(parseContext).getValue(bytes.toString())
       initStmtList.add(builder.allocate(parseContext, target, size))
     }

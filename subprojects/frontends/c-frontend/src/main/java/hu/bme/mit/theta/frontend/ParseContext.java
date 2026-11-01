@@ -53,9 +53,8 @@ public class ParseContext {
      * <p>The frontend emits object-lifetime bookkeeping (see {@code FunctionVisitor}'s scope-end
      * releases) that only the memory-safety checks read. Under any other property that bookkeeping
      * would be pure cost -- and worse, an observable change to a model nothing asks a question of
-     * -- so it is gated on this. The c-frontend module cannot see {@code MemsafetyPass.enabled},
-     * which is where the same decision is recorded on the pass side; both are set from the same
-     * property.
+     * -- so it is gated on this. The XCFA passes read it as well, so the frontend and the
+     * memory-safety instrumentation always agree.
      */
     private boolean checkMemsafety = false;
 

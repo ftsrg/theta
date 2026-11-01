@@ -204,7 +204,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             parseContext.metadata.create(varDecl.ref, "cType", ptrType)
             val assign = AssignStmtLabel(varDecl, lit)
             val labels =
-              if (MemsafetyPass.enabled) {
+              if (parseContext.isCheckMemsafety) {
                 val assign2 =
                   builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
@@ -270,7 +270,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             val units = ptrType.getValue(referencedUnits(ptrType.embeddedType).toString())
             val labels =
               builder.parent.bumpAllocate(parseContext, varDecl.ref, units, heap = false) +
-                if (MemsafetyPass.enabled)
+                if (parseContext.isCheckMemsafety)
                   listOf(
                     builder.parent.allocateReferenced(
                       parseContext,
@@ -308,7 +308,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           parseContext.metadata.create(varDecl.ref, "cType", ptrType)
           val assign2 = AssignStmtLabel(varDecl, ptrVar.ref)
           val labels =
-            if (MemsafetyPass.enabled) {
+            if (parseContext.isCheckMemsafety) {
               val assign3 =
                 builder.parent.allocateReferenced(parseContext, varDecl.ref, ptrType.embeddedType)
 
