@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.c2xcfa.targetPosition
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -371,6 +372,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                     statement.colNumberStop + 1 == loc.column) &&
                   label is StmtLabel &&
                   label.stmt is HavocStmt<*>
+              } else if (
+                wp.waypoint.type == WaypointType.TARGET &&
+                  label.metadata.targetPosition()?.let {
+                    it.line == loc.line && (loc.column == null || it.column + 1 == loc.column)
+                  } == true
+              ) {
+                // a target lies at the start of the violating full expression
+                true
               } else {
                 (wp.waypoint.type != WaypointType.ASSUMPTION ||
                   (edge.getCMetaData()?.notStatementStart == false &&
