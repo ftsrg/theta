@@ -232,6 +232,10 @@ malloc_may_fail.c	efficient	ILP32	UNSAFE	malloc may return NULL
 realloc_failure_keeps_block.c	efficient	ILP32	SAFE:valid-memsafety	a failed realloc returns NULL and keeps the old block
 calloc_failure_skips_fill.c	efficient	ILP32	SAFE:valid-memsafety	the zero-fill of calloc is skipped when it returns NULL
 alloca_void_pointer.c	efficient	ILP32	SAFE	an explicit alloca returning void * is lowered
+barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until count threads arrive
+barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
+barrier_serial_once.c	efficient	ILP32	SAFE	one waiter per barrier round gets PTHREAD_BARRIER_SERIAL_THREAD
+barrier_through_pointer.c	efficient	ILP32	FRONTEND-FAIL	a barrier behind a pointer is refused
 calloc_into_member.c	efficient	ILP32	SAFE	calloc bound to a struct member is zero-filled
 malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a dereference is not blocked
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
