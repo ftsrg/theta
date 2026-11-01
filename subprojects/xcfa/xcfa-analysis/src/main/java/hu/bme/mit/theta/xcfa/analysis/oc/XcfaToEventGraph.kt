@@ -32,8 +32,10 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -107,6 +109,19 @@ internal class XcfaToEventGraph(
   private val localFlows: MutableList<Expr<BoolType>> = mutableListOf()
   private val unrollExits: MutableList<UnrollExit> = mutableListOf()
 
+  /**
+   * Per started thread, a global flag its final location sets. A join reads it, so the join is
+   * ordered after the thread by that read -- which, unlike a program-order edge, binds only when
+   * the join executes. See [addJoinOrders].
+   */
+  private val doneVars = mutableMapOf<Int, VarDecl<BoolType>>()
+
+  private class PendingJoin(val finals: Set<E>, val join: E)
+
+  private val joins = mutableListOf<PendingJoin>()
+
+  private val createdKeys = mutableSetOf<Expr<*>>()
+
   private val racingGlobals: Set<VarDecl<*>> =
     xcfa.globalVars.filter { !it.threadLocal && !it.atomic }.map { it.wrappedVar }.toSet()
 
@@ -116,15 +131,47 @@ internal class XcfaToEventGraph(
    * Partitioning memory declarations by array type, offset type, and expression type as there
    * should never be data flow between events where any of these differ.
    */
+  // above its first (eager) use by [threadSpecificDecls]
+  private val maxPid by lazy {
+    var counter = 1
+    fun explore(proc: XcfaProcedure, startHistory: Set<String>) {
+      proc.edges.forEach { e ->
+        e.getFlatLabels().filterIsInstance<StartLabel>().forEach { s ->
+          if (s.name in startHistory) {
+            exit("recursive thread start")
+          }
+          counter++
+          val procedure =
+            xcfa.procedures.find { it.name == s.name } ?: exit("unknown procedure name: ${s.name}")
+          explore(procedure, startHistory + proc.name)
+        }
+      }
+    }
+
+    val initProc = xcfa.initProcedures.first().first
+    explore(initProc, setOf(initProc.name))
+    counter
+  }
+
   private val memoryDecls: Map<MemoryTypeKey, VarDecl<Type>> = createMemoryDecls()
-  private val memoryDeclSet: Set<VarDecl<*>> = memoryDecls.values.toSet()
+
+  /**
+   * Thread-specific data: per thread, a partition of slots addressed by `pthread_key_t` values
+   * (which `pthread_key_create` makes fresh, see CLibraryFunctionsPass). Not a partition of program
+   * memory: a slot used to be the key object's own memory at offset `pid`, which under the flat
+   * model is the absolute address `pid` -- some other object.
+   */
+  private val threadSpecificDecls: Map<Int, VarDecl<Type>> = createThreadSpecificDecls()
+
+  private val memoryDeclSet: Set<VarDecl<*>> =
+    memoryDecls.values.toSet() + threadSpecificDecls.values
 
   /**
    * Declarations for initial memory garbage: the values of these declarations are not constrained
    */
-  private val memoryGarbages: Map<MemoryTypeKey, IndexedConstDecl<Type>> =
-    memoryDecls
-      .mapValues { (_, decl) -> decl.getNewIndexed() }
+  private val memoryGarbages: Map<VarDecl<Type>, IndexedConstDecl<Type>> =
+    (memoryDecls.values + threadSpecificDecls.values)
+      .associateWith { it.getNewIndexed() }
       .also { XcfaEvent.memoryGarbages = it.values.toSet() }
 
   fun create(): EventGraph {
@@ -132,6 +179,7 @@ internal class XcfaToEventGraph(
     Thread.resetIds()
     ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
     addCrossThreadRelations()
+    addJoinOrders()
     return EventGraph(
       xcfa.name,
       threads,
@@ -160,9 +208,6 @@ internal class XcfaToEventGraph(
     xcfa.procedures.forEach { procedure ->
       procedure.edges.forEach { edge ->
         edge.label.dereferences.forEach { keys.add(it.memoryTypeKey) }
-        edge.getFlatLabels().filterIsInstance<InvokeLabel>().forEach { label ->
-          pthreadSpecificKey(label)?.let { keys.add(it) }
-        }
       }
     }
     val names = mutableSetOf<String>()
@@ -176,23 +221,26 @@ internal class XcfaToEventGraph(
       }
   }
 
-  /**
-   * `pthread_{get,set}specific` and `pthread_key_create` are modelled with dereferences synthesised
-   * in [ThreadProcessor.process] that are not present in the XCFA itself, so their partitions have
-   * to be registered separately.
-   */
-  private fun pthreadSpecificKey(label: InvokeLabel): MemoryTypeKey? {
-    val keyType =
-      when (label.name) {
-        "pthread_getspecific",
-        "pthread_setspecific" -> (label.params.getOrNull(1) as? Dereference<*, *, *>)?.array?.type
-
-        "pthread_key_create" ->
-          ((label.params.getOrNull(1) as? RefExpr<*>)?.decl as? VarDecl<*>)?.type
-
-        else -> null
-      } ?: return null
-    return MemoryTypeKey(keyType, Int(), Int())
+  private fun createThreadSpecificDecls(): Map<Int, VarDecl<Type>> {
+    val labels =
+      xcfa.procedures
+        .flatMap { it.edges }
+        .flatMap { it.getFlatLabels() }
+        .filterIsInstance<InvokeLabel>()
+    // the slots hold `void *` values: the result of a get, the value of a set
+    val types =
+      labels
+        .mapNotNull {
+          when (it.name) {
+            "pthread_getspecific" -> it.params[0].type
+            "pthread_setspecific" -> it.params[2].type
+            else -> null
+          }
+        }
+        .toSet()
+    if (types.size > 1) exit("thread-specific values of different types: $types")
+    val type = types.singleOrNull() ?: return mapOf()
+    return (0 until maxPid).associateWith { Decls.Var("__oc_thread_specific_$it", type) }
   }
 
   private val Dereference<*, *, *>.memoryDecl: VarDecl<Type>
@@ -217,6 +265,47 @@ internal class XcfaToEventGraph(
     }
   }
 
+  /**
+   * Program order is unconditional: [pos] is closed into a static order, which also orders events
+   * that execute without the join through the join's own program-order successors. After `if (c)
+   * pthread_join(t, 0);`, the merged path would then always come after `t` -- whether or not the
+   * join ran -- and its bugs and races with `t` were lost. The thread-to-join edges are therefore
+   * added only when every event after the join implies that it executed (the usual straight-line
+   * join); otherwise the read of the thread's done flag orders the join, and only when it runs.
+   */
+  private fun addJoinOrders() {
+    val successors = pos.groupBy({ it.from }, { it.to })
+    for ((finals, join) in joins.map { it.finals to it.join }) {
+      val seen = mutableSetOf(join)
+      val todo = ArrayDeque(listOf(join))
+      var unconditional = true
+      val implied = join.guard.associateWith { mutableMapOf<Expr<BoolType>, Boolean>() }
+      while (unconditional && todo.isNotEmpty()) {
+        val e = todo.removeFirst()
+        if (!implied.all { (c, memo) -> e.guard.any { it.implies(c, memo) } }) unconditional = false
+        successors[e]?.forEach { if (seen.add(it)) todo.add(it) }
+      }
+      if (unconditional) finals.forEach { po(it, join) }
+    }
+  }
+
+  /**
+   * A structural (incomplete, but sound) check that [this] implies [c]: merges after the join wrap
+   * its guard in an `Or` of the branches, each of which still conjoins it.
+   */
+  private fun Expr<BoolType>.implies(
+    c: Expr<BoolType>,
+    memo: MutableMap<Expr<BoolType>, Boolean>,
+  ): Boolean =
+    this == c ||
+      memo.getOrPut(this) {
+        when (this) {
+          is AndExpr -> ops.any { it.implies(c, memo) }
+          is OrExpr -> ops.all { it.implies(c, memo) }
+          else -> false
+        }
+      }
+
   private inner class ThreadProcessor(
     private val thread: Thread,
     addMemoryGarbage: Boolean = false,
@@ -230,7 +319,10 @@ internal class XcfaToEventGraph(
 
     // SSA value of each thread-local variable: local reads are bound to it instead of rf edges
     private lateinit var localValues: MutableMap<VarDecl<*>, IndexedConstDecl<*>>
-    private val memoryWrites = mutableMapOf<MemoryTypeKey, MutableSet<E>>()
+    private val memoryWrites = mutableMapOf<VarDecl<*>, MutableSet<E>>()
+
+    /** A thread-specific slot access being processed, and the partition it belongs to. */
+    private var threadSpecificSlot: Pair<Dereference<*, *, *>, VarDecl<Type>>? = null
     private lateinit var edge: XcfaEdge
     private var inEdge = false
     private var atomicBlock: Int? = null
@@ -243,14 +335,11 @@ internal class XcfaToEventGraph(
       if (addMemoryGarbage) {
         val firstEdge = thread.procedure.initLoc.outgoingEdges.first()
         last =
-          memoryGarbages.map { (key, garbage) ->
+          memoryGarbages.map { (decl, garbage) ->
             val e = E(garbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
             e.assignment = True()
-            memoryWrites.getOrPut(key) { mutableSetOf() }.add(e)
-            events
-              .getOrPut(memoryDecls.getValue(key)) { mutableMapOf() }
-              .getOrPut(thread.pid) { mutableListOf() }
-              .add(e)
+            memoryWrites.getOrPut(decl) { mutableSetOf() }.add(e)
+            events.getOrPut(decl) { mutableMapOf() }.getOrPut(thread.pid) { mutableListOf() }.add(e)
             e
           }
       }
@@ -294,8 +383,8 @@ internal class XcfaToEventGraph(
       useProvidedConst: Boolean = false,
     ): List<E> {
       check(!inEdge || last.size == 1)
-      val key = deref.memoryTypeKey
-      val decl = deref.memoryDecl
+      val decl =
+        threadSpecificSlot?.takeIf { (slot, _) -> slot === deref }?.second ?: deref.memoryDecl
       val array = deref.array.with(consts)
       val offset = deref.offset.with(consts)
       val clkId =
@@ -323,10 +412,10 @@ internal class XcfaToEventGraph(
       when (type) {
         // only same-partition writes can be observed (see MemoryTypeKey)
         READ ->
-          memoryWrites[key]?.forEach {
+          memoryWrites[decl]?.forEach {
             if (it.potentialSameMemory(e)) rfs.add(RelationType.RF, it, e)
           }
-        WRITE -> memoryWrites.getOrPut(key) { mutableSetOf() }.add(e)
+        WRITE -> memoryWrites.getOrPut(decl) { mutableSetOf() }.add(e)
       }
       events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
       return listOf(e)
@@ -390,7 +479,21 @@ internal class XcfaToEventGraph(
         }
 
         if (current.loc.final) {
-          thread.finalEvents.addAll(current.lastEvents)
+          val doneEdge = current.loc.incomingEdges.firstOrNull()
+          if (thread.pidVar != null && doneEdge != null) {
+            val done = doneVars.getOrPut(pid) { Decls.Var("__oc_thread_done_$pid", Bool()) }
+            edge = doneEdge
+            inEdge = false
+            atomicBlock = current.atomics.firstOrNull()
+            last = current.lastEvents
+            guard = current.guards.toOrInSet()
+            lastWrites = current.lastWrites.merge().toMutableMap()
+            val write = event(done, WRITE).first()
+            write.assignment = True()
+            thread.finalEvents.add(write)
+          } else {
+            thread.finalEvents.addAll(current.lastEvents)
+          }
         }
 
         val mergedGuard = current.guards.toOrInSet()
@@ -650,7 +753,13 @@ internal class XcfaToEventGraph(
       threadLookup[pidVar]?.forEach { (g, thread) ->
         guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
         val joinEvent = event(this.pidVar, READ).first()
-        thread.finalEvents.forEach { final -> po(final, joinEvent) }
+        doneVars[thread.pid]?.let { done ->
+          val incoming = last
+          last = listOf(joinEvent)
+          event(done, READ)
+          last = incoming
+        }
+        joins.add(PendingJoin(thread.finalEvents.toSet(), joinEvent))
         lastEvents.add(joinEvent)
         joinGuards.add(guard)
         thread.joinEvents.add(joinEvent)
@@ -663,8 +772,30 @@ internal class XcfaToEventGraph(
       if (this !is AtomicFenceLabel) {
         exit("untransformed fence label: $this")
       }
-      if (this is AtomicBeginLabel) atomicBlock = E.uniqueClkId()
+      // a block begun mid-edge continues the edge's atomic unit
+      if (this is AtomicBeginLabel) {
+        atomicBlock = if (inEdge) last.first().clkId else E.uniqueClkId()
+      }
       if (this is AtomicEndLabel) atomicBlock = null
+    }
+
+    /** The pthread functions' `int` result: 0, as they do not fail. */
+    private fun <T : Type> VarDecl<T>.assignZero() = Assign(this, type.integerOf(0)).process()
+
+    /** Processes [access] of the slot of [key] in thread [slotPid]. */
+    private fun threadSpecific(
+      key: Expr<*>,
+      slotPid: Int,
+      access: (Dereference<*, *, Type>) -> Unit,
+    ) {
+      val decl = threadSpecificDecls[slotPid] ?: exit("no thread-specific slot for thread $slotPid")
+      val slot = Dereference.of(cast(key, key.type), Int(0), decl.type)
+      threadSpecificSlot = slot to decl
+      try {
+        access(slot)
+      } finally {
+        threadSpecificSlot = null
+      }
     }
 
     private fun InvokeLabel.process() {
@@ -680,35 +811,32 @@ internal class XcfaToEventGraph(
       when (name) {
         "pthread_getspecific" -> {
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
-          val key = (params[1] as Dereference<*, *, *>).array
-          val deref = Dereference.of(key, Int(pid), Int())
-          val assign = Assign(cast(ret, Int()), deref)
-          assign.process()
+          threadSpecific(params[1], pid) { slot -> Assign(cast(ret, slot.type), slot).process() }
         }
 
         "pthread_setspecific" -> {
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
-          val key = (params[1] as Dereference<*, *, *>).array
-          val deref = Dereference.of(key, Int(pid), Int())
-          val memAssign = MemoryAssignStmt.of(deref, cast(params[2], Int()))
-          memAssign.process()
-          val assign = Assign(cast(ret, Int()), Int(0))
-          assign.process()
+          threadSpecific(params[1], pid) { slot ->
+            MemoryAssignStmt.of(slot, cast(params[2], slot.type)).process()
+          }
+          ret.assignZero()
         }
 
         "pthread_key_create" -> {
-          val isNull = Eq(params[2], Int(0))
+          val isNull = Eq(params[2], params[2].type.integerOf(0))
           if (ExprSimplifier.create().simplify(isNull, ImmutableValuation.empty()) != True()) {
             exit("pthread_key_create with non-null destructor")
           }
+          // the key is fresh per call site (CLibraryFunctionsPass): executing it twice would
+          // reuse it, and the two keys would share their slots
+          if (!createdKeys.add(params[1])) exit("pthread_key_create executed more than once")
           val ret = (params[0] as RefExpr<*>).decl as VarDecl<*>
-          repeat(maxPid) { i ->
-            val deref = Dereference.of(params[1], Int(i), Int())
-            val default = MemoryAssignStmt.of(deref, Int(0))
-            default.process()
+          threadSpecificDecls.keys.forEach { i ->
+            threadSpecific(params[1], i) { slot ->
+              MemoryAssignStmt.of(slot, slot.type.integerOf(0)).process()
+            }
           }
-          val assign = Assign(cast(ret, Int()), Int(0))
-          assign.process()
+          ret.assignZero()
         }
 
         else -> {
@@ -758,7 +886,9 @@ internal class XcfaToEventGraph(
 
   private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
     if (
-      this !in memoryDeclSet && xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
+      this !in memoryDeclSet &&
+        doneVars.values.none { it == this } &&
+        xcfa.globalVars.none { it.wrappedVar == this && !it.threadLocal }
     ) {
       // if not global var
       cast(
@@ -768,27 +898,6 @@ internal class XcfaToEventGraph(
         type,
       )
     } else this
-
-  private val maxPid by lazy {
-    var counter = 1
-    fun explore(proc: XcfaProcedure, startHistory: Set<String>) {
-      proc.edges.forEach { e ->
-        e.getFlatLabels().filterIsInstance<StartLabel>().forEach { s ->
-          if (s.name in startHistory) {
-            exit("recursive thread start")
-          }
-          counter++
-          val procedure =
-            xcfa.procedures.find { it.name == s.name } ?: exit("unknown procedure name: ${s.name}")
-          explore(procedure, startHistory + proc.name)
-        }
-      }
-    }
-
-    val initProc = xcfa.initProcedures.first().first
-    explore(initProc, setOf(initProc.name))
-    counter
-  }
 
   private fun exit(msg: String): Nothing {
     error("Feature not supported by OC checker: $msg.")

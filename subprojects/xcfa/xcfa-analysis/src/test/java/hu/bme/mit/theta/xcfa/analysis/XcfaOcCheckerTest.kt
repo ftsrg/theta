@@ -20,6 +20,7 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -74,8 +75,14 @@ class XcfaOcCheckerTest {
           arrayOf("/23atomic_loop_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/27overwrite_in_atomic_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/28overwrite_in_atomic_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/29alloca_thread_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/31conditional_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
         )
-      }
+      } +
+        // the propagator fails to look up the rf terms of this program's memory accesses
+        OcDecisionProcedureType.entries
+          .filter { it != OcDecisionProcedureType.PROPAGATOR }
+          .map { arrayOf("/30atomic_memassign_safe.c", it, SafetyResult<*, *>::isSafe) }
 
     @JvmStatic
     fun dataRaceData(): Collection<Array<Any>> =
@@ -95,6 +102,8 @@ class XcfaOcCheckerTest {
         arrayOf("/21race_atomic_abort_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/22race_atomic_reach_error_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/24race_atomic_abort_write.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/33struct_array_field_norace.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/34struct_array_field_race.c", SafetyResult<*, *>::isUnsafe),
       )
 
     @BeforeAll
@@ -196,6 +205,14 @@ class XcfaOcCheckerTest {
     println("Testing $program for data races with IDL...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     Assertions.assertTrue(verdict(check(program, property, OcDecisionProcedureType.IDL)))
+  }
+
+  @Test
+  fun testThreadLocalUnsupported() {
+    // one object per thread, but built as a single shared global: refused instead
+    Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
+      check("/32thread_local_unsupported.c", property, OcDecisionProcedureType.IDL)
+    }
   }
 
   @Test

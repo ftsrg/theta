@@ -344,6 +344,14 @@ class FrontendXcfaBuilder(
       ghosts.forEach { addGhostArray(builder, it, initStmtList) }
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
+      // A thread-local variable is one object per thread, but it is built here as a single global,
+      // which every thread would share: wrong values and false races. Exact without threads.
+      if (parseContext.multiThreading && globalDeclaration.get1().actualType.isThreadLocal) {
+        throw UnsupportedFrontendElementException(
+          "Thread-local variables are not supported in multithreaded programs: " +
+            globalDeclaration.get1().name
+        )
+      }
       initializeGlobalVariable(
         builder,
         globalDeclaration.get2().ref,
@@ -2289,6 +2297,19 @@ class FrontendXcfaBuilder(
         val (byValue, prep) = copyStructArgument(builder, argExpr, argType, getMetadata(statement))
         prepLabels.addAll(prep)
         params.add(byValue)
+      } else if (
+        !parseContext.memoryModel.flatAddressing() &&
+          (argType is CPointer || argType is CArray) &&
+          argExpr !is hu.bme.mit.theta.core.type.anytype.Reference<*, *> &&
+          argExpr.hasArithmetic()
+      ) {
+        // Passing a pointer is assigning it to the parameter, so it needs the same reading as
+        // `p = q + i` (see the assignment above): passed raw, `&a[i]` on an array of structs was
+        // the integer `a + i*k`, a base id of no object, and the callee accessed garbage cells.
+        params.add(
+          argExpr.asPointerArithReference(argType, parseContext)
+            ?: throw UnsupportedPointerSplitException("Pointer arithmetic not supported: $argExpr")
+        )
       } else {
         params.add(argExpr)
       }
@@ -2997,6 +3018,15 @@ private fun <T : Type> Expr<T>.replaceExpr(target: Expr<*>, replacement: Expr<*>
   else this.withOps(this.ops.map { (it as Expr<Type>).replaceExpr(target, replacement) }) as Expr<T>
 
 /**
+ * Whether pointers to these two types step over the same elements: any two scalars (one cell each),
+ * or equal aggregates. Pointers are scalars too.
+ */
+private fun CComplexType.sameElementAs(other: CComplexType): Boolean {
+  fun CComplexType.aggregate() = this is CStruct || this is CArray
+  return if (aggregate() || other.aggregate()) this == other else true
+}
+
+/**
  * Reads a `pointer + integer(s)` expression as the address of an element -- `q + i` as `&q[i]`,
  * i.e. `ref(deref(q, i))` -- so it can be assigned to a pointer variable through
  * [hu.bme.mit.theta.xcfa.passes.ReferenceElimination]'s base/offset split. Subtraction arrives here
@@ -3022,6 +3052,13 @@ private fun Expr<*>.asPointerArithReference(
       is CArray -> baseType.embeddedType
       else -> return null
     }
+  // The index counts elements of the arithmetic's own pointee: in `(char *)p - k` that is bytes,
+  // not elements of `p`'s pointee, so reading it as `&p[-k]` lands in the wrong cell (the
+  // `container_of` idiom read a garbage cell). Such a reinterpreting step is refused.
+  val arithElemType =
+    (runCatching { CComplexType.getType(this, parseContext) }.getOrNull() as? CPointer)
+      ?.embeddedType
+  if (arithElemType != null && !arithElemType.sameElementAs(elemType)) return null
   // The net index: the arithmetic with the pointer contribution removed. Cast to a *signed* long so
   // subtraction (which arrives as `+ (-i)`) and the accumulated offset of chained arithmetic
   // compose
