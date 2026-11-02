@@ -58,9 +58,8 @@ class UnusedVarPass(
 
   private val memoryWriteRemoval = parseContext?.let(::UnusedMemoryWriteRemoval)
 
-  companion object {
-    var keepGlobalVariableAccesses = false
-  }
+  // a race may involve a global access whose value is never read
+  private val keepGlobalVariableAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val isOverflow = property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false
@@ -110,11 +109,7 @@ class UnusedVarPass(
           }
         }
       }
-      if (
-        !keepGlobalVariableAccesses &&
-          !isOverflow &&
-          property?.inputProperty != ErrorDetection.DATA_RACE
-      ) {
+      if (!keepGlobalVariableAccesses && !isOverflow) {
         memoryWriteRemoval?.run(builder.parent.getProcedures())
       }
 
