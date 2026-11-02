@@ -231,6 +231,11 @@ private fun frontend(
     return config.inputConfig.xcfaWCtx!!
   }
 
+  // The passes transform the property while building the model (e.g., overflow to error location).
+  // A property inherited from an earlier build (a portfolio step's serialized config) must not
+  // carry that transformation into this one, or passes keyed on it misbehave.
+  config.inputConfig.property = config.inputConfig.property.untransformed()
+
   val cConfig = config.frontendConfig.specConfig as? CFrontendConfig
   val mayFallBackToFlat =
     config.frontendConfig.inputType == InputType.C && cConfig != null && cConfig.memoryModel == null
