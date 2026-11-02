@@ -249,3 +249,4 @@ calloc_into_member.c	efficient	ILP32	SAFE	calloc bound to a struct member is zer
 cond_timedwait_may_time_out.c	efficient	ILP32	UNSAFE	pthread_cond_timedwait may return ETIMEDOUT
 malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a dereference is not blocked
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
+flat_field_after_nested_member.c	efficient	LP64	SAFE:valid-memsafety	a referenced struct spans its inline members' cells, so trailing fields stay in bounds	flat
