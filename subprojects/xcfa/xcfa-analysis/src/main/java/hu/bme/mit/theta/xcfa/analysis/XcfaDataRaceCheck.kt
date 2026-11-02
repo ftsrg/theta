@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.repatch
+import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -66,24 +67,44 @@ data class DataRaceAccess(val pid: Int, val edge: XcfaEdge, val label: XcfaLabel
 /**
  * A pair of conflicting accesses constituting a data race. [condition] is the extra path condition
  * under which the two accesses actually alias -- the aliasing condition for memory accesses, [True]
- * for a plain global-variable race.
+ * for a plain global-variable race. It holds after [prefix1] and [prefix2], the statements the two
+ * labels execute before the accesses, which may assign the variables the condition reads.
  */
 data class DataRace(
   val access1: DataRaceAccess,
   val access2: DataRaceAccess,
   val condition: Expr<BoolType>,
-)
+  val prefix1: List<Stmt> = listOf(),
+  val prefix2: List<Stmt> = listOf(),
+) {
+  /** Whether [condition] can be checked in the state before the two labels. */
+  val exact: Boolean
+    get() = prefix1.isEmpty() && prefix2.isEmpty()
+
+  /**
+   * Runs both prefixes, in either order (both are real interleavings), then assumes [condition].
+   */
+  fun conditionLabel(): XcfaLabel {
+    fun seq(stmts: List<Stmt>) =
+      SequenceLabel(stmts.map { StmtLabel(it) } + StmtLabel(AssumeStmt.of(condition)))
+    return if (prefix1.isEmpty() || prefix2.isEmpty()) seq(prefix1 + prefix2)
+    else NondetLabel(setOf(seq(prefix1 + prefix2), seq(prefix2 + prefix1)))
+  }
+}
 
 /**
- * Finds a pair of conflicting accesses (same location, different processes, at least one write, not
- * both atomic, not mutually excluded) enabled after [s], or null if no data race is possible.
+ * Finds every pair of conflicting accesses (same location, different processes, at least one write,
+ * not both atomic, not mutually excluded) that may be enabled after [s].
  *
- * The returned [DataRace] carries the racing edges and labels the concurrent-witness writer needs;
- * [getDataRaceDetector] and the trace-checker wrapper only look at [DataRace.condition]. `_Atomic`
- * accesses are excluded here (via [parseContext]), so both consumers stay atomic-aware.
+ * A [DataRace] carries the racing edges and labels the concurrent-witness writer needs, and the
+ * condition the trace-checker wrapper asserts. `_Atomic` accesses are excluded here (via
+ * [parseContext]), so all consumers stay atomic-aware.
  */
-fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseContext): DataRace? {
-  if (s.isBottom) return null
+fun findDataRaces(
+  s: XcfaState<out PtrState<out ExprState>>,
+  parseContext: ParseContext,
+): Sequence<DataRace> = sequence {
+  if (s.isBottom) return@sequence
   val xcfa = s.xcfa!!
   val processes = s.processes.entries.toList()
   for (i in processes.indices) {
@@ -108,10 +129,14 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                   (v1.access.isWritten || v2.access.isWritten) &&
                   mayExecuteConcurrently(v1, v2)
               )
-                return DataRace(
-                  DataRaceAccess(process1.key, edge1, v1.label),
-                  DataRaceAccess(process2.key, edge2, v2.label),
-                  And(concurrentExecutionCondition(v1, v2), v1.precondition, v2.precondition),
+                yield(
+                  DataRace(
+                    DataRaceAccess(process1.key, edge1, v1.label),
+                    DataRaceAccess(process2.key, edge2, v2.label),
+                    concurrentExecutionCondition(v1, v2),
+                    v1.precedingStatements,
+                    v2.precedingStatements,
+                  )
                 )
             }
           }
@@ -127,16 +152,18 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
                   mayExecuteConcurrently(m1, m2) &&
                   mayBeSameMemoryLocation(m1, m2, s)
               ) {
-                return DataRace(
-                  DataRaceAccess(process1.key, edge1, m1.label),
-                  DataRaceAccess(process2.key, edge2, m2.label),
-                  And(
-                    concurrentExecutionCondition(m1, m2),
-                    m1.precondition,
-                    m2.precondition,
-                    Eq(m1.array, m2.array),
-                    Eq(m1.offset, m2.offset),
-                  ),
+                yield(
+                  DataRace(
+                    DataRaceAccess(process1.key, edge1, m1.label),
+                    DataRaceAccess(process2.key, edge2, m2.label),
+                    And(
+                      concurrentExecutionCondition(m1, m2),
+                      Eq(m1.array, m2.array),
+                      Eq(m1.offset, m2.offset),
+                    ),
+                    m1.precedingStatements,
+                    m2.precedingStatements,
+                  )
                 )
               }
             }
@@ -145,8 +172,11 @@ fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseC
       }
     }
   }
-  return null
 }
+
+/** The first of [findDataRaces], or null if no data race is possible after [s]. */
+fun findDataRace(s: XcfaState<out PtrState<out ExprState>>, parseContext: ParseContext): DataRace? =
+  findDataRaces(s, parseContext).firstOrNull()
 
 /** Returns a predicate that checks whether data race is possible after the given state. */
 fun getDataRaceDetector(parseContext: ParseContext) =
@@ -170,29 +200,42 @@ fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
   exprTraceChecker: ExprTraceChecker<T>,
   parseContext: ParseContext,
 ): ExprTraceChecker<T> = ExprTraceChecker { trace ->
-  val t =
-    if (
-      trace.states.isEmpty() ||
-        trace.actions.isEmpty() ||
-        trace.states.last() !is XcfaState<*> ||
-        trace.actions.last() !is XcfaAction
-    ) {
-      trace
-    } else {
-      val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
-      findDataRace(lastState, parseContext)?.condition?.let { extraAssumption ->
-        Trace.of(
-          trace.states,
-          trace.actions.subList(0, trace.actions.size - 1) +
-            trace.actions.last().let {
-              (it as XcfaAction).withLabel(
-                SequenceLabel(listOf(it.label, StmtLabel(AssumeStmt.of(extraAssumption))))
-              )
-            },
-        )
-      } ?: trace
+  if (
+    trace.states.isEmpty() ||
+      trace.actions.isEmpty() ||
+      trace.states.last() !is XcfaState<*> ||
+      trace.actions.last() !is XcfaAction
+  ) {
+    return@ExprTraceChecker exprTraceChecker.check(trace)
+  }
+  val lastState = trace.states.last() as XcfaState<out PtrState<out ExprState>>
+  val races = findDataRaces(lastState, parseContext).toList()
+  if (races.isEmpty()) return@ExprTraceChecker exprTraceChecker.check(trace)
+
+  fun withLastLabel(extra: XcfaLabel) =
+    Trace.of(
+      trace.states,
+      trace.actions.subList(0, trace.actions.size - 1) +
+        trace.actions.last().let {
+          (it as XcfaAction).withLabel(SequenceLabel(listOf(it.label, extra)))
+        },
+    )
+
+  val exactRace = races.firstOrNull { it.exact }
+  if (exactRace != null) {
+    exprTraceChecker.check(withLastLabel(StmtLabel(AssumeStmt.of(exactRace.condition))))
+  } else {
+    // Every candidate's addresses are only known after statements of its own label. A refuted trace
+    // here would mark a reachable state infeasible, hiding any race after it, so only a confirmed
+    // race is reported and the analysis gives up otherwise.
+    val conditions = races.map { it.conditionLabel() }.toSet()
+    val status =
+      exprTraceChecker.check(withLastLabel(conditions.singleOrNull() ?: NondetLabel(conditions)))
+    if (status.isInfeasible) {
+      throw NotSolvableException()
     }
-  exprTraceChecker.check(t)
+    status
+  }
 }
 
 /** Applies [wrapExprTraceCheckerWithDataRaceCondition] only when the property is a data race. */
