@@ -72,7 +72,7 @@ internal class XcfaToEventGraph(
     val wss: Map<VarDecl<*>, Set<R>>,
     val violations: List<Violation>, // OR!
     val branchingConditions: List<Expr<BoolType>>,
-    val localFlows: List<Expr<BoolType>>, // data flow of thread-local variables (no rf)
+    val localFlows: List<Expr<BoolType>>, // data flow of procedure-local variables (no rf)
     val memoryDecls: Set<VarDecl<*>>,
     val memoryGarbages: Set<IndexedConstDecl<*>>,
     val unrollExits: List<UnrollExit>,
@@ -125,13 +125,6 @@ internal class XcfaToEventGraph(
   private val racingGlobals: Set<VarDecl<*>> =
     xcfa.globalVars.filter { !it.threadLocal && !it.atomic }.map { it.wrappedVar }.toSet()
 
-  /**
-   * One memory declaration per [MemoryTypeKey], typed with the partition's element type.
-   *
-   * Partitioning memory declarations by array type, offset type, and expression type as there
-   * should never be data flow between events where any of these differ.
-   */
-  // above its first (eager) use by [threadSpecificDecls]
   private val maxPid by lazy {
     var counter = 1
     fun explore(proc: XcfaProcedure, startHistory: Set<String>) {
@@ -153,6 +146,12 @@ internal class XcfaToEventGraph(
     counter
   }
 
+  /**
+   * One memory declaration per [MemoryTypeKey], typed with the partition's element type.
+   *
+   * Partitioning memory declarations by array type, offset type, and expression type as there
+   * should never be data flow between events where any of these differ.
+   */
   private val memoryDecls: Map<MemoryTypeKey, VarDecl<Type>> = createMemoryDecls()
 
   /**
@@ -215,7 +214,7 @@ internal class XcfaToEventGraph(
     return keys
       .sortedBy { it.toString() }
       .associateWith { key ->
-        var name = "__oc_memory_declaration__${key.sanitizedName}"
+        var name = "__theta_oc_memory_declaration__${key.sanitizedName}"
         while (!names.add(name)) name += "_" // types with equal sanitized names (should not happen)
         Decls.Var(name, key.elemType)
       }
@@ -240,7 +239,7 @@ internal class XcfaToEventGraph(
         .toSet()
     if (types.size > 1) exit("thread-specific values of different types: $types")
     val type = types.singleOrNull() ?: return mapOf()
-    return (0 until maxPid).associateWith { Decls.Var("__oc_thread_specific_$it", type) }
+    return (0 until maxPid).associateWith { Decls.Var("__theta_oc_thread_specific_$it", type) }
   }
 
   private val Dereference<*, *, *>.memoryDecl: VarDecl<Type>
@@ -266,12 +265,10 @@ internal class XcfaToEventGraph(
   }
 
   /**
-   * Program order is unconditional: [pos] is closed into a static order, which also orders events
-   * that execute without the join through the join's own program-order successors. After `if (c)
-   * pthread_join(t, 0);`, the merged path would then always come after `t` -- whether or not the
-   * join ran -- and its bugs and races with `t` were lost. The thread-to-join edges are therefore
-   * added only when every event after the join implies that it executed (the usual straight-line
-   * join); otherwise the read of the thread's done flag orders the join, and only when it runs.
+   * Orders a joined thread's final events before the join only when every event after the join
+   * implies that it executed: [pos] is closed statically, so after `if (c) pthread_join(t, 0);` an
+   * unconditional order would put the merged path after `t` even when the join did not run. A
+   * conditional join is ordered by the read of the thread's done flag instead.
    */
   private fun addJoinOrders() {
     val successors = pos.groupBy({ it.from }, { it.to })
@@ -481,7 +478,7 @@ internal class XcfaToEventGraph(
         if (current.loc.final) {
           val doneEdge = current.loc.incomingEdges.firstOrNull()
           if (thread.pidVar != null && doneEdge != null) {
-            val done = doneVars.getOrPut(pid) { Decls.Var("__oc_thread_done_$pid", Bool()) }
+            val done = doneVars.getOrPut(pid) { Decls.Var("__theta_oc_thread_done_$pid", Bool()) }
             edge = doneEdge
             inEdge = false
             atomicBlock = current.atomics.firstOrNull()
@@ -588,9 +585,9 @@ internal class XcfaToEventGraph(
     }
 
     /**
-     * Phi of the local values reaching [current]: a variable whose value differs on the incoming
-     * paths gets a fresh constant equal to the value of an incoming path that is taken. A path on
-     * which the variable is unassigned leaves the constant unconstrained.
+     * Merges the local values reaching [current] from its incoming paths: a variable whose value
+     * differs between them gets a fresh constant equal to its value on the path taken (left
+     * unconstrained by a path on which it is unassigned).
      */
     private fun mergeLocalValues(current: SearchItem): Map<VarDecl<*>, IndexedConstDecl<*>> {
       val incoming = current.localValues
