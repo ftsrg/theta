@@ -48,6 +48,8 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  * variables (that is, variables assigned only once). Requires the ProcedureBuilder to be
  * `deterministic` (@see DeterministicPass) Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
+private const val MAX_PATHS = 4
+
 class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) :
   ProcedurePass {
 
@@ -58,17 +60,25 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     checkNotNull(builder.metaData["deterministic"])
     val unusedLocRemovalPass = UnusedLocRemovalPass()
     var edges = LinkedHashSet(builder.getEdges())
+    val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
+    // without threads nothing runs concurrently with the entry procedure: its globals change only
+    // through its own edges and calls (which still clear them below)
+    val singleThreaded =
+      builder.parent.getProcedures().none { proc ->
+        proc.getEdges().any { e -> e.getFlatLabels().any { it is StartLabel } }
+      }
     val initEdges =
       LinkedHashSet(
-        if (builder in builder.parent.getInitProcedures().map { it.first }) {
-          getNonConcurrentEdges(builder.parent, true).first
-        } else {
-          emptySet()
+        when {
+          isInitProcedure && singleThreaded -> builder.getEdges()
+          isInitProcedure -> getNonConcurrentEdges(builder.parent, true).first
+          else -> emptySet()
         }
       )
     val initLoops = getInitLoops(builder.initLoc, initEdges)
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
+    val pathValuations = LinkedHashMap<XcfaEdge, List<Valuation>>()
     val constValuation = MutableValuation()
     val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
@@ -95,11 +105,22 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
         val localValuation = MutableValuation.copyOf(incomingValuations)
         localValuation.putAll(constValuation)
+        val localPaths =
+          mergeIncomingPaths(edge.source, valuations, pathValuations, initLoops).map {
+            MutableValuation.copyOf(it).apply { putAll(constValuation) }
+          }
 
         val oldLabels = edge.getFlatLabels()
+        val feasiblePaths = localPaths.toMutableList()
         val newLabels =
           oldLabels.map { old ->
             val new = old.simplify(localValuation, parseContext)
+            // each path takes the label too; one an assume contradicts is dropped, and once a
+            // single path is left, the rest of the edge is simplified with its constants
+            feasiblePaths.removeIf { path ->
+              old.simplify(path, parseContext).let { (it as? StmtLabel)?.stmt == Assume(False()) }
+            }
+            if (old.isAssume) feasiblePaths.singleOrNull()?.let { localValuation.putAll(it) }
             if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, globalVars)) {
               old
             } else {
@@ -107,23 +128,30 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
             }
           }
 
-        if (edge !in initEdges || newLabels.any { it is InvokeLabel || it is StartLabel }) {
+        val nonConcurrent = edge in initEdges || (isInitProcedure && singleThreaded)
+        if (!nonConcurrent || newLabels.any { it is InvokeLabel || it is StartLabel }) {
           // note that global variable values are still propagated within an edge (XcfaEdge is
           // considered atomic)
-          modifiedGlobals.forEach { localValuation.remove(it) }
+          modifiedGlobals.forEach { v ->
+            localValuation.remove(v)
+            feasiblePaths.forEach { it.remove(v) }
+          }
         }
 
         if (newLabels != oldLabels) {
           builder.removeEdge(edge)
           valuations.remove(edge)
+          pathValuations.remove(edge)
           if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
             val newEdge = edge.withLabel(SequenceLabel(newLabels))
             builder.addEdge(newEdge)
             visited.add(newEdge)
             valuations[newEdge] = localValuation
+            pathValuations[newEdge] = feasiblePaths
           }
         } else {
           valuations[edge] = localValuation
+          pathValuations[edge] = feasiblePaths
         }
 
         toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
@@ -134,6 +162,32 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
     return builder
+  }
+
+  /**
+   * The valuations of the (at most [MAX_PATHS]) paths reaching [loc], kept apart where the merge
+   * would lose a constant on which they differ: e.g. a failed allocation leaves the pointer NULL
+   * and the allocator's ghost state untouched, and the program's own NULL check then selects the
+   * path on which all of them are constants again. Empty when unknown (loops, unvisited edges).
+   */
+  private fun mergeIncomingPaths(
+    loc: XcfaLocation,
+    valuations: Map<XcfaEdge, Valuation>,
+    pathValuations: Map<XcfaEdge, List<Valuation>>,
+    initLoops: Map<XcfaLocation, Set<XcfaEdge>>,
+  ): List<Valuation> {
+    val incoming =
+      loc.incomingEdges.filter {
+        it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) }
+      }
+    if (loc in initLoops || incoming.isEmpty() || incoming.any { it !in valuations })
+      return listOf()
+    val paths =
+      incoming.flatMap { e ->
+        pathValuations[e]?.takeIf { it.isNotEmpty() } ?: listOf(valuations[e]!!)
+      }
+    val distinct = paths.distinctBy { it.toMap() }
+    return if (distinct.size <= MAX_PATHS) distinct else listOf()
   }
 
   private val XcfaLabel.isAssume: Boolean

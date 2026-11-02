@@ -54,11 +54,13 @@ class StackArrayAllocaTest {
       getXcfaFromC(
         """
         extern int __VERIFIER_nondet_int(void);
-        int main(void) {
+        int f(int depth) {
           int arr[4];
           arr[0] = __VERIFIER_nondet_int();
+          if (depth > 0) f(depth - 1);
           return arr[0];
         }
+        int main(void) { return f(2); }
         """
           .trimIndent()
           .byteInputStream(),
@@ -67,8 +69,10 @@ class StackArrayAllocaTest {
         XcfaProperty(ErrorDetection.ERROR_LOCATION),
         NullLogger.getInstance(),
       )
+    // in the recursive function, whose activations each need a fresh base
     val counterAdds =
       xcfa.procedures
+        .filter { it.name == "f" }
         .flatMap { it.edges }
         .flatMap { it.getFlatLabels() }
         .filterIsInstance<StmtLabel>()

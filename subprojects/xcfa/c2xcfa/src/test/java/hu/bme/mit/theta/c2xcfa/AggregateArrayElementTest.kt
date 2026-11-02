@@ -304,12 +304,15 @@ class AggregateArrayElementTest {
         """
           .trimIndent()
       )
+    // objects are told apart by their bases, which constant propagation may have folded: `a` is
+    // the one written at cell 2 (`a[1].x`), so the copy's cells 0 and 1 belong to `t`
+    val aBase = from.first { it.second == "2" }.first
     assertTrue(
-      from.any { it.first.contains("t") && it.second == "0" },
+      from.any { it.first != aBase && it.second == "0" },
       "t receives its own copy of the element's cells; got $from",
     )
     assertTrue(
-      from.any { it.first.contains("t") && it.second == "1" },
+      from.any { it.first != aBase && it.second == "1" },
       "the copy is field by field, not a shared base; got $from",
     )
 
@@ -321,8 +324,10 @@ class AggregateArrayElementTest {
         """
           .trimIndent()
       )
+    // `t` is the object written at cell 0 (`t.x`), so cell 4 is written into `a`
+    val tBase = into.first { it.second == "0" }.first
     assertTrue(
-      into.any { it.first.contains("a") && it.second == "4" },
+      into.any { it.first != tBase && it.second == "4" },
       "a[2] starts at cell 4 and is written field by field; got $into",
     )
   }
