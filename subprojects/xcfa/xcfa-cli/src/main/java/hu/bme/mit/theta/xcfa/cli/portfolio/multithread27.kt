@@ -40,7 +40,6 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_SEQ
 import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
 
 private const val YICES = "JavaSMT:YICES2"
@@ -96,7 +95,8 @@ fun multithreadPortfolio27(
     /**
      * An OC configuration as measured on the ConcurrencySafety category: bitvector arithmetic with
      * an explicit memory model, so the program is re-read rather than reusing the integer-encoded
-     * one. Data races are checked natively, which needs IDL and no large-block encoding.
+     * one. Data races are checked natively, which needs IDL. No LBE: an edge is one atomic unit for
+     * OC (and `LbePass` disables non-local LBE for multithreaded programs anyway).
      */
     fun oc(
       solver: String,
@@ -112,7 +112,7 @@ fun multithreadPortfolio27(
           inputConfig = baseConfig.inputConfig.copy(xcfaWCtx = null),
           frontendConfig =
             baseConfig.frontendConfig.copy(
-              lbeLevel = if (verifiedProperty == DATA_RACE) NO_LBE else LBE_SEQ,
+              lbeLevel = NO_LBE,
               enableDataRaceToReachability = false,
               // a fresh instance per node: the frontend rewrites the memory model on its fallbacks
               specConfig =
@@ -131,7 +131,6 @@ fun multithreadPortfolio27(
                 OcConfig(
                   decisionProcedure = decisionProcedure,
                   autoConflict = AutoConflictFinderConfig.SIMPLE,
-                  autoConflictBound = 3,
                   forceUnrollBoundStart = 1,
                   smtSolver = solver,
                 ),
