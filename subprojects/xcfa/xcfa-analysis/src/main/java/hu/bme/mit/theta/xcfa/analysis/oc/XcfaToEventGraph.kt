@@ -72,7 +72,8 @@ internal class XcfaToEventGraph(
     val wss: Map<VarDecl<*>, Set<R>>,
     val violations: List<Violation>, // OR!
     val branchingConditions: List<Expr<BoolType>>,
-    val localFlows: List<Expr<BoolType>>, // data flow of procedure-local variables (no rf)
+    val localFlows: List<Expr<BoolType>>, // data flow of procedure-local variables (no events)
+    val edgeGuards: Map<Pair<Int, XcfaEdge>, Expr<BoolType>>, // path guard after each edge
     val memoryDecls: Set<VarDecl<*>>,
     val memoryGarbages: Set<IndexedConstDecl<*>>,
     val unrollExits: List<UnrollExit>,
@@ -107,6 +108,7 @@ internal class XcfaToEventGraph(
   private val violations: MutableList<Violation> = mutableListOf()
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
   private val localFlows: MutableList<Expr<BoolType>> = mutableListOf()
+  private val edgeGuards = mutableMapOf<Pair<Int, XcfaEdge>, Expr<BoolType>>()
   private val unrollExits: MutableList<UnrollExit> = mutableListOf()
 
   /**
@@ -189,6 +191,7 @@ internal class XcfaToEventGraph(
       violations,
       branchingConditions,
       localFlows,
+      edgeGuards,
       memoryDeclSet,
       memoryGarbages.values.toSet(),
       unrollExits,
@@ -373,6 +376,29 @@ internal class XcfaToEventGraph(
       return listOf(e)
     }
 
+    /**
+     * Procedure-local variables (each thread's own copy) have no events: a read is the variable's
+     * current SSA value, a write a fresh constant bound to the written value under the path guard.
+     * Thread handles keep their events in [StartLabel] / [JoinLabel], which order the threads.
+     */
+    private fun VarDecl<*>.isLocal(varPid: Int = pid) = threadVar(varPid) != this
+
+    private fun localRead(d: VarDecl<*>): IndexedConstDecl<*> {
+      val decl = d.threadVar(pid)
+      // an unwritten local has some (unconstrained) value, the same at every read
+      return localValues.getOrPut(decl) { decl.getNewIndexed() }
+    }
+
+    private fun localWrite(d: VarDecl<*>, value: Expr<*>?, varPid: Int = pid) {
+      val decl = d.threadVar(varPid)
+      val const = decl.getNewIndexed()
+      if (value != null) localFlows.add(underGuard(Eq(const.ref, value)))
+      localValues[decl] = const
+    }
+
+    private fun underGuard(e: Expr<BoolType>): Expr<BoolType> =
+      if (guard.isEmpty()) e else Imply(guard.toAnd(), e)
+
     private fun memoryEvent(
       deref: Dereference<*, *, *>,
       consts: Map<Any, IndexedConstDecl<*>>,
@@ -424,8 +450,12 @@ internal class XcfaToEventGraph(
     ): Map<Any, IndexedConstDecl<*>> {
       val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
       vars.forEach {
-        last = event(it, READ)
-        if (!useProvidedConst) mutConsts[it] = last.first().const
+        if (it.isLocal()) {
+          if (!useProvidedConst) mutConsts[it] = localRead(it)
+        } else {
+          last = event(it, READ)
+          if (!useProvidedConst) mutConsts[it] = last.first().const
+        }
       }
       dereferences.forEach {
         last = memoryEvent(it, mutConsts, READ, useProvidedConst)
@@ -538,6 +568,8 @@ internal class XcfaToEventGraph(
             firstLabel = false
           }
 
+          edgeGuards[pid to edge] = guard.toAnd()
+
           val searchItem =
             waitList.find { it.loc == edge.target }
               ?: SearchItem(edge.target).apply { waitList.add(this) }
@@ -570,7 +602,7 @@ internal class XcfaToEventGraph(
             for ((i1, v1) in set.withIndex()) for ((i2, v2) in set.withIndex()) {
               if (i1 == i2) break
               // the constants in the different branches must be equal
-              branchingConditions.add(Eq(v1.ref, v2.ref))
+              if (v1 != v2) branchingConditions.add(Eq(v1.ref, v2.ref))
             }
           }
         }
@@ -641,6 +673,10 @@ internal class XcfaToEventGraph(
 
     private fun AssignStmt<*>.process() {
       val consts = this.expr.toEvents()
+      if (varDecl.isLocal()) {
+        localWrite(varDecl, this.expr.with(consts))
+        return
+      }
       last = event(this.varDecl, WRITE)
       last.first().assignment = Eq(last.first().const.ref, this.expr.with(consts))
     }
@@ -650,13 +686,15 @@ internal class XcfaToEventGraph(
       firstLabel: Boolean,
     ) {
       val consts =
-        this.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
-          this.cond.dereferences.associateWith { it.memoryDecl.getNewIndexed(true) }
+        this.cond.vars.associateWith {
+          if (it.isLocal()) localRead(it) else it.threadVar(pid).getNewIndexed(false)
+        } + this.cond.dereferences.associateWith { it.memoryDecl.getNewIndexed(true) }
       val condWithConsts = this.cond.with(consts)
       val asAssign =
         consts.size == 1 &&
           consts.keys.first().let { c ->
             c is VarDecl<*> &&
+              !c.isLocal() &&
               c.threadVar(pid).let { v ->
                 v !in lastWrites ||
                   lastWrites[v]?.let { it.size == 1 && it.first().assignment == True() } == true
@@ -677,6 +715,10 @@ internal class XcfaToEventGraph(
     }
 
     private fun HavocStmt<*>.process() {
+      if (varDecl.isLocal()) {
+        localWrite(varDecl, null)
+        return
+      }
       last = event(this.varDecl, WRITE)
       last.first().assignment = True()
     }
@@ -704,9 +746,7 @@ internal class XcfaToEventGraph(
       procedure.params.forEachIndexed { index, param ->
         if (param.second != ParamDirection.OUT) {
           val consts = this.params[index].toEvents()
-          last = event(param.first, WRITE, newPid)
-          val e = last.first()
-          e.assignment = Eq(e.const.ref, this.params[index].with(consts))
+          localWrite(param.first, this.params[index].with(consts), newPid)
         }
       }
 
