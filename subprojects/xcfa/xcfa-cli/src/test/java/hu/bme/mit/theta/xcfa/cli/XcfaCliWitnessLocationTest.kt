@@ -58,6 +58,18 @@ class XcfaCliWitnessLocationTest {
         Arguments.of("overflow-assert-argument.c", "no-overflow"),
         Arguments.of("deref-if-guard.c", "valid-memsafety"),
       )
+
+    @JvmStatic
+    fun races(): Stream<Arguments> =
+      Stream.of(
+          "race-if-guard.c",
+          "race-for-test.c",
+          "race-initializer.c",
+          "race-return.c",
+          "race-pointer.c",
+          "race-third-thread.c",
+        )
+        .map { Arguments.of(it) }
   }
 
   @ParameterizedTest
@@ -69,23 +81,7 @@ class XcfaCliWitnessLocationTest {
     assertTrue(line > 0) { "$file marks no target" }
     val code = lines[line - 1].substringAfter("// target: ")
     val column = lines[line - 1].indexOf(code) + 1
-    val params =
-      arrayOf(
-        "--input-type",
-        "C",
-        "--input",
-        input.path,
-        "--property",
-        javaClass.getResource("/c/witness-target/prop/$property.prp")!!.path,
-        "--stacktrace",
-        "--svcomp",
-        "--backend",
-        "CEGAR",
-        "--domain",
-        "PRED_CART",
-        "--search",
-        "DFS",
-      )
+    val params = targetParams(input, property)
     val temp = createTempDirectory()
     val output = runCatchingOutput(params + "--output-directory" + temp.absolutePathString())
     assertTrue(output.getVerdict().contains("Unsafe")) {
@@ -99,6 +95,46 @@ class XcfaCliWitnessLocationTest {
     assertEquals(column, targets[0].location.column) {
       "The target must point at '$code' on line $line of $file"
     }
+
+    val validation =
+      runCatchingOutput(
+        params +
+          "--output-directory" +
+          createTempDirectory().absolutePathString() +
+          "--witness" +
+          witness.absolutePath
+      )
+    assertEquals(output.getVerdict(), validation.getVerdict())
+  }
+
+  /** A data race has one target per racing access; each is marked in the input. */
+  @ParameterizedTest
+  @MethodSource("races")
+  fun testRaceTargetsAtFullExpressions(file: String) {
+    val input = File(javaClass.getResource("/c/witness-target/$file")!!.path)
+    val marked =
+      input
+        .readLines()
+        .withIndex()
+        .filter { "// target: " in it.value }
+        .map { (i, line) -> Pair(i + 1, line.indexOf(line.substringAfter("// target: ")) + 1) }
+        .toSet()
+    assertEquals(2, marked.size) { "$file must mark both racing accesses" }
+    val params = targetParams(input, "no-data-race")
+    val temp = createTempDirectory()
+    val output = runCatchingOutput(params + "--output-directory" + temp.absolutePathString())
+    assertTrue(output.getVerdict().contains("Unsafe")) {
+      "Expected Unsafe, got ${output.getVerdict()}"
+    }
+
+    val witness = temp.getWitness()
+    val targets =
+      witness
+        .waypoints()
+        .filter { it.type == WaypointType.TARGET }
+        .map { Pair(it.location.line, it.location.column) }
+        .toSet()
+    assertEquals(marked, targets) { "The targets must point at the racing accesses of $file" }
 
     val validation =
       runCatchingOutput(
@@ -151,6 +187,24 @@ class XcfaCliWitnessLocationTest {
       }
     }
   }
+
+  private fun targetParams(input: File, property: String): Array<String> =
+    arrayOf(
+      "--input-type",
+      "C",
+      "--input",
+      input.path,
+      "--property",
+      javaClass.getResource("/c/witness-target/prop/$property.prp")!!.path,
+      "--stacktrace",
+      "--svcomp",
+      "--backend",
+      "CEGAR",
+      "--domain",
+      "PRED_CART",
+      "--search",
+      "DFS",
+    )
 
   private fun File.waypoints(): List<WaypointContent> =
     WitnessYamlConfig.decodeFromString<List<YamlWitness>>(readText())

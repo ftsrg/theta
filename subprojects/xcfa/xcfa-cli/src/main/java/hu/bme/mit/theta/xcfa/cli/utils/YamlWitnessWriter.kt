@@ -147,6 +147,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                 witnessfile,
                 ltlSpecification,
                 architecture,
+                logger,
               )
             witnessfile.writeText(bestEffortWitness)
           } else {
@@ -167,6 +168,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             witnessfile,
             ltlSpecification,
             architecture,
+            logger,
           )
         witnessfile.writeText(bestEffortWitness)
       }
@@ -194,6 +196,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
+    logger: Logger,
   ): String {
 
     val trace =
@@ -252,6 +255,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     @Suppress("UNCHECKED_CAST")
     val target =
       runCatching { violationTarget(trace as Trace<XcfaState<*>, XcfaAction>, inputFile) }
+        .onFailure { logger.info("Could not locate the violation target: ${it.message}") }
         .getOrNull()
 
     return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
