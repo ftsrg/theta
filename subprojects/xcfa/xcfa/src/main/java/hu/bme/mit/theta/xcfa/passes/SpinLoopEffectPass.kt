@@ -55,7 +55,7 @@ import hu.bme.mit.theta.xcfa.utils.strongLiveVars
  * value, counts as no effect. Every mutex, thread, call or other label always counts.
  *
  * Only for reachability: it removes spinning forever (termination), and it makes the checked writes
- * atomic (data races).
+ * atomic (data races). Not used when validating a witness.
  */
 class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
 
@@ -77,7 +77,13 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!ENABLED || property.verifiedProperty != ErrorDetection.ERROR_LOCATION) return builder
+    // a witness may follow the very iterations this pass prunes
+    if (
+      !ENABLED ||
+        property.verifiedProperty != ErrorDetection.ERROR_LOCATION ||
+        property.witness != null
+    )
+      return builder
     val loops = findLoops(builder)
     if (loops.isEmpty()) return builder
 

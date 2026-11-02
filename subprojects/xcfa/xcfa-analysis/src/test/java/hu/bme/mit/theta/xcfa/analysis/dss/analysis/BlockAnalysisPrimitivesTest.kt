@@ -97,7 +97,7 @@ class BlockAnalysisPrimitivesTest {
   fun `weakest preconditions of assumptions, assignments and sequences`() {
     val block =
       chain(
-        SequenceLabel(listOf(StmtLabel(Assign(x, Add(x.ref, Int(1)))), NopLabel)),
+        SequenceLabel(listOf(StmtLabel(Assign(x, Add(x.ref, Int(1)))), NopLabel())),
         StmtLabel(Assume(Gt(x.ref, Int(3)))),
       )
 

@@ -59,6 +59,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
+import hu.bme.mit.theta.xcfa.witnesses.EntryType
 
 fun runConfig(
   config: XcfaConfig<*, *>,
@@ -92,7 +93,12 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
       MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
-  DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
+  // a race of a violation witness only counts at its targets, which the reachability encoding
+  // checks
+  DataRaceToReachabilityPass.enabled =
+    config.frontendConfig.enableDataRaceToReachability ||
+      (config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE &&
+        config.inputConfig.property.witness?.witness?.entryType == EntryType.VIOLATION)
 
   if (config.backendConfig.backend == Backend.CEGAR) {
     val cegarConfig = config.backendConfig.specConfig

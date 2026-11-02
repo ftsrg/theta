@@ -146,11 +146,13 @@ class UnusedVarPass(
   ): XcfaLabel {
     return when (this) {
       is SequenceLabel ->
-        SequenceLabel(labels.map { it.removeUnusedWrites(used, global) }.filter { it !is NopLabel })
+        SequenceLabel(
+          labels.map { it.removeUnusedWrites(used, global) }.filter { !it.isDroppableNop() }
+        )
 
       is NondetLabel ->
         NondetLabel(
-          labels.map { it.removeUnusedWrites(used, global) }.filter { it !is NopLabel }.toSet()
+          labels.map { it.removeUnusedWrites(used, global) }.filter { !it.isDroppableNop() }.toSet()
         )
 
       is StmtLabel ->
@@ -163,8 +165,8 @@ class UnusedVarPass(
                     stmt.expr.dereferences.isNotEmpty()))
             )
               this
-            else NopLabel
-          is HavocStmt<*> -> if (stmt.varDecl in used) this else NopLabel
+            else NopLabel()
+          is HavocStmt<*> -> if (stmt.varDecl in used) this else NopLabel()
           else -> this
         }
 

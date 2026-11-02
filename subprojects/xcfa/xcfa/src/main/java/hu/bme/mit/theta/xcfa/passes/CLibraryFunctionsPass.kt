@@ -282,7 +282,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               "pthread_cond_init" -> {
                 // the mutex/condition object (non-scalar source type)
                 invokeLabel.markSyncParam(1)
-                addSingle(NopLabel)
+                addSingle(NopLabel(metadata))
               }
 
               "pthread_exit" -> {
@@ -296,7 +296,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   }
                 }
 
-                addSingle(NopLabel)
+                addSingle(NopLabel(metadata))
               }
 
               "pthread_key_create",

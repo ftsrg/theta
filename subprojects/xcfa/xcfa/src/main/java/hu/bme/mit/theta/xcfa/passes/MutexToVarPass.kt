@@ -90,7 +90,7 @@ class MutexToVarPass : ProcedurePass {
           !isLibraryFunction -> setOf(this)
           name in
             setOf("pthread_mutex_init", "pthread_mutexattr_init", "pthread_mutexattr_destroy") ->
-            setOf(NopLabel)
+            setOf(NopLabel())
           name == "pthread_mutexattr_settype" -> {
             check(
               ExprUtils.simplify(
@@ -99,7 +99,7 @@ class MutexToVarPass : ProcedurePass {
             ) {
               "Only NORMAL mutexes are supported by mutex elimination."
             }
-            setOf(NopLabel)
+            setOf(NopLabel())
           }
           else -> setOf(this)
         }

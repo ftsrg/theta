@@ -224,9 +224,10 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         initializerExpression =
                                 asString != null
                                         ? asString
-                                        : context.initializer()
-                                                .assignmentExpression()
-                                                .accept(functionVisitor);
+                                        : functionVisitor.visitFullExpression(
+                                                context.initializer().assignmentExpression());
+                        FunctionVisitor.setFullExpression(
+                                initializerExpression, context.initializer());
                     }
                     declaration.setInitExpr(initializerExpression);
                 }

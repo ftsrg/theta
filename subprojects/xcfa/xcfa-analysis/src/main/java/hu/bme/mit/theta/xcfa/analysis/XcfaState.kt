@@ -292,9 +292,9 @@ constructor(
 data class XcfaProcessState(
   val locs: LinkedList<XcfaLocation>,
   val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
-  val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
+  val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel())),
   val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> =
-    LinkedList(listOf(Pair(NopLabel, NopLabel))),
+    LinkedList(listOf(Pair(NopLabel(), NopLabel()))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
   val invokeParameterCounter: Int = 0,

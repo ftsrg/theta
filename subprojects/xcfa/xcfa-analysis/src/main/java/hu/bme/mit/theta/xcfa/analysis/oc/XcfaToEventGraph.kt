@@ -468,7 +468,7 @@ internal class XcfaToEventGraph(
      * inlining chains several of those together, so only the last link carries the flag. Paths
      * reaching such a sink may legitimately disagree about atomic nesting, because execution stops
      * there either way, so the agreement check has to see through the whole chain rather than one
-     * link. (The joining edge carries `SequenceLabel(listOf(NopLabel))`, which `getFlatLabels`
+     * link. (The joining edge carries `SequenceLabel(listOf(NopLabel()))`, which `getFlatLabels`
      * keeps rather than drops, so testing for an empty label does not recognise it either.)
      */
     private fun XcfaLocation.isTerminalSink(

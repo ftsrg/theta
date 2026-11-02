@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,6 +43,14 @@ public abstract class CStatement {
     private String functionName = "";
     private String sourceText = "";
     private ParserRuleContext ctx;
+
+    /**
+     * Start of the innermost full expression (C11 6.8p4) this node is part of, e.g., the condition
+     * of an `if`; -1 if it was not recorded, then the statement start stands for it.
+     */
+    private int fullExpressionLineStart = -1;
+
+    private int fullExpressionColStart = -1;
 
     protected CStatement(ParseContext parseContext) {
         this.parseContext = parseContext;
@@ -166,5 +174,18 @@ public abstract class CStatement {
 
     public void setCtx(ParserRuleContext ctx) {
         this.ctx = ctx;
+    }
+
+    public int getFullExpressionLineStart() {
+        return fullExpressionLineStart;
+    }
+
+    public int getFullExpressionColStart() {
+        return fullExpressionColStart;
+    }
+
+    public void setFullExpressionStart(int line, int col) {
+        this.fullExpressionLineStart = line;
+        this.fullExpressionColStart = col;
     }
 }
