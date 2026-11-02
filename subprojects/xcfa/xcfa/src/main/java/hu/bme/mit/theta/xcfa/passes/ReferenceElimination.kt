@@ -424,7 +424,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * == a == &a[0]`), so the pointer the reference machinery hands out has to span the array's
    * cells, not one: allocating a single unit made `arr[i]` for any `i > 0` -- reached through `(int
    * **)&arr` and the like -- a spurious out-of-bounds `valid-deref`. A struct keeps its historical
-   * one-cell-per-field size; a scalar is one cell.
+   * one-cell-per-field size except under flat addressing; a scalar is one cell.
    */
   private fun XcfaBuilder.allocateReferenced(
     parseContext: ParseContext,
@@ -435,6 +435,10 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       when {
         // In bytes, as the object's own initialization records it; cells would shrink it.
         parseContext.memoryModel.byteAddressed() -> referencedUnits(embeddedType).toInt()
+        // flat addressing lays nested members out cell by cell: a field count would cut off the
+        // trailing fields
+        embeddedType is CStruct && parseContext.memoryModel.flatAddressing() ->
+          flatCellCount(embeddedType)
         embeddedType is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
         embeddedType is CArray -> flatCellCount(embeddedType)
         else -> 1
