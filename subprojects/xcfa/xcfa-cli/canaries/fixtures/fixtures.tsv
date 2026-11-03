@@ -234,3 +234,7 @@ fp_self_neq_nan.c	efficient	LP64	UNSAFE	x != x on a double is not folded to fals
 fp_add_zero_sign.c	efficient	LP64	SAFE	x + 0.0 is not folded to x: the sign of a zero sum differs for x = -0.0
 fp_add_no_reassoc.c	efficient	LP64	SAFE	floating-point literals are not summed across other operands of an addition
 pthread_join_retval.c	efficient	LP64	FRONTEND-FAIL	pthread_join with a non-null retval is refused, not modelled as leaving *retval unchanged
+pthread_join_retval.c	efficient	LP64	FRONTEND-FAIL	pthread_join with a non-null retval is refused, not modelled as leaving *retval unchanged
+bool_bitfield_bytes.c	bitvector	LP64	SAFE	`bool : 1` bitfields after `unsigned int : 1` ones are laid out in a byte, not refused as straddling	bytes
+bool_bitfield_bytes_unsafe.c	bitvector	LP64	UNSAFE	planted bug: a `bool : 1` bitfield next to `unsigned int : 1` ones is read back as set	bytes
+bool_cast_nonzero.c	bitvector	LP64	SAFE	conversion to _Bool maps every non-zero value (and 2.5) to 1, not to the low bit

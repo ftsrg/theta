@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
@@ -286,7 +288,19 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CBool type, Expr<?> param) {
-        return handleUnsignedConversion(type, param);
+        // C17 6.3.1.2: any non-zero value converts to 1. Truncating to the low bit made `(_Bool)2`
+        // false.
+        CComplexType that = CComplexType.getType(param, parseContext);
+        if (that instanceof CBool) {
+            return param;
+        }
+        if (that instanceof CVoid) {
+            return type.getNullValue(); // see handleUnsignedConversion
+        }
+        final CComplexType source =
+                that instanceof CPointer ? CComplexType.getUnsignedLong(parseContext) : that;
+        final Expr<?> value = inBitvectorForm(source, param);
+        return Ite(Eq(value, source.getNullValue()), type.getNullValue(), type.getUnitValue());
     }
 
     @Override
