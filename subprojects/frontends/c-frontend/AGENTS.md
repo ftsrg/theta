@@ -1,24 +1,31 @@
 # frontends/c-frontend — notes for editing this module
 
-Gradle module: `:theta-c-frontend`. Parses preprocessed C (ANTLR grammar `src/main/antlr/C.g4`) into the intermediate model under `transformation/model/statements` (`CProgram`, `CFunction`, `CAssignment`, …). It does not build any formalism; [c2xcfa](../../xcfa/c2xcfa/README.md) turns the model into an XCFA, and its README explains the memory representation (cells, base ids, memory models) that most of this module's lowering targets.
+Gradle module: `:theta-c-frontend`. Parses preprocessed C with ANTLR into the *IM* (a `CStatement` tree plus a C type model), which [c2xcfa](../../xcfa/c2xcfa/README.md) turns into an XCFA. Pipeline overview: [README.md](README.md) and [transformation/Readme.md](src/main/java/hu/bme/mit/theta/frontend/transformation/Readme.md).
 
-## Pipeline
+## Build and test
 
-1. **`parseTypeAware`** ([CParseUtils.kt](src/main/java/hu/bme/mit/theta/frontend/transformation/grammar/CParseUtils.kt)) — two parses. The first one is permissive and only harvests typedef names, following `#include`s of the bundled headers. The second accepts only those names as types (`parser.typedefNames`, `permissiveTypeNames = false` in `C.g4`), with `BailErrorStrategy`. The second parse has no fallback on purpose; a file it rejects is an error.
-2. **`FunctionVisitor.visitCompilationUnit`** — typedefs (`TypedefVisitor`), then the reachable global declarations (`GlobalDeclUsageVisitor`: only what `main` transitively uses is processed), then `SourceTraitCollector` and, under `--arithmetic efficient`, `BitwiseChecker` picks `integer` or `bitvector` and sets `arithmeticAutoSelected`. Function names are created up front, before any global initializer is visited.
-3. **`FunctionVisitor`** (statements, declarations), **`ExpressionVisitor`** (expressions, `__builtin_*`), and **`TypeVisitor`** / **`DeclarationVisitor`** (types, declarators) build the model.
+- `./gradlew :theta-c-frontend:test` covers the type model, object layouts and the typedef-aware parse ([src/test/kotlin/hu/bme/mit/theta/frontend/](src/test/kotlin/hu/bme/mit/theta/frontend/)). Most frontend behaviour is tested from `./gradlew :theta-c2xcfa:test` (e.g. `CLiteralTypingTest`, `ShortCircuitTest`), whose `getXcfaFromC` parses, builds and runs the C pass pipeline. Run both.
+- A frontend unit test parses a source string with `parseTypeAware(...).accept(FunctionVisitor(ParseContext(), NullLogger.getInstance()))` and inspects the `CProgram` or the `ParseContext`.
+- Grammar and visitor changes must also pass `:theta-xcfa-cli:fixtureTest` and `canaryTest`, with a new fixture that fails before the change and passes after ([canaries/README.md](../../xcfa/xcfa-cli/canaries/README.md)).
 
-`ParseContext` is the shared state for one file: architecture, arithmetic, memory model, the `FrontendMetadata` store, and the object tables (atomic cells, accessed struct members, static object parents). Use a fresh `ParseContext` per parse.
+## Layout
+
+Paths below are relative to [src/main/java/hu/bme/mit/theta/frontend/](src/main/java/hu/bme/mit/theta/frontend/).
+
+- [C.g4](src/main/antlr/C.g4) — the grammar, generated into `hu.bme.mit.theta.c.frontend.dsl.gen` (ANTLR runs with `-Werror`).
+- `transformation/grammar/` — the visitors: `function/FunctionVisitor` (statements; entry point `visitCompilationUnit`), `expression/ExpressionVisitor`, `type/TypeVisitor` and `DeclarationVisitor`, `preprocess/` (typedefs, globals reachable from `main`, arithmetic traits), and `CParseUtils.kt` (`parseTypeAware`).
+- `transformation/model/` — the IM: `statements/` (`CStatementVisitor` plus one class per statement), `types/simple/` (declared specifiers such as `Struct`, `Enum`, `NamedType`; `getActualType()` resolves them), `types/complex/` (the resolved `CComplexType`s: integers, reals, `CPointer`, `CArray`, `CStruct`, object layouts).
+- [ParseContext.java](src/main/java/hu/bme/mit/theta/frontend/ParseContext.java) — per-build settings (architecture, arithmetic, memory model) and the `FrontendMetadata`. `stdlib/` holds the built-in contents of the supported `#include <...>` headers.
 
 ## Invariants / gotchas
 
-1. **`cType` metadata is identity-keyed** (`FrontendMetadata` keys it on `System.identityHashCode`). An expression you rebuild has no C type until you `create(expr, "cType", t)` it again. Re-stamp it; do not derive a C type back from an SMT sort.
-2. **Two arithmetic backends.** `types/complex/visitors/{integer,bitvector}` each implement the cast, limit, null/unit value and SMT-type visitors. A new `CComplexType`, or a change to one's semantics, has to be made in both.
-3. **Headers are bundled, not read from disk.** `stdlib/HeaderFile.kt` maps a header name to a Kotlin string of declarations. Add a new header there and to the enum; an unknown `#include <x>` expands to nothing.
-4. **Unsupported constructs throw.** Use `UnsupportedFrontendElementException`, or `RequiresByteAddressedMemoryException` when the construct needs byte cells. `xcfa-cli` catches the latter and rebuilds under `--memory-model bytes` (only when the model was not set explicitly). Do not model something approximately to avoid throwing (see "When in doubt, refuse" in the c2xcfa README).
-5. **Stack objects go through `alloca`.** Local aggregates and VLAs become `alloca` calls, and leaving a block emits `FunctionVisitor.SCOPE_END` (`__theta_scope_end`). Both are lowered by `AllocaFunctionPass` in `:theta-xcfa`. A VLA size is in cells, not bytes.
-
-## Tests
-
-- `./gradlew :theta-c-frontend:test`: unit tests under `src/test/kotlin` parse a source string with `parseTypeAware(...).accept(FunctionVisitor(ParseContext(), NullLogger.getInstance()))` and inspect the `CProgram` or `ParseContext`.
-- End-to-end behaviour is covered from c2xcfa (`getXcfaFromC` tests) and by the `xcfa-cli` fixtures (`:theta-xcfa-cli:fixtureTest`). A frontend change needs a fixture there that fails before the change; see the root `AGENTS.md`.
+1. **Parsing is two-pass.** `parseTypeAware` first harvests typedef names with a permissive, error-tolerant parse, then parses with `BailErrorStrategy`, accepting only those names as types. There is deliberately no permissive fallback. Never run the frontend's visitors in the first pass: they register struct tags and write `cType` metadata.
+2. **An expression's C type is metadata, not part of the `Expr`.** It is stored under `"cType"` in `ParseContext.getMetadata()`, keyed by object identity. `CComplexType.getType(expr, ctx)` falls back to a type derived from the SMT sort when it is missing, so stamp every expression you build from a typed one (`metadata.create(newExpr, "cType", type)`).
+3. **Static registries are per build.** `Struct` (tag registry), `Enum` (constants) and `FunctionIds` are static and are reset in `FunctionVisitor.visitCompilationUnit`, because one JVM can build the same input several times (the memory-model and arithmetic fallbacks, portfolio re-parses). Reset any new static per-program state there too.
+4. Side effects inside an expression are lowered to `preStatements` (run before it) and `postStatements` (run at the end of the full expression). Statements emitted by an operand of `&&`/`||` must run only when that operand is evaluated (`guardShortCircuited` in `ExpressionVisitor`).
+5. A local declared without an initializer inside a loop or outside `main` yields a `CAssume` carrying the variable (`getHavocked()`). c2xcfa lowers it to a havoc plus the range assume, so every re-execution gets a fresh value; a declaration that runs once keeps the backend's initial value, which explicit-state backends such as MDD rely on.
+6. `CStatementVisitor` has two implementors: `StatisticsCollectorVisitor` ([CStatistics.kt](src/main/java/hu/bme/mit/theta/frontend/CStatistics.kt)) and c2xcfa's `FrontendXcfaBuilder` (through `CStatementVisitorBase`, whose defaults throw). A new statement class needs both.
+7. Unsupported constructs throw `UnsupportedFrontendElementException`. Throw the subclass `RequiresByteAddressedMemoryException` only when `--memory-model bytes` can express the construct: when no memory model was requested, xcfa-cli retries under `bytes` on exactly that type.
+8. **Two arithmetic backends.** `types/complex/visitors/{integer,bitvector}` each implement the cast, limit, null/unit value and SMT-type visitors. A new `CComplexType`, or a change to one's semantics, has to be made in both.
+9. **Headers are bundled, not read from disk.** `stdlib/HeaderFile.kt` maps a header name to a Kotlin string of declarations. Add a new header there and to the enum; an unknown `#include <x>` expands to nothing.
+10. **Stack objects go through `alloca`.** Local aggregates and VLAs become `alloca` calls, and leaving a block emits `FunctionVisitor.SCOPE_END` (`__theta_scope_end`). Both are lowered by `AllocaFunctionPass` in `:theta-xcfa`. A VLA size is in cells, not bytes.

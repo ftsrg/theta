@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
@@ -30,6 +31,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.math.BigInteger
 
 /**
@@ -72,7 +74,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     if (!parseContext.memoryModel.byteAddressed()) return builder
 
     builder.getEdges().toList().forEach { edge ->
-      val newLabel = edge.label.bytify()
+      val newLabel = edge.label.bytify(builder)
       if (newLabel != edge.label) {
         builder.removeEdge(edge)
         builder.addEdge(edge.withLabel(newLabel))
@@ -111,13 +113,13 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
         " union, which no memory model supports yet."
     )
 
-  private fun XcfaLabel.bytify(): XcfaLabel =
+  private fun XcfaLabel.bytify(builder: XcfaProcedureBuilder): XcfaLabel =
     when (this) {
-      is SequenceLabel -> SequenceLabel(labels.map { it.bytify() }, metadata)
-      is NondetLabel -> NondetLabel(labels.map { it.bytify() }.toSet(), metadata)
+      is SequenceLabel -> SequenceLabel(labels.map { it.bytify(builder) }, metadata)
+      is NondetLabel -> NondetLabel(labels.map { it.bytify(builder) }.toSet(), metadata)
       is StmtLabel ->
         when (stmt) {
-          is MemoryAssignStmt<*, *, *> -> splitWrite(stmt)
+          is MemoryAssignStmt<*, *, *> -> splitWrite(stmt, builder)
           is AssignStmt<*> ->
             StmtLabel(
               AssignStmt.of(
@@ -136,14 +138,20 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
       is StartLabel ->
         StartLabel(name, params.map { it.expandReads() }, pidVar, metadata, tempLookup)
-      is ReturnLabel -> ReturnLabel(enclosedLabel.bytify())
+      is ReturnLabel -> ReturnLabel(enclosedLabel.bytify(builder))
       else -> this
     }
 
   /**
    * `(deref B O Bv_{8n}) := v` -> the `n` byte writes `(deref B O+j Bv8) := Extract(v, 8j, 8j+8)`.
+   *
+   * `B`, `O` and `v` are evaluated once, before the first byte write: re-evaluated per byte, a read
+   * of memory among them saw the bytes already written, so `(*p)--` from 1 stored `0xffffff00`.
    */
-  private fun splitWrite(stmt: MemoryAssignStmt<*, *, *>): XcfaLabel {
+  private fun splitWrite(
+    stmt: MemoryAssignStmt<*, *, *>,
+    builder: XcfaProcedureBuilder,
+  ): XcfaLabel {
     val deref = stmt.deref
     if (!wide(deref.type)) {
       return StmtLabel(
@@ -151,9 +159,17 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
         metadata = EmptyMetaData,
       )
     }
-    val base = deref.array.expandReads()
-    val offset = deref.offset.expandReads()
-    val rhs = stmt.expr.expandReads()
+    val reads = mutableListOf<XcfaLabel>()
+    fun Expr<*>.once(): Expr<*> {
+      if (dereferences.isEmpty()) return this
+      val tmp = Decls.Var("__theta_byte_write_tmp_${tmpCounter++}", type)
+      builder.addVar(tmp)
+      reads.add(StmtLabel(AssignStmt.of(tmp, cast(this, tmp.type))))
+      return tmp.ref
+    }
+    val base = deref.array.expandReads().once()
+    val offset = deref.offset.expandReads().once()
+    val rhs = stmt.expr.expandReads().once()
     val n = byteWidth(deref.type)!!
     val byteValues = ByteUnionSlice.toBytes(rhs, n)
     val writes =
@@ -161,8 +177,10 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
         val cell = byteCell(base, offset, j)
         StmtLabel(MemoryAssignStmt.create(cell, cast(byteValues[j], cell.type)))
       }
-    return SequenceLabel(writes)
+    return SequenceLabel(reads + writes)
   }
+
+  private var tmpCounter = 0
 
   @Suppress("UNCHECKED_CAST")
   private fun rebuildMemoryAssign(
