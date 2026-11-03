@@ -222,11 +222,11 @@ fun complex26(
             val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
             val bmc = bmc(150_000, "Z3:new")
 
-            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val kindMS = kind(300_000, "mathsat:5.6.19")
             val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+              cegar(300_000, "mathsat:5.6.19", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.19", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcMS = bmc(150_000, "mathsat:5.6.19")
 
             kind then pred_bw then expl then bmc
 
@@ -285,11 +285,11 @@ fun complex26(
             val expl = cegar(200_000, "Z3:new", Domain.EXPL, Refinement.NWT_IT_WP)
             val bmc = bmc(150_000, "Z3:new")
 
-            val kindMS = kind(300_000, "mathsat:5.6.12")
+            val kindMS = kind(300_000, "mathsat:5.6.19")
             val pred_bwMS =
-              cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-            val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+              cegar(300_000, "mathsat:5.6.19", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+            val explMS = cegar(200_000, "mathsat:5.6.19", Domain.EXPL, Refinement.NWT_IT_WP)
+            val bmcMS = bmc(150_000, "mathsat:5.6.19")
 
             kind then pred_bw then expl then bmc
 
@@ -315,10 +315,10 @@ fun complex26(
         val pred_seq = cegar(150_000, "Z3", Domain.PRED_CART, Refinement.SEQ_ITP)
         val expl_seq = cegar(150_000, "Z3", Domain.EXPL, Refinement.SEQ_ITP)
 
-        val pred_bwMS = cegar(300_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.BW_BIN_ITP)
-        val explMS = cegar(200_000, "mathsat:5.6.12", Domain.EXPL, Refinement.NWT_IT_WP)
-        val pred_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.PRED_CART, Refinement.SEQ_ITP)
-        val expl_seqMS = cegar(150_000, "mathsat:5.6.12", Domain.EXPL, Refinement.SEQ_ITP)
+        val pred_bwMS = cegar(300_000, "mathsat:5.6.19", Domain.PRED_CART, Refinement.BW_BIN_ITP)
+        val explMS = cegar(200_000, "mathsat:5.6.19", Domain.EXPL, Refinement.NWT_IT_WP)
+        val pred_seqMS = cegar(150_000, "mathsat:5.6.19", Domain.PRED_CART, Refinement.SEQ_ITP)
+        val expl_seqMS = cegar(150_000, "mathsat:5.6.19", Domain.EXPL, Refinement.SEQ_ITP)
 
         pred_bw then expl then pred_seq then expl_seq
 

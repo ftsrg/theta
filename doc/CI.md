@@ -228,7 +228,7 @@ archivePackaging {
         inputFlags = "--custom --flags"     // Command-line flags 
         solvers = listOf(                   // Optional: SMT solvers to bundle
             "cvc5:1.2.0",
-            "mathsat:5.6.12"
+            "mathsat:5.6.19"
         )
         includeSolverCli = true             // Include solver installation utility
         scriptName = "theta-start.sh"       // Script from scripts/ directory
