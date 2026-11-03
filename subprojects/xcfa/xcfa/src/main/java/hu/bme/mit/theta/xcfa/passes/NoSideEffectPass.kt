@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
           Regex("sleep"),
           Regex("free"),
           Regex("pthread_mutex_destroy"), // TODO: is this safe?
+          // Condition variables carry no modelled state (waits may wake spuriously).
+          Regex("pthread_cond_destroy"),
         )
         .any { label.name.matches(it) }
   }

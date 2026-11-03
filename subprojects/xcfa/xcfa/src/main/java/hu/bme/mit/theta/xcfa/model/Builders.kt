@@ -172,6 +172,12 @@ constructor(
     if (lastOptimized >= manager.passes.size - 1) optimized = this
   }
 
+  /** A copy made by a pass running on [running] has completed the phase [running] is in. */
+  internal fun completeOptimizationPhaseOf(running: XcfaProcedureBuilder) {
+    lastOptimized = running.lastOptimized
+    completeOptimizationPhase()
+  }
+
   fun build(parent: XCFA): XcfaProcedure {
     if (this::built.isInitialized) return built
     if (!this::optimized.isInitialized) optimize()

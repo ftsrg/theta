@@ -396,7 +396,7 @@ fun complex27(
   // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
   if (xcfa.isInlined && mainTrait == MULTITHREAD)
     return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-  if (xcfa.isInlined && mainTrait == TERMINATION)
+  if (mainTrait == TERMINATION)
     return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
   val loopFree = xcfa.boundedIsComplete

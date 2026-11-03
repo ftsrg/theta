@@ -27,6 +27,7 @@ Each phase below is one group in `CPasses`, in order.
 | optimizing | `SimplifyExprsPass`, `UnrollPass`, `EmptyEdgeRemovalPass` | constant-fold, then unroll loops (and expand recursion, when a recursion bound is set) | `UnrollPass` needs **a `SimplifyExprsPass` after it** (the one in the cleanup phase) to fold the loop variable into the copies it made |
 | calls | `FunctionPointerCallsPass` | expand a call through a function pointer into a dispatch over its candidates | before `InlineProceduresPass`, so the direct calls it produces can be inlined |
 | | `InlineProceduresPass`, `NondetFunctionPass`, `InlinedProcedureRemovalPass` | inline what can be inlined, model `__VERIFIER_nondet_*`, drop the bodies left behind | removal after inlining |
+| | `ThreadResultPass` | start a copy of each routine whose result `pthread_join` reads, which stores its return value under the result id `CLibraryFunctionsPass` passes it | after inlining, so the copy is of the finished body; in its own phase, as it adds procedures; before `CloneProcedureForStaticThreadsPass`, which may specialize the copies |
 | | `ReferenceElimination` (again) | inlining binds `&…` arguments to parameters only now, and no reference may reach the analyses | after `InlineProceduresPass` |
 | cleanup | `EmptyEdgeRemovalPass`, `SimplifyExprsPass`, `UnusedLocRemovalPass`, `RemoveDeadEnds`, `EliminateSelfLoops`, `StaticCoiPass` | shrink the CFA before the instrumentation below multiplies it | `StaticCoiPass` after inlining; `SimplifyExprsPass` is also what folds `UnrollPass`'s copies |
 | instrumentation | `NarrowCellRangePass` | constrain a narrow cell's value to what its C type can hold | before `MemsafetyPass` and `OverflowDetectionPass`, which read those cells |
@@ -58,7 +59,9 @@ Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
   over-approximation; the old value is one specific wrong value.
 - **Refuse loudly rather than model approximately.** A tool error scores nothing under SV-COMP; a
   wrong answer scores much worse. A pass that cannot state a construct exactly declines it, and logs
-  why -- the call is then left in place and surfaces later as "No such method ...".
+  why -- the call is then left in place and surfaces later as "No such method ...". When the bytes
+  model could state it, the pass throws `RequiresByteAddressedMemoryException` instead, and the
+  frontend is rebuilt under `--memory-model bytes`.
 - **A pass leaves the builder consistent.** Every edge must run between two locations the procedure
   still lists; `ProcedurePass.runChecked` asserts this after each pass, so run passes through it.
 

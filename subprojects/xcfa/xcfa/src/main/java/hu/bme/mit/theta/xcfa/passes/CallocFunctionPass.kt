@@ -16,11 +16,14 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.boundTarget
@@ -37,9 +40,10 @@ import java.math.BigInteger
  * [MemoryFunctionsPass] cannot know what a cell is, while the typed pointer the result is bound to
  * (`int *p = calloc(4, sizeof *p)`) carries the real `cType`.
  *
- * The count has to be statically known, for the same reason `memset` insists on it. A `calloc`
- * whose count is not known, or whose result is not bound to a typed pointer in the same block, is
- * left as it was: failing loudly beats handing back a block that is silently not zeroed.
+ * Under the byte-addressed model a cell is a byte whatever the pointee, so the fill goes right
+ * after the call. Under the cell-per-value models a `calloc` whose result is never bound to a typed
+ * pointer cannot be laid out, and the build is retried under `bytes` rather than handing back a
+ * block that is silently not zeroed.
  */
 class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -62,20 +66,23 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           if (!ok) return@map label
           label as InvokeLabel
           if (label.params.size < 3) return@map label
-          val num = literalValue(label.params[1]) ?: return@map label
-          val size = literalValue(label.params[2]) ?: return@map label
           val ret = label.params[0]
-          val bytes = num.multiply(size)
-          val count: Expr<*> =
-            CComplexType.getType(label.params[1], parseContext).getValue(bytes.toString())
+          val count = count(label.params[1], label.params[2])
           val zero = CComplexType.getType(label.params[2], parseContext).getValue("0")
-          pending.add(Triple(ret, zero, count))
           changed = true
-          InvokeLabel("malloc", listOf(ret, count), label.metadata, label.tempLookup)
+          val malloc = InvokeLabel("malloc", listOf(ret, count), label.metadata, label.tempLookup)
+          if (parseContext.memoryModel.byteAddressed()) {
+            val memset =
+              InvokeLabel("memset", listOf(ret, ret, zero, count), EmptyMetaData, emptyMap())
+            return@map SequenceLabel(listOf(malloc, memset))
+          }
+          pending.add(Triple(ret, zero, count))
+          malloc
         }
       if (changed) {
+        val flat = out.flatMap { if (it is SequenceLabel) it.labels else listOf(it) }
         builder.removeEdge(edge)
-        builder.addEdge(edge.withLabel(SequenceLabel(out, edge.label.metadata)))
+        builder.addEdge(edge.withLabel(SequenceLabel(flat, edge.label.metadata)))
       }
     }
     if (pending.isEmpty()) return builder
@@ -83,6 +90,7 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     // Phase 2 -- the binding `p = (T *) tmp` is usually on a LATER edge than the call, so the fill
     // is placed by scanning the whole procedure rather than the call's own label list.
     for ((ret, zero, count) in pending) {
+      var placed = false
       for (edge in LinkedHashSet(builder.getEdges())) {
         val labels = edge.getFlatLabels()
         var inserted = false
@@ -100,8 +108,14 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         if (inserted) {
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(out, edge.label.metadata)))
+          placed = true
           break
         }
+      }
+      if (!placed) {
+        throw RequiresByteAddressedMemoryException(
+          "calloc whose result is not bound to a typed pointer the cell-per-value models can zero"
+        )
       }
     }
     return builder
@@ -116,6 +130,17 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         type.embeddedType !is hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
       else -> false
     }
+
+  /** `num * size` in bytes: folded when both are literals, a `size_t` product otherwise. */
+  private fun count(num: Expr<*>, size: Expr<*>): Expr<*> {
+    val n = literalValue(num)
+    val s = literalValue(size)
+    if (n != null && s != null) {
+      return CComplexType.getType(num, parseContext).getValue(n.multiply(s).toString())
+    }
+    val sizeT = CComplexType.getUnsignedLong(parseContext)
+    return Mul(cast(sizeT.castTo(num), sizeT.smtType), cast(sizeT.castTo(size), sizeT.smtType))
+  }
 
   private fun literalValue(expr: Expr<*>): BigInteger? =
     when (val e = ExprUtils.simplify(expr)) {

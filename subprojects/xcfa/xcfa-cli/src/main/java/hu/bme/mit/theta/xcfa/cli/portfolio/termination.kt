@@ -241,7 +241,12 @@ fun termination(
           Pair(expl, imc)
         }
       } else {
-        error("Only single-procedure or inlineable programs are supported right now.")
+        // The bounded engines need a single procedure; the ASG abstraction keeps the call stack
+        // in its state, so it can still decide recursion whose depth stays bounded.
+        val expl = expl(300_000, "Z3:4.13")
+        val predcart = predcart(300_000, "Z3:4.13")
+        expl then predcart
+        Pair(expl, predcart)
       }
 
     return STM(startingConfig, edges)

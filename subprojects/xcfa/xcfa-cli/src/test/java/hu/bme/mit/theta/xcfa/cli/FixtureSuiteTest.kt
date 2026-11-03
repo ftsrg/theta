@@ -151,9 +151,10 @@ class FixtureSuiteTest {
     val output = SuiteSupport.execute(command, theta, timeout).output
 
     if (!isVerdictFixture) {
+      // A refusal raised by an XCFA pass comes after the parser has already reported success.
       return when {
-        output.contains("ParsingResult Success") -> "PARSE-OK"
         output.contains("Frontend failed!") -> "FRONTEND-FAIL"
+        output.contains("ParsingResult Success") -> "PARSE-OK"
         else -> "OTHER"
       }
     }

@@ -2315,14 +2315,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType declaredType,
             ObjectLayout.Field field,
             CComplexType offsetType) {
-        final int unitBits = declaredType.width();
+        final CComplexType unitType =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                        .ByteInitializer.storageUnitType(declaredType, parseContext);
+        final int unitBits = unitType.width();
         final int unitBytes = unitBits / 8;
         final int unitByteOffset = (field.bitOffset() / unitBits) * unitBytes;
         final int bitInUnit = field.bitOffset() - unitByteOffset * 8;
         if (bitInUnit + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(
-                    "Bitfield member [%s] straddles two storage units, which the bytes memory model"
-                            + " does not support.".formatted(memberName));
+                    ("Bitfield member [%s] straddles two storage units, which the bytes memory"
+                                    + " model does not support.")
+                            .formatted(memberName));
         }
         final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
@@ -2332,8 +2336,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
-                        declaredType.getSmtType());
-        parseContext.getMetadata().create(cell, "cType", declaredType);
+                        unitType.getSmtType());
+        parseContext.getMetadata().create(cell, "cType", unitType);
         final boolean signed =
                 declaredType
                                 instanceof
