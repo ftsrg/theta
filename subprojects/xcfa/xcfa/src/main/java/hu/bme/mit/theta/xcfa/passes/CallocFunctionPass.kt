@@ -15,8 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -26,6 +30,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.boundCell
 import hu.bme.mit.theta.xcfa.utils.boundTarget
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
@@ -42,8 +47,9 @@ import java.math.BigInteger
  *
  * Under the byte-addressed model a cell is a byte whatever the pointee, so the fill goes right
  * after the call. Under the cell-per-value models a `calloc` whose result is never bound to a typed
- * pointer cannot be laid out, and the build is retried under `bytes` rather than handing back a
- * block that is silently not zeroed.
+ * pointer (a variable or a memory cell) cannot be laid out, and the build is retried under `bytes`
+ * rather than handing back a block that is silently not zeroed. The fill is skipped when the
+ * allocation failed.
  */
 class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -56,6 +62,7 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
     // Phase 1 -- turn each `calloc` into the allocation, remembering what still needs zeroing.
     val pending = mutableListOf<Triple<Expr<*>, Expr<*>, Expr<*>>>()
+    val mallocs = LinkedHashMap<InvokeLabel, Triple<Expr<*>, Expr<*>, Expr<*>>>()
     for (edge in LinkedHashSet(builder.getEdges())) {
       val labels = edge.getFlatLabels()
       if (labels.none { it is InvokeLabel && it.name in CALLOC && it.name !in defined }) continue
@@ -71,12 +78,8 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           val zero = CComplexType.getType(label.params[2], parseContext).getValue("0")
           changed = true
           val malloc = InvokeLabel("malloc", listOf(ret, count), label.metadata, label.tempLookup)
-          if (parseContext.memoryModel.byteAddressed()) {
-            val memset =
-              InvokeLabel("memset", listOf(ret, ret, zero, count), EmptyMetaData, emptyMap())
-            return@map SequenceLabel(listOf(malloc, memset))
-          }
-          pending.add(Triple(ret, zero, count))
+          if (parseContext.memoryModel.byteAddressed()) mallocs[malloc] = Triple(ret, zero, count)
+          else pending.add(Triple(ret, zero, count))
           malloc
         }
       if (changed) {
@@ -85,34 +88,39 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         builder.addEdge(edge.withLabel(SequenceLabel(flat, edge.label.metadata)))
       }
     }
+    // Under bytes a cell is a byte whatever the pointee: the fill goes right after the allocation.
+    for ((malloc, fill) in mallocs) {
+      val (ret, zero, count) = fill
+      val edge = builder.getEdges().first { e -> e.getFlatLabels().any { it === malloc } }
+      val labels = edge.getFlatLabels()
+      builder.removeEdge(edge)
+      fillUnlessNull(
+        builder,
+        edge,
+        labels,
+        labels.indexOfFirst { it === malloc } + 1,
+        ret,
+        zero,
+        count,
+      )
+    }
     if (pending.isEmpty()) return builder
 
     // Phase 2 -- the binding `p = (T *) tmp` is usually on a LATER edge than the call, so the fill
     // is placed by scanning the whole procedure rather than the call's own label list.
     for ((ret, zero, count) in pending) {
-      var placed = false
-      for (edge in LinkedHashSet(builder.getEdges())) {
-        val labels = edge.getFlatLabels()
-        var inserted = false
-        val out = mutableListOf<XcfaLabel>()
-        for (label in labels) {
-          out.add(label)
-          if (inserted) continue
-          val target = boundTarget(label, ret) ?: continue
-          if (!pointeeIsTyped(target)) continue
-          out.add(
-            InvokeLabel("memset", listOf(target, target, zero, count), EmptyMetaData, emptyMap())
-          )
-          inserted = true
-        }
-        if (inserted) {
+      val filled =
+        LinkedHashSet(builder.getEdges()).any { edge ->
+          val labels = edge.getFlatLabels()
+          val bound = { l: XcfaLabel -> (boundTarget(l, ret) ?: boundCell(l, ret)) }
+          val at = labels.indexOfFirst { bound(it)?.let(::pointeeIsTyped) == true }
+          if (at < 0) return@any false
+          val target = bound(labels[at])!!
           builder.removeEdge(edge)
-          builder.addEdge(edge.withLabel(SequenceLabel(out, edge.label.metadata)))
-          placed = true
-          break
+          fillUnlessNull(builder, edge, labels, at + 1, target, zero, count)
+          true
         }
-      }
-      if (!placed) {
+      if (!filled) {
         throw RequiresByteAddressedMemoryException(
           "calloc whose result is not bound to a typed pointer the cell-per-value models can zero"
         )
@@ -120,6 +128,39 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     }
     return builder
   }
+
+  /** Splits [edge] after [at] labels to zero [target], unless the allocation failed. */
+  private fun fillUnlessNull(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    labels: List<XcfaLabel>,
+    at: Int,
+    target: Expr<*>,
+    zero: Expr<*>,
+    count: Expr<*>,
+  ) {
+    val loc = {
+      XcfaLocation(
+        "${edge.source.name}_calloc${XcfaLocation.uniqueCounter()}",
+        metadata = edge.source.metadata,
+      )
+    }
+    val before = loc()
+    val after = loc()
+    val nullValue = CComplexType.getType(target, parseContext).nullValue
+    val memset =
+      InvokeLabel("memset", listOf(target, target, zero, count), EmptyMetaData, emptyMap())
+    val add = { s: XcfaLocation, t: XcfaLocation, l: List<XcfaLabel> ->
+      builder.addEdge(XcfaEdge(s, t, SequenceLabel(l, edge.label.metadata), edge.metadata))
+    }
+    add(edge.source, before, labels.subList(0, at))
+    add(before, after, listOf(assume(Neq(target, nullValue)), memset))
+    add(before, after, listOf(assume(Eq(target, nullValue))))
+    add(after, edge.target, labels.subList(at, labels.size))
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun assume(cond: Expr<*>): XcfaLabel = StmtLabel(AssumeStmt.of(cond as Expr<BoolType>))
 
   /** Whether the frontend metadata gives this pointer a pointee we can lay out into cells. */
   private fun pointeeIsTyped(pointer: Expr<*>): Boolean =

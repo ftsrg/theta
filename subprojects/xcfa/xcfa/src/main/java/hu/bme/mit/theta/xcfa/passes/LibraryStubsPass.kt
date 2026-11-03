@@ -143,11 +143,6 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strspn" to Stub(),
         "strcspn" to Stub(),
         "strpbrk" to Stub(),
-        // Registering an exit handler cannot fail in this model, and a havoc'd return would make
-        // `if (atexit(f)) abort();` reachable in a program where it is not.
-        "atexit" to Stub(returns = 0),
-        "on_exit" to Stub(returns = 0),
-        "at_quick_exit" to Stub(returns = 0),
       )
 
     /** How many cells of a written pointee to fill when its extent is not otherwise known. */

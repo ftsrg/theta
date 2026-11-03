@@ -23,9 +23,11 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
@@ -70,7 +72,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!parseContext.isCheckMemsafety) return builder
+    if (!parseContext.isCheckMemsafety) return blockNullDerefs(builder)
 
     breakUpErrors(builder)
 
@@ -263,6 +265,50 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       builder.addEdge(XcfaEdge(badDeref, errorLoc, SequenceLabel(listOf(NopLabel)), EmptyMetaData))
     }
   }
+
+  /**
+   * Without the memory-safety properties, a dereference of NULL crashes the program, so it ends the
+   * path instead of reading or writing memory at address zero (e.g., after a failed `malloc`).
+   */
+  private fun blockNullDerefs(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    for (edge in ArrayList(builder.getEdges())) {
+      val guarded = guardNullDerefs(edge.label)
+      if (guarded == listOf(edge.label) || guarded == (edge.label as? SequenceLabel)?.labels)
+        continue
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(guarded, edge.label.metadata)))
+    }
+    return builder
+  }
+
+  /** [label], each dereferencing step preceded by an assumption that its base is not NULL. */
+  private fun guardNullDerefs(label: XcfaLabel): List<XcfaLabel> =
+    when (label) {
+      is SequenceLabel -> label.labels.flatMap(::guardNullDerefs)
+      is NondetLabel -> {
+        val branches =
+          label.labels.map { branch ->
+            val guarded = guardNullDerefs(branch)
+            if (guarded == listOf(branch)) branch else SequenceLabel(guarded)
+          }
+        if (branches.toSet() == label.labels) listOf(label)
+        else listOf(NondetLabel(branches.toSet(), label.metadata))
+      }
+      else -> {
+        // A literal base is a static object, or left unguarded as before.
+        val derefs = label.derefsWithShortCircuitCond.filter { it.first.array !is LitExpr<*> }
+        if (derefs.isEmpty()) listOf(label)
+        else {
+          val isNull =
+            Or(
+              derefs.map { (deref, conds) ->
+                And(And(conds), Eq(pointerType.castTo(deref.array), pointerType.nullValue))
+              }
+            )
+          listOf(StmtLabel(Assume(Not(isNull)), metadata = label.metadata), label)
+        }
+      }
+    }
 
   /**
    * The offset of [deref]'s last byte from its first under the bytes model, from the width of the
@@ -489,6 +535,15 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             derefs
           }
         }
+
+        is IteExpr<*> ->
+          cond.derefsWithShortCircuitCond +
+            then.derefsWithShortCircuitCond.map { (deref, conds) ->
+              deref to (listOf(cond) + conds)
+            } +
+            `else`.derefsWithShortCircuitCond.map { (deref, conds) ->
+              deref to (listOf(Not(cond)) + conds)
+            }
 
         is Dereference<*, *, *> -> {
           ops.flatMap { it.derefsWithShortCircuitCond } + listOf(this to listOf())

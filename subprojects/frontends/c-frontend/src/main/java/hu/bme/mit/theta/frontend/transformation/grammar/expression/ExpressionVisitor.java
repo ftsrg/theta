@@ -3970,10 +3970,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
      * (they are queued like any other side effect of the surrounding expression) and the last
-     * statement's value is the expression's value. This is what `container_of` expands to. When
-     * there is no value to yield -- no function visitor, or the block does not end in an expression
-     * -- fall back to the old null result: in statement position the value is discarded anyway, and
-     * a value position fails downstream exactly as it always did.
+     * statement's value is the expression's value. This is what `container_of` expands to. A block
+     * that does not end in an expression still has its statements queued, but yields null, as does
+     * any statement expression without a function visitor: in statement position the value is
+     * discarded anyway, and a value position fails downstream exactly as it always did.
      */
     private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
         if (functionVisitor == null) {
@@ -3989,6 +3989,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (value == null) {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: statement expression yields no value\n");
+            preStatements.add(statement);
             return null;
         }
         queueValueStatement(statement);

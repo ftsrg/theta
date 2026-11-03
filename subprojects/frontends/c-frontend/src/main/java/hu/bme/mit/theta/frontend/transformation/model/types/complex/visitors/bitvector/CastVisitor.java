@@ -297,17 +297,19 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CBool type, Expr<?> param) {
-        // C17 6.3.1.2: any non-zero value converts to 1. Truncating to the low bit made `(_Bool)2`
-        // false.
+        // C11 6.3.1.2: a comparison against zero, not a narrowing (that would keep only bit 0)
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CBool) {
             return param;
         }
         if (that instanceof CVoid) {
-            return type.getNullValue(); // see handleUnsignedConversion
+            // as in handleUnsignedConversion: the value can never be read
+            return type.getNullValue();
         }
+        // Compared in the source type itself: converting a float first would truncate 0.5 to 0, and
+        // the fp equality gives -0.0 == 0 and NaN != 0, as C requires.
         final CComplexType source =
-                that instanceof CPointer ? CComplexType.getUnsignedLong(parseContext) : that;
+                (that instanceof CPointer) ? CComplexType.getUnsignedLong(parseContext) : that;
         final Expr<?> value = inBitvectorForm(source, param);
         return Ite(Eq(value, source.getNullValue()), type.getNullValue(), type.getUnitValue());
     }
