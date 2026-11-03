@@ -239,3 +239,10 @@ bool_bitfield_bytes_unsafe.c	bitvector	LP64	UNSAFE	planted bug: a `bool : 1` bit
 bool_cast_nonzero.c	bitvector	LP64	SAFE	conversion to _Bool maps every non-zero value (and 2.5) to 1, not to the low bit
 pthread_cond_initializer.c	efficient	LP64	SAFE	PTHREAD_COND_INITIALIZER resolves and pthread_cond_destroy is a no-op
 termination_recursive.c	efficient	LP64	SAFE:termination	a recursive (non-inlinable) program reaches the ASG termination analysis
+memmove_overlap.c	efficient	LP64	SAFE	overlapping memmove reads all source cells before writing
+memmove_overlap_unsafe.c	efficient	LP64	UNSAFE	overlapping memmove still writes the destination
+memmove_overlap.c	efficient	LP64	SAFE	overlapping memmove reads all source cells before writing	flat
+memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead of writing through an unfolded pointer sum
+memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead of writing through an unfolded pointer sum	flat
+memcpy_symbolic.c	efficient	LP64	SAFE	memcpy with a symbolic byte count is lowered to a loop
+memset_struct_nested_array.c	efficient	LP64	SAFE	memset of a struct with a nested array is retried under bytes, not given up

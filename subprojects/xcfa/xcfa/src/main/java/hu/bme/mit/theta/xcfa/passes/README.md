@@ -58,7 +58,9 @@ Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
   over-approximation; the old value is one specific wrong value.
 - **Refuse loudly rather than model approximately.** A tool error scores nothing under SV-COMP; a
   wrong answer scores much worse. A pass that cannot state a construct exactly declines it, and logs
-  why -- the call is then left in place and surfaces later as "No such method ...".
+  why -- the call is then left in place and surfaces later as "No such method ...". When the bytes
+  model could state it, the pass throws `RequiresByteAddressedMemoryException` instead, and the
+  frontend is rebuilt under `--memory-model bytes`.
 - **A pass leaves the builder consistent.** Every edge must run between two locations the procedure
   still lists; `ProcedurePass.runChecked` asserts this after each pass, so run passes through it.
 
