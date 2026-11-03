@@ -246,3 +246,4 @@ memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead o
 memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead of writing through an unfolded pointer sum	flat
 memcpy_symbolic.c	efficient	LP64	SAFE	memcpy with a symbolic byte count is lowered to a loop
 memset_struct_nested_array.c	efficient	LP64	SAFE	memset of a struct with a nested array is retried under bytes, not given up
+typedef_shadowing.c	efficient	LP64	SAFE	ordinary identifiers shadow typedef names; struct T *T declares a variable

@@ -46,7 +46,140 @@ grammar C;
     public boolean permissiveTypeNames = true;
 
     public boolean isTypeName(String name) {
-        return permissiveTypeNames || typedefNames.contains(name);
+        return permissiveTypeNames || (typedefNames.contains(name) && !isShadowed(name));
+    }
+
+    /**
+     * Per open `declarationSpecifiers`, whether it already has a type specifier. A typedef name must
+     * be the only one (C11 6.7.2p2), so in `struct table *table;` the second `table` is the
+     * declarator even where it also names a type.
+     */
+    private final java.util.ArrayDeque<boolean[]> typeSpecified = new java.util.ArrayDeque<boolean[]>();
+
+    public void beginSpecifiers() {
+        typeSpecified.push(new boolean[] {false});
+    }
+
+    public void endSpecifiers() {
+        typeSpecified.pop();
+    }
+
+    public void sawTypeSpecifier(DeclarationSpecifierContext specifier) {
+        if (!typeSpecified.isEmpty() && !"__thread".equals(specifier.getText())) {
+            typeSpecified.peek()[0] = true;
+        }
+    }
+
+    /** Whether an identifier here can be a typedef name serving as a declaration's type. */
+    public boolean isTypedefSpecifier(String name) {
+        if (permissiveTypeNames) {
+            return true;
+        }
+        return isTypeName(name) && (typeSpecified.isEmpty() || !typeSpecified.peek()[0]);
+    }
+
+    /**
+     * Typedef names hidden by an ordinary identifier of the same name, one set per open block: in
+     * `int f(struct s *table) { table->x = 1; }` the parameter shadows a file-scope `typedef ...
+     * table`, and `table->x` is an expression, not a declaration.
+     */
+    private final java.util.ArrayDeque<java.util.Set<String>> shadowed =
+            new java.util.ArrayDeque<java.util.Set<String>>();
+
+    /** The parameters of the function definition whose body opens next. */
+    private java.util.Set<String> pendingParameters = new java.util.HashSet<String>();
+
+    private boolean isShadowed(String name) {
+        for (java.util.Set<String> scope : shadowed) {
+            if (scope.contains(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void openScope() {
+        shadowed.push(pendingParameters);
+        pendingParameters = new java.util.HashSet<String>();
+    }
+
+    public void closeScope() {
+        shadowed.pop();
+    }
+
+    /** Records the parameters of a function definition, to be shadowed in its body. */
+    public void enterFunctionDefinition(DeclaratorContext declarator) {
+        pendingParameters = new java.util.HashSet<String>();
+        DirectDeclaratorContext direct = declarator.directDeclarator();
+        while (direct instanceof DirectDeclaratorBracesContext braces) {
+            direct = braces.declarator().directDeclarator();
+        }
+        if (!(direct instanceof DirectDeclaratorFunctionDeclContext function)
+                || function.parameterTypeList() == null) {
+            return;
+        }
+        for (ParameterDeclarationContext parameter :
+                function.parameterTypeList().parameterList().parameterDeclaration()) {
+            if (parameter instanceof OrdinaryParameterDeclarationContext ordinary) {
+                String name = declaredName(ordinary.declarator().directDeclarator());
+                if (name != null) {
+                    pendingParameters.add(name);
+                }
+            }
+        }
+    }
+
+    /** A block-scope declaration shadows the typedef names it declares, or a typedef unshadows. */
+    public void declared(DeclarationContext declaration) {
+        if (shadowed.isEmpty()) {
+            return;
+        }
+        java.util.List<DeclarationSpecifierContext> specifiers =
+                declaration.declarationSpecifiers().declarationSpecifier();
+        boolean typedef = false;
+        for (DeclarationSpecifierContext specifier : specifiers) {
+            typedef |= "typedef".equals(specifier.getText());
+        }
+        java.util.List<String> names = new java.util.ArrayList<String>();
+        if (declaration.initDeclaratorList() != null) {
+            for (InitDeclaratorContext init : declaration.initDeclaratorList().initDeclarator()) {
+                names.add(declaredName(init.declarator().directDeclarator()));
+            }
+        }
+        for (String name : names) {
+            if (name == null) {
+                continue;
+            }
+            if (typedef) {
+                for (java.util.Set<String> scope : shadowed) {
+                    scope.remove(name);
+                }
+            } else if (typedefNames.contains(name)) {
+                shadowed.peek().add(name);
+            }
+        }
+    }
+
+    private static String declaredName(DirectDeclaratorContext direct) {
+        while (true) {
+            if (direct instanceof DirectDeclaratorIdContext id) {
+                return id.getText();
+            } else if (direct instanceof DirectDeclaratorBracesContext braces) {
+                direct = braces.declarator().directDeclarator();
+            } else if (direct instanceof DirectDeclaratorArray1Context a) {
+                direct = a.directDeclarator();
+            } else if (direct instanceof DirectDeclaratorArray2Context a) {
+                direct = a.directDeclarator();
+            } else if (direct instanceof DirectDeclaratorArray3Context a) {
+                direct = a.directDeclarator();
+            } else if (direct instanceof DirectDeclaratorArray4Context a) {
+                direct = a.directDeclarator();
+            } else if (direct instanceof DirectDeclaratorFunctionDeclContext f) {
+                direct = f.directDeclarator();
+            } else {
+                return null;
+            }
+        }
     }
 
     /** Everything a type can begin with, other than a typedef name. */
@@ -64,7 +197,7 @@ grammar C;
             return true;
         }
         if (token.getType() == Identifier) {
-            return typedefNames.contains(token.getText());
+            return isTypeName(token.getText());
         }
         return TYPE_STARTERS.contains(token.getText());
     }
@@ -336,16 +469,16 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers initDeclaratorList? ';'
+    :   declarationSpecifiers initDeclaratorList? ';' {declared($ctx);}
 //    |   staticAssertDeclaration                         # declarationStatic
     ;
 
 declarationSpecifiers
-    :   declarationSpecifier+
+    :   {beginSpecifiers();} declarationSpecifier+ {endSpecifiers();}
     ;
 
 declarationSpecifiers2
-    :   declarationSpecifier+
+    :   {beginSpecifiers();} declarationSpecifier+ {endSpecifiers();}
     ;
 
 // otherwise, (y*y)-2 is considered a cast
@@ -367,8 +500,8 @@ castDeclarationSpecifier
 
 declarationSpecifier
     :   storageClassSpecifier
-    |   typeSpecifierPointer
-    |   typeSpecifier
+    |   typeSpecifierPointer {sawTypeSpecifier($ctx);}
+    |   typeSpecifier {sawTypeSpecifier($ctx);}
     |   typeQualifier
     |   functionSpecifier
     |   alignmentSpecifier
@@ -623,7 +756,7 @@ directAbstractDeclarator
     ;
 
 typedefName
-    :   {isTypeName(_input.LT(1).getText())}? Identifier
+    :   {isTypedefSpecifier(_input.LT(1).getText())}? Identifier
     ;
 
 initializer
@@ -669,7 +802,7 @@ labeledStatement
     ;
 
 compoundStatement
-    :   '{' blockItemList? '}'
+    :   '{' {openScope();} blockItemList? '}' {closeScope();}
     ;
 
 blockItemList
@@ -748,7 +881,7 @@ externalDeclaration
     ;
 
 functionDefinition
-    :   declarationSpecifiers declarator /*declarationList?*/ compoundStatement
+    :   declarationSpecifiers declarator {enterFunctionDefinition($declarator.ctx);} /*declarationList?*/ compoundStatement
     ;
 
 //declarationList
