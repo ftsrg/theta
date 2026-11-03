@@ -265,6 +265,9 @@ fun complex27(
       parseContext.arithmetic == ArithmeticType.bitvector ||
         ArithmeticTrait.BITWISE in parseContext.arithmeticTraits
     val hasFloats = ArithmeticTrait.FLOAT in parseContext.arithmeticTraits
+    // The bounded engines run on MathSAT for programs that dereference memory, as it handles the
+    // memory encoding's array formulas better; Z3 takes over if it fails.
+    val hasPointers = mainTrait == PTR
 
     val itpSolver: String
     val itpAlt: String
@@ -283,14 +286,14 @@ fun complex27(
         itpSolver = "mathsat:5.6.19"
         // The only other packaged solver that interpolates over bitvectors.
         itpAlt = "bitwuzla:0.9.1"
-        bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.19"
+        bmcSolver = if (hasPointers) "mathsat:5.6.19" else "Z3:new"
+        bmcAlt = if (hasPointers) "Z3:new" else "mathsat:5.6.19"
       }
       else -> {
         itpSolver = "Z3"
         itpAlt = "mathsat:5.6.19"
-        bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.19"
+        bmcSolver = if (hasPointers) "mathsat:5.6.19" else "Z3:new"
+        bmcAlt = if (hasPointers) "Z3:new" else "mathsat:5.6.19"
       }
     }
 
