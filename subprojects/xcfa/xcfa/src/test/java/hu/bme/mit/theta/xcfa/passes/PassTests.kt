@@ -494,7 +494,6 @@ class PassTests {
               "y".assign("a")
             }
             (init to "L2") {
-              xLocal.assign("x")
               xLocal.assign("y")
               a.assign(xLocal.ref)
               "x".assign(xLocal.ref)
@@ -525,7 +524,6 @@ class PassTests {
 
             (init to "L3") {
               xLocal.assign("x")
-              yLocal.assign("y")
               a.assign(xLocal.ref)
               yLocal.assign(a.ref)
               xLocal.assign(yLocal.ref)
@@ -555,7 +553,6 @@ class PassTests {
             val xLocal = "x_l1" type Int()
             (init to "L4") {
               atomic_begin()
-              xLocal.assign("x")
               xLocal.assign("y")
             }
             ("L4" to "L5") {

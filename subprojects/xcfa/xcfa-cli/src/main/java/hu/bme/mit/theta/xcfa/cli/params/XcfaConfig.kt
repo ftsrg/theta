@@ -281,6 +281,28 @@ data class BTOR2FrontendConfig(
 
 @Serializable sealed interface SpecBackendConfig : Config
 
+/**
+ * Every solver the backend may use. Exhaustive over the backend configs, so a new one has to say
+ * which solvers it uses. A portfolio's and DSS's are not known up front: their sub-configurations
+ * pick their own.
+ */
+fun SpecBackendConfig.solverNames(): List<String> =
+  when (this) {
+    is CegarConfig -> listOf(abstractorConfig.abstractionSolver, refinerConfig.refinementSolver)
+    is AsgCegarConfig -> listOf(abstractorConfig.abstractionSolver, refinerConfig.refinementSolver)
+    is TracegenConfig -> listOf(abstractorConfig.abstractionSolver)
+    is HornConfig -> listOf(solver)
+    is LassoValidationConfig -> listOf(solver)
+    is BoundedConfig -> listOf(bmcConfig.bmcSolver, indConfig.indSolver, itpConfig.itpSolver)
+    is OcConfig -> listOf(smtSolver, unsatReferenceSolver)
+    is PortfolioConfig -> listOf()
+    is DssConfig -> listOf()
+    is MddConfig -> listOf(solver)
+    is MddCegarConfig -> listOf(solver, refinementSolver)
+    is Ic3Config -> listOf(solver)
+    is PathEnumerationConfig -> listOf(pathEnumerationSolver, abstractionSolver)
+  }.filter { it.isNotEmpty() }
+
 @Serializable
 data class BackendConfig<T : SpecBackendConfig>(
   @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -621,6 +643,18 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the OC solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--oc-unsat-reference-solver"],
+    description =
+      "Cross-checks every UNSAT answer of the OC solver by asking this solver the same question, and fails on a disagreement (implies --validate-solver). Slow; for diagnosing solver issues.",
+  )
+  var unsatReferenceSolver: String = "",
   @Parameter(
     names = ["--oc-unroll-start"],
     description = "First force loop unrolling bound for OC checker",

@@ -58,10 +58,18 @@ fun Dereference<*, *, *>.addressesAtomicData(
   if (parseContext.memoryModel.flatAddressing()) {
     // The flat address is array + offset, wrapped as FlatMemoryPass folds it (the race pass may ask
     // before that pass runs). The lookups below must not run: they would match the folded array 0.
-    // A non-literal address is "not atomic", so the access stays race-checked.
-    val sum =
-      (array.asConstantBigInteger() ?: return false) +
-        (offset.asConstantBigInteger() ?: return false)
+    // A non-literal address is a pointer stepped by an index (`p[i]` is `p + i`): its pointer
+    // variable's type says what it points at, as below. Otherwise it is "not atomic", so the access
+    // stays race-checked.
+    val arrayValue = array.asConstantBigInteger()
+    val offsetValue = offset.asConstantBigInteger()
+    if (arrayValue == null || offsetValue == null) {
+      // a pointer loaded from memory (`(*pp)[i]`) has no variable to ask
+      if (dereferences(array, offset)) return false
+      val leaves = listOf(array, offset).flatMap { it.pointerVariables(parseContext) }
+      return leaves.size == 1 && leaves[0].pointsToAtomic(globalVars, parseContext)
+    }
+    val sum = arrayValue + offsetValue
     val flatAddr = (array.type as? BvType)?.let { sum.mod(BigInteger.TWO.pow(it.size)) } ?: sum
     val slot = parseContext.flatAddressSpace.slotAt(flatAddr) ?: return false
     return parseContext.isAtomicObjectCell(slot.id(), flatAddr.subtract(slot.start()).toInt())
@@ -71,25 +79,39 @@ fun Dereference<*, *, *>.addressesAtomicData(
     if (parseContext.isAtomicObjectCell(base, offset.asConstantBigInteger()?.toInt())) return true
   }
   // A live pointer *variable*: its type says what it points at.
-  (array as? RefExpr<*>)?.decl?.let { decl ->
-    globalVars.firstOrNull { it.wrappedVar == decl }?.let { if (it.pointsToAtomic) return true }
-    val pointee =
-      try {
-        when (val type = CComplexType.getType(array, parseContext)) {
-          is CPointer -> type.embeddedType
-          is CArray -> type.embeddedType
-          else -> null
-        }
-      } catch (e: Exception) {
-        null
-      }
-    if (pointee?.isAtomic == true) return true
-  }
+  (array as? RefExpr<*>)?.let { if (it.pointsToAtomic(globalVars, parseContext)) return true }
   // An address-taken object, whose pointer has been folded to a bare literal -- its object id. The
   // pointer ReferenceElimination invented for it still holds that id, and remembers what it points
   // at.
   return globalVars.any { it.pointsToAtomic && it.initValue == array }
 }
+
+/** Whether this pointer variable points at `_Atomic` data, by its declaration or its C type. */
+private fun RefExpr<*>.pointsToAtomic(
+  globalVars: Collection<XcfaGlobalVar>,
+  parseContext: ParseContext,
+): Boolean {
+  if (globalVars.any { it.wrappedVar == decl && it.pointsToAtomic }) return true
+  return when (val type = runCatching { CComplexType.getType(this, parseContext) }.getOrNull()) {
+    is CPointer -> type.embeddedType.isAtomic
+    is CArray -> type.embeddedType.isAtomic
+    else -> false
+  }
+}
+
+private fun dereferences(vararg exprs: Expr<*>): Boolean =
+  exprs.any { it is Dereference<*, *, *> || dereferences(*it.ops.toTypedArray()) }
+
+/** The variables of pointer or array C type in this (address) expression. */
+private fun Expr<*>.pointerVariables(parseContext: ParseContext): List<RefExpr<*>> =
+  if (
+    this is RefExpr<*> &&
+      runCatching { CComplexType.getType(this, parseContext) }
+        .getOrNull()
+        .let { it is CPointer || it is CArray }
+  )
+    listOf(this)
+  else ops.flatMap { it.pointerVariables(parseContext) }
 
 /**
  * The value of a bare integer/bitvector literal, or null when this is not a compile-time constant.

@@ -95,8 +95,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 return BvExprs.SExt(
                         cast(param, BvType.of(that.width())), BvType.of(type.width(), true));
             } else if (that.width() > type.width()) {
-                return BvExprs.Extract(
-                        cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
+                return truncate(param, that, type, true);
             } else { // width equals
                 if (that instanceof Unsigned) {
                     return BvSignChangeExpr.of(
@@ -116,6 +115,17 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             throw new UnsupportedFrontendElementException(
                     "Compound types are not directly supported!");
         }
+    }
+
+    /**
+     * Narrows [param] to [type]'s width. An extract keeps its operand's signedness, so on its own
+     * `(unsigned int) 4294967295` (a signed `long long` source) stayed *signed*, and dividing it
+     * picked the signed division: `(unsigned int) 4294967295 / 4` came out 0.
+     */
+    private Expr<BvType> truncate(Expr<?> param, CComplexType that, CInteger type, boolean signed) {
+        return BvSignChangeExpr.of(
+                BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0), Int(type.width())),
+                BvType.of(type.width(), signed));
     }
 
     private Expr<? extends Type> handleUnsignedConversion(CInteger type, Expr<?> param) {
@@ -148,8 +158,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 return BvExprs.ZExt(
                         cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
             } else if (that.width() > type.width()) {
-                return BvExprs.Extract(
-                        cast(param, BvType.of(that.width())), Int(0), Int(type.width()));
+                return truncate(param, that, type, false);
             } else { // width equals
                 if (that instanceof Signed) {
                     return BvSignChangeExpr.of(

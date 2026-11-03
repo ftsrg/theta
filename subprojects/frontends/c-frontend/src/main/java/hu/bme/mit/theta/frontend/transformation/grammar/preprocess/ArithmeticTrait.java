@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 public enum ArithmeticTrait {
     LIN_INT,
     NONLIN_INT,
+    /** A `/` or `%` whose divisor is not an integer literal (a subset of {@link #NONLIN_INT}). */
+    NONCONST_DIV,
     BITWISE,
     FLOAT,
     ARR
