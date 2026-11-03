@@ -275,22 +275,22 @@ fun complex27(
         itpSolver = "cvc5:1.3.4"
         // MathSAT rejects floats combined with bitvectors, and cvc5 is the only solver packaged
         // that decides the combination, so there is no alternative to fall back to there.
-        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.12"
+        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.19"
         bmcSolver = "cvc5:1.3.4"
         bmcAlt = "Z3:new"
       }
       bitvectorEncoded -> {
-        itpSolver = "mathsat:5.6.12"
+        itpSolver = "mathsat:5.6.19"
         // The only other packaged solver that interpolates over bitvectors.
         itpAlt = "bitwuzla:0.9.1"
         bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.12"
+        bmcAlt = "mathsat:5.6.19"
       }
       else -> {
         itpSolver = "Z3"
-        itpAlt = "mathsat:5.6.12"
+        itpAlt = "mathsat:5.6.19"
         bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.12"
+        bmcAlt = "mathsat:5.6.19"
       }
     }
 
@@ -353,7 +353,7 @@ fun complex27(
         // reproduce the same XCFA, and a float program has no bitvector encoding at all.
         val lastResort =
           if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
-          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
+          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.19")
         steps to lastResort
       } else {
         // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
