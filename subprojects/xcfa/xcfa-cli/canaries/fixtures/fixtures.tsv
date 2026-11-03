@@ -233,3 +233,4 @@ symbolic_rwlock_readers.c	efficient	LP64	SAFE	symbolic read-write locks count re
 fp_self_neq_nan.c	efficient	LP64	UNSAFE	x != x on a double is not folded to false: it holds for NaN
 fp_add_zero_sign.c	efficient	LP64	SAFE	x + 0.0 is not folded to x: the sign of a zero sum differs for x = -0.0
 fp_add_no_reassoc.c	efficient	LP64	SAFE	floating-point literals are not summed across other operands of an addition
+pthread_join_retval.c	efficient	LP64	FRONTEND-FAIL	pthread_join with a non-null retval is refused, not modelled as leaving *retval unchanged

@@ -180,6 +180,13 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
               "pthread_join" -> {
                 val handle = invokeLabel.getParam(1)
+                // The thread's return value is not modelled, so `*retval` would silently keep its
+                // old value; only a null `retval` is claimed.
+                check(
+                  invokeLabel.params.size < 3 || invokeLabel.params[2].asConstant()?.signum() == 0
+                ) {
+                  "Unsupported pthread_join: non-null retval (${invokeLabel.params[2]})"
+                }
                 addSeq(
                   listOf(
                     JoinLabel(handle, metadata),
