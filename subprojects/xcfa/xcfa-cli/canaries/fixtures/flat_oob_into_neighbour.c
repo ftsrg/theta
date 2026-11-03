@@ -6,7 +6,11 @@ void free(void *);
 int main(void) {
   int *p = malloc(2 * sizeof(int));
   int *q = malloc(2 * sizeof(int));
-  if (!p || !q) return 0;
+  if (!p || !q) {
+    free(p);
+    free(q);
+    return 0;
+  }
   p[2] = 1;
   free(p);
   free(q);
