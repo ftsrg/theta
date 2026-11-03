@@ -89,6 +89,7 @@ class CloneProcedureForStaticThreadsPass : ProcedurePass {
               val fixLabel = SequenceLabel(fixArguments)
               specializedProcedure.addEdge(XcfaEdge(init, pseudoInitLoc, fixLabel, edge.metadata))
               builder.parent.addProcedure(specializedProcedure)
+              specializedProcedure.completeOptimizationPhaseOf(builder)
             }
 
             // Update start label to call specialized procedure

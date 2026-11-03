@@ -82,6 +82,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlineProceduresPass(parseContext),
       NondetFunctionPass(parseContext),
     ),
+    // starts copies of thread routines that store their result for pthread_join
+    listOf(ThreadResultPass()),
     listOf(CloneProcedureForStaticThreadsPass()),
     listOf(
       // Clean up procedures after inlining
