@@ -20,11 +20,15 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ParseContext {
@@ -52,11 +56,17 @@ public class ParseContext {
      * <p>The frontend emits object-lifetime bookkeeping (see {@code FunctionVisitor}'s scope-end
      * releases) that only the memory-safety checks read. Under any other property that bookkeeping
      * would be pure cost -- and worse, an observable change to a model nothing asks a question of
-     * -- so it is gated on this. The c-frontend module cannot see {@code MemsafetyPass.enabled},
-     * which is where the same decision is recorded on the pass side; both are set from the same
-     * property.
+     * -- so it is gated on this. The XCFA passes read it as well, so the frontend and the
+     * memory-safety instrumentation always agree.
      */
     private boolean checkMemsafety = false;
+
+    /**
+     * Whether the property being verified is no-data-race: a read C never performs (the unselected
+     * operand of {@code ?:}) must then not appear in the model, or it races. Set like {@link
+     * #checkMemsafety}.
+     */
+    private boolean checkDataRace = false;
 
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
@@ -86,9 +96,12 @@ public class ParseContext {
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
+    private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
+
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
     private boolean everyMemberAccessed = false;
+    private boolean aggregateMemberCopied = false;
 
     public Map<String, Integer> getSourceTraits() {
         return sourceTraits;
@@ -106,9 +119,42 @@ public class ParseContext {
         this.checkMemsafety = checkMemsafety;
     }
 
+    public boolean isCheckDataRace() {
+        return checkDataRace;
+    }
+
+    public void setCheckDataRace(boolean checkDataRace) {
+        this.checkDataRace = checkDataRace;
+    }
+
     public ParseContext() {
         metadata = new FrontendMetadata();
         cStmtCounter = new CStmtCounter();
+    }
+
+    /**
+     * Starts of the C full expressions being visited, innermost first. Every {@code CStatement}
+     * built meanwhile records the innermost one, which is where a witness locates a violation
+     * inside it. An empty entry hides the enclosing ones.
+     */
+    private final Deque<Optional<SourcePosition>> fullExpressions = new ArrayDeque<>();
+
+    public void pushFullExpression(SourcePosition start) {
+        fullExpressions.push(Optional.of(start));
+    }
+
+    /** Hides the enclosing full expressions until the matching {@link #popFullExpression()}. */
+    public void pushNoFullExpression() {
+        fullExpressions.push(Optional.empty());
+    }
+
+    public void popFullExpression() {
+        fullExpressions.pop();
+    }
+
+    /** The start of the innermost full expression, empty if there is none or it is hidden. */
+    public Optional<SourcePosition> getFullExpression() {
+        return fullExpressions.isEmpty() ? Optional.empty() : fullExpressions.peek();
     }
 
     public ParseContext(
@@ -190,6 +236,10 @@ public class ParseContext {
 
     public CStmtCounter getCStmtCounter() {
         return cStmtCounter;
+    }
+
+    public FlatAddressSpace getFlatAddressSpace() {
+        return flatAddressSpace;
     }
 
     /** Records that every cell of the object at base id [base] is `_Atomic`. */
@@ -275,6 +325,32 @@ public class ParseContext {
 
     public boolean isAnyMemberAccessed(CStruct type) {
         return everyMemberAccessed || accessedMembers.containsKey(type);
+    }
+
+    /** Records that a struct holding an aggregate member is copied member by member. */
+    public void markAggregateMemberCopied() {
+        aggregateMemberCopied = true;
+    }
+
+    /**
+     * Whether a struct, union or array member is accessed or copied anywhere: the only ways a
+     * sub-object held in a parent's cell is reached.
+     */
+    public boolean isAggregateMemberUsed() {
+        if (everyMemberAccessed || aggregateMemberCopied) {
+            return true;
+        }
+        return accessedMembers.entrySet().stream()
+                .anyMatch(
+                        entry ->
+                                entry.getKey().getFields().stream()
+                                        .anyMatch(
+                                                field ->
+                                                        entry.getValue().contains(field.get1())
+                                                                && (field.get2() instanceof CStruct
+                                                                        || field.get2()
+                                                                                instanceof
+                                                                                CArray)));
     }
 
     /**

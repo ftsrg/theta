@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -25,6 +23,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.boundTarget
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 
@@ -106,17 +105,6 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       }
     }
     return builder
-  }
-
-  /** The variable an `x := ret` assignment binds the call's result to, if this label is one. */
-  private fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
-    val stmt = (label as? StmtLabel)?.stmt as? AssignStmt<*> ?: return null
-    if (ret !is RefExpr<*>) return null
-    // The binding is `p = (int *) tmp`, not a bare `p = tmp` -- the frontend casts the `void *`
-    // result to the declared pointer type -- so match on the result being *referenced* rather than
-    // on the right-hand side being exactly it.
-    if (ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
-    return stmt.varDecl.ref
   }
 
   /** Whether the frontend metadata gives this pointer a pointee we can lay out into cells. */

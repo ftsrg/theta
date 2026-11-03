@@ -36,6 +36,7 @@ Each phase below is one group in `CPasses`, in order.
 | | `DataRaceToReachabilityPass`, `OverflowDetectionPass` | reduce the data-race and overflow properties to reachability | **after every pass that creates a memory access**, or that access is not instrumented and the property is silently under-checked |
 | | `MemoryFunctionsPass` | spell out `memcpy`/`memset`/`memmove` over the destination's cells | before anything that havocs the same objects, i.e. before `UnresolvedInvokeToHavocPass` |
 | | `UnresolvedInvokeToHavocPass` | havoc whatever calls are left | **last** of the call-consuming passes, by definition |
+| | `AmbiguousMutexPass` | collect guarded literal-address alternatives across the whole XCFA; if any mutex or attribute address remains unresolved, invoke `SymbolicMutexPass` to replace ordinary mutexes with shared ownership arrays and ghost thread IDs | resolve all procedures before applying any alternatives, so symbolic and literal aliases share the same encoding |
 | memory model | `FlatMemoryPass`, `ByteMemoryPass` | fold `(base, offset)` to one flat address, then split wide cells into bytes; both no-ops unless their `--memory-model` is selected | after every pass that creates or rewrites a dereference; `ByteMemoryPass` after `FlatMemoryPass` |
 | final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead, and the writes to global objects that nothing reads (a union only as a whole) | last |
 

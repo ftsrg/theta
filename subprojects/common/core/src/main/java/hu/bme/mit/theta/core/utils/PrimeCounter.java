@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,38 +23,46 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import java.util.List;
 
 public final class PrimeCounter {
 
     private PrimeCounter() {}
 
     public static VarIndexing countPrimes(final Expr<?> expr) {
-        return collectPrimes(expr, 0).build();
+        final BasicVarIndexing.BasicVarIndexingBuilder builder =
+                VarIndexingFactory.basicIndexingBuilder(0);
+        collectPrimes(expr, 0, builder);
+        return builder.build();
     }
 
-    private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(
-            final Expr<?> expr, final int nPrimes) {
+    // Accumulates into a single builder: joining per-operand builders copies the whole map for
+    // every operand, which is quadratic on large flat conjunctions.
+    private static void collectPrimes(
+            final Expr<?> expr,
+            final int nPrimes,
+            final BasicVarIndexing.BasicVarIndexingBuilder builder) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) expr;
             final Decl<?> decl = ref.getDecl();
             if (decl instanceof VarDecl) {
                 final VarDecl<?> varDecl = (VarDecl<?>) decl;
-                return VarIndexingFactory.basicIndexingBuilder(0).inc(varDecl, nPrimes);
+                final int current = builder.get(varDecl);
+                if (nPrimes > current) {
+                    builder.inc(varDecl, nPrimes - current);
+                }
+                return;
             }
         }
 
         if (expr instanceof PrimeExpr<?>) {
             final PrimeExpr<?> primeExpr = (PrimeExpr<?>) expr;
             final Expr<?> op = primeExpr.getOp();
-            return collectPrimes(op, nPrimes + 1);
+            collectPrimes(op, nPrimes + 1, builder);
+            return;
         }
 
-        final List<? extends Expr<?>> ops = expr.getOps();
-        return ops.stream()
-                .map(op -> collectPrimes(op, nPrimes))
-                .reduce(
-                        VarIndexingFactory.basicIndexingBuilder(0),
-                        BasicVarIndexing.BasicVarIndexingBuilder::join);
+        for (final Expr<?> op : expr.getOps()) {
+            collectPrimes(op, nPrimes, builder);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.UserPropagator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -127,7 +128,8 @@ public final class JavaSMTSolverFactory implements SolverFactory {
         }
     }
 
-    public Solver createSolverWithPropagators(JavaSMTUserPropagator... propagators) {
+    @Override
+    public Solver createSolverWithPropagators(UserPropagator... propagators) {
         try {
             final SolverContext context =
                     SolverContextFactory.createSolverContext(
@@ -140,13 +142,15 @@ public final class JavaSMTSolverFactory implements SolverFactory {
 
             final ProverEnvironment prover =
                     context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
-            for (JavaSMTUserPropagator propagator : propagators) {
-                if (!prover.registerUserPropagator(propagator)) {
+            for (UserPropagator propagator : propagators) {
+                final var adapter =
+                        new JavaSMTUserPropagator(
+                                propagator, transformationManager::toTerm, termTransformer::toExpr);
+                if (!prover.registerUserPropagator(adapter)) {
                     throw new JavaSMTSolverException(
                             "Could not register user propagator " + propagator);
                 }
-                propagator.setToExpr(termTransformer::toExpr);
-                propagator.setToTerm(transformationManager::toTerm);
+                propagator.bind(adapter);
             }
 
             return new JavaSMTSolver(

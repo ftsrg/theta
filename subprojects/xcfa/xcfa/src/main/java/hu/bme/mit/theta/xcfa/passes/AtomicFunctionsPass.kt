@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
@@ -34,6 +35,7 @@ import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
 import hu.bme.mit.theta.xcfa.model.AtomicBeginLabel
 import hu.bme.mit.theta.xcfa.model.AtomicEndLabel
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
@@ -56,6 +58,7 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
  * Memory orders are ignored: the analysis is sequentially consistent, so a fence and any ordering
  * constraint hold vacuously. A pointer argument is used as an expression (not restricted to a base
  * variable like `CLibraryFunctionsPass.getParam`), so `__atomic_load_n(&a[i], …)` and `&s.f` work.
+ * A call to a function the program defines under one of these names is left alone.
  */
 class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -92,6 +95,11 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       "atomic_compare_exchange_weak_explicit",
     )
   private val casPtrNames = setOf("__atomic_compare_exchange")
+  // The frontend resolves an `atomic_flag` argument to the address of its flag byte.
+  private val testAndSetNames =
+    setOf("__atomic_test_and_set", "atomic_flag_test_and_set", "atomic_flag_test_and_set_explicit")
+  private val clearNames =
+    setOf("__atomic_clear", "atomic_flag_clear", "atomic_flag_clear_explicit")
   // fetch_op: return the old value. op_fetch: return the new value.
   private val fetchOldOps =
     mapOf(
@@ -144,13 +152,17 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       name in casPtrNames ||
       name in fetchOldOps ||
       name in opFetchNew ||
-      name in fenceNames
-
-  private fun predicate(label: XcfaLabel): Boolean = label is InvokeLabel && handled(label.name)
+      name in fenceNames ||
+      name in testAndSetNames ||
+      name in clearNames
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val defined = builder.parent.getProcedures().mapNotNull { it.name }.toSet()
+    val predicate = { label: XcfaLabel ->
+      label is InvokeLabel && handled(label.name) && label.name !in defined
+    }
     for (edge in ArrayList(builder.getEdges())) {
-      val edges = edge.splitIf(this::predicate)
+      val edges = edge.splitIf(predicate)
       if (
         edges.size > 1 ||
           (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))
@@ -250,8 +262,10 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
     if (name in loadNames) {
       // ret = *p  -- a single memory read, already atomic; the block keeps it uniform.
+      // __atomic_load(p, ret_ptr, order) returns it by pointer instead: *ret_ptr = *p.
       val p = args[0]
-      return atomic(listOf(AssignStmtLabel(ret, cell(p))))
+      val target = if (name == "__atomic_load") cell(args[1]) else ret
+      return atomic(listOf(AssignStmtLabel(target, cell(p))))
     }
 
     if (name in storeNames) {
@@ -306,6 +320,31 @@ class AtomicFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       val newValue = pointee.castTo(bitwise(op, cell(p, pointee), args[1], pointee))
       return atomic(
         listOf(AssignStmtLabel(cell(p, pointee), newValue), AssignStmtLabel(ret, cell(p, pointee)))
+      )
+    }
+
+    if (name in testAndSetNames || name in clearNames) {
+      // test-and-set: ret = *p != 0 ; *p = 1.  clear: *p = 0.  Both act on one byte.
+      val p = args[0]
+      val pointee = pointeeOf(p)
+      if (pointee !is CBool && pointee.width() != 8)
+        throw UnsupportedFrontendElementException("$name on a non-byte object of type $pointee")
+      if (name in clearNames)
+        return atomic(listOf(AssignStmtLabel(cell(p, pointee), pointee.nullValue)))
+      val retType = CComplexType.getType(ret, parseContext)
+      val wasSet =
+        Neq(cast(cell(p, pointee), pointee.smtType), cast(pointee.nullValue, pointee.smtType))
+      val retWasSet =
+        Ite(
+          cast(wasSet, BoolType.getInstance()),
+          cast(retType.unitValue, retType.smtType),
+          cast(retType.nullValue, retType.smtType),
+        )
+      return atomic(
+        listOf(
+          AssignStmtLabel(ret, retWasSet),
+          AssignStmtLabel(cell(p, pointee), pointee.unitValue),
+        )
       )
     }
 

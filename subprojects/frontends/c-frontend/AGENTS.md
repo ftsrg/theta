@@ -5,6 +5,7 @@ Gradle module: `:theta-c-frontend`. Parses preprocessed C with ANTLR into the *I
 ## Build and test
 
 - `./gradlew :theta-c-frontend:test` covers the type model, object layouts and the typedef-aware parse ([src/test/kotlin/hu/bme/mit/theta/frontend/](src/test/kotlin/hu/bme/mit/theta/frontend/)). Most frontend behaviour is tested from `./gradlew :theta-c2xcfa:test` (e.g. `CLiteralTypingTest`, `ShortCircuitTest`), whose `getXcfaFromC` parses, builds and runs the C pass pipeline. Run both.
+- A frontend unit test parses a source string with `parseTypeAware(...).accept(FunctionVisitor(ParseContext(), NullLogger.getInstance()))` and inspects the `CProgram` or the `ParseContext`.
 - Grammar and visitor changes must also pass `:theta-xcfa-cli:fixtureTest` and `canaryTest`, with a new fixture that fails before the change and passes after ([canaries/README.md](../../xcfa/xcfa-cli/canaries/README.md)).
 
 ## Layout
@@ -25,3 +26,6 @@ Paths below are relative to [src/main/java/hu/bme/mit/theta/frontend/](src/main/
 5. A local declared without an initializer inside a loop or outside `main` yields a `CAssume` carrying the variable (`getHavocked()`). c2xcfa lowers it to a havoc plus the range assume, so every re-execution gets a fresh value; a declaration that runs once keeps the backend's initial value, which explicit-state backends such as MDD rely on.
 6. `CStatementVisitor` has two implementors: `StatisticsCollectorVisitor` ([CStatistics.kt](src/main/java/hu/bme/mit/theta/frontend/CStatistics.kt)) and c2xcfa's `FrontendXcfaBuilder` (through `CStatementVisitorBase`, whose defaults throw). A new statement class needs both.
 7. Unsupported constructs throw `UnsupportedFrontendElementException`. Throw the subclass `RequiresByteAddressedMemoryException` only when `--memory-model bytes` can express the construct: when no memory model was requested, xcfa-cli retries under `bytes` on exactly that type.
+8. **Two arithmetic backends.** `types/complex/visitors/{integer,bitvector}` each implement the cast, limit, null/unit value and SMT-type visitors. A new `CComplexType`, or a change to one's semantics, has to be made in both.
+9. **Headers are bundled, not read from disk.** `stdlib/HeaderFile.kt` maps a header name to a Kotlin string of declarations. Add a new header there and to the enum; an unknown `#include <x>` expands to nothing.
+10. **Stack objects go through `alloca`.** Local aggregates and VLAs become `alloca` calls, and leaving a block emits `FunctionVisitor.SCOPE_END` (`__theta_scope_end`). Both are lowered by `AllocaFunctionPass` in `:theta-xcfa`. A VLA size is in cells, not bytes.

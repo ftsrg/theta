@@ -149,6 +149,15 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val src = invoke.params[2]
+    if (parseContext.memoryModel.byteAddressed()) {
+      val byte = CUnsignedChar(null, parseContext)
+      return byteWise(invoke) { i ->
+        MemoryAssignStmt.create(
+          deref(dst, indexOf(i, dst), byte),
+          cast(deref(src, indexOf(i, src), byte), byte.smtType),
+        )
+      }
+    }
 
     // A whole-object copy (`memcpy(p, q, sizeof *p)`, which is what these calls almost always are)
     // has to be driven by the object's *cell layout*, not by an element width: cells are one per
@@ -190,6 +199,15 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val value = invoke.params[2]
+    if (parseContext.memoryModel.byteAddressed()) {
+      val byte = CUnsignedChar(null, parseContext)
+      return byteWise(invoke) { i ->
+        MemoryAssignStmt.create(
+          deref(dst, indexOf(i, dst), byte),
+          cast(byte.castTo(value), byte.smtType),
+        )
+      }
+    }
 
     // `memset(p, 0, sizeof *p)` on an aggregate, by cells rather than by element width -- see the
     // matching branch in [copy]. Only the zero fill is claimed: a non-zero byte means something
@@ -470,7 +488,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    *
    * A nested aggregate member disqualifies the whole object: its parent cell holds the *base id* of
    * a separate object, so copying that cell would make the two objects share storage rather than
-   * copy it. A union likewise, whose cells mean different things to different members.
+   * copy it. A union likewise, whose cells mean different things to different members. Under
+   * [CStruct.inlinesAggregates] only a union member is such a separate object.
    */
   private fun aggregateOf(pointer: Expr<*>): Triple<CComplexType, Int, BigInteger>? {
     val pointee = pointeeOf(pointer) ?: return null
@@ -490,6 +509,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         if (dimension == null || element == null) null else dimension * element
       }
 
+      type is CStruct && type.inlinesAggregates() ->
+        if (type.fields.any { flatCells(it.get2()) == null }) null else type.unitCount
+
       type is CStruct ->
         if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
         else type.unitCount
@@ -503,6 +525,11 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       type is CArray -> {
         val stride = flatCells(type.embeddedType) ?: 1
         cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
+      }
+
+      type is CStruct && type.inlinesAggregates() -> {
+        val field = type.fields.lastOrNull { type.unitOffsetOf(it.get1()) <= index } ?: return type
+        cellTypeAt(field.get2(), index - type.unitOffsetOf(field.get1()))
       }
 
       type is CStruct ->
@@ -535,6 +562,24 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     }
 
   /** The index of the i-th element, in the type the dereference's offset is built at. */
+  /**
+   * Under the bytes model every byte is a cell of its own, so a copy or fill is exactly its `n`
+   * byte moves, whatever the objects' types; [stmt] is the one for byte `i`.
+   */
+  private fun byteWise(invoke: InvokeLabel, stmt: (Int) -> MemoryAssignStmt<*, *, *>): XcfaLabel? {
+    val n = literalValue(invoke.params[3]) ?: return giveUp(invoke)
+    if (n.signum() < 0 || n > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
+    return SequenceLabel(
+      (0 until n.toInt()).map { StmtLabel(stmt(it), metadata = invoke.metadata) } +
+        returns(invoke, invoke.params[1])
+    )
+  }
+
+  /** The cell a fill loop writes: a byte under the bytes model, else the pointee element. */
+  private fun fillElement(pointer: Expr<*>): CComplexType? =
+    if (parseContext.memoryModel.byteAddressed()) CUnsignedChar(null, parseContext)
+    else elementOf(pointer)
+
   private fun indexOf(i: Int, pointer: Expr<*>): Expr<*> =
     CComplexType.getUnsignedLong(parseContext).getValue("$i")
 
@@ -543,7 +588,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   private fun needsLoop(invoke: InvokeLabel): Boolean {
     if (invoke.params.size < 4) return false
     if (aggregateOf(invoke.params[1]) != null) return false
-    val element = elementOf(invoke.params[1]) ?: return false
+    val element = fillElement(invoke.params[1]) ?: return false
     if (literalValue(invoke.params[3]) != null) return false // the constant path handles it better
     if (element.width() <= 0 || element.width() % 8 != 0) return false
     val zero = literalValue(invoke.params[2])?.equals(BigInteger.ZERO) == true
@@ -579,7 +624,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val dst = invoke.params[1]
     val value = invoke.params[2]
     val bytes = invoke.params[3]
-    val element = elementOf(dst) ?: return
+    val element = fillElement(dst) ?: return
     val width = element.width() / 8
     if (width <= 0) return
     val zero = literalValue(value)?.equals(BigInteger.ZERO) == true

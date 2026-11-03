@@ -1,0 +1,13 @@
+var p: boolean = false
+var q: boolean = false
+var d: boolean = true
+
+trans {
+    assume !(p && q);
+    p := p != (q && d);
+    q := q != d;
+}
+
+init {}
+
+env {}

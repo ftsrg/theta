@@ -391,9 +391,13 @@ class UnrollPass(
       return true
     }
 
-    /** Replaces the loop variable with its constant value for iteration [index], when enabled. */
+    /**
+     * Replaces the loop variable with its constant value for iteration [index], when enabled and
+     * [count] got that far: a loop it could not count at all can still be force unrolled.
+     */
     private fun substituteLoopVarIn(label: XcfaLabel, index: Int): XcfaLabel {
       if (!substituteLoopVar || parseContext == null || loopVar == null) return label
+      if (index !in loopVarValues.indices) return label
       val valuation = MutableValuation()
       valuation.put(loopVar, loopVarValues[index])
       return label.simplify(valuation, parseContext)
@@ -749,7 +753,11 @@ class UnrollPass(
           val inEdge = inEdges.first()
           val vars = inEdge.label.collectVarsWithAccessType()
           if (vars[loopVar].isWritten) {
-            if (vars.size > 1) return@run null
+            // Other variables on the same edge are fine: [count] replays the whole edge from an
+            // empty state, so they are assigned along the way, and a loop variable whose value
+            // stays unknown makes the count give up on its own. Demanding the edge touch nothing
+            // else lost every loop whose initialization shares an edge with an unrelated one --
+            // a global counter beside the allocation counter, say.
             loopVarInit = inEdge
             break
           }
@@ -784,11 +792,7 @@ class UnrollPass(
         exitEdges = exits,
         properlyUnrollable = properlyUnrollable,
         forceUnrollLimit = tracker.bound(exitKey, forceUnrollLimit),
-        // Never for a global loop variable: another thread could write it, so its per-iteration
-        // value is not a constant of the copy, and baking one in would hide a race or a
-        // memory-safety violation on whatever the loop indexes.
-        substituteLoopVar =
-          substituteLoopVar && builder.parent.getVars().none { it.wrappedVar == loopVar },
+        substituteLoopVar = substituteLoopVar && builder.substitutes(loopVar),
         parseContext = parseContext,
         exitKey = exitKey,
         tracker = tracker,
@@ -797,4 +801,36 @@ class UnrollPass(
       )
       .also { if (it in testedLoops) return null }
   }
+
+  /**
+   * Whether [loopVar] holds a value each unrolled copy can bake in.
+   *
+   * A global that another thread writes does not: its per-iteration value is not a constant of the
+   * copy, and substituting one would hide a race or a memory-safety violation on whatever the loop
+   * indexes. No other thread can write it when the loop sits in an init procedure -- which runs
+   * once -- and no other procedure writes the variable at all. Thread-creation loops index their
+   * handle array with exactly such a counter (`pthread_create(&t[i], ...)` with a file-scope `i`),
+   * and CLibraryFunctionsPass needs the index folded to a constant to key a handle on it.
+   */
+  private fun XcfaProcedureBuilder.substitutes(loopVar: VarDecl<*>?): Boolean {
+    if (parent.getVars().none { it.wrappedVar == loopVar }) return true
+    if (parent.getInitProcedures().none { it.first.name == name }) return false
+    val elsewhere =
+      writtenElsewhere
+        ?: parent
+          .getProcedures()
+          .filter { it.name != name }
+          .flatMapTo(mutableSetOf<VarDecl<*>>()) { procedure ->
+            procedure.getEdges().flatMap { edge ->
+              edge.label.collectVarsWithAccessType().filterValues { it.isWritten }.keys
+            }
+          }
+          .also { writtenElsewhere = it }
+    return loopVar !in elsewhere
+  }
+
+  /**
+   * Globals written outside the procedure being unrolled; scanned once, it is a whole-XCFA walk.
+   */
+  private var writtenElsewhere: Set<VarDecl<*>>? = null
 }
