@@ -143,7 +143,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invokeLabel.params[0] as RefExpr<*>
     val arg = invokeLabel.params[1]
     val sizeLabels =
-      (if (MemsafetyPass.enabled)
+      (if (parseContext.isCheckMemsafety)
         listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
       else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
@@ -177,7 +177,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     builder.boundPointee(parseContext, ret).let {
       if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
     }
-    return if (MemsafetyPass.enabled) {
+    return if (parseContext.isCheckMemsafety) {
       listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
     } else {
       listOf(keepBase)

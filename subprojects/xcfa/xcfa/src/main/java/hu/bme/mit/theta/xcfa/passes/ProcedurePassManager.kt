@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
@@ -101,10 +102,13 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property), // after unroll to simplify with fewer loops
       UnusedLocRemovalPass(),
-      RemoveDeadEnds(parseContext),
+      RemoveDeadEnds(
+        parseContext,
+        enabled = property.inputProperty == ErrorDetection.ERROR_LOCATION,
+      ),
       EliminateSelfLoops(),
     ),
-    listOf(StaticCoiPass()),
+    listOf(StaticCoiPass(property)),
     listOf(
       // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),

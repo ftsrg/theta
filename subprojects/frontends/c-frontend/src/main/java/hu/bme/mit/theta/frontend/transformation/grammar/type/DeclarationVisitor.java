@@ -224,9 +224,7 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
                         initializerExpression =
                                 asString != null
                                         ? asString
-                                        : context.initializer()
-                                                .assignmentExpression()
-                                                .accept(functionVisitor);
+                                        : initializerAsFullExpression(context.initializer());
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
@@ -799,5 +797,13 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
     @Override
     public CDeclaration visitDirectDeclaratorBitField(CParser.DirectDeclaratorBitFieldContext ctx) {
         throw new UnsupportedOperationException("Not yet implemented!");
+    }
+
+    private CStatement initializerAsFullExpression(CParser.InitializerContext initializer) {
+        if (functionVisitor == null) {
+            return initializer.assignmentExpression().accept(functionVisitor);
+        }
+        return functionVisitor.inFullExpression(
+                initializer, () -> initializer.assignmentExpression().accept(functionVisitor));
     }
 }

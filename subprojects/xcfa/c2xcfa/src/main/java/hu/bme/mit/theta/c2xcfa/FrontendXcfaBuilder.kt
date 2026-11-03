@@ -82,7 +82,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
-import hu.bme.mit.theta.xcfa.passes.MemsafetyPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -304,7 +303,11 @@ class FrontendXcfaBuilder(
       else -> t.javaClass.simpleName
     }
 
-  private fun getMetadata(source: CStatement): MetaData =
+  /**
+   * The metadata of a label built for [source]. [fullExprSource] is the C full expression the label
+   * evaluates, e.g. the guard of a loop whose labels otherwise carry the body's position.
+   */
+  private fun getMetadata(source: CStatement, fullExprSource: CStatement = source): MetaData =
     CMetaData(
       lineNumberStart = source.lineNumberStart.takeIf { it != -1 },
       lineNumberStop = source.lineNumberStop.takeIf { it != -1 },
@@ -316,6 +319,7 @@ class FrontendXcfaBuilder(
       astNodes = listOf(source),
       functionName = source.functionName.takeIf { it != "" },
       notStatementStart = alreadyHandledStatements.contains(source),
+      fullExpression = fullExprSource.fullExpression.orElse(null),
     )
 
   /** A pointer-indexed, Fitsall-valued memsafety ghost array, zero everywhere at the start. */
@@ -336,7 +340,7 @@ class FrontendXcfaBuilder(
   fun buildXcfa(cProgram: CProgram): XcfaBuilder {
     val builder = XcfaBuilder(cProgram.id ?: "")
     val initStmtList: MutableList<XcfaLabel> = ArrayList()
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val ghosts =
         if (parseContext.memoryModel.flatAddressing())
           listOf("__theta_ptr_size", OBJ_EXTENT_VAR, OBJ_HEAP_VAR)
@@ -623,7 +627,7 @@ class FrontendXcfaBuilder(
     initStmtList: MutableList<XcfaLabel>,
     parentBase: Int,
   ) {
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val fitsall = Fitsall(null, parseContext)
       val size = if (type.isUnion) unionCellCount(type) else type.unitCount
       initStmtList.add(builder.allocate(parseContext, objectExpr, fitsall.getValue("$size")))
@@ -1051,7 +1055,7 @@ class FrontendXcfaBuilder(
         )
       )
       recordStaticObject(objectBase, type, globalDeclaration, parentCell(globalDeclaration))
-      if (MemsafetyPass.enabled) {
+      if (parseContext.isCheckMemsafety) {
         // Sized or initializer-sized, the count comes from getArraySize; re-materializing the
         // literal through getValue types it for the *current* arithmetic. The stored dimension
         // expression cannot be used directly: types registered by the early typedef pass carry
@@ -1235,7 +1239,7 @@ class FrontendXcfaBuilder(
       )
     )
     recordStaticObject(objectBase, type, target, parentCell(target))
-    if (MemsafetyPass.enabled) {
+    if (parseContext.isCheckMemsafety) {
       val size = CComplexType.getUnsignedLong(parseContext).getValue(bytes.toString())
       initStmtList.add(builder.allocate(parseContext, target, size))
     }
@@ -2431,7 +2435,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(body, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2444,7 +2448,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = getMetadata(body, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2500,6 +2504,7 @@ class FrontendXcfaBuilder(
     // statement itself is entered only once. Anchoring them to the body's metadata (as CWhile does)
     // makes a cycled witness waypoint point at the loop body rather than the `for` keyword.
     val bodyMetadata = if (body == null) getMetadata(statement) else getMetadata(body)
+    val guardMetadata = getMetadata(body ?: statement, fullExprSource = guard ?: body ?: statement)
     val assume =
       StmtLabel(
         Stmts.Assume(
@@ -2511,7 +2516,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = bodyMetadata,
+        metadata = guardMetadata,
       )
     check(lastTest != null)
     xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = bodyMetadata)
@@ -2527,7 +2532,7 @@ class FrontendXcfaBuilder(
             )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = guardMetadata,
       )
     xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = bodyMetadata)
     builder.addEdge(xcfaEdge)
@@ -2617,7 +2622,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(statement),
+        metadata = getMetadata(statement, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(endGuard, mainBranch, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2630,7 +2635,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = getMetadata(statement),
+        metadata = getMetadata(statement, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(endGuard, elseBranch, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2701,7 +2706,7 @@ class FrontendXcfaBuilder(
             cast(key, key.type),
             cast(type.castTo(expr?.expression ?: type.nullValue), key.type),
           ),
-          metadata = getMetadata(statement),
+          metadata = getMetadata(statement, fullExprSource = expr ?: statement),
         ),
         metadata = getMetadata(statement),
       )
@@ -2776,7 +2781,7 @@ class FrontendXcfaBuilder(
           StmtLabel(
             Stmts.Assume(switchTestEq(testValue.expression, cStatement.expr.expression)),
             choiceType = ChoiceType.MAIN_PATH,
-            metadata = getMetadata(cStatement),
+            metadata = getMetadata(cStatement, fullExprSource = testValue),
           )
         xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
         builder.addEdge(xcfaEdge)
@@ -2790,7 +2795,7 @@ class FrontendXcfaBuilder(
           StmtLabel(
             Stmts.Assume(defaultExpr),
             choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect?
-            metadata = getMetadata(cStatement),
+            metadata = getMetadata(cStatement, fullExprSource = testValue),
           )
         xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
         builder.addEdge(xcfaEdge)
@@ -2840,7 +2845,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.MAIN_PATH,
-        metadata = getMetadata(body),
+        metadata = getMetadata(body, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
@@ -2853,7 +2858,7 @@ class FrontendXcfaBuilder(
           )
         ),
         choiceType = ChoiceType.ALTERNATIVE_PATH,
-        metadata = EmptyMetaData,
+        metadata = getMetadata(body, fullExprSource = guard),
       )
     xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1, metadata = getMetadata(body))
     builder.addEdge(xcfaEdge)
