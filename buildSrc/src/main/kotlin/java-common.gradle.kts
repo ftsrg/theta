@@ -126,12 +126,14 @@ spotless {
     isEnforceCheck = false
 
     java {
+        targetExclude("**/build/**")
         importOrder("java|javax", "hu.bme.", "")
         removeUnusedImports()
         googleJavaFormat("1.35.0").aosp().reflowLongStrings()
         formatAnnotations()
     }
     kotlin {
+        targetExclude("**/build/**")
         ktfmt("0.51").googleStyle()
     }
     kotlinGradle {
