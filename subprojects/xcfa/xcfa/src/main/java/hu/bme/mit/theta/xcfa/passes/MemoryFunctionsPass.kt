@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -858,7 +859,21 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   private fun splitOffset(pointer: Expr<*>, index: Expr<*>): Pair<Expr<*>, Expr<*>> {
     var stripped: Expr<*> = pointer
     while (stripped is PosExpr<*>) stripped = stripped.op
-    if (parseContext.memoryModel.byteAddressed() || stripped !is AddExpr<*>) return pointer to index
+    if (parseContext.memoryModel.byteAddressed()) return pointer to index
+    // The frontend reads a pointer-sum argument as an element's address: `a + 1` arrives as
+    // `&a[1]`.
+    if (stripped is Reference<*, *>) {
+      val element = stripped.expr as? Dereference<*, *, *> ?: return pointer to index
+      val pointee = pointeeOf(pointer)
+      if (pointee is CStruct || pointee is CArray || pointee != pointeeOf(element.array)) {
+        throw RequiresByteAddressedMemoryException(
+          "A mem* call on an element address the cell-per-value models cannot fold: $pointer"
+        )
+      }
+      val indexType = CComplexType.getUnsignedLong(parseContext)
+      return element.array to Add(listOf(indexType.castTo(element.offset), indexType.castTo(index)))
+    }
+    if (stripped !is AddExpr<*>) return pointer to index
     val ops =
       stripped.ops.map {
         var op: Expr<*> = it
