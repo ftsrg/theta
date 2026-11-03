@@ -40,6 +40,10 @@ val isShallowClone = providers.exec {
     isIgnoreExitValue = true
 }.standardOutput.asText.map { it.trim() == "true" }
 
+// Build outputs, generated sources among them, are skipped by directory name, so that the check does not
+// depend on the path separator.
+val skippedDirs = setOf("build", "bin", ".gradle")
+
 val shallowCloneError =
     "Copyright years come from each file's last commit, which a shallow git clone does not know " +
         "for files older than its boundary. Run `git fetch --unshallow` first."
@@ -52,6 +56,7 @@ tasks.register("checkCopyright", fun(task: Task){
     val rootDir = rootDir
     val isShallowClone = isShallowClone
     val shallowCloneError = shallowCloneError
+    val skippedDirs = skippedDirs
 
   task.doLast(fun(task: Task) {
     if (isShallowClone.get()) throw GradleException(shallowCloneError)
@@ -86,12 +91,8 @@ tasks.register("checkCopyright", fun(task: Task){
 
     fun collectSourceFiles(dir: File): List<File> {
       val result = mutableListOf<File>()
-      dir.walk().forEach { file ->
-        if (file.isFile &&
-          (file.extension == "java" || file.extension == "kt" || file.extension == "kts") &&
-          !file.absolutePath.contains("/build/") &&
-          !file.absolutePath.contains("/bin/") &&
-          !file.absolutePath.contains("/.gradle/")) {
+      dir.walk().onEnter { it.name !in skippedDirs }.forEach { file ->
+        if (file.isFile && (file.extension == "java" || file.extension == "kt" || file.extension == "kts")) {
           result.add(file)
         }
       }
@@ -137,6 +138,7 @@ tasks.register("applyCopyright", fun(task: Task) {
   val copyrightHeader = copyrightHeader
   val isShallowClone = isShallowClone
   val shallowCloneError = shallowCloneError
+  val skippedDirs = skippedDirs
 
     task.doLast {
       if (isShallowClone.get()) throw GradleException(shallowCloneError)
@@ -171,12 +173,8 @@ tasks.register("applyCopyright", fun(task: Task) {
 
       fun collectSourceFiles(dir: File): List<File> {
         val result = mutableListOf<File>()
-        dir.walk().forEach { file ->
-          if (file.isFile &&
-            (file.extension == "java" || file.extension == "kt" || file.extension == "kts") &&
-            !file.absolutePath.contains("/build/") &&
-            !file.absolutePath.contains("/bin/") &&
-            !file.absolutePath.contains("/.gradle/")) {
+        dir.walk().onEnter { it.name !in skippedDirs }.forEach { file ->
+          if (file.isFile && (file.extension == "java" || file.extension == "kt" || file.extension == "kts")) {
             result.add(file)
           }
         }
