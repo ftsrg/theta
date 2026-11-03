@@ -69,11 +69,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
       }
     val initEdges =
       LinkedHashSet(
-        when {
-          isInitProcedure && singleThreaded -> builder.getEdges()
-          isInitProcedure -> getNonConcurrentEdges(builder.parent, true).first
-          else -> emptySet()
-        }
+        if (isInitProcedure) getNonConcurrentEdges(builder.parent, true).first else emptySet()
       )
     val initLoops = getInitLoops(builder.initLoc, initEdges)
 
