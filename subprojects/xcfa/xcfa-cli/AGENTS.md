@@ -1,27 +1,26 @@
-# XCFA CLI
+# xcfa/xcfa-cli — notes for editing this module
+
+Gradle module: `:theta-xcfa-cli`, main class `hu.bme.mit.theta.xcfa.cli.XcfaCli`. This is the user-facing verifier: option parsing, the frontend and its fallbacks, checker construction, portfolios, witnesses, and the SV-COMP and CHC-COMP distributions (the `archivePackaging` variants in [build.gradle.kts](build.gradle.kts)). Usage and the config object model: [README.md](README.md).
 
 ## Build and test
 
-- Build or run the CLI with `./gradlew :theta-xcfa-cli:build` or
-  `./gradlew :theta-xcfa-cli:run --args="..."`.
-- Run module tests with `./gradlew :theta-xcfa-cli:test`.
-- Run the feature regressions with `./gradlew :theta-xcfa-cli:fixtureTest`; run
-  `./gradlew :theta-xcfa-cli:canaryTest` for the fixture gate plus the broader SV-Benchmarks
-  smoke suite.
-- Semantic frontend changes need a discriminating verdict fixture under `canaries/fixtures/` and a
-  matching row in `canaries/fixtures/fixtures.tsv`. Use `PARSE-OK` only for parse/build changes;
-  use `SAFE` or `UNSAFE` when the change affects program meaning.
-- The canary suite uses the sibling `sv-benchmarks` checkout for property files. It re-extracts
-  `build/distributions/Theta-svcomp` when the zip is newer than the extracted `theta.jar`.
+- `./gradlew :theta-xcfa-cli:test` runs the unit and end-to-end tests. A test that needs an SMT-LIB solver skips itself when the solver cannot be installed, and the root `verifySolverInstallations` task then fails the build.
+- The canary gate is kept out of `test`. `:theta-xcfa-cli:fixtureTest` runs the feature-guard fixtures and takes a few minutes. `:theta-xcfa-cli:canaryTest` runs the sv-benchmarks sample in `canaries.tsv` and depends on `fixtureTest`. Both build `buildArchiveTheta-svcomp` first and need an sv-benchmarks checkout: `../sv-benchmarks` beside the repository, or `-Ptheta.canary.svBenchmarks=<dir>`. Modes, and how to add a fixture: [canaries/README.md](canaries/README.md).
+- The suites re-extract `build/distributions/Theta-svcomp.zip` into `Theta-svcomp/` when that directory is missing or older than the zip.
 
-## Integration points and invariants
+## Layout
 
-- `XcfaCli.kt` parses command-line options, `params/XcfaConfig.kt` defines them, and
-  `ExecuteConfig.kt` orchestrates parsing, analysis, and output. `utils/XcfaParser.kt` wires the
-  language frontend and XCFA passes.
-- Automatic C memory-model fallback is allowed only when `--memory-model` was not specified.
-  Pin any selected fallback in the shared config because portfolio configurations may rebuild the
-  frontend. The `bytes` model requires bitvector arithmetic; if it cannot represent the input,
-  restore the requested arithmetic before falling back to `flat`.
-- Frontend failures normally log and exit. Re-throw only the specific typed limitations that the
-  caller can recover from; do not convert unrelated frontend failures into fallback attempts.
+Paths are relative to [src/main/java/hu/bme/mit/theta/xcfa/cli/](src/main/java/hu/bme/mit/theta/xcfa/cli/).
+
+- `XcfaCli.kt` calls `runConfig` in `ExecuteConfig.kt`, which validates the input, runs `frontend` and `backend`, maps the result and writes the witness.
+- `params/`: `XcfaConfig.kt` (the config tree, with one `SpecBackendConfig` per backend), `ParamValues.kt` (the `Backend`, `Domain`, `Refinement`, `POR`, ... enums, which carry their factories), `ExitCodes.kt`.
+- `checkers/`: `ConfigToChecker.kt` dispatches on `Backend` to a `ConfigTo<X>Checker.kt`. `ConfigToPortfolio.kt` maps `--portfolio` names to `portfolio/` (`STABLE` is `complex27`).
+- `utils/XcfaParser.kt` (one parser per input type), `witnesstransformation/` (trace concretization, witness application), `utils/*WitnessWriter.kt`.
+
+## Invariants / gotchas
+
+1. **The frontend fallbacks rebuild in-process.** They apply only when no `--memory-model` was given. `UnsupportedPointerSplitException` rebuilds under `flat` and `RequiresByteAddressedMemoryException` under `bytes`. An arithmetic the frontend chose itself is retried as bitvector. A fallback pins its model in the config, because the portfolio re-runs the frontend from that config. The `bytes` model requires bitvector arithmetic; if it cannot represent the input, restore the requested arithmetic before falling back to `flat`.
+2. **New backend:** add it to `Backend`. The exhaustive `when`s in `BackendConfig.createSpecConfig` and `getSafetyChecker` then need a spec config and a `ConfigTo<X>Checker` for it.
+3. Invalid domain/refinement combinations are rejected while the checker is built: `UNSAT_CORE` needs a `Domain` with a `varsPrecRefiner` (currently only EXPL).
+4. `ConfigToAsgCegarChecker` passes `traceEnricher = ::threadWriteTriples` so that lassos see pointer writes. Any new consumer of paths needs the same enrichment ([xcfa-analysis AGENTS.md](../xcfa-analysis/AGENTS.md)).
+5. Frontend failures normally log and exit. Re-throw only the specific typed limitations that the caller can recover from; do not turn unrelated frontend failures into fallback attempts.
