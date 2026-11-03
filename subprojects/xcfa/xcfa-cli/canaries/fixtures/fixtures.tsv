@@ -256,3 +256,4 @@ memset_struct_nested_array.c	efficient	LP64	SAFE	memset of a struct with a neste
 typedef_shadowing.c	efficient	LP64	SAFE	ordinary identifiers shadow typedef names; struct T *T declares a variable
 calloc_void_binding_unsafe.c	efficient	LP64	UNSAFE	calloc bound only through void * is zeroed for real
 calloc_void_binding.c	efficient	LP64	SAFE	calloc bound only through void * is zeroed
+flat_field_after_nested_member.c	efficient	LP64	SAFE:valid-memsafety	a referenced struct spans its inline members' cells, so trailing fields stay in bounds	flat

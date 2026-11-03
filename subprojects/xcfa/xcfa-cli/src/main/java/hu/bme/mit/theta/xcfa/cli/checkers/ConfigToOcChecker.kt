@@ -20,6 +20,9 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
@@ -50,7 +53,7 @@ fun getOcChecker(
       property = config.inputConfig.property,
       parseContext = parseContext,
       decisionProcedure = ocConfig.decisionProcedure,
-      smtSolver = ocConfig.smtSolver,
+      solverFactory = ocSolverFactory(ocConfig),
       logger = logger,
       outputConflictClauses = ocConfig.outputConflictClauses,
       autoConflictConfig = ocConfig.autoConflict,
@@ -63,6 +66,16 @@ fun getOcChecker(
       maxExitQueries = ocConfig.maxExitQueries,
     )
   return SafetyChecker { ocChecker.check() }
+}
+
+private fun ocSolverFactory(ocConfig: OcConfig): SolverFactory {
+  val solverFactory = SolverManager.resolveSolverFactory(ocConfig.smtSolver)
+  if (!ocConfig.validateSolver && ocConfig.unsatReferenceSolver.isEmpty()) return solverFactory
+  val unsatReference =
+    ocConfig.unsatReferenceSolver
+      .takeIf { it.isNotEmpty() }
+      ?.let { SolverManager.resolveSolverFactory(it) }
+  return SolverValidatorWrapperFactory.create(solverFactory, unsatReference)
 }
 
 /**
