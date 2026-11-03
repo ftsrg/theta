@@ -53,6 +53,8 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
           Regex("sleep"),
           Regex("free"),
           Regex("pthread_mutex_destroy"), // TODO: is this safe?
+          // Condition variables carry no modelled state (waits may wake spuriously).
+          Regex("pthread_cond_destroy"),
         )
         .any { label.name.matches(it) }
   }

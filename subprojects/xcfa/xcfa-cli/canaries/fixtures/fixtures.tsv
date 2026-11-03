@@ -238,3 +238,8 @@ pthread_join_retval.c	efficient	LP64	FRONTEND-FAIL	pthread_join with a non-null 
 bool_bitfield_bytes.c	bitvector	LP64	SAFE	`bool : 1` bitfields after `unsigned int : 1` ones are laid out in a byte, not refused as straddling	bytes
 bool_bitfield_bytes_unsafe.c	bitvector	LP64	UNSAFE	planted bug: a `bool : 1` bitfield next to `unsigned int : 1` ones is read back as set	bytes
 bool_cast_nonzero.c	bitvector	LP64	SAFE	conversion to _Bool maps every non-zero value (and 2.5) to 1, not to the low bit
+pthread_join_retval.c	efficient	LP64	FRONTEND-FAIL	pthread_join with a non-null retval is refused, not modelled as leaving *retval unchanged
+bool_bitfield_bytes.c	bitvector	LP64	SAFE	`bool : 1` bitfields after `unsigned int : 1` ones are laid out in a byte, not refused as straddling	bytes
+bool_bitfield_bytes_unsafe.c	bitvector	LP64	UNSAFE	planted bug: a `bool : 1` bitfield next to `unsigned int : 1` ones is read back as set	bytes
+bool_cast_nonzero.c	bitvector	LP64	SAFE	conversion to _Bool maps every non-zero value (and 2.5) to 1, not to the low bit
+pthread_cond_initializer.c	efficient	LP64	SAFE	PTHREAD_COND_INITIALIZER resolves and pthread_cond_destroy is a no-op
