@@ -288,27 +288,17 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CBool type, Expr<?> param) {
-        // C11 6.3.1.2: conversion to _Bool is a comparison against zero yielding 0 or 1. It is
-        // NOT a narrowing conversion, and must not be routed through handleUnsignedConversion():
-        // _Bool has width 1, so that path took the `that.width() > type.width()` branch and
-        // emitted Extract(param, 0, 1) -- bit 0 of the operand. Every EVEN non-zero value then
-        // converted to *false*, so `assume_abort_if_not(ptr)` on an even address became
-        // assume(false), killed every path, and produced a vacuous "Safe" on unsafe programs
-        // (the aws-c-common *_negated missed bugs). The integer CastVisitor has always done this
-        // correctly; this mirrors it.
+        // C11 6.3.1.2: a comparison against zero, not a narrowing (that would keep only bit 0)
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CBool) {
             return param;
         }
         if (that instanceof CVoid) {
-            // Same rationale as in handleUnsignedConversion: the value can never be read.
+            // as in handleUnsignedConversion: the value can never be read
             return type.getNullValue();
         }
-        // Compare in the SOURCE type's own representation. Widening to a common type first
-        // would be wrong for floats -- ToBv truncates, so (_Bool)0.5 would become 0 where C
-        // says 1. FpType is Equational, so the generic Eq covers reals too, and it gets the
-        // IEEE corner cases right: -0.0 compares equal to zero (=> false) and NaN does not
-        // (=> true), which is what C requires.
+        // Compared in the source type itself: converting a float first would truncate 0.5 to 0, and
+        // the fp equality gives -0.0 == 0 and NaN != 0, as C requires.
         final CComplexType source =
                 (that instanceof CPointer) ? CComplexType.getUnsignedLong(parseContext) : that;
         final Expr<?> value = inBitvectorForm(source, param);
