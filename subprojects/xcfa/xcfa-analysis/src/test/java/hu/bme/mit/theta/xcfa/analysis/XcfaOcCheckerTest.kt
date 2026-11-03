@@ -29,8 +29,6 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.RemoveDeadEnds
-import hu.bme.mit.theta.xcfa.passes.UnusedVarPass
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -158,22 +156,14 @@ class XcfaOcCheckerTest {
     val parseContext = ParseContext()
     parseContext.arithmetic = arithmetic
     // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
-    // detected between, and keeping every global access for a data race check.
+    // detected between.
     val lbeLevel = LbePass.defaultLevel
-    val keepGlobalAccesses = UnusedVarPass.keepGlobalVariableAccesses
-    val removeDeadEnds = RemoveDeadEnds.enabled
     LbePass.defaultLevel = LbePass.LbeLevel.NO_LBE
-    if (property.inputProperty == ErrorDetection.DATA_RACE) {
-      UnusedVarPass.keepGlobalVariableAccesses = true
-      RemoveDeadEnds.enabled = false
-    }
     val xcfa =
       try {
         getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
       } finally {
         LbePass.defaultLevel = lbeLevel
-        UnusedVarPass.keepGlobalVariableAccesses = keepGlobalAccesses
-        RemoveDeadEnds.enabled = removeDeadEnds
       }
     return XcfaOcChecker(
         xcfa = xcfa,

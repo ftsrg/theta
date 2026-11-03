@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.c2xcfa.getCMetaData
+import hu.bme.mit.theta.c2xcfa.targetPosition
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
@@ -41,13 +42,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr
-import hu.bme.mit.theta.core.type.fptype.FpRoundingMode
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall
@@ -61,7 +59,6 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.cli.witnesstransformation.printLit
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
 import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.MetaData
@@ -71,6 +68,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
@@ -149,6 +147,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                 witnessfile,
                 ltlSpecification,
                 architecture,
+                logger,
               )
             witnessfile.writeText(bestEffortWitness)
           } else {
@@ -169,6 +168,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             witnessfile,
             ltlSpecification,
             architecture,
+            logger,
           )
         witnessfile.writeText(bestEffortWitness)
       }
@@ -196,6 +196,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
+    logger: Logger,
   ): String {
 
     val trace =
@@ -250,14 +251,18 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         .actions
         .flatMap { it.label.getFlatLabels() }
         .findLast { it.metadata.isSubstantial() }
-    if (lastLabel == null)
-      return generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
-    val metadata = lastLabel.getCMetaData()
+    val metadata = lastLabel?.getCMetaData()
+    @Suppress("UNCHECKED_CAST")
+    val target =
+      runCatching { violationTarget(trace as Trace<XcfaState<*>, XcfaAction>, inputFile) }
+        .onFailure { logger.info("Could not locate the violation target: ${it.message}") }
+        .getOrNull()
 
     return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
       val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
-      call?.let {
-        val loc = Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1)
+      val callLocation =
+        call?.let { Location(inputFile.name, it.lineNumberStart, it.colNumberStart + 1) }
+      (callLocation ?: target)?.let { loc ->
         generateTrivialViolationWitness(
           safetyResult = safetyResult,
           inputFile = inputFile,
@@ -273,7 +278,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       listOf(ErrorDetection.OVERFLOW, ErrorDetection.MEMCLEANUP, ErrorDetection.MEMSAFETY)
         .contains(property.inputProperty)
     ) {
-      getLocation(inputFile, metadata)?.let {
+      target?.let {
         generateTrivialViolationWitness(
           safetyResult = safetyResult,
           inputFile = inputFile,
@@ -372,7 +377,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       task =
         Task(
           inputFiles = listOf(inputFile.name),
-          inputFileHashes = mapOf(Pair(inputFile.path, createTaskHash(inputFile.path))),
+          // keyed like input_files, which names the file without its path
+          inputFileHashes = mapOf(Pair(inputFile.name, createTaskHash(inputFile.path))),
           specification = ltlSpecification,
           dataModel =
             architecture?.let {
@@ -560,6 +566,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     inputFile: File,
     parseContext: ParseContext,
     withTargets: Boolean,
+    targetLocation: Location? = null,
   ): List<WaypointContent> {
     val waypoints = mutableListOf<WaypointContent>()
     for (i in 0..witnessTrace.length()) {
@@ -576,11 +583,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               (witnessTrace.states[i].violation ||
                 (witnessTrace.states.getOrNull(i + 1)?.violation ?: false)),
           threadId = threadIds.ofNode(witnessTrace.states[i], incoming, outgoing),
+          targetLocation = targetLocation,
         )
         ?.let {
           // to avoid multiple segments for the target location, we need to remove the existing
           // follow waypoint and only keep the target
-          if (it.type == WaypointType.TARGET && waypoints.last().location == it.location) {
+          if (it.type == WaypointType.TARGET && waypoints.lastOrNull()?.location == it.location) {
             waypoints.removeLast()
           }
           waypoints.add(it)
@@ -608,7 +616,14 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val threadIds = ThreadIdEmission(concrTrace, parseContext)
 
     val content =
-      witnessTraceWaypoints(witnessTrace, threadIds, inputFile, parseContext, withTargets = true)
+      witnessTraceWaypoints(
+          witnessTrace,
+          threadIds,
+          inputFile,
+          parseContext,
+          withTargets = true,
+          targetLocation = violationTarget(concrTrace, inputFile),
+        )
         .let { it.subList(0, it.indexOfFirst { it.type == WaypointType.TARGET } + 1) }
         .let(::keepEssentialWaypoints)
         .map { ContentItem(it) }
@@ -786,7 +801,10 @@ private fun AssignStmt<*>.isHeldFlagSet(raceFlagNames: Set<String>): Boolean {
  * source line survives on the edge's source (and, failing that, target) location instead.
  */
 private fun XcfaAction.accessLocation(inputFile: File): Location? =
-  getLocation(inputFile, edge.metadata)
+  edge.getFlatLabels().asReversed().firstNotNullOfOrNull {
+    getTargetLocation(inputFile, it.metadata)
+  }
+    ?: getTargetLocation(inputFile, edge.metadata)
     ?: getLocation(inputFile, edge.source.metadata)
     ?: getLocation(inputFile, edge.target.metadata)
 
@@ -916,10 +934,50 @@ private fun targetWaypointAtViolation(
 
 private fun getLocation(inputFile: File, metadata: MetaData?): Location? {
   val m = (metadata as? CMetaData)?.asExportableCMetadata ?: return null
-  val line = m.lineNumberStart ?: m.lineNumberStop ?: return null
+  val line =
+    m.lineNumberStart?.takeIf { it > 0 } ?: m.lineNumberStop?.takeIf { it > 0 } ?: return null
   val column = m.colNumberStart ?: m.colNumberStop
   return Location(fileName = inputFile.name, line = line, column = column?.plus(1))
 }
+
+/**
+ * The location of [metadata]'s target position, also for a label that does not start a statement.
+ */
+private fun getTargetLocation(inputFile: File, metadata: MetaData?): Location? =
+  metadata?.targetPosition()?.let {
+    Location(fileName = inputFile.name, line = it.line, column = it.column + 1)
+  }
+
+/**
+ * Where the violation of [trace] lies: the target position of the last located label of the process
+ * that reaches the error location. Edges into the error location often have no position of their
+ * own, so the earlier labels of that process are searched as well.
+ */
+private fun violationTarget(
+  trace: Trace<out XcfaState<*>, XcfaAction>,
+  inputFile: File,
+): Location? {
+  val pid =
+    trace.states.last().processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
+      ?: trace.actions.lastOrNull()?.pid
+      ?: return null
+  for (action in trace.actions.asReversed()) {
+    if (action.pid != pid) continue
+    for (label in action.edge.getFlatLabels().asReversed()) {
+      getTargetLocation(inputFile, label.metadata)?.let {
+        return it
+      }
+    }
+    getTargetLocation(inputFile, action.edge.metadata)?.let {
+      return it
+    }
+  }
+  return null
+}
+
+/** The C type of [decl], or null if the frontend recorded none. */
+private fun cTypeOf(decl: Decl<*>, parseContext: ParseContext): CComplexType? =
+  runCatching { CComplexType.getType(decl.ref, parseContext) }.getOrNull()
 
 private fun getStopLocation(inputFile: File, statement: CStatement): Location {
   val line = statement.lineNumberStop
@@ -928,23 +986,17 @@ private fun getStopLocation(inputFile: File, statement: CStatement): Location {
 }
 
 /**
- * The location of the opening parenthesis of the `pthread_create` call on [edge] -- the call-site
- * anchor for the thread-registering `function_enter` waypoint. Returns null when the call (or its
- * `(`) cannot be located on a single source line, in which case the caller omits the column and the
- * validator falls back to the leftmost suitable position on the line.
+ * The location of the closing parenthesis of the `pthread_create` call on [edge], where the format
+ * anchors a `function_enter` waypoint. Returns null when the call cannot be located.
  */
 private fun threadCreateLocation(edge: WitnessEdge, inputFile: File): Location? {
   val call =
     edge.edge?.getCMetaData()?.astNodes?.filterIsInstance<CCall>()?.firstOrNull {
       it.functionId == "pthread_create"
     } ?: return null
-  val line = call.lineNumberStart.takeIf { it > 0 } ?: return null
-  val colStart = call.colNumberStart.takeIf { it >= 0 } ?: return null
-  val parenIndex = call.sourceText.indexOf('(')
-  // the column is only well-defined if the '(' sits on the call's start line
-  if (parenIndex < 0 || call.sourceText.substring(0, parenIndex).contains('\n')) return null
-  // +1: Theta's columns are 0-based, witness columns are 1-based
-  return Location(fileName = inputFile.name, line = line, column = colStart + parenIndex + 1)
+  if (call.lineNumberStop <= 0 || call.colNumberStop < 0) return null
+  if (!call.sourceText.trimEnd().endsWith(")")) return null
+  return getStopLocation(inputFile, call)
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
@@ -952,7 +1004,10 @@ private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
   val endLoc =
     Location(
       fileName = inputFile.name,
-      line = witnessEdge.startline ?: witnessEdge.endline ?: return null,
+      line =
+        witnessEdge.startline?.takeIf { it > 0 }
+          ?: witnessEdge.endline?.takeIf { it > 0 }
+          ?: return null,
       column = (witnessEdge.startcol ?: witnessEdge.endcol)?.plus(1),
     )
   return endLoc
@@ -968,6 +1023,7 @@ private fun WitnessNode.toSegment(
   parseContext: ParseContext,
   violation: Boolean = false,
   threadId: Int? = null,
+  targetLocation: Location? = null,
 ): WaypointContent? {
   var loc =
     Location(
@@ -975,7 +1031,14 @@ private fun WitnessNode.toSegment(
       line = outgoingEdge?.startline ?: -1,
       column = outgoingEdge?.startcol?.plus(1),
     )
-  if (violation) {
+  if (violation && targetLocation != null) {
+    return WaypointContent(
+      type = WaypointType.TARGET,
+      location = targetLocation,
+      action = action,
+      threadId = threadId,
+    )
+  } else if (violation) {
     if (loc.line == -1) {
       // prefer the process standing at the violation (in a multi-threaded
       // program the violating process is not necessarily the first one)
@@ -996,40 +1059,22 @@ private fun WitnessNode.toSegment(
       threadId = threadId,
     )
   } else if (outgoingEdge?.startline != null && outgoingEdge.startcol != null) {
-    // TODO this will very much break if we have 1+ nondet call on the edge or 1+ variable or .....
-    if (
-      (outgoingEdge.edge?.metadata as CMetaData).astNodes.any {
-        it is CCall && it.functionId.contains("__VERIFIER_nondet_")
-      } &&
-        outgoingEdge.edge?.label is SequenceLabel &&
-        (outgoingEdge.edge?.label as SequenceLabel).labels.any {
-          it is StmtLabel && it.stmt is HavocStmt<*>
-        }
-    ) {
-      val varsOnEdge = (outgoingEdge.edge?.label as SequenceLabel).collectVars().toSet()
-      check(varsOnEdge.size == 1) // this has to be the havoced variable
-      val varOnEdge = varsOnEdge.first()
-      val typeName = CComplexType.getType(varOnEdge.ref, parseContext)?.typeName
-      val assignedValue = outgoingEdge.target.globalState?.`val`!!.toMap()[varOnEdge] ?: return null
-      val (cast, valueString) =
-        when (assignedValue) {
-          is BvLitExpr -> "" to assignedValue.toString().replace("#", "0")
-          is FpLitExpr ->
-            (typeName?.let { "($it)" } ?: "") to
-              FpUtils.fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), assignedValue)
-                .toString()
-
-          else -> "" to assignedValue.toString()
-        }
-
-      val constraint = "\\result == $cast$valueString"
-      loc =
-        getStopLocation(
-          inputFile,
-          (outgoingEdge.edge?.metadata as CMetaData).astNodes.first {
-            it is CCall && it.functionId.contains("__VERIFIER_nondet_")
-          },
-        )
+    val edgeMetadata = outgoingEdge.edge?.metadata as? CMetaData ?: return null
+    val nondetCalls =
+      edgeMetadata.astNodes.filter { it is CCall && it.functionId.contains("__VERIFIER_nondet_") }
+    val havocs =
+      (outgoingEdge.edge?.label as? SequenceLabel)?.labels?.mapNotNull {
+        (it as? StmtLabel)?.stmt as? HavocStmt<*>
+      } ?: emptyList()
+    if (nondetCalls.isNotEmpty() && havocs.isNotEmpty()) {
+      // with several nondet calls on one edge, values and calls cannot be paired up reliably
+      if (nondetCalls.size > 1 || havocs.size > 1) return null
+      val varOnEdge = havocs.first().varDecl
+      val assignedValue =
+        outgoingEdge.target.globalState?.`val`?.toMap()?.get(varOnEdge) ?: return null
+      val constraint =
+        assignedValue.toCConstraint("\\result", cTypeOf(varOnEdge, parseContext)) ?: return null
+      loc = getStopLocation(inputFile, nondetCalls.first())
       return WaypointContent(
         type = WaypointType.FUNCTION_RETURN,
         location = loc,
@@ -1037,11 +1082,9 @@ private fun WitnessNode.toSegment(
         constraint = Constraint(constraint, Format.EXT_C_EXPRESSION),
         threadId = threadId,
       )
-    } else if ((outgoingEdge.edge?.metadata as CMetaData).astNodes.any { it is CIf }) {
-      val constraintValue =
-        if ((outgoingEdge.edge!!.label as StmtLabel).choiceType == ChoiceType.ALTERNATIVE_PATH)
-          "false"
-        else "true"
+    } else if (edgeMetadata.astNodes.any { it is CIf }) {
+      val choiceType = (outgoingEdge.edge?.label as? StmtLabel)?.choiceType ?: return null
+      val constraintValue = if (choiceType == ChoiceType.ALTERNATIVE_PATH) "false" else "true"
       return WaypointContent(
         type = WaypointType.BRANCHING,
         location = loc,
@@ -1051,7 +1094,7 @@ private fun WitnessNode.toSegment(
       )
     } else {
       // we only want assumptions that are actually about something in a function
-      if ((outgoingEdge.edge!!.metadata as CMetaData).functionName == "NotC") {
+      if (edgeMetadata.functionName == "NotC") {
         return null
       } else {
         val constraint =
@@ -1065,9 +1108,7 @@ private fun WitnessNode.toSegment(
                   splitName.subList(2, splitName.size).joinToString("::")
                 else varDecl.name
               if (
-                splitName.size > 1 &&
-                  splitName[splitName.size - 2] !=
-                    (outgoingEdge.edge!!.metadata as CMetaData).functionName
+                splitName.size > 1 && splitName[splitName.size - 2] != edgeMetadata.functionName
               ) {
                 null
               } else if (
@@ -1078,13 +1119,11 @@ private fun WitnessNode.toSegment(
                 // the original program, so it must not appear in a c_expression constraint.
                 null
               } else {
-                if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent) {
-                  "(${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-                    printLit(value)
-                  })"
-                } else {
-                  null
-                }
+                parseContext.metadata
+                  .getMetadataValue(rootName, "cName")
+                  .orElse(null)
+                  ?.let { value.toCConstraint(it as String, cTypeOf(varDecl, parseContext)) }
+                  ?.let { "($it)" }
               }
             }
             ?.joinToString("&&")
@@ -1158,23 +1197,15 @@ private fun DataRaceAccess.toTargetWaypoint(
   inputFile: File,
   threadIds: ThreadIdEmission,
 ): WaypointContent {
-  // important do not use getCMetadata() helpers here because they only return exportable metadata
-  // however, data race may occur at a non-statement start location as well. The label's own
-  // metadata can also be present but line-less (e.g. a ternary condition lowered to an `assume`,
-  // whose CIf metadata carries no source line), so prefer whichever of the label and the edge
-  // actually has a source line.
-  val metadata =
-    listOfNotNull(label.metadata as? CMetaData, edge.metadata as? CMetaData).firstOrNull {
-      it.lineNumberStart != null || it.lineNumberStop != null
-    }
-  val line =
-    metadata?.lineNumberStart
-      ?: metadata?.lineNumberStop
+  // the access may be anywhere in its statement (e.g. in a `&&` operand), so the full expression
+  // locates it, not the exportable statement start
+  val location =
+    getTargetLocation(inputFile, label.metadata)
+      ?: getTargetLocation(inputFile, edge.metadata)
       ?: error("No source location for racing access $label")
   return WaypointContent(
     type = WaypointType.TARGET,
-    location =
-      Location(fileName = inputFile.name, line = line, column = metadata?.colNumberStart?.plus(1)),
+    location = location,
     action = Action.FOLLOW,
     threadId = threadIds.ofPid(pid),
   )
@@ -1218,7 +1249,7 @@ private class ThreadIdEmission(
   /**
    * The thread-registering `function_enter` waypoints for the threads spawned by this step (a new
    * process in the target state), also assigning the spawned threads' ids. The waypoint belongs to
-   * the spawning thread and is located at the opening parenthesis of the thread-creating call (the
+   * the spawning thread and is located at the closing parenthesis of the thread-creating call (the
    * call-site anchor that the format expects for `function_enter`).
    */
   fun registrations(edge: WitnessEdge, inputFile: File): List<WaypointContent> {
@@ -1226,11 +1257,10 @@ private class ThreadIdEmission(
     val newPids = edge.target.xcfaLocations.keys - edge.source.xcfaLocations.keys
     return newPids.mapNotNull { pid ->
       threadIds["$pid"] = nextThreadId++
-      // anchor to the thread-creating call's '('; fall back to the bare line if it cannot be
-      // located
+      // without a column, validators take the first matching call on the line
       val location =
         threadCreateLocation(edge, inputFile)
-          ?: (edge.startline ?: edge.endline)?.let {
+          ?: (edge.endline ?: edge.startline)?.let {
             Location(fileName = inputFile.name, line = it)
           }
           ?: return@mapNotNull null

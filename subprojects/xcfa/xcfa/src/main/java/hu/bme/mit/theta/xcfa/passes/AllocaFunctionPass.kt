@@ -113,7 +113,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 )
               }
             val labels =
-              if (MemsafetyPass.enabled) {
+              if (parseContext.isCheckMemsafety) {
                 addressLabels +
                   listOfNotNull(
                     builder.parent.allocate(parseContext, ret, arg),
@@ -156,7 +156,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       val lowered =
         labels.mapNotNull { label ->
           if (label !is InvokeLabel || label.name != SCOPE_END) label
-          else if (!MemsafetyPass.enabled) null
+          else if (!parseContext.isCheckMemsafety) null
           else builder.parent.deallocate(parseContext, label.params[1])
         }
       builder.removeEdge(edge)
@@ -181,7 +181,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    * only leave a bug unfound, never invent one.
    */
   private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<Expr<*>>) {
-    if (!MemsafetyPass.enabled || allocated.isEmpty()) return
+    if (!parseContext.isCheckMemsafety || allocated.isEmpty()) return
     val finalLoc = builder.finalLoc.orElse(null) ?: return
     val releases = allocated.map { builder.parent.deallocate(parseContext, it) }
     LinkedHashSet(finalLoc.incomingEdges).forEach { edge ->

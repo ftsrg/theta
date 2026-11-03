@@ -69,13 +69,8 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
 class MemsafetyPass(private val property: XcfaProperty, private val parseContext: ParseContext) :
   ProcedurePass {
 
-  companion object {
-
-    var enabled = false
-  }
-
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled) return builder
+    if (!parseContext.isCheckMemsafety) return builder
 
     breakUpErrors(builder)
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.stream.Collectors
 
-class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
-
-  companion object {
-
-    var enabled = true
-  }
+/**
+ * Removes edges that reach neither the error nor the final location. Enable it only for
+ * reachability: other properties can be violated on such edges.
+ */
+class RemoveDeadEnds(val parseContext: ParseContext, private val enabled: Boolean = true) :
+  ProcedurePass {
 
   // TODO: thread start and procedure call should not be dead-end! Use-case: while(1)
   // pthread_create(..);

@@ -98,19 +98,6 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     val cegarConfig = config.backendConfig.specConfig
     cegarConfig as CegarConfig
   }
-  if (config.inputConfig.property.inputProperty != ErrorDetection.ERROR_LOCATION) {
-    RemoveDeadEnds.enabled = false
-  }
-  if (
-    config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
-      config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
-  ) {
-    MemsafetyPass.enabled = true
-  }
-  if (config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE) {
-    StaticCoiPass.enabled = false
-    UnusedVarPass.keepGlobalVariableAccesses = true
-  }
   if (config.debugConfig.argToFile) {
     WebDebuggerLogger.enableWebDebuggerLogger()
     WebDebuggerLogger.getInstance().setTitle(config.inputConfig.input?.name)
@@ -361,9 +348,8 @@ private fun buildFrontend(
       cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
       parseContext.arithmetic = cConfig.arithmetic
     }
-    // Mirrors `MemsafetyPass.enabled` on the frontend side, from the same property: the c-frontend
-    // module cannot see the pass. Anything the frontend emits solely for the memory-safety checks
-    // is gated on this, so the XCFA for every other property is byte-for-byte what it was.
+    // Anything the frontend and the passes emit solely for the memory-safety checks is gated on
+    // this, so the XCFA for every other property is byte-for-byte what it was.
     parseContext.isCheckMemsafety =
       config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
