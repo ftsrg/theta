@@ -203,7 +203,7 @@ fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>):
  * cell: the frontend converts it to the cell's pointer type, while the cell's own recorded type is
  * its address.
  */
-private fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
+fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
   val stmt = (label as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *> ?: return null
   if (ret !is RefExpr<*> || ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
   return stmt.expr
