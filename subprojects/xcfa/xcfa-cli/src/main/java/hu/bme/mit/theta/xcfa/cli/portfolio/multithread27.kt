@@ -93,19 +93,21 @@ fun multithreadPortfolio27(
       )
 
     /**
-     * An OC configuration as measured on the ConcurrencySafety category: bitvector arithmetic with
-     * an explicit memory model, so the program is re-read rather than reusing the integer-encoded
-     * one. Data races are checked natively, which needs IDL. No LBE: an edge is one atomic unit for
-     * OC (and `LbePass` disables non-local LBE for multithreaded programs anyway).
+     * An OC configuration as measured on the ConcurrencySafety category, with an explicit
+     * arithmetic and memory model, so the program is re-read rather than reusing the portfolio's
+     * encoding. Data races are checked natively, which needs IDL. No LBE: an edge is one atomic
+     * unit for OC (and `LbePass` disables non-local LBE for multithreaded programs anyway).
      */
     fun oc(
       solver: String,
       decisionProcedure: OcDecisionProcedureType,
       memoryModel: MemoryModelType,
       timeoutMs: Long,
+      arithmetic: ArithmeticType = ArithmeticType.bitvector,
     ): ConfigNode {
       val solverName = solver.substringAfter(':').lowercase()
-      val name = "MULTITHREAD_OC_${decisionProcedure}_${memoryModel}_$solverName-$inProcess"
+      val name =
+        "MULTITHREAD_OC_${decisionProcedure}_${arithmetic}_${memoryModel}_$solverName-$inProcess"
       return ConfigNode(
         name,
         XcfaConfig(
@@ -117,7 +119,7 @@ fun multithreadPortfolio27(
               // a fresh instance per node: the frontend rewrites the memory model on its fallbacks
               specConfig =
                 (baseConfig.frontendConfig.specConfig ?: CFrontendConfig()).copy(
-                  arithmetic = ArithmeticType.bitvector,
+                  arithmetic = arithmetic,
                   memoryModel = memoryModel,
                 ),
             ),
@@ -248,22 +250,32 @@ fun multithreadPortfolio27(
               checker,
             )
 
-          // Overflows arrive here as reachability of the instrumented checks. Only the flat memory
-          // model gave no wrong overflow verdicts, and one slice solves nearly all it can.
+          // Overflows arrive here as reachability of the instrumented checks. The propagator is
+          // used only for them: on plain reachability it missed bugs, on overflows it gave no wrong
+          // verdict with integer arithmetic or with bitvectors under multi.
           val config_OC =
             if (baseConfig.inputConfig.property.inputProperty == OVERFLOW) {
-              val config_OC_OVERFLOW =
-                oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.flat, 100_000)
-              edges.add(Edge(config_OC_OVERFLOW, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              config_OC_OVERFLOW
+              val config_OC_PROP_INT =
+                oc(
+                  "Z3:new",
+                  OcDecisionProcedureType.PROPAGATOR,
+                  MemoryModelType.flat,
+                  100_000,
+                  ArithmeticType.integer,
+                )
+              val config_OC_PROP_BV =
+                oc("Z3:new", OcDecisionProcedureType.PROPAGATOR, MemoryModelType.multi, 100_000)
+              edges.add(Edge(config_OC_PROP_INT, config_OC_PROP_BV, anyError))
+              edges.add(Edge(config_OC_PROP_BV, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              config_OC_PROP_INT
             } else {
-              val config_OC_IDL =
+              val config_OC_YICES =
                 oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 150_000)
-              val config_OC_BASIC =
-                oc(YICES, OcDecisionProcedureType.BASIC, MemoryModelType.multi, 100_000)
-              edges.add(Edge(config_OC_IDL, config_OC_BASIC, anyError))
-              edges.add(Edge(config_OC_BASIC, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              config_OC_IDL
+              val config_OC_Z3 =
+                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
+              edges.add(Edge(config_OC_YICES, config_OC_Z3, anyError))
+              edges.add(Edge(config_OC_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              config_OC_YICES
             }
 
           edges.add(
@@ -309,9 +321,10 @@ fun multithreadPortfolio27(
             )
 
           val config_OC_MULTI =
-            oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
-          val config_OC_FLAT = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
-          // Only reached when the Yices slice failed for a reason other than time, mostly the
+            oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
+          val config_OC_FLAT =
+            oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
+          // Only reached when the flat slice failed for a reason other than time, mostly the
           // frontend rejecting the program: the byte-level memory model encodes some of those.
           val config_OC_BYTES =
             oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
