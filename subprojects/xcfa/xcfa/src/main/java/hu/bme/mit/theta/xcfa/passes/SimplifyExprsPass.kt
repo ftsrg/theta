@@ -73,7 +73,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val pathValuations = LinkedHashMap<XcfaEdge, List<Valuation>>()
-    val constValuation = MutableValuation.copyOf(shared.constGlobals)
+    val constValuation = MutableValuation.withFallback(shared.constGlobals)
     val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
     val modifiedGlobals = shared.modifiedGlobals
@@ -93,11 +93,11 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         toVisit.remove(edge)
         visited.add(edge)
         val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
-        val localValuation = MutableValuation.copyOf(incomingValuations)
-        localValuation.putAll(constValuation)
+        val localValuation = MutableValuation.withFallback(constValuation)
+        localValuation.putAll(incomingValuations)
         val localPaths =
           mergeIncomingPaths(edge.source, valuations, pathValuations, initLoops).map {
-            MutableValuation.copyOf(it).apply { putAll(constValuation) }
+            MutableValuation.withFallback(constValuation).apply { putAll(it) }
           }
 
         val oldLabels = edge.getFlatLabels()

@@ -3514,6 +3514,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return typed(result, signedInt);
     }
 
+    /** The exact value of a C99 hexadecimal floating constant, `0x8.ap+3`, in decimal. */
+    private static String exactDecimalOfHexFloat(String text) {
+        final int p = text.indexOf('p');
+        final String mantissa = text.substring(2, p);
+        final int dot = mantissa.indexOf('.');
+        final String digits = mantissa.replace(".", "");
+        final int fractionBits = dot < 0 ? 0 : 4 * (mantissa.length() - dot - 1);
+        final int scale = Integer.parseInt(text.substring(p + 1)) - fractionBits;
+        final java.math.BigDecimal value = new java.math.BigDecimal(new BigInteger(digits, 16));
+        final java.math.BigDecimal two = java.math.BigDecimal.valueOf(2);
+        return (scale >= 0
+                        ? value.multiply(two.pow(scale))
+                        : value.divide(two.pow(-scale)))
+                .toString();
+    }
+
     private Expr<?> typed(Expr<?> expr, CComplexType type) {
         parseContext.getMetadata().create(expr, "cType", type);
         return expr;
@@ -3988,12 +4004,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // these outright killed the whole frontend on the file that used one
                 // (ldv-regression/test_union_cast), and they are ordinary in float benchmarks.
                 //
-                // `long double` keeps the refusal: its significand is wider than a `double`'s, so
-                // routing the literal through one could silently round a value the source stated
-                // exactly, and a quietly wrong constant is worse than a loud refusal.
+                // `long double` cannot go through a `double`: its significand is wider, and that
+                // would round a value the source stated exactly. Its exact decimal expansion can.
                 if (isLong) {
-                    throw new UnsupportedFrontendElementException(
-                            "Hexadecimal long double constants are not yet supported!");
+                    final BinaryMathContext context = new BinaryMathContext(significand, exponent);
+                    bigFloat = new BigFloat(exactDecimalOfHexFloat(text), context);
+                    FpLitExpr longLit =
+                            FpUtils.bigFloatToFpLitExpr(
+                                    bigFloat, FpType(exponent, significand));
+                    parseContext.getMetadata().create(longLit, "cType", type);
+                    return longLit;
                 }
                 // Precision is the significand width *including* the implicit leading bit -- 24
                 // for float, 53 for double -- which is what MPFR means by precision and what
