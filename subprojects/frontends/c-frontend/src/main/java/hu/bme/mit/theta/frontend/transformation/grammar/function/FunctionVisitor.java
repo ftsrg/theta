@@ -827,7 +827,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         .create(typedef.getName(), "cTypedefName", typedef.getActualType());
             }
             SourceTraitCollector.collect(parseContext, reachableContexts.get(i));
-            introduceFunctionNames(reachableContexts.get(i));
+            // Also the definitions another unit's won over: this unit still refers to them by name.
+            introduceFunctionNames(usageVisitors.get(i).getContexts(reachable));
             for (CParser.ExternalDeclarationContext context : reachableContexts.get(i)) {
                 CStatement accept = context.accept(this);
                 if (accept instanceof CFunction function) {
