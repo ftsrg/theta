@@ -43,11 +43,12 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         super(logger);
 
         versions = new ArrayList<>();
+        // 5.6.12 dropped the -msvc suffix of the Windows archive; 5.6.11 still has it
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.12"))
                         .addString(LINUX, X64, "linux-x86_64")
                         .addString(MAC, X64, "macos")
-                        .addString(WINDOWS, X64, "win64-msvc")
+                        .addString(WINDOWS, X64, "win64")
                         .build());
         versions.add(
                 SemVer.VersionDecoder.create(SemVer.of("5.6.7"))
@@ -114,6 +115,25 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     protected void installSolver(Path installDir, String version)
             throws SmtLibSolverInstallerException {
+        final var downloadUrl = getDownloadUrl(version);
+
+        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
+
+        try (final var inputStream = downloadUrl.toURL().openStream()) {
+            if (OsHelper.getOs().equals(WINDOWS)) {
+                Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
+            } else {
+                Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
+            }
+            makeExecutable(installDir.resolve("bin").resolve(getSolverBinaryName()));
+        } catch (IOException e) {
+            throw new SmtLibSolverInstallerException(e);
+        }
+
+        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+    }
+
+    URI getDownloadUrl(final String version) throws SmtLibSolverInstallerException {
         final var semVer = SemVer.of(version);
         String archStr = null;
 
@@ -130,32 +150,10 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
                             OsHelper.getOs(), OsHelper.getArch()));
         }
 
-        final var downloadUrl =
-                URI.create(
-                        String.format(
-                                "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
-                                version,
-                                archStr,
-                                OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
-
-        logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
-
-        try (final var inputStream = downloadUrl.toURL().openStream()) {
-            if (OsHelper.getOs().equals(WINDOWS)) {
-                Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-            } else {
-                Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
-            }
-            installDir
-                    .resolve("bin")
-                    .resolve(getSolverBinaryName())
-                    .toFile()
-                    .setExecutable(true, true);
-        } catch (IOException e) {
-            throw new SmtLibSolverInstallerException(e);
-        }
-
-        logger.write(Logger.Level.MAINSTEP, "Download finished\n");
+        return URI.create(
+                String.format(
+                        "https://mathsat.fbk.eu/release/mathsat-%s-%s.%s",
+                        version, archStr, OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"));
     }
 
     @Override
@@ -188,13 +186,14 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-                "5.6.12", "5.6.11", "5.6.10", "5.6.9", "5.6.8", "5.6.7", "5.6.6", "5.6.5", "5.6.4",
-                "5.6.3", "5.6.2", "5.6.1", "5.6.0", "5.5.4", "5.5.3", "5.5.2", "5.5.1", "5.5.0",
-                "5.4.1", "5.4.0", "5.3.14", "5.3.13", "5.3.12", "5.3.11", "5.3.10", "5.3.9",
-                "5.3.8", "5.3.7", "5.3.6", "5.3.5", "5.3.4", "5.3.3", "5.3.2", "5.3.1", "5.2.12",
-                "5.2.11", "5.2.10", "5.2.9", "5.2.8", "5.2.7", "5.2.6", "5.2.5", "5.2.4", "5.2.3",
-                "5.2.2", "5.2.1", "5.1.12", "5.1.11", "5.1.10", "5.1.9", "5.1.8", "5.1.7", "5.1.6",
-                "5.1.5", "5.1.4", "5.1.3");
+                "5.6.19", "5.6.18", "5.6.17", "5.6.16", "5.6.15", "5.6.14", "5.6.13", "5.6.12",
+                "5.6.11", "5.6.10", "5.6.9", "5.6.8", "5.6.7", "5.6.6", "5.6.5", "5.6.4", "5.6.3",
+                "5.6.2", "5.6.1", "5.6.0", "5.5.4", "5.5.3", "5.5.2", "5.5.1", "5.5.0", "5.4.1",
+                "5.4.0", "5.3.14", "5.3.13", "5.3.12", "5.3.11", "5.3.10", "5.3.9", "5.3.8",
+                "5.3.7", "5.3.6", "5.3.5", "5.3.4", "5.3.3", "5.3.2", "5.3.1", "5.2.12", "5.2.11",
+                "5.2.10", "5.2.9", "5.2.8", "5.2.7", "5.2.6", "5.2.5", "5.2.4", "5.2.3", "5.2.2",
+                "5.2.1", "5.1.12", "5.1.11", "5.1.10", "5.1.9", "5.1.8", "5.1.7", "5.1.6", "5.1.5",
+                "5.1.4", "5.1.3");
     }
 
     private String getSolverBinaryName() {

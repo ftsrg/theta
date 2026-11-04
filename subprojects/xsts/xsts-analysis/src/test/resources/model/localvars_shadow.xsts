@@ -1,0 +1,10 @@
+var y: integer = 0
+
+trans {
+    y := y + 1;
+    local var y: integer = 5;
+}
+
+init {}
+
+env {}

@@ -64,6 +64,8 @@ import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa2chc.toCHC
+import hu.bme.mit.theta.xcfa2chc.toThreadModularCHC
+import kotlin.collections.plus
 import kotlin.jvm.optionals.getOrNull
 
 fun getHornChecker(
@@ -101,55 +103,8 @@ fun getHornChecker(
     )
   }
 
-  try {
-    if (parseContext.multiThreading) {
-      error("Current CHC encoding does not support multithreading")
-    }
-    val (vars, chc) =
-      xcfa.initProcedures[0]
-        .first
-        .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
-    val checker = hornChecker(chc)
-
-    return SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-      val result = checker.check(null)
-
-      if (result.isSafe) {
-        getLocationInvariants(xcfa, result.asSafe()?.proof, vars)
-      } else if (result.isUnsafe) {
-        try {
-          getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
-        } catch (t: Throwable) {
-          logger.writeln(
-            Logger.Level.INFO,
-            "Could not get proper trace: ${t.stackTraceToString()}\n",
-          )
-          SafetyResult.unsafe(
-            Trace.of(
-              listOf(
-                XcfaState(
-                  xcfa,
-                  xcfa.initProcedures.get(0).first.errorLoc.getOrNull()
-                    ?: XcfaLocation("<missing!>", metadata = EmptyMetaData),
-                  PtrState(PredState.of(True())),
-                )
-              ),
-              listOf(),
-            ),
-            LocationInvariants(),
-          )
-        }
-      } else {
-        SafetyResult.unknown()
-      }
-    }
-  } catch (t: Throwable) {
-    logger.benchmark(
-      "Error initializing XCFA procedure as CHC, falling back to monolithic (due to %s)",
-      t.message,
-    )
-
-    return getPipelineChecker(
+  val monolithicChecker = {
+    getPipelineChecker(
       config,
       xcfa,
       parseContext,
@@ -224,6 +179,67 @@ fun getHornChecker(
       logger,
     )
       as SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
+  }
+
+  if (
+    parseContext.multiThreading &&
+      property == ErrorDetection.ERROR_LOCATION &&
+      // The data race instrumentation is not known to be sound for unboundedly many instances.
+      config.inputConfig.property.inputProperty != ErrorDetection.DATA_RACE &&
+      xcfa.hasUnboundedThreads()
+  ) {
+    return threadModularChecker(xcfa, parseContext, logger, hornChecker, monolithicChecker)
+  }
+
+  try {
+    if (parseContext.multiThreading) {
+      error("Current CHC encoding does not support multithreading")
+    }
+    val (vars, chc) =
+      xcfa.initProcedures[0]
+        .first
+        .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
+    val checker = hornChecker(chc)
+
+    return SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+      val result = checker.check(null)
+
+      if (result.isSafe) {
+        getLocationInvariants(xcfa, result.asSafe()?.proof, vars)
+      } else if (result.isUnsafe) {
+        try {
+          getProperTrace(xcfa, result as SafetyResult<Invariant, CexTree>, vars)
+        } catch (t: Throwable) {
+          logger.writeln(
+            Logger.Level.INFO,
+            "Could not get proper trace: ${t.stackTraceToString()}\n",
+          )
+          SafetyResult.unsafe(
+            Trace.of(
+              listOf(
+                XcfaState(
+                  xcfa,
+                  xcfa.initProcedures.get(0).first.errorLoc.getOrNull()
+                    ?: XcfaLocation("<missing!>", metadata = EmptyMetaData),
+                  PtrState(PredState.of(True())),
+                )
+              ),
+              listOf(),
+            ),
+            LocationInvariants(),
+          )
+        }
+      } else {
+        SafetyResult.unknown()
+      }
+    }
+  } catch (t: Throwable) {
+    logger.benchmark(
+      "Error initializing XCFA procedure as CHC, falling back to monolithic (due to %s)",
+      t.message,
+    )
+
+    return monolithicChecker()
   }
 }
 
@@ -368,3 +384,81 @@ fun getLocationInvariants(
 
   return SafetyResult.safe(LocationInvariants(locationInvariants))
 }
+
+/**
+ * Whether the number of threads is not statically bounded: a start or join in a loop, or a thread
+ * (transitively) starting its own procedure. The monolithic encoding can only force-unroll these,
+ * so its safe results are not trusted there.
+ */
+private fun XCFA.hasUnboundedThreads(): Boolean {
+  fun XcfaLabel.labels(): List<XcfaLabel> =
+    when (this) {
+      is SequenceLabel -> labels.flatMap { it.labels() }
+      is NondetLabel -> labels.flatMap { it.labels() }
+      else -> listOf(this)
+    }
+  val started =
+    procedures.associateWith { proc ->
+      proc.edges
+        .flatMap { it.label.labels() }
+        .filterIsInstance<StartLabel>()
+        .mapNotNull { start -> procedures.find { it.name == start.name } }
+    }
+  val visiting = mutableSetOf<XcfaProcedure>()
+  val visited = mutableSetOf<XcfaProcedure>()
+  fun unbounded(proc: XcfaProcedure): Boolean {
+    if (proc in visiting) return true
+    if (!visited.add(proc)) return false
+    visiting.add(proc)
+    val inLoop =
+      proc.loopEdges.any { edge -> edge.label.labels().any { it is StartLabel || it is JoinLabel } }
+    return (inLoop || started[proc]!!.any { unbounded(it) }).also { visiting.remove(proc) }
+  }
+  return unbounded(initProcedures.single().first)
+}
+
+/**
+ * Runs the thread-modular CHC encoding first, trusting only its safe result (it over-approximates
+ * every interleaving); otherwise falls back to the monolithic encoding, whose forced unrolling then
+ * only yields trusted unsafe results.
+ */
+private fun threadModularChecker(
+  xcfa: XCFA,
+  parseContext: ParseContext,
+  logger: Logger,
+  hornChecker: (List<Relation>) -> HornChecker,
+  monolithicChecker:
+    () -> SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>,
+): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> =
+  SafetyChecker { prec ->
+    val safe =
+      try {
+        val chc =
+          xcfa
+            .optimizeFurther(
+              ProcedurePassManager(
+                listOf(
+                  EliminateSelfLoops(),
+                  RemoveAbortBranchesPass(),
+                  LbePass(parseContext, LbePass.LbeLevel.LBE_LOCAL_FULL, true),
+                  RemoveUnnecessaryAtomicBlocksPass(),
+                  MutexToVarPass(),
+                  DereferenceToArrayPass(),
+                )
+              )
+            )
+            .toThreadModularCHC()
+        val result = hornChecker(chc).check(null)
+        logger.mainStep("Thread-modular CHC result: $result")
+        result.isSafe
+      } catch (t: Throwable) {
+        logger.benchmark("Thread-modular CHC encoding failed (due to %s)", t.message)
+        false
+      }
+    if (safe) {
+      SafetyResult.safe(EmptyProof.getInstance())
+    } else {
+      logger.mainStep("Thread-modular CHC inconclusive, falling back to monolithic")
+      monolithicChecker().check(prec)
+    }
+  }

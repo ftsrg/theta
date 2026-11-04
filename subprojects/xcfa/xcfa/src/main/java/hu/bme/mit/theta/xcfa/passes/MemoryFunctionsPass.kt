@@ -28,8 +28,11 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -37,6 +40,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -63,10 +67,10 @@ import java.math.BigInteger
  * of them. That is exact whenever the byte count is a whole number of elements, which is what
  * `memcpy(p, q, sizeof *p)` and `memcpy(buf, src, 100 * sizeof(char))` are.
  *
- * It also means the count has to be *known*. A symbolic one wants a loop, and a loop wants the
- * element size to divide a bound we cannot see -- so it is not attempted, and such a call is left
- * exactly as it was: it will still fail, loudly, which is the same as before and better than a copy
- * that quietly moves the wrong number of bytes.
+ * A symbolic count becomes a loop over `n / sizeof(element)` cells (`memset`, `memcpy`), with the
+ * partially covered tail cell havoc'd. Anything the cell-per-value models cannot state exactly
+ * throws [RequiresByteAddressedMemoryException], so the frontend rebuilds under the bytes model;
+ * there, a call still not modelled is left in place and fails loudly as "No such method".
  *
  * A pointer to a **struct** has no single element type, so it takes the other route: a whole-object
  * copy, driven by the object's cell layout rather than by any element width. That is the only
@@ -82,6 +86,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
     /** `dst`, `src`, `n` -- the copying pair. */
     private val COPY = setOf("memcpy", "memmove", "__builtin_memcpy", "__builtin_memmove")
+
+    /** The copies whose regions may overlap: every source cell is read before any is written. */
+    private val MOVE = setOf("memmove", "__builtin_memmove")
 
     /** `dst`, `c`, `n` -- fills with a byte. */
     private val FILL = setOf("memset", "__builtin_memset")
@@ -103,9 +110,15 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       val labels = edge.label.getFlatLabels()
       val idx =
         labels.indexOfFirst {
-          it is InvokeLabel && it.name in FILL && it.name !in defined && needsLoop(it)
+          it is InvokeLabel &&
+            it.name !in defined &&
+            ((it.name in FILL && needsLoop(it)) || (it.name in COPY && needsCopyLoop(it)))
         }
-      if (idx >= 0) fillLoop(builder, edge, labels, idx, labels[idx] as InvokeLabel)
+      if (idx >= 0) {
+        val invoke = labels[idx] as InvokeLabel
+        if (invoke.name in FILL) fillLoop(builder, edge, labels, idx, invoke)
+        else copyLoop(builder, edge, labels, idx, invoke)
+      }
     }
 
     // Same treatment for a nondet fill whose region is too large (or too unknown) to write out cell
@@ -131,7 +144,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       val rewritten =
         labels.map { label ->
           if (label !is InvokeLabel || label.name in defined) label
-          else if (label.name in COPY) copy(label) ?: label
+          else if (label.name in COPY) copy(label, builder) ?: label
           else if (label.name in FILL) fill(label) ?: label
           else if (label.name in NONDET_FILL) nondetFill(label, builder) ?: label else label
         }
@@ -144,11 +157,19 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   }
 
   /** `memcpy(dst, src, n)`: `dst[i] = src[i]` for every element the n bytes cover. */
-  private fun copy(invoke: InvokeLabel): XcfaLabel? {
+  private fun copy(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel? {
     // params are [returnValue, dst, src, n]
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val src = invoke.params[2]
+    if (parseContext.memoryModel.byteAddressed()) {
+      val byte = CUnsignedChar(null, parseContext)
+      val n = literalValue(invoke.params[3]) ?: return giveUp(invoke)
+      if (n.signum() < 0 || n > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
+      return SequenceLabel(
+        copyCells(invoke, builder, dst, src, List(n.toInt()) { byte }) + returns(invoke, dst)
+      )
+    }
 
     // A whole-object copy (`memcpy(p, q, sizeof *p)`, which is what these calls almost always are)
     // has to be driven by the object's *cell layout*, not by an element width: cells are one per
@@ -156,33 +177,46 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     // bytes, not one.
     aggregateOf(dst)?.let { (pointee, cells, bytes) ->
       if (literalValue(invoke.params[3]) != bytes) return giveUp(invoke)
-      val stmts =
-        (0 until cells).map { i ->
-          val cellType = cellTypeAt(pointee, i)
-          MemoryAssignStmt.create(
-            deref(dst, indexOf(i, dst), cellType),
-            cast(deref(src, indexOf(i, src), cellType), cellType.smtType),
-          )
-        }
-      return SequenceLabel(
-        stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
-      )
+      val types = (0 until cells).map { cellTypeAt(pointee, it) }
+      return SequenceLabel(copyCells(invoke, builder, dst, src, types) + returns(invoke, dst))
     }
 
     val element = elementOf(dst) ?: elementOf(src) ?: return giveUp(invoke)
     val count = elementCount(invoke.params[3], element) ?: return giveUp(invoke)
+    return SequenceLabel(
+      copyCells(invoke, builder, dst, src, List(count) { element }) + returns(invoke, dst)
+    )
+  }
 
-    val stmts =
-      (0 until count).map { i ->
-        val index = indexOf(i, dst)
-        MemoryAssignStmt.create(
-          deref(dst, index, element),
-          cast(deref(src, indexOf(i, src), element), element.smtType),
+  /**
+   * `dst[i] = src[i]` for each cell `i` of [types]. A `memmove` first reads every source cell into
+   * a temporary: copied in place, `memmove(a + 1, a, 3)` overwrote `a[1]` before reading it.
+   */
+  private fun copyCells(
+    invoke: InvokeLabel,
+    builder: XcfaProcedureBuilder,
+    dst: Expr<*>,
+    src: Expr<*>,
+    types: List<CComplexType>,
+  ): List<XcfaLabel> {
+    val reads = types.mapIndexed { i, type -> deref(src, indexOf(i, src), type) as Expr<*> }
+    val saves = mutableListOf<XcfaLabel>()
+    val values =
+      if (invoke.name !in MOVE) reads
+      else
+        reads.map { read ->
+          val tmp = Var("__memmove_tmp_" + counter++, read.type)
+          builder.addVar(tmp)
+          saves.add(AssignStmtLabel(tmp, read, tmp.type, invoke.metadata))
+          tmp.ref
+        }
+    return saves +
+      types.mapIndexed { i, type ->
+        StmtLabel(
+          MemoryAssignStmt.create(deref(dst, indexOf(i, dst), type), cast(values[i], type.smtType)),
+          metadata = invoke.metadata,
         )
       }
-    return SequenceLabel(
-      stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
-    )
   }
 
   /** `memset(dst, c, n)`: every element covered is set to `c`. */
@@ -190,6 +224,15 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (invoke.params.size < 4) return null
     val dst = invoke.params[1]
     val value = invoke.params[2]
+    if (parseContext.memoryModel.byteAddressed()) {
+      val byte = CUnsignedChar(null, parseContext)
+      return byteWise(invoke) { i ->
+        MemoryAssignStmt.create(
+          deref(dst, indexOf(i, dst), byte),
+          cast(byte.castTo(value), byte.smtType),
+        )
+      }
+    }
 
     // `memset(p, 0, sizeof *p)` on an aggregate, by cells rather than by element width -- see the
     // matching branch in [copy]. Only the zero fill is claimed: a non-zero byte means something
@@ -421,6 +464,13 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   }
 
   private fun giveUp(invoke: InvokeLabel): XcfaLabel? {
+    // Under the bytes model every object is its bytes, so the frontend retries there instead.
+    if (!parseContext.memoryModel.byteAddressed()) {
+      throw RequiresByteAddressedMemoryException(
+        "${invoke.name} with a byte count or object layout the cell-per-value models cannot state" +
+          " exactly"
+      )
+    }
     uniqueWarningLogger.write(
       Logger.Level.INFO,
       "WARNING: ${invoke.name} with a byte count or element type that cannot be stated exactly" +
@@ -470,7 +520,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
    *
    * A nested aggregate member disqualifies the whole object: its parent cell holds the *base id* of
    * a separate object, so copying that cell would make the two objects share storage rather than
-   * copy it. A union likewise, whose cells mean different things to different members.
+   * copy it. A union likewise, whose cells mean different things to different members. Under
+   * [CStruct.inlinesAggregates] only a union member is such a separate object.
    */
   private fun aggregateOf(pointer: Expr<*>): Triple<CComplexType, Int, BigInteger>? {
     val pointee = pointeeOf(pointer) ?: return null
@@ -490,6 +541,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         if (dimension == null || element == null) null else dimension * element
       }
 
+      type is CStruct && type.inlinesAggregates() ->
+        if (type.fields.any { flatCells(it.get2()) == null }) null else type.unitCount
+
       type is CStruct ->
         if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
         else type.unitCount
@@ -503,6 +557,11 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       type is CArray -> {
         val stride = flatCells(type.embeddedType) ?: 1
         cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
+      }
+
+      type is CStruct && type.inlinesAggregates() -> {
+        val field = type.fields.lastOrNull { type.unitOffsetOf(it.get1()) <= index } ?: return type
+        cellTypeAt(field.get2(), index - type.unitOffsetOf(field.get1()))
       }
 
       type is CStruct ->
@@ -535,6 +594,24 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     }
 
   /** The index of the i-th element, in the type the dereference's offset is built at. */
+  /**
+   * Under the bytes model every byte is a cell of its own, so a copy or fill is exactly its `n`
+   * byte moves, whatever the objects' types; [stmt] is the one for byte `i`.
+   */
+  private fun byteWise(invoke: InvokeLabel, stmt: (Int) -> MemoryAssignStmt<*, *, *>): XcfaLabel? {
+    val n = literalValue(invoke.params[3]) ?: return giveUp(invoke)
+    if (n.signum() < 0 || n > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
+    return SequenceLabel(
+      (0 until n.toInt()).map { StmtLabel(stmt(it), metadata = invoke.metadata) } +
+        returns(invoke, invoke.params[1])
+    )
+  }
+
+  /** The cell a fill loop writes: a byte under the bytes model, else the pointee element. */
+  private fun fillElement(pointer: Expr<*>): CComplexType? =
+    if (parseContext.memoryModel.byteAddressed()) CUnsignedChar(null, parseContext)
+    else elementOf(pointer)
+
   private fun indexOf(i: Int, pointer: Expr<*>): Expr<*> =
     CComplexType.getUnsignedLong(parseContext).getValue("$i")
 
@@ -543,7 +620,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   private fun needsLoop(invoke: InvokeLabel): Boolean {
     if (invoke.params.size < 4) return false
     if (aggregateOf(invoke.params[1]) != null) return false
-    val element = elementOf(invoke.params[1]) ?: return false
+    val element = fillElement(invoke.params[1]) ?: return false
     if (literalValue(invoke.params[3]) != null) return false // the constant path handles it better
     if (element.width() <= 0 || element.width() % 8 != 0) return false
     val zero = literalValue(invoke.params[2])?.equals(BigInteger.ZERO) == true
@@ -579,7 +656,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val dst = invoke.params[1]
     val value = invoke.params[2]
     val bytes = invoke.params[3]
-    val element = elementOf(dst) ?: return
+    val element = fillElement(dst) ?: return
     val width = element.width() / 8
     if (width <= 0) return
     val zero = literalValue(value)?.equals(BigInteger.ZERO) == true
@@ -662,10 +739,167 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     builder.addEdge(XcfaEdge(exit, edge.target, SequenceLabel(after), EmptyMetaData))
   }
 
+  /**
+   * The cell a `memcpy` loop copies, when the byte count is symbolic: a byte under the bytes model,
+   * else the scalar element both sides share. A `memmove` is not taken, since a forward loop is
+   * wrong for overlapping regions.
+   */
+  private fun copyElement(invoke: InvokeLabel): CComplexType? {
+    if (invoke.params.size < 4 || invoke.name in MOVE) return null
+    if (literalValue(invoke.params[3]) != null) return null // the constant path handles it
+    if (parseContext.memoryModel.byteAddressed()) return CUnsignedChar(null, parseContext)
+    val dst = elementOf(invoke.params[1]) ?: return null
+    val src = elementOf(invoke.params[2]) ?: return null
+    if (dst.javaClass != src.javaClass || dst.width() != src.width()) return null
+    return if (dst.width() > 0 && dst.width() % 8 == 0) dst else null
+  }
+
+  private fun needsCopyLoop(invoke: InvokeLabel): Boolean = copyElement(invoke) != null
+
+  /**
+   * `memcpy(dst, src, n)` with a symbolic `n`: `for (i = 0; i < n / w; i++) dst[i] = src[i]`, with
+   * the partially covered tail cell havoc'd exactly as in [fillLoop].
+   */
+  private fun copyLoop(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    labels: List<XcfaLabel>,
+    idx: Int,
+    invoke: InvokeLabel,
+  ) {
+    val dst = invoke.params[1]
+    val src = invoke.params[2]
+    val element = copyElement(invoke) ?: return
+    val width = element.width() / 8
+
+    val idxType = CComplexType.getUnsignedLong(parseContext)
+    val i = Var("__memcpy_i_" + counter++, idxType.smtType)
+    builder.addVar(i)
+    val nCast = idxType.castTo(invoke.params[3])
+    val w = idxType.getValue("$width")
+    val count = Div(cast(nCast, idxType.smtType), cast(w, idxType.smtType))
+
+    val head = XcfaLocation("__memcpy_head_" + counter, metadata = EmptyMetaData)
+    val body = XcfaLocation("__memcpy_body_" + counter, metadata = EmptyMetaData)
+    val tail = XcfaLocation("__memcpy_tail_" + counter, metadata = EmptyMetaData)
+    val exit = XcfaLocation("__memcpy_exit_" + counter, metadata = EmptyMetaData)
+    listOf(head, body, tail, exit).forEach(builder::addLoc)
+
+    val before = labels.subList(0, idx) + AssignStmtLabel(i, idxType.getValue("0"), i.type)
+    val after = returns(invoke, dst) + labels.subList(idx + 1, labels.size)
+
+    builder.removeEdge(edge)
+    builder.addEdge(XcfaEdge(edge.source, head, SequenceLabel(before), edge.metadata))
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        body,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Lt(i.ref, count))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        tail,
+        SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Not(Lt(i.ref, count)))))),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        body,
+        head,
+        SequenceLabel(
+          listOf(
+            StmtLabel(
+              MemoryAssignStmt.create(
+                deref(dst, i.ref, element),
+                cast(deref(src, i.ref, element), element.smtType),
+              ),
+              metadata = invoke.metadata,
+            ),
+            AssignStmtLabel(i, Add(i.ref, idxType.getValue("1")), i.type),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    val exact = Eq(Mul(count, cast(w, idxType.smtType)), nCast)
+    val spill = Var("__memcpy_spill_" + counter++, element.smtType)
+    builder.addVar(spill)
+    builder.addEdge(
+      XcfaEdge(tail, exit, SequenceLabel(listOf(StmtLabel(AssumeStmt.of(exact)))), EmptyMetaData)
+    )
+    builder.addEdge(
+      XcfaEdge(
+        tail,
+        exit,
+        SequenceLabel(
+          listOf(
+            StmtLabel(AssumeStmt.of(Not(exact))),
+            StmtLabel(HavocStmt.of(spill)),
+            StmtLabel(
+              MemoryAssignStmt.create(deref(dst, count, element), cast(spill.ref, element.smtType))
+            ),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    builder.addEdge(XcfaEdge(exit, edge.target, SequenceLabel(after), EmptyMetaData))
+  }
+
+  /**
+   * `p + k` as the base `p` and index `k + index`, the way the frontend folds its own accesses:
+   * under the cell models `arrays[p + k]` names no object, so `memcpy(a + 1, b, 3)` wrote to
+   * nowhere and left `a` unchanged. The bytes model resolves addresses itself and takes the sum as
+   * it is.
+   */
+  private fun splitOffset(pointer: Expr<*>, index: Expr<*>): Pair<Expr<*>, Expr<*>> {
+    var stripped: Expr<*> = pointer
+    while (stripped is PosExpr<*>) stripped = stripped.op
+    if (parseContext.memoryModel.byteAddressed()) return pointer to index
+    // The frontend reads a pointer-sum argument as an element's address: `a + 1` arrives as
+    // `&a[1]`.
+    if (stripped is Reference<*, *>) {
+      val element = stripped.expr as? Dereference<*, *, *> ?: return pointer to index
+      val pointee = pointeeOf(pointer)
+      if (pointee is CStruct || pointee is CArray || pointee != pointeeOf(element.array)) {
+        throw RequiresByteAddressedMemoryException(
+          "A mem* call on an element address the cell-per-value models cannot fold: $pointer"
+        )
+      }
+      val indexType = CComplexType.getUnsignedLong(parseContext)
+      return element.array to Add(listOf(indexType.castTo(element.offset), indexType.castTo(index)))
+    }
+    if (stripped !is AddExpr<*>) return pointer to index
+    val ops =
+      stripped.ops.map {
+        var op: Expr<*> = it
+        while (op is PosExpr<*>) op = op.op
+        op
+      }
+    val bases =
+      ops.filter {
+        CComplexType.getType(it, parseContext).let { t -> t is CPointer || t is CArray }
+      }
+    val pointee = pointeeOf(pointer)
+    if (bases.size != 1 || pointee is CStruct || pointee is CArray) {
+      throw RequiresByteAddressedMemoryException(
+        "A mem* call on a pointer sum the cell-per-value models cannot fold: $pointer"
+      )
+    }
+    val indexType = CComplexType.getUnsignedLong(parseContext)
+    val offsets = (ops - bases.toSet()).map { indexType.castTo(it) } + indexType.castTo(index)
+    return bases[0] to Add(offsets)
+  }
+
   private var counter = 0
 
   private fun deref(pointer: Expr<*>, index: Expr<*>, element: CComplexType): Dereference<*, *, *> {
-    val of = Dereference.of(pointer as Expr<Type>, index as Expr<Type>, element.smtType as Type)
+    val (base, offset) = splitOffset(pointer, index)
+    val of = Dereference.of(base as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
     parseContext.metadata.create(of, "cType", element)
     return of
   }

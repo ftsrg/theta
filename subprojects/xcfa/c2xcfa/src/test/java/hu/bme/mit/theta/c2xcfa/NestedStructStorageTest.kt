@@ -59,10 +59,11 @@ class NestedStructStorageTest {
         extern unsigned long __VERIFIER_nondet_ulong(void);
         struct In { unsigned long x; };
         struct Out { struct In in; unsigned long y; };
-        int main(void) {
-          unsigned long n = __VERIFIER_nondet_ulong();
+        int f(unsigned long n, int depth) {
+          if (depth > 0) f(n, depth - 1);
           $body
         }
+        int main(void) { return f(__VERIFIER_nondet_ulong(), 2); }
         """
           .trimIndent()
           .byteInputStream(),
@@ -71,7 +72,9 @@ class NestedStructStorageTest {
         XcfaProperty(ErrorDetection.ERROR_LOCATION),
         NullLogger.getInstance(),
       )
+    // in the recursive function, which runs as several activations and is not inlined
     return xcfa.procedures
+      .filter { it.name == "f" }
       .flatMap { it.edges }
       .flatMap { it.getFlatLabels() }
       .filterIsInstance<StmtLabel>()

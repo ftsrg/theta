@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectAssumesVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
@@ -26,7 +28,7 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 
-class StaticCoiPass : ProcedurePass {
+class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass {
 
   companion object {
 
@@ -38,7 +40,8 @@ class StaticCoiPass : ProcedurePass {
   private val interProcessVarObservers: MutableMap<VarDecl<*>, Set<XcfaLabel>> = mutableMapOf()
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled) return builder
+    // a race may involve accesses that no error location depends on
+    if (!enabled || property?.inputProperty == ErrorDetection.DATA_RACE) return builder
 
     builder.parent.getProcedures().forEach { procedure ->
       procedure.getEdges().forEach { edge ->

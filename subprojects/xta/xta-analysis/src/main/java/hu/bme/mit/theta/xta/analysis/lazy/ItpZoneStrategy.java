@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ abstract class ItpZoneStrategy<S extends State> implements AlgorithmStrategy<S, 
         prec = ZonePrec.of(system.getClockVars());
         analysis =
                 PrecMappingAnalysis.create(
-                        ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()), p -> prec);
+                        ItpZoneAnalysis.create(XtaZoneAnalysis.create(system)), p -> prec);
         projection = s -> unit();
     }
 

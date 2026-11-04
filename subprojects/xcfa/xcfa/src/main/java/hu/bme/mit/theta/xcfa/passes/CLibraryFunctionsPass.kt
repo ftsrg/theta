@@ -20,23 +20,40 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
+import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.utils.defaultValue
+import hu.bme.mit.theta.xcfa.utils.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -85,7 +102,12 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
       "pthread_key_create",
       "pthread_getspecific",
       "pthread_setspecific",
-    )
+      "pthread_mutex_timedlock",
+      "pthread_cond_timedwait",
+      "pthread_spin_lock",
+      "pthread_spin_unlock",
+      "pthread_spin_trylock",
+    ) + NO_EFFECT_FUNCTIONS
 
   companion object {
 
@@ -97,7 +119,37 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
      */
     const val SYNC_VAR_METADATA_KEY = "synchronizationObject"
 
+    /** `_Atomic` global holding each started thread's return value, indexed by its result id. */
+    const val THREAD_RESULTS = "__theta_thread_results"
+    const val THREAD_NEXT_RESULT_ID = "__theta_thread_next_result_id"
+    /** Prefix of the variable that holds the result id of the thread last started on a handle. */
+    const val THREAD_RESULT_ID_PREFIX = "__theta_thread_result_id_"
+
     private var uniqueCounter = 0
+
+    /** glibc's `ETIMEDOUT`. */
+    private const val ETIMEDOUT = 110
+
+    /**
+     * Initialization and attributes whose only effects are process sharing, which matters only
+     * across `fork` (never modeled), and scheduling, which constrains no interleaving.
+     */
+    private val NO_EFFECT_FUNCTIONS =
+      setOf(
+        "pthread_spin_init",
+        "pthread_spin_destroy",
+        "pthread_mutexattr_setpshared",
+        "pthread_mutexattr_setprotocol",
+        "pthread_mutexattr_setprioceiling",
+        "pthread_condattr_init",
+        "pthread_condattr_destroy",
+        "pthread_condattr_setpshared",
+        "pthread_condattr_setclock",
+        "pthread_rwlockattr_init",
+        "pthread_rwlockattr_destroy",
+        "pthread_rwlockattr_setpshared",
+        "pthread_rwlockattr_setkind_np",
+      )
   }
 
   /** Tags [handle] as a synchronization object (no-op when no [parseContext] is available). */
@@ -115,14 +167,25 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
+    val atomicLocations = getAtomicBlockInnerLocations(builder).toSet()
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
+      val atomicBefore =
+        edges.runningFold(edge.source in atomicLocations) { atomic, part ->
+          part.getFlatLabels().fold(atomic) { a, l ->
+            when (l) {
+              is AtomicBeginLabel -> true
+              is AtomicEndLabel -> false
+              else -> a
+            }
+          }
+        }
       if (
         edges.size > 1 ||
           (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))
       ) {
         builder.removeEdge(edge)
-        edges.forEach {
+        edges.forEachIndexed { index, it ->
           if (predicate((it.label as SequenceLabel).labels[0])) {
             val invokeLabel = it.label.labels[0] as InvokeLabel
             val metadata = invokeLabel.metadata
@@ -131,10 +194,24 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             val addSingle = { label: XcfaLabel ->
               builder.addEdge(XcfaEdge(it.source, target, SequenceLabel(listOf(label)), metadata))
             }
-            val addSeq = { labels: List<XcfaLabel> ->
-              XcfaEdge(it.source, target, SequenceLabel(labels), metadata)
+            // Instrumentation that has to be atomic, unless the call already is.
+            val atomically = { labels: List<XcfaLabel> ->
+              if (atomicBefore[index]) labels
+              else listOf(AtomicBeginLabel(metadata)) + labels + AtomicEndLabel(metadata)
+            }
+            val addSeqFrom = { source: XcfaLocation, labels: List<XcfaLabel> ->
+              XcfaEdge(source, target, SequenceLabel(labels), metadata)
                 .splitIf { label -> label is MutexUnlockLabel || label is MutexLockLabel }
                 .forEach(builder::addEdge)
+            }
+            val addSeq = { labels: List<XcfaLabel> -> addSeqFrom(it.source, labels) }
+            val assignRet = { value: Int ->
+              val ret = invokeLabel.params[0]
+              AssignStmtLabel(
+                ret as RefExpr<*>,
+                CComplexType.getType(ret, parseContext).getValue("$value"),
+                metadata,
+              )
             }
 
             // list of edges, where an edge consists of a list of labels (for a SequenceLabel)
@@ -152,12 +229,14 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val initEdge = XcfaEdge(it.source, loc, SequenceLabel(listOf(initLabel)), metadata)
                 builder.addEdge(initEdge)
 
-                val sourceDeref = Dereference.of(copySource, indexVar.ref, copySource.type)
-                val targetDeref = Dereference.of(copyTarget, indexVar.ref, copyTarget.type)
+                // the cells are `char`s: with the pointer type, bitvector cells were read in a
+                // partition of their own, never written by the string's initialisation
+                val sourceDeref = Dereference.of(copySource, indexVar.ref, charType(copySource))
+                val targetDeref = Dereference.of(copyTarget, indexVar.ref, charType(copyTarget))
 
                 val continueAssume =
                   StmtLabel(
-                    AssumeStmt.of(NeqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                    AssumeStmt.of(NeqExpr.create2(sourceDeref, sourceDeref.type.integerOf(0)))
                   )
                 val copyCurrent = StmtLabel(MemoryAssignStmt.of(targetDeref, sourceDeref))
                 val increment =
@@ -168,18 +247,41 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                 val exitAssume =
                   StmtLabel(
-                    AssumeStmt.of(EqExpr.create2(sourceDeref, copySource.type.integerOf(0)))
+                    AssumeStmt.of(EqExpr.create2(sourceDeref, sourceDeref.type.integerOf(0)))
                   )
-                val exitLabel = SequenceLabel(listOf(exitAssume))
+                // copy the terminating null byte as well
+                val exitLabel = SequenceLabel(listOf(exitAssume, copyCurrent))
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
               }
 
               "pthread_join" -> {
                 val handle = invokeLabel.getParam(1)
+                val retval = invokeLabel.params.getOrNull(2)?.takeUnless { it.isNullPointer() }
+                // The joined thread is finished, so its slot is final: a plain read suffices.
+                val storeResult =
+                  retval?.let {
+                    val results = threadResults(builder, it.type)
+                    val id = resultIdVar(builder, invokeLabel.params[1], handle)
+                    val offset = CComplexType.getSignedLong(parseContext).nullValue
+                    StmtLabel(
+                      MemoryAssignStmt.of(
+                        Dereference.of(it, offset, it.type),
+                        cast(
+                          Read(
+                            cast(results.ref, results.type as ArrayType<Type, Type>),
+                            cast(id.ref, resultIdType),
+                          ),
+                          it.type,
+                        ),
+                      ),
+                      metadata = metadata,
+                    )
+                  }
                 addSeq(
-                  listOf(
+                  listOfNotNull(
                     JoinLabel(handle, metadata),
+                    storeResult,
                     AssignStmtLabel(
                       invokeLabel.params[0] as RefExpr<*>,
                       zeroOf(invokeLabel.params[0]),
@@ -192,21 +294,55 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
               "pthread_create" -> {
                 val handle = invokeLabel.getParam(1)
                 val funcptr = invokeLabel.getParam(3)
-                check(builder.parent.getProcedures().any { it.name == funcptr.name }) {
-                  "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
-                    "Only direct function symbols are supported as thread entry points."
-                }
-                val param = invokeLabel.params[4]
+                val startRoutine =
+                  checkNotNull(builder.parent.getProcedures().find { it.name == funcptr.name }) {
+                    "Unsupported pthread_create start routine `${funcptr.name}`: no such procedure exists. " +
+                      "Only direct function symbols are supported as thread entry points."
+                  }
+                // the argument keeps its own C type (e.g. an int-typed NULL), whose width can
+                // differ from the routine's `void *` parameter under LP64
+                val param =
+                  startRoutine.getParams().getOrNull(1)?.first?.let {
+                    CComplexType.getType(it.ref, parseContext).castTo(invokeLabel.params[4])
+                  } ?: invokeLabel.params[4]
+                // A thread whose result may be joined gets a fresh result id as an extra argument;
+                // ThreadResultPass makes its start routine store the result under it.
+                val resultId =
+                  if (threadResultsUsed(builder)) {
+                    val id = resultIdVar(builder, invokeLabel.params[1], handle)
+                    val next = nextResultId(builder)
+                    // Passed through a local: start labels must not read atomic globals.
+                    val arg =
+                      Decls.Var("${THREAD_RESULT_ID_PREFIX}arg_${uniqueCounter++}", resultIdType)
+                        .also(builder::addVar)
+                    atomically(
+                      listOf(
+                        AssignStmtLabel(arg, next.ref, metadata),
+                        AssignStmtLabel(id, next.ref, metadata),
+                        AssignStmtLabel(
+                          next,
+                          Add(listOf(next.ref, next.type.integerOf(1))),
+                          metadata,
+                        ),
+                      )
+                    ) to arg
+                  } else null
                 // int(0) to solve StartLabel not handling return params
                 addSeq(
-                  listOf(
-                    StartLabel(funcptr.name, listOf(Int(0), param), handle, metadata),
-                    AssignStmtLabel(
-                      invokeLabel.params[0] as RefExpr<*>,
-                      zeroOf(invokeLabel.params[0]),
-                      metadata,
-                    ),
-                  )
+                  (resultId?.first ?: emptyList()) +
+                    listOf(
+                      StartLabel(
+                        funcptr.name,
+                        listOfNotNull(Int(0), param, resultId?.second?.ref),
+                        handle,
+                        metadata,
+                      ),
+                      AssignStmtLabel(
+                        invokeLabel.params[0] as RefExpr<*>,
+                        zeroOf(invokeLabel.params[0]),
+                        metadata,
+                      ),
+                    )
                 )
               }
 
@@ -224,6 +360,74 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val handle = invokeLabel.getMutexHandle()
                 val ret = invokeLabel.getParam(0)
                 addSingle(MutexTryLockLabel(handle, ret, metadata))
+              }
+
+              // Timing out is possible exactly when the mutex is held, as a failing trylock is.
+              "pthread_mutex_timedlock" -> {
+                val handle = invokeLabel.getMutexHandle()
+                val choice = choiceVar(builder)
+                val choose =
+                  XcfaLocation(
+                    "${it.source.name}_timedlock${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                builder.addEdge(
+                  XcfaEdge(
+                    it.source,
+                    choose,
+                    SequenceLabel(listOf(StmtLabel(Havoc(choice)))),
+                    metadata,
+                  )
+                )
+                addSeqFrom(
+                  choose,
+                  listOf(
+                    StmtLabel(Assume(choice.ref)),
+                    MutexLockLabel(handle, metadata),
+                    assignRet(0),
+                  ),
+                )
+                val tryLock = MutexTryLockLabel(handle, invokeLabel.getParam(0), metadata)
+                addSeqFrom(choose, listOf(StmtLabel(Assume(Not(choice.ref))), tryLock))
+              }
+
+              "pthread_cond_timedwait" -> {
+                invokeLabel.markSyncParam(1)
+                val handle = invokeLabel.getMutexHandle(2)
+                val choice = choiceVar(builder)
+                val ret = invokeLabel.params[0]
+                val retType = CComplexType.getType(ret, parseContext)
+                val timedOut =
+                  Ite<Type>(choice.ref, retType.getValue("$ETIMEDOUT"), retType.nullValue)
+                addSeq(
+                  listOf(
+                    MutexUnlockLabel(handle, metadata),
+                    MutexLockLabel(handle, metadata),
+                    StmtLabel(Havoc(choice)),
+                    AssignStmtLabel(ret as RefExpr<*>, timedOut, metadata),
+                  )
+                )
+              }
+
+              // A spin lock is a mutex that busy-waits, which no interleaving tells apart.
+              "pthread_spin_lock" -> {
+                addSeq(listOf(MutexLockLabel(invokeLabel.getMutexHandle(), metadata), assignRet(0)))
+              }
+
+              "pthread_spin_unlock" -> {
+                addSeq(
+                  listOf(MutexUnlockLabel(invokeLabel.getMutexHandle(), metadata), assignRet(0))
+                )
+              }
+
+              "pthread_spin_trylock" -> {
+                val ret = invokeLabel.getParam(0)
+                addSingle(MutexTryLockLabel(invokeLabel.getMutexHandle(), ret, metadata))
+              }
+
+              in NO_EFFECT_FUNCTIONS -> {
+                invokeLabel.markSyncParam(1)
+                addSingle(assignRet(0))
               }
 
               "pthread_rwlock_rdlock" -> {
@@ -293,10 +497,35 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                   }
                 }
 
-                addSingle(NopLabel)
+                // The exit value is the thread's result, exactly as if the routine returned it. A
+                // routine whose return slot cannot hold it is refused by ThreadResultPass.
+                val ret = builder.getParams().firstOrNull { it.second == ParamDirection.OUT }?.first
+                val value = invokeLabel.params.getOrNull(1)
+                if (
+                  ret != null &&
+                    value != null &&
+                    ret.type == value.type &&
+                    threadResultsUsed(builder)
+                ) {
+                  addSingle(AssignStmtLabel(ret, value, metadata))
+                } else addSingle(NopLabel)
               }
 
-              "pthread_key_create",
+              "pthread_key_create" -> {
+                // `*key = <fresh key>`, and the call keeps only the key value: the thread-specific
+                // slots are addressed by it, like by the key argument of pthread_{get,set}specific
+                val key = pointee(invokeLabel.params[1])
+                val id = key.type.integerOf(++uniqueCounter)
+                val params = invokeLabel.params.toMutableList()
+                params[1] = id
+                addSeq(
+                  listOf(
+                    AssignStmtLabel(key, id, metadata),
+                    invokeLabel.copy(params = params, isLibraryFunction = true),
+                  )
+                )
+              }
+
               "pthread_getspecific",
               "pthread_setspecific" -> {
                 invokeLabel.isLibraryFunction = true
@@ -314,6 +543,27 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
+  /** The SMT type of the `char`s that [ptr] (a `char *` or `char[]`) points to. */
+  private fun charType(ptr: Expr<*>): Type =
+    when (val t = CComplexType.getType(ptr, parseContext)) {
+      is CPointer -> t.embeddedType.smtType
+      is CArray -> t.embeddedType.smtType
+      else -> error("strcpy on a non-pointer argument of type $t: $ptr")
+    }
+
+  /** `*ptr`: the variable itself for `&x`, otherwise a [Dereference] at offset 0. */
+  private fun pointee(ptr: Expr<*>): Expr<*> {
+    if (ptr is Reference<*, *> && ptr.expr is RefExpr<*>) return ptr.expr
+    val pointee =
+      (CComplexType.getType(ptr, parseContext) as? CPointer)?.embeddedType
+        ?: error("pthread_key_create on a non-pointer argument: $ptr")
+    val offset = CComplexType.getSignedLong(parseContext).nullValue
+    return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
+  }
+
+  private fun choiceVar(builder: XcfaProcedureBuilder): VarDecl<BoolType> =
+    Decls.Var("__theta_pthread_choice_${uniqueCounter++}", Bool()).also(builder::addVar)
+
   private fun checkMutexDecl(mutex: Decl<*>, builder: XcfaProcedureBuilder) {
     check(mutex is VarDecl<*> && mutex in builder.parent.getVars().map { it.wrappedVar }) {
       "Local mutex handles are not supported: ${mutex.name}"
@@ -330,6 +580,76 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
+
+  private fun Expr<*>.isNullPointer() = asConstant()?.signum() == 0
+
+  /**
+   * Whether some `pthread_join` may store a thread's result: one not lowered yet, or one already
+   * lowered, which has created [THREAD_RESULTS]. Only then are thread starts instrumented.
+   */
+  private fun threadResultsUsed(builder: XcfaProcedureBuilder): Boolean =
+    builder.parent.getVars().any { it.wrappedVar.name == THREAD_RESULTS } ||
+      builder.parent.getProcedures().any { proc ->
+        proc.getEdges().any { e ->
+          e.getFlatLabels().any {
+            it is InvokeLabel &&
+              it.name == "pthread_join" &&
+              it.params.getOrNull(2)?.isNullPointer() == false
+          }
+        }
+      }
+
+  private val resultIdType
+    get() = CComplexType.getSignedInt(parseContext).smtType
+
+  private fun atomicGlobal(builder: XcfaProcedureBuilder, name: String, type: Type): VarDecl<*> =
+    builder.parent.getVars().firstOrNull { it.wrappedVar.name == name }?.wrappedVar
+      ?: Decls.Var(name, type).also {
+        builder.parent.addVar(XcfaGlobalVar(it, type.defaultValue, atomic = true))
+      }
+
+  private fun threadResults(builder: XcfaProcedureBuilder, resultType: Type): VarDecl<*> =
+    atomicGlobal(builder, THREAD_RESULTS, ArrayType.of(resultIdType, resultType)).also {
+      check((it.type as ArrayType<*, *>).elemType == resultType) {
+        "Unsupported pthread_join: retval of type $resultType"
+      }
+    }
+
+  private fun nextResultId(builder: XcfaProcedureBuilder): VarDecl<*> =
+    atomicGlobal(builder, THREAD_NEXT_RESULT_ID, resultIdType)
+
+  /**
+   * The variable holding the result id of the thread last started on [handle], in the scope of the
+   * handle's own variable ([param] is the handle argument as written, e.g. `&t[1]`), so that the
+   * create and the join of one handle agree on it.
+   */
+  private fun resultIdVar(
+    builder: XcfaProcedureBuilder,
+    param: Expr<*>,
+    handle: VarDecl<*>,
+  ): VarDecl<*> {
+    var base: Expr<*> = param
+    while (true) {
+      base =
+        when (base) {
+          is Reference<*, *> -> base.expr
+          is Dereference<*, *, *> -> base.array
+          is PosExpr<*> -> base.op
+          is AddExpr<*> -> base.ops.single { it.asConstant() == null }
+          else -> break
+        }
+    }
+    val decl = (base as? RefExpr<*>)?.decl
+    val name = "$THREAD_RESULT_ID_PREFIX${handle.name}"
+    return when {
+      decl in builder.getVars() ->
+        builder.getVars().firstOrNull { it.name == name }
+          ?: Decls.Var(name, resultIdType).also(builder::addVar)
+      builder.parent.getVars().any { it.wrappedVar == decl } ->
+        atomicGlobal(builder, name, resultIdType)
+      else -> error("Unsupported pthread handle for a thread result: $param")
+    }
+  }
 
   private fun Expr<*>.asConstant(): BigInteger? =
     when (this) {
@@ -381,18 +701,31 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             // SimplifyExprsPass after it) before this pass runs.
             "Unsupported library parameter: non-constant dereference offset (${param.offset})"
           }
-        // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
-        // single-object cases -- while every higher element gets its own synthetic handle.
-        if (offset == BigInteger.ZERO) base
-        else
-          arrayElementHandles.getOrPut(base to offset) {
-            Decls.Var("${base.name}_$offset", base.type)
-          }
+        elementHandle(base, offset)
+      }
+
+      // `t + i`, the pointer-arithmetic spelling of `&t[i]`: one base variable plus constants.
+      is AddExpr<*> -> {
+        val ops = param.ops.map { it to it.asConstant() }
+        var base = ops.filter { it.second == null }.map { it.first }.singleOrNull()
+        while (base is PosExpr<*>) base = base.op
+        check(base is RefExpr<*> && base.decl is VarDecl<*>) {
+          "Unsupported library parameter: expected a reference base variable plus a constant " +
+            "offset, got $param"
+        }
+        elementHandle(base.decl as VarDecl<*>, ops.sumOf { it.second ?: BigInteger.ZERO })
       }
 
       else -> error("Unsupported library parameter expression: $param")
     }
   }
+
+  private fun elementHandle(base: VarDecl<*>, offset: BigInteger): VarDecl<*> =
+    // Offset 0 keeps mapping to the base variable itself -- unchanged for the scalar and
+    // single-object cases -- while every higher element gets its own synthetic handle.
+    if (offset == BigInteger.ZERO) base
+    else
+      arrayElementHandles.getOrPut(base to offset) { Decls.Var("${base.name}_$offset", base.type) }
 
   private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
 }

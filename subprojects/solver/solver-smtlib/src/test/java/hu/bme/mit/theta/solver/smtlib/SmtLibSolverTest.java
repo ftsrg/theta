@@ -131,6 +131,25 @@ public final class SmtLibSolverTest {
     }
 
     @Test
+    public void testPopMultipleLevels() {
+        final Solver solver = solverFactory.createSolver();
+
+        final ConstDecl<IntType> x = Const("x", IntExprs.Int());
+
+        solver.push();
+        solver.add(IntExprs.Eq(x.getRef(), IntExprs.Int(0)));
+        solver.push();
+        solver.add(IntExprs.Gt(x.getRef(), IntExprs.Int(5)));
+        assertTrue(solver.check().isUnsat());
+        solver.pop(2);
+
+        // Both levels are gone from the solver too: x is declared anew, and x = 1 is satisfiable.
+        solver.add(IntExprs.Eq(x.getRef(), IntExprs.Int(1)));
+        assertTrue(solver.check().isSat());
+        assertEquals(IntExprs.Int(1), solver.getModel().eval(x).orElseThrow());
+    }
+
+    @Test
     public void testUnsatCore() {
         final UCSolver solver = solverFactory.createUCSolver();
 

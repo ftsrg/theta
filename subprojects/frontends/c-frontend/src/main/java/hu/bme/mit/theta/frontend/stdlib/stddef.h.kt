@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,6 @@ package hu.bme.mit.theta.frontend.stdlib
 
 internal val stddef_h =
   """
-typedef unsigned size_t;
+typedef long unsigned int size_t;
 """
     .trimIndent()

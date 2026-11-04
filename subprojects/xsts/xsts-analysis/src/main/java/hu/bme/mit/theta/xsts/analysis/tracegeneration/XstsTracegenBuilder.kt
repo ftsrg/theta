@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ class XstsTracegenBuilder(
     val solver2 =
       solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
 
-    val analysis = XstsAnalysis.create(ExplAnalysis.create(solver2, BoolExprs.True()))
+    val analysis = XstsAnalysis.create(ExplAnalysis.create(solver2, xsts.initFormula))
     val lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()))
 
     val negProp: Expr<BoolType> = BoolExprs.Not(xsts.prop)
@@ -163,17 +163,6 @@ class XstsTracegenBuilder(
   */
 
   fun build(xsts: XSTS): XstsTracegenConfig<out State, out Action, out Prec> {
-    val solver2 =
-      solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
-
-    val analysis = XstsAnalysis.create(ExplAnalysis.create(solver2, BoolExprs.True()))
-    val lts = XstsLts.create(xsts, XstsStmtOptimizer.create(ExplStmtOptimizer.getInstance()))
-
-    val negProp: Expr<BoolType> = BoolExprs.Not(xsts.prop)
-    val target: Predicate<XstsState<ExplState>?> =
-      XstsStatePredicate(ExplStatePredicate(negProp, solver2))
-    val argBuilder = ArgBuilder.create(lts, analysis, target, true)
-
     if (abstraction == TracegenerationAbstraction.VARLIST) {
       return buildExpl(xsts)
     } /*else if (abstraction==TracegenerationAbstraction.AUTOPRED) {

@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.UserPropagator;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,98 +34,72 @@ import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.PropagatorBackend;
 import org.sosy_lab.java_smt.basicimpl.AbstractUserPropagator;
 
-public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
-    private Function<Expr<?>, Formula> toTerm;
-    private Function<Formula, Expr<?>> toExpr;
+/** Binds a {@link UserPropagator} to a JavaSMT prover, translating between exprs and formulas. */
+final class JavaSMTUserPropagator extends AbstractUserPropagator implements UserPropagator.Backend {
+    private final UserPropagator propagator;
+    private final Function<Expr<?>, Formula> toTerm;
+    private final Function<Formula, Expr<?>> toExpr;
     private final Map<Expr<BoolType>, BooleanFormula> registeredTerms;
+    private final Map<BooleanFormula, Expr<BoolType>> registeredExprs;
 
-    protected JavaSMTUserPropagator() {
-        super();
-        registeredTerms = new LinkedHashMap<>();
-    }
-
-    final void setToTerm(final Function<Expr<?>, Formula> toTerm) {
+    JavaSMTUserPropagator(
+            final UserPropagator propagator,
+            final Function<Expr<?>, Formula> toTerm,
+            final Function<Formula, Expr<?>> toExpr) {
+        this.propagator = propagator;
         this.toTerm = toTerm;
-    }
-
-    final void setToExpr(final Function<Formula, Expr<?>> toExpr) {
         this.toExpr = toExpr;
+        registeredTerms = new LinkedHashMap<>();
+        registeredExprs = new LinkedHashMap<>();
+    }
+
+    private Expr<BoolType> toBoolExpr(final BooleanFormula formula) {
+        final Expr<BoolType> registered = registeredExprs.get(formula);
+        return registered != null ? registered : cast(toExpr.apply(formula), Bool());
     }
 
     @Override
-    protected final PropagatorBackend getBackend() {
-        return super.getBackend();
-    }
-
-    /**
-     * Gets called when the solver decides on the value for a bool expression. Can call propagate*
-     * calls from here. When overriding, no need to call super.
-     *
-     * @param expr The expression for which a value became available
-     * @param value The value of the expression
-     */
-    public void onKnownValue(final Expr<BoolType> expr, final boolean value) {}
-
-    @Override
-    public final void onKnownValue(final BooleanFormula expr, final boolean value) {
-        super.onKnownValue(expr, value);
-        final var entry =
-                registeredTerms.entrySet().stream()
-                        .filter(e -> e.getValue().equals(expr))
-                        .findAny();
-        final var tExpr =
-                entry.isPresent() ? entry.get().getKey() : cast(toExpr.apply(expr), Bool());
-        onKnownValue(tExpr, value);
-    }
-
-    /**
-     * Gets called when a branching is done on a registered expression. Change the decision by
-     * calling propagateNextDecision.
-     *
-     * @param expr
-     * @param value
-     */
-    public void onDecision(final Expr<BoolType> expr, final boolean value) {}
-
-    @Override
-    public final void onDecision(final BooleanFormula expr, final boolean value) {
-        super.onDecision(expr, value);
-        final var tExpr = cast(toExpr.apply(expr), Bool());
-        onDecision(tExpr, value);
-    }
-
-    @Override
-    public final void initializeWithBackend(final PropagatorBackend pBackend) {
+    public void initializeWithBackend(final PropagatorBackend pBackend) {
         super.initializeWithBackend(pBackend);
         getBackend().notifyOnFinalCheck();
         getBackend().notifyOnKnownValue();
         getBackend().notifyOnDecision();
     }
 
-    /**
-     * Register an expression with the propagator. Does NOT add it to the solver.
-     *
-     * @param expr The expression to register
-     */
-    public void registerExpression(final Expr<BoolType> expr) {
-        final BooleanFormula booleanFormula = (BooleanFormula) toTerm.apply(expr);
-        registeredTerms.put(expr, booleanFormula);
-        registerExpression(booleanFormula);
+    @Override
+    public void onKnownValue(final BooleanFormula expr, final boolean value) {
+        propagator.onKnownValue(toBoolExpr(expr), value);
     }
 
     @Override
-    public final void registerExpression(final BooleanFormula theoryExpr) {
-        super.registerExpression(theoryExpr);
+    public void onDecision(final BooleanFormula expr, final boolean value) {
+        propagator.onDecision(toBoolExpr(expr), value);
     }
 
-    public final void propagateConflict(final List<Expr<BoolType>> exprs) {
-        final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
-        checkState(Arrays.stream(terms).noneMatch(Objects::isNull));
-        getBackend().propagateConflict(terms);
+    @Override
+    public void onFinalCheck() {
+        propagator.onFinalCheck();
     }
 
-    public final void propagateConsequence(
-            final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
+    @Override
+    public void onPush() {
+        propagator.onPush();
+    }
+
+    @Override
+    public void onPop(final int levels) {
+        propagator.onPop(levels);
+    }
+
+    @Override
+    public void registerExpression(final Expr<BoolType> expr) {
+        final BooleanFormula term = (BooleanFormula) toTerm.apply(expr);
+        registeredTerms.put(expr, term);
+        registeredExprs.putIfAbsent(term, expr);
+        registerExpression(term);
+    }
+
+    private BooleanFormula[] registered(final List<Expr<BoolType>> exprs) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
         checkState(
                 Arrays.stream(terms).noneMatch(Objects::isNull),
@@ -132,13 +107,29 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
                         + " terms: %s",
                 exprs,
                 registeredTerms.keySet());
-        final BooleanFormula consequenceTerm = (BooleanFormula) toTerm.apply(consequence);
-        getBackend().propagateConsequence(terms, consequenceTerm);
+        return terms;
     }
 
-    public final boolean propagateNextDecision(
-            final Expr<BoolType> formula, Optional<Boolean> optional) {
-        final BooleanFormula term = (BooleanFormula) toTerm.apply(formula);
-        return getBackend().propagateNextDecision(term, optional);
+    @Override
+    public void propagateConflict(final List<Expr<BoolType>> exprs) {
+        getBackend().propagateConflict(registered(exprs));
+    }
+
+    @Override
+    public void propagateConsequence(
+            final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
+        getBackend()
+                .propagateConsequence(
+                        registered(exprs), (BooleanFormula) toTerm.apply(consequence));
+    }
+
+    @Override
+    public boolean propagateNextDecision(final Expr<BoolType> expr, final Optional<Boolean> value) {
+        return getBackend().propagateNextDecision((BooleanFormula) toTerm.apply(expr), value);
+    }
+
+    @Override
+    public String toString() {
+        return propagator.toString();
     }
 }
