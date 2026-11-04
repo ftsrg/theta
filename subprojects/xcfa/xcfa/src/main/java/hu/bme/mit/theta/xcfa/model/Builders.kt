@@ -148,6 +148,10 @@ constructor(
     }
   }
 
+  /** The optimization phase running on this procedure, while a pass runs. */
+  val currentPhase: Int
+    get() = lastOptimized + 1
+
   /** Returns true, if optimization is finished (no more phases to execute) */
   fun optimize(phase: Int): Boolean {
     if (this::optimized.isInitialized || phase >= manager.passes.size) return true

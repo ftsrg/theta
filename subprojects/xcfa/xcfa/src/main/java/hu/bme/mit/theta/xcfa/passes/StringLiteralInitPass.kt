@@ -44,10 +44,12 @@ import hu.bme.mit.theta.xcfa.utils.isRead
  */
 class StringLiteralInitPass : ProcedurePass {
 
-  private var unread: Set<VarDecl<*>>? = null
-
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val dead = unread ?: unreadLiterals(builder.parent).also { unread = it }
+    // Every procedure has its own instance of this pass, but the scan is of the whole program.
+    @Suppress("UNCHECKED_CAST")
+    val dead =
+      builder.parent.metaData.getOrPut(UNREAD_LITERALS) { unreadLiterals(builder.parent) }
+        as Set<VarDecl<*>>
     if (dead.isEmpty()) return builder
     builder.getEdges().toList().forEach { edge ->
       val stripped = edge.label.withoutInitOf(dead)
@@ -140,3 +142,5 @@ class StringLiteralInitPass : ProcedurePass {
 private val STRING_LITERAL_NAME = Regex("""__theta_str\d+$""")
 
 private fun VarDecl<*>.isStringLiteral() = STRING_LITERAL_NAME.containsMatchIn(name)
+
+private const val UNREAD_LITERALS = "stringLiteralInitUnread"

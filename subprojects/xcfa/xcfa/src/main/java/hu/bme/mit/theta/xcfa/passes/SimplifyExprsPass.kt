@@ -63,10 +63,8 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
     // without threads nothing runs concurrently with the entry procedure: its globals change only
     // through its own edges and calls (which still clear them below)
-    val singleThreaded =
-      builder.parent.getProcedures().none { proc ->
-        proc.getEdges().any { e -> e.getFlatLabels().any { it is StartLabel } }
-      }
+    val shared = sharedScan(builder)
+    val singleThreaded = shared.singleThreaded
     val initEdges =
       LinkedHashSet(
         if (isInitProcedure) getNonConcurrentEdges(builder.parent, true).first else emptySet()
@@ -75,14 +73,10 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val pathValuations = LinkedHashMap<XcfaEdge, List<Valuation>>()
-    val constValuation = MutableValuation()
+    val constValuation = MutableValuation.copyOf(shared.constGlobals)
     val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
-    val modifiedGlobals = mutableListOf<VarDecl<*>>()
-    builder.parent
-      .getVars()
-      .map { it.wrappedVar }
-      .getConstAndModifiedVars(builder.parent.getProcedures(), constValuation, modifiedGlobals)
+    val modifiedGlobals = shared.modifiedGlobals
 
     builder.getVars().getConstAndModifiedVars(setOf(builder), constValuation)
 
@@ -234,6 +228,42 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     return lostGlobal || derefCount(new) < derefCount(old)
   }
 
+  private class SharedScan(
+    val phase: Int,
+    val singleThreaded: Boolean,
+    val constGlobals: Valuation,
+    val modifiedGlobals: List<VarDecl<*>>,
+  )
+
+  /**
+   * What takes a look at all procedures, once per optimization phase rather than per procedure: on
+   * a program of thousands of procedures that is what the pass spends its time on. Within a phase
+   * only what the phase's own passes do changes, and those add no writes to a global: the answers
+   * can only have become more conservative than they need to be.
+   */
+  private fun sharedScan(builder: XcfaProcedureBuilder): SharedScan {
+    val phase = builder.currentPhase
+    (builder.parent.metaData[SHARED_SCAN] as? SharedScan)
+      ?.takeIf { it.phase == phase }
+      ?.let {
+        return it
+      }
+    val procedures = builder.parent.getProcedures()
+    val constGlobals = MutableValuation()
+    val modifiedGlobals = mutableListOf<VarDecl<*>>()
+    builder.parent
+      .getVars()
+      .map { it.wrappedVar }
+      .getConstAndModifiedVars(procedures, constGlobals, modifiedGlobals)
+    val singleThreaded =
+      procedures.none { proc ->
+        proc.getEdges().any { e -> e.getFlatLabels().any { it is StartLabel } }
+      }
+    return SharedScan(phase, singleThreaded, constGlobals, modifiedGlobals).also {
+      builder.parent.metaData[SHARED_SCAN] = it
+    }
+  }
+
   /**
    * Separates the variables in this collection. The constant variables are added to the given
    * valuation with their values. Modified variables are returned as a list.
@@ -300,3 +330,5 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     } while (changed) // no change, no point in iterating further
   }
 }
+
+private const val SHARED_SCAN = "simplifyExprsSharedScan"
