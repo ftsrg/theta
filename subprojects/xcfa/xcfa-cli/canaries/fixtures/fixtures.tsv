@@ -131,7 +131,7 @@ large_static_object.c	efficient	LP64	SAFE	a static array longer than the old bas
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	flat
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	bytes
 vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	flat
-vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	bytes
+vla_then_address_taken_local_bytes.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	bytes
 flat_oob_into_neighbour.c	efficient	LP64	UNSAFE:valid-memsafety	one-past-the-end write is invalid although the next block follows it	flat
 flat_nested_member_pointer_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a pointer into an inline member is in bounds of the enclosing block	flat
 flat_symbolic_size_oob.c	efficient	LP64	UNSAFE:valid-memsafety	out-of-bounds write on a symbolic-size block (size recorded in cells)	flat
@@ -148,7 +148,7 @@ bytes_zero_init.c	efficient	LP64	SAFE	a global without an initializer is zero at
 bytes_local_aggregate_init.c	efficient	LP64	SAFE	a local brace initializer is written at byte offsets under bytes	bytes
 local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	multi
 local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	flat
-local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
+local_bitfield_init_bytes.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
 global_bitfield_init.c	efficient	LP64	SAFE	a global bitfield initializer is spliced into the unit at its byte offset	bytes
 union_array_elements.c	efficient	LP64	SAFE	each element of a local array of unions gets an object of its own	multi
 union_array_elements.c	efficient	LP64	SAFE	an array-of-unions element is a region of the array under bytes	bytes
@@ -173,8 +173,8 @@ flat_flexible_member_malloc.c	efficient	LP64	SAFE:valid-memsafety	a malloc'd str
 bytes_pointer_to_array.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken array is sized in bytes under bytes	bytes
 bytes_wide_access_bounds.c	efficient	LP64	SAFE:valid-memsafety	a wide access whose bytes all lie in the block is valid under bytes	bytes
 flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	a wide access running past the block end is invalid under bytes	bytes
-flat_nested_memcpy.c	efficient	ILP32	SAFE	memcpy copies byte by byte under bytes	bytes
-flat_nested_calloc.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
+flat_memcpy_bytes.c	efficient	ILP32	SAFE	memcpy copies byte by byte under bytes	bytes
+flat_nested_calloc_bytes.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
 ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
 typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of

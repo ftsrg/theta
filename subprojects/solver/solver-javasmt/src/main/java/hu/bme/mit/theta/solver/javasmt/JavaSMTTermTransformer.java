@@ -284,6 +284,14 @@ final class JavaSMTTermTransformer {
                 exprUnaryOperator(
                         t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
         addEnvFunc(
+                FunctionDeclarationKind.UBV_TO_INT,
+                exprUnaryOperator(
+                        t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, false)));
+        addEnvFunc(
+                FunctionDeclarationKind.SBV_TO_INT,
+                exprUnaryOperator(
+                        t -> hu.bme.mit.theta.core.type.bvtype.BvToIntExpr.create(t, true)));
+        addEnvFunc(
                 FunctionDeclarationKind.BV_MUL,
                 exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));
         addEnvFunc(
@@ -380,7 +388,9 @@ final class JavaSMTTermTransformer {
                     return FpFromBvExpr.of(
                             roundingmode,
                             op,
-                            FpType.of(type.getExponentSize(), type.getMantissaSize() + 1),
+                            FpType.of(
+                                    type.getExponentSize(),
+                                    type.getMantissaSizeWithoutHiddenBit() + 1),
                             true);
                 });
         environment.put(
@@ -419,12 +429,14 @@ final class JavaSMTTermTransformer {
                                 roundingmode,
                                 (Expr<FpType>) op,
                                 type.getExponentSize(),
-                                type.getMantissaSize() + 1);
+                                type.getMantissaSizeWithoutHiddenBit() + 1);
                     } else if (op.getType() instanceof BvType) {
                         return FpFromBvExpr.of(
                                 roundingmode,
                                 (Expr<BvType>) op,
-                                FpType.of(type.getExponentSize(), type.getMantissaSize() + 1),
+                                FpType.of(
+                                        type.getExponentSize(),
+                                        type.getMantissaSizeWithoutHiddenBit() + 1),
                                 false);
                     } else {
                         throw new JavaSMTSolverException("Unsupported:" + op.getType());
@@ -444,12 +456,14 @@ final class JavaSMTTermTransformer {
                                 roundingmode,
                                 (Expr<FpType>) op,
                                 type.getExponentSize(),
-                                type.getMantissaSize() + 1);
+                                type.getMantissaSizeWithoutHiddenBit() + 1);
                     } else if (op.getType() instanceof BvType) {
                         return FpFromBvExpr.of(
                                 roundingmode,
                                 (Expr<BvType>) op,
-                                FpType.of(type.getExponentSize(), type.getMantissaSize() + 1),
+                                FpType.of(
+                                        type.getExponentSize(),
+                                        type.getMantissaSizeWithoutHiddenBit() + 1),
                                 false);
                     } else {
                         throw new JavaSMTSolverException("Unsupported:" + op.getType());
@@ -466,7 +480,9 @@ final class JavaSMTTermTransformer {
                     return FpFromBvExpr.of(
                             FpRoundingMode.getDefaultRoundingMode(),
                             op,
-                            FpType.of(type.getExponentSize(), type.getMantissaSize() + 1),
+                            FpType.of(
+                                    type.getExponentSize(),
+                                    type.getMantissaSizeWithoutHiddenBit() + 1),
                             true);
                 });
 
@@ -694,7 +710,8 @@ final class JavaSMTTermTransformer {
         return FpLitExpr.of(
                 value.getSign(),
                 BvUtils.bigIntegerToNeutralBvLitExpr(value.getExponent(), value.getExponentSize()),
-                BvUtils.bigIntegerToNeutralBvLitExpr(value.getMantissa(), value.getMantissaSize()));
+                BvUtils.bigIntegerToNeutralBvLitExpr(
+                        value.getMantissa(), value.getMantissaSizeWithoutHiddenBit()));
     }
 
     private Expr<?> transformApp(
@@ -801,6 +818,12 @@ final class JavaSMTTermTransformer {
     private Expr<?> transformVar(final Formula term, String name, final List<Decl<?>> vars) {
         FormulaType type = context.getFormulaManager().getFormulaType(term);
         Type thetaType = transformType(type);
+        // JavaSMT hands out quantifier bodies with their bound variables as free constants.
+        for (final Decl<?> var : Lists.reverse(vars)) {
+            if (var.getName().equals(term.toString()) && var.getType().equals(thetaType)) {
+                return var.getRef();
+            }
+        }
         final var c = symbolTable.getConst(term);
         checkState(thetaType == null || c.getType().equals(thetaType));
         return c.getRef();
@@ -816,7 +839,8 @@ final class JavaSMTTermTransformer {
             return BvType.of(bvType.getSize());
         } else if (type.isFloatingPointType()) {
             FloatingPointType fpType = (FloatingPointType) type;
-            return FpType.of(fpType.getExponentSize(), fpType.getMantissaSize() + 1);
+            return FpType.of(
+                    fpType.getExponentSize(), fpType.getMantissaSizeWithoutHiddenBit() + 1);
         } else if (type.isArrayType()) {
             ArrayFormulaType<?, ?> arrayFormulaType = (ArrayFormulaType<?, ?>) type;
             final var indexType = arrayFormulaType.getIndexType();

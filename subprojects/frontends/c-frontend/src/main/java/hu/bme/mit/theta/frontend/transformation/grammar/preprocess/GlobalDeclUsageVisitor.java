@@ -23,7 +23,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisi
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,7 +37,7 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
     private final DeclarationVisitor declarationVisitor;
 
     /** The globals declared with an initializer so far. */
-    private final Set<String> initializedGlobals = new HashSet<>();
+    private final Map<String, GlobalDeclarationLevel> initializedGlobals = new HashMap<>();
 
     public GlobalDeclUsageVisitor(DeclarationVisitor declarationVisitor) {
         this.declarationVisitor = declarationVisitor;
@@ -62,16 +62,21 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                         ctx.declaration().declarationSpecifiers(),
                         ctx.declaration().initDeclaratorList(),
                         false);
-        Set<CDeclaration> withInitializer = withInitializer(ctx, declarations);
+        Map<CDeclaration, GlobalDeclarationLevel> declarationLevel =
+                withDeclarationLevel(ctx, declarations);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
                 // The declaration with an initializer is the definition, whatever the order: a
                 // later one without (`int x = 5; extern int x;`) must not take its place.
-                if (withInitializer.contains(declaration)) {
-                    initializedGlobals.add(declaration.getName());
-                } else if (initializedGlobals.contains(declaration.getName())) {
-                    continue;
-                }
+                // If the variable has at least one tentative definition (non-extern declaration),
+                // then that shall define its value. Otherwise, its value is undefined.
+                if (initializedGlobals.containsKey(declaration.getName())
+                        && declarationLevel
+                                        .get(declaration)
+                                        .compareTo(initializedGlobals.get(declaration.getName()))
+                                <= 0) continue;
+
+                initializedGlobals.put(declaration.getName(), declarationLevel.get(declaration));
                 // A bare prototype repeating a function that was already *defined* above must not
                 // replace it: the definition carries the body, the prototype does not. Preprocessed
                 // sources hit this routinely, where a header re-declares a `static inline` function
@@ -110,21 +115,21 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         return null;
     }
 
-    /**
-     * The declarations of {@code ctx} that have an initializer. {@code declarations} is what
-     * getDeclarations built from it: one per init-declarator, in order, after the name read into
-     * the specifiers, if any, which never has one.
-     */
-    private static Set<CDeclaration> withInitializer(
+    private Map<CDeclaration, GlobalDeclarationLevel> withDeclarationLevel(
             CParser.GlobalDeclarationContext ctx, List<CDeclaration> declarations) {
         CParser.InitDeclaratorListContext list = ctx.declaration().initDeclaratorList();
         List<CParser.InitDeclaratorContext> initDeclarators =
                 list == null ? List.of() : list.initDeclarator();
         int first = declarations.size() - initDeclarators.size();
-        Set<CDeclaration> ret = new HashSet<>();
-        for (int i = 0; i < initDeclarators.size(); i++) {
-            if (initDeclarators.get(i).initializer() != null) {
-                ret.add(declarations.get(first + i));
+        Map<CDeclaration, GlobalDeclarationLevel> ret = new LinkedHashMap<>();
+        for (int i = 0; i < declarations.size(); i++) {
+            CDeclaration declaration = declarations.get(i);
+            if (i >= first && initDeclarators.get(i).initializer() != null) {
+                ret.put(declaration, GlobalDeclarationLevel.DEFINED);
+            } else if (!declaration.getType().isExtern()) {
+                ret.put(declaration, GlobalDeclarationLevel.DECLARED);
+            } else {
+                ret.put(declaration, GlobalDeclarationLevel.EXTERN);
             }
         }
         return ret;
@@ -208,5 +213,11 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                 .map(Tuple2::get2)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    private enum GlobalDeclarationLevel {
+        EXTERN,
+        DECLARED,
+        DEFINED,
     }
 }
