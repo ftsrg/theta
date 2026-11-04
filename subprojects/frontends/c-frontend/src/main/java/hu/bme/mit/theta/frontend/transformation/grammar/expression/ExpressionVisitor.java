@@ -2100,6 +2100,36 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
                 return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
             }
+            case "__builtin_add_overflow",
+                    "__builtin_sub_overflow",
+                    "__builtin_mul_overflow" -> {
+                return genericOverflowBuiltin(args, name.charAt("__builtin_".length()));
+            }
+            case "__builtin_clz", "__builtin_ctz" -> {
+                return bitScan(args, CComplexType.getUnsignedInt(parseContext), name.endsWith("clz"));
+            }
+            case "__builtin_clzl", "__builtin_ctzl" -> {
+                return bitScan(
+                        args, CComplexType.getUnsignedLong(parseContext), name.endsWith("clzl"));
+            }
+            case "__builtin_clzll", "__builtin_ctzll" -> {
+                return bitScan(
+                        args,
+                        CComplexType.getUnsignedLongLong(parseContext),
+                        name.endsWith("clzll"));
+            }
+            case "__builtin_ceil",
+                    "__builtin_ceilf",
+                    "__builtin_ceill",
+                    "__builtin_floor",
+                    "__builtin_floorf",
+                    "__builtin_floorl",
+                    "__builtin_trunc",
+                    "__builtin_truncf",
+                    "__builtin_truncl" -> {
+                return callModeledLibraryFunction(
+                        name.substring("__builtin_".length()), args, true);
+            }
             case "__builtin_uadd_overflow" -> {
                 return unsignedOverflowBuiltin(
                         args, true, CComplexType.getUnsignedInt(parseContext));
@@ -3364,6 +3394,124 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         preStatements.add(
                 new CAssignment(target, new CExpr(stored, parseContext), "=", parseContext));
         return flag.getRef();
+    }
+
+    /**
+     * {@code __builtin_{add,sub,mul}_overflow(a, b, &r)}, of any integer type: the type of r says at
+     * what width the operation is done. Unsigned overflow shows on the wrapped result compared with
+     * the operands, as in {@link #unsignedOverflowBuiltin}; a signed one also has to know the sign
+     * of the second operand.
+     */
+    private Expr<?> genericOverflowBuiltin(List<AssignmentExpressionContext> args, char operation) {
+        if (functionVisitor == null || args.size() != 3) {
+            return null;
+        }
+        Expr<?> a = args.get(0).accept(functionVisitor).getExpression();
+        Expr<?> b = args.get(1).accept(functionVisitor).getExpression();
+        Expr<?> resultPointer = args.get(2).accept(functionVisitor).getExpression();
+        CComplexType type = pointeeOf(resultPointer);
+        if (type == null) {
+            return null;
+        }
+        boolean signed = type instanceof CInteger integer && integer.isSsigned();
+        Expr<?> left = typed(type.castTo(a), type);
+        Expr<?> right = typed(type.castTo(b), type);
+        Expr<?> exact =
+                typed(
+                        switch (operation) {
+                            case 'a' -> Add(left, right);
+                            case 's' -> Sub(left, right);
+                            default -> Mul(left, right);
+                        },
+                        type);
+        Expr<?> wrapped = typed(type.castTo(exact), type);
+        Expr<BoolType> rightNegative =
+                signed ? AbstractExprs.Lt(right, type.getNullValue()) : BoolExprs.False();
+        Expr<BoolType> overflowed =
+                switch (operation) {
+                    case 'a' ->
+                            BoolExprs.Or(
+                                    BoolExprs.And(
+                                            BoolExprs.Not(rightNegative),
+                                            AbstractExprs.Lt(wrapped, left)),
+                                    BoolExprs.And(rightNegative, AbstractExprs.Gt(wrapped, left)));
+                    case 's' ->
+                            BoolExprs.Or(
+                                    BoolExprs.And(
+                                            BoolExprs.Not(rightNegative),
+                                            AbstractExprs.Gt(wrapped, left)),
+                                    BoolExprs.And(rightNegative, AbstractExprs.Lt(wrapped, left)));
+                    default -> {
+                        Expr<?> quotient =
+                                typed(
+                                        wrapped.getType() instanceof IntType
+                                                        && left.getType() instanceof IntType
+                                                ? createIntDiv(wrapped, left)
+                                                : Div(wrapped, left),
+                                        type);
+                        yield BoolExprs.And(
+                                BoolExprs.Not(AbstractExprs.Eq(left, type.getNullValue())),
+                                BoolExprs.Not(AbstractExprs.Eq(quotient, right)));
+                    }
+                };
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> flag = functionVisitor.createTempVar(signedInt, "overflow");
+        Expr<?> flagValue =
+                typed(
+                        Ite(overflowed, signedInt.getUnitValue(), signedInt.getNullValue()),
+                        signedInt);
+        preStatements.add(
+                new CAssignment(
+                        flag.getRef(), new CExpr(flagValue, parseContext), "=", parseContext));
+        Expr<?> target =
+                dereference(
+                        resultPointer,
+                        CComplexType.getUnsignedLong(parseContext).getNullValue(),
+                        type);
+        preStatements.add(
+                new CAssignment(target, new CExpr(wrapped, parseContext), "=", parseContext));
+        return flag.getRef();
+    }
+
+    /**
+     * {@code __builtin_clz} and {@code __builtin_ctz} as a cascade of comparisons, which also holds
+     * under integer arithmetic. Their result on 0 is undefined; here it is the width.
+     */
+    private Expr<?> bitScan(
+            List<AssignmentExpressionContext> args, CComplexType type, boolean leading) {
+        if (functionVisitor == null || args.size() != 1) {
+            return null;
+        }
+        Expr<?> operand = args.get(0).accept(functionVisitor).getExpression();
+        Expr<?> x = typed(type.castTo(operand), type);
+        int width = type.width();
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        Expr<?> result = signedInt.getValue(Integer.toString(width));
+        for (int bit = 0; bit < width; bit++) {
+            // clz: the highest set bit decides, so the lowest power is the innermost test.
+            // ctz: the lowest set bit decides, so the highest position is the innermost test.
+            int position = leading ? bit : width - 1 - bit;
+            String power = BigInteger.ONE.shiftLeft(position).toString();
+            Expr<BoolType> found;
+            if (leading) {
+                found = AbstractExprs.Geq(x, type.getValue(power));
+            } else {
+                String twice = BigInteger.ONE.shiftLeft(position + 1).toString();
+                Expr<?> kept =
+                        position + 1 == width
+                                ? x
+                                : typed(AbstractExprs.Rem(x, type.getValue(twice)), type);
+                found = AbstractExprs.Geq(kept, type.getValue(power));
+                if (position + 1 != width) {
+                    // All lower bits are zero when this test is reached, so "bit is set" is
+                    // "remainder is not zero".
+                    found = BoolExprs.Not(AbstractExprs.Eq(kept, type.getNullValue()));
+                }
+            }
+            String count = Integer.toString(leading ? width - 1 - position : position);
+            result = Ite(found, signedInt.getValue(count), result);
+        }
+        return typed(result, signedInt);
     }
 
     private Expr<?> typed(Expr<?> expr, CComplexType type) {

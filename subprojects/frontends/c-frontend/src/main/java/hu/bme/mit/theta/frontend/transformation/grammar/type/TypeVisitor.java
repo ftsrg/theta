@@ -438,10 +438,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 // keyword.
                 return null;
             case "_Thread_local":
-                // Genuinely different: thread-local storage gives every thread its own copy, which
-                // the model does not represent. Refused rather than silently shared.
-                throw new UnsupportedFrontendElementException(
-                        "Not yet implemented (" + ctx.getText() + ")");
+                return ThreadLocal();
         }
         throw new UnsupportedFrontendElementException(
                 "Storage class specifier not expected: " + ctx.getText());

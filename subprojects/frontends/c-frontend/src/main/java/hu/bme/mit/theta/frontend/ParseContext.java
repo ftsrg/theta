@@ -225,6 +225,31 @@ public class ParseContext {
         this.arithmeticAutoSelected = arithmeticAutoSelected;
     }
 
+    /**
+     * Whether calls of known procedures are inlined. They are by default; a large program's call
+     * graph does not fit in memory that way, and its XCFA is only readable per procedure.
+     */
+    private boolean inlineProcedures = true;
+
+    /** Whether the bytes model may keep a float out of the byte cells, see ByteMemoryPass. */
+    private boolean separateFloatCells = false;
+
+    public boolean isSeparateFloatCells() {
+        return separateFloatCells;
+    }
+
+    public void setSeparateFloatCells(boolean separateFloatCells) {
+        this.separateFloatCells = separateFloatCells;
+    }
+
+    public boolean isInlineProcedures() {
+        return inlineProcedures;
+    }
+
+    public void setInlineProcedures(boolean inlineProcedures) {
+        this.inlineProcedures = inlineProcedures;
+    }
+
     public boolean isConstantIntDivisorsOnly() {
         return constantIntDivisorsOnly;
     }

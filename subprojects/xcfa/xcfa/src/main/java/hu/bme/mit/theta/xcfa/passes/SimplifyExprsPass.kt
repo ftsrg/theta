@@ -150,6 +150,15 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
           pathValuations[edge] = feasiblePaths
         }
 
+        // Only the edges leaving a location read what reached it, so once they are done it can go:
+        // kept to the end, a long procedure holds a copy of its constants per edge.
+        if (edge.source.outgoingEdges.all { it in visited }) {
+          edge.source.incomingEdges.forEach {
+            valuations.remove(it)
+            pathValuations.remove(it)
+          }
+        }
+
         toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
       }
       unusedLocRemovalPass.runChecked(builder)

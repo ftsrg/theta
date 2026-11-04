@@ -234,6 +234,17 @@ data class CFrontendConfig(
   )
   var cir2cMerge: Boolean = false,
   @Parameter(
+    names = ["--no-inlining"],
+    description = "Keep procedures separate in the XCFA, instead of inlining the calls of known ones",
+  )
+  var noInlining: Boolean = false,
+  @Parameter(
+    names = ["--separate-float-cells"],
+    description =
+      "Under the bytes memory model, keep floats in cells of their own instead of refusing them. A float then does not alias the bytes overlapping it.",
+  )
+  var separateFloatCells: Boolean = false,
+  @Parameter(
     names = ["--enable-signed-wraparound"],
     description =
       "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
