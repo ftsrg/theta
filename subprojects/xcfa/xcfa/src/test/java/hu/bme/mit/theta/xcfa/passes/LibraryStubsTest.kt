@@ -115,8 +115,9 @@ class LibraryStubsTest {
   }
 
   @Test
-  fun assumedSuccessReturnsItsFixedValue() {
-    // A havoc'd return makes `if (atexit(f)) abort();` reachable in a program where it is not.
+  fun exitHandlersAreLeftForRefusal() {
+    // An exit handler would run after main, which is not modelled: the call must survive this pass
+    // so that UnresolvedInvokeToHavocPass refuses it, rather than being stubbed as a success.
     val parseContext = ParseContext()
     val labels =
       labelsAfter(parseContext) {
@@ -125,12 +126,8 @@ class LibraryStubsTest {
         (init to "L1") { "atexit"("ret", "handler") }
       }
     assertTrue(
-      labels.any { it is StmtLabel && it.stmt is AssignStmt<*> },
-      "atexit must return its fixed success value",
-    )
-    assertTrue(
-      labels.none { it is StmtLabel && it.stmt is HavocStmt<*> },
-      "atexit's return must not be havoced",
+      labels.any { it is InvokeLabel && it.name == "atexit" },
+      "atexit must not be stubbed here",
     )
   }
 

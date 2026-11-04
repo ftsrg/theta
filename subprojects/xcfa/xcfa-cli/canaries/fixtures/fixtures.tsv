@@ -233,4 +233,45 @@ symbolic_rwlock_readers.c	efficient	LP64	SAFE	symbolic read-write locks count re
 fp_self_neq_nan.c	efficient	LP64	UNSAFE	x != x on a double is not folded to false: it holds for NaN
 fp_add_zero_sign.c	efficient	LP64	SAFE	x + 0.0 is not folded to x: the sign of a zero sum differs for x = -0.0
 fp_add_no_reassoc.c	efficient	LP64	SAFE	floating-point literals are not summed across other operands of an addition
+pthread_join_retval.c	efficient	LP64	SAFE	pthread_join stores the joined thread's return value in *retval
+pthread_join_retval.c	efficient	LP64	SAFE	pthread_join stores the joined thread's return value in *retval	flat
+pthread_join_retval.c	efficient	LP64	SAFE	pthread_join stores the joined thread's return value in *retval	bytes
+pthread_join_retval.c	bitvector	ILP32	SAFE	pthread_join stores the joined thread's return value in *retval
+pthread_join_retval_unsafe.c	efficient	LP64	UNSAFE	planted bug: pthread_join's *retval holds the returned address
+pthread_exit_retval.c	efficient	LP64	SAFE	pthread_exit's argument is the result pthread_join stores
+pthread_join_retval_two.c	efficient	LP64	SAFE	two threads of one routine keep their results apart
+pthread_join_retval_two_unsafe.c	efficient	LP64	UNSAFE	planted bug: two threads of one routine both return their own argument
+bool_bitfield_bytes.c	bitvector	LP64	SAFE	`bool : 1` bitfields after `unsigned int : 1` ones are laid out in a byte, not refused as straddling	bytes
+bool_bitfield_bytes_unsafe.c	bitvector	LP64	UNSAFE	planted bug: a `bool : 1` bitfield next to `unsigned int : 1` ones is read back as set	bytes
+bool_cast_nonzero.c	bitvector	LP64	SAFE	conversion to _Bool maps every non-zero value (and 2.5) to 1, not to the low bit
+pthread_cond_initializer.c	efficient	LP64	SAFE	PTHREAD_COND_INITIALIZER resolves and pthread_cond_destroy is a no-op
+termination_recursive.c	efficient	LP64	SAFE:termination	a recursive (non-inlinable) program reaches the ASG termination analysis
+memmove_overlap.c	efficient	LP64	SAFE	overlapping memmove reads all source cells before writing
+memmove_overlap_unsafe.c	efficient	LP64	UNSAFE	overlapping memmove still writes the destination
+memmove_overlap.c	efficient	LP64	SAFE	overlapping memmove reads all source cells before writing	flat
+memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead of writing through an unfolded pointer sum
+memcpy_offset_dst.c	efficient	LP64	SAFE	memcpy to a+1 keeps the offset instead of writing through an unfolded pointer sum	flat
+memcpy_symbolic.c	efficient	LP64	SAFE	memcpy with a symbolic byte count is lowered to a loop
+memset_struct_nested_array.c	efficient	LP64	SAFE	memset of a struct with a nested array is retried under bytes, not given up
+typedef_shadowing.c	efficient	LP64	SAFE	ordinary identifiers shadow typedef names; struct T *T declares a variable
+calloc_void_binding_unsafe.c	efficient	LP64	UNSAFE	calloc bound only through void * is zeroed for real
+calloc_void_binding.c	efficient	LP64	SAFE	calloc bound only through void * is zeroed
 flat_field_after_nested_member.c	efficient	LP64	SAFE:valid-memsafety	a referenced struct spans its inline members' cells, so trailing fields stay in bounds	flat
+malloc_may_fail.c	efficient	ILP32	UNSAFE	malloc may return NULL
+realloc_failure_keeps_block.c	efficient	ILP32	SAFE:valid-memsafety	a failed realloc returns NULL and keeps the old block
+calloc_failure_skips_fill.c	efficient	ILP32	SAFE:valid-memsafety	the zero-fill of calloc is skipped when it returns NULL
+alloca_void_pointer.c	efficient	ILP32	SAFE	an explicit alloca returning void * is lowered
+barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until count threads arrive
+barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
+barrier_serial_once.c	efficient	ILP32	SAFE	one waiter per barrier round gets PTHREAD_BARRIER_SERIAL_THREAD
+barrier_through_pointer.c	efficient	ILP32	FRONTEND-FAIL	a barrier behind a pointer is refused
+atexit_handler_refused.c	efficient	ILP32	FRONTEND-FAIL	an atexit handler, which would run after main, is refused
+spin_lock_mutual_exclusion.c	efficient	ILP32	SAFE	pthread_spin_lock excludes like a mutex
+mutex_timedlock_free.c	efficient	ILP32	SAFE	pthread_mutex_timedlock acquires a free mutex
+mutex_trylock_held.c	efficient	ILP32	SAFE	pthread_mutex_trylock on a held mutex fails
+calloc_into_member.c	efficient	ILP32	SAFE	calloc bound to a struct member is zero-filled
+cond_timedwait_may_time_out.c	efficient	ILP32	UNSAFE	pthread_cond_timedwait may return ETIMEDOUT
+malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a dereference is not blocked
+malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
+bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
+stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value

@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -130,7 +131,7 @@ public final class ByteInitializer {
                 if (field.isBitfield()) {
                     final int unit = offset + unitByteOffset(field);
                     if (units.add(unit)) {
-                        out.add(new Cell(unit, field.type()));
+                        out.add(new Cell(unit, storageUnitType(field.type(), parseContext)));
                     }
                 } else {
                     zero(field.type(), offset + field.bitOffset() / 8, null, units, out);
@@ -249,11 +250,19 @@ public final class ByteInitializer {
     }
 
     /**
+     * The type a bitfield's storage unit is read and written as under the bytes model: its declared
+     * type, except that a `_Bool` bitfield (one bit wide in this frontend) lives in a whole byte.
+     */
+    public static CComplexType storageUnitType(CComplexType declared, ParseContext parseContext) {
+        return declared instanceof CBool ? new CUnsignedChar(null, parseContext) : declared;
+    }
+
+    /**
      * The byte offset, within its struct, of the storage unit a bitfield is read from -- the same
      * unit {@code ExpressionVisitor#byteModeBitfieldAccess} slices.
      */
     private static int unitByteOffset(ObjectLayout.Field field) {
-        final int unitBits = field.type().width();
+        final int unitBits = Math.max(field.type().width(), 8);
         final int unit = (field.bitOffset() / unitBits) * (unitBits / 8);
         if (field.bitOffset() - unit * 8 + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(

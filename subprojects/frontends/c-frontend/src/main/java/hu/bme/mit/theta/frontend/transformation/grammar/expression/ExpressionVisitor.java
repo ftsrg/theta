@@ -2315,14 +2315,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType declaredType,
             ObjectLayout.Field field,
             CComplexType offsetType) {
-        final int unitBits = declaredType.width();
+        final CComplexType unitType =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                        .ByteInitializer.storageUnitType(declaredType, parseContext);
+        final int unitBits = unitType.width();
         final int unitBytes = unitBits / 8;
         final int unitByteOffset = (field.bitOffset() / unitBits) * unitBytes;
         final int bitInUnit = field.bitOffset() - unitByteOffset * 8;
         if (bitInUnit + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(
-                    "Bitfield member [%s] straddles two storage units, which the bytes memory model"
-                            + " does not support.".formatted(memberName));
+                    ("Bitfield member [%s] straddles two storage units, which the bytes memory"
+                                    + " model does not support.")
+                            .formatted(memberName));
         }
         final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
@@ -2332,8 +2336,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
-                        declaredType.getSmtType());
-        parseContext.getMetadata().create(cell, "cType", declaredType);
+                        unitType.getSmtType());
+        parseContext.getMetadata().create(cell, "cType", unitType);
         final boolean signed =
                 declaredType
                                 instanceof
@@ -3966,10 +3970,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
      * (they are queued like any other side effect of the surrounding expression) and the last
-     * statement's value is the expression's value. This is what `container_of` expands to. When
-     * there is no value to yield -- no function visitor, or the block does not end in an expression
-     * -- fall back to the old null result: in statement position the value is discarded anyway, and
-     * a value position fails downstream exactly as it always did.
+     * statement's value is the expression's value. This is what `container_of` expands to. A block
+     * that does not end in an expression still has its statements queued, but yields null, as does
+     * any statement expression without a function visitor: in statement position the value is
+     * discarded anyway, and a value position fails downstream exactly as it always did.
      */
     private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
         if (functionVisitor == null) {
@@ -3985,6 +3989,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (value == null) {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: statement expression yields no value\n");
+            preStatements.add(statement);
             return null;
         }
         queueValueStatement(statement);

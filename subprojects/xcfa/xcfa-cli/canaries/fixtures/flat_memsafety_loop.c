@@ -9,10 +9,17 @@ int main(void) {
   int *p = malloc(2 * sizeof(int));
   if (!p) return 0;
   int *q = malloc(2 * sizeof(int));
-  if (!q) return 0;
+  if (!q) {
+    free(p);
+    return 0;
+  }
   q[0] = 7;
   int *r = realloc(p, 16 * sizeof(int));
-  if (!r) return 0;
+  if (!r) {
+    free(p);
+    free(q);
+    return 0;
+  }
   for (int i = 0; i < 16; i++) r[i] = 1;
   free(r);
   free(q);

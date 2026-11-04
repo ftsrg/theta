@@ -52,6 +52,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
       // also before ReferenceElimination: the pointer arguments it writes through are still `&x`
@@ -82,6 +84,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlineProceduresPass(parseContext),
       NondetFunctionPass(parseContext),
     ),
+    // starts copies of thread routines that store their result for pthread_join
+    listOf(ThreadResultPass()),
     listOf(CloneProcedureForStaticThreadsPass()),
     listOf(
       // Clean up procedures after inlining
@@ -176,6 +180,8 @@ class NontermValidationPasses(
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
     ),

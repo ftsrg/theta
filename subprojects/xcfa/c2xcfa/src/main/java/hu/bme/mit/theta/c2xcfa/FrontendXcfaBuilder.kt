@@ -1278,13 +1278,17 @@ class FrontendXcfaBuilder(
           "A global initialized with a whole aggregate value is not supported under the bytes model."
         )
       }
-      val cell = cell(leaf.byteOffset, leaf.type)
+      val unitType =
+        if (leaf.isBitfield) ByteInitializer.storageUnitType(leaf.type, parseContext) else leaf.type
+      val cell = cell(leaf.byteOffset, unitType)
       val value = leaf.type.castTo(leaf.value.expression)
       initStmtList.add(
         AssignStmtLabel(
           cell,
           if (leaf.isBitfield)
-            leaf.type.castTo(BitfieldSlice.write(cell, value, leaf.bitInUnit, leaf.width))
+            unitType.castTo(
+              BitfieldSlice.write(cell, unitType.castTo(value), leaf.bitInUnit, leaf.width)
+            )
           else value,
         )
       )
@@ -2036,7 +2040,9 @@ class FrontendXcfaBuilder(
               FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
             )
           } else {
-            cellType.castTo(rExpression)
+            // Convert to the member's own type first: a `_Bool` member stored in a wider cell
+            // must take `x != 0`, not the low bit of `x`.
+            cellType.castTo(CComplexType.getType(lValue, parseContext).castTo(rExpression))
           }
         val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)

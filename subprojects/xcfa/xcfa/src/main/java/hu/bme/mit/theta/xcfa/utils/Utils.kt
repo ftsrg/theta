@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
@@ -41,6 +42,8 @@ import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.getLoopElements
@@ -191,7 +194,13 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
         // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
         // SMT type instead -- carry it over, as the statement branches above do.
-        params.map { ExprUtils.simplify(it, valuation).withCTypeOf(parseContext, it) },
+        params.map { param ->
+          val simplified = ExprUtils.simplify(param, valuation)
+          // a literal is shared, so it cannot carry the pointer type the library-call lowering
+          // reads off the argument; the later simplification runs fold it anyway
+          if (simplified is LitExpr<*> && param.isPointerTyped(parseContext)) param
+          else simplified.withCTypeOf(parseContext, param)
+        },
         metadata,
         tempLookup,
         isLibraryFunction,
@@ -212,6 +221,10 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
  * makes the argument unrecognizable, so the call is left as an `InvokeLabel` that later stages
  * refuse outright.
  */
+private fun Expr<*>.isPointerTyped(parseContext: ParseContext): Boolean =
+  parseContext.metadata.getMetadataValue(this, "cType").isPresent &&
+    CComplexType.getType(this, parseContext).let { it is CPointer || it is CArray }
+
 private fun <T : Type> Expr<T>.withCTypeOf(
   parseContext: ParseContext,
   metadataSource: Expr<*>,

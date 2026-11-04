@@ -119,7 +119,11 @@ class ShortCircuitTest {
     // The operator's value is built after every operand ran, so `a > 1` would be re-read after the
     // decrement, and `g == 0` after `bump()` set `g`.
     assertTrue(snapshotCount("if (a > 1 && --a) { g = 2; }") > 0, "a > 1 must be snapshotted")
-    assertTrue(snapshotCount("if (g == 0 && bump()) { g = 2; }") > 0, "g == 0 must be snapshotted")
+    // `g` is made unknown first, or `g == 0` is a constant that needs no snapshot
+    assertTrue(
+      snapshotCount("g = __VERIFIER_nondet_int(); if (g == 0 && bump()) { g = 2; }") > 0,
+      "g == 0 must be snapshotted",
+    )
   }
 
   @Test

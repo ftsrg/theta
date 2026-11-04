@@ -151,9 +151,10 @@ class FixtureSuiteTest {
     val output = SuiteSupport.execute(command, theta, timeout).output
 
     if (!isVerdictFixture) {
+      // Procedure passes run after the parser has reported success, and may still refuse.
       return when {
-        output.contains("ParsingResult Success") -> "PARSE-OK"
         output.contains("Frontend failed!") -> "FRONTEND-FAIL"
+        output.contains("ParsingResult Success") -> "PARSE-OK"
         else -> "OTHER"
       }
     }
