@@ -118,6 +118,16 @@ class MultiTranslationUnitTest {
   }
 
   @Test
+  fun aCallReturnsTheStructOfTheCallingUnit() {
+    val program =
+      link(
+        "struct S { int a; }; struct S make(void) { struct S s = {1}; return s; }",
+        "struct S { int a; }; struct S make(void); int main(void) { struct S s = make(); return s.a; }",
+      )
+    assertEquals(setOf("make", "main"), program.functionNames().toSet())
+  }
+
+  @Test
   fun tagsBelongToTheirUnit() {
     val program =
       link(

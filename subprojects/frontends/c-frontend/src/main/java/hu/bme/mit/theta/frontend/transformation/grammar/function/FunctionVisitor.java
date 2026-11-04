@@ -663,6 +663,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 if (returnType.isTypedef()) continue;
                 CDeclaration funcDecl = funcDef.declarator().accept(declarationVisitor);
                 funcDecl.setType(returnType);
+                if (linking && funcDecl.getName() != null) {
+                    // A call reads the return type by name, and it has to be this unit's own
+                    // type: the units' struct tags are different types, even when alike.
+                    parseContext
+                            .getMetadata()
+                            .create(funcDecl.getName(), "cType", returnType.getActualType());
+                }
                 if (funcDecl.getName() != null
                         && !variables.peek().get2().containsKey(funcDecl.getName())) {
                     parseContext
@@ -715,6 +722,18 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                     continue;
                 }
                 for (CDeclaration declaration : declarations) {
+                    if (linking
+                            && declaration.isFunc()
+                            && declaration.getName() != null
+                            && declaration.getType() != null
+                            && !declaration.getType().isTypedef()) {
+                        parseContext
+                                .getMetadata()
+                                .create(
+                                        declaration.getName(),
+                                        "cType",
+                                        declaration.getType().getActualType());
+                    }
                     // Only functions: an ordinary global must keep being declared in source order,
                     // where its initializer runs.
                     if (declaration.getName() == null
