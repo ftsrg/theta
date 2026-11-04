@@ -19,8 +19,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipFile
 
-/** What one task run produced, and whether it was cut short. */
-internal data class RunResult(val output: String, val timedOut: Boolean)
+/** What one task run produced, and whether it was cut short. [exitCode] is null on a timeout. */
+internal data class RunResult(val output: String, val timedOut: Boolean, val exitCode: Int? = null)
 
 /**
  * Plumbing shared by [CanarySuiteTest] and [FixtureSuiteTest].
@@ -143,7 +143,17 @@ internal object SuiteSupport {
       return RunResult(output.toString(), timedOut = true)
     }
     collector.join(30_000)
-    return RunResult(output.toString(), timedOut = false)
+    return RunResult(output.toString(), timedOut = false, exitCode = process.exitValue())
+  }
+
+  /**
+   * Why a run did not give the expected answer, for the failure message: the timeout, or the exit
+   * code and the last lines printed, which is where Theta reports an exception or an error exit.
+   */
+  fun diagnose(result: RunResult, timeoutSeconds: Long, lines: Int = 20): String {
+    if (result.timedOut) return "timed out after ${timeoutSeconds}s"
+    val tail = result.output.trimEnd().lines().takeLast(lines).joinToString("\n") { "  | $it" }
+    return "exit code ${result.exitCode}, last output:\n$tail"
   }
 
   /**

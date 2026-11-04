@@ -168,6 +168,9 @@ val canaryTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 
@@ -213,6 +216,9 @@ val fixtureTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 
