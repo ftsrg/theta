@@ -112,7 +112,7 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
                 )
               }
             }
-            else -> property.unsupported("property '${property.original}'")
+            else -> throw property.unsupported("property '${property.original}'")
           }
         }
       }
