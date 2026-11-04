@@ -39,8 +39,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  *
  * <p>The second is solved by renaming, on the tokens, before any frontend visitor runs. Every
  * occurrence of the identifier in that file is renamed, including a struct field or a local that
- * happens to share the spelling; renaming all of them consistently within one file cannot change its
- * meaning, and it spares every later stage from having to know about linkage.
+ * happens to share the spelling; renaming all of them consistently within one file cannot change
+ * its meaning, and it spares every later stage from having to know about linkage.
  */
 public final class TranslationUnitLinker {
 

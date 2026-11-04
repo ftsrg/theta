@@ -638,7 +638,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         // Remembered so a later failure can still fall back to bitvectors: once `efficient` is
         // resolved here, nothing downstream could tell an automatic choice apart from one the
         // user made explicitly, and the fallback in XcfaParser refused to revise either.
-                parseContext.setArithmeticAutoSelected(true);
+        parseContext.setArithmeticAutoSelected(true);
     }
 
     private void introduceFunctionNames(List<CParser.ExternalDeclarationContext> globalUsages) {
@@ -761,12 +761,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /**
      * Builds one program out of several translation units, doing what a linker does.
      *
-     * <p>All units share one file-scope name table, so a name declared in one and defined in another
-     * is the same variable, the way an external name is one object. Internal names are renamed apart
-     * first (see {@link TranslationUnitLinker}), so sharing the table cannot merge them. Everything
-     * else a unit declares is its own: typedef names and struct tags are reset between units, as two
-     * files can give the same tag different members. What is reachable can only be known across all
-     * units, since {@code main} is in just one of them.
+     * <p>All units share one file-scope name table, so a name declared in one and defined in
+     * another is the same variable, the way an external name is one object. Internal names are
+     * renamed apart first (see {@link TranslationUnitLinker}), so sharing the table cannot merge
+     * them. Everything else a unit declares is its own: typedef names and struct tags are reset
+     * between units, as two files can give the same tag different members. What is reachable can
+     * only be known across all units, since {@code main} is in just one of them.
      */
     public CProgram visitTranslationUnits(List<CParser.CompilationUnitContext> units) {
         variables.clear();
@@ -900,7 +900,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         checkState(definitions.containsKey("main"), "Main function not found!");
         Map<String, Set<String>> usages = new HashMap<>();
         for (int i = 0; i < usageVisitors.size(); i++) {
-            for (Map.Entry<String, Set<String>> entry : usageVisitors.get(i).getUsages().entrySet()) {
+            for (Map.Entry<String, Set<String>> entry :
+                    usageVisitors.get(i).getUsages().entrySet()) {
                 TranslationUnitLinker.FunctionSymbol definition = definitions.get(entry.getKey());
                 // Only the definition that is linked uses anything; the rest are never visited.
                 if (definition == null || definition.unit() == i) {
@@ -926,9 +927,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * A unit that is not the one with {@code main} has no other way to run its static
-     * initializers, so {@code __attribute__((constructor))} functions are called on entry to main:
-     * by priority, then in unit order, as they run when linked in that order.
+     * A unit that is not the one with {@code main} has no other way to run its static initializers,
+     * so {@code __attribute__((constructor))} functions are called on entry to main: by priority,
+     * then in unit order, as they run when linked in that order.
      */
     private void runConstructorsFromMain(
             CProgram program,

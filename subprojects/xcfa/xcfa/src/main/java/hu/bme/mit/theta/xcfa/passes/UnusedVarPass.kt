@@ -71,7 +71,10 @@ class UnusedVarPass(
     val cached = builder.parent.metaData[USED_VARS] as? Pair<Int, Set<VarDecl<*>>>
     val usedVars =
       if (cached != null && cached.first == phase) cached.second
-      else usedVarsOfProgram(builder, isOverflow).also { builder.parent.metaData[USED_VARS] = phase to it }
+      else
+        usedVarsOfProgram(builder, isOverflow).also {
+          builder.parent.metaData[USED_VARS] = phase to it
+        }
 
     builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
 

@@ -2100,13 +2100,12 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             case "__builtin_bswap16", "__builtin_bswap32", "__builtin_bswap64" -> {
                 return byteSwap(args, Integer.parseInt(name.substring("__builtin_bswap".length())));
             }
-            case "__builtin_add_overflow",
-                    "__builtin_sub_overflow",
-                    "__builtin_mul_overflow" -> {
+            case "__builtin_add_overflow", "__builtin_sub_overflow", "__builtin_mul_overflow" -> {
                 return genericOverflowBuiltin(args, name.charAt("__builtin_".length()));
             }
             case "__builtin_clz", "__builtin_ctz" -> {
-                return bitScan(args, CComplexType.getUnsignedInt(parseContext), name.endsWith("clz"));
+                return bitScan(
+                        args, CComplexType.getUnsignedInt(parseContext), name.endsWith("clz"));
             }
             case "__builtin_clzl", "__builtin_ctzl" -> {
                 return bitScan(
@@ -3397,10 +3396,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
-     * {@code __builtin_{add,sub,mul}_overflow(a, b, &r)}, of any integer type: the type of r says at
-     * what width the operation is done. Unsigned overflow shows on the wrapped result compared with
-     * the operands, as in {@link #unsignedOverflowBuiltin}; a signed one also has to know the sign
-     * of the second operand.
+     * {@code __builtin_{add,sub,mul}_overflow(a, b, &r)}, of any integer type: the type of r says
+     * at what width the operation is done. Unsigned overflow shows on the wrapped result compared
+     * with the operands, as in {@link #unsignedOverflowBuiltin}; a signed one also has to know the
+     * sign of the second operand.
      */
     private Expr<?> genericOverflowBuiltin(List<AssignmentExpressionContext> args, char operation) {
         if (functionVisitor == null || args.size() != 3) {
@@ -3524,9 +3523,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final int scale = Integer.parseInt(text.substring(p + 1)) - fractionBits;
         final java.math.BigDecimal value = new java.math.BigDecimal(new BigInteger(digits, 16));
         final java.math.BigDecimal two = java.math.BigDecimal.valueOf(2);
-        return (scale >= 0
-                        ? value.multiply(two.pow(scale))
-                        : value.divide(two.pow(-scale)))
+        return (scale >= 0 ? value.multiply(two.pow(scale)) : value.divide(two.pow(-scale)))
                 .toString();
     }
 
@@ -4010,8 +4007,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     final BinaryMathContext context = new BinaryMathContext(significand, exponent);
                     bigFloat = new BigFloat(exactDecimalOfHexFloat(text), context);
                     FpLitExpr longLit =
-                            FpUtils.bigFloatToFpLitExpr(
-                                    bigFloat, FpType(exponent, significand));
+                            FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
                     parseContext.getMetadata().create(longLit, "cType", type);
                     return longLit;
                 }

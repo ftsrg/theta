@@ -235,7 +235,8 @@ data class CFrontendConfig(
   var cir2cMerge: Boolean = false,
   @Parameter(
     names = ["--no-inlining"],
-    description = "Keep procedures separate in the XCFA, instead of inlining the calls of known ones",
+    description =
+      "Keep procedures separate in the XCFA, instead of inlining the calls of known ones",
   )
   var noInlining: Boolean = false,
   @Parameter(

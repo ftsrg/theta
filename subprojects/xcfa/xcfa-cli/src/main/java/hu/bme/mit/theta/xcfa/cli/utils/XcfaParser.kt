@@ -44,7 +44,6 @@ import java.io.FileReader
 import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import kotlin.io.path.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
 import org.antlr.v4.runtime.BailErrorStrategy
@@ -292,7 +291,7 @@ private fun parseC(
               logger.result(
                 "%s",
                 "Parsing ${resolved.size} input file(s) from ${input.name}: " +
-                  resolved.joinToString(" ") { it.name }
+                  resolved.joinToString(" ") { it.name },
               )
               resolved
             }
@@ -318,7 +317,8 @@ private fun parseC(
       listOf(input)
     }
 
-  val transformedInputs = if (frontendConfig.useCir2c) runCir2c(inputs, frontendConfig, logger) else inputs
+  val transformedInputs =
+    if (frontendConfig.useCir2c) runCir2c(inputs, frontendConfig, logger) else inputs
 
   // Parse single or multiple translation units
   val xcfaFromC =
@@ -327,14 +327,7 @@ private fun parseC(
         val stream = FileInputStream(transformedInputs[0])
         getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
       } else {
-        getXcfaFromC(
-            transformedInputs,
-            parseContext,
-            false,
-            property,
-            uniqueWarningLogger,
-            logger,
-          )
+        getXcfaFromC(transformedInputs, parseContext, false, property, uniqueWarningLogger, logger)
           .first
       }
     } catch (e: Throwable) {
@@ -355,23 +348,17 @@ private fun parseC(
         val xcfa =
           if (transformedInputs.size == 1) {
             val stream = FileInputStream(transformedInputs[0])
-            getXcfaFromC(
-              stream,
-              parseContext,
-              false,
-              property,
-              uniqueWarningLogger,
-              logger,
-            ).first
+            getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
           } else {
             getXcfaFromC(
-              transformedInputs,
-              parseContext,
-              false,
-              property,
-              uniqueWarningLogger,
-              logger,
-            ).first
+                transformedInputs,
+                parseContext,
+                false,
+                property,
+                uniqueWarningLogger,
+                logger,
+              )
+              .first
           }
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
