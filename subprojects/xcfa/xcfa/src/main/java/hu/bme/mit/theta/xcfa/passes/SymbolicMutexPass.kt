@@ -37,8 +37,6 @@ import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.intValue
 import hu.bme.mit.theta.xcfa.utils.integerOf
-import java.util.Collections
-import java.util.IdentityHashMap
 
 private val mutexLibraryFunctions =
   setOf(
@@ -73,12 +71,12 @@ internal fun XcfaLabel.withMutexAddresses(addresses: List<Expr<*>>): XcfaLabel =
 
 /** Lowers all ordinary mutex operations of an XCFA to atomic, guarded array updates. */
 class SymbolicMutexPass : ProcedurePass {
-  private val processed = Collections.newSetFromMap(IdentityHashMap<XcfaBuilder, Boolean>())
   private var temporary = 0
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val model = builder.parent
-    if (!processed.add(model)) return builder
+    // Every procedure has its own instance of this pass, but it rewrites the whole model at once.
+    if (model.metaData.put(PROCESSED, Unit) != null) return builder
     val labels = model.getProcedures().flatMap { it.getEdges() }.flatMap { it.getAllLabels() }
     if (labels.none { it.mutexAddresses.isNotEmpty() }) return builder
 
@@ -427,3 +425,5 @@ class SymbolicMutexPass : ProcedurePass {
       get() = this as VarDecl<Type>
   }
 }
+
+private const val PROCESSED = "symbolicMutexProcessed"

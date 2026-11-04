@@ -39,8 +39,6 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intValue
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.math.BigInteger
-import java.util.Collections
-import java.util.IdentityHashMap
 
 class AmbiguousMutexPass : ProcedurePass {
 
@@ -51,10 +49,10 @@ class AmbiguousMutexPass : ProcedurePass {
   }
 
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
-  private val processed = Collections.newSetFromMap(IdentityHashMap<XcfaBuilder, Boolean>())
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!processed.add(builder.parent)) return builder
+    // Every procedure has its own instance of this pass, but it resolves the whole model at once.
+    if (builder.parent.metaData.put(PROCESSED, Unit) != null) return builder
     val procedures = builder.parent.getProcedures().toList()
     val unresolved =
       procedures
@@ -500,3 +498,5 @@ class AmbiguousMutexPass : ProcedurePass {
   private fun <A, B> pairIfBothNotNull(first: A?, second: B?): Pair<A, B>? =
     if (first != null && second != null) Pair(first, second) else null
 }
+
+private const val PROCESSED = "ambiguousMutexProcessed"
