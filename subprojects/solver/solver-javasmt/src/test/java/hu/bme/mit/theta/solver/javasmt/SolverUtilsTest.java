@@ -80,7 +80,7 @@ public class SolverUtilsTest {
                                 context.getFormulaManager()
                                         .getBitvectorFormulaManager()
                                         .makeBitvector(16, BigInteger.ZERO),
-                                FormulaType.getFloatingPointType(5, 10));
+                                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(5, 10));
 
         context.getFormulaManager()
                 .visit(

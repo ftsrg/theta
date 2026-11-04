@@ -21,6 +21,7 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 
 public final class Z3SolverFactory implements SolverFactory {
@@ -69,7 +70,15 @@ public final class Z3SolverFactory implements SolverFactory {
 
     @NotNull private Z3Solver createSolverInternal() {
         final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
-        final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
+        // Eliminating the equalities first keeps memory encodings with one array variable per store
+        // tractable: on those, the bare solver does not return in a reasonable time.
+        final com.microsoft.z3.Solver z3Solver =
+                z3Context.mkSolver(
+                        z3Context.andThen(
+                                z3Context.mkTactic("simplify"),
+                                z3Context.mkTactic("propagate-values"),
+                                z3Context.mkTactic("solve-eqs"),
+                                z3Context.mkTactic("smt")));
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager =
@@ -81,8 +90,8 @@ public final class Z3SolverFactory implements SolverFactory {
     }
 
     public HornSolver createHornSolver() {
-        final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
-        z3Context.updateParamValue("proof", "true");
+        final com.microsoft.z3.Context z3Context =
+                new com.microsoft.z3.Context(Map.of("proof", "true"));
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSolver("HORN");
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();

@@ -1,6 +1,6 @@
 # solver/solver-z3 — notes for editing this module
 
-Gradle module: `:theta-solver-z3`. Backend for **modern Z3** (native libs via the Maven artifact `org.sosy-lab:javasmt-solver-z3`, version in [Deps.kt](../../../buildSrc/src/main/kotlin/Deps.kt)). Resolves as solver name **`"Z3:new"`** (deprecated alias `"Z3:4.13"`); plain `"Z3"` goes to [solver-z3-legacy](../solver-z3-legacy/AGENTS.md). ⚠ Class names are identical to the legacy module (`Z3SolverManager`, `Z3Solver`, …) — only the package (`solver.z3`) differs.
+Gradle module: `:theta-solver-z3`. Backend for **modern Z3** (API jar and natives from the Z3 GitHub release, version in [Deps.kt](../../../buildSrc/src/main/kotlin/Deps.kt)). Resolves as solver name **`"Z3:new"`** (deprecated alias `"Z3:4.13"`); plain `"Z3"` goes to [solver-z3-legacy](../solver-z3-legacy/AGENTS.md). ⚠ Class names are identical to the legacy module (`Z3SolverManager`, `Z3Solver`, …) — only the package (`solver.z3`) differs.
 
 ## Structure
 
@@ -14,4 +14,4 @@ Standard backend skeleton (`{Decl,Expr,Term,Type}Transformer` + `Z3Transformatio
 1. **Mirror obligation with solver-z3-legacy**: new core types/exprs must be taught to both modules' transformers (same-commit precedent: EnumType).
 2. Interpolation here is *derived*, not native — it can fail with `NotSolvableException` where the legacy backend answers, so a refinement config resolving here must tolerate that.
    `Z3Solver.push()/pop(n)` also have to propagate to every live marker: a marker keeps its own copy of what was asserted through it, and an interpolation query built after a pop would otherwise still see the popped assertions.
-3. Z3 version bumps go through `Deps.kt` (artifact carries the natives) — no vendored jar to update, but check the deprecated name alias when bumping.
+3. Z3 version bumps go through `Deps.kt` (`z3Version`, `z3NativeAssets`). JavaSMT's Z3 backend shares the API jar and natives, so the `java-smt` version in `Deps.kt` has to match the new `Native` signatures. Check the deprecated name alias when bumping.
