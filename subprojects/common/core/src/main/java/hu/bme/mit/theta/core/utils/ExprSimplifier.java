@@ -25,12 +25,16 @@ import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -205,6 +209,7 @@ public final class ExprSimplifier {
 
                     .addCase(RefExpr.class, this::simplifyRef)
                     .addCase(IteExpr.class, this::simplifyIte)
+                    .addCase(PrimeExpr.class, this::simplifyPrime)
 
                     // Reference
 
@@ -269,6 +274,29 @@ public final class ExprSimplifier {
         }
 
         return expr.with(cond, then, elze);
+    }
+
+    /**
+     * A valuation binds the current state, so variables under a prime (the next state) must not be
+     * substituted: `x' = x + 1` with `x -> 2` is `x' = 3`, not `2' = 3`. Constants and params are
+     * time-independent and are still substituted.
+     */
+    private Expr<?> simplifyPrime(final PrimeExpr<?> expr, final Valuation val) {
+        final Valuation nextVal = withoutVars(val);
+        return expr.map(it -> simplify(it, nextVal));
+    }
+
+    private static Valuation withoutVars(final Valuation val) {
+        if (val.getDecls().stream().noneMatch(VarDecl.class::isInstance)) {
+            return val;
+        }
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final Decl<?> decl : val.getDecls()) {
+            if (!(decl instanceof VarDecl)) {
+                builder.put(decl, val.eval(decl).orElseThrow());
+            }
+        }
+        return builder.build();
     }
 
     private <ExprType extends Type> Expr<BoolType> unwrapIte(
@@ -1896,41 +1924,33 @@ public final class ExprSimplifier {
     }
 
     private Expr<FpType> simplifyFpAdd(final FpAddExpr expr, final Valuation val) {
+        // An n-ary addition is a left fold, and IEEE addition is neither associative nor has 0.0
+        // as identity (-0.0 + 0.0 is 0.0): only a left-nested addition and a leading run of
+        // literals may be folded.
         final List<Expr<FpType>> ops = new ArrayList<>();
-
         for (final Expr<FpType> op : expr.getOps()) {
-            final Expr<FpType> opVisited = simplify(op, val);
-            if (opVisited instanceof FpAddExpr) {
-                final FpAddExpr addOp = (FpAddExpr) opVisited;
-                ops.addAll(addOp.getOps());
-            } else {
-                ops.add(opVisited);
-            }
+            ops.add(simplify(op, val));
         }
-        final FpLitExpr zero =
-                FpUtils.bigFloatToFpLitExpr(
-                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-        FpLitExpr value = zero;
-
-        for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-            final Expr<FpType> op = iterator.next();
-            if (op instanceof FpLitExpr) {
-                final FpLitExpr litOp = (FpLitExpr) op;
-                value = value.add(expr.getRoundingMode(), litOp);
-                iterator.remove();
-            }
+        if (ops.get(0) instanceof FpAddExpr first
+                && first.getRoundingMode() == expr.getRoundingMode()) {
+            ops.remove(0);
+            ops.addAll(0, first.getOps());
         }
 
-        if (!value.equals(zero)) {
-            ops.add(value);
+        FpLitExpr value = null;
+        int literals = 0;
+        while (literals < ops.size() && ops.get(literals) instanceof FpLitExpr litOp) {
+            value = value == null ? litOp : value.add(expr.getRoundingMode(), litOp);
+            literals++;
         }
-
-        if (ops.isEmpty()) {
-            return zero;
-        } else if (ops.size() == 1) {
-            return Utils.singleElementOf(ops);
+        if (literals == ops.size()) {
+            return value;
+        } else if (literals > 1) {
+            final List<Expr<FpType>> rest = new ArrayList<>();
+            rest.add(value);
+            rest.addAll(ops.subList(literals, ops.size()));
+            return expr.with(rest);
         }
-
         return expr.with(ops);
     }
 
@@ -1944,13 +1964,7 @@ public final class ExprSimplifier {
             return leftLit.sub(expr.getRoundingMode(), rightLit);
         }
 
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return FpUtils.bigFloatToFpLitExpr(
-                        BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-            }
-        }
-
+        // x - x is not 0.0 for NaN and infinities
         return expr.with(leftOp, rightOp);
     }
 
@@ -2201,12 +2215,9 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
             return lLit.neq(rLit);
-        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-                return False();
-            }
         }
 
+        // x != x holds for NaN, so it must not fold to false
         return expr.with(leftOp, rightOp);
     }
 

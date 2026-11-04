@@ -216,11 +216,11 @@ fun emergent26(
             // MS by default, Z3 fallback, but if ITP, use CVC instead of Z3
 
             val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3CegarMS = ic3Cegar(50_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            val ic3CegarMS = ic3Cegar(50_000, "mathsat:5.6.19")
+            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.19")
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq =
@@ -289,11 +289,11 @@ fun emergent26(
             // MS by default, Z3 fallback
 
             val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.19")
+            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.19")
 
             val expl_pred_nwt = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seq = cegar(200_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
@@ -320,11 +320,11 @@ fun emergent26(
             val mddCegar = mddCegar(50_000, "Z3")
 
             val expl_pred_nwtMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
             val expl_pred_seqMS =
-              cegar(200_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
-            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.12")
-            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.12")
+              cegar(200_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+            val ic3CegarMS = ic3Cegar(100_000, "mathsat:5.6.19")
+            val mddCegarMS = mddCegar(50_000, "mathsat:5.6.19")
 
             expl_pred_nwt then expl_pred_seq then ic3Cegar then mddCegar
 
@@ -343,10 +343,10 @@ fun emergent26(
             val bmc = bmc(150_000, "Z3:new")
             val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
-            val mddMS = mdd(600_000, "mathsat:5.6.12")
-            val bmcMS = bmc(150_000, "mathsat:5.6.12")
+            val mddMS = mdd(600_000, "mathsat:5.6.19")
+            val bmcMS = bmc(150_000, "mathsat:5.6.19")
             val expl_pred_seqMS =
-              cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+              cegar(150_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
             mdd then bmc then expl_pred_seq
 
@@ -366,9 +366,9 @@ fun emergent26(
         val expl_pred_nwt = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
         val expl_pred_seq = cegar(150_000, "Z3", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
         val expl_pred_nwtMS =
-          cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
+          cegar(150_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.NWT_IT_WP)
         val expl_pred_seqMS =
-          cegar(150_000, "mathsat:5.6.12", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
+          cegar(150_000, "mathsat:5.6.19", Domain.EXPL_PRED_STMT, Refinement.SEQ_ITP)
 
         expl_pred_nwtMS then expl_pred_seqMS
 

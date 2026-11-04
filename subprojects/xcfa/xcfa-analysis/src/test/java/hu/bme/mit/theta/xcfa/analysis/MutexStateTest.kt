@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.utils.BvUtils.bigIntegerToNeutralBvLitExpr
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.model.MutexType.RECURSIVE
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.math.BigInteger
 import java.util.LinkedList
 import kotlin.random.Random
@@ -260,5 +261,51 @@ class MutexStateTest {
       assertFalse(order.isLeq(normal, initial))
       assertTrue(order.isLeq(once, once))
     }
+  }
+
+  @Test
+  fun stackCoverageRetainsGlobalStateAndSeparateThreadIds() {
+    val nextTid = Var("next_tid", Int())
+    val tid = Var("tid", Int())
+    val firstTid = Var("T1_tid", Int())
+    val secondTid = Var("T2_tid", Int())
+    val model = XcfaBuilder("coverage")
+    model.addVar(XcfaGlobalVar(nextTid, Int(3), atomic = true))
+    val main = XcfaProcedureBuilder("main", ProcedurePassManager())
+    main.createInitLoc()
+    model.addEntryPoint(main, emptyList())
+    val xcfa = model.build()
+    val processes =
+      listOf(firstTid, secondTid)
+        .mapIndexed { index, instance ->
+          index to
+            XcfaProcessState(
+              LinkedList(listOf(main.initLoc)),
+              LinkedList(listOf(mapOf(tid to instance))),
+              paramsInitialized = true,
+            )
+        }
+        .toMap()
+    fun state(counter: Int, first: Int = 1, second: Int = 2) =
+      XcfaState(
+        xcfa,
+        processes,
+        PtrState(
+          ExplState.of(
+            ImmutableValuation.builder()
+              .put(nextTid, Int(counter))
+              .put(firstTid, Int(first))
+              .put(secondTid, Int(second))
+              .build()
+          )
+        ),
+      )
+    val order =
+      getStackPartialOrder(
+        PartialOrd<PtrState<ExplState>> { a, b -> a.innerState.isLeq(b.innerState) }
+      )
+    assertTrue(order.isLeq(state(3), state(3)))
+    assertFalse(order.isLeq(state(3), state(4)))
+    assertFalse(order.isLeq(state(3), state(3, first = 2, second = 1)))
   }
 }

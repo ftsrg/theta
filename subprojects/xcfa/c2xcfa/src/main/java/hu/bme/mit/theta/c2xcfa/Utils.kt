@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -151,12 +151,8 @@ fun getBoolExpressionFromC(
 }
 
 /**
- * Builds an XCFA from multiple C translation units (multi-TU verification).
- *
- * Each file is parsed into its own [CProgram], then all programs are merged by combining their
- * functions, global declarations, and function declarations into a single [CProgram] before
- * building the XCFA. This allows verifying C programs whose source is split across multiple
- * .c files, as is common in real projects.
+ * Builds an XCFA from several C translation units, linked the way a linker would link them: see
+ * [FunctionVisitor.visitTranslationUnits].
  */
 fun getXcfaFromC(
   files: List<File>,
@@ -166,25 +162,18 @@ fun getXcfaFromC(
   warningLogger: Logger,
   logger: Logger = warningLogger,
 ): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
-  val programs = ArrayList<CProgram>()
-  for (file in files) {
-    val input = CharStreams.fromStream(java.io.FileInputStream(file))
-    val context = parseTypeAware(input)
-    val program = context.accept(FunctionVisitor(parseContext, warningLogger))
-    check(program is CProgram) { "Expected CProgram from $file" }
-    programs.add(program)
-    logger.benchmark("ParsingResult Success")
-  }
+  val units = files.map { parseTypeAware(CharStreams.fromFileName(it.path)) }
+  val program = FunctionVisitor(parseContext, warningLogger).visitTranslationUnits(units)
+  logger.benchmark("ParsingResult Success")
 
-  val merged = mergeCPrograms(programs)
   val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
-  val builder = frontendXcfaBuilder.buildXcfa(merged)
+  val builder = frontendXcfaBuilder.buildXcfa(program)
   val xcfa = builder.build()
 
   if (collectStatistics) {
     val programStatistics =
       try {
-        merged.getStatistics()
+        program.getStatistics()
       } catch (_: Exception) {
         CStatistics(0, emptyList())
       }
@@ -204,42 +193,4 @@ fun getXcfaFromC(
   }
 
   return Triple(xcfa, null, null)
-}
-
-/**
- * Merges multiple [CProgram] instances into one by combining their functions, global declarations,
- * and function declarations. Duplicate function names are kept (the first definition wins), while
- * declarations are deduplicated by name.
- */
-private fun mergeCPrograms(programs: List<CProgram>): CProgram {
-  if (programs.size == 1) return programs[0]
-
-  val merged = CProgram(programs[0].getParseContext())
-  val functionNames = HashSet<String>()
-  val globalNames = HashSet<String>()
-  val funcDeclNames = HashSet<String>()
-
-  for (program in programs) {
-    for (function in program.functions) {
-      if (!functionNames.contains(function.funcDecl.name)) {
-        merged.functions.add(function)
-        functionNames.add(function.funcDecl.name)
-      }
-    }
-    for (global in program.globalDeclarations) {
-      val name = global.get2().name
-      if (!globalNames.contains(name)) {
-        merged.globalDeclarations.add(global)
-        globalNames.add(name)
-      }
-    }
-    for (funcDecl in program.functionDeclarations) {
-      val name = funcDecl.get1().name
-      if (!funcDeclNames.contains(name)) {
-        merged.functionDeclarations.add(funcDecl)
-        funcDeclNames.add(name)
-      }
-    }
-  }
-  return merged
 }

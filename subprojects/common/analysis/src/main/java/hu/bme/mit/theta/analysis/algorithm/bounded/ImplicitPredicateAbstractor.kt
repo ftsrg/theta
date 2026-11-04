@@ -49,6 +49,7 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
 
   private val predToLiteral = LinkedHashMap<Expr<BoolType>, VarDecl<BoolType>>()
   private val literalToPredMap = LinkedHashMap<Decl<*>, Expr<BoolType>>()
+  private val initCopies = LinkedHashMap<VarDecl<*>, VarDecl<*>>()
   private lateinit var currentPrec: PredPrec
   private var groupTransitions: List<List<Int>> = emptyList()
 
@@ -88,17 +89,6 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
           )
       }
 
-    var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
-    concreteModel.vars.forEach { decl ->
-      val offset = concreteModel.transOffsetIndex[decl]
-      if (decl !in concreteModel.ctrlVars) {
-        repeat(offset) { indexingBuilder = indexingBuilder.inc(decl) }
-      } else if (offset > 1) {
-        repeat(offset - 1) { indexingBuilder = indexingBuilder.inc(decl) }
-      }
-    }
-    val transOffsetIndex = indexingBuilder.build()
-
     val literalVars = activationLiterals.associateWith { ExprUtils.getVars(literalToPredMap[it]!!) }
     val groups = LinkedHashMap<Set<VarDecl<BoolType>>, MutableList<Int>>()
     concreteModel.split.indices.forEach { i ->
@@ -128,11 +118,34 @@ class ImplicitPredicateAbstractor(private val concreteModel: MonolithicExpr) {
         )
       }
     val allLambda = And(lambda.values)
+    val transExpr = if (splits.size == 1) splits[0] else Or(splits)
+    val isConcrete = { v: VarDecl<*> -> v !in concreteModel.ctrlVars && v !in activationLiterals }
+
+    // All concrete vars, not only the state vars, get fresh constants in every step (offset one
+    // above their concrete offset): steps may share only literals and ctrl vars.
+    var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
+    (concreteModel.vars + ExprUtils.getVars(transExpr)).distinct().forEach { decl ->
+      val offset = concreteModel.transOffsetIndex[decl]
+      if (isConcrete(decl)) {
+        repeat(offset) { indexingBuilder = indexingBuilder.inc(decl) }
+      } else if (decl in concreteModel.ctrlVars && offset > 1) {
+        repeat(offset - 1) { indexingBuilder = indexingBuilder.inc(decl) }
+      }
+    }
+    val transOffsetIndex = indexingBuilder.build()
+
+    // Init gets its own copies of the concrete vars; sharing them with the first step would make
+    // the initial state stronger than its literals, which loop-free path checking cannot see.
+    val initExpr = And(allLambda, concreteModel.initExpr)
+    val initRenaming =
+      ExprUtils.getVars(initExpr).filter(isConcrete).associateWith {
+        initCopies.getOrPut(it) { Decls.Var("__init_" + it.name, it.type) }
+      }
 
     val model =
       MonolithicExpr(
-        initExpr = And(allLambda, concreteModel.initExpr),
-        transExpr = if (splits.size == 1) splits[0] else Or(splits),
+        initExpr = ExprUtils.changeDecls(initExpr, initRenaming),
+        transExpr = transExpr,
         propExpr = Not(And(allLambda, Not(concreteModel.propExpr))),
         transOffsetIndex = transOffsetIndex,
         vars = activationLiterals + concreteModel.ctrlVars,

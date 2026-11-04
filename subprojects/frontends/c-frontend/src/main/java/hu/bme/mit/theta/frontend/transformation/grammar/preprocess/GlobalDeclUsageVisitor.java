@@ -23,6 +23,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisi
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,6 +36,9 @@ import java.util.stream.Collectors;
 public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDeclaration>> {
     private final DeclarationVisitor declarationVisitor;
 
+    /** The globals declared with an initializer so far. */
+    private final Set<String> initializedGlobals = new HashSet<>();
+
     public GlobalDeclUsageVisitor(DeclarationVisitor declarationVisitor) {
         this.declarationVisitor = declarationVisitor;
     }
@@ -42,6 +46,7 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
     public void clear() {
         globalUsages.clear();
         usedContexts.clear();
+        initializedGlobals.clear();
         current = null;
     }
 
@@ -57,8 +62,16 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
                         ctx.declaration().declarationSpecifiers(),
                         ctx.declaration().initDeclaratorList(),
                         false);
+        Set<CDeclaration> withInitializer = withInitializer(ctx, declarations);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
+                // The declaration with an initializer is the definition, whatever the order: a
+                // later one without (`int x = 5; extern int x;`) must not take its place.
+                if (withInitializer.contains(declaration)) {
+                    initializedGlobals.add(declaration.getName());
+                } else if (initializedGlobals.contains(declaration.getName())) {
+                    continue;
+                }
                 // A bare prototype repeating a function that was already *defined* above must not
                 // replace it: the definition carries the body, the prototype does not. Preprocessed
                 // sources hit this routinely, where a header re-declares a `static inline` function
@@ -97,6 +110,26 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         return null;
     }
 
+    /**
+     * The declarations of {@code ctx} that have an initializer. {@code declarations} is what
+     * getDeclarations built from it: one per init-declarator, in order, after the name read into
+     * the specifiers, if any, which never has one.
+     */
+    private static Set<CDeclaration> withInitializer(
+            CParser.GlobalDeclarationContext ctx, List<CDeclaration> declarations) {
+        CParser.InitDeclaratorListContext list = ctx.declaration().initDeclaratorList();
+        List<CParser.InitDeclaratorContext> initDeclarators =
+                list == null ? List.of() : list.initDeclarator();
+        int first = declarations.size() - initDeclarators.size();
+        Set<CDeclaration> ret = new HashSet<>();
+        for (int i = 0; i < initDeclarators.size(); i++) {
+            if (initDeclarators.get(i).initializer() != null) {
+                ret.add(declarations.get(first + i));
+            }
+        }
+        return ret;
+    }
+
     @Override
     public List<CDeclaration> visitExternalFunctionDefinition(
             CParser.ExternalFunctionDefinitionContext ctx) {
@@ -130,10 +163,30 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         return null;
     }
 
+    /** Reads one unit without pruning it: over several, what is used is only known at the end. */
+    public void collect(CParser.CompilationUnitContext ctx) {
+        clear();
+        if (ctx.translationUnit() != null) ctx.translationUnit().accept(this);
+    }
+
+    public Map<String, Set<String>> getUsages() {
+        return globalUsages;
+    }
+
+    /** The declarations of the given names, in the order {@link #collect} met them. */
+    public List<CParser.ExternalDeclarationContext> getContexts(Set<String> names) {
+        return usedContexts.stream()
+                .filter(objects -> names.contains(objects.get1()))
+                .map(Tuple2::get2)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
     public List<CParser.ExternalDeclarationContext> getGlobalUsages(
             CParser.CompilationUnitContext ctx) {
         globalUsages.clear();
         usedContexts.clear();
+        initializedGlobals.clear();
         ctx.translationUnit().accept(this);
         checkState(globalUsages.containsKey("main"), "Main function not found!");
         Set<String> ret = new LinkedHashSet<>();

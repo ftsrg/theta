@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.SourcePosition;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import java.util.Optional;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -44,12 +45,22 @@ public abstract class CStatement {
     private String sourceText = "";
     private ParserRuleContext ctx;
 
+    // start of the innermost full expression this statement was built for, if known
+    private Optional<SourcePosition> fullExpression = Optional.empty();
+
     protected CStatement(ParseContext parseContext) {
         this.parseContext = parseContext;
+        if (parseContext != null) {
+            fullExpression = parseContext.getFullExpression();
+        }
     }
 
-    public ParseContext getParseContext() {
-        return parseContext;
+    public Optional<SourcePosition> getFullExpression() {
+        return fullExpression;
+    }
+
+    public void setFullExpression(SourcePosition fullExpression) {
+        this.fullExpression = Optional.of(fullExpression);
     }
 
     public String getId() {

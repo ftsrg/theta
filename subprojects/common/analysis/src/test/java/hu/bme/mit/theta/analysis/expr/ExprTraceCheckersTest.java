@@ -19,6 +19,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -32,6 +33,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -43,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -108,5 +112,42 @@ public final class ExprTraceCheckersTest {
             assertTrue(status.isInfeasible());
             assertFalse(status.isFeasible());
         }
+    }
+
+    @Test
+    public void testUnsatCoreIndexesTracePositions() {
+        // Arrange: y := 0; x := 0; assume x >= 1. The core has x at SSA index 1, written by the
+        // second action, so it must be reported at trace position 2.
+        final VarDecl<IntType> x = Var("x", Int());
+        final VarDecl<IntType> y = Var("y", Int());
+
+        final ExprAction writeY = mock(ExprAction.class);
+        doReturn(Eq(Prime(y.getRef()), Int(0))).when(writeY).toExpr();
+        when(writeY.nextIndexing())
+                .thenReturn(VarIndexingFactory.indexingBuilder(0).inc(y).build());
+
+        final ExprAction writeX = mock(ExprAction.class);
+        doReturn(Eq(Prime(x.getRef()), Int(0))).when(writeX).toExpr();
+        when(writeX.nextIndexing())
+                .thenReturn(VarIndexingFactory.indexingBuilder(0).inc(x).build());
+
+        final ExprAction assume = mock(ExprAction.class);
+        doReturn(Geq(x.getRef(), Int(1))).when(assume).toExpr();
+        when(assume.nextIndexing()).thenReturn(VarIndexingFactory.indexing(0));
+
+        final Trace<ExprState, ExprAction> trace =
+                ExprTraceUtils.traceFrom(Arrays.asList(writeY, writeX, assume));
+        final UCSolver ucSolver = Z3LegacySolverFactory.getInstance().createUCSolver();
+
+        // Act
+        final ExprTraceStatus<VarsRefutation> status =
+                ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver).check(trace);
+
+        // Assert
+        assertTrue(status.isInfeasible());
+        final VarsRefutation refutation = status.asInfeasible().getRefutation();
+        assertEquals(Set.of(2), refutation.getVarSets().getNonEmptyIndexes());
+        assertEquals(Set.of(x), refutation.getVarSets().getVars(2));
+        assertEquals(2, refutation.getPruneIndex());
     }
 }

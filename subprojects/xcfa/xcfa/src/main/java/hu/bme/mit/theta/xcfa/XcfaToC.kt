@@ -51,12 +51,15 @@ import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType.CComplexTypeVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CLongLong
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
@@ -76,6 +79,7 @@ fun XCFA.toC(
     extern short __VERIFIER_nondet_short();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();
+    ${nondetDecls(parseContext)}
     extern void reach_error();
     
     ${
@@ -288,8 +292,8 @@ private fun XcfaLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
 private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolean): String =
   when (stmt) {
     is HavocStmt<*> ->
-      "${stmt.varDecl.name.toC()} = __VERIFIER_nondet_${
-            CComplexType.getType(stmt.varDecl.ref, parseContext).toC()
+      "${stmt.varDecl.name.toC()} = ${
+            nondetName(CComplexType.getType(stmt.varDecl.ref, parseContext))
         }(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
 
     is AssignStmt<*> -> "${stmt.varDecl.name.toC()} = ${stmt.expr.toC(parseContext)};"
@@ -308,6 +312,19 @@ fun Pair<VarDecl<*>, ParamDirection>.decl(parseContext: ParseContext): String =
 
 fun VarDecl<*>.decl(parseContext: ParseContext): String =
   "${CComplexType.getType(ref, parseContext).toC()} ${name.toC()}"
+
+private fun nondetName(type: CComplexType) = "__VERIFIER_nondet_${type.toC().toC()}"
+
+// Every havocked type needs a declared nondet function, not only the ones the preamble lists.
+private fun XCFA.nondetDecls(parseContext: ParseContext): String =
+  procedures
+    .flatMap { it.edges }
+    .flatMap { it.getFlatLabels() }
+    .mapNotNull { ((it as? StmtLabel)?.stmt as? HavocStmt<*>)?.varDecl }
+    .map { CComplexType.getType(it.ref, parseContext) }
+    .filter { it.toC() !in setOf("char", "short", "int", "_Bool") }
+    .distinctBy { it.toC() }
+    .joinToString("\n") { "extern ${it.toC()} ${nondetName(it)}();" }
 
 private fun CComplexType.toC(): String =
   when (this) {
@@ -353,7 +370,10 @@ fun IteExpr<*>.toC(parseContext: ParseContext): String =
 // nullary: ref + lit
 fun NullaryExpr<*>.toC(parseContext: ParseContext): String =
   when (this) {
-    is RefExpr<*> -> this.decl.name.toC()
+    is RefExpr<*> ->
+      if (parseContext.metadata.getMetadataValue(decl.name, "isAnyPrev").isPresent)
+        "\\at(${parseContext.metadata.getMetadataValue(decl.name, "cName").get()}, AnyPrev)"
+      else decl.name.toC()
     is LitExpr<*> -> (this as LitExpr<*>).toC(parseContext)
     else -> TODO("Not yet supported: $this")
   }
@@ -367,6 +387,71 @@ fun LitExpr<*>.toC(parseContext: ParseContext): String =
     is FpLitExpr -> FpUtils.fpLitExprToBigFloat(FpRoundingMode.RNE, this).toString()
     is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(this).toString()
     else -> TODO("Not yet supported: $this")
+  }
+
+/**
+ * A C condition stating that [lhs], of C type [type], holds this value: a C11 constant of the
+ * type's signedness, or null if the value cannot be written exactly (e.g. long double, pointers).
+ */
+fun LitExpr<*>.toCConstraint(lhs: String, type: CComplexType?): String? =
+  when (type) {
+    // pointers are integers in Theta, but a pointer may only be compared to a pointer constant
+    is CPointer -> null
+    is CInteger -> {
+      val value =
+        when (this) {
+          is IntLitExpr -> this.value
+          is BvLitExpr ->
+            if (type.isSsigned) BvUtils.signedBvLitExprToBigInteger(this)
+            else BvUtils.unsignedBvLitExprToBigInteger(this)
+          is TrueExpr -> BigInteger.ONE
+          is FalseExpr -> BigInteger.ZERO
+          else -> null
+        }
+      value?.let { cIntegerConstant(it, type.isSsigned) }?.let { "$lhs == $it" }
+    }
+
+    is CFloat,
+    is CDouble -> {
+      val fp = this as? FpLitExpr
+      val bigFloat = fp?.let { FpUtils.fpLitExprToBigFloat(FpRoundingMode.RNE, it) }
+      val max = if (type is CFloat) "3.4028234663852886e+38f" else "1.7976931348623157e+308"
+      when {
+        bigFloat == null -> null
+        bigFloat.isNaN -> "$lhs != $lhs"
+        bigFloat.isInfinite -> if (bigFloat.sign()) "$lhs < -$max" else "$lhs > $max"
+        type is CFloat -> "$lhs == ${bigFloat.toFloat()}f"
+        else -> "$lhs == ${bigFloat.toDouble()}"
+      }
+    }
+
+    else -> null
+  }
+
+private val INT_MIN = BigInteger.valueOf(Int.MIN_VALUE.toLong())
+private val INT_MAX = BigInteger.valueOf(Int.MAX_VALUE.toLong())
+private val LONG_MIN = BigInteger.valueOf(Long.MIN_VALUE)
+private val LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE)
+private val UINT_MAX = BigInteger.ONE.shiftLeft(32).subtract(BigInteger.ONE)
+private val ULONG_MAX = BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE)
+
+/** A C11 integer constant with the value and signedness; the minimum is not a negated literal. */
+private fun cIntegerConstant(value: BigInteger, signed: Boolean): String? =
+  if (signed) {
+    when {
+      value == INT_MIN -> "(-2147483647-1)"
+      value in INT_MIN..INT_MAX -> value.toString()
+      value == LONG_MIN -> "(-9223372036854775807LL-1)"
+      value in LONG_MIN..LONG_MAX -> "${value}LL"
+      else -> null
+    }
+  } else {
+    when {
+      value.signum() < 0 -> null
+      value <= UINT_MAX -> "${value}U"
+      value <= ULONG_MAX -> "${value}ULL"
+      else -> null
+    }
   }
 
 fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ object VariableConsistencyMEPassValidator : MonolithicExprPassValidator<Invarian
         upstreamPassIndex < 0
     )
       return
-    val upstreamOutput =
-      steps.findLast { it.first == upstreamPassIndex }!!.second.expressionResult!!
+    val upstreamVars =
+      steps.findLast { it.first == upstreamPassIndex }!!.second.expressionResult!!.vars.toSet()
     lastResult.safetyResult
       .asUnsafe()
       .cex
@@ -41,7 +41,7 @@ object VariableConsistencyMEPassValidator : MonolithicExprPassValidator<Invarian
       .flatMap { it.decls }
       .filterIsInstance<VarDecl<*>>()
       .forEach {
-        if (it !in upstreamOutput.vars)
+        if (it !in upstreamVars)
           throw MEPassPipelineException(
             "Trace contains variables not present in input monolithic expression for this pass"
           )

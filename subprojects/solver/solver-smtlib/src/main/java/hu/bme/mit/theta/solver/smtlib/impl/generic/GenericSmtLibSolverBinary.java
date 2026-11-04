@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinaryException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -55,7 +56,14 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         } catch (InterruptedException ignored) {
 
         }
-        checkState(solverProcess.isRunning());
+        // NuProcess only logs why a start failed, so name the likeliest cause here.
+        checkState(
+                solverProcess.isRunning(),
+                "Solver process %s is not running: it failed to start or exited immediately%s",
+                processCmd,
+                Files.isExecutable(solverPath)
+                        ? ""
+                        : " (" + solverPath + " is missing or not executable by this user)");
     }
 
     @Override

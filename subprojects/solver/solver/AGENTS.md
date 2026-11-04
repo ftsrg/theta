@@ -18,6 +18,6 @@ Gradle module: `:theta-solver`. This is the **interface-only layer** — no back
 
 ## Package map
 
-- root — `SolverBase` (check/push/pop/reset, `AutoCloseable`), `Solver` (add/getModel), `UCSolver` (track/getUnsatCore), `ItpSolver` (markers + patterns + `getInterpolant`), `HornSolver` (`add(Relation)`, `getProof(): ProofNode`, default `interpolate`), `SolverFactory`, `SolverManager`, `SolverPool`, `SolverStatus` (SAT/UNSAT), `Interpolant`, `ItpMarker`/`ItpPattern`/`ItpMarkerTree`, `ProofNode`, `UnknownSolverStatusException`.
+- root — `SolverBase` (check/push/pop/reset, `AutoCloseable`), `Solver` (add/getModel), `UCSolver` (track/getUnsatCore), `ItpSolver` (markers + patterns + `getInterpolant`), `HornSolver` (`add(Relation)`, `getProof(): ProofNode`, default `interpolate`), `SolverFactory`, `UserPropagator` (search callbacks; opt-in via `SolverFactory.createSolverWithPropagators`, JavaSMT only), `SolverManager`, `SolverPool`, `SolverStatus` (SAT/UNSAT), `Interpolant`, `ItpMarker`/`ItpPattern`/`ItpMarkerTree`, `ProofNode`, `UnknownSolverStatusException`.
 - [utils/](src/main/java/hu/bme/mit/theta/solver/utils/) — `WithPushPop` (try-with-resources push/pop scope), `SolverUtils` (`entails`, model streaming).
 - [impl/](src/main/java/hu/bme/mit/theta/solver/impl/) — `NullSolver`, `StackImpl`. [validator/](src/main/java/hu/bme/mit/theta/solver/validator/) — validating wrappers.

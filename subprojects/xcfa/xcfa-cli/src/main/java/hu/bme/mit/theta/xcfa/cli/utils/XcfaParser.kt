@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Lexer
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.btor2xcfa.Btor2XcfaBuilder
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
-import hu.bme.mit.theta.c2xcfa.getXcfaFromC as getXcfaFromCFiles
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.Logger
@@ -59,7 +58,8 @@ import org.antlr.v4.runtime.CommonTokenStream
  * wrap this in a `try`. The two failure modes a caller CAN recover from are therefore handed back
  * untouched when it asks for them, and only then:
  * - [rethrowPointerSplitLimitation]: the base/offset pointer splitting of `--memory-model multi`
- *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat`.
+ *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat` (and
+ *   then under `--memory-model bytes` if flat needs byte granularity).
  * - [rethrowByteGranularityLimitation]: a construct that needs byte granularity
  *   ([RequiresByteAddressedMemoryException]), recoverable under `--memory-model bytes`.
  *
@@ -210,6 +210,65 @@ private fun CFA.toXcfa(): XCFA {
   return xcfaBuilder.build()
 }
 
+/**
+ * Lowers the inputs to C with Cir2C: a single file, one file per translation unit for the multi-TU
+ * frontend to link, or with `--cir2c-merge` one file made by cir-merge for the regular frontend.
+ */
+private fun runCir2c(inputs: List<File>, config: CFrontendConfig, logger: Logger): List<File> {
+  val temp = createTempDirectory().toFile()
+  // The input is copied, so what it includes relative to itself has to be found another way.
+  fun includes(file: File) = listOf("--cflag", "-I${file.absoluteFile.parent}")
+  val userArgs = config.cir2cArgs.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+  val copies =
+    inputs.mapIndexed { i, inputFile ->
+      val copied = temp.resolve("tu$i").also { it.mkdirs() }.resolve(inputFile.name)
+      var curlyBraceCount = 0
+      inputFile.readLines().forEach { line ->
+        line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
+        val newLine =
+          if (curlyBraceCount == 0 && '{' !in line) {
+            "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
+          } else {
+            line
+          }
+        copied.appendText(newLine)
+        copied.appendText(System.lineSeparator())
+      }
+      copied
+    }
+  // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess -> cir2c) and finds
+  // its own toolchain relative to the script.
+  val script = "./run-cir2c.sh"
+  if (inputs.size == 1 || config.cir2cMerge) {
+    val transformed = temp.resolve("input-transformed.c")
+    val merge = if (inputs.size > 1) listOf("--merge", "cir") else emptyList()
+    val args =
+      listOf(script) +
+        merge +
+        inputs.distinctBy { it.absoluteFile.parent }.flatMap(::includes) +
+        userArgs +
+        copies.map { it.absolutePath } +
+        transformed.absolutePath
+    args.runCommand(config.cir2cDir, logger)
+    return listOf(transformed)
+  }
+  return copies.indices
+    .toList()
+    .parallelStream()
+    .map { i ->
+      val transformed = temp.resolve("tu$i-transformed.c")
+      val args =
+        listOf(script, "--tu-part") +
+          includes(inputs[i]) +
+          userArgs +
+          copies[i].absolutePath +
+          transformed.absolutePath
+      args.runCommand(config.cir2cDir, logger)
+      transformed
+    }
+    .toList()
+}
+
 private fun parseC(
   frontendConfig: CFrontendConfig,
   input: File,
@@ -226,7 +285,10 @@ private fun parseC(
         if (parsedYaml is YamlMap) {
           when (val files = parsedYaml.get<YamlNode>("input_files")) {
             is YamlList -> {
-              val resolved = files.items.map { Path(input.parent).resolve(it.toString()).toFile() }
+              val resolved =
+                files.items.map {
+                  input.absoluteFile.parentFile.resolve((it as YamlScalar).content)
+                }
               logger.result(
                 "%s",
                 "Parsing ${resolved.size} input file(s) from ${input.name}: " +
@@ -235,7 +297,7 @@ private fun parseC(
               resolved
             }
             is YamlScalar -> {
-              val inputFile = Path(input.parent).resolve(files.content).toFile()
+              val inputFile = input.absoluteFile.parentFile.resolve(files.content)
               logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
               listOf(inputFile)
             }
@@ -256,49 +318,7 @@ private fun parseC(
       listOf(input)
     }
 
-  // Apply cir2c transformation if enabled
-  val transformedInputs =
-    if (frontendConfig.useCir2c) {
-      val temp = createTempDirectory()
-
-      // Preprocess each input: fix empty parameter lists for C compatibility
-      val copiedInputs =
-        inputs.map { inputFile ->
-          val copied = temp.resolve("input_${inputFile.name}.${inputFile.extension}").toFile()
-          var curlyBraceCount = 0
-          inputFile.readLines().forEach { line ->
-            line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
-            val newLine =
-              if (curlyBraceCount == 0 && '{' !in line) {
-                "([^(]*)\\(\\s*\\)".toRegex().replace(line) { it.groups[1]!!.value + "(void)" }
-              } else {
-                line
-              }
-            copied.appendText(newLine)
-            copied.appendText(System.lineSeparator())
-          }
-          copied
-        }
-
-      val transformed = temp.resolve("input-transformed.c").toFile()
-
-      // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
-      // cir2c) and finds its own toolchain relative to the script, so we only pass the
-      // source and the desired C output path.
-      if (copiedInputs.size == 1) {
-        // Single-file path: backward compatible
-        "./run-cir2c.sh ${copiedInputs[0].absolutePath} ${transformed.absolutePath}"
-          .runCommand(frontendConfig.cir2cDir, logger)
-      } else {
-        // Multi-file path: use C-level merge via run-cir2c.sh
-        val inputArgs = copiedInputs.joinToString(" ") { "\"${it.absolutePath}\"" }
-        "./run-cir2c.sh $inputArgs --merge c ${transformed.absolutePath}"
-          .runCommand(frontendConfig.cir2cDir, logger)
-      }
-      listOf(transformed)
-    } else {
-      inputs
-    }
+  val transformedInputs = if (frontendConfig.useCir2c) runCir2c(inputs, frontendConfig, logger) else inputs
 
   // Parse single or multiple translation units
   val xcfaFromC =
@@ -307,7 +327,7 @@ private fun parseC(
         val stream = FileInputStream(transformedInputs[0])
         getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
       } else {
-        getXcfaFromCFiles(
+        getXcfaFromC(
             transformedInputs,
             parseContext,
             false,
@@ -344,7 +364,7 @@ private fun parseC(
               logger,
             ).first
           } else {
-            getXcfaFromCFiles(
+            getXcfaFromC(
               transformedInputs,
               parseContext,
               false,
@@ -426,11 +446,15 @@ private fun parseBTOR2(
   return xcfa
 }
 
-private fun String.runCommand(wd: File, logger: Logger, level: Logger.Level = Logger.Level.INFO) {
-  val process =
-    ProcessBuilder(*split(" ").toTypedArray()).directory(wd).redirectErrorStream(true).start()
+private fun List<String>.runCommand(
+  wd: File,
+  logger: Logger,
+  level: Logger.Level = Logger.Level.INFO,
+) {
+  val process = ProcessBuilder(this).directory(wd).redirectErrorStream(true).start()
   process.inputStream.bufferedReader().useLines { lines ->
     lines.forEach { logger.write(level, "%s%n", it) }
   }
-  process.waitFor(15, TimeUnit.MINUTES)
+  check(process.waitFor(15, TimeUnit.MINUTES)) { "Timed out: ${joinToString(" ")}" }
+  check(process.exitValue() == 0) { "Exit code ${process.exitValue()}: ${joinToString(" ")}" }
 }

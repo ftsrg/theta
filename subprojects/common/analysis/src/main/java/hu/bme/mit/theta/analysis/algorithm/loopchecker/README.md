@@ -87,3 +87,5 @@ To find all the variables that contribute towards the needed number of unwinding
 Since infinite bounds can
 still be encountered, there is a configurable maximum for the bound. If m would be greater
 than that, the refiner falls back to the default concretizer algorithm, which is direct refinement in the current implementation.
+It also falls back when the unrolled loop stays feasible for m iterations without repeating a state at the honda, as the
+bound does not hold then (e.g. due to nondeterministic operations).

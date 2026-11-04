@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -326,7 +326,7 @@ constructor(
         itpSolver.pop()
         itpSolver.pop()
         return SafetyResult.safe(
-          PredState.of(extractModel(img, indices.subList(0, 1))),
+          PredState.of(PathUtils.foldin(img, indices[0])),
           BoundedStatistics(iteration),
         )
       }

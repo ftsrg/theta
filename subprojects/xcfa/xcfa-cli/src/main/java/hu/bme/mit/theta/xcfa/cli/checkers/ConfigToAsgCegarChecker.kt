@@ -160,6 +160,7 @@ fun getAsgCegarChecker(
       refinementSolverFactory,
       precRefiner,
       logger,
+      traceEnricher = ::threadWriteTriples,
     )
 
   val checker =

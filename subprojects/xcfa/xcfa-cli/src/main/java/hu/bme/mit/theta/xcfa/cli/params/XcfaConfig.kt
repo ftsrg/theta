@@ -211,8 +211,8 @@ data class CFrontendConfig(
         " line as if every base were 0 (a pointer is a single scalar address), bytes = the flat" +
         " line but byte-granular (every cell is one byte; wider scalars Concat/Extract). bytes" +
         " requires bitvector arithmetic. Left unset, the model is multi, but the frontend may" +
-        " fall back to flat for programs multi cannot represent; passing this flag explicitly" +
-        " disables that fallback.",
+        " fall back to flat (then bytes, if flat is insufficient) for programs multi cannot" +
+        " represent; passing this flag explicitly disables that fallback.",
   )
   var memoryModel: ArchitectureConfig.MemoryModelType? = null,
   @Parameter(names = ["--use-cir2c"], description = "Use Cir2C to preprocess files")
@@ -222,6 +222,17 @@ data class CFrontendConfig(
     description = "Folder with the run-cir2c.sh wrapper script (Cir2C pipeline)",
   )
   var cir2cDir: File = File("./cir2c"),
+  @Parameter(
+    names = ["--cir2c-args"],
+    description = "Further arguments of run-cir2c.sh, separated by whitespace",
+  )
+  var cir2cArgs: String = "",
+  @Parameter(
+    names = ["--cir2c-merge"],
+    description =
+      "With several inputs, merge them with cir-merge and parse one C file, instead of lowering each on its own and linking them in the frontend",
+  )
+  var cir2cMerge: Boolean = false,
   @Parameter(
     names = ["--enable-signed-wraparound"],
     description =
@@ -235,8 +246,8 @@ data class CFrontendConfig(
   /**
    * The memory model actually in effect. [memoryModel] is null exactly when the user did not pass
    * `--memory-model` at all, which is the only case in which the frontend is allowed to swap the
-   * model on its own (see the flat fallback in `frontend()`); an explicitly requested model -- even
-   * if it is the default `multi` -- is always honoured as given.
+   * model on its own (see the fallback in `frontend()`); an explicitly requested model -- even if
+   * it is the default `multi` -- is always honoured as given.
    */
   val effectiveMemoryModel: ArchitectureConfig.MemoryModelType
     get() = memoryModel ?: ArchitectureConfig.MemoryModelType.multi
@@ -280,6 +291,28 @@ data class BTOR2FrontendConfig(
 ) : SpecFrontendConfig
 
 @Serializable sealed interface SpecBackendConfig : Config
+
+/**
+ * Every solver the backend may use. Exhaustive over the backend configs, so a new one has to say
+ * which solvers it uses. A portfolio's and DSS's are not known up front: their sub-configurations
+ * pick their own.
+ */
+fun SpecBackendConfig.solverNames(): List<String> =
+  when (this) {
+    is CegarConfig -> listOf(abstractorConfig.abstractionSolver, refinerConfig.refinementSolver)
+    is AsgCegarConfig -> listOf(abstractorConfig.abstractionSolver, refinerConfig.refinementSolver)
+    is TracegenConfig -> listOf(abstractorConfig.abstractionSolver)
+    is HornConfig -> listOf(solver)
+    is LassoValidationConfig -> listOf(solver)
+    is BoundedConfig -> listOf(bmcConfig.bmcSolver, indConfig.indSolver, itpConfig.itpSolver)
+    is OcConfig -> listOf(smtSolver, unsatReferenceSolver)
+    is PortfolioConfig -> listOf()
+    is DssConfig -> listOf()
+    is MddConfig -> listOf(solver)
+    is MddCegarConfig -> listOf(solver, refinementSolver)
+    is Ic3Config -> listOf(solver)
+    is PathEnumerationConfig -> listOf(pathEnumerationSolver, abstractionSolver)
+  }.filter { it.isNotEmpty() }
 
 @Serializable
 data class BackendConfig<T : SpecBackendConfig>(
@@ -430,7 +463,7 @@ data class CegarRefinerConfig(
   @Parameter(
     names = ["--validate-refinement-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateRefinementSolver: Boolean = false,
   @Parameter(names = ["--refinement"], description = "Refinement strategy")
@@ -476,7 +509,7 @@ data class AsgCegarRefinerConfig(
   @Parameter(
     names = ["--validate-refinement-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateRefinementSolver: Boolean = false,
   @Parameter(names = ["--refinement"], description = "Refinement strategy")
@@ -588,7 +621,7 @@ data class InterpolationConfig(
   @Parameter(
     names = ["--validate-interpolation-solver"],
     description =
-      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.",
+      "Activates a wrapper, which validates the assertions in the solver in each (SAT) check, and every interpolant. Filters some solver issues.",
   )
   var validateItpSolver: Boolean = false,
 ) : Config
@@ -621,6 +654,18 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--validate-solver"],
+    description =
+      "Activates a wrapper, which validates the assertions in the OC solver in each (SAT) check. Filters some solver issues.",
+  )
+  var validateSolver: Boolean = false,
+  @Parameter(
+    names = ["--oc-unsat-reference-solver"],
+    description =
+      "Cross-checks every UNSAT answer of the OC solver by asking this solver the same question, and fails on a disagreement (implies --validate-solver). Slow; for diagnosing solver issues.",
+  )
+  var unsatReferenceSolver: String = "",
   @Parameter(
     names = ["--oc-unroll-start"],
     description = "First force loop unrolling bound for OC checker",
