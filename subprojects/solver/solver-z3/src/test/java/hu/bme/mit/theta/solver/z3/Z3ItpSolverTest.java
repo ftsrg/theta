@@ -52,6 +52,7 @@ import hu.bme.mit.theta.solver.ItpMarkerTree;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -65,7 +66,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public final class Z3ItpSolverTest {
+public class Z3ItpSolverTest {
+
+    protected SolverFactory solverFactory() {
+        return Z3SolverFactory.getInstance();
+    }
 
     ItpSolver solver;
 
@@ -83,7 +88,7 @@ public final class Z3ItpSolverTest {
 
     @BeforeEach
     public void initialize() {
-        solver = Z3SolverFactory.getInstance().createItpSolver();
+        solver = solverFactory().createItpSolver();
 
         final ConstDecl<IntType> ad = Const("a", Int());
         final ConstDecl<IntType> bd = Const("b", Int());

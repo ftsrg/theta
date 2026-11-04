@@ -39,6 +39,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -49,6 +50,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.kframework.mpfr.BigFloat;
 
 public class Z3SolverFPTest {
+    protected SolverFactory solverFactory() {
+        return Z3SolverFactory.getInstance();
+    }
+
     public Class<?> exprType;
     public Expr<?> expected;
     public Expr<?> actual;
@@ -83,7 +88,7 @@ public class Z3SolverFPTest {
                         + ")");
 
         // Equality check
-        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        final Solver solver = solverFactory().createSolver();
         solver.push();
 
         if (expected instanceof FpLitExpr && actual.getType() instanceof FpType) {
@@ -136,7 +141,7 @@ public class Z3SolverFPTest {
     @ParameterizedTest(name = "value: {0}")
     public void testModelValue(FpLitExpr value) {
         final ConstDecl<FpType> x = Decls.Const("x", value.getType());
-        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        final Solver solver = solverFactory().createSolver();
         solver.add(value.isNaN() ? IsNan(x.getRef()) : FpAssignExpr.of(x.getRef(), value));
         assertTrue(solver.check().isSat());
 
