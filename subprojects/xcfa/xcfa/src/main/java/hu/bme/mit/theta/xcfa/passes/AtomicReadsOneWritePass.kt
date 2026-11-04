@@ -243,7 +243,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
   private fun XcfaLabel.isAssume() = this is StmtLabel && stmt is AssumeStmt
 
   private fun XcfaLabel.accesses(vars: Collection<VarDecl<*>>) =
-    collectVarsWithAccessType().any { (v, _) -> v in vars }
+    collectVarsWithAccessType(builder).any { (v, _) -> v in vars }
 
   private fun <T : Type> VarDecl<T>.localVersion(
     indexing: VarIndexing,

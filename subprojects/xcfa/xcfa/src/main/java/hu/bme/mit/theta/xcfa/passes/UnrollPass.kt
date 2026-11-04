@@ -822,7 +822,7 @@ class UnrollPass(
           .filter { it.name != name }
           .flatMapTo(mutableSetOf<VarDecl<*>>()) { procedure ->
             procedure.getEdges().flatMap { edge ->
-              edge.label.collectVarsWithAccessType().filterValues { it.isWritten }.keys
+              edge.label.collectVarsWithAccessType(this).filterValues { it.isWritten }.keys
             }
           }
           .also { writtenElsewhere = it }

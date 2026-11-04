@@ -428,10 +428,10 @@ private fun threadModularChecker(
   logger: Logger,
   hornChecker: (List<Relation>) -> HornChecker,
   monolithicChecker:
-    () -> SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>,
-): SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> =
+    () -> SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>,
+): SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> =
   SafetyChecker { prec ->
-    val safe =
+    val result =
       try {
         val chc =
           xcfa
@@ -450,13 +450,13 @@ private fun threadModularChecker(
             .toThreadModularCHC()
         val result = hornChecker(chc).check(null)
         logger.mainStep("Thread-modular CHC result: $result")
-        result.isSafe
+        result
       } catch (t: Throwable) {
         logger.benchmark("Thread-modular CHC encoding failed (due to %s)", t.message)
-        false
+        SafetyResult.unknown()
       }
-    if (safe) {
-      SafetyResult.safe(EmptyProof.getInstance())
+    if (result.isSafe) {
+      SafetyResult.safe(LocationInvariants())
     } else {
       logger.mainStep("Thread-modular CHC inconclusive, falling back to monolithic")
       monolithicChecker().check(prec)
