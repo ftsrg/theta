@@ -27,16 +27,30 @@ import org.jetbrains.annotations.NotNull;
 public final class Z3SolverFactory implements SolverFactory {
 
     private static final Z3SolverFactory INSTANCE;
+    private static final Z3SolverFactory PRESOLVE_INSTANCE;
 
     static {
         loadLibraries();
-        INSTANCE = new Z3SolverFactory();
+        INSTANCE = new Z3SolverFactory(false);
+        PRESOLVE_INSTANCE = new Z3SolverFactory(true);
     }
 
-    private Z3SolverFactory() {}
+    private final boolean presolve;
+
+    private Z3SolverFactory(final boolean presolve) {
+        this.presolve = presolve;
+    }
 
     public static Z3SolverFactory getInstance() {
         return INSTANCE;
+    }
+
+    /**
+     * Solvers of this factory eliminate defined variables before each check, and restart each check
+     * from scratch. This suits queries with long chains of nested array stores.
+     */
+    public static Z3SolverFactory getPresolveInstance() {
+        return PRESOLVE_INSTANCE;
     }
 
     private static void loadLibraries() {
@@ -70,15 +84,15 @@ public final class Z3SolverFactory implements SolverFactory {
 
     @NotNull private Z3Solver createSolverInternal() {
         final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
-        // Eliminating the equalities first keeps memory encodings with one array variable per store
-        // tractable: on those, the bare solver does not return in a reasonable time.
         final com.microsoft.z3.Solver z3Solver =
-                z3Context.mkSolver(
-                        z3Context.andThen(
-                                z3Context.mkTactic("simplify"),
-                                z3Context.mkTactic("propagate-values"),
-                                z3Context.mkTactic("solve-eqs"),
-                                z3Context.mkTactic("smt")));
+                presolve
+                        ? z3Context.mkSolver(
+                                z3Context.andThen(
+                                        z3Context.mkTactic("simplify"),
+                                        z3Context.mkTactic("propagate-values"),
+                                        z3Context.mkTactic("solve-eqs"),
+                                        z3Context.mkTactic("smt")))
+                        : z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager =

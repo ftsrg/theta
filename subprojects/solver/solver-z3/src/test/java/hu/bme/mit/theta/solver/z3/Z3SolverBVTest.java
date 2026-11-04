@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -29,6 +30,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class Z3SolverBVTest {
+    protected SolverFactory solverFactory() {
+        return Z3SolverFactory.getInstance();
+    }
+
     public Class<?> exprType;
     public Expr<?> expected;
     public Expr<?> actual;
@@ -68,7 +73,7 @@ public class Z3SolverBVTest {
                         + ")");
 
         // Equality check
-        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        final Solver solver = solverFactory().createSolver();
         solver.push();
 
         solver.add(EqExpr.create2(expected, actual));

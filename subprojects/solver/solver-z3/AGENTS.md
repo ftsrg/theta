@@ -1,6 +1,6 @@
 # solver/solver-z3 — notes for editing this module
 
-Gradle module: `:theta-solver-z3`. Backend for **modern Z3** (API jar and natives from the Z3 GitHub release, version in [Deps.kt](../../../buildSrc/src/main/kotlin/Deps.kt)). Resolves as solver name **`"Z3:new"`** (deprecated alias `"Z3:4.13"`); plain `"Z3"` goes to [solver-z3-legacy](../solver-z3-legacy/AGENTS.md). ⚠ Class names are identical to the legacy module (`Z3SolverManager`, `Z3Solver`, …) — only the package (`solver.z3`) differs.
+Gradle module: `:theta-solver-z3`. Backend for **modern Z3** (API jar and natives from the Z3 GitHub release, version in [Deps.kt](../../../buildSrc/src/main/kotlin/Deps.kt)). Resolves as solver name **`"Z3:new"`** (deprecated alias `"Z3:4.13"`), or opt-in **`"Z3:new-presolve"`**, which runs `simplify`, `propagate-values`, `solve-eqs` and `smt` on each check instead of an incremental `mkSimpleSolver`; plain `"Z3"` goes to [solver-z3-legacy](../solver-z3-legacy/AGENTS.md). ⚠ Class names are identical to the legacy module (`Z3SolverManager`, `Z3Solver`, …) — only the package (`solver.z3`) differs.
 
 ## Structure
 

@@ -148,7 +148,7 @@ bytes_zero_init.c	efficient	LP64	SAFE	a global without an initializer is zero at
 bytes_local_aggregate_init.c	efficient	LP64	SAFE	a local brace initializer is written at byte offsets under bytes	bytes
 local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	multi
 local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	flat
-local_bitfield_init.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
+local_bitfield_init_bytes.c	efficient	LP64	SAFE	a local brace initializer splices packed bitfields into their shared cell	bytes
 global_bitfield_init.c	efficient	LP64	SAFE	a global bitfield initializer is spliced into the unit at its byte offset	bytes
 union_array_elements.c	efficient	LP64	SAFE	each element of a local array of unions gets an object of its own	multi
 union_array_elements.c	efficient	LP64	SAFE	an array-of-unions element is a region of the array under bytes	bytes
@@ -174,7 +174,7 @@ bytes_pointer_to_array.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken a
 bytes_wide_access_bounds.c	efficient	LP64	SAFE:valid-memsafety	a wide access whose bytes all lie in the block is valid under bytes	bytes
 flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	a wide access running past the block end is invalid under bytes	bytes
 flat_memcpy_bytes.c	efficient	ILP32	SAFE	memcpy copies byte by byte under bytes	bytes
-flat_nested_calloc.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
+flat_nested_calloc_bytes.c	efficient	ILP32	SAFE	calloc zeroes byte by byte under bytes	bytes
 ternary_call_argument.c	efficient	LP64	SAFE	?: false branch is a conditional-expression: it does not swallow the later call arguments
 ternary_comma_operand.c	efficient	LP64	SAFE	a comma after ?: ends the conditional (x = c ? 1 : 2, y = 5 always assigns y)
 typeof_deref.c	efficient	LP64	SAFE	typeof(*p) names the pointee type, also nested in container_of
