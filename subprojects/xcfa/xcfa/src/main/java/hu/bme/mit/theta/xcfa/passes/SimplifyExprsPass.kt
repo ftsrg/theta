@@ -238,16 +238,20 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
   /**
    * What takes a look at all procedures, once per optimization phase rather than per procedure: on
    * a program of thousands of procedures that is what the pass spends its time on. Within a phase
-   * only what the phase's own passes do changes, and those add no writes to a global: the answers
-   * can only have become more conservative than they need to be.
+   * the answers can only become more conservative than they need to be, as long as nothing in it
+   * writes a global that was not written before. The witness phase does (it instruments procedures
+   * one by one with ghost writes, and simplifies within the same phase), so it is scanned each time.
    */
   private fun sharedScan(builder: XcfaProcedureBuilder): SharedScan {
     val phase = builder.currentPhase
-    (builder.parent.metaData[SHARED_SCAN] as? SharedScan)
-      ?.takeIf { it.phase == phase }
-      ?.let {
-        return it
-      }
+    val reusable = property?.witness == null
+    if (reusable) {
+      (builder.parent.metaData[SHARED_SCAN] as? SharedScan)
+        ?.takeIf { it.phase == phase }
+        ?.let {
+          return it
+        }
+    }
     val procedures = builder.parent.getProcedures()
     val constGlobals = MutableValuation()
     val modifiedGlobals = mutableListOf<VarDecl<*>>()
