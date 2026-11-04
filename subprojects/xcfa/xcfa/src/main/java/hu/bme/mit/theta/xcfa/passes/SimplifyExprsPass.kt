@@ -240,7 +240,8 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
    * a program of thousands of procedures that is what the pass spends its time on. Within a phase
    * the answers can only become more conservative than they need to be, as long as nothing in it
    * writes a global that was not written before. The witness phase does (it instruments procedures
-   * one by one with ghost writes, and simplifies within the same phase), so it is scanned each time.
+   * one by one with ghost writes, and simplifies within the same phase), so it is scanned each
+   * time.
    */
   private fun sharedScan(builder: XcfaProcedureBuilder): SharedScan {
     val phase = builder.currentPhase
