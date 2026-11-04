@@ -73,20 +73,6 @@ class UnusedVarPass(
       if (cached != null && cached.first == phase) cached.second
       else usedVarsOfProgram(builder, isOverflow).also { builder.parent.metaData[USED_VARS] = phase to it }
 
-    val allVars =
-      Sets.union(
-        builder.parent.getProcedures().flatMap { it.getVars() }.toSet(),
-        builder.parent.getVars().map { it.wrappedVar }.toSet(),
-      )
-    val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
-    if (!varsAndParams.containsAll(usedVars)) {
-      uniqueWarningLogger.writeln(
-        Logger.Level.INFO,
-        "WARNING: There are some used variables not present as declarations: " +
-          usedVars.filter { it !in varsAndParams },
-      )
-    }
-
     builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
 
     return builder
@@ -146,6 +132,20 @@ class UnusedVarPass(
 
       edges = LinkedHashSet(builder.parent.getProcedures().flatMap { it.getEdges() })
     } while (lastEdges != edges)
+    val allVars =
+      Sets.union(
+        builder.parent.getProcedures().flatMap { it.getVars() }.toSet(),
+        builder.parent.getVars().map { it.wrappedVar }.toSet(),
+      )
+    val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
+    if (!varsAndParams.containsAll(usedVars)) {
+      uniqueWarningLogger.writeln(
+        Logger.Level.INFO,
+        "WARNING: There are some used variables not present as declarations: " +
+          usedVars.filter { it !in varsAndParams },
+      )
+    }
+
     return usedVars
   }
 
