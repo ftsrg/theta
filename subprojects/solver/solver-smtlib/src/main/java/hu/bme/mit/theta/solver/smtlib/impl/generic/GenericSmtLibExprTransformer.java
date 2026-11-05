@@ -1216,7 +1216,6 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         return running;
     }
 
-    /** An uninterpreted function per function and sort (see SmtLibMathFuncDecls). */
     private String transformFpMathFunc(final FpMathFuncExpr expr) {
         final String funcSymbol = transformer.toSymbol(SmtLibMathFuncDecls.funcDecl(expr));
         return "(%s %s)".formatted(funcSymbol, toTerm(expr.getOp()));

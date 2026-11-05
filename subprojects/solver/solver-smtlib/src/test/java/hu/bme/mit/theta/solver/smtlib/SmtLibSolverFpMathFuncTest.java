@@ -88,7 +88,6 @@ public class SmtLibSolverFpMathFuncTest {
         assertEquals(SolverStatus.SAT, check(both));
     }
 
-    /** The declaration must be re-issued after a pop that removed it. */
     @Test
     public void declarationFollowsPushPop() throws Exception {
         final ConstDecl<FpType> x = Const("x", FLOAT);
@@ -105,7 +104,6 @@ public class SmtLibSolverFpMathFuncTest {
         }
     }
 
-    /** An interpolant over the function comes back as the same expression. */
     @Test
     public void interpolantMentionsTheFunction() throws Exception {
         final ConstDecl<FpType> x = Const("x", FLOAT);

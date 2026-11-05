@@ -717,7 +717,6 @@ final class JavaSMTTermTransformer {
 
     private static final Pattern MATH_FUNC_NAME = Pattern.compile("(fpmath\\.[a-z0-9]+)-\\d+-\\d+");
 
-    /** The math function named by a declaration of {@code transformFpMathFunc}, or null. */
     private static FpMathFuncExpr.Function mathFunctionOf(final String name) {
         final var matcher = MATH_FUNC_NAME.matcher(name);
         return matcher.matches() ? FpMathFuncExpr.Function.fromLabel(matcher.group(1)) : null;

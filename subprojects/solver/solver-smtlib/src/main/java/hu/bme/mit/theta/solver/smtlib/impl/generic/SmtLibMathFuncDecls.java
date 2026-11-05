@@ -28,12 +28,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * An {@link FpMathFuncExpr} is an application of an uninterpreted function, but, like {@code deref}
- * (see {@link SmtLibDereferenceDecls}), it has no backing declaration in the expression, and
- * SMT-LIB forbids declaring one name with two signatures. This gives every function and sort one
- * canonical function {@link ConstDecl}, cached so the same instance is used when collecting the
- * constants to declare, when transforming the application, and when mapping a solver's term back to
- * it.
+ * One canonical function {@link ConstDecl} per math function and sort, as {@link
+ * SmtLibDereferenceDecls} does for {@code deref}: the application has no declaration of its own,
+ * and SMT-LIB forbids one name with two signatures.
  */
 public final class SmtLibMathFuncDecls {
 
@@ -45,7 +42,6 @@ public final class SmtLibMathFuncDecls {
 
     private SmtLibMathFuncDecls() {}
 
-    /** The canonical function declaration of one application's function and sort. */
     public static ConstDecl<?> funcDecl(final FpMathFuncExpr expr) {
         final FpType type = expr.getType();
         return CACHE.computeIfAbsent(
@@ -64,12 +60,10 @@ public final class SmtLibMathFuncDecls {
                 });
     }
 
-    /** The function a canonical declaration stands for, if it is one. */
     public static Optional<FpMathFuncExpr.Function> functionOf(final ConstDecl<?> decl) {
         return Optional.ofNullable(FUNCTIONS.get(decl));
     }
 
-    /** The canonical function declarations of every math function applied in [expr]. */
     public static Set<ConstDecl<?>> collect(final Expr<?> expr) {
         final Set<ConstDecl<?>> result = new LinkedHashSet<>();
         collect(expr, result);

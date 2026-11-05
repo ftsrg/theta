@@ -108,7 +108,6 @@ fun getPortfolioChecker(
     try {
       portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
     } catch (e: ErrorCodeException) {
-      // The last config, too, found only an over-approximated violation: no verdict.
       if (e.code != ExitCodes.UNRELIABLE_UNSAFE.code) throw e
       // The winning config prints the result line in a portfolio run; here none won.
       val unknown =
