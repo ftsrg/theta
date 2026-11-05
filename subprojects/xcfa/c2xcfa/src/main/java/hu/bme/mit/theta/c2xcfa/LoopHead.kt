@@ -19,12 +19,16 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement
 
 /**
- * A C loop, marking the locations where its controlling expression is evaluated. Passes copy the
- * marker with the location metadata (unrolling, inlining), so the states of all marked locations
- * together describe every evaluation. When a pass removes a marked location, evaluations may pass
- * through unmarked ones, so the loop is no longer [complete].
+ * A C loop, marking the locations where its controlling expression is evaluated. Inlining copies
+ * the marker with the location metadata, so the states of all marked locations together describe
+ * every evaluation. When a pass removes or unrolls a marked location, evaluations may pass through
+ * unmarked ones, so the loop is no longer [complete].
  */
-class LoopHead(val loop: CStatement, val variablesAtGuard: Map<String, VarDecl<*>>) {
+class LoopHead(
+  val loop: CStatement,
+  val variablesAtGuard: Map<String, VarDecl<*>>,
+  val functionName: String,
+) {
   var complete = true
     private set
 

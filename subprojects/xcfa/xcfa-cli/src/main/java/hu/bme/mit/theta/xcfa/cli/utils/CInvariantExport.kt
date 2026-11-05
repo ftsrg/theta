@@ -33,6 +33,12 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.booltype.XorExpr
 import hu.bme.mit.theta.core.type.bvtype.*
 import hu.bme.mit.theta.core.type.inttype.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Geq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Leq
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Mul
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -57,9 +63,11 @@ private const val MAX_LENGTH = 8192
 
 /**
  * Loop invariants from the states of a single-threaded, fully inlined proof. All states at the
- * locations of a [LoopHead] are joined. Each state keeps only its conjuncts over the C variables in
- * scope at the loop that [CInvariantPrinter] prints exactly; dropping conjuncts only weakens a
- * state, so the join stays an invariant. Loops whose head a pass removed are skipped.
+ * locations of a [LoopHead] are joined. Conjuncts over leftovers of inlined callees are dropped. A
+ * loop is skipped if a pass removed its head, or if a state has another conjunct that is not over
+ * the C variables in scope or that [CInvariantPrinter] cannot print exactly: dropping it would keep
+ * the join an invariant, but what remains may be too weak to prove inductively, and a validator
+ * would spend its time on that instead of the property.
  */
 internal fun LocationInvariants.loopInvariantContent(
   inputFile: File,
@@ -101,24 +109,41 @@ private fun loopInvariant(
   val disjuncts = LinkedHashSet<List<String>>()
   for (state in states) {
     if (state.isBottom) continue
-    val conjuncts = LinkedHashSet<String>()
+    val simples = mutableListOf<Expr<BoolType>>()
     var infeasible = false
+    var lostConjunct = false
     for (conjunct in conjunctsOf(state.toExpr())) {
-      if (!ExprUtils.getVars(conjunct).all { it in names }) continue
+      val outOfScope = ExprUtils.getVars(conjunct).filter { it !in names }
+      if (outOfScope.isNotEmpty()) {
+        lostConjunct =
+          lostConjunct ||
+            outOfScope.any {
+              !it.name.contains("::") || it.name.startsWith(head.functionName + "::")
+            }
+        continue
+      }
       for (simple in conjunctsOf(ExprUtils.simplify(conjunct))) {
         when (simple) {
           is TrueExpr -> {}
           is FalseExpr -> infeasible = true
-          else -> printer.print(simple)?.let(conjuncts::add)
+          else -> simples += simple
         }
       }
     }
     if (infeasible) continue
-    // a state that constrains no printable variable allows every value
+    if (lostConjunct) return null
+    val conjuncts = LinkedHashSet<String>()
+    val merged = mergeBounds(simples) { CInvariantPrinter.typeRange(it, parseContext) }
+    for (simple in merged) conjuncts += printer.print(simple) ?: return null
+    // a state that constrains nothing allows every value
     if (conjuncts.isEmpty()) return null
     disjuncts += conjuncts.toList()
   }
   if (disjuncts.isEmpty()) return null
+  // a disjunct with all conjuncts of another one implies it
+  disjuncts.retainAll(
+    disjuncts.filter { d -> disjuncts.none { it.size < d.size && d.containsAll(it) } }.toSet()
+  )
 
   fun conjunction(conjuncts: Collection<String>) = conjuncts.joinToString(" && ", "(", ")")
   // the conjuncts every state shares are implied by each of them
@@ -146,12 +171,194 @@ private fun loopInvariant(
             fileName = inputFile.name,
             line = loop.lineNumberStart,
             column = loop.colNumberStart + 1,
-            function = loop.functionName?.takeIf { it.isNotEmpty() },
+            function = head.functionName,
           ),
         value = value,
         format = Format.C_EXPRESSION,
       )
   )
+}
+
+/** A linear integer term: the sum of its coefficients times their variables, plus a constant. */
+private data class Linear(val coefficients: Map<VarDecl<*>, BigInteger>, val constant: BigInteger) {
+  operator fun plus(other: Linear): Linear {
+    val sum = LinkedHashMap(coefficients)
+    other.coefficients.forEach { (decl, k) -> sum.merge(decl, k, BigInteger::add) }
+    sum.values.removeIf { it.signum() == 0 }
+    return Linear(sum, constant + other.constant)
+  }
+
+  operator fun times(factor: BigInteger) =
+    if (factor.signum() == 0) Linear(emptyMap(), BigInteger.ZERO)
+    else Linear(coefficients.mapValues { it.value * factor }, constant * factor)
+
+  operator fun minus(other: Linear) = this + other * BigInteger.ONE.negate()
+}
+
+private fun linear(e: Expr<*>): Linear? =
+  when (e) {
+    is IntLitExpr -> Linear(emptyMap(), e.value)
+    is RefExpr<*> ->
+      (e.decl as? VarDecl<*>)?.let { Linear(mapOf(it to BigInteger.ONE), BigInteger.ZERO) }
+    is IntPosExpr -> linear(e.op)
+    is IntNegExpr -> linear(e.op)?.times(BigInteger.ONE.negate())
+    is IntAddExpr -> e.ops.map { linear(it) ?: return null }.reduceOrNull(Linear::plus)
+    is IntSubExpr -> linear(e.leftOp)?.let { l -> linear(e.rightOp)?.let { r -> l - r } }
+    is IntMulExpr -> {
+      val factors = e.ops.map { linear(it) ?: return null }
+      val nonConstant = factors.filter { it.coefficients.isNotEmpty() }
+      val constant =
+        factors
+          .filter { it.coefficients.isEmpty() }
+          .fold(BigInteger.ONE) { acc, f -> acc * f.constant }
+      when (nonConstant.size) {
+        0 -> Linear(emptyMap(), constant)
+        1 -> nonConstant.single() * constant
+        else -> null
+      }
+    }
+    else -> null
+  }
+
+/** The linear term that is at least zero exactly when the integer comparison [e] holds. */
+private fun lowerBound(e: Expr<*>): Linear? {
+  fun diff(l: Expr<*>, r: Expr<*>, offset: Long = 0): Linear? =
+    linear(l)?.let { a ->
+      linear(r)?.let { b -> a - b + Linear(emptyMap(), BigInteger.valueOf(offset)) }
+    }
+  return when (e) {
+    is IntGeqExpr -> diff(e.leftOp, e.rightOp)
+    is IntLeqExpr -> diff(e.rightOp, e.leftOp)
+    is IntGtExpr -> diff(e.leftOp, e.rightOp, -1)
+    is IntLtExpr -> diff(e.rightOp, e.leftOp, -1)
+    is NotExpr ->
+      when (val op = e.op) {
+        is IntGeqExpr -> diff(op.rightOp, op.leftOp, -1)
+        is IntLeqExpr -> diff(op.leftOp, op.rightOp, -1)
+        is IntGtExpr -> diff(op.rightOp, op.leftOp)
+        is IntLtExpr -> diff(op.leftOp, op.rightOp)
+        else -> null
+      }
+    else -> null
+  }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun sumOf(coefficients: Map<VarDecl<*>, BigInteger>, constant: BigInteger): Expr<IntType> {
+  val ops =
+    coefficients.map { (decl, k) ->
+      val ref = decl.ref as Expr<IntType>
+      if (k == BigInteger.ONE) ref else Mul(Int(k), ref)
+    } + listOfNotNull(constant.takeIf { it.signum() != 0 }?.let { Int(it) })
+  return when (ops.size) {
+    0 -> Int(BigInteger.ZERO)
+    1 -> ops.single()
+    else -> Add(ops)
+  }
+}
+
+/**
+ * [conjuncts] with their linear bounds reduced: only the tightest bound on each term stays, two
+ * opposite bounds become an equality, and bounds that the [range] of each variable already implies
+ * are dropped. Validators can confirm `a == b` where they cannot confirm the same fact as `a <= b
+ * && b <= a`, and the range checks of the overflow property tell them nothing.
+ */
+internal fun mergeBounds(
+  conjuncts: List<Expr<BoolType>>,
+  range: (VarDecl<*>) -> Pair<BigInteger, BigInteger>?,
+): List<Expr<BoolType>> {
+  val tightest = LinkedHashMap<Map<VarDecl<*>, BigInteger>, BigInteger>()
+  val others =
+    conjuncts
+      .map { (it as? OrExpr)?.let(::unionBound) ?: it }
+      .filter { conjunct ->
+        val bound = lowerBound(conjunct)
+        if (bound == null || bound.coefficients.isEmpty()) true
+        else {
+          tightest.merge(bound.coefficients, bound.constant, BigInteger::min)
+          false
+        }
+      }
+  val done = HashSet<Map<VarDecl<*>, BigInteger>>()
+  val bounds = mutableListOf<Expr<BoolType>>()
+  for ((coefficients, constant) in tightest) {
+    if (!done.add(coefficients)) continue
+    val opposite = coefficients.mapValues { it.value.negate() }
+    val equal = tightest[opposite] == constant.negate()
+    if (equal) done += opposite else if (alwaysHolds(coefficients, constant, range)) continue
+    bounds += comparison(coefficients, constant, equal)
+  }
+  return others + bounds
+}
+
+/** Whether `term + constant >= 0` holds for all values in the [range] of each variable. */
+private fun alwaysHolds(
+  coefficients: Map<VarDecl<*>, BigInteger>,
+  constant: BigInteger,
+  range: (VarDecl<*>) -> Pair<BigInteger, BigInteger>?,
+): Boolean {
+  var min = constant
+  for ((decl, k) in coefficients) {
+    val (low, high) = range(decl) ?: return false
+    min += k * (if (k.signum() > 0) low else high)
+  }
+  return min.signum() >= 0
+}
+
+/** `term + constant == 0` if [equal], otherwise `term + constant >= 0`, without negative terms. */
+private fun comparison(
+  coefficients: Map<VarDecl<*>, BigInteger>,
+  constant: BigInteger,
+  equal: Boolean,
+): Expr<BoolType> {
+  val positive = coefficients.filterValues { it.signum() > 0 }
+  val negative = coefficients.filterValues { it.signum() < 0 }.mapValues { it.value.negate() }
+  val left = sumOf(positive, constant.max(BigInteger.ZERO))
+  val right = sumOf(negative, constant.negate().max(BigInteger.ZERO))
+  return if (equal) Eq(left, right)
+  else if (positive.isEmpty()) Leq(right, left) else Geq(left, right)
+}
+
+/**
+ * The single bound equal to [or], if its operands are adjoining ranges of one linear term, such as
+ * `a == b || a > b` for `a >= b`.
+ */
+private fun unionBound(or: OrExpr): Expr<BoolType>? {
+  class Range(val min: BigInteger?, val max: BigInteger?)
+  var term: Map<VarDecl<*>, BigInteger>? = null
+  val ranges =
+    or.ops.map { op ->
+      val equality =
+        (op as? IntEqExpr)?.let { eq ->
+          linear(eq.leftOp)?.let { l -> linear(eq.rightOp)?.let { l - it } }
+        }
+      val bound = equality ?: lowerBound(op) ?: return null
+      val base = term ?: bound.coefficients.also { term = it }
+      val flipped = bound.coefficients == base.mapValues { it.value.negate() }
+      if (base.isEmpty() || (!flipped && bound.coefficients != base)) return null
+      val value = if (flipped) bound.constant else bound.constant.negate()
+      when {
+        equality != null -> Range(value, value)
+        flipped -> Range(null, value)
+        else -> Range(value, null)
+      }
+    }
+  val lowest = ranges.filter { it.max == null }.mapNotNull { it.min }.minOrNull()
+  val highest = ranges.filter { it.min == null }.mapNotNull { it.max }.maxOrNull()
+  if ((lowest == null) == (highest == null)) return null
+  val points = ranges.filter { it.min != null && it.max != null }.map { it.min!! }.distinct()
+  // the points must extend the open range without a gap
+  return if (lowest != null) {
+    var min: BigInteger = lowest
+    for (point in points.sortedDescending()) if (point == min.dec()) min = point
+    else if (point < min) return null
+    comparison(term!!, min.negate(), false)
+  } else {
+    var max: BigInteger = highest!!
+    for (point in points.sorted()) if (point == max.inc()) max = point
+    else if (point > max) return null
+    comparison(term!!.mapValues { it.value.negate() }, max, false)
+  }
 }
 
 /** The conjuncts of [expr] with nested conjunctions flattened, in order. */
@@ -185,6 +392,15 @@ internal class CInvariantPrinter(
           else -> null
         }
       return (type as? CInteger)?.takeIf { it !is CPointer && it.width() in 1..64 }
+    }
+
+    /** The values of the C integer type of [decl], see [cIntegerType]. */
+    fun typeRange(decl: VarDecl<*>, parseContext: ParseContext): Pair<BigInteger, BigInteger>? {
+      val type = cIntegerType(decl, parseContext) ?: return null
+      val width = type.width()
+      return if (type.isSsigned)
+        BigInteger.ONE.shiftLeft(width - 1).negate() to BigInteger.ONE.shiftLeft(width - 1).dec()
+      else BigInteger.ZERO to BigInteger.ONE.shiftLeft(width).dec()
     }
 
     private fun mask(width: Int): String = BigInteger.ONE.shiftLeft(width).dec().toString() + "ULL"
@@ -257,26 +473,20 @@ internal class CInvariantPrinter(
       is RefExpr<*> -> {
         val decl = e.decl as? VarDecl<*> ?: return null
         val name = names[decl] ?: return null
-        val type = cIntegerType(decl, parseContext) ?: return null
-        val width = type.width()
-        val (min, max) =
-          if (type.isSsigned)
-            BigInteger.ONE.shiftLeft(width - 1).negate() to
-              BigInteger.ONE.shiftLeft(width - 1).dec()
-          else BigInteger.ZERO to BigInteger.ONE.shiftLeft(width).dec()
+        val (min, max) = typeRange(decl, parseContext) ?: return null
         intTerm("((long long)$name)", min, max)
       }
       is IntPosExpr -> int(e.op)
-      is IntNegExpr -> int(e.op)?.let { intTerm("(-${it.text})", it.max.negate(), it.min.negate()) }
-      is IntAddExpr ->
-        e.ops.map { int(it) ?: return null }.reduceOrNull { a, b -> add(a, b) ?: return null }
+      is IntNegExpr -> int(e.op)?.let(::neg)
+      is IntAddExpr -> sum(e.ops)
       is IntSubExpr -> {
         val l = int(e.leftOp) ?: return null
         val r = int(e.rightOp) ?: return null
-        intTerm("(${l.text} - ${r.text})", l.min - r.max, l.max - r.min)
+        sub(l, r)
       }
       is IntMulExpr ->
-        e.ops.map { int(it) ?: return null }.reduceOrNull { a, b -> mul(a, b) ?: return null }
+        negated(e)?.let { positive -> int(positive)?.let(::neg) }
+          ?: e.ops.map { int(it) ?: return null }.reduceOrNull { a, b -> mul(a, b) ?: return null }
       is IteExpr<*> -> {
         val c = bool(e.cond) ?: return null
         val t = int(e.then) ?: return null
@@ -286,8 +496,45 @@ internal class CInvariantPrinter(
       else -> null
     }
 
+  /**
+   * The term `t` if [e] is `-t` or has a negative constant factor. Solvers can be far slower on a
+   * multiplication by a negative constant than on the equal subtraction, so those are not printed.
+   */
+  private fun negated(e: Expr<*>): Expr<IntType>? =
+    when (e) {
+      is IntNegExpr -> e.op
+      is IntLitExpr -> if (e.value.signum() < 0) Int(e.value.negate()) else null
+      is IntMulExpr -> {
+        val factor = e.ops.filterIsInstance<IntLitExpr>().singleOrNull { it.value.signum() < 0 }
+        val rest = e.ops.filter { it !== factor }
+        when {
+          factor == null -> null
+          factor.value != BigInteger.ONE.negate() -> Mul(listOf(Int(factor.value.negate())) + rest)
+          rest.size == 1 -> rest.single()
+          else -> Mul(rest)
+        }
+      }
+      else -> null
+    }
+
+  /** The sum of [ops], with the positive terms first and the negative ones subtracted. */
+  private fun sum(ops: List<Expr<IntType>>): IntTerm? {
+    val (subtracted, added) = ops.partition { negated(it) != null }
+    var acc = added.map { int(it) ?: return null }.reduceOrNull { a, b -> add(a, b) ?: return null }
+    for (op in subtracted) {
+      val term = int(negated(op)!!) ?: return null
+      acc = (if (acc == null) neg(term) else sub(acc, term)) ?: return null
+    }
+    return acc
+  }
+
   private fun add(a: IntTerm, b: IntTerm) =
     intTerm("(${a.text} + ${b.text})", a.min + b.min, a.max + b.max)
+
+  private fun sub(a: IntTerm, b: IntTerm) =
+    intTerm("(${a.text} - ${b.text})", a.min - b.max, a.max - b.min)
+
+  private fun neg(a: IntTerm) = intTerm("(-${a.text})", a.max.negate(), a.min.negate())
 
   private fun mul(a: IntTerm, b: IntTerm): IntTerm? {
     val products = listOf(a.min * b.min, a.min * b.max, a.max * b.min, a.max * b.max)

@@ -338,7 +338,9 @@ class FrontendXcfaBuilder(
     val testEnd = buildWithoutPostStatement(guard, param)
     if (!isTransparent(param.lastLoc, testEnd, variablesAtGuard.values.toSet())) return testEnd
     val metadata =
-      (getMetadata(loop) as CMetaData).copy(loopHead = LoopHead(loop, variablesAtGuard))
+      (getMetadata(loop) as CMetaData).copy(
+        loopHead = LoopHead(loop, variablesAtGuard, param.builder.name)
+      )
     val head = getAnonymousLoc(param.builder, metadata = metadata)
     param.builder.addEdge(XcfaEdge(testEnd, head, metadata = EmptyMetaData))
     return head
