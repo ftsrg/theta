@@ -33,11 +33,21 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   states, or skipping a state covered by an older one, makes SAFE unsound.
 - Message and witness contents must survive `DssExprCodec` (`PROCESS` executor): only program
   variables and `DssAuxVars`; locations travel by index. New fields need matching changes in
-  `DssProcessExecutor.kt`.
+  `DssProcessExecutor.kt`. Each block has the codec of its own program; the reversed program has
+  its own variables (temporaries) and locations.
+- A postcondition's `inputs` must name exactly the stored versions its analysis started from, and
+  an analysis without exit states must still report `false` (`observerOnly`): `DssMeetingActor`'s
+  SAFE relies on both (`trackSummaries`).
+- A restriction only ever strengthens a block's start states and never enters a violation
+  condition; a block under one, or fed by one, reports no witness invariants.
+- Networks of one run need unique block ids (the backward network uses `R.`). A failure reaches
+  only its own network (`DssConnection.failureScope`), and a network with a shut-down block is
+  never SAFE.
 
 ## Change recipes
 - New label kind in a block: violation conditions come from `WpState.wep` on `label.toStmt()`;
   allow the label in `checkSupported` (`ViolationConditions.kt`) only if `toStmt` is exact, and add
-  a case in `BlockAnalysisPrimitivesTest`.
+  a case in `BlockAnalysisPrimitivesTest`. The backward direction needs an exact inverse in
+  `ProgramReversal.kt` (otherwise it must throw), with a case in `ProgramReversalTest`.
 - New `--dss-*` option: `DssConfig.kt` in `xcfa-cli`, wired in `ConfigToDssChecker.kt`; add it to
   `README.md` here and `XcfaCliDssTest`.

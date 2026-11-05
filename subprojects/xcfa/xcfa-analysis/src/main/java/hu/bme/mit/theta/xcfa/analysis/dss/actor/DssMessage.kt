@@ -28,6 +28,7 @@ enum class DssMessageType {
   EXCEPTION,
   RESULT,
   STATISTIC,
+  RESTRICTION,
 }
 
 enum class DssResult {
@@ -51,13 +52,25 @@ sealed class DssMessage {
         is DssExceptionMessage -> DssMessageType.EXCEPTION
         is DssResultMessage -> DssMessageType.RESULT
         is DssStatisticsMessage -> DssMessageType.STATISTIC
+        is DssRestrictionMessage -> DssMessageType.RESTRICTION
       }
 }
 
+/**
+ * [version] numbers the sender's postconditions, and [inputs] gives the version of each
+ * predecessor's postcondition it was computed from, so `DssMeetingActor` can tell a converged
+ * region apart. A [restricted] postcondition was computed under an imported invariant: it covers
+ * the states of every error path, but is no invariant of the program. An [observerOnly] one reports
+ * `false`, which successors never receive.
+ */
 data class DssPostConditionMessage(
   override val senderId: String,
   val postconditions: List<Expr<BoolType>> = emptyList(),
   val precision: Set<Expr<BoolType>> = emptySet(),
+  val version: Int = 0,
+  val inputs: Map<String, Int> = emptyMap(),
+  val restricted: Boolean = false,
+  val observerOnly: Boolean = false,
 ) : DssMessage() {
 
   constructor(
@@ -72,6 +85,16 @@ data class DssPostConditionMessage(
 data class DssViolationConditionMessage(
   override val senderId: String,
   val violationCondition: Expr<BoolType>? = null,
+) : DssMessage()
+
+/**
+ * A formula covering the states of every error path at the entry of [targetIds], which conjoin it
+ * to their preconditions. Only `DssMeetingActor` sends it.
+ */
+data class DssRestrictionMessage(
+  override val senderId: String,
+  val restriction: Expr<BoolType>,
+  val targetIds: Set<String> = emptySet(),
 ) : DssMessage()
 
 data class DssExceptionMessage(override val senderId: String, val error: Throwable) : DssMessage()

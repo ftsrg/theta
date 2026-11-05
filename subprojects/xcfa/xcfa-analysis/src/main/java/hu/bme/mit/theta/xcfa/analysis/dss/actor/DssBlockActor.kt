@@ -33,6 +33,7 @@ class DssBlockActor(
       DssMessageType.POST_CONDITION -> behavior.onPostCondition(message as DssPostConditionMessage)
       DssMessageType.VIOLATION_CONDITION ->
         behavior.onViolationCondition(message as DssViolationConditionMessage)
+      DssMessageType.RESTRICTION -> behavior.onRestriction(message as DssRestrictionMessage)
       DssMessageType.EXCEPTION,
       DssMessageType.RESULT -> {
         shutdown = true
@@ -47,7 +48,9 @@ class DssBlockActor(
       when (message.type) {
         DssMessageType.POST_CONDITION -> {
           broadcaster.broadcastToObserver(message)
-          broadcaster.broadcastToIds(message, block.successorIds)
+          if (!(message as DssPostConditionMessage).observerOnly) {
+            broadcaster.broadcastToIds(message, block.successorIds)
+          }
         }
         DssMessageType.VIOLATION_CONDITION -> {
           if (block.isRoot) {
@@ -65,6 +68,7 @@ class DssBlockActor(
           broadcaster.broadcastToAll(message)
           shutdown = true
         }
+        DssMessageType.RESTRICTION -> error("Block ${block.id} cannot send restrictions: $message")
       }
     }
   }
@@ -76,7 +80,7 @@ class DssBlockActor(
       broadcast(behavior.initialMessages())
       true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
-      connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))
+      connection.reportFailure(DssExceptionMessage(id, e))
       false
     } finally {
       connection.active.remove(id)

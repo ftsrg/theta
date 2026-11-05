@@ -23,10 +23,14 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ProgramReversal
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.findBlockRun
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.followPath
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
@@ -79,19 +83,45 @@ fun combineInvariants(
     }
   )
 
-/** The error path, followed block by block from the root's reported condition. */
+/**
+ * Invariants of the original program from a backward network's (DSS on [reversal]) at quiescence.
+ * Those over-approximate the states that can reach an error, so their complements contain the
+ * entry's states and are closed under the program's steps. Ones over temporaries are left out.
+ */
+fun backwardInvariants(
+  reversal: ProgramReversal,
+  blockGraph: BlockGraph,
+  witnesses: Map<String, DssBlockWitness>,
+): DssInvariants {
+  val reversed = combineInvariants(reversal.procedure, blockGraph, witnesses).invariants
+  return DssInvariants(
+    reversal.original.locs.associateWith { location ->
+      val states = reversal.reversedOf[location]?.let(reversed::get) ?: return@associateWith null
+      val reachesError = Or(states)
+      val vars = ExprUtils.getVars(reachesError)
+      if (vars.any { it in reversal.temporaries || DssAuxVars.isAux(it) }) null
+      else listOf(Not(reachesError))
+    }
+  )
+}
+
+/**
+ * The error path, followed block by block from [start]'s reported [conditions] (by default the
+ * root's), with [initial] the state at [start]'s entry.
+ */
 fun stitchViolationPath(
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
   initial: Valuation,
   solver: Solver,
   maxBlocks: Int = 10_000,
+  start: Block = blockGraph.root,
+  conditions: List<Expr<BoolType>>? = null,
 ): List<XcfaEdge>? {
   val blocksById = blockGraph.blocks.associateBy { it.id }
-  val root = blockGraph.root
-  return witnesses[root.id]?.reported?.firstNotNullOfOrNull { condition ->
+  return (conditions ?: witnesses[start.id]?.reported)?.firstNotNullOfOrNull { condition ->
     val path = mutableListOf<XcfaEdge>()
-    var block = root
+    var block = start
     var current = condition
     var state = initial
     repeat(maxBlocks) {

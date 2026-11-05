@@ -81,6 +81,19 @@ object DssAuxVars {
     vars.forEachIndexed { index, decl -> substitution.put(decl, get(index, decl.type).ref) }
     return substitution.build().apply(expr)
   }
+
+  /** The first index no auxiliary variable of [expr] uses. */
+  fun nextIndex(expr: Expr<*>): Int =
+    collectVars(expr).mapNotNull(::indexOf).maxOrNull()?.plus(1) ?: 0
+
+  /** [expr] with its auxiliary variables moved by [offset], so a conjunction keeps them apart. */
+  fun <T : Type> shift(expr: Expr<T>, offset: Int): Expr<T> {
+    val vars = collectVars(expr)
+    if (vars.isEmpty() || offset == 0) return expr
+    val substitution = BasicSubstitution.builder()
+    for (decl in vars) substitution.put(decl, get(indexOf(decl)!! + offset, decl.type).ref)
+    return substitution.build().apply(expr)
+  }
 }
 
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */

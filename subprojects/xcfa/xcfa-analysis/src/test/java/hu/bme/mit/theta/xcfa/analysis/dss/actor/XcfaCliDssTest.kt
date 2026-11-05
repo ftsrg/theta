@@ -44,6 +44,14 @@ class XcfaCliDssTest {
         .stream()
 
     @JvmStatic
+    fun directedDecompositions(): Stream<Arguments> =
+      listOf("BACKWARD", "BIDIRECTIONAL")
+        .flatMap { direction ->
+          decompositions().toList().map { Arguments.of(direction, *it.get()) }
+        }
+        .stream()
+
+    @JvmStatic
     fun options(): Stream<Arguments> =
       listOf(
           listOf("--output", "ALL"),
@@ -55,6 +63,12 @@ class XcfaCliDssTest {
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "PRIORITY"),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "FASTEST"),
           listOf("--dss-checker-backends", "CEGAR,BMC", "--dss-checker-selection", "ROUND_ROBIN"),
+          listOf("--dss-direction", "BACKWARD"),
+          listOf("--dss-direction", "BACKWARD", "--dss-executor", "PROCESS"),
+          listOf("--dss-direction", "BIDIRECTIONAL"),
+          listOf("--dss-direction", "BIDIRECTIONAL", "--dss-share-invariants", "false"),
+          listOf("--dss-direction", "BIDIRECTIONAL", "--dss-executor", "CONCURRENT"),
+          listOf("--dss-direction", "BIDIRECTIONAL", "--dss-executor", "PROCESS"),
         )
         .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
         .stream()
@@ -69,6 +83,18 @@ class XcfaCliDssTest {
     assertTrue(
       dssVerdict(program, "--dss-decomposition", decomposition).contains(expected(program))
     )
+  }
+
+  @ParameterizedTest(name = "{0}, {1} on {2}")
+  @MethodSource("directedDecompositions")
+  fun `every decomposition gives the right verdict in both new directions`(
+    direction: String,
+    decomposition: String,
+    program: String,
+  ) {
+    val verdict =
+      dssVerdict(program, "--dss-direction", direction, "--dss-decomposition", decomposition)
+    assertTrue(verdict.contains(expected(program))) { verdict }
   }
 
   @ParameterizedTest(name = "{0} on {1}")
@@ -134,6 +160,25 @@ class XcfaCliDssTest {
     assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
   }
 
+  /** The complements of the backward invariants must hold at every reachable state. */
+  @Test
+  fun `a SAFE backward run writes location invariants that Theta validates`() {
+    val witness = dssWitness("loop", "SEQUENTIAL", "--dss-direction", "BACKWARD")
+    assertTrue(witness.contains("entry_type: 'invariant_set'")) { witness }
+    assertTrue(verdictWithWitness("loop", witness).contains("SafetyResult Safe"))
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["BACKWARD", "BIDIRECTIONAL"])
+  fun `an UNSAFE run of a new direction writes a violation witness that Theta validates`(
+    direction: String
+  ) {
+    val witness = dssWitness("loop_unsafe", "SEQUENTIAL", "--dss-direction", direction)
+    assertTrue(witness.contains("entry_type: 'violation_sequence'")) { witness }
+    assertTrue(witness.contains("type: 'target'")) { witness }
+    assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
+  }
+
   /** The verdict line of a DSS run on [program] against `<property>.prp`. */
   private fun dssVerdict(
     program: String,
@@ -190,8 +235,8 @@ class XcfaCliDssTest {
     }
   }
 
-  /** The SV-COMP witness of a DSS run on [program] with emergent27's settings. */
-  private fun dssWitness(program: String, executor: String): String {
+  /** The SV-COMP witness of a DSS run on [program] with emergent27's settings and [options]. */
+  private fun dssWitness(program: String, executor: String, vararg options: String): String {
     val temp = createTempDirectory()
     try {
       main(
@@ -199,6 +244,7 @@ class XcfaCliDssTest {
           "--svcomp",
           "--backend",
           "DSS",
+          *options,
           "--dss-executor",
           executor,
           "--dss-decomposition",

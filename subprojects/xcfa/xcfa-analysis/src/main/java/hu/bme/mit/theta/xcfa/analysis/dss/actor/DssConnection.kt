@@ -17,11 +17,24 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import java.util.concurrent.BlockingQueue
 
+/**
+ * A failure reaches only the blocks of [failureScope] and the observers, everyone if it is null.
+ */
 class DssConnection(
   private val inbox: BlockingQueue<DssMessage>,
   val broadcaster: DssMessageBroadcaster,
   val active: MutableSet<String>,
+  val failureScope: Set<String>? = null,
 ) {
 
   fun read(): DssMessage = inbox.take()
+
+  fun reportFailure(message: DssExceptionMessage) {
+    if (failureScope == null) {
+      broadcaster.broadcastToAll(message)
+    } else {
+      broadcaster.broadcastToIds(message, failureScope)
+      broadcaster.broadcastToObserver(message)
+    }
+  }
 }

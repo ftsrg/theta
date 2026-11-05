@@ -29,5 +29,6 @@ private val DssMessage.priority: Int
       DssMessageType.EXCEPTION,
       DssMessageType.STATISTIC -> 0
       DssMessageType.POST_CONDITION,
-      DssMessageType.VIOLATION_CONDITION -> 1
+      DssMessageType.VIOLATION_CONDITION,
+      DssMessageType.RESTRICTION -> 1
     }

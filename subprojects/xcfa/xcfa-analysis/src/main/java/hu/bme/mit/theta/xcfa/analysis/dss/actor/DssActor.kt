@@ -41,7 +41,7 @@ abstract class DssWorker(override val id: String) : DssActor {
       broadcast(processMessage(message))
       return true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
-      connection.broadcaster.broadcastToAll(DssExceptionMessage(id, e))
+      connection.reportFailure(DssExceptionMessage(id, e))
       return false
     } finally {
       connection.active.remove(id)

@@ -29,10 +29,13 @@ import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -44,15 +47,22 @@ import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssCoordinatorFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssExprCodec
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssMeet
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssMeetingActor
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssMeetingSide
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssNetwork
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssResult
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssWorkerLauncher
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.PredicateBlockBehavior
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.backwardInvariants
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.combineInvariants
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.fingerprint
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActors
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActorsInProcesses
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssActorsSequentially
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssNetworks
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssNetworksInProcesses
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.runDssNetworksSequentially
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.serveDssBlocks
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.stitchViolationPath
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.violationTrace
@@ -62,10 +72,13 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ProgramReversal
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseBlockGraph
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseProgram
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withSolverConstructionLock
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
@@ -86,6 +99,7 @@ import hu.bme.mit.theta.xcfa.cli.params.DssCegarDomain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
 import hu.bme.mit.theta.xcfa.cli.params.DssConfig
 import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
+import hu.bme.mit.theta.xcfa.cli.params.DssDirection
 import hu.bme.mit.theta.xcfa.cli.params.DssExecutor
 import hu.bme.mit.theta.xcfa.cli.params.OutputLevel
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
@@ -96,6 +110,7 @@ import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.params.toJson
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -143,9 +158,23 @@ fun getDssChecker(
       DssDecomposition.MIN_CUT_ACYCLIC -> MinCutDecomposition(loopHandling = CutLoopHandling.FORBID)
       DssDecomposition.NONE -> SingleBlockDecomposition
     }
-  val blockGraph: BlockGraph = decomposition.decompose(procedure)
-  blockGraph.checkConsistency()
-  logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", blockGraph.getStatistics())
+  val direction = dssConfig.direction
+  val forwardGraph: BlockGraph? =
+    if (direction == DssDirection.BACKWARD) null else decomposition.decompose(procedure)
+  val reversal = if (direction == DssDirection.FORWARD) null else reverseProgram(xcfa)
+  val backwardGraph: BlockGraph? =
+    reversal?.let {
+      // Shared block boundaries are where the two directions can meet
+      val graph =
+        if (forwardGraph != null) reverseBlockGraph(forwardGraph, it)
+        else decomposition.decompose(it.procedure)
+      graph.checkConsistency()
+      graph.withIdPrefix(BACKWARD_BLOCK_PREFIX)
+    }
+  forwardGraph?.checkConsistency()
+  for (graph in listOfNotNull(forwardGraph, backwardGraph)) {
+    logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", graph.getStatistics())
+  }
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
@@ -183,10 +212,11 @@ fun getDssChecker(
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
   val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
-  val behaviorFor = { block: Block ->
+  val bidirectional = direction == DssDirection.BIDIRECTIONAL
+  fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure) = { block: Block ->
     PredicateBlockBehavior(
-        xcfa,
-        procedure,
+        program,
+        programProcedure,
         block,
         checkerRoster,
         useGlobalPredicatePool = dssConfig.globalPredicatePool,
@@ -194,38 +224,69 @@ fun getDssChecker(
         reuseBlockPrecision = dssConfig.reuseBlockPrecision,
         checkerFallback = true,
         solverFactory = dssSolverFactory,
+        trackSummaries = bidirectional,
       )
       .also { behaviors[block.id] = it }
   }
+  val networks =
+    listOfNotNull(
+      forwardGraph?.let { DssNetwork(it, behaviorsOf(xcfa, procedure)) },
+      backwardGraph?.let { DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure)) },
+    )
+  val forwardIndex = if (forwardGraph != null) 0 else null
+  val backwardIndex = if (backwardGraph == null) null else networks.lastIndex
+  val forwardCodec by lazy { DssExprCodec(xcfa) }
+  val backwardCodec by lazy { DssExprCodec(reversal!!.xcfa) }
+  val backwardIds = backwardGraph?.blocks?.mapTo(hashSetOf()) { it.id }.orEmpty()
+  val codecOf = { id: String -> if (id in backwardIds) backwardCodec else forwardCodec }
 
   if (dssConfig.workerPort != 0) {
-    val blocks = blockGraph.blocks.associateBy { it.id }
+    val blocks =
+      networks
+        .flatMap { network -> network.blockGraph.blocks.map { it.id to (it to network) } }
+        .toMap()
     serveDssBlocks(
       dssConfig.workerPort,
       dssConfig.workerIndex,
-      blockGraph.fingerprint(),
-      dssConfig.workerBlocks.associateWith { behaviorFor(blocks.getValue(it)) },
-      DssExprCodec(xcfa),
+      fingerprint(networks.map { it.blockGraph }),
+      dssConfig.workerBlocks.associateWith { id ->
+        blocks.getValue(id).let { (block, network) -> network.behaviorFor(block) }
+      },
+      codecOf,
     )
     kotlin.system.exitProcess(0)
   }
 
+  var meeting: DssMeetingActor? = null
+  val coordinator: DssCoordinatorFactory? =
+    if (!bidirectional) null
+    else
+      { connection ->
+        DssMeetingActor(
+            connection,
+            procedure,
+            DssMeetingSide(forwardGraph!!, procedure.locs.associateWith { it }),
+            DssMeetingSide(backwardGraph!!, reversal!!.originalOf),
+            dssSolverFactory,
+            sharedVars = procedure.vars + xcfa.globalVars.map { it.wrappedVar },
+            shareInvariants = dssConfig.shareInvariants,
+          )
+          .also { meeting = it }
+      }
+
   val processWitnesses = ConcurrentHashMap<String, DssBlockWitness>()
-  val dssResult =
+  val dssRun =
     try {
       when (dssConfig.executor) {
         DssExecutor.CONCURRENT ->
-          runDssActors(
-            blockGraph,
-            behaviorFor = behaviorFor,
-            maxParallelBlocks = dssConfig.maxParallelBlocks,
-          )
-        DssExecutor.SEQUENTIAL -> runDssActorsSequentially(blockGraph, behaviorFor = behaviorFor)
+          runDssNetworks(networks, coordinator, maxParallelBlocks = dssConfig.maxParallelBlocks)
+        DssExecutor.SEQUENTIAL -> runDssNetworksSequentially(networks, coordinator)
         DssExecutor.PROCESS ->
-          runDssActorsInProcesses(
-            blockGraph,
+          runDssNetworksInProcesses(
+            networks.map { it.blockGraph },
             getDssWorkerLauncher(config, dssConfig),
-            DssExprCodec(xcfa),
+            codecOf,
+            coordinator,
             witnesses = processWitnesses,
           )
       }
@@ -248,8 +309,19 @@ fun getDssChecker(
           runCatching { behavior.witness() }.getOrNull()?.let { id to it }
         }
         .toMap()
-  when (dssResult) {
-    DssResult.SAFE -> SafetyResult.safe(combineInvariants(procedure, blockGraph, witnesses))
+  meeting?.failure?.let {
+    logger.write(Logger.Level.INFO, "DSS: the two directions stopped meeting: %s\n", it)
+  }
+  when (dssRun.result) {
+    DssResult.SAFE ->
+      SafetyResult.safe(
+        when (dssRun.network) {
+          forwardIndex -> combineInvariants(procedure, forwardGraph!!, witnesses)
+          backwardIndex -> backwardInvariants(reversal!!, backwardGraph!!, witnesses)
+          // A cut of disjoint summaries: neither network's invariants are known to hold
+          else -> DssInvariants(procedure.locs.associateWith { null })
+        }
+      )
     DssResult.UNSAFE -> {
       val initial =
         ImmutableValuation.from(
@@ -257,23 +329,60 @@ fun getDssChecker(
             .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
             .toMap()
         )
-      val path = stitchViolationPath(blockGraph, witnesses, initial, dssSolverFactory, logger)
+      val path =
+        stitchViolationPath(dssSolverFactory, logger) { solver ->
+          when (dssRun.network) {
+            forwardIndex -> stitchViolationPath(forwardGraph!!, witnesses, initial, solver)
+            // The reversed program starts at the error, in any state
+            backwardIndex ->
+              stitchViolationPath(backwardGraph!!, witnesses, ImmutableValuation.empty(), solver)
+                ?.let(reversal!!::originalPath)
+            else ->
+              meeting?.meet?.let { meet ->
+                meetPath(meet, forwardGraph!!, backwardGraph!!, reversal!!, witnesses, solver)
+              }
+          }
+        }
       val trace = violationTrace(xcfa, procedure.initLoc, path.orEmpty(), initial)
       SafetyResult.unsafe(trace, EmptyProof.getInstance())
     }
   }
 }
 
-private fun stitchViolationPath(
-  blockGraph: BlockGraph,
+/** Block ids of the backward network, apart from the forward network's. */
+private const val BACKWARD_BLOCK_PREFIX = "R."
+
+/** The path to the meeting state from the backward network, then on to the error. */
+private fun meetPath(
+  meet: DssMeet,
+  forwardGraph: BlockGraph,
+  backwardGraph: BlockGraph,
+  reversal: ProgramReversal,
   witnesses: Map<String, DssBlockWitness>,
-  initial: ImmutableValuation,
+  solver: Solver,
+): List<XcfaEdge>? {
+  fun stitch(graph: BlockGraph, blockId: String, condition: Expr<BoolType>) =
+    stitchViolationPath(
+      graph,
+      witnesses,
+      meet.state,
+      solver,
+      start = graph.blocks.single { it.id == blockId },
+      conditions = listOf(condition),
+    )
+  val toError = stitch(forwardGraph, meet.forwardBlock, meet.forwardCondition) ?: return null
+  val fromEntry = stitch(backwardGraph, meet.backwardBlock, meet.backwardCondition) ?: return null
+  return reversal.originalPath(fromEntry) + toError
+}
+
+private fun stitchViolationPath(
   solverFactory: SolverFactory,
   logger: Logger,
+  stitch: (Solver) -> List<XcfaEdge>?,
 ): List<XcfaEdge>? =
   try {
     withSolverConstructionLock { solverFactory.createSolver() }
-      .use { solver -> stitchViolationPath(blockGraph, witnesses, initial, solver) }
+      .use(stitch)
       .also {
         if (it == null) logger.write(Logger.Level.INFO, "DSS: no violation path to stitch\n")
       }

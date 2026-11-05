@@ -34,6 +34,8 @@ class DssMessageBroadcaster(
 
   fun isEmpty(): Boolean = queuesById.values.all { it.isEmpty() }
 
+  fun isEmpty(ids: Set<String>): Boolean = ids.all { queuesById[it]?.isEmpty() ?: true }
+
   fun broadcastToIds(message: DssMessage, ids: Set<String>) {
     for (id in ids) {
       val queue = requireNotNull(queuesById[id]) { "No connection found for id: $id" }

@@ -61,7 +61,14 @@ const val DEFAULT_DSS_SOLVER = "Z3"
 /** The solver of the concurrent executor, which needs a thread-safe one. */
 const val CONCURRENT_DSS_SOLVER = "Z3:new"
 
-/** CPAchecker's `DssBlockAnalysis`, running a Theta checker on the extracted block. */
+/**
+ * CPAchecker's `DssBlockAnalysis`, running a Theta checker on the extracted block.
+ *
+ * With [trackSummaries], postconditions carry their version and inputs, and an analysis without
+ * exit states reports `false` to the observers, so `DssMeetingActor` can certify converged regions.
+ * A restriction (`DssRestrictionMessage`) is conjoined to every start state; violation conditions
+ * stay exact, as they are computed from the block's own paths only.
+ */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
   private val sourceProcedure: XcfaProcedure,
@@ -72,6 +79,7 @@ class PredicateBlockBehavior(
   private val reuseBlockPrecision: Boolean = false,
   private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
+  private val trackSummaries: Boolean = false,
 ) : DssBlockBehavior {
 
   private data class Summary(val state: Expr<BoolType>, val precision: Set<Expr<BoolType>>) {
@@ -129,6 +137,16 @@ class PredicateBlockBehavior(
   private val violationRecords = mutableListOf<DssViolationRecord>()
   private val reportedViolationConditions = mutableListOf<Expr<BoolType>>()
 
+  /** The conjunction of all received restrictions; only ever strengthened. */
+  private var restriction: Expr<BoolType> = True()
+  private var postconditionVersion = 0
+  private val inputVersions = LinkedHashMap<String, Int>()
+  private val restrictedInputs = HashSet<String>()
+
+  /** Exit states under a restriction cover the error paths only: no program invariant. */
+  private val restricted: Boolean
+    get() = restriction != True() || restrictedInputs.isNotEmpty()
+
   override fun initialMessages(): Collection<DssMessage> = runInitialAnalysis()
 
   override fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage> =
@@ -137,6 +155,15 @@ class PredicateBlockBehavior(
   override fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage> =
     if (storeViolationCondition(message)) analyzeViolationCondition(message.senderId)
     else emptyList()
+
+  /** A stronger start state can only refute more, so only received conditions are re-analyzed. */
+  override fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> {
+    if (operators.isLeq(restriction, message.restriction)) return emptyList()
+    restriction = And(restriction, message.restriction)
+    val canAnalyze = block.isRoot || preconditions.isNotEmpty()
+    return if (violationConditions.isNotEmpty() && canAnalyze) analyzePrecondition()
+    else emptyList()
+  }
 
   private fun top() = Summary(True(), startPrecision)
 
@@ -147,8 +174,11 @@ class PredicateBlockBehavior(
   fun runInitialAnalysis(): Collection<DssMessage> {
     return when (val result = run(top(), violationCondition = null)) {
       is RunResult.Safe ->
-        if (!block.isRoot || result.postcondition == False()) emptyList()
-        else reportPostconditions(listOf(Summary(result.postcondition, result.precision)))
+        if (!block.isRoot) emptyList()
+        else
+          reportPostconditions(
+            listOf(Summary(result.postcondition, result.precision)).filter { it.state != False() }
+          )
       is RunResult.Unsafe -> {
         containsViolationInsideBlock = true
         result.path?.let {
@@ -165,6 +195,9 @@ class PredicateBlockBehavior(
    */
   fun storePrecondition(message: DssPostConditionMessage): Boolean {
     val received = message.postconditions.map { Summary(it, message.precision) }
+    inputVersions[message.senderId] = message.version
+    if (message.restricted) restrictedInputs += message.senderId
+    else restrictedInputs -= message.senderId
     val stored = preconditions.put(message.senderId, received.toMutableList())
     return stored == null || !statesEqual(received, stored)
   }
@@ -242,7 +275,8 @@ class PredicateBlockBehavior(
         if (resetPrecisionForEveryRun || start.isTop) startPrecision
         else combinePrecisionIfPossible() ?: start.precision
       // Without the start state's atoms, the block-end abstraction can forget the precondition
-      val startState = start.copy(precision = precision + listOf(start.state).collectPreds())
+      val startAtoms = listOf(start.state, restriction).collectPreds()
+      val startState = start.copy(precision = precision + startAtoms)
 
       when (val result = run(startState, violationCondition)) {
         is RunResult.Safe -> {
@@ -322,7 +356,10 @@ class PredicateBlockBehavior(
       extractBlockXcfa(
         sourceProcedure,
         block,
-        precondition = start.state.takeUnless { start.isTop },
+        precondition =
+          (if (restriction == True()) start.state else And(start.state, restriction)).takeUnless {
+            it == True()
+          },
         violationCondition = violationCondition,
         keepSpecificationTargets = keepSpecificationTargets,
       )
@@ -344,7 +381,7 @@ class PredicateBlockBehavior(
     }
     val proof = result.asSafe().proof
     // Witness invariants need a start state that covers the block's entries
-    if (recordInvariants) {
+    if (recordInvariants && restriction == True()) {
       invariantsByStart[start.state] =
         proof
           .getPartitions()
@@ -488,13 +525,18 @@ class PredicateBlockBehavior(
   }
 
   private fun reportPostconditions(summaries: List<Summary>): Collection<DssMessage> {
-    if (summaries.isEmpty()) return emptyList()
+    if (summaries.isEmpty() && !trackSummaries) return emptyList()
     val unique = deduplicateStates(summaries)
     return listOf(
       DssPostConditionMessage(
         block.id,
-        unique.map { it.state },
+        unique.map { it.state }.ifEmpty { listOf(False()) },
         unique.flatMapTo(linkedSetOf()) { it.precision },
+        version = if (trackSummaries) ++postconditionVersion else 0,
+        inputs = if (trackSummaries) inputVersions.toMap() else emptyMap(),
+        restricted = restricted,
+        // Successors keep the sender's older states instead, which still cover the exit
+        observerOnly = unique.isEmpty(),
       )
     )
   }
@@ -530,6 +572,7 @@ class PredicateBlockBehavior(
 
   /** Invariants from start states that cover the block's real entries, else from top. */
   private fun invariants(): Map<XcfaLocation, List<Expr<BoolType>>>? {
+    if (restricted) return null
     val stored = preconditions.values.flatten().map { it.state }.distinct()
     val cover =
       when {

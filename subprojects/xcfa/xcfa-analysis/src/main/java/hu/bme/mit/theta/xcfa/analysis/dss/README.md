@@ -32,6 +32,8 @@ Only single-procedure programs and error-location reachability are supported.
 | Option | Default | Meaning |
 |---|---|---|
 | `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
+| `--dss-direction` | `FORWARD` | `FORWARD`, `BACKWARD` (DSS on the reversed program), `BIDIRECTIONAL` (both at once, see [Directions](#directions)) |
+| `--dss-share-invariants` | `true` | `BIDIRECTIONAL`: conjoin each direction's converged summaries to the other direction's preconditions |
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one |
 | `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once) |
 | `--dss-cegar-domain` | `PRED_CART` | Domain of the `CEGAR` checkers: `PRED_CART`, or `EXPL` tracking the variables of the predicates DSS passes as precision (reported back as `v = v` atoms) |
@@ -45,14 +47,58 @@ The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding cras
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.
 `PROCESS` runs any solver in parallel, at the price of one JVM per worker.
 
+## Directions
+
+**Backward** is DSS on the reversed program (`reverseProgram`, `ProgramReversal.kt`). There,
+`__rev_init` leads to every error location, and the original entry leads to `__rev_err`;
+locations that cannot reach an error are left out. An assignment `x := e` becomes
+`assume x == e; havoc x`, and with `x` in `e`, `havoc t; assume x == e[t/x]; x := t; havoc t`.
+The weakest existential precondition of a reversed label is the strongest postcondition of the
+original, so:
+
+* the reversed program's violation conditions are exact sets of states that the entry reaches;
+* its postconditions over-approximate the states that can reach an error.
+
+Labels without an exact reversal throw. The complements of the backward invariants are the SAFE
+witness invariants (those over temporaries are left out), and violation paths are mapped back to
+the program.
+
+**Bidirectional** runs both networks in one run (`runDssNetworks`, `runDssNetworksSequentially`,
+`runDssNetworksInProcesses`). Backward block ids are prefixed with `R.`, and the backward blocks
+are the forward ones reversed (`reverseBlockGraph`), so the two share every block boundary.
+
+* Each network reaches SAFE by its own quiescence.
+* A failing network leaves the other one running.
+* The first verdict wins; a contradicting one fails the run.
+
+`DssMeetingActor` sees both networks' messages:
+
+* **UNSAFE** where a forward and a backward violation condition intersect at one location. Their
+  auxiliary variables are kept apart.
+* **Certified summaries.** Postconditions carry a version number and the version of each input
+  they were computed from. Take a region of blocks that contains every predecessor of its members,
+  where each member's latest postcondition was computed from inputs that cover its predecessors'
+  latest ones. This region is a fixpoint, so it covers every error path's states at each location
+  whose incoming blocks all belong to it.
+* **SAFE** when locations where certified summaries are disjoint, together with those that cannot
+  reach an error, cut every path from the entry to an error.
+* **Shared invariants.** With `--dss-share-invariants`, a certified summary is sent
+  (`DssRestrictionMessage`) to the other direction's blocks that start at the same location, and
+  they conjoin it to their start states. The error paths stay the same, and violation conditions
+  are unaffected, as they are computed from a block's own paths. A postcondition under a restriction
+  is no program invariant, so such blocks report no witness invariants.
+
+A SAFE verdict from a cut comes without invariants.
+
 ## Packages
 
 * `dss.decomposition` — `Block`, `BlockGraph` and the decompositions.
 * `dss.analysis` — block extraction (`extractBlockXcfa`), violation conditions
   (`computeViolationCondition`, `DssAuxVars`), postconditions, solver-backed operators,
-  precisions, the checker roster.
+  precisions, the checker roster, the program reversal (`reverseProgram`, `reverseBlockGraph`).
 * `dss.actor` — the actor network: `DssBlockActor` + `PredicateBlockBehavior` (CPAchecker's
-  `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses.
+  `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses, and for several
+  networks `DssNetwork` and `DssMeetingActor`.
 * `xcfa-cli` — `--backend DSS` (`ConfigToDssChecker.kt`, `DssConfig`).
 
 Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depend on `xcfa-cli`.
@@ -87,6 +133,9 @@ states. As in CPAchecker's `AlwaysReplacePreconditionHandler`, a postcondition r
 stored from its sender, every analysis starts from all stored preconditions, and a predecessor that
 has not sent anything yet counts as top; a block stops only when a sender repeats its states.
 
+The meeting actor trusts only message contents: the versions of a certified region, never timing,
+so its SAFE holds under every executor. A query it cannot decide disables it, never the networks.
+
 Termination is not guaranteed, in CPAchecker either: a loop block can keep refuting ever longer
 violation conditions while refinement finds new predicates.
 
@@ -99,3 +148,7 @@ violation conditions while refinement finds new predicates.
 * A solver query DSS itself cannot decide gives an unknown verdict.
 * Witness invariants appear only at C statements that start an XCFA edge; without every block's
   records, an UNSAFE verdict has an empty trace.
+* `BACKWARD` and `BIDIRECTIONAL` reject a program whose labels have no exact reversal, also where
+  `FORWARD` would not compute a violation condition over them.
+* A SAFE verdict proven by a bidirectional cut, or by a network under restrictions, carries few or
+  no witness invariants.

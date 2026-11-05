@@ -41,7 +41,8 @@ class DssVisualizationActor(
       DssMessageType.EXCEPTION -> sawFinalMessage = true
       DssMessageType.STATISTIC -> statsReceivedFrom.add(message.senderId)
       DssMessageType.POST_CONDITION,
-      DssMessageType.VIOLATION_CONDITION -> {}
+      DssMessageType.VIOLATION_CONDITION,
+      DssMessageType.RESTRICTION -> {}
     }
     if (sawFinalMessage && statsReceivedFrom.size >= numberOfBlocks) {
       shutdown = true

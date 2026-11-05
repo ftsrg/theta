@@ -15,36 +15,75 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
-/** CPAchecker's `DssObserverWorker`: waits for a `RESULT` and every block's `STATISTIC`. */
+/**
+ * CPAchecker's `DssObserverWorker`: waits for a `RESULT` and every block's `STATISTIC`.
+ *
+ * With several [networks] (block ids per network), a failure ends only its own network: the run
+ * fails once every network has, and the first `RESULT` wins. A later, different `RESULT` means one
+ * network is unsound, so the run fails instead of picking one.
+ */
 class DssObserverActor(
   id: String,
   override val connection: DssConnection,
   private val numberOfBlocks: Int,
+  private val networks: List<Set<String>> = emptyList(),
 ) : DssWorker(id) {
 
   private var shutdown = false
   private var result: DssResult? = null
   private var failure: Throwable? = null
+  private var disagreement: Throwable? = null
+  private val failedNetworks = mutableSetOf<Int>()
   private val statsReceivedFrom = mutableSetOf<String>()
+
+  /** The sender of the first `RESULT`. */
+  var resultSender: String? = null
+    private set
 
   override fun shutdownRequested(): Boolean = shutdown
 
   override fun processMessage(message: DssMessage): Collection<DssMessage> {
     when (message.type) {
-      DssMessageType.RESULT -> result = (message as DssResultMessage).result
+      DssMessageType.RESULT -> {
+        val received = (message as DssResultMessage).result
+        if (result == null) {
+          result = received
+          resultSender = message.senderId
+        } else if (received != result) {
+          disagreement =
+            IllegalStateException(
+              "DSS networks disagree: $result from $resultSender, $received from ${message.senderId}"
+            )
+          shutdown = true
+        }
+      }
       DssMessageType.EXCEPTION -> {
-        failure = (message as DssExceptionMessage).error
-        shutdown = true
+        if (failure == null) failure = (message as DssExceptionMessage).error
+        val network = networks.indexOfFirst { message.senderId in it }
+        if (networks.size <= 1 || network < 0) shutdown = true
+        else {
+          failedNetworks += network
+          if (failedNetworks.size == networks.size) shutdown = true
+        }
       }
       DssMessageType.STATISTIC -> statsReceivedFrom.add(message.senderId)
       DssMessageType.POST_CONDITION,
-      DssMessageType.VIOLATION_CONDITION -> {}
+      DssMessageType.VIOLATION_CONDITION,
+      DssMessageType.RESTRICTION -> {}
     }
-    if (result != null && statsReceivedFrom.size >= numberOfBlocks) {
+    if (result != null && allStatisticsReceived()) {
       shutdown = true
     }
     return emptyList()
   }
+
+  /** A failed network's failing block never answers, so only the others are waited for. */
+  private fun allStatisticsReceived(): Boolean =
+    if (networks.size <= 1) statsReceivedFrom.size >= numberOfBlocks
+    else
+      networks.withIndex().all { (index, ids) ->
+        index in failedNetworks || statsReceivedFrom.containsAll(ids)
+      }
 
   override fun broadcast(messages: Collection<DssMessage>) {
     check(messages.isEmpty()) { "Observer never produces a response, but got: $messages" }
@@ -56,7 +95,10 @@ class DssObserverActor(
   }
 
   fun verdict(): DssResult {
+    disagreement?.let { throw it }
+    val found = result
+    if (networks.size > 1 && found != null) return found
     failure?.let { throw IllegalStateException(it.message, it) }
-    return result ?: error("Analysis finished but no result is present.")
+    return found ?: error("Analysis finished but no result is present.")
   }
 }

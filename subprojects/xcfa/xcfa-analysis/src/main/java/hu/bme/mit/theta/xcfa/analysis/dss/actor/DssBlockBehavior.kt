@@ -24,5 +24,7 @@ interface DssBlockBehavior {
 
   fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage>
 
+  fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> = emptyList()
+
   fun witness(): DssBlockWitness? = null
 }

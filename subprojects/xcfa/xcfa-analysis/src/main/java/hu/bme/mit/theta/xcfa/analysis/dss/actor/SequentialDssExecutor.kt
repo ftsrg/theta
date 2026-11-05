@@ -28,21 +28,41 @@ fun runDssActorsSequentially(
   blockGraph: BlockGraph,
   behaviorFor: (Block) -> DssBlockBehavior,
   visualizationLog: MutableList<DssLogEntry>? = null,
-): DssResult {
+): DssResult =
+  runDssNetworksSequentially(listOf(DssNetwork(blockGraph, behaviorFor)), null, visualizationLog)
+    .result
+
+private fun executorId(networks: List<DssNetwork>, index: Int) =
+  if (networks.size == 1) SEQUENTIAL_EXECUTOR_ID else "$SEQUENTIAL_EXECUTOR_ID-$index"
+
+/**
+ * [runDssActorsSequentially] for several [networks]: a network is SAFE once its own queues are
+ * empty after a round, unless one of its blocks has shut down (it failed).
+ */
+fun runDssNetworksSequentially(
+  networks: List<DssNetwork>,
+  coordinator: DssCoordinatorFactory? = null,
+  visualizationLog: MutableList<DssLogEntry>? = null,
+): DssRun {
+  checkUniqueBlockIds(networks)
+  val separate = networks.size > 1
   val active = mutableSetOf<String>()
-  val extraIds = if (visualizationLog != null) setOf(SEQUENTIAL_VISUALIZER_ID) else emptySet()
+  val blockIds = networks.flatMap { it.blockIds }
+  val extraIds =
+    listOfNotNull(
+      SEQUENTIAL_VISUALIZER_ID.takeIf { visualizationLog != null },
+      COORDINATOR_ID.takeIf { coordinator != null },
+    )
   val inboxes =
-    (blockGraph.blocks.map { it.id }.sorted() + SEQUENTIAL_OBSERVER_ID + extraIds).associateWith {
+    (blockIds.sorted() + SEQUENTIAL_OBSERVER_ID + extraIds).associateWith {
       // Arrival order, so the final messages can't end the visualizer's run early
       if (it == SEQUENTIAL_VISUALIZER_ID) LinkedBlockingQueue<DssMessage>()
       else createDssMessageQueue()
     }
+  val blockIdSet = blockIds.toSet()
   val connectionsForBroadcaster =
     inboxes.mapValues { (id, queue) ->
-      val role =
-        if (id == SEQUENTIAL_OBSERVER_ID || id == SEQUENTIAL_VISUALIZER_ID) DssActorRole.OBSERVER
-        else DssActorRole.BLOCK
-      role to queue
+      (if (id in blockIdSet) DssActorRole.BLOCK else DssActorRole.OBSERVER) to queue
     }
   val broadcaster = DssMessageBroadcaster(connectionsForBroadcaster)
 
@@ -50,41 +70,56 @@ fun runDssActorsSequentially(
     DssObserverActor(
       SEQUENTIAL_OBSERVER_ID,
       DssConnection(inboxes.getValue(SEQUENTIAL_OBSERVER_ID), broadcaster, active),
-      blockGraph.blocks.size,
+      blockIds.size,
+      if (separate) networks.map { it.blockIds } else emptyList(),
     )
   val blockActors =
-    blockGraph.blocks.associate { block ->
-      block.id to
-        DssBlockActor(
-          block,
-          DssConnection(inboxes.getValue(block.id), broadcaster, active),
-          behaviorFor(block),
-        )
-    }
+    networks
+      .flatMap { network ->
+        network.blockGraph.blocks.map { block ->
+          block.id to
+            DssBlockActor(
+              block,
+              DssConnection(
+                inboxes.getValue(block.id),
+                broadcaster,
+                active,
+                network.blockIds.takeIf { separate },
+              ),
+              network.behaviorFor(block),
+            )
+        }
+      }
+      .toMap()
   val visualizer =
     visualizationLog?.let {
       DssVisualizationActor(
         SEQUENTIAL_VISUALIZER_ID,
         DssConnection(inboxes.getValue(SEQUENTIAL_VISUALIZER_ID), broadcaster, active),
-        blockGraph.blocks.size,
+        blockIds.size,
         it,
       )
     }
+  val coordinatorActor =
+    coordinator?.invoke(DssConnection(inboxes.getValue(COORDINATOR_ID), broadcaster, active))
   val workers: Map<String, DssWorker> =
     blockActors +
       (SEQUENTIAL_OBSERVER_ID to observer) +
-      listOfNotNull(visualizer).associateBy { it.id }
+      listOfNotNull(visualizer, coordinatorActor).associateBy { it.id }
+  // The coordinator's own id may differ from its queue's
+  fun workerOf(queueId: String) =
+    if (queueId == COORDINATOR_ID) coordinatorActor!! else workers.getValue(queueId)
 
   blockActors.values.forEach { it.start() }
 
   // Round-robin, so a self-feeding loop block can't starve the others
   fun hasWorkLeft() =
     !observer.shutdownRequested() ||
-      inboxes.any { (id, queue) -> !workers.getValue(id).shutdownRequested() && queue.isNotEmpty() }
+      inboxes.any { (id, queue) -> !workerOf(id).shutdownRequested() && queue.isNotEmpty() }
   while (hasWorkLeft()) {
     var processedAny = false
     for ((id, queue) in inboxes) {
-      val worker = workers.getValue(id)
+      val worker = workerOf(id)
       if (worker.shutdownRequested()) {
         queue.clear()
         continue
@@ -93,10 +128,29 @@ fun runDssActorsSequentially(
       processedAny = true
       worker.processOneMessage(message)
     }
-    if (!processedAny && !observer.shutdownRequested()) {
-      broadcaster.broadcastToAll(DssResultMessage(SEQUENTIAL_EXECUTOR_ID, DssResult.SAFE))
+    if (observer.shutdownRequested()) continue
+    if (!separate) {
+      if (!processedAny) {
+        broadcaster.broadcastToAll(DssResultMessage(SEQUENTIAL_EXECUTOR_ID, DssResult.SAFE))
+      }
+      continue
+    }
+    // A RESULT already sent sits in every live block's queue, so no network looks quiet then
+    val quiet =
+      networks.indices.firstOrNull { index ->
+        val ids = networks[index].blockIds
+        ids.none { blockActors.getValue(it).shutdownRequested() } &&
+          ids.all { inboxes.getValue(it).isEmpty() }
+      }
+    if (quiet != null) {
+      broadcaster.broadcastToAll(DssResultMessage(executorId(networks, quiet), DssResult.SAFE))
+    } else {
+      check(processedAny) { "DSS networks stopped without a verdict" }
     }
   }
 
-  return observer.verdict()
+  return DssRun(
+    observer.verdict(),
+    networkOf(networks, observer.resultSender) { executorId(networks, it) },
+  )
 }

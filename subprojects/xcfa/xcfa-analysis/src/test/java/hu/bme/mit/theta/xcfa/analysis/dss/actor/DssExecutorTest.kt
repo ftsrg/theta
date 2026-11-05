@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
@@ -93,6 +94,59 @@ class DssExecutorTest {
     assertEquals(DssResult.UNSAFE, executor.runEcho(chain(), violatingBlock = "B"))
     assertEquals(DssResult.UNSAFE, executor.runEcho(join(), violatingBlock = "C"))
     assertEquals(DssResult.UNSAFE, executor.runEcho(selfLoop(), violatingBlock = "X"))
+  }
+
+  enum class NetworkExecutor(val run: (List<DssNetwork>) -> DssRun) {
+    CONCURRENT({ runDssNetworks(it) }),
+    SEQUENTIAL({ runDssNetworksSequentially(it) }),
+  }
+
+  private class FailingBehavior : DssBlockBehavior {
+    override fun initialMessages(): Collection<DssMessage> = error("analysis failed")
+
+    override fun onPostCondition(message: DssPostConditionMessage) = initialMessages()
+
+    override fun onViolationCondition(message: DssViolationConditionMessage) = initialMessages()
+  }
+
+  @ParameterizedTest
+  @EnumSource(NetworkExecutor::class)
+  fun `a failing network leaves the other one to reach SAFE`(executor: NetworkExecutor) {
+    val failing = DssNetwork(chain().withIdPrefix("F.")) { FailingBehavior() }
+    val working = DssNetwork(join()) { EchoBlockAnalysis(it.id) }
+    val run =
+      assertTimeoutPreemptively<DssRun>(Duration.ofSeconds(10)) {
+        executor.run(listOf(failing, working))
+      }
+    assertEquals(DssRun(DssResult.SAFE, 1), run)
+  }
+
+  @ParameterizedTest
+  @EnumSource(NetworkExecutor::class)
+  fun `a run fails when all its networks fail`(executor: NetworkExecutor) {
+    val first = DssNetwork(chain().withIdPrefix("F.")) { FailingBehavior() }
+    val second = DssNetwork(join()) { FailingBehavior() }
+    assertThrows<IllegalStateException> {
+      assertTimeoutPreemptively<DssRun>(Duration.ofSeconds(10)) {
+        executor.run(listOf(first, second))
+      }
+    }
+  }
+
+  @Test
+  fun `disagreeing verdicts fail the run instead of picking one`() {
+    val queue = createDssMessageQueue()
+    val observer =
+      DssObserverActor(
+        "observer",
+        DssConnection(queue, DssMessageBroadcaster(emptyMap()), mutableSetOf()),
+        numberOfBlocks = 2,
+        networks = listOf(setOf("a"), setOf("b")),
+      )
+    observer.processMessage(DssResultMessage("a", DssResult.SAFE))
+    observer.processMessage(DssResultMessage("b", DssResult.UNSAFE))
+    assertTrue(observer.shutdownRequested())
+    assertThrows<IllegalStateException> { observer.verdict() }
   }
 
   /** Records how many behavior calls overlap; each call takes long enough to overlap if allowed. */

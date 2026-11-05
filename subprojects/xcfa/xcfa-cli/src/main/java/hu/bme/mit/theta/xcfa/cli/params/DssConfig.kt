@@ -43,6 +43,16 @@ enum class DssDecomposition {
   NONE,
 }
 
+/** Which way DSS runs (see `xcfa-analysis's dss/README.md`). */
+enum class DssDirection {
+  /** From the entry: postconditions forward, violation conditions backward. */
+  FORWARD,
+  /** DSS on the reversed program, from the error locations towards the entry. */
+  BACKWARD,
+  /** Both at once, combined where their conditions and summaries meet. */
+  BIDIRECTIONAL,
+}
+
 enum class DssExecutor {
   /** One thread per block; uses `Z3:new`, as legacy Z3 is not thread-safe. */
   CONCURRENT,
@@ -76,6 +86,21 @@ data class DssConfig(
     description = "How to decompose the input procedure into DSS blocks",
   )
   var decomposition: DssDecomposition = DssDecomposition.MERGE,
+  @Parameter(
+    names = ["--dss-direction"],
+    description =
+      "FORWARD, BACKWARD (DSS on the reversed program), or BIDIRECTIONAL (both, meeting where " +
+        "their conditions intersect)",
+  )
+  var direction: DssDirection = DssDirection.FORWARD,
+  @Parameter(
+    names = ["--dss-share-invariants"],
+    description =
+      "--dss-direction BIDIRECTIONAL: conjoin each direction's converged summaries to the other " +
+        "direction's preconditions",
+    arity = 1,
+  )
+  var shareInvariants: Boolean = true,
   @Parameter(
     names = ["--dss-checker-backends"],
     description =

@@ -18,10 +18,14 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.END_TO_END_TIMEOUT
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseBlockGraph
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseProgram
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
@@ -105,6 +109,19 @@ class DssVerdictTest {
         }
         .stream()
     }
+
+    /** Every program, both new directions, the default and an acyclic decomposition. */
+    @JvmStatic
+    fun directionCases(): Stream<Arguments> =
+      programs.keys
+        .flatMap { program ->
+          listOf(Decomposition.LINEAR, Decomposition.MERGE, Decomposition.ACYCLIC).flatMap { d ->
+            Direction.entries.flatMap { direction ->
+              listOf(true, false).map { safe -> Arguments.of(program, d, direction, safe) }
+            }
+          }
+        }
+        .stream()
 
     private fun branchXcfa(safe: Boolean): XCFA =
       xcfa("branch") {
@@ -339,6 +356,68 @@ class DssVerdictTest {
     val xcfa = programs.getValue(program)(safe)
     val blockGraph = decomposition.decompose(xcfa.procedures.single())
     assertEquals(expected(safe), checkDecomposed(xcfa, blockGraph))
+  }
+
+  enum class Direction {
+    BACKWARD,
+    BIDIRECTIONAL,
+    BIDIRECTIONAL_SHARING,
+  }
+
+  /** The verdict of [direction], run as `--dss-direction` runs it. */
+  private fun checkDirection(
+    wholeProgram: XCFA,
+    decomposition: Decomposition,
+    direction: Direction,
+  ): DssRun {
+    val procedure = wholeProgram.procedures.single()
+    val reversal = reverseProgram(wholeProgram)
+    val roster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    val tracked = direction != Direction.BACKWARD
+    fun behaviors(program: XCFA, programProcedure: XcfaProcedure) = { block: Block ->
+      PredicateBlockBehavior(program, programProcedure, block, roster, trackSummaries = tracked)
+    }
+    return assertTimeoutPreemptively<DssRun>(END_TO_END_TIMEOUT) {
+      if (direction == Direction.BACKWARD) {
+        val graph = decomposition.decompose(reversal.procedure).also { it.checkConsistency() }
+        runDssNetworksSequentially(
+          listOf(DssNetwork(graph, behaviors(reversal.xcfa, reversal.procedure)))
+        )
+      } else {
+        val forward = decomposition.decompose(procedure)
+        val backward = reverseBlockGraph(forward, reversal).withIdPrefix("R.")
+        backward.checkConsistency()
+        runDssNetworksSequentially(
+          listOf(
+            DssNetwork(forward, behaviors(wholeProgram, procedure)),
+            DssNetwork(backward, behaviors(reversal.xcfa, reversal.procedure)),
+          ),
+          coordinator = { connection ->
+            DssMeetingActor(
+              connection,
+              procedure,
+              DssMeetingSide(forward, procedure.locs.associateWith { it }),
+              DssMeetingSide(backward, reversal.originalOf),
+              SolverManager.resolveSolverFactory("Z3"),
+              sharedVars = procedure.vars,
+              shareInvariants = direction == Direction.BIDIRECTIONAL_SHARING,
+            )
+          },
+        )
+      }
+    }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, {2}, safe={3}")
+  @MethodSource("directionCases")
+  fun `every direction gives the verdict of the program`(
+    program: String,
+    decomposition: Decomposition,
+    direction: Direction,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    assertEquals(expected(safe), checkDirection(xcfa, decomposition, direction).result)
   }
 
   @Test
