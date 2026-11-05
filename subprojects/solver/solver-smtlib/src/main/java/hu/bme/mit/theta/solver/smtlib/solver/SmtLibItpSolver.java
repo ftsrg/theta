@@ -29,6 +29,7 @@ import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibMathFuncDecls;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpMarker;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
@@ -116,6 +117,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         // Declare the `deref` uninterpreted function (per signature) alongside the ordinary
         // constants; it has no ConstDecl in the assertion of its own (see SmtLibDereferenceDecls).
         consts.addAll(SmtLibDereferenceDecls.collect(assertion));
+        consts.addAll(SmtLibMathFuncDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
         enumStrategy.declareDatatypes(

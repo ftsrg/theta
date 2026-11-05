@@ -28,6 +28,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -103,7 +105,19 @@ fun getPortfolioChecker(
     }
 
   val result =
-    portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+    try {
+      portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
+    } catch (e: ErrorCodeException) {
+      if (e.code != ExitCodes.UNRELIABLE_UNSAFE.code) throw e
+      val unknown =
+        SafetyResult.unknown<
+          ARG<XcfaState<PtrState<*>>, XcfaAction>,
+          Trace<XcfaState<PtrState<*>>, XcfaAction>,
+        >()
+      logger.result("No config gave a reliable verdict")
+      logger.result("%s", unknown.toString())
+      return@SafetyChecker unknown
+    }
 
   logger.result("Config ${result.first.first} succeeded in ${sw.elapsedMillis()} ms")
   logger.benchmark("success-result: ${result.first.first}\n")
