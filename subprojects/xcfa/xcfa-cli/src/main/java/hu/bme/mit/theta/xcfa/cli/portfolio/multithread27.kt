@@ -290,7 +290,7 @@ fun multithreadPortfolio27(
                   YICES,
                   OcDecisionProcedureType.IDL,
                   MemoryModelType.multi,
-                  150_000,
+                  250_000,
                   ptrSizeInMemory = true,
                 )
               // Under flat, checks over static objects need no ghost state, see MemsafetyPass.
@@ -299,7 +299,7 @@ fun multithreadPortfolio27(
                   YICES,
                   OcDecisionProcedureType.IDL,
                   MemoryModelType.flat,
-                  600_000,
+                  500_000,
                   ptrSizeInMemory = true,
                 )
               val config_OC_MEM =

@@ -153,8 +153,7 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
   private val zero = uint.nullValue
   private val one = uint.getValue("1")
 
-  fun reset(): List<XcfaLabel> =
-    listOf(assign(arrived, zero), assign(draining, False()))
+  fun reset(): List<XcfaLabel> = listOf(assign(arrived, zero), assign(draining, False()))
 
   /** Joins the current round, tripping the barrier as its last arrival. */
   fun arrive(): List<XcfaLabel> =
