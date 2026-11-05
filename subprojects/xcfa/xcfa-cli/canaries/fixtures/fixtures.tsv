@@ -286,4 +286,5 @@ strlen_exact.c	efficient	LP64	SAFE:no-overflow	strlen counts the characters befo
 strlen_exact_overflow.c	efficient	LP64	UNSAFE:no-overflow	the exact strlen is not treated as an over-approximated value
 printf_bound.c	efficient	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals
 printf_bound.c	bitvector	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals (bitvector)
+memmove_symbolic_reach.c	bitvector	LP64	UNSAFE	memmove with a symbolic length onto a later overlapping region copies from the last element down
 strlen_after_buffer_stub.c	efficient	LP64	UNKNOWN	strlen is not exact over cells that a buffer stub left stale
