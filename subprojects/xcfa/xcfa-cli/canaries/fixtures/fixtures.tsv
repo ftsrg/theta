@@ -280,3 +280,7 @@ malloc_struct_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a struct ele
 malloc_void_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc of unknown cell count retries under bytes
 scalar_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken local is released on an early return
 thread_result_dangling_local.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread local is released when the thread returns
+fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient), fmod (truncated quotient) and modf (signed fraction, inf) are modeled exactly
+fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
+fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
+dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
