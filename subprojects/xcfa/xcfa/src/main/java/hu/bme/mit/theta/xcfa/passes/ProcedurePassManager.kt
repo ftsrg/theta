@@ -51,7 +51,10 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
-      CLibraryFunctionsPass(parseContext),
+      CLibraryFunctionsPass(
+        parseContext,
+        modelStringLength = property.inputProperty != ErrorDetection.TERMINATION,
+      ),
       // before ReferenceElimination, which folds the `&barrier` handle away
       PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination

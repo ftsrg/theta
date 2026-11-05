@@ -138,7 +138,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "vsnprintf" to Stub(Writes.At(setOf(1))),
         "vasprintf" to Stub(Writes.At(setOf(1))),
         "asprintf" to Stub(Writes.At(setOf(1))),
-        // string/memory inspection -- these only READ, so the return is the whole effect
+        // string/memory inspection -- these only READ, so the return is the whole effect.
+        // CLibraryFunctionsPass models most `strlen` calls exactly; this stub takes the rest.
         "strlen" to Stub(),
         "strnlen" to Stub(),
         "strcmp" to Stub(),
@@ -152,6 +153,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strcspn" to Stub(),
         "strpbrk" to Stub(),
       )
+
+    /** The stubbed calls that write through a pointer, filling only [DEFAULT_FILL_CELLS] cells. */
+    internal val BUFFER_WRITING: Set<String> = STUBS.filterValues { it.writes != Writes.None }.keys
 
     /** How many cells of a written pointee to fill when its extent is not otherwise known. */
     private const val DEFAULT_FILL_CELLS = 1

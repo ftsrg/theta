@@ -282,3 +282,6 @@ overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum ins
 stub_dependent_overflow.c	efficient	LP64	UNKNOWN:no-overflow	an overflow that needs an over-approximated stub value is not reported
 stub_dependent_reach.c	efficient	LP64	UNKNOWN	an error path that needs an over-approximated stub value is not reported
 stub_independent_overflow.c	efficient	LP64	UNSAFE:no-overflow	an overflow that does not use the stub value is still reported
+strlen_exact.c	efficient	LP64	SAFE:no-overflow	strlen counts the characters before the terminator exactly
+strlen_exact_overflow.c	efficient	LP64	UNSAFE:no-overflow	the exact strlen is not treated as an over-approximated value
+strlen_after_buffer_stub.c	efficient	LP64	UNKNOWN	strlen is not exact over cells that a buffer stub left stale
