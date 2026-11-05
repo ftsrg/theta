@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.utils
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
@@ -27,9 +28,18 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
@@ -42,7 +52,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.Obj
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
+import hu.bme.mit.theta.xcfa.model.ParamDirection
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
@@ -184,19 +196,184 @@ fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The type of the block an allocation's result [ret] is bound to in this procedure: the pointee of
- * the typed pointer variable or memory cell (`n->next = (T *) tmp`) it is stored into, or null when
- * there is none or it points to `void`.
+ * The type of the block an allocation's result [ret] is bound to: the pointee of the typed pointer
+ * variable or memory cell (`n->next = (T *) tmp`) it is stored into, or null when there is none or
+ * the bindings disagree (see [blockBinding]).
  */
-fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>): CComplexType? {
-  val target =
-    getEdges().firstNotNullOfOrNull { e ->
-      e.getFlatLabels().firstNotNullOfOrNull { boundTarget(it, ret) ?: boundCell(it, ret) }
-    } ?: return null
-  val type = runCatching { CComplexType.getType(target, parseContext) }.getOrNull()
-  val pointee = (type as? CPointer)?.embeddedType ?: return null
-  return pointee.takeIf { it !is CVoid }
+fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>): CComplexType? =
+  (blockBinding(parseContext, ret) as? BlockBinding.Typed)?.pointee
+
+/** What [blockBinding] found out about the element type of a fresh block. */
+sealed interface BlockBinding {
+  /** Every typed binding of the block agrees on this pointee. */
+  data class Typed(val pointee: CComplexType) : BlockBinding
+
+  /** The block is never bound to a typed pointer and never reaches a use that could access it. */
+  data object Unused : BlockBinding
+
+  /** The bindings disagree, or the block reaches a use whose element type is not known. */
+  data object Unknown : BlockBinding
 }
+
+/** Calls that take a block without accessing it, so they say nothing about its element type. */
+private val NON_ACCESSING_CALLS = setOf("free", "realloc")
+
+/**
+ * The element type of the block an allocation's result [ret] holds. The value is followed through
+ * `void *` variables, from a procedure's return value to the results of its calls, and from call
+ * and thread-start arguments to the callee's parameters, so a wrapper such as `void *xmalloc(n)`
+ * takes the type its callers bind the block to. The callees are still separate procedures here.
+ */
+fun XcfaProcedureBuilder.blockBinding(parseContext: ParseContext, ret: Expr<*>): BlockBinding {
+  val start = (ret as? RefExpr<*>)?.decl as? VarDecl<*> ?: return BlockBinding.Unknown
+  val globals = parent.getVars().map { it.wrappedVar }.toSet()
+  val pointees = mutableListOf<CComplexType>()
+  val seen = mutableSetOf<Pair<XcfaProcedureBuilder, VarDecl<*>>>()
+  val work = ArrayDeque<Pair<XcfaProcedureBuilder, VarDecl<*>>>()
+  fun follow(proc: XcfaProcedureBuilder, v: VarDecl<*>) {
+    if (seen.add(proc to v)) work.add(proc to v)
+  }
+  // Records the value reaching [target]; false when [target] is not a pointer.
+  fun reach(proc: XcfaProcedureBuilder, target: Expr<*>, decl: VarDecl<*>?): Boolean {
+    val type = runCatching { CComplexType.getType(target, parseContext) }.getOrNull()
+    val pointee = (type as? CPointer)?.embeddedType ?: return false
+    when {
+      pointee !is CVoid -> pointees.add(pointee)
+      decl != null -> follow(proc, decl)
+      else -> return false
+    }
+    return true
+  }
+  follow(this, start)
+  while (work.isNotEmpty()) {
+    val (proc, v) = work.removeFirst()
+    if (proc.getParams().any { it.first == v && it.second == ParamDirection.OUT }) {
+      val calls =
+        parent.getProcedures().flatMap { caller ->
+          caller.getEdges().flatMap { it.getAllLabels() }.map { caller to it }
+        }
+      // A thread's result is read through `pthread_join`, which this search does not follow.
+      if (calls.any { (_, l) -> l is StartLabel && l.name == proc.name }) {
+        return BlockBinding.Unknown
+      }
+      val results = calls.filter { (_, l) -> l is InvokeLabel && l.name == proc.name }
+      if (results.isEmpty()) return BlockBinding.Unknown
+      for ((caller, call) in results) {
+        val result = ((call as InvokeLabel).params.firstOrNull() as? RefExpr<*>)?.decl
+        if (result is VarDecl<*>) follow(caller, result) else return BlockBinding.Unknown
+      }
+    }
+    val owners = if (v in globals) parent.getProcedures() else setOf(proc)
+    for (owner in owners) {
+      for (label in owner.getEdges().flatMap { it.getAllLabels() }) {
+        if (!owner.knownUse(label, v, ::reach)) return BlockBinding.Unknown
+      }
+    }
+  }
+  val first = pointees.firstOrNull() ?: return BlockBinding.Unused
+  val flat = parseContext.memoryModel.flatAddressing()
+  val agree =
+    pointees.all {
+      it == first ||
+        (isScalar(it) &&
+          isScalar(first) &&
+          ObjectLayout.cellModelSize(it, flat) == ObjectLayout.cellModelSize(first, flat))
+    }
+  return if (agree) BlockBinding.Typed(first) else BlockBinding.Unknown
+}
+
+/**
+ * Whether [label] uses [v] only in a way [blockBinding] understands: it compares it, copies it to a
+ * pointer (handed to [reach]), or passes it to a call. False when it accesses memory through [v].
+ */
+private fun XcfaProcedureBuilder.knownUse(
+  label: XcfaLabel,
+  v: VarDecl<*>,
+  reach: (XcfaProcedureBuilder, Expr<*>, VarDecl<*>?) -> Boolean,
+): Boolean =
+  when (label) {
+    is StmtLabel ->
+      when (val stmt = label.stmt) {
+        is AssumeStmt -> onlyCompared(stmt.cond, v)
+        is AssignStmt<*> ->
+          !reads(stmt.expr, v) ||
+            (!accesses(stmt.expr, v) &&
+              (reach(this, stmt.varDecl.ref, stmt.varDecl) || onlyCompared(stmt.expr, v)))
+        is MemoryAssignStmt<*, *, *> ->
+          !reads(stmt.deref, v) &&
+            (!reads(stmt.expr, v) || (!accesses(stmt.expr, v) && reach(this, stmt.expr, null)))
+        else -> v !in StmtUtils.getVars(stmt)
+      }
+    is InvokeLabel -> {
+      val args = label.params.drop(argumentStart(label.name, label.params))
+      args.none { reads(it, v) } ||
+        (args.none { accesses(it, v) } &&
+          (label.name in NON_ACCESSING_CALLS || passToCallee(label.name, label.params, v, reach)))
+    }
+    is StartLabel ->
+      label.params.none { reads(it, v) } ||
+        (label.params.none { accesses(it, v) } && passToCallee(label.name, label.params, v, reach))
+    else -> true
+  }
+
+/**
+ * Hands the arguments of a call of [name] that read [v] to the callee's parameters. False when the
+ * callee is not a procedure of this XCFA or a parameter is not a pointer.
+ */
+private fun XcfaProcedureBuilder.passToCallee(
+  name: String,
+  params: List<Expr<*>>,
+  v: VarDecl<*>,
+  reach: (XcfaProcedureBuilder, Expr<*>, VarDecl<*>?) -> Boolean,
+): Boolean {
+  val callee = parent.getProcedures().find { it.name == name } ?: return false
+  val calleeParams = callee.getParams()
+  val start = argumentStart(name, params)
+  return params.withIndex().all { (i, arg) ->
+    if (i < start || !reads(arg, v)) return@all true
+    val param = calleeParams.getOrNull(i + 1 - start) ?: return@all false
+    param.second != ParamDirection.OUT && reach(callee, param.first.ref, param.first)
+  }
+}
+
+/**
+ * The index of the first argument in [params] of a call of [name]: 1 after the return slot, 0 for a
+ * void procedure, whose calls pass no return slot (see `ProcedureInlining`).
+ */
+private fun XcfaProcedureBuilder.argumentStart(name: String, params: List<Expr<*>>): Int {
+  val callee = parent.getProcedures().find { it.name == name } ?: return 1
+  return if (callee.getParams().size == params.size + 1) 0 else 1
+}
+
+private fun reads(expr: Expr<*>, v: VarDecl<*>): Boolean = ExprUtils.getVars(expr).contains(v)
+
+/** Whether [expr] accesses memory through [v] or takes the address of [v]. */
+private fun accesses(expr: Expr<*>, v: VarDecl<*>): Boolean =
+  when (expr) {
+    is Dereference<*, *, *>,
+    is Reference<*, *> -> reads(expr, v)
+    else -> expr.ops.any { accesses(it, v) }
+  }
+
+/** Whether [expr] reads [v] only as a pointer value that is compared. */
+private fun onlyCompared(expr: Expr<*>, v: VarDecl<*>, compared: Boolean = false): Boolean =
+  when (expr) {
+    is RefExpr<*> -> expr.decl != v || compared
+    is Dereference<*, *, *>,
+    is Reference<*, *> -> !reads(expr, v)
+    else -> {
+      val comparison =
+        expr is EqExpr<*> ||
+          expr is NeqExpr<*> ||
+          expr is LtExpr<*> ||
+          expr is LeqExpr<*> ||
+          expr is GtExpr<*> ||
+          expr is GeqExpr<*>
+      expr.ops.all { onlyCompared(it, v, compared || comparison) }
+    }
+  }
+
+private fun isScalar(type: CComplexType): Boolean = type !is CStruct && type !is CArray
 
 /**
  * The value [label] stores an allocation's result [ret] into memory as, or null. The value, not the

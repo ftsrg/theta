@@ -164,7 +164,7 @@ typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an 
 typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
 malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
 malloc_subobject_copy.c	efficient	ILP32	SAFE	a struct copy into a malloc'd block writes its own sub-objects
-malloc_untyped_subobjects.c	efficient	ILP32	SAFE	an untyped malloc whose sub-objects are reached falls back to flat
+malloc_untyped_subobjects.c	efficient	ILP32	SAFE	a wrapper malloc of unknown length whose sub-objects are reached falls back to flat
 malloc_member_array_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	an array member of a malloc'd struct is a valid sub-object
 malloc_cell_subobjects.c	efficient	ILP32	SAFE	a malloc stored into a struct field is typed by it and gets its sub-objects
 malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated
@@ -275,3 +275,4 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+heap_oob_wrapper.c	efficient	ILP32	UNSAFE:valid-memsafety	a block from a void * wrapper takes the element type of its callers	flat
