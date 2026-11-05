@@ -321,6 +321,8 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
+  /** Set by the portfolio for the configs it runs, so a config without a verdict can hand over. */
+  var portfolioStep: Boolean = false,
   @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",

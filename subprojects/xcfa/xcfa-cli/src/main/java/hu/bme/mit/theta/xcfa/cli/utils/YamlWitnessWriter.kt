@@ -118,13 +118,19 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             }
           }
         if (trace is Trace<*, *>) {
+          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>
+          val lasso =
+            if (property.inputProperty == ErrorDetection.TERMINATION)
+              XcfaTraceConcretizer.concretizeLasso(trace, cexSolverFactory, parseContext)
+            else null
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-            XcfaTraceConcretizer.concretize(
-              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-              cexSolverFactory,
-              parseContext,
-              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-            )
+            lasso?.trace
+              ?: XcfaTraceConcretizer.concretize(
+                trace,
+                cexSolverFactory,
+                parseContext,
+                wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+              )
 
           val witness =
             violationWitnessFromConcreteTrace(
@@ -134,6 +140,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               property,
               parseContext,
               witnessfile,
+              lasso?.cycleStart,
             )
 
           if (witness.content.isEmpty()) {
@@ -451,6 +458,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
+    cycleStart: Int?,
   ): YamlWitness {
     // last state is cycle_head, find its earliest occurrence
     // stem is everything beforehand
@@ -458,28 +466,29 @@ class YamlWitnessWriter : XcfaWitnessWriter {
 
     val cycleHead = concrTrace.states.last()
     val cycleHeadFirst =
-      concrTrace.states
-        .indexOfFirst {
-          it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-            it.sGlobal == cycleHead.sGlobal
-        }
-        .let { index ->
-          if (index == concrTrace.states.size - 1) {
-            // we go backwards, and find a candidate.
-            val revIdx =
-              1 +
-                concrTrace.states.subList(0, concrTrace.states.size - 1).reversed().indexOfFirst {
-                  it.processes.values.map { it.locs } ==
-                    cycleHead.processes.values.map { it.locs } &&
-                    it.sGlobal.toMap().all { (key, value) ->
-                      cycleHead.sGlobal.toMap()[key] == value
-                    }
-                }
-            concrTrace.states.size - 1 - revIdx
-          } else {
-            index
+      cycleStart
+        ?: concrTrace.states
+          .indexOfFirst {
+            it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+              it.sGlobal == cycleHead.sGlobal
           }
-        }
+          .let { index ->
+            if (index == concrTrace.states.size - 1) {
+              // we go backwards, and find a candidate.
+              val revIdx =
+                1 +
+                  concrTrace.states.subList(0, concrTrace.states.size - 1).reversed().indexOfFirst {
+                    it.processes.values.map { it.locs } ==
+                      cycleHead.processes.values.map { it.locs } &&
+                      it.sGlobal.toMap().all { (key, value) ->
+                        cycleHead.sGlobal.toMap()[key] == value
+                      }
+                  }
+              concrTrace.states.size - 1 - revIdx
+            } else {
+              index
+            }
+          }
     if (cycleHeadFirst == -1) {
       error("Lasso not found")
     }
@@ -697,6 +706,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
+    cycleStart: Int? = null,
   ): YamlWitness =
     when (property.inputProperty) {
       ErrorDetection.TERMINATION -> {
@@ -707,6 +717,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           property,
           parseContext,
           witnessfile,
+          cycleStart,
         )
       }
 

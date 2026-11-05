@@ -68,7 +68,7 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
 
   // Floating-point — double
   DBL_DIG("DBL_DIG", { CComplexType.getSignedInt(it).getValue("15") }),
-  DBL_EPSILON("DBL_EPSILON", { CComplexType.getDouble(it).getValue("1.1102230246251568e-16") }),
+  DBL_EPSILON("DBL_EPSILON", { CComplexType.getDouble(it).getValue("2.220446049250313e-16") }),
   DBL_MANT_DIG("DBL_MANT_DIG", { CComplexType.getSignedInt(it).getValue("53") }),
   DBL_MAX("DBL_MAX", { CComplexType.getDouble(it).getValue("1.7976931348623157e+308") }),
   DBL_MAX_10_EXP("DBL_MAX_10_EXP", { CComplexType.getSignedInt(it).getValue("308") }),
@@ -82,13 +82,13 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
 
   // Floating-point — float
   FLT_DIG("FLT_DIG", { CComplexType.getSignedInt(it).getValue("6") }),
-  FLT_EPSILON("FLT_EPSILON", { CComplexType.getFloat(it).getValue("1.19209290e-07F") }),
+  FLT_EPSILON("FLT_EPSILON", { CComplexType.getFloat(it).getValue("1.19209290e-07") }),
   FLT_GUARD("FLT_GUARD", { CComplexType.getSignedInt(it).getValue("1") }),
   FLT_MANT_DIG("FLT_MANT_DIG", { CComplexType.getSignedInt(it).getValue("24") }),
-  FLT_MAX("FLT_MAX", { CComplexType.getFloat(it).getValue("3.40282347e+38F") }),
+  FLT_MAX("FLT_MAX", { CComplexType.getFloat(it).getValue("3.40282347e+38") }),
   FLT_MAX_10_EXP("FLT_MAX_10_EXP", { CComplexType.getSignedInt(it).getValue("38") }),
   FLT_MAX_EXP("FLT_MAX_EXP", { CComplexType.getSignedInt(it).getValue("128") }),
-  FLT_MIN("FLT_MIN", { CComplexType.getFloat(it).getValue("1.17549435e-38F") }),
+  FLT_MIN("FLT_MIN", { CComplexType.getFloat(it).getValue("1.17549435e-38") }),
   FLT_MIN_10_EXP("FLT_MIN_10_EXP", { CComplexType.getSignedInt(it).getValue("-37") }),
   FLT_MIN_EXP("FLT_MIN_EXP", { CComplexType.getSignedInt(it).getValue("-125") }),
   FLT_NORMALIZE("FLT_NORMALIZE", { CComplexType.getSignedInt(it).getValue("1") }),
