@@ -271,10 +271,10 @@ public final class ObjectLayout {
     }
 
     /**
-     * The byte size `sizeof` reports outside the bytes model: what is in the type, unpadded (a
+     * The byte size of [type]'s cells outside the bytes model: what is in the type, unpadded (a
      * union's, its largest member's). Under [flat] a fixed-size array counts every element, as it
      * is laid out inline, and a flexible array member nothing; otherwise it is the one cell holding
-     * its base.
+     * its base, which is also what a struct's array member counts for.
      */
     public static int cellModelSize(CComplexType type, boolean flat) {
         if (flat && type instanceof CArray array) {
