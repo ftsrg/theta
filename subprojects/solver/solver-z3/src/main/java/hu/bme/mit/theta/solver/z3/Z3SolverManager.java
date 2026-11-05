@@ -26,6 +26,7 @@ public final class Z3SolverManager extends SolverManager {
 
     private static final String NAME = "Z3:new";
     private static final String NAME_DEPRECATED = "Z3:4.13";
+    private static final String NAME_PRESOLVE = "Z3:new-presolve";
 
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
@@ -38,13 +39,16 @@ public final class Z3SolverManager extends SolverManager {
 
     @Override
     public boolean managesSolver(final String name) {
-        return NAME.equals(name) || NAME_DEPRECATED.equals(name);
+        return NAME.equals(name) || NAME_DEPRECATED.equals(name) || NAME_PRESOLVE.equals(name);
     }
 
     @Override
     public SolverFactory getSolverFactory(final String name) {
         checkArgument(managesSolver(name));
-        return new ManagedFactory(Z3SolverFactory.getInstance());
+        return new ManagedFactory(
+                NAME_PRESOLVE.equals(name)
+                        ? Z3SolverFactory.getPresolveInstance()
+                        : Z3SolverFactory.getInstance());
     }
 
     @Override

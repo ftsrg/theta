@@ -51,6 +51,7 @@ import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
 import java.util.ArrayList;
@@ -59,13 +60,17 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public final class Z3SolverTest {
+public class Z3SolverTest {
+
+    protected SolverFactory solverFactory() {
+        return Z3SolverFactory.getInstance();
+    }
 
     private Solver solver;
 
     @BeforeEach
     public void setup() {
-        solver = Z3SolverFactory.getInstance().createSolver();
+        solver = solverFactory().createSolver();
     }
 
     @Test
@@ -91,7 +96,7 @@ public final class Z3SolverTest {
 
     @Test
     public void testTrack() {
-        final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
+        final UCSolver solver = solverFactory().createUCSolver();
         final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
         final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
 
