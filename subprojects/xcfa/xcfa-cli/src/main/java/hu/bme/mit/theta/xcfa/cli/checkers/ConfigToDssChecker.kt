@@ -182,6 +182,14 @@ fun getDssChecker(
   dssConfig.checkerBackends
     .firstOrNull { it !in DSS_CHECKER_BACKENDS }
     ?.let { throw IllegalArgumentException("--dss-checker-backends: $it cannot check DSS blocks") }
+  // Bounded proofs keep path variables whose names recur across runs, so the solver would conflate
+  // them when the meeting actor intersects two summaries
+  require(
+    direction != DssDirection.BIDIRECTIONAL || dssConfig.checkerBackends.all { it == Backend.CEGAR }
+  ) {
+    "--dss-direction BIDIRECTIONAL needs --dss-checker-backends CEGAR: the summaries of " +
+      "${dssConfig.checkerBackends.filter { it != Backend.CEGAR }} cannot be certified"
+  }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER

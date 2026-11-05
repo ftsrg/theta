@@ -289,7 +289,11 @@ class PredicateBlockBehavior(
           if (!discardSummary) {
             val summary =
               run(startState, violationCondition = null, keepSpecificationTargets = false)
-            if (summary is RunResult.Safe && summary.postcondition != False()) {
+            // Dropping these states would leave the postcondition short of what its inputs name
+            check(summary is RunResult.Safe) {
+              "Block ${block.id}: the run without targets reached an error location: $summary"
+            }
+            if (summary.postcondition != False()) {
               summaries += Summary(summary.postcondition, summary.precision)
             }
           }

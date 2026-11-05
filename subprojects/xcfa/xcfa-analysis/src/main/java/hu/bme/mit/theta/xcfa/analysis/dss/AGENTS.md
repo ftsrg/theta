@@ -35,9 +35,12 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   variables and `DssAuxVars`; locations travel by index. New fields need matching changes in
   `DssProcessExecutor.kt`. Each block has the codec of its own program; the reversed program has
   its own variables (temporaries) and locations.
-- A postcondition's `inputs` must name exactly the stored versions its analysis started from, and
-  an analysis without exit states must still report `false` (`observerOnly`): `DssMeetingActor`'s
-  SAFE relies on both (`trackSummaries`).
+- A postcondition's `inputs` must name exactly the stored versions its analysis started from, it
+  must cover every exit state of those (a start state whose run yields no summary fails the
+  analysis), and an analysis without exit states must still report `false` (`observerOnly`):
+  `DssMeetingActor`'s SAFE relies on all three (`trackSummaries`).
+- `DssMeetingActor` intersects summaries of different runs, so they may only contain program
+  variables, temporaries and `DssAuxVars`; this is why `BIDIRECTIONAL` takes CEGAR checkers only.
 - A restriction only ever strengthens a block's start states and never enters a violation
   condition; a block under one, or fed by one, reports no witness invariants.
 - Networks of one run need unique block ids (the backward network uses `R.`). A failure reaches

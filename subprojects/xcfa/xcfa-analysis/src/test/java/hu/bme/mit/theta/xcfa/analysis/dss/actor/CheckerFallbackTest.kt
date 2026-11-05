@@ -108,6 +108,23 @@ class CheckerFallbackTest {
     assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
   }
 
+  /** Its exit states would be missing from a postcondition that still names its inputs. */
+  @Test
+  fun `a run without targets that is not safe fails the analysis`() {
+    val targetsKept: CheckerFactory = { _ -> cegar(program) }
+    val block =
+      program.procedures.single().let { procedure ->
+        PredicateBlockBehavior(
+          program,
+          procedure,
+          SingleBlockDecomposition.decompose(procedure).blocks.single(),
+          DssCheckerRoster(listOf(targetsKept)),
+          trackSummaries = true,
+        )
+      }
+    assertThrows(IllegalStateException::class.java) { block.analyzePrecondition() }
+  }
+
   @Test
   fun `without the flag the crash propagates`() {
     assertThrows(SolverBroke::class.java) {

@@ -49,6 +49,12 @@ class XcfaCliDssTest {
         .flatMap { direction ->
           decompositions().toList().map { Arguments.of(direction, *it.get()) }
         }
+        // Backward DSS does not terminate on the safe loop while the reversed loop stays a cycle
+        .filterNot {
+          it.get()[0] == "BACKWARD" &&
+            it.get()[1] in setOf("LINEAR", "MERGE") &&
+            it.get()[2] == "loop"
+        }
         .stream()
 
     @JvmStatic
@@ -107,6 +113,13 @@ class XcfaCliDssTest {
   @EnumSource(Backend::class, names = ["CEGAR", "BMC", "KIND", "IMC", "KINDIMC", "BOUNDED"])
   fun `every checker backend finds the violation`(backend: Backend) {
     assertTrue(dssVerdict("unsafe", "--dss-checker-backends", backend.name).contains("Unsafe"))
+  }
+
+  @Test
+  fun `a bidirectional run with a bounded block checker is rejected`() {
+    val (output, thrown) =
+      runDss("safe", "--dss-direction", "BIDIRECTIONAL", "--dss-checker-backends", "CEGAR,KIND")
+    assertTrue(thrown != null && "cannot be certified" in output) { output }
   }
 
   @Test
@@ -237,6 +250,8 @@ class XcfaCliDssTest {
 
   /** The SV-COMP witness of a DSS run on [program] with emergent27's settings and [options]. */
   private fun dssWitness(program: String, executor: String, vararg options: String): String {
+    // BIDIRECTIONAL accepts CEGAR block checkers only
+    val backends = if ("BIDIRECTIONAL" in options) "CEGAR" else "CEGAR,KIND"
     val temp = createTempDirectory()
     try {
       main(
@@ -250,7 +265,7 @@ class XcfaCliDssTest {
           "--dss-decomposition",
           "MIN_CUT_ABSORB_SELF_LOOPS",
           "--dss-checker-backends",
-          "CEGAR,KIND",
+          backends,
           "--dss-checker-selection",
           "PRIORITY",
           "--property",

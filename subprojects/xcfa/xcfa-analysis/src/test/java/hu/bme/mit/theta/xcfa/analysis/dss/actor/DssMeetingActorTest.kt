@@ -51,7 +51,9 @@ class DssMeetingActorTest {
     }
   }
 
-  /** `init -A-> l1 -B-> l2 -C-> err`, cut by hand so that `l1` and `l2` are block boundaries. */
+  /**
+   * Safe `init -A-> l1 -B-> l2 -C-> err`, cut by hand so that `l1` and `l2` are block boundaries.
+   */
   private val xcfa =
     xcfa("meet") {
       val main =
@@ -60,7 +62,7 @@ class DssMeetingActorTest {
           "y" type Int()
           (init to "l1") { "x" assign "0" }
           ("l1" to "l2") { "x" assign "(+ x 1)" }
-          ("l2" to err) { assume("(= x 1)") }
+          ("l2" to err) { assume("(= x 7)") }
         }
       main.start()
     }
@@ -106,14 +108,19 @@ class DssMeetingActorTest {
     vararg inputs: Pair<String, Int>,
   ) = DssPostConditionMessage(id, listOf(state), version = version, inputs = inputs.toMap())
 
-  /** A converged backward network: `x == 1` reaches the error at `l2`, `x == 0` at `l1`. */
-  private val backwardChain =
+  /** A converged backward network up to `l2`, where `x == 7` reaches the error. */
+  private val backwardToL2 =
     listOf(
       post("R.init", True(), 1),
       post("R.error0", True(), 1, "R.init" to 1),
-      post("R.C", Eq(x, Int(1)), 1, "R.error0" to 1),
-      post("R.B", Eq(x, Int(0)), 1, "R.C" to 1),
+      post("R.C", Eq(x, Int(7)), 1, "R.error0" to 1),
     )
+
+  /** [backwardToL2], and `x == 6` reaching the error from `l1`. */
+  private val backwardChain = backwardToL2 + post("R.B", Eq(x, Int(6)), 1, "R.C" to 1)
+
+  /** A valid but coarse forward summary at `l1`, which meets the backward one there. */
+  private val coarseA = Or(Eq(x, Int(0)), Eq(x, Int(6)))
 
   private fun DssMeetingActor.feed(messages: List<DssMessage>): List<DssMessage> =
     messages.flatMap { processMessage(it) }
@@ -130,8 +137,7 @@ class DssMeetingActorTest {
   fun `disjoint certified summaries on a cut prove SAFE`() {
     val actor = actor()
     actor.feed(backwardChain)
-    val answer =
-      actor.feed(listOf(post("A", Eq(x, Int(0)), 1), post("B", Eq(x, Int(6)), 1, "A" to 1)))
+    val answer = actor.feed(listOf(post("A", Eq(x, Int(0)), 1)))
     assertEquals(listOf(DssResult.SAFE), answer.verdicts())
   }
 
@@ -139,30 +145,30 @@ class DssMeetingActorTest {
   @Test
   fun `a postcondition computed from an outdated input is not certified`() {
     val actor = actor()
-    actor.feed(backwardChain)
+    actor.feed(backwardToL2)
     val early =
       actor.feed(
         listOf(
-          post("A", Eq(x, Int(5)), 1),
-          post("A", Eq(x, Int(0)), 2),
-          post("B", Eq(x, Int(6)), 1, "A" to 1),
+          post("A", Or(Eq(x, Int(0)), Eq(x, Int(5))), 1),
+          post("A", Or(Eq(x, Int(0)), Eq(x, Int(3))), 2),
+          post("B", Or(Eq(x, Int(1)), Eq(x, Int(6))), 1, "A" to 1),
         )
       )
     assertTrue(early.verdicts().isEmpty()) { "$early" }
-    val converged = actor.feed(listOf(post("B", Eq(x, Int(6)), 2, "A" to 2)))
+    val converged = actor.feed(listOf(post("B", Or(Eq(x, Int(1)), Eq(x, Int(4))), 2, "A" to 2)))
     assertEquals(listOf(DssResult.SAFE), converged.verdicts())
   }
 
   @Test
   fun `an input covering the newest postcondition counts as converged`() {
     val actor = actor()
-    actor.feed(backwardChain)
+    actor.feed(backwardToL2)
     val answer =
       actor.feed(
         listOf(
           post("A", Or(Eq(x, Int(0)), Eq(x, Int(5))), 1),
           post("A", Eq(x, Int(0)), 2),
-          post("B", Eq(x, Int(6)), 1, "A" to 1),
+          post("B", Or(Eq(x, Int(1)), Eq(x, Int(6))), 1, "A" to 1),
         )
       )
     assertEquals(listOf(DssResult.SAFE), answer.verdicts())
@@ -171,8 +177,8 @@ class DssMeetingActorTest {
   @Test
   fun `a postcondition without all its inputs is not certified`() {
     val actor = actor()
-    actor.feed(backwardChain)
-    val answer = actor.feed(listOf(post("A", Eq(x, Int(0)), 1), post("B", Eq(x, Int(6)), 1)))
+    actor.feed(backwardToL2)
+    val answer = actor.feed(listOf(post("A", Eq(x, Int(0)), 1), post("B", Eq(x, Int(1)), 1)))
     assertTrue(answer.verdicts().isEmpty()) { "$answer" }
   }
 
@@ -214,23 +220,23 @@ class DssMeetingActorTest {
     val backwardAnswer = actor.feed(backwardChain).filterIsInstance<DssRestrictionMessage>()
     // l2 and l1 are certified backward: forward C and B start there
     assertEquals(
-      setOf(setOf("C") to Eq(x, Int(1)), setOf("B") to Eq(x, Int(0))),
+      setOf(setOf("C") to Eq(x, Int(7)), setOf("B") to Eq(x, Int(6))),
       backwardAnswer.map { it.targetIds to it.restriction }.toSet(),
     )
-    val first = actor.feed(listOf(post("A", Eq(x, Int(0)), 1)))
+    val first = actor.feed(listOf(post("A", coarseA, 1)))
     assertEquals(
-      listOf(setOf("R.A") to Eq(x, Int(0))),
+      listOf(setOf("R.A") to coarseA),
       first.filterIsInstance<DssRestrictionMessage>().map { it.targetIds to it.restriction },
     )
-    val repeated = actor.feed(listOf(post("A", Eq(x, Int(0)), 2)))
+    val repeated = actor.feed(listOf(post("A", coarseA, 2)))
     assertTrue(repeated.isEmpty()) { "$repeated" }
-    val unshared = actor.feed(listOf(post("A", Eq(y, Int(0)), 3)))
+    val unshared = actor.feed(listOf(post("A", And(coarseA, Or(Eq(y, Int(0)), Gt(y, Int(0)))), 3)))
     assertTrue(unshared.none { it is DssRestrictionMessage }) { "$unshared" }
   }
 
   @Test
   fun `without sharing, nothing is sent`() {
     val actor = actor(shareInvariants = false)
-    assertTrue(actor.feed(backwardChain + post("A", Eq(x, Int(0)), 1)).isEmpty())
+    assertTrue(actor.feed(backwardChain + post("A", coarseA, 1)).isEmpty())
   }
 }
