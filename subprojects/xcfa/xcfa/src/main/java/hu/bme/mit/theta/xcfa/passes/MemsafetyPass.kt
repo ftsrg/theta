@@ -633,6 +633,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         is NondetLabel -> labels.flatMap { it.derefsWithShortCircuitCond }
         is SequenceLabel -> labels.flatMap { it.derefsWithShortCircuitCond }
         is StartLabel -> params.flatMap { it.derefsWithShortCircuitCond }
+        is FenceLabel -> lock.derefsWithShortCircuitCond
         else -> emptyList()
       }
 

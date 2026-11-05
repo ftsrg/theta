@@ -99,6 +99,10 @@ public class ParseContext {
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
 
+    // (parent address, cell) -> address of the static subobject the cell holds.
+    private final Map<BigInteger, Map<BigInteger, BigInteger>> staticSubObjectAddresses =
+            new LinkedHashMap<>();
+
     // Compile-time base ids of global objects, mapped to the object they are a part of (if any).
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
@@ -306,6 +310,23 @@ public class ParseContext {
         }
         Map<Integer, BigInteger> cells = subObjectCells.get(parentBase);
         return cells == null ? null : cells.get(unitOffset);
+    }
+
+    /**
+     * Records that cell [unit] of the static object at [parentAddress] holds the address of a
+     * static subobject. As an address, it is a constant whatever the program writes to the cell.
+     */
+    public void recordStaticSubObjectAddress(
+            BigInteger parentAddress, BigInteger unit, BigInteger address) {
+        staticSubObjectAddresses
+                .computeIfAbsent(parentAddress, k -> new LinkedHashMap<>())
+                .put(unit, address);
+    }
+
+    /** The address recorded by {@link #recordStaticSubObjectAddress}, or null if there is none. */
+    public BigInteger staticSubObjectAddressAt(BigInteger parentAddress, BigInteger unit) {
+        Map<BigInteger, BigInteger> cells = staticSubObjectAddresses.get(parentAddress);
+        return cells == null ? null : cells.get(unit);
     }
 
     /**

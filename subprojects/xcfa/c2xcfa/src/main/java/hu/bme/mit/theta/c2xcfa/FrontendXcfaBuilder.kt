@@ -88,6 +88,7 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.math.BigInteger
 import java.util.IdentityHashMap
 
@@ -574,7 +575,24 @@ class FrontendXcfaBuilder(
       parent?.let { BigInteger.valueOf(it.first.toLong()) },
     )
     recordObjectAtomicity(base, type)
+    val unit = parent?.second
+    if (unit != null && !parseContext.memoryModel.byteAddressed()) {
+      parseContext.recordStaticSubObjectAddress(
+        staticAddress(parent.first),
+        BigInteger.valueOf(unit.toLong()),
+        staticAddress(base),
+      )
+    }
   }
+
+  private fun staticAddress(base: Int) =
+    BigInteger(
+      FlatMemoryPass.flatBaseValue(
+        base,
+        objectUnits(staticObjects.getValue(base).type),
+        parseContext,
+      )
+    )
 
   /** The static object, and the cell of it, that [objectExpr] is stored in, if any. */
   private fun parentCell(objectExpr: Expr<*>): Pair<Int, Int?>? {
@@ -622,10 +640,16 @@ class FrontendXcfaBuilder(
     }
   }
 
+  /** Sizing a sub-object reads its base from a cell, so it has to go along with that cell. */
   private fun XcfaLabel.isNeededInitWrite(): Boolean {
-    val deref = ((this as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>)?.deref ?: return true
-    val obj = staticObjectBases[deref.array]?.let(staticObjects::get) ?: return true
-    return obj.needsCell(deref.offset.asConstantBigInteger()?.toInt())
+    val cells =
+      ((this as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>)?.let { listOf(it.deref) }
+        ?: ghostWriteIndex?.dereferences
+        ?: return true
+    return cells.all { deref ->
+      val obj = staticObjectBases[deref.array]?.let(staticObjects::get)
+      obj == null || obj.needsCell(deref.offset.asConstantBigInteger()?.toInt())
+    }
   }
 
   private fun giveStructObjectStorage(
