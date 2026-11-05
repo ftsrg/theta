@@ -322,11 +322,14 @@ data class MutexTryLockLabel(
   override fun toStmt(): Stmt =
     when (successful) {
       true -> Assign(cast(successVar, successVar.type), successVar.type.integerOf(0))
-      false -> Assign(cast(successVar, successVar.type), successVar.type.integerOf(1))
+      false -> Assign(cast(successVar, successVar.type), successVar.type.integerOf(EBUSY))
       else -> Skip()
     }
 
   companion object {
+
+    // Linux EBUSY, matching the C frontend's errno definitions.
+    internal const val EBUSY = 16
 
     private const val LABEL = "mutex_trylock"
 
