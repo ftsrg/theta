@@ -198,6 +198,7 @@ public final class ExprSimplifier {
                     .addCase(FpMaxExpr.class, this::simplifyFpMax)
                     .addCase(FpMinExpr.class, this::simplifyFpMin)
                     .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
+                    .addCase(FpMathFuncExpr.class, this::simplifyFpMathFunc)
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
@@ -2262,6 +2263,18 @@ public final class ExprSimplifier {
             return expr.with(op).eval(val);
         }
 
+        return expr.with(op);
+    }
+
+    /** Folds only the exact special values: any other result is the program's libm's to give. */
+    private Expr<FpType> simplifyFpMathFunc(final FpMathFuncExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+        if (op instanceof FpLitExpr lit) {
+            final var special = expr.getFunction().specialValue(lit);
+            if (special.isPresent()) {
+                return special.get();
+            }
+        }
         return expr.with(op);
     }
 
