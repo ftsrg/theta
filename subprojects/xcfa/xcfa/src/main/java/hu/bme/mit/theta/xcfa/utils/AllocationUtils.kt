@@ -405,6 +405,8 @@ fun XcfaProcedureBuilder.memsafetyBound(
   if (parseContext.memoryModel.byteAddressed()) return bytes
   val binding = blockBinding(parseContext, ret)
   if (binding == BlockBinding.Unused) return bytes
+  // Stepping a pointer to a union is refused, so only a union's first cell is ever reached.
+  if ((binding as? BlockBinding.Typed)?.pointee?.let(::containsUnion) == true) return bytes
   val cells =
     (binding as? BlockBinding.Typed)?.let { allocationCells(parseContext, it.pointee, bytes) }
       ?: throw RequiresByteAddressedMemoryException(
@@ -478,6 +480,14 @@ private fun flexibleMemberCells(
     Mul(elements, type.getValue("${CStruct.inlineCells(element)}")),
   )
 }
+
+/** A union's members overlap at offset 0, each spanning its own cells: no one count covers them. */
+fun containsUnion(type: CComplexType): Boolean =
+  when (type) {
+    is CArray -> containsUnion(type.embeddedType)
+    is CStruct -> type.isUnion || type.fields.any { containsUnion(it.get2()) }
+    else -> false
+  }
 
 private fun hasFlexibleMember(type: CComplexType): Boolean =
   when (type) {

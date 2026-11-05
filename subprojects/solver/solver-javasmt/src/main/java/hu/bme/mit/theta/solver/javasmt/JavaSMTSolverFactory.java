@@ -39,6 +39,7 @@ public final class JavaSMTSolverFactory implements SolverFactory {
     private final Solvers solver;
 
     private final Configuration config;
+    private final Configuration itpConfig;
     private final LogManager logger;
     private final ShutdownManager shutdownManager;
 
@@ -82,7 +83,14 @@ public final class JavaSMTSolverFactory implements SolverFactory {
     private JavaSMTSolverFactory(Solvers solver, String[] args) {
         try {
             this.solver = solver;
-            config = Configuration.fromCmdLineArguments(args);
+            itpConfig = Configuration.fromCmdLineArguments(args);
+            // JavaSMT defaults Yices to MCSAT, the only backend that interpolates, but DPLL(T) is
+            // far faster on difference logic.
+            config =
+                    Configuration.builder()
+                            .copyFrom(itpConfig)
+                            .setOption("solver.yices2.solverType", "dpllt")
+                            .build();
             logger = BasicLogManager.create(config);
             shutdownManager = ShutdownManager.create();
         } catch (InvalidConfigurationException e) {
@@ -188,7 +196,7 @@ public final class JavaSMTSolverFactory implements SolverFactory {
         try {
             final SolverContext context =
                     SolverContextFactory.createSolverContext(
-                            config, logger, shutdownManager.getNotifier(), solver);
+                            itpConfig, logger, shutdownManager.getNotifier(), solver);
             final JavaSMTSymbolTable symbolTable = new JavaSMTSymbolTable();
             final JavaSMTTransformationManager transformationManager =
                     new JavaSMTTransformationManager(symbolTable, context);

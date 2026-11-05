@@ -103,10 +103,15 @@ private constructor(
       startEvent: XcfaEvent? = null,
       startHistory: List<String> = listOf(),
       lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
+      allocationSites: AllocationSites? = null,
     ): Thread {
       val passManager =
         ProcedurePassManager(
-          listOf(WitnessOptimizer(params, parseContext), AtomicReadsOneWritePass())
+          listOfNotNull(
+            allocationSites,
+            WitnessOptimizer(params, parseContext),
+            AtomicReadsOneWritePass(),
+          )
         )
       val p = procedure.optimizeFurther(passManager, "${procedure.name}[$pid]", pid.toString())
       return Thread(pid, p, guard, pidVar, startEvent, startHistory, lastWrites)

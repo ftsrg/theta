@@ -68,6 +68,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
+      MemoryFunctionsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
       // optimizing
@@ -91,6 +92,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // Clean up procedures after inlining
       InlinedProcedureRemovalPass()
     ),
+    listOf(ThreadLocalVarPass(parseContext)),
     listOf(
       // again: inlining turns `&(deref B O)` call arguments into assignments the earlier run of
       // this pass could not see, and no reference may survive into the analyses
@@ -136,8 +138,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       )
     } ?: emptyList(),
     listOf(OverflowDetectionPass(property, parseContext)),
-    // spells out the mem* copies before anything below havocs the same objects
-    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
     listOf(AmbiguousMutexPass()),
@@ -156,6 +156,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     // on the finished XCFA, as the portfolio applies it: the mem* calls are spelled out and every
     // other unresolved call is havoced by now, so their accesses are instrumented too
     listOf(DataRaceToReachabilityPass(property, parseContext)),
+    // last: anything before it may still rewrite or instrument dereferences
+    listOf(PtrSizeToMemoryPass(parseContext)),
   )
 
 class NontermValidationPasses(

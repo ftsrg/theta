@@ -54,8 +54,10 @@ import hu.bme.mit.theta.xcfa.utils.strongLiveVars
  * So a failed compare-and-swap, which writes the old value back, or a repeated store of the same
  * value, counts as no effect. Every mutex, thread, call or other label always counts.
  *
- * Only for reachability: it removes spinning forever (termination), and it makes the checked writes
- * atomic (data races).
+ * For reachability and data races only: it removes spinning forever (termination). An access of a
+ * dropped iteration still happens before the back edge's assumption, so its races stay visible; to
+ * keep them, a data race check counts every non-atomic write as an effect instead of making it
+ * atomic to compare it with the old value.
  */
 class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
 
@@ -64,6 +66,8 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
     var ENABLED = true
 
     private var counter = 0
+
+    private val CHECKED_PROPERTIES = setOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.DATA_RACE)
   }
 
   private class Loop(
@@ -77,7 +81,7 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!ENABLED || property.verifiedProperty != ErrorDetection.ERROR_LOCATION) return builder
+    if (!ENABLED || property.verifiedProperty !in CHECKED_PROPERTIES) return builder
     val loops = findLoops(builder)
     if (loops.isEmpty()) return builder
 
@@ -164,8 +168,9 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
    *
    * A write to a global variable or to memory counts only if it changes the stored value: the new
    * value is computed, the old value read and the cell written in one atomic block, and the flag is
-   * set when they differ. Every other label that is not a plain local step (mutex and thread
-   * operations, calls, havocs of globals, nondeterministic choices, ...) always counts.
+   * set when they differ. A data race check does this only for writes already in an atomic block.
+   * Every other label that is not a plain local step (mutex and thread operations, calls, havocs of
+   * globals, nondeterministic choices, ...) always counts.
    */
   private fun instrumentEffects(
     labels: List<XcfaLabel>,
@@ -176,6 +181,8 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
   ): MutableList<XcfaLabel> {
     val result = mutableListOf<XcfaLabel>()
     var inAtomic = startsInAtomic
+
+    fun keepsAccessesApart() = property.verifiedProperty == ErrorDetection.DATA_RACE && !inAtomic
 
     fun mark(condition: Expr<BoolType>?) {
       loops.forEach { loop ->
@@ -206,13 +213,19 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
             is AssumeStmt,
             is SkipStmt -> {}
             is MemoryAssignStmt<*, *, *> -> {
-              checkedWrite(stmt.deref, stmt.expr) {
-                StmtLabel(buildMemoryAssign(stmt.deref, it), metadata = label.metadata)
+              if (keepsAccessesApart()) {
+                mark(null)
+              } else {
+                checkedWrite(stmt.deref, stmt.expr) {
+                  StmtLabel(buildMemoryAssign(stmt.deref, it), metadata = label.metadata)
+                }
+                continue
               }
-              continue
             }
             is AssignStmt<*> ->
-              if (stmt.varDecl in globals) {
+              if (stmt.varDecl in globals && keepsAccessesApart()) {
+                mark(null)
+              } else if (stmt.varDecl in globals) {
                 checkedWrite(stmt.varDecl.ref, stmt.expr) {
                   AssignStmtLabel(stmt.varDecl, it, label.metadata)
                 }

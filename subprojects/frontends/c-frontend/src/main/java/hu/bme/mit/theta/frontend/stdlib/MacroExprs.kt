@@ -57,6 +57,8 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
   MEMORY_ORDER_RELEASE("memory_order_release", { CComplexType.getSignedInt(it).getValue("3") }),
   MEMORY_ORDER_ACQ_REL("memory_order_acq_rel", { CComplexType.getSignedInt(it).getValue("4") }),
   MEMORY_ORDER_SEQ_CST("memory_order_seq_cst", { CComplexType.getSignedInt(it).getValue("5") }),
+  // The GCC predefined spelling of the same order, used with the `__atomic_*` builtins.
+  ATOMIC_SEQ_CST("__ATOMIC_SEQ_CST", { CComplexType.getSignedInt(it).getValue("5") }),
   ATOMIC_FLAG_INIT("ATOMIC_FLAG_INIT", { CComplexType.getSignedInt(it).nullValue }),
 
   // Integer characteristics

@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.solver.AssumingSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
@@ -52,7 +53,7 @@ import org.sosy_lab.java_smt.api.Model.ValueAssignment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverException;
 
-final class JavaSMTSolver implements UCSolver, Solver {
+final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
 
     private final JavaSMTSymbolTable symbolTable;
     private final JavaSMTTransformationManager transformationManager;
@@ -139,6 +140,19 @@ final class JavaSMTSolver implements UCSolver, Solver {
         }
 
         return unsatCore;
+    }
+
+    @Override
+    public SolverStatus checkAssuming(final Expr<BoolType> assumption) {
+        final BooleanFormula term = (BooleanFormula) transformationManager.toTerm(assumption);
+        try {
+            clearState();
+            final boolean unsat = solver.isUnsatWithAssumptions(List.of(term));
+            status = unsat ? SolverStatus.UNSAT : SolverStatus.SAT;
+            return status;
+        } catch (SolverException | InterruptedException e) {
+            throw new JavaSMTSolverException(e);
+        }
     }
 
     @Override
