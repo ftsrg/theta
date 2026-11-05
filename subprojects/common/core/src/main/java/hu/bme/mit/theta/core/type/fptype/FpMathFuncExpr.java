@@ -61,6 +61,8 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
             FpLitExpr zero,
             FpLitExpr one,
             FpLitExpr minusOne,
+            FpLitExpr two,
+            FpLitExpr four,
             FpLitExpr posInf,
             FpLitExpr negInf,
             FpLitExpr nan) {
@@ -70,6 +72,8 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
                     FpExprs.PositiveZero(type),
                     one,
                     one.neg(),
+                    FpUtils.fromString("2", type),
+                    FpUtils.fromString("4", type),
                     FpExprs.PositiveInfinity(type),
                     FpExprs.NegativeInfinity(type),
                     FpExprs.NaN(type));
@@ -87,7 +91,10 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
         SIN("fpmath.sin"),
         COS("fpmath.cos"),
         TANH("fpmath.tanh"),
-        ERF("fpmath.erf");
+        ERF("fpmath.erf"),
+        ACOS("fpmath.acos"),
+        ASIN("fpmath.asin"),
+        ATANH("fpmath.atanh");
 
         private final String label;
 
@@ -148,8 +155,26 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
                     cases.add(new Case(FpAssign(x, c.posInf()), c.one()));
                     cases.add(new Case(FpAssign(x, c.negInf()), c.minusOne()));
                 }
+                case ACOS -> {
+                    cases.add(new Case(outsideUnit(x, c), c.nan()));
+                    cases.add(new Case(FpAssign(x, c.one()), c.zero()));
+                }
+                case ASIN -> {
+                    cases.add(new Case(outsideUnit(x, c), c.nan()));
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                }
+                case ATANH -> {
+                    cases.add(new Case(outsideUnit(x, c), c.nan()));
+                    cases.add(new Case(FpAssign(x, c.one()), c.posInf()));
+                    cases.add(new Case(FpAssign(x, c.minusOne()), c.negInf()));
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                }
             }
             return cases;
+        }
+
+        private static Expr<BoolType> outsideUnit(final Expr<FpType> x, final Consts c) {
+            return Or(Lt(x, c.minusOne()), Gt(x, c.one()));
         }
 
         /** Bounds on the result {@code r} by representable values, beyond the special cases. */
@@ -159,6 +184,8 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
             final Expr<BoolType> finite = Not(Or(IsNan(x), IsInfinite(x)));
             final Expr<BoolType> unitRange = And(Geq(r, c.minusOne()), Leq(r, c.one()));
             final Expr<BoolType> finiteR = Not(Or(IsNan(r), IsInfinite(r)));
+            final Expr<BoolType> inUnit = And(Geq(x, c.minusOne()), Leq(x, c.one()));
+            final Expr<BoolType> strictlyInUnit = And(Gt(x, c.minusOne()), Lt(x, c.one()));
             return switch (this) {
                 case EXP ->
                         List.of(
@@ -188,6 +215,21 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
                                 Imply(notNan, unitRange),
                                 Imply(Gt(x, c.zero()), Geq(r, c.zero())),
                                 Imply(Lt(x, c.zero()), Leq(r, c.zero())));
+                // acos is within [0, pi] and asin within [-pi/2, pi/2]; 4 and 2 bound them.
+                case ACOS -> List.of(Imply(inUnit, And(Geq(r, c.zero()), Leq(r, c.four()))));
+                // Outside [-1, 1] the result is NaN, so the sign rules stop at the domain.
+                case ASIN ->
+                        List.of(
+                                Imply(
+                                        inUnit,
+                                        And(Geq(r, c.two().neg()), Leq(r, c.two()))),
+                                Imply(And(inUnit, Gt(x, c.zero())), Geq(r, c.zero())),
+                                Imply(And(inUnit, Lt(x, c.zero())), Leq(r, c.zero())));
+                case ATANH ->
+                        List.of(
+                                Imply(strictlyInUnit, finiteR),
+                                Imply(And(inUnit, Gt(x, c.zero())), Geq(r, c.zero())),
+                                Imply(And(inUnit, Lt(x, c.zero())), Leq(r, c.zero())));
             };
         }
 

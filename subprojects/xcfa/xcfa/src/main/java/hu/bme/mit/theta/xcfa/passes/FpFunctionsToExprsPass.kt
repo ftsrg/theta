@@ -153,6 +153,19 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     addHandler(arrayOf("copysign", "copysignf", "copysignl")) { builder, callStmt ->
       handleCopysign(builder, callStmt)
     }
+    addHandler(
+      arrayOf(
+        "signbit",
+        "__signbit",
+        "__signbitf",
+        "__signbitl",
+        "__builtin_signbit",
+        "__builtin_signbitf",
+        "__builtin_signbitl",
+      )
+    ) { builder, callStmt ->
+      handleSignbit(builder, callStmt)
+    }
     addMathFunc(arrayOf("exp", "expf", "expl"), Function.EXP)
     addMathFunc(arrayOf("expm1", "expm1f", "expm1l"), Function.EXPM1)
     addMathFunc(arrayOf("log", "logf", "logl"), Function.LOG)
@@ -161,6 +174,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     addMathFunc(arrayOf("cos", "cosf", "cosl"), Function.COS)
     addMathFunc(arrayOf("tanh", "tanhf", "tanhl"), Function.TANH)
     addMathFunc(arrayOf("erf", "erff", "erfl"), Function.ERF)
+    addMathFunc(arrayOf("acos", "acosf", "acosl"), Function.ACOS)
+    addMathFunc(arrayOf("asin", "asinf", "asinl"), Function.ASIN)
+    addMathFunc(arrayOf("atanh", "atanhf", "atanhl"), Function.ATANH)
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
       handleIsnormal(builder, callStmt)
     }
@@ -398,6 +414,40 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       labels +
         StmtLabel(HavocStmt.of(nanSign), metadata = callStmt.metadata) +
         assignFp(callStmt, ret, type, rhs)
+    )
+  }
+
+  /**
+   * `signbit(x)` is only specified as nonzero when the sign bit is set (glibc has returned both 1
+   * and `0x80000000`), and the sign of a NaN is not modeled at all. The result is therefore a
+   * nondeterministic nonzero value for a negative `x`, zero for a positive one, and either for NaN.
+   */
+  private fun handleSignbit(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val ret = callStmt.params[0]
+    Preconditions.checkState(ret is RefExpr<*>)
+    val retType = CComplexType.getType(ret, parseContext)
+    val argType = CComplexType.getType(callStmt.params[1], parseContext)
+    check(argType.smtType is FpType) { "${callStmt.name} is presumed to take a floating type" }
+    val (labels, args) = freshArgs(builder, callStmt, argType, 1)
+    val x = args[0]
+    val retDecl = (ret as RefExpr<*>).decl as VarDecl<*>
+    val zero = TypeUtils.cast(retType.nullValue, retDecl.type)
+    val sign =
+      Or(
+        FpExprs.IsNan(x),
+        IteExpr.of(
+          isNegative(x),
+          Not(AbstractExprs.Eq(retDecl.ref, zero)),
+          AbstractExprs.Eq(retDecl.ref, zero),
+        ),
+      )
+    builder.setOverApproximation()
+    return SequenceLabel(
+      labels +
+        StmtLabel(HavocStmt.of(retDecl), metadata = callStmt.metadata) +
+        StmtLabel(retType.limit(retDecl.ref), metadata = callStmt.metadata) +
+        StmtLabel(Stmts.Assume(sign), metadata = callStmt.metadata)
     )
   }
 

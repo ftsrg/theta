@@ -71,6 +71,13 @@ public class FpMathFuncExprTest {
         assertEquals(d(1), special(Function.COS, NEG_ZERO));
         assertEquals(d(-1), special(Function.TANH, NEG_INF));
         assertEquals(d(1), special(Function.ERF, POS_INF));
+        assertEquals(POS_ZERO, special(Function.ACOS, d(1)));
+        assertTrue(special(Function.ACOS, d(1.5)).isNaN());
+        assertEquals(NEG_ZERO, special(Function.ASIN, NEG_ZERO));
+        assertTrue(special(Function.ASIN, NEG_INF).isNaN());
+        assertEquals(POS_INF, special(Function.ATANH, d(1)));
+        assertEquals(NEG_INF, special(Function.ATANH, d(-1)));
+        assertTrue(special(Function.ATANH, d(2)).isNaN());
         for (final Function f : Function.values()) {
             assertTrue(special(f, NAN).isNaN(), f.getLabel());
         }
@@ -126,10 +133,12 @@ public class FpMathFuncExprTest {
                         Function.LOG1P, StrictMath::log1p,
                         Function.SIN, StrictMath::sin,
                         Function.COS, StrictMath::cos,
-                        Function.TANH, StrictMath::tanh);
+                        Function.TANH, StrictMath::tanh,
+                        Function.ACOS, StrictMath::acos,
+                        Function.ASIN, StrictMath::asin);
         final double[] inputs = {
-            -700, -20, -3, -1.5, -0.999, -0.5, -1e-10, 1e-300, 1e-10, 0.5, 0.999, 1.000001, 3, 20,
-            700, 1e10
+            -700, -20, -3, -1.5, -1, -0.999, -0.5, -1e-10, 1e-300, 1e-10, 0.5, 0.999, 1,
+            1.000001, 3, 20, 700, 1e10
         };
         libm.forEach(
                 (f, op) -> {
@@ -149,5 +158,7 @@ public class FpMathFuncExprTest {
         assertTrue(!holds(Function.TANH.facts(d(3), d(1.5))));
         assertTrue(!holds(Function.LOG.facts(d(0.5), d(0.1))));
         assertTrue(!holds(Function.SIN.facts(POS_INF, d(0))));
+        assertTrue(!holds(Function.ACOS.facts(d(0.5), d(-0.1))));
+        assertTrue(!holds(Function.ATANH.facts(d(0.5), d(-0.5))));
     }
 }
