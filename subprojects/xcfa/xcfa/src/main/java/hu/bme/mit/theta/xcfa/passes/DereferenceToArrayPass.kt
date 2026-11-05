@@ -19,7 +19,6 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -30,7 +29,6 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.xcfa.utils.dereferences
@@ -75,25 +73,13 @@ class DereferenceToArrayPass : ProcedurePass {
     val arrayType = ArrayType.of(derefArrayType, ArrayType.of(derefOffsetType, derefType))
 
     val decl = Decls.Var("__arrays_${derefArrayType}_${derefOffsetType}_${derefType}", arrayType)
-    val (globalDecl, initLabel) =
-      if (zeroInitialized) {
-        val defaultValue =
-          ArrayLitExpr.of(
-            listOf(),
-            cast(arrayType.elemType.defaultValue, arrayType.elemType),
-            arrayType,
-          )
-        XcfaGlobalVar(decl, defaultValue, atomic = true) to AssignStmtLabel(decl, defaultValue)
-      } else {
-        XcfaGlobalVar(decl, atomic = true) to StmtLabel(HavocStmt.of(decl))
-      }
-    xcfa.addVar(globalDecl)
-    xcfa.getInitProcedures().forEach { (procedure, _) ->
-      procedure.initLoc.outgoingEdges.toSet().forEach { edge ->
-        procedure.removeEdge(edge)
-        procedure.addEdge(edge.withLabel(SequenceLabel(listOf(initLabel, edge.label))))
-      }
-    }
+    val zero =
+      ArrayLitExpr.of(
+        listOf(),
+        cast(arrayType.elemType.defaultValue, arrayType.elemType),
+        arrayType,
+      )
+    xcfa.addMemoryGlobals(listOf(decl to zero))
     return decl as VarDecl<out ArrayType2D>
   }
 
