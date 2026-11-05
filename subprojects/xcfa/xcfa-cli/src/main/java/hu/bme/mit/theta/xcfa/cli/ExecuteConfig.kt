@@ -467,6 +467,14 @@ private fun backend(
               }
               .let ResultMapper@{ result ->
                 if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
+                  if (config.backendConfig.portfolioStep) {
+                    logger.benchmark(
+                      "Over-approximating model used: handing over to the next config."
+                    )
+                    exitOnError(config.debugConfig.stacktrace, throwDontExit) {
+                      throw ErrorCodeException(ExitCodes.UNRELIABLE_UNSAFE.code)
+                    }
+                  }
                   // Downgraded before the property or the raw result is printed: output parsers
                   // match on both.
                   logger.benchmark("Over-approximating model used: an unsafe result is unreliable.")
