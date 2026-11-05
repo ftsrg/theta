@@ -1,4 +1,4 @@
-// Transcendental functions are uninterpreted functions constrained by range and special-value
+// Math functions such as exp are uninterpreted functions constrained by range and special-value
 // facts (FpFunctionsToExprsPass). A property that follows from those facts is provable, and so is
 // one that needs only functional consistency (equal arguments give equal results).
 extern void abort(void);

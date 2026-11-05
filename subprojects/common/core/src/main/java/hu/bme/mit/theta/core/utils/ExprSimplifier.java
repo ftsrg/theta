@@ -198,7 +198,7 @@ public final class ExprSimplifier {
                     .addCase(FpMaxExpr.class, this::simplifyFpMax)
                     .addCase(FpMinExpr.class, this::simplifyFpMin)
                     .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
-                    .addCase(FpTranscendentalExpr.class, this::simplifyFpTranscendental)
+                    .addCase(FpMathFuncExpr.class, this::simplifyFpMathFunc)
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
@@ -2266,9 +2266,9 @@ public final class ExprSimplifier {
         return expr.with(op);
     }
 
-    /** Simplifies the operand only: a literal operand is not folded, see FpTranscendentalExpr. */
-    private Expr<FpType> simplifyFpTranscendental(
-            final FpTranscendentalExpr expr, final Valuation val) {
+    /** Simplifies the operand only: a literal operand is not folded, see FpMathFuncExpr. */
+    private Expr<FpType> simplifyFpMathFunc(
+            final FpMathFuncExpr expr, final Valuation val) {
         return expr.with(simplify(expr.getOp(), val));
     }
 

@@ -186,7 +186,7 @@ final class Z3ExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
-                        .addCase(FpTranscendentalExpr.class, this::transformFpTranscendental)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
@@ -866,7 +866,7 @@ final class Z3ExprTransformer {
     }
 
     /** An uninterpreted function per function and sort, named after the operator label. */
-    private com.microsoft.z3legacy.Expr transformFpTranscendental(final FpTranscendentalExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpMathFunc(final FpMathFuncExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         final Sort sort = transformer.toSort(expr.getType());
         final FuncDecl func = context.mkFuncDecl(expr.getOperatorLabel(), new Sort[] {sort}, sort);

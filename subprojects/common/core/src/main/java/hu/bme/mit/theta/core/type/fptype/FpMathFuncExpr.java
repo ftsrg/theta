@@ -31,17 +31,17 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
  * a correctly rounded value need not be what the program's libm returns, and folding one would
  * decide a verdict on a value the program may never compute.
  */
-public final class FpTranscendentalExpr extends UnaryExpr<FpType, FpType> {
+public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
 
     public enum Function {
-        EXP("fpexp"),
-        EXPM1("fpexpm1"),
-        LOG("fplog"),
-        LOG1P("fplog1p"),
-        SIN("fpsin"),
-        COS("fpcos"),
-        TANH("fptanh"),
-        ERF("fperf");
+        EXP("fpmath.exp"),
+        EXPM1("fpmath.expm1"),
+        LOG("fpmath.log"),
+        LOG1P("fpmath.log1p"),
+        SIN("fpmath.sin"),
+        COS("fpmath.cos"),
+        TANH("fpmath.tanh"),
+        ERF("fpmath.erf");
 
         private final String label;
 
@@ -67,18 +67,18 @@ public final class FpTranscendentalExpr extends UnaryExpr<FpType, FpType> {
 
     private final Function function;
 
-    private FpTranscendentalExpr(final Function function, final Expr<FpType> op) {
+    private FpMathFuncExpr(final Function function, final Expr<FpType> op) {
         super(op);
         this.function = checkNotNull(function);
     }
 
-    public static FpTranscendentalExpr of(final Function function, final Expr<FpType> op) {
-        return new FpTranscendentalExpr(function, castFp(op));
+    public static FpMathFuncExpr of(final Function function, final Expr<FpType> op) {
+        return new FpMathFuncExpr(function, castFp(op));
     }
 
-    public static FpTranscendentalExpr create(final Function function, final Expr<?> op) {
+    public static FpMathFuncExpr create(final Function function, final Expr<?> op) {
         checkNotNull(op);
-        return FpTranscendentalExpr.of(function, castFp(op));
+        return FpMathFuncExpr.of(function, castFp(op));
     }
 
     public Function getFunction() {
@@ -97,11 +97,11 @@ public final class FpTranscendentalExpr extends UnaryExpr<FpType, FpType> {
     }
 
     @Override
-    public FpTranscendentalExpr with(final Expr<FpType> op) {
+    public FpMathFuncExpr with(final Expr<FpType> op) {
         if (op == getOp()) {
             return this;
         } else {
-            return FpTranscendentalExpr.of(function, op);
+            return FpMathFuncExpr.of(function, op);
         }
     }
 
@@ -110,7 +110,7 @@ public final class FpTranscendentalExpr extends UnaryExpr<FpType, FpType> {
         if (this == obj) {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
-            final FpTranscendentalExpr that = (FpTranscendentalExpr) obj;
+            final FpMathFuncExpr that = (FpMathFuncExpr) obj;
             return this.function == that.function && this.getOp().equals(that.getOp());
         } else {
             return false;
