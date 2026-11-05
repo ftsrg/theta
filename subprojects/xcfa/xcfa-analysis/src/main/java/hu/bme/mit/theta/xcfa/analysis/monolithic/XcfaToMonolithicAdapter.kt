@@ -59,7 +59,7 @@ abstract class XcfaToMonolithicAdapter(
 
   override val model: XCFA = model.optimizeFurther(furtherPasses)
 
-  protected val intType: Type = CInt.getUnsignedInt(parseContext).smtType
+  protected val intType: Type = ctrlType(parseContext)
 
   init {
     check(
@@ -69,14 +69,7 @@ abstract class XcfaToMonolithicAdapter(
     }
   }
 
-  protected fun smtInt(value: Int): LitExpr<*> =
-    when (intType) {
-      is IntType -> Int(value)
-      is BvType ->
-        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), intType.size)
-
-      else -> error("Unknown integer type: $intType")
-    }
+  protected fun smtInt(value: Int): LitExpr<*> = ctrlLit(intType, value)
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
     if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
@@ -97,3 +90,13 @@ abstract class XcfaToMonolithicAdapter(
       }
       .toList()
 }
+
+/** The type of the control variables (locations, edges): integer or bitvector, as the program. */
+internal fun ctrlType(parseContext: ParseContext): Type = CInt.getUnsignedInt(parseContext).smtType
+
+internal fun ctrlLit(type: Type, value: Int): LitExpr<*> =
+  when (type) {
+    is IntType -> Int(value)
+    is BvType -> BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(value.toLong()), type.size)
+    else -> error("Unknown integer type: $type")
+  }

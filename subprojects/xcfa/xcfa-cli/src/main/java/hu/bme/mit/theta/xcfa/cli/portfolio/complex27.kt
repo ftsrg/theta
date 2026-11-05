@@ -98,6 +98,7 @@ fun complex27(
           itpEnabled = false,
           timeoutMs = timeout,
           bmcSolver = solver,
+          blockEncoding = true,
         ),
         checker,
       )
@@ -114,6 +115,7 @@ fun complex27(
           timeoutMs = timeout,
           bmcSolver = solver,
           indSolver = solver,
+          blockEncoding = true,
         ),
         checker,
       )
@@ -129,6 +131,7 @@ fun complex27(
           itpEnabled = true,
           timeoutMs = timeout,
           itpSolver = solver,
+          blockEncoding = true,
         ),
         checker,
       )

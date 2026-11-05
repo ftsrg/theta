@@ -549,6 +549,11 @@ data class BoundedConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--block-encoding"],
+    description = "One step per loop-free block instead of per edge (single-threaded reachability)",
+  )
+  var blockEncoding: Boolean = false,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),

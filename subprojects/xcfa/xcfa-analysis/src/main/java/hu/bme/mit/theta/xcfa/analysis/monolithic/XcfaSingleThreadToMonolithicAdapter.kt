@@ -32,17 +32,20 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.NonDetStmt
 import hu.bme.mit.theta.core.stmt.SequenceStmt
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -55,21 +58,40 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
 
-class XcfaSingleThreadToMonolithicAdapter(
+class XcfaSingleThreadToMonolithicAdapter
+private constructor(
   model: XCFA,
   property: XcfaProperty,
   parseContext: ParseContext,
-  initValues: Boolean = false,
+  initValues: Boolean,
+  private val blocks: BlockEncoding?,
 ) :
   XcfaToMonolithicAdapter(
     model,
     property,
-    ProcedurePassManager(listOf(DereferenceToArrayPass())),
+    ProcedurePassManager(listOf(DereferenceToArrayPass()) + (blocks?.passes ?: listOf())),
     parseContext,
     initValues,
   ) {
+
+  /** [blockEncoding]: one transition per block instead of per edge (see [BlockEncoding]). */
+  @JvmOverloads
+  constructor(
+    model: XCFA,
+    property: XcfaProperty,
+    parseContext: ParseContext,
+    initValues: Boolean = false,
+    blockEncoding: Boolean = false,
+  ) : this(
+    model,
+    property,
+    parseContext,
+    initValues,
+    if (blockEncoding && property.verifiedProperty == ERROR_LOCATION) BlockEncoding(parseContext)
+    else null,
+  )
 
   private lateinit var locVar: VarDecl<Type>
   private val edgeVar = Decls.Var("__edge_", intType)
@@ -81,7 +103,7 @@ class XcfaSingleThreadToMonolithicAdapter(
       Preconditions.checkArgument(model.initProcedures.size == 1)
       val proc = model.initProcedures.stream().findFirst().orElse(null).first
       Preconditions.checkArgument(
-        proc.edges.map { it.getFlatLabels() }.flatten().none { it !is StmtLabel && it !is NopLabel }
+        proc.edges.flatMap { it.getAllLabels() }.none { it !is StmtLabel && it !is NopLabel }
       )
 
       // Initialize location var, location and edge mappings
@@ -159,9 +181,11 @@ class XcfaSingleThreadToMonolithicAdapter(
             location,
             listOf(
               PredState.of(
-                ExprUtils.simplify(
-                  proof.getInvariant(),
-                  ImmutableValuation.builder().put(locVar, smtInt(index)).build(),
+                withoutChoices(
+                  ExprUtils.simplify(
+                    proof.getInvariant(),
+                    ImmutableValuation.builder().put(locVar, smtInt(index)).build(),
+                  )
                 )
               )
             ),
@@ -207,12 +231,19 @@ class XcfaSingleThreadToMonolithicAdapter(
                 }
               }
             )
-          Pair(location, listOf(PredState.of(ExprUtils.simplify(invariant))))
+          Pair(location, listOf(PredState.of(withoutChoices(ExprUtils.simplify(invariant)))))
         }
         .toMap(),
       true,
     )
   }
+
+  /**
+   * A choice variable of the block encoding is no program variable: such an invariant is dropped.
+   */
+  private fun withoutChoices(invariant: Expr<BoolType>): Expr<BoolType> =
+    if (ExprUtils.getVars(invariant).any { BlockEncoding.CHOICE_PREFIX in it.name }) True()
+    else invariant
 
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()
@@ -226,7 +257,8 @@ class XcfaSingleThreadToMonolithicAdapter(
               it.key.name != "__loc_" &&
                 it.key.name != "__edge_" &&
                 !it.key.name.startsWith("__temp_") &&
-                !it.key.name.startsWith("__saved_")
+                !it.key.name.startsWith("__saved_") &&
+                !it.key.name.startsWith(BlockEncoding.CHOICE_PREFIX)
             }
           )
         )
@@ -240,9 +272,15 @@ class XcfaSingleThreadToMonolithicAdapter(
    */
   fun valToAction(valuation: Valuation): XcfaAction {
     val valMap = valuation.toMap()
+    val edge = edges[valMap.entries.first { it.key.name == "__edge_" }.value.value]
+    if (blocks == null) return XcfaAction(pid = 0, edge = edge)
+    val procedure = model.initProcedures.first().first.name
     return XcfaAction(
-      pid = 0,
-      edge = edges[valMap.entries.first { it.key.name == "__edge_" }.value.value],
+      0,
+      edge.source,
+      edge.target,
+      blocks.expand(procedure, edge, valuation),
+      edge.metadata,
     )
   }
 }
