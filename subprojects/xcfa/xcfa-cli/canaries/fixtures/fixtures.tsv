@@ -275,6 +275,10 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+recursive_call_arg_conversion_safe.c	efficient	LP64	SAFE	a non-inlined call converts its argument to the parameter type (261 -> unsigned char 5)
+recursive_call_arg_conversion_safe.c	bitvector	LP64	SAFE	a non-inlined call converts a wider bitvector argument to the parameter width
+recursive_call_arg_conversion_unsafe.c	efficient	LP64	UNSAFE	the argument conversion of a non-inlined call keeps a reachable error (262 -> 6)
+recursive_call_arg_conversion_unsafe.c	bitvector	LP64	UNSAFE	the argument conversion of a non-inlined call keeps a reachable error (bitvector)
 fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient), fmod (truncated quotient) and modf (signed fraction, inf) are modeled exactly
 fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
 fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
