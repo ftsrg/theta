@@ -30,7 +30,6 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -154,14 +153,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     addHandler(arrayOf("copysign", "copysignf", "copysignl")) { builder, callStmt ->
       handleCopysign(builder, callStmt)
     }
-    addMathFunc(arrayOf("exp", "expf", "expl"), Function.EXP, ::expFacts)
-    addMathFunc(arrayOf("expm1", "expm1f", "expm1l"), Function.EXPM1, ::expm1Facts)
-    addMathFunc(arrayOf("log", "logf", "logl"), Function.LOG, ::logFacts)
-    addMathFunc(arrayOf("log1p", "log1pf", "log1pl"), Function.LOG1P, ::log1pFacts)
-    addMathFunc(arrayOf("sin", "sinf", "sinl"), Function.SIN, ::sinFacts)
-    addMathFunc(arrayOf("cos", "cosf", "cosl"), Function.COS, ::cosFacts)
-    addMathFunc(arrayOf("tanh", "tanhf", "tanhl"), Function.TANH, ::oddSigmoidFacts)
-    addMathFunc(arrayOf("erf", "erff", "erfl"), Function.ERF, ::oddSigmoidFacts)
+    addMathFunc(arrayOf("exp", "expf", "expl"), Function.EXP)
+    addMathFunc(arrayOf("expm1", "expm1f", "expm1l"), Function.EXPM1)
+    addMathFunc(arrayOf("log", "logf", "logl"), Function.LOG)
+    addMathFunc(arrayOf("log1p", "log1pf", "log1pl"), Function.LOG1P)
+    addMathFunc(arrayOf("sin", "sinf", "sinl"), Function.SIN)
+    addMathFunc(arrayOf("cos", "cosf", "cosl"), Function.COS)
+    addMathFunc(arrayOf("tanh", "tanhf", "tanhl"), Function.TANH)
+    addMathFunc(arrayOf("erf", "erff", "erfl"), Function.ERF)
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
       handleIsnormal(builder, callStmt)
     }
@@ -403,122 +402,27 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * A math function with no counterpart in the FP theory: it becomes an
-   * [FpMathFuncExpr], which solvers encode as an uninterpreted function, and its result is
-   * constrained by [facts]. Being an over-approximation, it marks the procedure: an Unsafe verdict
-   * is then reported as Unknown.
+   * A math function with no counterpart in the FP theory: it becomes an [FpMathFuncExpr], which
+   * solvers encode as an uninterpreted function, and its result is constrained by the function's
+   * [facts][Function.facts]. Being an over-approximation, it marks the procedure: an Unsafe
+   * verdict is then reported as Unknown.
    */
-  private fun addMathFunc(
-    names: Array<String>,
-    function: Function,
-    facts: (x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) -> List<Expr<BoolType>>,
-  ) {
+  private fun addMathFunc(names: Array<String>, function: Function) {
     addHandler(names) { builder, callStmt ->
       Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
       val (ret, type) = fpReturn(callStmt)
       val (labels, args) = freshArgs(builder, callStmt, type, 1)
-      val x = args[0]
-      @Suppress("UNCHECKED_CAST")
-      val one = TypeUtils.cast(type.unitValue, type.smtType) as Expr<FpType>
-      val assumption =
-        And(listOf(Imply(FpExprs.IsNan(x), FpExprs.IsNan(ret.ref))) + facts(x, ret.ref, one))
       builder.setOverApproximation()
       SequenceLabel(
         labels +
-          assignFp(callStmt, ret, type, FpExprs.MathFunc(function, x)) +
-          StmtLabel(Stmts.Assume(assumption), metadata = callStmt.metadata)
+          assignFp(callStmt, ret, type, FpExprs.MathFunc(function, args[0])) +
+          StmtLabel(
+            Stmts.Assume(And(function.facts(args[0], ret.ref))),
+            metadata = callStmt.metadata,
+          )
       )
     }
   }
-
-  // The facts below only bound a result by representable values (0, ±1, ±inf), which faithful
-  // rounding preserves, or fix the special values prescribed by C Annex F (F.10).
-
-  private fun fpEq(a: Expr<FpType>, b: Expr<FpType>) = FpExprs.FpAssign(a, b)
-
-  private fun isFinite(x: Expr<FpType>) = Not(Or(FpExprs.IsNan(x), FpExprs.IsInfinite(x)))
-
-  private fun posInf(x: Expr<FpType>) = FpExprs.PositiveInfinity(x.type)
-
-  private fun negInf(x: Expr<FpType>) = FpExprs.NegativeInfinity(x.type)
-
-  private fun zero(x: Expr<FpType>) = FpExprs.PositiveZero(x.type)
-
-  /** Signed zeros map to themselves (`f(±0) = ±0`). */
-  private fun keepsZero(x: Expr<FpType>, r: Expr<FpType>) =
-    listOf(
-      Imply(fpEq(x, zero(x)), fpEq(r, zero(x))),
-      Imply(fpEq(x, FpExprs.NegativeZero(x.type)), fpEq(r, FpExprs.NegativeZero(x.type))),
-    )
-
-  /** `x > 0 ⇒ r ≥ 0` and `x < 0 ⇒ r ≤ 0`. */
-  private fun keepsSign(x: Expr<FpType>, r: Expr<FpType>) =
-    listOf(
-      Imply(FpExprs.Gt(x, zero(x)), FpExprs.Geq(r, zero(x))),
-      Imply(FpExprs.Lt(x, zero(x)), FpExprs.Leq(r, zero(x))),
-    )
-
-  private fun inUnitRange(r: Expr<FpType>, one: Expr<FpType>) =
-    And(FpExprs.Geq(r, FpExprs.Neg(one)), FpExprs.Leq(r, one))
-
-  private fun expFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(Not(FpExprs.IsNan(x)), FpExprs.Geq(r, zero(x))),
-      Imply(FpExprs.Eq(x, zero(x)), fpEq(r, one)),
-      Imply(FpExprs.Gt(x, zero(x)), FpExprs.Geq(r, one)),
-      Imply(FpExprs.Lt(x, zero(x)), FpExprs.Leq(r, one)),
-      Imply(fpEq(x, negInf(x)), fpEq(r, zero(x))),
-      Imply(fpEq(x, posInf(x)), fpEq(r, posInf(x))),
-    )
-
-  private fun expm1Facts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(Not(FpExprs.IsNan(x)), FpExprs.Geq(r, FpExprs.Neg(one))),
-      Imply(fpEq(x, negInf(x)), fpEq(r, FpExprs.Neg(one))),
-      Imply(fpEq(x, posInf(x)), fpEq(r, posInf(x))),
-    ) + keepsZero(x, r) + keepsSign(x, r)
-
-  private fun logFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(FpExprs.Lt(x, zero(x)), FpExprs.IsNan(r)),
-      Imply(FpExprs.Eq(x, zero(x)), fpEq(r, negInf(x))),
-      Imply(fpEq(x, one), fpEq(r, zero(x))),
-      Imply(fpEq(x, posInf(x)), fpEq(r, posInf(x))),
-      Imply(And(FpExprs.Gt(x, zero(x)), isFinite(x)), isFinite(r)),
-      Imply(And(FpExprs.Gt(x, zero(x)), FpExprs.Lt(x, one)), FpExprs.Leq(r, zero(x))),
-      Imply(FpExprs.Gt(x, one), FpExprs.Geq(r, zero(x))),
-    )
-
-  private fun log1pFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(FpExprs.Lt(x, FpExprs.Neg(one)), FpExprs.IsNan(r)),
-      Imply(fpEq(x, FpExprs.Neg(one)), fpEq(r, negInf(x))),
-      Imply(fpEq(x, posInf(x)), fpEq(r, posInf(x))),
-      Imply(And(FpExprs.Gt(x, FpExprs.Neg(one)), isFinite(x)), isFinite(r)),
-      Imply(FpExprs.Gt(x, zero(x)), FpExprs.Geq(r, zero(x))),
-      Imply(And(FpExprs.Gt(x, FpExprs.Neg(one)), FpExprs.Lt(x, zero(x))), FpExprs.Leq(r, zero(x))),
-    ) + keepsZero(x, r)
-
-  private fun sinFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(FpExprs.IsInfinite(x), FpExprs.IsNan(r)),
-      Imply(isFinite(x), inUnitRange(r, one)),
-    ) + keepsZero(x, r)
-
-  private fun cosFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(FpExprs.IsInfinite(x), FpExprs.IsNan(r)),
-      Imply(isFinite(x), inUnitRange(r, one)),
-      Imply(FpExprs.Eq(x, zero(x)), fpEq(r, one)),
-    )
-
-  /** `tanh` and `erf`: odd, increasing, with range [-1, 1] and limits ±1 at ±inf. */
-  private fun oddSigmoidFacts(x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) =
-    listOf(
-      Imply(Not(FpExprs.IsNan(x)), inUnitRange(r, one)),
-      Imply(fpEq(x, posInf(x)), fpEq(r, one)),
-      Imply(fpEq(x, negInf(x)), fpEq(r, FpExprs.Neg(one))),
-    ) + keepsZero(x, r) + keepsSign(x, r)
 
   private fun handleTrunc(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")

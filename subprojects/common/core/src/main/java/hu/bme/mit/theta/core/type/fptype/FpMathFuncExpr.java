@@ -16,22 +16,68 @@
 package hu.bme.mit.theta.core.type.fptype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Eq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Geq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Gt;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsInfinite;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Lt;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.FpUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * A C math-library function with no counterpart in the SMT-LIB FloatingPoint theory, applied to a
  * floating-point operand of the result's type.
  *
- * <p>Solvers encode it as an uninterpreted function per function and sort, so it is only
- * functionally consistent: equal operands give equal results. It deliberately has no {@link #eval}:
- * a correctly rounded value need not be what the program's libm returns, and folding one would
+ * <p>Solvers encode it as an uninterpreted function per function and sort, so on its own it is
+ * only functionally consistent. What is known about it is stated by {@link Function#facts}: the
+ * special values of C Annex F (F.10), which are exact, and range bounds by representable values (0,
+ * ±1, ±inf), which any faithfully rounded libm preserves. A user of the expression asserts them.
+ *
+ * <p>{@link #eval} answers only for those special inputs. Any other value is left to the solver: a
+ * correctly rounded result need not be what the program's libm returns, and folding one would
  * decide a verdict on a value the program may never compute.
  */
 public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
+
+    /** The constants a fact refers to, in the operand's sort. */
+    private record Consts(
+            FpLitExpr zero,
+            FpLitExpr one,
+            FpLitExpr minusOne,
+            FpLitExpr posInf,
+            FpLitExpr negInf,
+            FpLitExpr nan) {
+        static Consts of(final FpType type) {
+            final FpLitExpr one = FpUtils.fromString("1", type);
+            return new Consts(
+                    FpExprs.PositiveZero(type),
+                    one,
+                    one.neg(),
+                    FpExprs.PositiveInfinity(type),
+                    FpExprs.NegativeInfinity(type),
+                    FpExprs.NaN(type));
+        }
+    }
+
+    /** Exact result {@code value(x)} wherever {@code guard(x)} holds; the first match applies. */
+    private record Case(Expr<BoolType> guard, Expr<FpType> value) {}
 
     public enum Function {
         EXP("fpmath.exp"),
@@ -61,6 +107,111 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
             }
             return null;
         }
+
+        /** The special values; `Eq(x, 0)` is IEEE equality, so it matches both zeros. */
+        private List<Case> cases(final Expr<FpType> x, final Consts c) {
+            final List<Case> cases = new ArrayList<>();
+            cases.add(new Case(IsNan(x), c.nan()));
+            switch (this) {
+                case EXP -> {
+                    cases.add(new Case(Eq(x, c.zero()), c.one()));
+                    cases.add(new Case(FpAssign(x, c.negInf()), c.zero()));
+                    cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
+                }
+                case EXPM1 -> {
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                    cases.add(new Case(FpAssign(x, c.negInf()), c.minusOne()));
+                    cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
+                }
+                case LOG -> {
+                    cases.add(new Case(Lt(x, c.zero()), c.nan()));
+                    cases.add(new Case(Eq(x, c.zero()), c.negInf()));
+                    cases.add(new Case(FpAssign(x, c.one()), c.zero()));
+                    cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
+                }
+                case LOG1P -> {
+                    cases.add(new Case(Lt(x, c.minusOne()), c.nan()));
+                    cases.add(new Case(FpAssign(x, c.minusOne()), c.negInf()));
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                    cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
+                }
+                case SIN -> {
+                    cases.add(new Case(IsInfinite(x), c.nan()));
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                }
+                case COS -> {
+                    cases.add(new Case(IsInfinite(x), c.nan()));
+                    cases.add(new Case(Eq(x, c.zero()), c.one()));
+                }
+                case TANH, ERF -> {
+                    cases.add(new Case(Eq(x, c.zero()), x));
+                    cases.add(new Case(FpAssign(x, c.posInf()), c.one()));
+                    cases.add(new Case(FpAssign(x, c.negInf()), c.minusOne()));
+                }
+            }
+            return cases;
+        }
+
+        /** Bounds on the result {@code r} by representable values, beyond the special cases. */
+        private List<Expr<BoolType>> bounds(
+                final Expr<FpType> x, final Expr<FpType> r, final Consts c) {
+            final Expr<BoolType> notNan = Not(IsNan(x));
+            final Expr<BoolType> finite = Not(Or(IsNan(x), IsInfinite(x)));
+            final Expr<BoolType> unitRange = And(Geq(r, c.minusOne()), Leq(r, c.one()));
+            final Expr<BoolType> finiteR = Not(Or(IsNan(r), IsInfinite(r)));
+            return switch (this) {
+                case EXP ->
+                        List.of(
+                                Imply(notNan, Geq(r, c.zero())),
+                                Imply(Gt(x, c.zero()), Geq(r, c.one())),
+                                Imply(Lt(x, c.zero()), Leq(r, c.one())));
+                case EXPM1 ->
+                        List.of(
+                                Imply(notNan, Geq(r, c.minusOne())),
+                                Imply(Gt(x, c.zero()), Geq(r, c.zero())),
+                                Imply(Lt(x, c.zero()), Leq(r, c.zero())));
+                case LOG ->
+                        List.of(
+                                Imply(And(Gt(x, c.zero()), finite), finiteR),
+                                Imply(And(Gt(x, c.zero()), Lt(x, c.one())), Leq(r, c.zero())),
+                                Imply(Gt(x, c.one()), Geq(r, c.zero())));
+                case LOG1P ->
+                        List.of(
+                                Imply(And(Gt(x, c.minusOne()), finite), finiteR),
+                                Imply(Gt(x, c.zero()), Geq(r, c.zero())),
+                                Imply(
+                                        And(Gt(x, c.minusOne()), Lt(x, c.zero())),
+                                        Leq(r, c.zero())));
+                case SIN, COS -> List.of(Imply(finite, unitRange));
+                case TANH, ERF ->
+                        List.of(
+                                Imply(notNan, unitRange),
+                                Imply(Gt(x, c.zero()), Geq(r, c.zero())),
+                                Imply(Lt(x, c.zero()), Leq(r, c.zero())));
+            };
+        }
+
+        /** Everything known about {@code r = f(x)}: the special values and the range bounds. */
+        public List<Expr<BoolType>> facts(final Expr<FpType> x, final Expr<FpType> r) {
+            final Consts c = Consts.of(x.getType());
+            final List<Expr<BoolType>> facts = new ArrayList<>();
+            for (final Case special : cases(x, c)) {
+                facts.add(Imply(special.guard(), FpAssign(r, special.value())));
+            }
+            facts.addAll(bounds(x, r, c));
+            return facts;
+        }
+
+        /** The exact result for a special input, or empty when only the solver can tell. */
+        public Optional<FpLitExpr> specialValue(final FpLitExpr x) {
+            final var empty = ImmutableValuation.empty();
+            for (final Case special : cases(x, Consts.of(x.getType()))) {
+                if (((BoolLitExpr) special.guard().eval(empty)).getValue()) {
+                    return Optional.of((FpLitExpr) special.value().eval(empty));
+                }
+            }
+            return Optional.empty();
+        }
     }
 
     private static final int HASH_SEED = 6672;
@@ -85,6 +236,11 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
         return function;
     }
 
+    /** {@link Function#facts} for this application. */
+    public List<Expr<BoolType>> facts() {
+        return function.facts(getOp(), this);
+    }
+
     @Override
     public FpType getType() {
         return getOp().getType();
@@ -92,8 +248,15 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
 
     @Override
     public FpLitExpr eval(final Valuation val) {
-        throw new UnsupportedOperationException(
-                "No exact value for " + function.getLabel() + ": it is left to the solver");
+        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
+        return function.specialValue(opVal)
+                .orElseThrow(
+                        () ->
+                                new UnsupportedOperationException(
+                                        function.getLabel()
+                                                + " has no exact value at "
+                                                + opVal
+                                                + ": it is left to the solver"));
     }
 
     @Override

@@ -2266,10 +2266,16 @@ public final class ExprSimplifier {
         return expr.with(op);
     }
 
-    /** Simplifies the operand only: a literal operand is not folded, see FpMathFuncExpr. */
-    private Expr<FpType> simplifyFpMathFunc(
-            final FpMathFuncExpr expr, final Valuation val) {
-        return expr.with(simplify(expr.getOp(), val));
+    /** Folds only the exact special values: any other result is the program's libm's to give. */
+    private Expr<FpType> simplifyFpMathFunc(final FpMathFuncExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+        if (op instanceof FpLitExpr lit) {
+            final var special = expr.getFunction().specialValue(lit);
+            if (special.isPresent()) {
+                return special.get();
+            }
+        }
+        return expr.with(op);
     }
 
     private Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
