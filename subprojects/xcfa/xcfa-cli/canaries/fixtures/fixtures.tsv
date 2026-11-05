@@ -31,7 +31,7 @@ char_literal_escapes.c	efficient	LP64	SAFE	character constant escapes, radixes a
 static_local_storage.c	efficient	LP64	SAFE	static locals keep their value across calls (storage class no longer dropped)
 nested_aggregate_init.c	efficient	LP64	SAFE	nested-struct initializer follows the subobject, and untouched members are zero
 nested_member_address.c	efficient	LP64	SAFE	the address of a nested struct or array member is its own base
-nested_mutex_address.c	efficient	LP64	SAFE	a mutex in a struct or an array is locked through its cell's address
+nested_mutex_address.c	efficient	LP64	SAFE	a mutex in a struct or an array retains its nested object identity
 global_array_nested_member.c	efficient	LP64	SAFE	a global struct array's nested members are initialized inline and get their own storage
 array_member_init.c	efficient	LP64	SAFE	array member is its own object; array elements and rows stay inline
 deref_dot_member.c	efficient	LP64	SAFE	(*p).field is one dereference, like p->field and p[0].field
@@ -422,6 +422,9 @@ union_pointer_increment_safe.c	efficient	ILP32	SAFE	stepping a pointer to a unio
 global_enum_sized_struct_safe.c	efficient	ILP32	SAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_unsafe.c	efficient	ILP32	UNSAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_multi_declarator_safe.c	efficient	ILP32	SAFE	each declarator keeps its own initializer
+nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	direct and pointer-held mutex addresses protect the same nested datum	flat
+nested_mutex_alias.c	efficient	LP64	SAFE:no-data-race	nested mutex aliases retain their identity with integer arithmetic	flat
+nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	nested mutex aliases retain their identity with byte addressing	bytes
 lifetime_function_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a scalar local dies when its function returns
 lifetime_parameter_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken parameter dies when its function returns
 lifetime_out_parameter.c	efficient	ILP32	UNSAFE:valid-memsafety	a local stored through an out-parameter dies at return
