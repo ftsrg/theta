@@ -35,6 +35,10 @@ enum class ExitCodes(val code: Int) {
   INVALID_PARAM(211),
   VERIFICATION_STUCK(220),
   SOLVER_ERROR(221),
+  /**
+   * An Unsafe result through an over-approximation: no verdict, but the next config may have one.
+   */
+  UNRELIABLE_UNSAFE(222),
 }
 
 data class ErrorCodeException(val code: Int) : Exception()
