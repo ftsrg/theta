@@ -275,6 +275,19 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+overflow_pointer_member.c	bitvector	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow (bitvector)	flat
+overflow_pointer_member.c	efficient	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow	flat
+overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked
+overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked	flat
+stub_dependent_overflow.c	efficient	LP64	UNKNOWN:no-overflow	an overflow that needs an over-approximated stub value is not reported
+stub_dependent_reach.c	efficient	LP64	UNKNOWN	an error path that needs an over-approximated stub value is not reported
+stub_independent_overflow.c	efficient	LP64	UNSAFE:no-overflow	an overflow that does not use the stub value is still reported
+strlen_exact.c	efficient	LP64	SAFE:no-overflow	strlen counts the characters before the terminator exactly
+strlen_exact_overflow.c	efficient	LP64	UNSAFE:no-overflow	the exact strlen is not treated as an over-approximated value
+printf_bound.c	efficient	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals
+printf_bound.c	bitvector	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals (bitvector)
+memmove_symbolic_reach.c	bitvector	LP64	UNSAFE	memmove with a symbolic length onto a later overlapping region copies from the last element down
+strlen_after_buffer_stub.c	efficient	LP64	UNKNOWN	strlen is not exact over cells that a buffer stub left stale
 malloc_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc bound counts cells, not bytes
 malloc_struct_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a struct element of a malloc bound spans its member cells
 malloc_void_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc of unknown cell count retries under bytes

@@ -28,12 +28,15 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -740,12 +743,27 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   }
 
   /**
-   * The cell a `memcpy` loop copies, when the byte count is symbolic: a byte under the bytes model,
-   * else the scalar element both sides share. A `memmove` is not taken, since a forward loop is
-   * wrong for overlapping regions.
+   * True when the copy must run from the last cell down: the destination starts after the source in
+   * the same object. Under the bytes model the addresses themselves are compared.
+   */
+  private fun overlapsAfter(dst: Expr<*>, src: Expr<*>, idxType: CComplexType): Expr<BoolType> {
+    val zero = idxType.getValue("0")
+    val (dstBase, dstOffset) = splitOffset(dst, zero)
+    val (srcBase, srcOffset) = splitOffset(src, zero)
+    val after =
+      Lt(
+        cast(idxType.castTo(srcOffset), idxType.smtType),
+        cast(idxType.castTo(dstOffset), idxType.smtType),
+      )
+    return if (parseContext.memoryModel.byteAddressed()) after else And(Eq(dstBase, srcBase), after)
+  }
+
+  /**
+   * The cell a `memcpy` or `memmove` loop copies, when the byte count is symbolic: a byte under the
+   * bytes model, else the scalar element both sides share.
    */
   private fun copyElement(invoke: InvokeLabel): CComplexType? {
-    if (invoke.params.size < 4 || invoke.name in MOVE) return null
+    if (invoke.params.size < 4) return null
     if (literalValue(invoke.params[3]) != null) return null // the constant path handles it
     if (parseContext.memoryModel.byteAddressed()) return CUnsignedChar(null, parseContext)
     val dst = elementOf(invoke.params[1]) ?: return null
@@ -758,7 +776,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
   /**
    * `memcpy(dst, src, n)` with a symbolic `n`: `for (i = 0; i < n / w; i++) dst[i] = src[i]`, with
-   * the partially covered tail cell havoc'd exactly as in [fillLoop].
+   * the partially covered tail cell havoc'd exactly as in [fillLoop]. A `memmove` whose destination
+   * lies after its source in the same object copies from the last cell down instead.
    */
   private fun copyLoop(
     builder: XcfaProcedureBuilder,
@@ -789,7 +808,72 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val after = returns(invoke, dst) + labels.subList(idx + 1, labels.size)
 
     builder.removeEdge(edge)
-    builder.addEdge(XcfaEdge(edge.source, head, SequenceLabel(before), edge.metadata))
+    if (invoke.name in MOVE) {
+      val choice = XcfaLocation("__memmove_choice_" + counter, metadata = EmptyMetaData)
+      val downHead = XcfaLocation("__memmove_down_head_" + counter, metadata = EmptyMetaData)
+      val downBody = XcfaLocation("__memmove_down_body_" + counter, metadata = EmptyMetaData)
+      listOf(choice, downHead, downBody).forEach(builder::addLoc)
+      val backward = overlapsAfter(dst, src, idxType)
+      builder.addEdge(
+        XcfaEdge(edge.source, choice, SequenceLabel(labels.subList(0, idx)), edge.metadata)
+      )
+      builder.addEdge(
+        XcfaEdge(
+          choice,
+          head,
+          SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Not(backward)))) + before.last()),
+          EmptyMetaData,
+        )
+      )
+      builder.addEdge(
+        XcfaEdge(
+          choice,
+          downHead,
+          SequenceLabel(
+            listOf(StmtLabel(AssumeStmt.of(backward)), AssignStmtLabel(i, count, i.type))
+          ),
+          EmptyMetaData,
+        )
+      )
+      val zero = cast(idxType.getValue("0"), idxType.smtType)
+      builder.addEdge(
+        XcfaEdge(
+          downHead,
+          downBody,
+          SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Lt(zero, i.ref))))),
+          EmptyMetaData,
+        )
+      )
+      builder.addEdge(
+        XcfaEdge(
+          downHead,
+          tail,
+          SequenceLabel(listOf(StmtLabel(AssumeStmt.of(Not(Lt(zero, i.ref)))))),
+          EmptyMetaData,
+        )
+      )
+      builder.addEdge(
+        XcfaEdge(
+          downBody,
+          downHead,
+          SequenceLabel(
+            listOf(
+              AssignStmtLabel(i, Sub(i.ref, idxType.getValue("1")), i.type),
+              StmtLabel(
+                MemoryAssignStmt.create(
+                  deref(dst, i.ref, element),
+                  cast(deref(src, i.ref, element), element.smtType),
+                ),
+                metadata = invoke.metadata,
+              ),
+            )
+          ),
+          EmptyMetaData,
+        )
+      )
+    } else {
+      builder.addEdge(XcfaEdge(edge.source, head, SequenceLabel(before), edge.metadata))
+    }
     builder.addEdge(
       XcfaEdge(
         head,

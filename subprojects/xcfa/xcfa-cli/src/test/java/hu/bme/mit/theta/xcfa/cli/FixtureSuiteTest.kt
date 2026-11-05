@@ -28,9 +28,10 @@ import org.junit.jupiter.api.fail
  * - `PARSE-OK` / `FRONTEND-FAIL` -- run the frontend only (`--backend NONE`) and check whether it
  *   built the XCFA. A fixture builds only if its change is present, so reverting the change flips
  *   the outcome.
- * - `SAFE` / `UNSAFE`, optionally `:<property>` -- run the real verifier and check the verdict. Use
- *   these for changes that alter values rather than what parses: a miswritten memory cell parses
- *   perfectly and only shows up as a wrong answer. `UNKNOWN` pins a verdict the tool must withhold.
+ * - `SAFE` / `UNSAFE` / `UNKNOWN`, optionally `:<property>` -- run the real verifier and check the
+ *   verdict. Use these for changes that alter values rather than what parses: a miswritten memory
+ *   cell parses perfectly and only shows up as a wrong answer. `UNKNOWN` is for a verdict that the
+ *   tool must withhold.
  *
  * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
  *

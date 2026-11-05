@@ -82,6 +82,7 @@ fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
         )
     builder.addEntryPoint(initProc, params)
   }
+  builder.overApproximatedVars.putAll(overApproximatedVars)
   return builder.build()
 }
 
