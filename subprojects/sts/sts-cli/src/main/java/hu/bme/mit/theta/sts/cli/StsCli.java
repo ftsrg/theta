@@ -32,13 +32,19 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.PredicateAbstractionMEPass;
 import hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.ReverseMEPass;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarChecker;
+import hu.bme.mit.theta.analysis.algorithm.frame.car.CarOptimizations;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.IC3Optimizations;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCheckerFactoriesKt;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.CliUtils;
@@ -79,6 +85,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import kotlin.jvm.functions.Function1;
 
 /** A command line interface for running a CEGAR configuration on an STS. */
 public class StsCli {
@@ -180,21 +187,85 @@ public class StsCli {
                         new Ic3Checker(
                                 monolithicExpr,
                                 solverFactory,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
-                                true,
+                                new IC3Optimizations(
+                                        stsCli.ic3UnSatOpt,
+                                        stsCli.ic3NotBOpt,
+                                        stsCli.ic3PropagateOpt,
+                                        stsCli.ic3FilterOpt,
+                                        stsCli.ic3GeneralizeOpt,
+                                        stsCli.ic3PropertyOpt,
+                                        stsCli.ic3UnsatPropagateOpt,
+                                    true),
                                 logger));
             }
-        };
+        },
+        CAR {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new CarChecker(
+                                monolithicExpr,
+                                solverFactory,
+                                stsCli.getCarOptimizations(),
+                                logger));
+            }
+        },
+        CARCEGAR {
+            @Override
+            Function<
+                            MonolithicExpr,
+                            SafetyChecker<
+                                    ? extends InvariantProof,
+                                    Trace<ExplState, ExprAction>,
+                                    UnitPrec>>
+                    getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger) {
+                return (monolithicExpr ->
+                        new CarCegarChecker(
+                                monolithicExpr,
+                                solverFactory,
+                                stsCli.carTraceCheckerType.create(
+                                        Z3LegacySolverFactory.getInstance()),
+                                stsCli.getCarOptimizations(),
+                                logger));
+            }
+        },
+        ;
 
         abstract Function<
                         MonolithicExpr,
                         SafetyChecker<
                                 ? extends InvariantProof, Trace<ExplState, ExprAction>, UnitPrec>>
                 getCheckerFactory(StsCli stsCli, SolverFactory solverFactory, Logger logger);
+    }
+
+    /** Interpolating trace checker used by CARCEGAR to decide whether a CEX is spurious. */
+    enum TraceCheckerType {
+        FW_BIN_ITP(ExprTraceCheckerFactoriesKt::createFwBinItpCheckerFactory),
+        BW_BIN_ITP(ExprTraceCheckerFactoriesKt::createBwBinItpCheckerFactory),
+        SEQ_ITP(ExprTraceCheckerFactoriesKt::createSeqItpCheckerFactory),
+        ;
+
+        private final Function<SolverFactory, Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>>>
+                factory;
+
+        TraceCheckerType(
+                Function<
+                                SolverFactory,
+                                Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>>>
+                        factory) {
+            this.factory = factory;
+        }
+
+        Function1<MonolithicExpr, ExprTraceChecker<ItpRefutation>> create(
+                SolverFactory solverFactory) {
+            return factory.apply(solverFactory);
+        }
     }
 
     @Parameter(
@@ -262,6 +333,123 @@ public class StsCli {
             names = {"--iteration-strategy"},
             description = "MDD iteration strategy")
     IterationStrategy iterationStrategy = IterationStrategy.GSAT;
+
+    @Parameter(
+            names = {"--ic3-unsat-opt"},
+            description = "IC3: minimize blocked cube using UNSAT core",
+            arity = 1)
+    Boolean ic3UnSatOpt = true;
+
+    @Parameter(
+            names = {"--ic3-notb-opt"},
+            description = "IC3: add NOT(B) to the transition query",
+            arity = 1)
+    Boolean ic3NotBOpt = true;
+
+    @Parameter(
+            names = {"--ic3-propagate-opt"},
+            description = "IC3: propagate clauses forward during push phase",
+            arity = 1)
+    Boolean ic3PropagateOpt = true;
+
+    @Parameter(
+            names = {"--ic3-filter-opt"},
+            description = "IC3: filter redundant variables from the SAT model",
+            arity = 1)
+    Boolean ic3FilterOpt = true;
+
+    @Parameter(
+            names = {"--ic3-generalize-opt"},
+            description = "IC3: generalize blocked cubes (MIC)",
+            arity = 1)
+    Boolean ic3GeneralizeOpt = true;
+
+    @Parameter(
+            names = {"--ic3-property-opt"},
+            description = "IC3: use property-aware frame initialization",
+            arity = 1)
+    Boolean ic3PropertyOpt = true;
+
+    @Parameter(
+            names = {"--ic3-unsat-propagate-opt"},
+            description = "IC3: use UNSAT core when propagating clauses during push phase",
+            arity = 1)
+    Boolean ic3UnsatPropagateOpt = true;
+
+    @Parameter(
+            names = {"--car-unsat-opt"},
+            description = "CAR: minimize blocked cube using UNSAT core",
+            arity = 1)
+    Boolean carUnSatOpt = true;
+
+    @Parameter(
+            names = {"--car-notb-opt"},
+            description = "CAR: add NOT(B) to the transition query",
+            arity = 1)
+    Boolean carNotBOpt = true;
+
+    @Parameter(
+            names = {"--car-propagate-opt"},
+            description = "CAR: propagate clauses forward during push phase",
+            arity = 1)
+    Boolean carPropagateOpt = true;
+
+    @Parameter(
+            names = {"--car-property-opt"},
+            description = "CAR: use property-aware frame initialization",
+            arity = 1)
+    Boolean carPropertyOpt = true;
+
+    @Parameter(
+            names = {"--car-filter-opt"},
+            description = "CAR: filter redundant variables from the SAT model",
+            arity = 1)
+    Boolean carFilterOpt = true;
+
+    @Parameter(
+            names = {"--car-generalize-opt"},
+            description = "CAR: generalize blocked cubes (MIC)",
+            arity = 1)
+    Boolean carGeneralizeOpt = true;
+
+    @Parameter(
+            names = {"--car-unsat-propagate-opt"},
+            description = "CAR: use UNSAT core when propagating clauses during push phase",
+            arity = 1)
+    Boolean carUnsatPropagateOpt = true;
+
+    @Parameter(
+            names = {"--car-cover-opt"},
+            description = "CAR: use covering to prune subsumed nodes",
+            arity = 1)
+    Boolean carCoverOpt = true;
+
+    @Parameter(
+            names = {"--car-monotonous-frames"},
+            description = "CAR: keep frames monotonous",
+            arity = 1)
+    Boolean carMonotonousFrames = false;
+
+    @Parameter(
+            names = {"--car-store-frames"},
+            description =
+                    "CARCEGAR: keep accumulated frames across CEGAR iterations instead of"
+                            + " rebuilding them from scratch each iteration",
+            arity = 1)
+    Boolean carStoreFrames = true;
+
+    @Parameter(
+            names = {"--car-store-nodes"},
+            description =
+                    "CARCEGAR: keep the explored counterexample node tree across CEGAR"
+                            + " iterations instead of rebuilding it from scratch each iteration",
+            arity = 1)
+    Boolean carStoreNodes = true;
+
+    @Parameter(
+            names = {"--car-trace-checker"},
+            description = "CARCEGAR: interpolating trace checker used for spuriousness checking")
+    TraceCheckerType carTraceCheckerType = TraceCheckerType.FW_BIN_ITP;
 
     @Parameter(
             names = {"--smt-home"},
@@ -350,7 +538,7 @@ public class StsCli {
                 if (cegar) {
                     passes.add(
                             new PredicateAbstractionMEPass<>(
-                                    ExprTraceCheckerFactoriesKt.createSeqItpCheckerFactory(
+                                    ExprTraceCheckerFactoriesKt.createFwBinItpCheckerFactory(
                                             solverFactory)));
                 }
                 if (reversed) {
@@ -377,6 +565,21 @@ public class StsCli {
             printError(ex);
             System.exit(1);
         }
+    }
+
+    private CarOptimizations getCarOptimizations() {
+        return new CarOptimizations(
+                carUnSatOpt,
+                carNotBOpt,
+                carPropagateOpt,
+                carPropertyOpt,
+                carFilterOpt,
+                carGeneralizeOpt,
+                carUnsatPropagateOpt,
+                carCoverOpt,
+                carMonotonousFrames,
+                carStoreFrames,
+                carStoreNodes);
     }
 
     private void registerSolverManagers() throws IOException {
