@@ -502,6 +502,10 @@ private fun backend(
           } else {
             SafetyResult.unknown<EmptyProof, EmptyCex>()
           }
+        } else if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
+          logger.benchmark("%s", "Analysis result: $result")
+          logger.benchmark("Over-approximating model used: unsafe result is unreliable.")
+          SafetyResult.unknown<EmptyProof, EmptyCex>()
         } else {
           result
         }
