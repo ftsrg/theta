@@ -17,15 +17,10 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -140,14 +135,6 @@ public final class MutablePartitionedValuation extends Valuation {
             }
         }
         return Optional.empty();
-    }
-
-    @Override
-    public Expr<BoolType> toExpr() {
-        return SmartBoolExprs.And(
-                getDecls().stream()
-                        .map(e -> Eq(e.getRef(), eval(e).get()))
-                        .collect(toImmutableList()));
     }
 
     @Override
