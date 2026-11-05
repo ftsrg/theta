@@ -69,9 +69,7 @@ public class Z3SolverFpMathFuncTest {
     public void functionsAndSortsAreDistinct() {
         final ConstDecl<FpType> x = Const("x", FLOAT);
         final var sinEqCos =
-                FpAssign(
-                        MathFunc(Function.SIN, x.getRef()),
-                        MathFunc(Function.COS, x.getRef()));
+                FpAssign(MathFunc(Function.SIN, x.getRef()), MathFunc(Function.COS, x.getRef()));
         assertEquals(SolverStatus.SAT, check(Not(sinEqCos)));
     }
 

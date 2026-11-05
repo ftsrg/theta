@@ -45,10 +45,10 @@ import java.util.Optional;
  * A C math-library function with no counterpart in the SMT-LIB FloatingPoint theory, applied to a
  * floating-point operand of the result's type.
  *
- * <p>Solvers encode it as an uninterpreted function per function and sort, so on its own it is
- * only functionally consistent. What is known about it is stated by {@link Function#facts}: the
- * special values of C Annex F (F.10), which are exact, and range bounds by representable values (0,
- * ±1, ±inf), which any faithfully rounded libm preserves. A user of the expression asserts them.
+ * <p>Solvers encode it as an uninterpreted function per function and sort, so on its own it is only
+ * functionally consistent. What is known about it is stated by {@link Function#facts}: the special
+ * values of C Annex F (F.10), which are exact, and range bounds by representable values (0, ±1,
+ * ±inf), which any faithfully rounded libm preserves. A user of the expression asserts them.
  *
  * <p>{@link #eval} answers only for those special inputs. Any other value is left to the solver: a
  * correctly rounded result need not be what the program's libm returns, and folding one would
@@ -206,9 +206,7 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
                         List.of(
                                 Imply(And(Gt(x, c.minusOne()), finite), finiteR),
                                 Imply(Gt(x, c.zero()), Geq(r, c.zero())),
-                                Imply(
-                                        And(Gt(x, c.minusOne()), Lt(x, c.zero())),
-                                        Leq(r, c.zero())));
+                                Imply(And(Gt(x, c.minusOne()), Lt(x, c.zero())), Leq(r, c.zero())));
                 case SIN, COS -> List.of(Imply(finite, unitRange));
                 case TANH, ERF ->
                         List.of(
@@ -220,9 +218,7 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
                 // Outside [-1, 1] the result is NaN, so the sign rules stop at the domain.
                 case ASIN ->
                         List.of(
-                                Imply(
-                                        inUnit,
-                                        And(Geq(r, c.two().neg()), Leq(r, c.two()))),
+                                Imply(inUnit, And(Geq(r, c.two().neg()), Leq(r, c.two()))),
                                 Imply(And(inUnit, Gt(x, c.zero())), Geq(r, c.zero())),
                                 Imply(And(inUnit, Lt(x, c.zero())), Leq(r, c.zero())));
                 case ATANH ->

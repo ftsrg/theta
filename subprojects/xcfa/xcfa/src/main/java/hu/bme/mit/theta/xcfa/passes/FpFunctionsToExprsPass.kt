@@ -280,8 +280,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     Preconditions.checkState(ret is RefExpr<*>)
     val type = CComplexType.getType(ret, parseContext)
     check(type.smtType is FpType) { "${callStmt.name} is presumed to return a floating type" }
-    @Suppress("UNCHECKED_CAST")
-    return Pair((ret as RefExpr<*>).decl as VarDecl<FpType>, type)
+    @Suppress("UNCHECKED_CAST") return Pair((ret as RefExpr<*>).decl as VarDecl<FpType>, type)
   }
 
   /**
@@ -321,7 +320,10 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
   /** The sign bit of a non-NaN value; false for NaN, whose sign the FP theory does not model. */
   private fun isNegative(x: Expr<FpType>): Expr<BoolType> =
-    Or(FpExprs.Lt(x, FpExprs.PositiveZero(x.type)), FpExprs.FpAssign(x, FpExprs.NegativeZero(x.type)))
+    Or(
+      FpExprs.Lt(x, FpExprs.PositiveZero(x.type)),
+      FpExprs.FpAssign(x, FpExprs.NegativeZero(x.type)),
+    )
 
   /** `copysign(mag, sign)` for a non-NaN [sign]. */
   private fun withSignOf(mag: Expr<FpType>, sign: Expr<FpType>): Expr<FpType> =
@@ -454,8 +456,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   /**
    * A math function with no counterpart in the FP theory: it becomes an [FpMathFuncExpr], which
    * solvers encode as an uninterpreted function, and its result is constrained by the function's
-   * [facts][Function.facts]. Being an over-approximation, it marks the procedure: an Unsafe
-   * verdict is then reported as Unknown.
+   * [facts][Function.facts]. Being an over-approximation, it marks the procedure: an Unsafe verdict
+   * is then reported as Unknown.
    */
   private fun addMathFunc(names: Array<String>, function: Function) {
     addHandler(names) { builder, callStmt ->

@@ -64,6 +64,7 @@ import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
@@ -76,7 +77,6 @@ import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -166,9 +166,7 @@ final class Z3TermTransformer {
         this.addFunc("fprem", this.exprBinaryOperator(FpRemExpr::create));
         this.addFunc("fp.abs", this.exprUnaryOperator(FpAbsExpr::create));
         for (final FpMathFuncExpr.Function f : FpMathFuncExpr.Function.values()) {
-            this.addFunc(
-                    f.getLabel(),
-                    this.exprUnaryOperator(op -> FpMathFuncExpr.create(f, op)));
+            this.addFunc(f.getLabel(), this.exprUnaryOperator(op -> FpMathFuncExpr.create(f, op)));
         }
         this.addFunc("fp.leq", this.exprBinaryOperator(FpLeqExpr::create));
         this.addFunc("fp.lt", this.exprBinaryOperator(FpLtExpr::create));

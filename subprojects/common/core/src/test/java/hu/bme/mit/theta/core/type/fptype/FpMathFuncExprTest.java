@@ -114,10 +114,7 @@ public class FpMathFuncExprTest {
             for (final FpLitExpr x : inputs) {
                 f.specialValue(x)
                         .ifPresent(
-                                r ->
-                                        assertTrue(
-                                                holds(f.facts(x, r)),
-                                                f.getLabel() + " at " + x));
+                                r -> assertTrue(holds(f.facts(x, r)), f.getLabel() + " at " + x));
             }
         }
     }
@@ -137,8 +134,8 @@ public class FpMathFuncExprTest {
                         Function.ACOS, StrictMath::acos,
                         Function.ASIN, StrictMath::asin);
         final double[] inputs = {
-            -700, -20, -3, -1.5, -1, -0.999, -0.5, -1e-10, 1e-300, 1e-10, 0.5, 0.999, 1,
-            1.000001, 3, 20, 700, 1e10
+            -700, -20, -3, -1.5, -1, -0.999, -0.5, -1e-10, 1e-300, 1e-10, 0.5, 0.999, 1, 1.000001,
+            3, 20, 700, 1e10
         };
         libm.forEach(
                 (f, op) -> {
