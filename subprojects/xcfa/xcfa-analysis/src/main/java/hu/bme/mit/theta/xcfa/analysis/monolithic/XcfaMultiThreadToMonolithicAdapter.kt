@@ -414,6 +414,10 @@ class XcfaMultiThreadToMonolithicAdapter(
 
     val threads = mutableMapOf<StartLabel, XcfaProcedure>()
     startLabels.forEach { startLabel ->
+      // Equal start labels (e.g. from an unrolled loop) would share one thread instance below.
+      check(startLabel !in threads) {
+        "XcfaMultiThreadToMonolithicAdapter does not support identical start labels: $startLabel"
+      }
       val startedProcedure = procedures.find { it.name == startLabel.name }!!
       check(startedProcedure !in startedProcedures) {
         "Recursion is not allowed in static thread-procedure mapping!"
