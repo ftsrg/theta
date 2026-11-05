@@ -210,11 +210,24 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
- * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
- * flexible array member its header and the whole trailing elements. Null when there is no such
- * pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the cells, then
- * stays the bound, which can miss an overrun but not invent one.
+ * The size to record for an allocation of [bytes], in the unit the valid-deref bound compares: a
+ * dereference's offset counts cells under the cell-per-value models and bytes under the bytes
+ * model.
+ */
+fun XcfaProcedureBuilder.recordedSize(
+  parseContext: ParseContext,
+  ret: Expr<*>,
+  bytes: Expr<*>,
+): Expr<*> =
+  if (parseContext.memoryModel.byteAddressed()) bytes
+  else mallocCells(parseContext, ret, bytes) ?: bytes
+
+/**
+ * The cells an allocation of [bytes] spans: whole elements of the typed pointer its result [ret] is
+ * bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a flexible array member
+ * its header and the whole trailing elements. Null when there is no such pointer, or its pointee is
+ * flexible elsewhere; the byte count, never fewer than the cells, then stays the bound, which can
+ * miss an overrun but not invent one.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -227,7 +240,7 @@ fun XcfaProcedureBuilder.mallocCells(
     return it
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, true)
+  val elementBytes = ObjectLayout.cellModelSize(pointee, parseContext.memoryModel.flatAddressing())
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)

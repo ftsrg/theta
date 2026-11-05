@@ -285,3 +285,10 @@ memset_value_reread.c	efficient	LP64	SAFE	the memset value is read once, before 
 memcpy_count_reread.c	efficient	LP64	SAFE	the memcpy count is read once, before the first write
 memset_struct_symbolic.c	efficient	LP64	UNSAFE	memset of structs with a symbolic count is a loop under bytes, not a call left in place
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap
+malloc_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc bound is in cells: the fourth int of a 3-int block overruns it
+malloc_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the last int of a 3-int block is in bounds
+malloc_struct_cells_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a struct element of a malloc block spans its member cells
+malloc_char_view_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a char view of a malloc int block reaches all its bytes
+alloca_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	an alloca bound is in cells: the third int of a 10-byte block overruns it
+alloca_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the second int of a 10-byte alloca block is in bounds
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints under multi too
