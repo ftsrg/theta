@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 
 /**
  * The number of pointer-base residue classes: every memory object has a base id, and the id modulo
@@ -227,6 +228,9 @@ fun XcfaProcedureBuilder.mallocCells(
     flexibleMemberCells(parseContext, pointee, bytes)?.let {
       return it
     }
+  } else if (hasFlexibleMember(pointee)) {
+    // Only the flat layout counts the trailing elements of a flexible member.
+    throw UnsupportedPointerSplitException("allocation of a struct with a flexible array member")
   }
   if (hasFlexibleMember(pointee)) return null
   val elementBytes = ObjectLayout.cellModelSize(pointee, flat)
