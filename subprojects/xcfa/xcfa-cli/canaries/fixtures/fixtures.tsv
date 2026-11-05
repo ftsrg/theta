@@ -276,3 +276,15 @@ malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL br
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
 heap_oob_wrapper.c	efficient	ILP32	UNSAFE:valid-memsafety	a block from a void * wrapper takes the element type of its callers	flat
+flat_symbolic_size_oob.c	efficient	LP64	UNSAFE:valid-memsafety	out-of-bounds write on a symbolic-size block (size recorded in cells)	multi
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints; the third overruns	multi
+heap_oob_int.c	efficient	ILP32	UNSAFE:valid-memsafety	a heap block is bounded by its element cells, not its bytes	multi
+heap_oob_long.c	efficient	LP64	UNSAFE:valid-memsafety	eight bytes hold one long under LP64	multi
+heap_oob_wrapper.c	efficient	ILP32	UNSAFE:valid-memsafety	a block from a void * wrapper takes the element type of its callers	multi
+heap_wrapper_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a block from a void * wrapper is in bounds	multi
+heap_oob_thread.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread writing past a heap block is caught	multi
+heap_struct_array_ok.c	efficient	LP64	SAFE:valid-memsafety	the last member of the last element of a malloc'd struct array is in bounds	multi
+heap_struct_array_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc'd struct array is bounded by its elements' cells	multi
+heap_full_block_ok.c	efficient	ILP32	SAFE:valid-memsafety	memset, memcpy, calloc and realloc over whole int blocks stay in bounds	multi
+heap_untyped_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a block with no element type is bounded under bytes
+heap_sub_element_free.c	efficient	ILP32	SAFE:valid-memsafety	a block smaller than its element is live and may be freed

@@ -37,12 +37,16 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -64,6 +68,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
+import java.math.BigInteger
 
 /**
  * The number of pointer-base residue classes: every memory object has a base id, and the id modulo
@@ -387,32 +392,66 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
- * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
- * flexible array member its header and the whole trailing elements. Null when there is no such
- * pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the cells, then
- * stays the bound, which can miss an overrun but not invent one.
+ * The size memsafety records for a fresh block of [bytes] bound to [ret]: the bytes under the bytes
+ * model, else its whole elements in cells ([allocationCells]), the unit accesses index in. A block
+ * that cells cannot bound is refused, so that the program is rebuilt under bytes: its element type
+ * is unknown, or it is not empty but holds no whole element (size 0 would mean it is freed).
  */
-fun XcfaProcedureBuilder.mallocCells(
+fun XcfaProcedureBuilder.memsafetyBound(
   parseContext: ParseContext,
   ret: Expr<*>,
   bytes: Expr<*>,
-): Expr<*>? {
-  val pointee = boundPointee(parseContext, ret) ?: return null
+): Expr<*> {
+  if (parseContext.memoryModel.byteAddressed()) return bytes
+  val binding = blockBinding(parseContext, ret)
+  if (binding == BlockBinding.Unused) return bytes
+  val cells =
+    (binding as? BlockBinding.Typed)?.let { allocationCells(parseContext, it.pointee, bytes) }
+      ?: throw RequiresByteAddressedMemoryException(
+        "A block whose element type is not known cannot be bounded in cells."
+      )
+  if ((literalValue(bytes)?.signum() ?: 0) > 0 && literalValue(cells)?.signum() == 0) {
+    throw RequiresByteAddressedMemoryException(
+      "A block smaller than one element cannot be bounded in cells."
+    )
+  }
+  return cells
+}
+
+/**
+ * The cells a block of [bytes] holding [pointee] spans under the cell-per-value models: its whole
+ * elements of `sizeof` bytes each, each [CStruct.inlineCells] cells, or under flat, for a struct
+ * ending in a flexible array member, its header and the whole trailing elements. Null for an array
+ * pointee, and for a flexible member that is not laid out inline.
+ */
+fun allocationCells(parseContext: ParseContext, pointee: CComplexType, bytes: Expr<*>): Expr<*>? {
+  val flat = parseContext.memoryModel.flatAddressing()
   if (pointee is CArray) return null
-  flexibleMemberCells(parseContext, pointee, bytes)?.let {
-    return it
+  if (flat) {
+    flexibleMemberCells(parseContext, pointee, bytes)?.let {
+      return it
+    }
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, true)
+  val elementBytes = ObjectLayout.cellModelSize(pointee, flat)
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)
+  literalValue(bytes)?.let {
+    return type.getValue("${it / elementBytes.toBigInteger() * elementCells.toBigInteger()}")
+  }
   val count = Div(type.castTo(bytes), type.getValue("$elementBytes"))
   return if (elementCells == 1) count else Mul(count, type.getValue("$elementCells"))
 }
 
-/** [mallocCells] of a struct whose last member, and only that, is a flexible array. */
+private fun literalValue(expr: Expr<*>): BigInteger? =
+  when (val simplified = ExprUtils.simplify(expr)) {
+    is IntLitExpr -> simplified.value
+    is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(simplified)
+    else -> null
+  }
+
+/** [allocationCells] of a struct whose last member, and only that, is a flexible array. */
 private fun flexibleMemberCells(
   parseContext: ParseContext,
   pointee: CComplexType,
