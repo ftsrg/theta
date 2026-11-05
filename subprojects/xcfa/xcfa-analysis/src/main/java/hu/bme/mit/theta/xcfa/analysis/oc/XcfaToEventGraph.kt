@@ -57,6 +57,8 @@ internal class XcfaToEventGraph(
   private val xcfa: XCFA,
   private val parseContext: ParseContext,
   private val property: ErrorDetection,
+  private val pruneCandidates: Boolean = false,
+  private val dischargeDeadTargets: Boolean = false,
 ) {
 
   init {
@@ -108,6 +110,7 @@ internal class XcfaToEventGraph(
   private val violations: MutableList<Violation> = mutableListOf()
   private val branchingConditions: MutableList<Expr<BoolType>> = mutableListOf()
   private val localFlows: MutableList<Expr<BoolType>> = mutableListOf()
+  private val localDefinitions = mutableMapOf<ConstDecl<*>, MutableList<LocalDefinition>>()
   private val edgeGuards = mutableMapOf<Pair<Int, XcfaEdge>, Expr<BoolType>>()
   private val unrollExits: MutableList<UnrollExit> = mutableListOf()
 
@@ -178,9 +181,34 @@ internal class XcfaToEventGraph(
   fun create(): EventGraph {
     XcfaEvent.resetIds()
     Thread.resetIds()
-    ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
+    ThreadProcessor(
+        Thread.of(
+          xcfa.initProcedures.first().first,
+          parseContext,
+          allocationSites = allocationSites,
+        ),
+        true,
+      )
+      .process()
     addCrossThreadRelations()
     addJoinOrders()
+    if (pruneCandidates) {
+      val analysis =
+        XcfaOcValueAnalysis(
+          events.values.flatMap { it.values.flatten() },
+          pos,
+          rfs,
+          wss,
+          localDefinitions,
+          memoryGarbages.values.toSet(),
+          parseContext.isCheckMemsafety,
+        )
+      analysis.prune().forEach { localFlows.add(Not(it.toAnd())) }
+      if (dischargeDeadTargets) {
+        violations.removeIf { analysis.isCertainlyFalse(it.guard) }
+        unrollExits.removeIf { analysis.isCertainlyFalse(it.guard) }
+      }
+    }
     return EventGraph(
       xcfa.name,
       threads,
@@ -306,6 +334,8 @@ internal class XcfaToEventGraph(
         }
       }
 
+  private val allocationSites = AllocationSites(xcfa, parseContext)
+
   private inner class ThreadProcessor(
     private val thread: Thread,
     addMemoryGarbage: Boolean = false,
@@ -393,6 +423,7 @@ internal class XcfaToEventGraph(
       val decl = d.threadVar(varPid)
       val const = decl.getNewIndexed()
       if (value != null) localFlows.add(underGuard(Eq(const.ref, value)))
+      localDefinitions.getOrPut(const) { mutableListOf() }.add(LocalDefinition(guard, value))
       localValues[decl] = const
     }
 
@@ -542,15 +573,17 @@ internal class XcfaToEventGraph(
               }
               .toMutableMap()
           var firstLabel = true
+          var leadingAssume = true
           atomicBlock = current.atomics.firstOrNull()
 
           edge.getFlatLabels().forEach { label ->
             if (label.references.isNotEmpty()) exit("references")
+            leadingAssume = leadingAssume && label is StmtLabel && label.stmt is AssumeStmt
             when (label) {
               is StmtLabel -> {
                 when (val stmt = label.stmt) {
                   is AssignStmt<*> -> stmt.process()
-                  is AssumeStmt -> stmt.process(assumeConsts, firstLabel)
+                  is AssumeStmt -> stmt.process(assumeConsts, firstLabel, leadingAssume)
                   is HavocStmt<*> -> stmt.process()
                   is MemoryAssignStmt<*, *, *> -> stmt.process()
                   is SkipStmt -> {}
@@ -634,6 +667,11 @@ internal class XcfaToEventGraph(
           continue
         }
         val phi = v.getNewIndexed()
+        localDefinitions[phi] =
+          current.guards
+            .zip(values)
+            .map { (g, value) -> LocalDefinition(g, value?.ref) }
+            .toMutableList()
         val options =
           current.guards.zip(values).map { (g, value) ->
             if (value == null) g.toAnd() else And(g.toAnd(), Eq(phi.ref, value.ref))
@@ -684,6 +722,7 @@ internal class XcfaToEventGraph(
     private fun AssumeStmt.process(
       assumeConsts: MutableMap<Any, MutableList<ConstDecl<*>>>,
       firstLabel: Boolean,
+      leadingAssume: Boolean,
     ) {
       val consts =
         this.cond.vars.associateWith {
@@ -704,7 +743,9 @@ internal class XcfaToEventGraph(
       val outgoingEdgesSize = edge.source.outgoingEdges.size
       if (outgoingEdgesSize > 1 || !asAssign) {
         guard = guard + condWithConsts
-        if (firstLabel) {
+        // a branch condition can follow other assumes (e.g. a null check): it still reads the value
+        // the other branch reads, or both branches could be taken at once
+        if (leadingAssume) {
           consts.forEach { (v, c) -> assumeConsts.getOrPut(v) { mutableListOf() }.add(c) }
         }
       }
@@ -767,6 +808,7 @@ internal class XcfaToEventGraph(
           last.first(),
           newHistory,
           lastWrites,
+          allocationSites,
         )
       // a literal of the handle's own type: Eq(bv, Int) would cast the handle to Int, which some
       // solvers (e.g. Yices) do not support

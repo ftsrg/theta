@@ -29,6 +29,7 @@ Each phase below is one group in `CPasses`, in order.
 | calls | `FunctionPointerCallsPass` | expand a call through a function pointer into a dispatch over its candidates | before `InlineProceduresPass`, so the direct calls it produces can be inlined |
 | | `InlineProceduresPass`, `NondetFunctionPass`, `InlinedProcedureRemovalPass` | inline what can be inlined, model `__VERIFIER_nondet_*`, drop the bodies left behind | removal after inlining |
 | | `ThreadResultPass` | start a copy of each routine whose result `pthread_join` reads, which stores its return value under the result id `CLibraryFunctionsPass` passes it | after inlining, so the copy is of the finished body; in its own phase, as it adds procedures; before `CloneProcedureForStaticThreadsPass`, which may specialize the copies |
+| | `ThreadLocalVarPass` | give each thread a local copy of a `__thread` global | after inlining, so a call left over can be refused; before the second `ReferenceElimination`, which then places an address-taken copy per thread |
 | | `ReferenceElimination` (again) | inlining binds `&…` arguments to parameters only now, and no reference may reach the analyses | after `InlineProceduresPass` |
 | cleanup | `EmptyEdgeRemovalPass`, `SimplifyExprsPass`, `UnusedLocRemovalPass`, `RemoveDeadEnds`, `EliminateSelfLoops`, `StaticCoiPass` | shrink the CFA before the instrumentation below multiplies it | `StaticCoiPass` after inlining; `SimplifyExprsPass` is also what folds `UnrollPass`'s copies |
 | instrumentation | `NarrowCellRangePass` | constrain a narrow cell's value to what its C type can hold | before `MemsafetyPass` and `OverflowDetectionPass`, which read those cells |
@@ -41,6 +42,8 @@ Each phase below is one group in `CPasses`, in order.
 | | `AmbiguousMutexPass` | collect guarded literal-address alternatives across the whole XCFA; if any mutex or attribute address remains unresolved, invoke `SymbolicMutexPass` to replace ordinary mutexes with shared ownership arrays and ghost thread IDs | resolve all procedures before applying any alternatives, so symbolic and literal aliases share the same encoding |
 | memory model | `FlatMemoryPass`, `ByteMemoryPass` | fold `(base, offset)` to one flat address, then split wide cells into bytes; both no-ops unless their `--memory-model` is selected | after every pass that creates or rewrites a dereference; `ByteMemoryPass` after `FlatMemoryPass` |
 | final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead, and the writes to global objects that nothing reads (a union only as a whole) | last |
+| | `DataRaceToReachabilityPass` | the portfolio's form of the data-race reduction, on the finished XCFA | after the `mem*` calls are spelled out and unresolved calls havoced |
+| | `PtrSizeToMemoryPass` | with `--ptr-size-in-memory` (OC only), move the memory-safety ghost arrays into memory, and their constant static entries into tables in the reads | last: anything before it may still rewrite dereferences |
 
 Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
 `AssumeFalseRemovalPass`, `AtomicReadsOneWritePass` and `WitnessOptimizer` by the OC checker,

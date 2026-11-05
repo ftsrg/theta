@@ -275,3 +275,137 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+oc_branch_after_null_check.c	bitvector	ILP32	SAFE	a branch condition after a null check reads the same value on both edges
+spin_iteration_read_race.c	bitvector	ILP32	UNSAFE:no-data-race	a read inside an effect-free spinning iteration still races
+spin_iteration_write_race.c	bitvector	ILP32	UNSAFE:no-data-race	a value-preserving write inside a spinning iteration still races
+memcleanup_static_object_threaded.c	bitvector	ILP32	SAFE:valid-memcleanup	a static object is not an unreleased allocation	multi
+memcleanup_leak_threaded.c	bitvector	ILP32	UNSAFE:valid-memcleanup	an unreleased block is still reported	multi
+overflow_after_lock_threaded.c	bitvector	ILP32	UNSAFE:no-overflow	an overflow behind a spinning acquire is found
+atomic_seq_cst_macro.c	efficient	ILP32	SAFE	__ATOMIC_SEQ_CST resolves to 5
+oc_value_dead_merge.c	bitvector	ILP32	UNSAFE	a branch that can never be taken does not end the path after the merge	multi
+oc_value_pointer_handoff.c	bitvector	ILP32	UNSAFE	a write through a pointer another thread stores	multi
+oc_value_conditional_overwrite.c	bitvector	ILP32	UNSAFE	a write that may not execute hides nothing	multi
+oc_value_racing_overwrite.c	bitvector	ILP32	UNSAFE	a write after a fork does not hide the initial value from the new thread	multi
+oc_value_covered_read.c	bitvector	ILP32	SAFE	a must-execute write hides the initial value	multi
+ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory plus an index is passed with its offset	multi
+ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory plus an index is passed with its offset	flat
+ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	multi
+ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	flat
+ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	multi
+ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	flat
+ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	multi
+ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	flat
+ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	multi
+ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	flat
+ptr_callee_struct_step_unsafe.c	bitvector	ILP32	UNSAFE	p++ on a one-field struct pointer in a callee moves one element	multi
+ptr_callee_struct_step_unsafe.c	bitvector	ILP32	UNSAFE	p++ on a one-field struct pointer in a callee moves one element	flat
+ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a callee keeps its offset	multi
+ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a callee keeps its offset	flat
+ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	multi
+ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	flat
+ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	multi
+ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	flat
+ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	multi
+ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	flat
+ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	multi
+ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	flat
+ptr_member_array_arg_unsafe.c	bitvector	ILP32	UNSAFE	the address of a member array element keeps its offset	multi
+ptr_member_array_arg_unsafe.c	bitvector	ILP32	UNSAFE	the address of a member array element keeps its offset	flat
+ptr_void_to_struct_arg_safe.c	bitvector	ILP32	SAFE	a struct element passed through void* keeps its offset	multi
+ptr_void_to_struct_arg_safe.c	bitvector	ILP32	SAFE	a struct element passed through void* keeps its offset	flat
+ptr_void_to_struct_arg_unsafe.c	bitvector	ILP32	UNSAFE	a struct element passed through void* keeps its offset	multi
+ptr_void_to_struct_arg_unsafe.c	bitvector	ILP32	UNSAFE	a struct element passed through void* keeps its offset	flat
+ptr_postincrement_struct_safe.c	bitvector	ILP32	SAFE	p++ on an aggregate pointer moves a whole element	multi
+ptr_postincrement_struct_safe.c	bitvector	ILP32	SAFE	p++ on an aggregate pointer moves a whole element	flat
+ptr_postincrement_struct_safe.c	bitvector	ILP32	SAFE	p++ on an aggregate pointer moves a whole element	bytes
+ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	multi
+ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	flat
+ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	bytes
+ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	multi
+ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	flat
+ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	bytes
+ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	multi
+ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	flat
+ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	bytes
+ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	multi
+ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	flat
+ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	bytes
+ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	multi
+ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	flat
+ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	bytes
+ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	multi
+ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	flat
+ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	bytes
+ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	multi
+ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	flat
+ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	bytes
+ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	multi
+ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	flat
+ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	bytes
+ptr_scalar_steps_unsafe.c	bitvector	ILP32	UNSAFE	p++, p-- and p += k on an int pointer move whole elements	multi
+ptr_scalar_steps_unsafe.c	bitvector	ILP32	UNSAFE	p++, p-- and p += k on an int pointer move whole elements	flat
+ptr_scalar_steps_unsafe.c	bitvector	ILP32	UNSAFE	p++, p-- and p += k on an int pointer move whole elements	bytes
+ptr_struct_walk_safe.c	bitvector	ILP32	SAFE	a pointer walking a struct array visits each element	multi
+ptr_struct_walk_safe.c	bitvector	ILP32	SAFE	a pointer walking a struct array visits each element	flat
+ptr_struct_walk_unsafe.c	bitvector	ILP32	UNSAFE	a pointer walking a struct array visits each element	multi
+ptr_struct_walk_unsafe.c	bitvector	ILP32	UNSAFE	a pointer walking a struct array visits each element	flat
+ptr_char_step_reinterpreted_safe.c	bitvector	ILP32	SAFE	stepping an int array through char* is byte-exact	bytes
+ptr_char_step_reinterpreted_unsafe.c	bitvector	ILP32	UNSAFE	stepping an int array through char* is byte-exact	bytes
+ptr_void_step_safe.c	bitvector	ILP32	SAFE	stepping through void* is byte-exact	bytes
+ptr_void_step_unsafe.c	bitvector	ILP32	UNSAFE	stepping through void* is byte-exact	bytes
+ptr_void_char_step_safe.c	bitvector	ILP32	SAFE	stepping through void* cast to char* is byte-exact	bytes
+ptr_void_char_step_unsafe.c	bitvector	ILP32	UNSAFE	stepping through void* cast to char* is byte-exact	bytes
+thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	multi
+thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	flat
+thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	bytes
+thread_local_values_unsafe.c	bitvector	ILP32	UNSAFE	each thread sees its own __thread variable	multi
+thread_local_values_unsafe.c	bitvector	ILP32	UNSAFE	each thread sees its own __thread variable	flat
+thread_local_values_unsafe.c	bitvector	ILP32	UNSAFE	each thread sees its own __thread variable	bytes
+thread_local_address_safe.c	bitvector	ILP32	SAFE	the address of a __thread variable is per thread	multi
+thread_local_address_safe.c	bitvector	ILP32	SAFE	the address of a __thread variable is per thread	flat
+thread_local_address_safe.c	bitvector	ILP32	SAFE	the address of a __thread variable is per thread	bytes
+thread_local_address_unsafe.c	bitvector	ILP32	UNSAFE	the address of a __thread variable is per thread	multi
+thread_local_address_unsafe.c	bitvector	ILP32	UNSAFE	the address of a __thread variable is per thread	flat
+thread_local_address_unsafe.c	bitvector	ILP32	UNSAFE	the address of a __thread variable is per thread	bytes
+memsafety_stored_mid_object_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a stored mid-object pointer is checked against its own object
+memsafety_stored_mid_object_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	a stored mid-object pointer is checked against its own object
+recursion_loop_threaded_safe.c	bitvector	ILP32	SAFE	a loop around a recursive call stays deepenable
+recursion_loop_threaded_unsafe.c	bitvector	ILP32	UNSAFE	a bug at the full recursion depth is found
+strerror_stub.c	bitvector	ILP32	SAFE	strerror is stubbed
+flat_oob_into_neighbour.c	efficient	ILP32	UNSAFE:valid-memsafety	malloc records cells, not bytes, under multi	multi
+flat_symbolic_size_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a symbolic malloc size is in cells under multi	multi
+flat_partial_element_malloc.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element is not addressable under multi	multi
+oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	flat
+oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	multi
+oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	bytes
+oc_null_member_other_path_unsafe.c	bitvector	ILP32	UNSAFE	the path through a real object survives the NULL guard	flat
+oc_null_member_other_path_unsafe.c	bitvector	ILP32	UNSAFE	the path through a real object survives the NULL guard	multi
+oc_null_member_other_path_unsafe.c	bitvector	ILP32	UNSAFE	the path through a real object survives the NULL guard	bytes
+oc_pointer_sentinel_distinct_safe.c	bitvector	ILP32	SAFE	an integer sentinel is no object's address	flat
+oc_pointer_sentinel_distinct_safe.c	bitvector	ILP32	SAFE	an integer sentinel is no object's address	bytes
+oc_guarded_address_unsafe.c	bitvector	ILP32	UNSAFE	a checked pointer still reads the other thread's write	flat
+oc_guarded_address_unsafe.c	bitvector	ILP32	UNSAFE	a checked pointer still reads the other thread's write	multi
+oc_guarded_address_safe.c	bitvector	ILP32	SAFE	a checked pointer reads only the object it points to	flat
+oc_guarded_address_safe.c	bitvector	ILP32	SAFE	a checked pointer reads only the object it points to	multi
+memsafety_static_only_bounds_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	the check over static objects sees an overrun	flat
+memsafety_static_only_bounds_safe.c	bitvector	ILP32	SAFE:valid-memsafety	the check over static objects accepts a valid pointer	flat
+memsafety_main_local_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a local of main is valid for the threads it joins	flat
+memsafety_null_member_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	a member of NULL is an invalid dereference	flat
+oc_stack_objects_distinct_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	flat
+oc_stack_objects_distinct_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	multi
+oc_stack_objects_distinct_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	bytes
+oc_stack_object_shared_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
+oc_stack_object_shared_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
+oc_stack_object_shared_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	bytes
+oc_masked_index_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	flat
+oc_masked_index_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	multi
+oc_masked_index_safe.c	bitvector	ILP32	SAFE	OC value analysis keeps this verdict	bytes
+oc_masked_index_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
+oc_masked_index_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
+oc_masked_index_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	bytes
+oc_uninit_int_branch_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
+oc_uninit_int_branch_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
+oc_conditionally_set_pointer_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
+oc_conditionally_set_pointer_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
+oc_heap_pointer_field_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
+oc_heap_pointer_field_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi

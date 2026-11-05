@@ -37,6 +37,11 @@ interface IOcChecker<E : Event> {
 
   val solver: Solver
 
+  /** Assumed by the next [check] where the checker supports it, instead of a solver scope. */
+  var assumption: Expr<BoolType>?
+    get() = null
+    set(_) {}
+
   /**
    * Checks the consistency of the event graph (i.e., if there is a partial order of events
    * satisfying the given constraints).
@@ -55,6 +60,20 @@ interface IOcChecker<E : Event> {
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus?
+
+  /**
+   * Asserts the consistency of the event graph once, for [check]s under later solver scopes to
+   * share.
+   *
+   * @return whether the encoding was asserted: a checker that returned false encodes it in [check]
+   */
+  fun prepare(
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
+    rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+    wss: Map<VarDecl<*>, Set<Relation<E>>>,
+  ): Boolean = false
 
   /** Returns the condition when the two events are racing. */
   fun raceCondition(e1: E, e2: E): Expr<BoolType> =

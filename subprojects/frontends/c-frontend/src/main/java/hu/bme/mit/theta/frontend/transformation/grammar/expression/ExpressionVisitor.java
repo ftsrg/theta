@@ -739,18 +739,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // inside the resulting dereference's offset makes the assignment path misread the *load* as
         // pointer arithmetic). An aggregate element spans `cellCount(pointee)` cells and is scaled,
         // matching the subscript path's `rowOf`; a null scale (an unsized element) means no factor.
-        final boolean aggregatePointee =
-                pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
-        // Under the bytes model a step of `p` is the pointee's whole byte size, whatever its shape;
-        // under multi/flat only an aggregate element spans more than one cell and is scaled. A unit
-        // stride stays null so no `* 1` is injected (see the note below).
-        final Expr<?> cells;
-        if (byteAddressed()) {
-            final Expr<?> stride = byteStrideExpr(pointee);
-            cells = (stride == null || isLiteralOne(stride)) ? null : stride;
-        } else {
-            cells = aggregatePointee ? cellCountExpr(pointee) : null;
-        }
+        refuseReinterpretedStep(base, pointee);
+        final Expr<?> cells = pointerStride(pointee);
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final List<Expr<?>> indexTerms = new ArrayList<>();
         for (int i = 0; i < exprs.size(); i++) {
@@ -775,6 +765,78 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> ptrArith = Add(addOps);
         parseContext.getMetadata().create(ptrArith, "cType", pointerType);
         return ptrArith;
+    }
+
+    /**
+     * What one step of a pointer to {@code pointee} adds to it, null for a unit step. Under the
+     * bytes model that is the pointee's byte size; under multi/flat an aggregate element spans
+     * several cells, and a {@code void *} steps over bytes, which those models cannot address.
+     */
+    private Expr<?> pointerStride(CComplexType pointee) {
+        if (byteAddressed()) {
+            if (pointee instanceof CVoid) return null;
+            final Expr<?> stride = byteStrideExpr(pointee);
+            return (stride == null || isLiteralOne(stride)) ? null : stride;
+        }
+        if (pointee instanceof CVoid) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Arithmetic on a void pointer is not supported.");
+        }
+        final boolean aggregate =
+                pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
+        return aggregate ? cellCountExpr(pointee) : null;
+    }
+
+    /** The value of {@code ++}/{@code --} on an operand of the given type. */
+    private Expr<?> incrementStep(CComplexType type) {
+        if (type instanceof CPointer pointer && !pointer.isFunctionPointer()) {
+            final Expr<?> stride = pointerStride(pointer.getEmbeddedType());
+            if (stride != null) return type.castTo(stride);
+        }
+        return type.getUnitValue();
+    }
+
+    /** The right-hand side of {@code lhs += rhs} or {@code lhs -= rhs}, in {@code lhs}'s unit. */
+    public Expr<?> compoundStep(Expr<?> lhs, Expr<?> rhs) {
+        if (!(CComplexType.getType(lhs, parseContext) instanceof CPointer pointer)
+                || pointer.isFunctionPointer()) {
+            return rhs;
+        }
+        final Expr<?> stride = pointerStride(pointer.getEmbeddedType());
+        if (stride == null) return rhs;
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> scaled =
+                indexType.castTo(Mul(List.of(indexType.castTo(rhs), indexType.castTo(stride))));
+        parseContext.getMetadata().create(scaled, "cType", indexType);
+        return scaled;
+    }
+
+    /**
+     * Under multi/flat a step counts cells of the pointee, so stepping a pointer cast from or to an
+     * aggregate pointer counts them in the wrong unit: {@code (char *)p + k} on a {@code struct *}.
+     */
+    private void refuseReinterpretedStep(Expr<?> base, CComplexType pointee) {
+        if (byteAddressed()) return;
+        Expr<?> operand = base;
+        while (operand instanceof PosExpr<?> pos) operand = pos.getOp();
+        if (operand == base) return;
+        final CComplexType original = CComplexType.getType(operand, parseContext);
+        final CComplexType originalPointee;
+        if (original instanceof CPointer p && !p.isFunctionPointer()) {
+            originalPointee = p.getEmbeddedType();
+        } else if (original instanceof CArray a) {
+            originalPointee = a.getEmbeddedType();
+        } else return;
+        final boolean aggregate =
+                pointee instanceof CStruct
+                        || pointee instanceof CArray
+                        || originalPointee instanceof CStruct
+                        || originalPointee instanceof CArray;
+        if (aggregate && !(originalPointee instanceof CVoid) && !pointee.equals(originalPointee)) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Stepping a %s through a %s pointer is not supported."
+                            .formatted(originalPointee.getTypeName(), pointee.getTypeName()));
+        }
     }
 
     @Override
@@ -1304,9 +1366,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (increment != 0) {
             Expr<?> expr = ret;
             CComplexType type = CComplexType.getType(ret, parseContext);
+            final Expr<?> step = incrementStep(type);
             for (int i = 0; i < Math.abs(increment); i++) {
-                if (increment < 0) expr = AbstractExprs.Sub(expr, type.getUnitValue());
-                else expr = AbstractExprs.Add(expr, type.getUnitValue());
+                if (increment < 0) expr = AbstractExprs.Sub(expr, step);
+                else expr = AbstractExprs.Add(expr, step);
             }
             parseContext.getMetadata().create(expr, "cType", type);
             expr = type.castTo(expr);
@@ -4230,7 +4293,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return (primary) -> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
-                expr = AbstractExprs.Add(expr, type.getUnitValue());
+                expr = AbstractExprs.Add(expr, incrementStep(type));
                 parseContext.getMetadata().create(expr, "cType", type);
                 expr = type.castTo(expr);
                 parseContext.getMetadata().create(expr, "cType", type);
@@ -4257,7 +4320,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return (primary) -> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
-                expr = AbstractExprs.Sub(expr, type.getUnitValue());
+                expr = AbstractExprs.Sub(expr, incrementStep(type));
                 parseContext.getMetadata().create(expr, "cType", type);
                 expr = type.castTo(expr);
                 parseContext.getMetadata().create(expr, "cType", type);

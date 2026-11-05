@@ -2096,8 +2096,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             resetPreStatements(compoundInitExpr);
             resetPostStatements(compoundInitExpr);
         }
-        CAssignment cAssignment =
-                new CAssignment(ret, rhs, ctx.assignmentOperator().getText(), parseContext);
+        final String operator = ctx.assignmentOperator().getText();
+        if (operator.equals("+=") || operator.equals("-=")) {
+            final Expr<?> step = expressionVisitor.compoundStep(ret, rhs.getExpression());
+            if (step != rhs.getExpression()) rhs = new CExpr(step, parseContext);
+        }
+        CAssignment cAssignment = new CAssignment(ret, rhs, operator, parseContext);
         recordMetadata(ctx, cAssignment);
         expressionVisitor.getPreStatements().forEach(preStatements::addCStatement);
         compound.addCStatement(cAssignment);

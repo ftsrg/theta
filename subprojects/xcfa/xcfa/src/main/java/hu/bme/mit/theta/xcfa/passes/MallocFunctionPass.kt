@@ -196,9 +196,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
 
-  /** The size recorded for memsafety: cells under flat addressing where known, else bytes. */
+  /** The size recorded for memsafety: cells under the cell models where known, else bytes. */
   private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
-    if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
+    if (!parseContext.memoryModel.byteAddressed())
       builder.mallocCells(parseContext, ret, bytes) ?: bytes
     else bytes
 

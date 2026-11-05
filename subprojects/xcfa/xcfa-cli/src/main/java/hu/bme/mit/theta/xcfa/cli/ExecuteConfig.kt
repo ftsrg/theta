@@ -92,6 +92,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
       MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
+  check(!config.frontendConfig.ptrSizeInMemory || config.backendConfig.backend == Backend.OC) {
+    "--ptr-size-in-memory requires the OC backend"
+  }
+  PtrSizeToMemoryPass.enabled = config.frontendConfig.ptrSizeInMemory
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
   if (config.backendConfig.backend == Backend.CEGAR) {

@@ -143,6 +143,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strspn" to Stub(),
         "strcspn" to Stub(),
         "strpbrk" to Stub(),
+        "strerror" to Stub(),
       )
 
     /** How many cells of a written pointee to fill when its extent is not otherwise known. */

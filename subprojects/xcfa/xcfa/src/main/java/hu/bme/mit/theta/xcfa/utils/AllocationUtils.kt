@@ -210,11 +210,11 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
- * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
- * flexible array member its header and the whole trailing elements. Null when there is no such
- * pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the cells, then
- * stays the bound, which can miss an overrun but not invent one.
+ * The cells a `malloc` of [bytes] spans: whole elements of the typed pointer its result [ret] is
+ * bound to, each one [CStruct.inlineCells] cells under flat and one unit otherwise, or for a struct
+ * ending in a flexible array member its header and the whole trailing elements. Null when there is
+ * no such pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the
+ * cells, then stays the bound, which can miss an overrun but not invent one.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -227,8 +227,10 @@ fun XcfaProcedureBuilder.mallocCells(
     return it
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, true)
-  val elementCells = CStruct.inlineCells(pointee)
+  val elementBytes = ObjectLayout.cellModelSize(pointee, parseContext.memoryModel.flatAddressing())
+  val elementCells =
+    if (parseContext.memoryModel.flatAddressing()) CStruct.inlineCells(pointee)
+    else (pointee as? CStruct)?.unitCount ?: 1
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)
   val count = Div(type.castTo(bytes), type.getValue("$elementBytes"))
