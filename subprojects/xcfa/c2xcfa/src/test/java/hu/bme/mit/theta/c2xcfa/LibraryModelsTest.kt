@@ -19,7 +19,10 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -41,8 +44,20 @@ class LibraryModelsTest {
   private fun XCFA.recorded(prefix: String) =
     overApproximatedVars.filterKeys { it.name.startsWith(prefix) }
 
+  private fun XCFA.calls(name: String) =
+    procedures
+      .flatMap { p -> p.edges.flatMap { it.getAllLabels() } }
+      .count { it is InvokeLabel && it.name == name }
+
   private fun XCFA.hasVar(prefix: String) =
     procedures.any { p -> p.vars.any { it.name.startsWith(prefix) } }
+
+  @Test
+  fun `strerror gives a fresh string whose characters are recorded`() {
+    val xcfa = build("strerror.c")
+    assertEquals(0, xcfa.calls("strerror"))
+    assertEquals(127, xcfa.recorded("__stub_strerror_").size)
+  }
 
   @Test
   fun `strlen is exact and not recorded when no stub writes a buffer`() {

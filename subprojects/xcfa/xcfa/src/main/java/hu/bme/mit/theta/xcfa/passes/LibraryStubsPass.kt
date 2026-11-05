@@ -20,9 +20,11 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -100,11 +102,14 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      *   success, say so here instead.
      * @param input the written buffers hold input from the environment, which can be any value in C
      *   too. Otherwise the call computes them, and their havoc is an over-approximation.
+     * @param freshString the call returns a fresh string of fewer than this many characters, with
+     *   any content.
      */
     private data class Stub(
       val writes: Writes = Writes.None,
       val returns: Long? = null,
       val input: Boolean = false,
+      val freshString: Int? = null,
     )
 
     private val STUBS: Map<String, Stub> =
@@ -152,6 +157,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strspn" to Stub(),
         "strcspn" to Stub(),
         "strpbrk" to Stub(),
+        // glibc and musl messages in the C locale are shorter than this
+        "strerror" to Stub(freshString = 128),
       )
 
     /** The stubbed calls that write through a pointer, filling only [DEFAULT_FILL_CELLS] cells. */
@@ -186,7 +193,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
    * model.
    */
   private fun InvokeLabel.stubbable(defined: Set<String>) =
-    name in STUBS && name !in defined && !isLibraryFunction
+    name in STUBS &&
+      name !in defined &&
+      !isLibraryFunction &&
+      // a fresh string is allocated, which memory safety would report as a leak
+      !(STUBS.getValue(name).freshString != null && parseContext.isCheckMemsafety)
 
   /** The argument positions this call writes through, resolved against the actual arity. */
   private fun writtenIndices(stub: Stub, invoke: InvokeLabel): List<Int> =
@@ -265,6 +276,10 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
 
     // The return value: a fixed one where the call is assumed to succeed, otherwise a havoc.
     val ret = (invoke.params.getOrNull(0) as? RefExpr<*>)?.decl as? VarDecl<*>
+    if (ret != null && spec.freshString != null) {
+      val string = freshString(ret, spec.freshString, invoke, builder)
+      if (string != null) return out + string
+    }
     if (ret != null) {
       val fixed = spec.returns
       if (fixed == null) {
@@ -276,6 +291,51 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
           AssignStmtLabel(ret, cast(type.getValue("$fixed"), ret.type), metadata = invoke.metadata)
         )
       }
+    }
+    return out
+  }
+
+  /**
+   * `ret := malloc(cells)`, never null, with any characters in all cells but the last, which is 0.
+   * Null when [ret] is not a pointer to a scalar.
+   */
+  private fun freshString(
+    ret: VarDecl<*>,
+    cells: Int,
+    invoke: InvokeLabel,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel>? {
+    val cell = pointeeCellType(ret.ref) ?: return null
+    val out = mutableListOf<XcfaLabel>()
+    val size = CComplexType.getUnsignedLong(parseContext).getValue("$cells")
+    out.add(InvokeLabel("malloc", listOf(ret.ref, size), invoke.metadata))
+    val nullValue = CComplexType.getType(ret.ref, parseContext).nullValue
+    out.add(StmtLabel(Assume(Neq(ret.ref, nullValue)), metadata = invoke.metadata))
+    for (n in 0 until cells) {
+      val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
+      val deref =
+        Dereference.of(
+          ret.ref as Expr<Type>,
+          cast(index, ret.type) as Expr<Type>,
+          cell.smtType as Type,
+        )
+      parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
+      val value =
+        if (n == cells - 1) cell.nullValue
+        else {
+          val fresh = Var("__stub_${invoke.name}_${counter++}", cell.smtType)
+          builder.addVar(fresh)
+          builder.overApproximatedVars[fresh] = typeInterval(cell, parseContext)
+          out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
+          out.add(StmtLabel(cell.limit(fresh.ref), metadata = invoke.metadata))
+          fresh.ref
+        }
+      out.add(
+        StmtLabel(
+          MemoryAssignStmt.create(deref, cast(value, cell.smtType)),
+          metadata = invoke.metadata,
+        )
+      )
     }
     return out
   }
