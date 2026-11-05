@@ -25,7 +25,15 @@ import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
@@ -36,12 +44,15 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -51,6 +62,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.defaultValue
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
@@ -83,8 +95,8 @@ class CLibraryFunctionsPass(
   private var scanned: XcfaBuilder? = null
 
   /**
-   * A stub writes a buffer somewhere: it fills one cell and leaves the rest stale, where C has a
-   * terminated string. An exact `strlen` over those cells could then prove a wrong Safe.
+   * A stub writes a buffer somewhere but leaves cells stale that C writes, e.g., a terminated
+   * string. An exact `strlen` or `atoi` over those cells could then prove a wrong Safe.
    */
   private var bufferStubCalled = false
 
@@ -127,6 +139,10 @@ class CLibraryFunctionsPass(
     ) + NO_EFFECT_FUNCTIONS
 
   companion object {
+    private val DECIMAL_PARSERS = setOf("atoi", "atol", "atoll")
+
+    /** The largest array that the `atoi` model unrolls. */
+    private const val MAX_UNROLLED_CELLS = 64
 
     /**
      * Metadata flag (keyed by a variable's name, like `cName`) marking a global variable that
@@ -192,7 +208,9 @@ class CLibraryFunctionsPass(
         builder.parent.getProcedures().any { procedure ->
           procedure.getEdges().any { edge ->
             edge.getAllLabels().any {
-              it is InvokeLabel && it.name in LibraryStubsPass.BUFFER_WRITING && it.name !in defined
+              it is InvokeLabel &&
+                it.name !in defined &&
+                LibraryStubsPass.writesBufferInexactly(it, parseContext)
             }
           }
         }
@@ -284,6 +302,9 @@ class CLibraryFunctionsPass(
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
               }
+
+              in DECIMAL_PARSERS ->
+                addDecimalParse(invokeLabel, it.source, target, metadata, builder)
 
               "strlen" -> {
                 // The index of the first 0 cell. The index has no C type, so it gets no overflow
@@ -640,7 +661,178 @@ class CLibraryFunctionsPass(
 
   private fun predicate(it: XcfaLabel): Boolean =
     it is InvokeLabel &&
-      (it.name in supportedFunctions || (it.name == "strlen" && modelsStringLength(it)))
+      (it.name in supportedFunctions ||
+        (it.name == "strlen" && modelsStringLength(it)) ||
+        (it.name in DECIMAL_PARSERS && modelsDecimalParse(it)))
+
+  /** `atoi` and friends on a plain variable, under the same conditions as `strlen`. */
+  private fun modelsDecimalParse(invoke: InvokeLabel): Boolean {
+    if (!modelStringLength || bufferStubCalled) return false
+    if (invoke.name in defined || invoke.params.size != 2) return false
+    if (invoke.params[0] !is RefExpr<*>) return false
+    val str = invoke.params[1] as? RefExpr<*> ?: return false
+    val type = CComplexType.getType(str, parseContext)
+    return type is CPointer || type is CArray
+  }
+
+  /**
+   * `atoi`, `atol` and `atoll` as glibc computes them: `strtol(s, NULL, 10)` (`strtoll` for
+   * `atoll`), converted to the return type modulo 2^w. Skip white space, read a sign and the
+   * decimal digits, and saturate at the limits of the parsed type. The state has no C type, so it
+   * gets no overflow check.
+   *
+   * Each character is one block of assignments. Over an array of at most [MAX_UNROLLED_CELLS]
+   * cells, the blocks of all cells are one edge, so that the program stays acyclic and BMC takes
+   * one step. If no cell ends the number, C reads the cell after the array: the model reads it
+   * (memory safety checks it) and ends the path. Otherwise one loop edge per character.
+   */
+  private fun addDecimalParse(
+    invoke: InvokeLabel,
+    source: XcfaLocation,
+    target: XcfaLocation,
+    metadata: MetaData,
+    builder: XcfaProcedureBuilder,
+  ) {
+    val str = invoke.params[1]
+    val ret = invoke.params[0] as RefExpr<*>
+    val parsed =
+      if (invoke.name == "atoll") CComplexType.getSignedLongLong(parseContext)
+      else CComplexType.getSignedLong(parseContext)
+    val max = BigInteger.TWO.pow(parsed.width() - 1).dec()
+    val min = max.inc().negate()
+    val limit = max / BigInteger.TEN
+    val num = { v: BigInteger -> parsed.smtType.integerOf(v)!! }
+    val size =
+      (CComplexType.getType(str, parseContext) as? CArray)
+        ?.let { SubObjects(parseContext).fixedArraySize(it) }
+        ?.takeIf { it in 1..MAX_UNROLLED_CELLS }
+    // The digits of a terminated string in the array cannot reach the limit: saturation together
+    // with the conversion modulo 2^w makes the query far harder, so it is left out then.
+    val saturates = size == null || BigInteger.TEN.pow(size - 1).dec() > max
+    val id = uniqueCounter++
+    val name = "__theta_${invoke.name}_$id"
+    val char = charType(str)
+    val acc = Decls.Var("${name}_acc", parsed.smtType)
+    val digit = Decls.Var("${name}_digit", parsed.smtType)
+    val ch = Decls.Var("${name}_char", char)
+    val flag = { kind: String -> Decls.Var("${name}_$kind", Bool()) }
+    val neg = flag("neg")
+    val sat = flag("sat")
+    val started = flag("started")
+    val done = flag("done")
+    val lead = flag("lead")
+    val isDigit = flag("isdigit")
+    val stop = flag("stop")
+    (listOf(acc, digit, ch) + listOf(neg, sat, started, done, lead, isDigit, stop)).forEach(
+      builder::addVar
+    )
+    val index =
+      if (size == null) Decls.Var("${name}_index", str.type).also(builder::addVar) else null
+    val cell = { i: Int -> Dereference.of(str, index?.ref ?: str.type.integerOf(i), char) }
+    val isChar = { values: List<Int> ->
+      Or(values.map { Eq(ch.ref, char.integerOf(it)) as Expr<BoolType> })
+    }
+    val space = isChar(listOf(32, 9, 10, 11, 12, 13))
+    val sign = isChar(listOf('-'.code, '+'.code))
+    val isDigitChar =
+      And(Geq(ch.ref, char.integerOf('0'.code)), Leq(ch.ref, char.integerOf('9'.code)))
+    // linear in the character, which the solver handles far better than an ite over the digits
+    val charCType =
+      when (val t = CComplexType.getType(str, parseContext)) {
+        is CPointer -> t.embeddedType
+        is CArray -> t.embeddedType
+        else -> error("atoi on a non-pointer argument of type $t: $str")
+      }
+    parseContext.metadata.create(ch.ref, "cType", charCType)
+    val value = Sub(parsed.castTo(ch.ref), num(BigInteger.valueOf('0'.code.toLong())))
+    val upper = num(limit)
+    val lower = num(limit.negate())
+    val overflow =
+      Or(
+        And(
+          neg.ref,
+          Or(
+            Lt(acc.ref, lower) as Expr<BoolType>,
+            And(Eq(acc.ref, lower), Gt(digit.ref, num(min.negate().mod(BigInteger.TEN)))),
+          ),
+        ),
+        And(
+          Not(neg.ref),
+          Or(
+            Gt(acc.ref, upper) as Expr<BoolType>,
+            And(Eq(acc.ref, upper), Gt(digit.ref, num(max.mod(BigInteger.TEN)))),
+          ),
+        ),
+      )
+    val shifted = Mul(acc.ref, num(BigInteger.TEN))
+    val next = Ite<Type>(neg.ref, Sub(shifted, digit.ref), Add(shifted, digit.ref))
+    // the conditions read the state before the character, so they are computed first
+    val block = { read: Expr<*> ->
+      listOf(
+        AssignStmtLabel(ch, read),
+        AssignStmtLabel(lead, And(Not(started.ref), Not(done.ref))),
+        AssignStmtLabel(
+          isDigit,
+          And(Not(done.ref), Or(started.ref, Not(Or(space, sign))), isDigitChar),
+        ),
+        AssignStmtLabel(
+          stop,
+          And(Not(done.ref), Or(started.ref, Not(Or(space, sign))), Not(isDigitChar)),
+        ),
+        AssignStmtLabel(neg, Or(neg.ref, And(lead.ref, isChar(listOf('-'.code))))),
+        AssignStmtLabel(digit, value),
+        AssignStmtLabel(
+          sat,
+          if (saturates) Or(sat.ref, And(isDigit.ref, overflow)) else Bool(false),
+        ),
+        AssignStmtLabel(acc, Ite<Type>(And(isDigit.ref, Not(sat.ref)), next, acc.ref)),
+        AssignStmtLabel(done, Or(done.ref, stop.ref)),
+        AssignStmtLabel(started, Or(started.ref, And(lead.ref, Not(space)))),
+      )
+    }
+    val init =
+      listOfNotNull(index?.let { AssignStmtLabel(it, str.type.integerOf(0)) }) +
+        AssignStmtLabel(acc, num(BigInteger.ZERO)) +
+        listOf(neg, sat, started, done).map { AssignStmtLabel(it, Bool(false)) }
+    val loc = { kind: String ->
+      XcfaLocation("${source.name}_${invoke.name}_${id}_$kind", metadata = source.metadata)
+    }
+    val edge = { from: XcfaLocation, to: XcfaLocation, labels: List<XcfaLabel> ->
+      builder.addEdge(XcfaEdge(from, to, SequenceLabel(labels), metadata))
+    }
+    val assume = { cond: Expr<BoolType> -> StmtLabel(Assume(cond)) }
+    val parsedLoc = loc("parsed")
+    if (size != null) {
+      edge(source, parsedLoc, init + (0 until size).flatMap { block(cell(it)) })
+      val past = Decls.Var("${name}_past", char).also(builder::addVar)
+      edge(parsedLoc, loc("past"), listOf(assume(Not(done.ref)), AssignStmtLabel(past, cell(size))))
+    } else {
+      val loop = loc("loop")
+      edge(source, loop, init)
+      val step = AssignStmtLabel(index!!.ref, Add(listOf(index.ref, str.type.integerOf(1))))
+      edge(loop, loop, listOf(assume(Not(done.ref))) + block(cell(0)) + step)
+      edge(loop, parsedLoc, listOf(assume(done.ref)))
+    }
+    val result = Ite<Type>(sat.ref, Ite<Type>(neg.ref, num(min), num(max)), acc.ref)
+    edge(
+      parsedLoc,
+      target,
+      listOf(assume(done.ref), AssignStmtLabel(ret, cast(convert(result, parsed, ret), ret.type))),
+    )
+  }
+
+  /** [value] of the C type [from] converted to the type of [ret] modulo 2^w, as gcc does. */
+  private fun convert(value: Expr<*>, from: CComplexType, ret: Expr<*>): Expr<*> {
+    val retType = CComplexType.getType(ret, parseContext)
+    // the integer encoding keeps a narrowing signed conversion unwrapped, so wrap explicitly
+    return if (value.type is IntType && retType.width() < from.width()) {
+      val half = BigInteger.TWO.pow(retType.width() - 1)
+      Sub(Mod(Add(value, Int(half)), Int(half.shiftLeft(1))), Int(half))
+    } else {
+      parseContext.metadata.create(value, "cType", from)
+      retType.castTo(value)
+    }
+  }
 
   /**
    * `strlen` on a plain variable, when the program does not define it and no stub writes a buffer.

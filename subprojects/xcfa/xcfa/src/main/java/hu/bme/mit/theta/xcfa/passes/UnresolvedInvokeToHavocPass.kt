@@ -205,16 +205,16 @@ class UnresolvedInvokeToHavocPass(
 
   private fun isPlainIntegerScalar(type: CComplexType): Boolean =
     type is CInteger && type !is CPointer && type !is CArray
-
-  /**
-   * A literal null pointer (integer or bitvector zero) cannot be written through. Constant-folds
-   * first: pointer casts wrap literals in modulo arithmetic, e.g. `(void*)0` arrives as `(mod (mod
-   * 0 2^64) 2^64)`.
-   */
-  private fun isNullLiteral(expr: Expr<*>): Boolean =
-    when (val folded = ExprUtils.simplify(expr)) {
-      is IntLitExpr -> folded.value == BigInteger.ZERO
-      is BvLitExpr -> folded.value.all { !it }
-      else -> false
-    }
 }
+
+/**
+ * A literal null pointer (integer or bitvector zero) cannot be written through. Constant-folds
+ * first: pointer casts wrap literals in modulo arithmetic, e.g. `(void*)0` arrives as `(mod (mod 0
+ * 2^64) 2^64)`.
+ */
+internal fun isNullLiteral(expr: Expr<*>): Boolean =
+  when (val folded = ExprUtils.simplify(expr)) {
+    is IntLitExpr -> folded.value == BigInteger.ZERO
+    is BvLitExpr -> folded.value.all { !it }
+    else -> false
+  }

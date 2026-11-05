@@ -306,3 +306,23 @@ fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient
 fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
 fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
 dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
+scanf_keeps_value.c	efficient	LP64	SAFE	a scanf that assigns nothing keeps its target
+scanf_return_range.c	efficient	LP64	SAFE	scanf returns EOF or the number of assigned conversions
+scanf_checked_overflow.c	efficient	LP64	UNSAFE:no-overflow	a checked scanf result is input, not an over-approximation
+socket_ranges.c	efficient	LP64	SAFE	socket, connect and close return -1 or a valid result
+recv_index_memsafety.c	efficient	LP64	SAFE:valid-memsafety	recv returns -1 or at most n, so buf[r] = 0 stays inside
+recv_index_unchecked.c	efficient	LP64	UNSAFE:valid-memsafety	recv can return -1
+fgets_full_line.c	efficient	LP64	UNSAFE	fgets can fill the whole buffer (exact strlen after fgets)
+fgets_line_bound.c	efficient	LP64	SAFE	fgets terminates its line inside the buffer
+atoi_constant.c	efficient	LP64	SAFE	atoi skips white space, reads the sign and stops at a non-digit
+atoi_max_overflow.c	efficient	LP64	UNSAFE:no-overflow	atoi of INT_MAX is exact
+atoi_short_buffer.c	efficient	LP64	SAFE	atoi of a 3-character line is at most 999
+atoi_input_overflow.c	efficient	LP64	UNSAFE:no-overflow	atoi of an fgets line can be INT_MAX (Juliet bad pattern)
+atoi_input_guarded.c	efficient	LP64	SAFE:no-overflow	the guarded Juliet good pattern
+atoi_input_overflow.c	bitvector	LP64	UNSAFE:no-overflow	atoi of an fgets line can be INT_MAX (bitvector)
+atoi_input_guarded.c	bitvector	LP64	SAFE:no-overflow	the guarded Juliet good pattern (bitvector)
+htons_exact.c	efficient	LP64	SAFE	htons and htonl reverse the bytes
+htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
+inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
+socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
+socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
