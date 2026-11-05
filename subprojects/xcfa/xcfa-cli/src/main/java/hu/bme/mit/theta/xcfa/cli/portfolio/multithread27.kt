@@ -370,7 +370,8 @@ fun multithreadPortfolio27(
           if (ArithmeticTrait.ARR in parseContext.arithmeticTraits) {
             val config_OC_MULTI =
               oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
-            val config_OC_FLAT = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
+            val config_OC_FLAT =
+              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
             // yices has no arrays, which symbolic mutexes need
             val config_OC_FLAT_Z3 =
               oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)
