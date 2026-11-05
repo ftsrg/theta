@@ -46,6 +46,36 @@ internal fun XcfaProcedureBuilder.calleeOf(label: InvokeLabel): XcfaProcedureBui
   parent.getProcedures().find { p -> p.name == label.name }
 
 /**
+ * Converts the arguments of the calls in [label] that stay calls to their parameters' C types, as a
+ * prototyped C call does. Inlining applies the same conversion when it binds the arguments, but an
+ * un-inlined (recursive) call is bound by the analysis, which needs the types to match already.
+ */
+internal fun XcfaProcedureBuilder.convertCallArguments(
+  label: XcfaLabel,
+  parseContext: ParseContext,
+): XcfaLabel =
+  when (label) {
+    is SequenceLabel ->
+      label.copy(labels = label.labels.map { convertCallArguments(it, parseContext) })
+    is NondetLabel ->
+      label.copy(labels = label.labels.map { convertCallArguments(it, parseContext) }.toSet())
+    is InvokeLabel -> {
+      val params = calleeOf(label)?.getParams()
+      if (params == null || params.size != label.params.size) label
+      else
+        label.copy(
+          params =
+            label.params.mapIndexed { i, arg ->
+              val (param, direction) = params[i]
+              if (direction != ParamDirection.IN) arg
+              else CComplexType.getType(param.ref, parseContext).castTo(arg)
+            }
+        )
+    }
+    else -> label
+  }
+
+/**
  * The names of the procedures that can reach themselves through calls, direct or mutual.
  *
  * Computed from the bodies as they currently stand rather than through
