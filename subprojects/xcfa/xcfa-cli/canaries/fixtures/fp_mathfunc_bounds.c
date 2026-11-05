@@ -10,6 +10,7 @@ extern float logf(float x);
 extern double sin(double x);
 extern float acosf(float x);
 extern float atanhf(float x);
+extern int __signbit(double x);
 
 int main() {
   float x = __VERIFIER_nondet_float();
@@ -27,6 +28,6 @@ int main() {
   if (acosf(1.0f) != 0.0f) reach_error();
   if (x >= -1.0f && x <= 1.0f && acosf(x) < 0.0f) reach_error();
   if (atanhf(1.0f) != 1.0f / 0.0f) reach_error();
-  if (__builtin_signbit(-2.0) == 0 || __builtin_signbit(2.0) != 0) reach_error();
+  if (__signbit(-2.0) == 0 || __signbit(2.0) != 0) reach_error();
   return 0;
 }
