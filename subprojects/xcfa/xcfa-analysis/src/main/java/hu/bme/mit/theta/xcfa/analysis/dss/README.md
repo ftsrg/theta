@@ -47,6 +47,15 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-generalization-gas` | `2` | Failed probes per sender and condition shape before that shape is no longer generalized |
 | `--dss-conjecture-invariants` | off | Conjecture invariants where violation conditions keep drifting at a block boundary; the blocks check them, and a broken one is retracted (see [Conjectured invariants](#conjectured-invariants)). `FORWARD` or `BACKWARD`, not with `PROCESS` |
 | `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
+| `--dss-block-local-pool` | off | Seed a block only with the pool conditions over at least one of its variables |
+| `--dss-checker-budget` | `0` | Milliseconds each checker gets in turn, 4-fold after every round (`0`: no budget); needs `PRIORITY` |
+| `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
+| `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
+| `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
+
+A checker over its budget is stopped at its next solver call (`DssBudget.kt`) and retried in the
+next round, so a block never counts as safe unless some checker finished it. The checker that
+finished a block's last analysis starts its next one.
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.
@@ -215,3 +224,6 @@ never conjectured where a block needs per-path conditions, which the may violati
   also with `--dss-conjecture-invariants`; `BIDIRECTIONAL` may still finish by a cut.
 * `BIDIRECTIONAL` takes `CEGAR` block checkers only, except for a `FINISHER`'s finisher (see
   [Directions](#directions)).
+* Witness invariants keep only integer and Boolean conjuncts over the variables in scope at their
+  statement (globals, and the locals of the function its labels use); bit-vector, floating-point
+  and memory terms, block-scoped locals and uninterpolated bounded proofs contribute nothing.

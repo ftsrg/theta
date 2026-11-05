@@ -87,15 +87,27 @@ class FinisherCheckerSelectionStrategy :
 fun BlockGraph.finishingBlocks(): Set<String> =
   blocks.filter { it.successorIds.isEmpty() }.mapTo(linkedSetOf()) { it.id }
 
-/** The block checkers of a run, handed out by [strategy]; each block uses its [forBlock] view. */
+/**
+ * The block checkers of a run, handed out by [strategy]; each block uses its [forBlock] view.
+ *
+ * With a positive [budgetMs], a block analysis gives each checker that many milliseconds in turn
+ * and multiplies the budget by [BUDGET_GROWTH] after every round, so no checker can block the
+ * others. The checkers must then use [DeadlineSolverManager] solvers, which enforce the budget.
+ */
 class DssCheckerRoster(
   private val checkers: List<CheckerFactory>,
   private val strategy: DssCheckerSelectionStrategy = PriorityCheckerSelectionStrategy(),
+  val budgetMs: Long = 0,
 ) {
 
   init {
     require(checkers.isNotEmpty()) { "DSS needs at least one checker to run blocks with" }
+    require(budgetMs >= 0) { "A DSS checker budget cannot be negative: $budgetMs" }
   }
+
+  /** Whether block analyses take turns with growing budgets (see the class documentation). */
+  val budgeted: Boolean
+    get() = budgetMs > 0 && checkers.size > 1 && !strategy.ranksPerBlock
 
   val size: Int
     get() = checkers.size
@@ -107,7 +119,7 @@ class DssCheckerRoster(
 
   /** The roster of one block (see [DssCheckerSelectionStrategy.checkersOf]). */
   fun forBlock(finishing: Boolean): DssCheckerRoster =
-    DssCheckerRoster(strategy.checkersOf(checkers, finishing), strategy)
+    DssCheckerRoster(strategy.checkersOf(checkers, finishing), strategy, budgetMs)
 
   fun next(attempt: Int = 0): CheckerFactory {
     val selected = strategy.select(checkers, attempt)
@@ -115,5 +127,9 @@ class DssCheckerRoster(
       "DssCheckerSelectionStrategy.select returned a checker not present in this roster"
     }
     return selected
+  }
+
+  companion object {
+    const val BUDGET_GROWTH = 4L
   }
 }

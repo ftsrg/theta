@@ -208,32 +208,46 @@ fun getDssChecker(
       "CONCURRENT --dss-executor"
   }
   require(dssConfig.conjectureGas > 0) { "--dss-conjecture-gas must be positive" }
+  require(dssConfig.checkerBudgetMs >= 0) { "--dss-checker-budget cannot be negative" }
+  require(
+    dssConfig.checkerBudgetMs == 0L ||
+      dssConfig.checkerSelection == DssCheckerSelectionMethod.PRIORITY
+  ) {
+    "--dss-checker-budget orders the checkers itself, so it needs --dss-checker-selection PRIORITY"
+  }
+  require(!finisherSelection || !dssConfig.explChecker) {
+    "--dss-expl-checker adds a checker after the FINISHER finisher, which must be the last of " +
+      "--dss-checker-backends"
+  }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
-    if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
+    dssConfig.solver
+      ?: if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER
+      else DEFAULT_DSS_SOLVER
   // The counterexample monitor's registry is global: only concurrent block checkers go without it
   val cexMonitor =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE
     else CexMonitorOptions.CHECK
-  fun checkerFor(backend: Backend): CheckerFactory {
-    val blockConfig =
-      if (backend == Backend.CEGAR)
-        getDefaultPredCegarConfig(dssConfig.cegarDomain.domain, solver, cexMonitor)
-      else
-        getDefaultConfig(backend).also {
-          // Postconditions and witness invariants must be over program variables
-          (it.backendConfig.specConfig as BoundedConfig).interpolateProof =
-            dssConfig.interpolateBoundedProofs
-        }
-    return { blockXcfa: XCFA ->
-      if (backend == Backend.CEGAR) {
-        val cegar = getCegarChecker(blockXcfa, mcm, parseContext, blockConfig, blockLogger)
-        if (dssConfig.cegarDomain == DssCegarDomain.EXPL) adaptExplChecker(cegar) else cegar
-      } else
-        adaptBoundedChecker(getBoundedChecker(blockXcfa, parseContext, blockConfig, blockLogger))
+  val checkers: List<CheckerFactory> =
+    blockCheckers(dssConfig, solver) { backend, domain, blockSolver ->
+      val blockConfig =
+        if (backend == Backend.CEGAR)
+          getDefaultPredCegarConfig(domain.domain, blockSolver ?: solver, cexMonitor)
+        else
+          getDefaultConfig(backend).also { config ->
+            blockSolver?.let { config.useSolver(it) }
+            // Postconditions and witness invariants must be over program variables
+            (config.backendConfig.specConfig as BoundedConfig).interpolateProof =
+              dssConfig.interpolateBoundedProofs
+          }
+      return@blockCheckers { blockXcfa: XCFA ->
+        if (backend == Backend.CEGAR) {
+          val cegar = getCegarChecker(blockXcfa, mcm, parseContext, blockConfig, blockLogger)
+          if (domain == DssCegarDomain.EXPL) adaptExplChecker(cegar) else cegar
+        } else
+          adaptBoundedChecker(getBoundedChecker(blockXcfa, parseContext, blockConfig, blockLogger))
+      }
     }
-  }
-  val checkers: List<CheckerFactory> = dssConfig.checkerBackends.map(::checkerFor)
   val selectionStrategy: DssCheckerSelectionStrategy =
     when (dssConfig.checkerSelection) {
       DssCheckerSelectionMethod.ROUND_ROBIN -> RoundRobinCheckerSelectionStrategy()
@@ -247,7 +261,7 @@ fun getDssChecker(
         FinisherCheckerSelectionStrategy()
       }
     }
-  val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
+  val checkerRoster = DssCheckerRoster(checkers, selectionStrategy, dssConfig.checkerBudgetMs)
   val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val bidirectional = direction == DssDirection.BIDIRECTIONAL
@@ -261,6 +275,7 @@ fun getDssChecker(
           useGlobalPredicatePool = dssConfig.globalPredicatePool,
           resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
           reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+          blockLocalPool = dssConfig.blockLocalPool,
           checkerFallback = true,
           solverFactory = dssSolverFactory,
           trackSummaries = bidirectional,

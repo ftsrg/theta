@@ -35,6 +35,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.BlockXcfaExtraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster.Companion.BUDGET_GROWTH
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ViolationGeneralizer
@@ -46,6 +48,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.extractBlockXcfa
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withoutAuxVars
@@ -56,6 +59,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 /** Legacy Z3: its interpolation handles C integer arithmetic, but it is not thread-safe. */
 const val DEFAULT_DSS_SOLVER = "Z3"
@@ -90,6 +94,7 @@ class PredicateBlockBehavior(
   private val useGlobalPredicatePool: Boolean = true,
   private val resetPrecisionForEveryRun: Boolean = false,
   private val reuseBlockPrecision: Boolean = false,
+  private val blockLocalPool: Boolean = false,
   private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
   private val trackSummaries: Boolean = false,
@@ -141,7 +146,12 @@ class PredicateBlockBehavior(
   }
 
   private val startPrecision: Set<Expr<BoolType>> by lazy {
-    if (useGlobalPredicatePool) wholeProgram.collectAssumePreds() else emptySet()
+    if (!useGlobalPredicatePool) return@lazy emptySet()
+    val pool = wholeProgram.collectAssumePreds()
+    if (!blockLocalPool) return@lazy pool
+    // The block leaves the other variables unchanged; the precondition's atoms keep them
+    val blockVars = block.edges.flatMapTo(hashSetOf()) { it.label.collectVars() }
+    pool.filterTo(linkedSetOf()) { pred -> ExprUtils.getVars(pred).any { it in blockVars } }
   }
 
   private var fastestChecker: Int? = null
@@ -646,7 +656,8 @@ class PredicateBlockBehavior(
     sourceProcedure.vars + wholeProgram.globalVars.map { it.wrappedVar }
   }
 
-  private inline fun <T> runWithCheckerFallback(analysis: (CheckerFactory) -> T): T {
+  private inline fun <T> runWithCheckerFallback(noinline analysis: (CheckerFactory) -> T): T {
+    if (checkerRoster.budgeted) return runWithBudgets(analysis)
     val leader = fastestChecker
     if (checkerRoster.ranksPerBlock && leader == null) return runEveryChecker(analysis)
     val order = leader?.let { listOf(it) + (0 until checkerRoster.size).filter { i -> i != it } }
@@ -661,6 +672,41 @@ class PredicateBlockBehavior(
       } catch (e: Exception) {
         failure?.addSuppressed(e) ?: run { failure = e }
       }
+    }
+    throw checkNotNull(failure)
+  }
+
+  /** The checker that finished this block's last analysis; it starts the next one. */
+  private var lastFinisher: Int? = null
+
+  /**
+   * Gives every checker the roster's budget in turn, multiplying it after each round; a checker
+   * that fails other than by running out of budget is dropped. There is no unlimited round, so a
+   * checker that never finishes cannot stop the others from being retried with more time.
+   */
+  private fun <T> runWithBudgets(analysis: (CheckerFactory) -> T): T {
+    val first = lastFinisher
+    val order = listOfNotNull(first) + (0 until checkerRoster.size).filter { it != first }
+    val failed = BooleanArray(checkerRoster.size)
+    var failure: Exception? = null
+    var budget = checkerRoster.budgetMs
+    while (order.any { !failed[it] }) {
+      for (index in order) {
+        if (failed[index]) continue
+        try {
+          val result = DssDeadline.within(budget) { analysis(checkerRoster[index]) }
+          lastFinisher = index
+          return result
+        } catch (e: InterruptedException) {
+          throw e
+        } catch (e: Exception) {
+          if (e.isDssBudgetExceeded()) continue
+          failed[index] = true
+          failure?.addSuppressed(e) ?: run { failure = e }
+        }
+      }
+      budget =
+        if (budget > Long.MAX_VALUE / 1_000_000 / BUDGET_GROWTH) budget else budget * BUDGET_GROWTH
     }
     throw checkNotNull(failure)
   }

@@ -15,11 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
@@ -192,6 +194,59 @@ class CheckerFallbackTest {
       assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
     }
     assertEquals(listOf("flaky", "slow", "flaky", "slow"), used)
+  }
+
+  /** Queries the deadline for [millis], as a solver-bound analysis does, then runs [then]. */
+  private fun busy(millis: Long, then: CheckerFactory? = null): CheckerFactory = { x ->
+    SafetyChecker { prec ->
+      val end = System.nanoTime() + millis * 1_000_000
+      while (System.nanoTime() < end) {
+        DssDeadline.check()
+        Thread.sleep(5)
+      }
+      checkNotNull(then) { "this checker never finishes" }(x).check(prec)
+    }
+  }
+
+  private fun budgeted(checkers: List<CheckerFactory>) =
+    DssCheckerRoster(checkers, PriorityCheckerSelectionStrategy(), budgetMs = 50)
+
+  @Test
+  fun `with a budget a checker that overruns it gives the turn to the next one`() {
+    val used = mutableListOf<String>()
+    val checkers = listOf(recording("stuck", used, busy(10_000)), recording("cegar", used, cegar))
+    val messages = initialMessages(checkers, checkerFallback = false, roster = budgeted(checkers))
+    assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+    assertEquals(listOf("stuck", "cegar"), used)
+  }
+
+  @Test
+  fun `with a budget every checker is retried with a growing budget until one finishes`() {
+    val used = mutableListOf<String>()
+    val checkers =
+      listOf(recording("slow", used, busy(120, cegar)), recording("stuck", used, busy(10_000)))
+    val messages = initialMessages(checkers, checkerFallback = false, roster = budgeted(checkers))
+    assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+    assertEquals(listOf("slow", "stuck", "slow"), used)
+  }
+
+  @Test
+  fun `with a budget the checker that finished the last analysis starts the next one`() {
+    val used = mutableListOf<String>()
+    val checkers = listOf(recording("stuck", used, busy(10_000)), recording("cegar", used, cegar))
+    val block = behavior(checkers, checkerFallback = false, roster = budgeted(checkers))
+    repeat(2) { block.runInitialAnalysis() }
+    assertEquals(listOf("stuck", "cegar", "cegar"), used)
+  }
+
+  @Test
+  fun `with a budget a crashing checker is dropped and the crash ends the analysis`() {
+    val checkers = listOf(crashing, crashing)
+    val e =
+      assertThrows(SolverBroke::class.java) {
+        initialMessages(checkers, checkerFallback = false, roster = budgeted(checkers))
+      }
+    assertEquals(1, e.suppressed.size)
   }
 
   @Test

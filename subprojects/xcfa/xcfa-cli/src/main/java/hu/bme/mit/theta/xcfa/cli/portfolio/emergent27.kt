@@ -23,6 +23,12 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
+/** First budget of a block checker; it grows 4-fold per round (see `DssCheckerRoster`). */
+private const val EMERGENT_CHECKER_BUDGET_MS = 30_000L
+
+/** Retried on when legacy Z3 fails a block (unknown results, interpolation errors). */
+private const val EMERGENT_FALLBACK_SOLVER = "JavaSMT:MATHSAT5"
+
 /** Only DSS; fails on properties that no pass reduces to error-location reachability. */
 fun emergent27(
   xcfa: XCFA,
@@ -41,7 +47,7 @@ fun emergent27(
   fun getStm(inProcess: Boolean): STM {
     val dss =
       ConfigNode(
-        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-CEGAR-KIND-$inProcess",
+        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-KIND-CEGAR-EXPL-BUDGET-$inProcess",
         baseDssConfig.copy(
           backendConfig =
             baseDssConfig.backendConfig.copy(
@@ -50,8 +56,14 @@ fun emergent27(
               specConfig =
                 baseDssConfig.backendConfig.specConfig!!.copy(
                   decomposition = DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS,
-                  checkerBackends = listOf(Backend.CEGAR, Backend.KIND),
+                  // A whole-loop block usually needs k-induction; the budget keeps a checker that
+                  // cannot finish from starving the others
+                  checkerBackends = listOf(Backend.KIND, Backend.CEGAR),
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
+                  checkerBudgetMs = EMERGENT_CHECKER_BUDGET_MS,
+                  explChecker = true,
+                  fallbackSolver = EMERGENT_FALLBACK_SOLVER,
+                  blockLocalPool = true,
                 ),
             )
         ),

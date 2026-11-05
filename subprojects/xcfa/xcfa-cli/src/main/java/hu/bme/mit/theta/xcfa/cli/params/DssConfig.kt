@@ -188,6 +188,38 @@ data class DssConfig(
       "--dss-conjecture-invariants: retracted conjectures per location before it gets no more",
   )
   var conjectureGas: Int = 2,
+  @Parameter(
+    names = ["--dss-block-local-pool"],
+    description =
+      "Seed a block's initial precision only with the --dss-global-predicate-pool conditions " +
+        "over at least one variable of the block",
+  )
+  var blockLocalPool: Boolean = false,
+  @Parameter(
+    names = ["--dss-checker-budget"],
+    description =
+      "Milliseconds a block checker runs before the next one takes its turn; the budget grows " +
+        "4-fold after every round of the block checkers (0: a checker runs until it ends). " +
+        "Needs --dss-checker-selection PRIORITY",
+  )
+  var checkerBudgetMs: Long = 0,
+  @Parameter(
+    names = ["--dss-solver"],
+    description =
+      "Solver of the block checkers and of DSS's own queries (default: Z3, or Z3:new for " +
+        "--dss-executor CONCURRENT)",
+  )
+  var solver: String? = null,
+  @Parameter(
+    names = ["--dss-fallback-solver"],
+    description = "A block checker that fails with --dss-solver is retried once with this solver",
+  )
+  var fallbackSolver: String? = null,
+  @Parameter(
+    names = ["--dss-expl-checker"],
+    description = "Add an EXPL CEGAR block checker after --dss-checker-backends",
+  )
+  var explChecker: Boolean = false,
   @Parameter(names = ["--dss-worker-port"], hidden = true) var workerPort: Int = 0,
   @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
   @Parameter(names = ["--dss-worker-blocks"], hidden = true)

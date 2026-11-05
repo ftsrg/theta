@@ -28,3 +28,11 @@ With a `LivenessWitness`, MDD (`--backend MDD`, bitvector arithmetic) answered S
 `bounded-count-down.c` with a wrong state invariant after exploring 5 states, without reporting an
 under-approximation. Plain bitvector MDD on the same program does not finish in 120 s. Termination
 validation refuses MDD, MDD_CEGAR and IC3 for now (`ConfigToChecker.kt`).
+
+## C statements never get their function name
+
+`FunctionVisitor.propagateFunctionName` only sets a name when `getFunctionName()` is null, but
+`CStatement.functionName` defaults to `""`, and it only descends into `CCompound`s. So
+`CMetaData.functionName` is null for ordinary statements, and `YamlWitnessWriter`'s
+violation-witness assumptions, which keep a local only if its function matches, drop every local
+variable. `DssWitnessContent` infers the function from the locals a statement uses instead.
