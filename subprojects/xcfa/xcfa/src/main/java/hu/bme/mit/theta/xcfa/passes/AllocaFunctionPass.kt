@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -43,6 +44,21 @@ import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocVar
 import java.math.BigInteger
+
+/** Marks a `pthread_exit` of the initial thread, whose locals die while other threads run on. */
+const val MAIN_THREAD_EXIT = "__theta_main_thread_exit"
+
+/**
+ * The edges where this procedure's stack objects die. Returning from the initial thread ends the
+ * process, so the threads it leaves running never see its objects released.
+ */
+fun XcfaProcedureBuilder.lifetimeEndEdges(): List<XcfaEdge> {
+  val edges = finalLoc.orElse(null)?.incomingEdges?.toList() ?: return listOf()
+  if (parent.getInitProcedures().none { it.first == this }) return edges
+  return edges.filter { edge ->
+    edge.getFlatLabels().any { it is InvokeLabel && it.name == MAIN_THREAD_EXIT }
+  }
+}
 
 /**
  * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
@@ -66,9 +82,7 @@ import java.math.BigInteger
  * way but lives as long as its block, so it is not released at return. Like `alloca` memory it is
  * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported.
  *
- * Known gaps (both are the pre-existing scope-lifetime limitation, not new to alloca): the block is
- * never invalidated at function return, so a dangling access to it afterwards is not caught, and
- * `free()`ing it is accepted rather than reported as an invalid free.
+ * Known gap: `free()`ing the block is accepted rather than reported as an invalid free.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -153,10 +167,17 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   private fun lowerScopeEnds(builder: XcfaProcedureBuilder) {
     for (edge in ArrayList(builder.getEdges())) {
       val labels = edge.getFlatLabels()
-      if (labels.none { it is InvokeLabel && it.name == SCOPE_END }) continue
+      labels
+        .firstOrNull { it is InvokeLabel && it.name == FunctionVisitor.SCOPE_START }
+        ?.let { error("The lifetime of a stack object was not lowered: $it") }
+      if (
+        labels.none { it is InvokeLabel && (it.name == SCOPE_END || it.name == MAIN_THREAD_EXIT) }
+      )
+        continue
       val lowered =
         labels.mapNotNull { label ->
-          if (label !is InvokeLabel || label.name != SCOPE_END) label
+          if (label is InvokeLabel && label.name == MAIN_THREAD_EXIT) null
+          else if (label !is InvokeLabel || label.name != SCOPE_END) label
           else if (!parseContext.isCheckMemsafety) null
           else builder.parent.deallocate(parseContext, label.params[1])
         }
@@ -183,9 +204,8 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    */
   private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<Expr<*>>) {
     if (!parseContext.isCheckMemsafety || allocated.isEmpty()) return
-    val finalLoc = builder.finalLoc.orElse(null) ?: return
     val releases = allocated.map { builder.parent.deallocate(parseContext, it) }
-    LinkedHashSet(finalLoc.incomingEdges).forEach { edge ->
+    builder.lifetimeEndEdges().forEach { edge ->
       builder.removeEdge(edge)
       builder.addEdge(
         edge.withLabel(SequenceLabel(edge.label.getFlatLabels() + releases, edge.label.metadata))

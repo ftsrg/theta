@@ -1520,9 +1520,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return address;
                 }
                 // Taking a *scalar* local's address is what makes its storage observable after the
-                // block ends, and such a scalar is not an alloca -- ReferenceElimination gives it a
-                // compile-time base -- so nothing else would ever release it. Tell the function
-                // visitor, which releases it at the end of the block that DECLARED it.
+                // block ends, and such a scalar is not an alloca, so nothing else would ever
+                // release
+                // it. Tell the function visitor, which ties it to the block that DECLARED it.
                 if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
                     final Expr<?> address = reference(originalOperand);
                     functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);

@@ -30,7 +30,6 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
@@ -465,9 +464,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   }
 
   /**
-   * The start and size of each object when these are constants: all set on the entry path, nothing
-   * freed, and at most released when `main` returns, where the process ends with its memory. A
-   * check is then a condition over the address alone, with no witness or ghost array.
+   * The start and size of each object when these are constants: all set on the entry path and
+   * nothing released. A check is then a condition over the address alone, with no witness or ghost
+   * array.
    */
   @Suppress("UNCHECKED_CAST")
   private fun staticSizes(xcfa: XcfaBuilder): Map<LitExpr<*>, LitExpr<*>>? =
@@ -505,44 +504,13 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       loc = edge.target
       if (!seen.add(loc)) break
     }
-    val onlyAtExit =
-      labels.all { (edge, procedure) ->
-        edge
-          .getFlatLabels()
-          .filter { it !in entry && it.writesAny(ghosts) }
-          .all { label ->
-            procedure == init && (label as StmtLabel).releases() && nothingRunsAfter(edge, label)
-          }
-      }
-    return sizes.takeIf { onlyAtExit }
+    val onlyOnEntry =
+      labels.none { (edge, _) -> edge.getFlatLabels().any { it !in entry && it.writesAny(ghosts) } }
+    return sizes.takeIf { onlyOnEntry }
   }
 
   private fun XcfaLabel.writesAny(ghosts: List<VarDecl<*>>): Boolean =
     collectVarsWithAccessType().any { (variable, access) -> variable in ghosts && access.isWritten }
-
-  private fun StmtLabel.releases(): Boolean {
-    val write = (stmt as? AssignStmt<*>)?.expr as? ArrayWriteExpr<*, *> ?: return false
-    return write.array == (stmt as AssignStmt<*>).varDecl.ref &&
-      write.index is LitExpr<*> &&
-      write.elem == fitsall.nullValue
-  }
-
-  /** Whether after [label] on [edge] the procedure makes no call and accesses no memory. */
-  private fun nothingRunsAfter(edge: XcfaEdge, label: XcfaLabel): Boolean {
-    val quiet = { l: XcfaLabel ->
-      l !is InvokeLabel && l !is StartLabel && l.dereferences.isEmpty()
-    }
-    if (!edge.getFlatLabels().dropWhile { it !== label }.drop(1).all(quiet)) return false
-    val seen = mutableSetOf(edge.target)
-    val queue = ArrayDeque(seen)
-    while (queue.isNotEmpty()) {
-      for (next in queue.removeFirst().outgoingEdges) {
-        if (!next.getFlatLabels().all(quiet)) return false
-        if (seen.add(next.target)) queue.add(next.target)
-      }
-    }
-    return true
-  }
 
   private fun inObject(address: Expr<*>, start: LitExpr<*>, size: LitExpr<*>): Expr<BoolType> {
     val index = Sub(address, cast(start, address.type)).toFitsall()

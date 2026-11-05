@@ -55,6 +55,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -339,9 +340,40 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         addRefInitializations(builder, globalReferredVars) // we only need this for main
       }
       addRefInitializations(builder, referredVars)
+      if (parseContext.isCheckMemsafety) lowerLifetimes(builder, referredVars)
       return true
     }
     return false
+  }
+
+  /**
+   * Gives a local a fresh base on each entry to its block, so a release does not outlive the block,
+   * and ends its lifetime where the procedure exits: a `return` leaves every open block.
+   */
+  private fun lowerLifetimes(
+    builder: XcfaProcedureBuilder,
+    referredVars: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
+  ) {
+    val allocations: Map<Any?, List<XcfaLabel>> =
+      referredVars.values.associate { (pointer, labels) -> pointer to labels.labels }
+    for (edge in LinkedHashSet(builder.getEdges())) {
+      val labels = edge.getFlatLabels()
+      if (labels.none { it is InvokeLabel && it.name == FunctionVisitor.SCOPE_START }) continue
+      val lowered =
+        labels.flatMap { label ->
+          if (label !is InvokeLabel || label.name != FunctionVisitor.SCOPE_START) listOf(label)
+          else allocations[(label.params[1] as? RefExpr<*>)?.decl] ?: listOf(label)
+        }
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
+    }
+    val releases = referredVars.values.map { builder.parent.deallocate(parseContext, it.first.ref) }
+    for (edge in builder.lifetimeEndEdges()) {
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(edge.getFlatLabels() + releases, edge.label.metadata))
+      )
+    }
   }
 
   private fun addRefInitializations(
