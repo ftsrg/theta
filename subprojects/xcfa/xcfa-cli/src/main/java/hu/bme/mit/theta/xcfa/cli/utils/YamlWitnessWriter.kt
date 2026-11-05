@@ -1322,8 +1322,8 @@ private fun Proof.toContent(
       !StaticCoiPass.enabled &&
       property?.inputProperty in setOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.OVERFLOW)
   )
-    // the verdict is already decided: an empty witness is valid, a failed export must not cost it
-    return try {
+  // the verdict is already decided: an empty witness is valid, a failed export must not cost it
+  return try {
       loopInvariantContent(inputFile, parseContext)
     } catch (_: Throwable) {
       listOf()
