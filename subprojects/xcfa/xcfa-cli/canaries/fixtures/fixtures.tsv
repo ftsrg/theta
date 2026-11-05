@@ -275,3 +275,6 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+malloc_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc bound counts cells, not bytes
+malloc_struct_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a struct element of a malloc bound spans its member cells
+malloc_void_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc of unknown cell count retries under bytes
