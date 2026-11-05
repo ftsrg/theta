@@ -42,6 +42,7 @@ import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import hu.bme.mit.theta.xcfa.utils.memsafetyBound
 import java.math.BigInteger
 
 /**
@@ -55,6 +56,9 @@ import java.math.BigInteger
  * stack object gets a *fresh runtime* base per allocation. A compile-time constant base would be
  * the same for every activation of the procedure, so two recursive frames or two threads running it
  * would alias; a runtime base from the shared counter cannot.
+ *
+ * The frontend's own `alloca` of a stack object is sized in cells. A program's `alloca(n)` arrives
+ * as `__builtin_alloca`, sized in bytes, so memsafety records its whole elements, as for `malloc`.
  *
  * Under the multi model the block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`),
  * which the memcleanup scan does not enumerate: `alloca` memory is released when the enclosing
@@ -117,14 +121,14 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               if (parseContext.isCheckMemsafety) {
                 addressLabels +
                   listOfNotNull(
-                    builder.parent.allocate(parseContext, ret, arg),
+                    builder.parent.allocate(parseContext, ret, size(builder, invokeLabel)),
                     probeInvalidLength(builder, ret, arg, retType),
                   )
               } else {
                 addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-            if (invokeLabel.name == "alloca") allocated.add(ret)
+            if (invokeLabel.name != HEAP_SUBOBJECT) allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
@@ -235,11 +239,23 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   private var probeCnt = 0
 
+  /**
+   * The size memsafety records: the frontend's own blocks come in cells, the program's in bytes.
+   */
+  private fun size(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): Expr<*> =
+    if (invokeLabel.name == USER_ALLOCA)
+      builder.memsafetyBound(parseContext, invokeLabel.params[0], invokeLabel.params[1])
+    else invokeLabel.params[1]
+
   private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && (it.name == "alloca" || it.name == HEAP_SUBOBJECT)
+    return it is InvokeLabel &&
+      (it.name == "alloca" || it.name == USER_ALLOCA || it.name == HEAP_SUBOBJECT)
   }
 
   private companion object {
+    /** Must match `ExpressionVisitor.ALLOCA`. */
+    const val USER_ALLOCA = "__builtin_alloca"
+
     /** Must match `FunctionVisitor.SCOPE_END`. */
     const val SCOPE_END = "__theta_scope_end"
   }

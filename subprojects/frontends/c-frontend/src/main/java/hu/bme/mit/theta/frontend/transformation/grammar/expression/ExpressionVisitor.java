@@ -2057,7 +2057,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(unused, "cType", signedInt);
                 return unused;
             }
-            case "__builtin_alloca", "__builtin_alloca_with_align" -> {
+            case "alloca", "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
             }
             case "__builtin_va_start", "__builtin_va_end", "__builtin_va_copy" -> {
@@ -3266,7 +3266,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return cCall.getRet().getRef();
     }
 
-    private static final String ALLOCA = "alloca";
+    /**
+     * A program's own `alloca`, sized in bytes; the frontend's `alloca` of a stack object is sized
+     * in cells. Must match `AllocaFunctionPass.USER_ALLOCA`.
+     */
+    private static final String ALLOCA = "__builtin_alloca";
 
     /**
      * Models {@code __builtin_uadd*_overflow(a, b, res)} and {@code __builtin_umul*_overflow}: the

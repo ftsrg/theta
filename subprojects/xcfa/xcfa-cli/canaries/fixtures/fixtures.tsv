@@ -288,3 +288,6 @@ heap_struct_array_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc'd struct 
 heap_full_block_ok.c	efficient	ILP32	SAFE:valid-memsafety	memset, memcpy, calloc and realloc over whole int blocks stay in bounds	multi
 heap_untyped_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a block with no element type is bounded under bytes
 heap_sub_element_free.c	efficient	ILP32	SAFE:valid-memsafety	a block smaller than its element is live and may be freed
+user_alloca_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	__builtin_alloca is sized in bytes and bounded in cells	multi
+user_alloca_direct_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a direct alloca call is sized in bytes and bounded in cells	multi
+user_alloca_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a byte-sized alloca block is in bounds	multi

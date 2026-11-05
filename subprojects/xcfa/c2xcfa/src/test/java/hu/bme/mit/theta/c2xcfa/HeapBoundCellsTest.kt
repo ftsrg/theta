@@ -41,8 +41,8 @@ import org.junit.jupiter.api.assertThrows
 
 /**
  * Under the cell-per-value models an access indexes a block in cells, one per scalar element, so
- * memsafety must record a heap block's size in cells too, not in the bytes the program asks for. A
- * block whose element type is not known is refused and rebuilt under bytes.
+ * memsafety must record a heap or `alloca` block's size in cells too, not in the bytes the program
+ * asks for. A block whose element type is not known is refused and rebuilt under bytes.
  */
 class HeapBoundCellsTest {
 
@@ -128,6 +128,12 @@ class HeapBoundCellsTest {
         "expected the cells of an int block under $model in $sizes",
       )
     }
+  }
+
+  @Test
+  fun userAllocaIsBoundedInCells() {
+    val sizes = sizes("user-alloca.c")
+    assertCells(sizes, 4, 16)
   }
 
   @Test
