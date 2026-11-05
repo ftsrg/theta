@@ -37,7 +37,7 @@ Büchi automata for liveness come from `common/ltl` (which also owns the jhoafpa
 ## ASG specifics (asg/ + loopchecker/)
 
 - `ASG` permits cycles; `ASGTrace` is a lasso (tail → "honda" node → loop). `ASGNode.expanded` is write-once-true — re-expansion goes through `ASG.pruneAll()`, there is no per-node re-expansion.
-- `SingleASGTraceRefiner` inspects only `traces[0]` and prunes the whole ASG on spurious — no LAZY/FULL distinction like ARG.
+- `SingleASGTraceRefiner` inspects only `traces[0]` and prunes the whole ASG on spurious — no LAZY/FULL distinction like ARG. A refinement that leaves the precision unchanged throws `NotSolvableException` (the rebuilt ASG would yield the same lasso).
 - Refinement strategies: `DIRECT_REFINEMENT` (default) or `BOUNDED_UNROLLING` (bound hardcoded 100, silently falls back).
 
 ## Editing recipes

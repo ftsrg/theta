@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.cli.witnesstransformation
 
-import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -24,10 +23,8 @@ import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -38,9 +35,9 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode
-import java.math.BigInteger
 import java.util.function.Predicate
 
 enum class Verbosity {
@@ -80,7 +77,7 @@ fun traceToWitness(
               state.xcfa,
               state.processes,
               PtrState(state.sGlobal),
-              state.mutexes,
+              state.mutexState,
               state.threadLookup,
               state.bottom,
             )
@@ -173,9 +170,12 @@ private fun labelToEdge(
             // encoding is not a valid C expression over the original program
             !parseContext.metadata.getMetadataValue(rootName, SYNC_VAR_METADATA_KEY).isPresent
         )
-          "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
-                    printLit(eval.get())
-                }"
+          eval
+            .get()
+            .toCConstraint(
+              parseContext.metadata.getMetadataValue(rootName, "cName").get() as String,
+              runCatching { CComplexType.getType(varDecl.ref, parseContext) }.getOrNull(),
+            )
         else null
       } else null,
     control =
@@ -193,50 +193,4 @@ private fun labelToEdge(
     cSource = xcfaLabel.getCMetaData()?.sourceText,
     edge = edge,
   )
-}
-
-fun printLit(litExpr: LitExpr<*>): String? {
-  return if (litExpr is BvLitExpr) {
-    val value = litExpr.value
-    var intValue = BigInteger.ZERO
-    for (i in value.indices) {
-      val b = value[i]
-      if (b) {
-        intValue = intValue.add(BigInteger.ONE.shiftLeft(value.size - 1 - i))
-      }
-    }
-    "0x" + intValue.toString(16)
-  } else if (litExpr is FpLitExpr) {
-    val boolList: MutableList<Boolean> = java.util.ArrayList()
-    val tmpList: MutableList<Boolean> = java.util.ArrayList()
-    for (b in litExpr.significand.value) {
-      tmpList.add(b)
-    }
-    boolList.addAll(Lists.reverse(tmpList))
-    tmpList.clear()
-    for (b in litExpr.exponent.value) {
-      tmpList.add(b)
-    }
-    boolList.addAll(Lists.reverse(tmpList))
-    boolList.add(litExpr.hidden)
-    var aggregate = 0
-    val hexDigits: MutableList<Char> = java.util.ArrayList()
-    for (i in boolList.indices) {
-      if (i % 4 == 0 && i > 0) {
-        if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar())
-        else hexDigits.add(('A'.code - 10 + aggregate).toChar())
-        aggregate = 0
-      }
-      if (boolList[i]) aggregate += 1 shl i % 4
-    }
-    if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar())
-    else hexDigits.add(('A'.code - 10 + aggregate).toChar())
-    val stringBuilder = StringBuilder("0x")
-    for (character in Lists.reverse(hexDigits)) {
-      stringBuilder.append(character)
-    }
-    stringBuilder.toString()
-  } else {
-    litExpr.toString()
-  }
 }

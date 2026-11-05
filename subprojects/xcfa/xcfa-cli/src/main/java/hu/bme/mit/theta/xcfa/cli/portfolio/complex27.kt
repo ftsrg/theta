@@ -61,10 +61,10 @@ fun complex27(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  var baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseIc3Config = baseIc3Config(xcfa, mcm, parseContext, portfolioConfig, false)
+  var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseIc3Config = baseIc3Config(portfolioConfig)
 
   fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
     fun cegar(
@@ -140,7 +140,6 @@ fun complex27(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -157,7 +156,6 @@ fun complex27(
         baseIc3Config.copy(
           backendConfig =
             baseIc3Config.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = timeout,
               inProcess = inProcess,
               specConfig =
@@ -180,7 +178,6 @@ fun complex27(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig = baseMddConfig.backendConfig.specConfig!!.copy(solver = solver),
             )
         ),
@@ -196,7 +193,6 @@ fun complex27(
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
               inProcess = inProcess,
-              parseInProcess = true,
               specConfig =
                 baseMddConfig.backendConfig.specConfig!!.copy(cegar = true, solver = solver),
             )
@@ -245,7 +241,7 @@ fun complex27(
               inputType = InputType.C,
               specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
             ),
-          backendConfig = adapted.backendConfig.copy(parseInProcess = true),
+          backendConfig = adapted.backendConfig,
           outputConfig = baseCegarConfig.outputConfig,
           debugConfig = portfolioConfig.debugConfig,
         ),
@@ -279,22 +275,22 @@ fun complex27(
         itpSolver = "cvc5:1.3.4"
         // MathSAT rejects floats combined with bitvectors, and cvc5 is the only solver packaged
         // that decides the combination, so there is no alternative to fall back to there.
-        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.12"
+        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.19"
         bmcSolver = "cvc5:1.3.4"
         bmcAlt = "Z3:new"
       }
       bitvectorEncoded -> {
-        itpSolver = "mathsat:5.6.12"
+        itpSolver = "mathsat:5.6.19"
         // The only other packaged solver that interpolates over bitvectors.
         itpAlt = "bitwuzla:0.9.1"
         bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.12"
+        bmcAlt = "mathsat:5.6.19"
       }
       else -> {
         itpSolver = "Z3"
-        itpAlt = "mathsat:5.6.12"
+        itpAlt = "mathsat:5.6.19"
         bmcSolver = "Z3:new"
-        bmcAlt = "mathsat:5.6.12"
+        bmcAlt = "mathsat:5.6.19"
       }
     }
 
@@ -357,7 +353,7 @@ fun complex27(
         // reproduce the same XCFA, and a float program has no bitvector encoding at all.
         val lastResort =
           if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
-          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.12")
+          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.19")
         steps to lastResort
       } else {
         // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
@@ -399,8 +395,8 @@ fun complex27(
 
   // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
   if (xcfa.isInlined && mainTrait == MULTITHREAD)
-    return multithreadPortfolio(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
-  if (xcfa.isInlined && mainTrait == TERMINATION)
+    return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+  if (mainTrait == TERMINATION)
     return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
   val loopFree = xcfa.boundedIsComplete

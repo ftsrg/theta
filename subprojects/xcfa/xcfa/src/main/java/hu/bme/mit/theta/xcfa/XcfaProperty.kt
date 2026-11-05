@@ -43,6 +43,9 @@ class XcfaProperty(val inputProperty: ErrorDetection, val witness: WitnessInfo? 
   fun copy(): XcfaProperty =
     XcfaProperty(inputProperty, witness).also { it.verifiedProperty = this.verifiedProperty }
 
+  /** A copy with no transformation applied, for building a model from the input again. */
+  fun untransformed(): XcfaProperty = XcfaProperty(inputProperty, witness)
+
   override fun toString(): String = "Input/verified property: $inputProperty / $verifiedProperty"
 }
 

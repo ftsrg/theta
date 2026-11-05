@@ -111,7 +111,8 @@ The primary CI/CD workflow orchestrates the entire build, test, and deployment p
 11. **deploy-zenodo** job: Archives releases to Zenodo
     - Only runs on `workflow_dispatch` with release message on master
     - Requires: `zenodo_token`
-    - Tools: Theta-svcomp, EmergenTheta-svcomp, Thorn-svcomp, Theta-chccomp
+    - Tools: Theta-svcomp, EmergenTheta-svcomp, SymbolicTheta-svcomp, Thorn-svcomp, Theta-chccomp
+    - Each matrix entry may name a `record` to publish a new version of; without one, the record titled `<tool> - Verifier Archive` is looked up, and created on the first release
 
 12. **deploy-docs** job: Publishes documentation to GitHub Pages
     - Builds wiki with MkDocs
@@ -227,7 +228,7 @@ archivePackaging {
         inputFlags = "--custom --flags"     // Command-line flags 
         solvers = listOf(                   // Optional: SMT solvers to bundle
             "cvc5:1.2.0",
-            "mathsat:5.6.12"
+            "mathsat:5.6.19"
         )
         includeSolverCli = true             // Include solver installation utility
         scriptName = "theta-start.sh"       // Script from scripts/ directory
@@ -336,7 +337,7 @@ Deployments occur only when `linux-build-test-deploy.yml` is manually triggered 
 | **Maven Central** | JAR, source, Javadoc | Published via `publish` Gradle task |
 | **DockerHub** | Docker images | Pushed for each CLI tool (`ftsrg/theta-*-cli`) |
 | **GitHub Container Registry** | Docker images | Pushed for each CLI tool (`ftsrg/theta-*-cli`) |
-| **Zenodo** | Archives | Versioned snapshots for competition tools (Theta-svcomp, EmergenTheta-svcomp, Thorn-svcomp, Theta-chccomp) |
+| **Zenodo** | Archives | Versioned snapshots for competition tools (Theta-svcomp, EmergenTheta-svcomp, SymbolicTheta-svcomp, Thorn-svcomp, Theta-chccomp) |
 | **GitHub Pages** | Wiki, Javadoc | Published to `gh-pages` branch under `/wiki` and `/javadoc` |
 
 ### Deployment Actions

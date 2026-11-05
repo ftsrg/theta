@@ -34,8 +34,10 @@ public abstract class CReal extends CComplexType {
 
     @Override
     public int width() {
-        return parseContext.getArchitecture().getBitWidth(getTypeName() + "_s")
-                + parseContext.getArchitecture().getBitWidth(getTypeName() + "_e");
+        // the architecture's keys are spelled without spaces (`longdouble`), the type name is C
+        String key = getTypeName().replace(" ", "");
+        return parseContext.getArchitecture().getBitWidth(key + "_s")
+                + parseContext.getArchitecture().getBitWidth(key + "_e");
     }
 
     @Override

@@ -118,7 +118,6 @@ entity  InputConfig << data >> {
    propertyFile: File?
    input: File?
    xcfaWCtx: Triple<XCFA, Collection<GraphConstraint>, ParseContext>?
-   parseCtx: File?
 }
 entity  InterpolationConfig << data >> {
    disable: Boolean

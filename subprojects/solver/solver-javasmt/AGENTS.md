@@ -7,7 +7,7 @@ Gradle module: `:theta-solver-javasmt`. Backend multiplexer over [JavaSMT](https
 Standard backend skeleton (`{Decl,Expr,Term,Type}Transformer` + `JavaSMTTransformationManager`/`JavaSMTTermTransformer` + `JavaSMTSymbolTable`) plus:
 
 - `JavaSMTSolver` (Solver/UCSolver) and `JavaSMTItpSolver` — interpolation availability depends on the *underlying* solver (SMTInterpol/Princess yes; not all).
-- **`JavaSMTUserPropagator`** — the only user-propagator entry point in Theta (Z3-specific feature surfaced through JavaSMT); sole consumer is `analysis`'s `oc/UserPropagatorOcChecker`. Changing its callback signatures breaks weak-memory checking in xcfa.
+- **`JavaSMTUserPropagator`** — the only backend implementing `SolverFactory.createSolverWithPropagators` (Z3 through JavaSMT): adapts a solver-agnostic `UserPropagator` to JavaSMT's propagator interface. Its sole consumer is `analysis`'s `oc/UserPropagatorOcChecker`, which `xcfa-analysis` gives a JavaSMT Z3 factory.
 - `JavaSMTSolverException` — wraps underlying-solver failures.
 
 ## Invariants / gotchas
@@ -15,4 +15,4 @@ Standard backend skeleton (`{Decl,Expr,Term,Type}Transformer` + `JavaSMTTransfor
 1. **Capabilities are per-underlying-solver**, not per this module: a config that requests `JavaSMT:X` with interpolation must know X interpolates. Failures surface at factory/solve time, not at registration.
 2. New core types/exprs: teach the transformers here too (fifth stack besides z3, z3-legacy, smtlib — grep precedent: EnumType).
 3. JavaSMT bundles native libs per solver via the `javasmtDeps` artifacts — version drift between `javasmt` and `javasmtDeps` breaks at runtime, which is why Deps.kt hard-codes them together.
-4. JavaSMT's FP mantissa size excludes the hidden bit, Theta's `FpType` significand includes it: build sorts with `getSignificand() - 1`, read them back with `getMantissaSize() + 1`. Term printing differs per solver (Z3 `(_ extract 5 2)`, MathSAT `bvextract_5_2_8`), so a read-back that parses `term.toString()` needs every solver's form; the Z3-based round-trip test does not catch MathSAT-only breaks (see `JavaSMTMathsatTransformerTest`).
+4. JavaSMT's FP mantissa size excludes the hidden bit, Theta's `FpType` significand includes it: build sorts with `getFloatingPointTypeFromSizesWithoutHiddenBit(e, getSignificand() - 1)`, read them back with `getMantissaSizeWithoutHiddenBit() + 1`. Term printing differs per solver (Z3 `(_ extract 5 2)`, MathSAT `bvextract_5_2_8`), so a read-back that parses `term.toString()` needs every solver's form (`EXTRACT_INDICES` covers both); the Z3-based round-trip test does not catch MathSAT-only breaks (see `JavaSMTMathsatTransformerTest`).

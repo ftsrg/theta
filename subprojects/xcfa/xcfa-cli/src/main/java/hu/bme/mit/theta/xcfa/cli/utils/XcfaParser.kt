@@ -58,7 +58,8 @@ import org.antlr.v4.runtime.CommonTokenStream
  * wrap this in a `try`. The two failure modes a caller CAN recover from are therefore handed back
  * untouched when it asks for them, and only then:
  * - [rethrowPointerSplitLimitation]: the base/offset pointer splitting of `--memory-model multi`
- *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat`.
+ *   giving up ([UnsupportedPointerSplitException]), recoverable under `--memory-model flat` (and
+ *   then under `--memory-model bytes` if flat needs byte granularity).
  * - [rethrowByteGranularityLimitation]: a construct that needs byte granularity
  *   ([RequiresByteAddressedMemoryException]), recoverable under `--memory-model bytes`.
  *
@@ -99,11 +100,6 @@ fun getXcfa(
       InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
 
       InputType.LITMUS -> LitmusInterpreter.getXcfa(config.inputConfig.input!!)
-
-      InputType.JSON -> {
-        val gson = getGson()
-        gson.fromJson(config.inputConfig.input!!.readText(), XCFA::class.java)
-      }
 
       InputType.DSL -> {
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")

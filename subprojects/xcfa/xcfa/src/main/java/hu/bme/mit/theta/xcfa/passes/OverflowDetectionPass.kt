@@ -248,6 +248,12 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
    * and would be silently dropped.
    */
   private fun evaluationPrefixesOf(expr: Expr<*>): List<Expr<*>> {
+    if (expr is IteExpr<*>) {
+      // a guarded chain (see `getExpressions`): its intermediates are guarded the same way
+      return evaluationPrefixesOf(expr.then).map {
+        IteExpr.of(expr.cond, it as Expr<IntType>, Int(0))
+      }
+    }
     if (expr !is AddExpr<*> && expr !is MulExpr<*>) return listOf()
     val ops = expr.ops
     if (ops.size <= 2) return listOf()
@@ -309,6 +315,15 @@ private fun Expr<*>.getExpressions(
 ): Set<Expr<*>> {
   var shortCircuitCondition: Expr<BoolType> = shortCircuitCondition
   val ret = mutableSetOf<Expr<*>>()
+  if (this is IteExpr<*>) {
+    // `c ? a : b` evaluates only the selected branch, so an overflow in a branch counts only when
+    // the condition selects it.
+    ret.addAll(cond.getExpressions(f, shortCircuitCondition))
+    ret.addAll(then.getExpressions(f, And(shortCircuitCondition, cond)))
+    ret.addAll(`else`.getExpressions(f, And(shortCircuitCondition, Not(cond))))
+    if (f(this)) ret.add(this)
+    return ret
+  }
   for (expr in ops) {
     ret.addAll(expr.getExpressions(f, shortCircuitCondition))
     shortCircuitCondition =

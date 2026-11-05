@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ fun chcCompPortfolioModel25(
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseCegarConfig = baseCegarConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseBoundedConfig = baseBoundedConfig(xcfa, mcm, parseContext, portfolioConfig, false)
-  val baseMddConfig = baseMddConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  val baseMddConfig = baseMddConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -143,11 +143,7 @@ fun chcCompPortfolioModel25(
         "MDD-$inProcess",
         baseMddConfig.copy(
           backendConfig =
-            baseMddConfig.backendConfig.copy(
-              timeoutMs = timeout,
-              inProcess = inProcess,
-              parseInProcess = true,
-            )
+            baseMddConfig.backendConfig.copy(timeoutMs = timeout, inProcess = inProcess)
         ),
         checker,
       )
@@ -159,9 +155,7 @@ fun chcCompPortfolioModel25(
         XcfaConfig(
           inputConfig =
             portfolioConfig.inputConfig.copy(
-              xcfaWCtx =
-                if (portfolioConfig.backendConfig.parseInProcess) null
-                else Triple(xcfa, mcm, parseContext),
+              xcfaWCtx = null,
               propertyFile = null,
               property = portfolioConfig.inputConfig.property,
             ),

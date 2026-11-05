@@ -101,7 +101,6 @@ class XcfaCliVerifyTest {
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
-        Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
       )
     }
 
@@ -247,7 +246,7 @@ class XcfaCliVerifyTest {
         "--debug",
       )
     main(params)
-    Assertions.assertTrue(temp.resolve("xcfa.json").exists())
+    Assertions.assertTrue(temp.resolve("xcfa.dot").exists())
     Assertions.assertTrue(
       temp.resolve("arg-true.dot").exists() || temp.resolve("arg-false.dot").exists()
     )

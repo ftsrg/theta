@@ -36,11 +36,16 @@ public class CAssignment extends CStatement {
     public CAssignment(
             Expr<?> lValue, CStatement rValue, String operator, ParseContext parseContext) {
         super(parseContext);
-        checkNotNull(rValue.getExpression());
+        // A local union is assigned its whole brace list (FunctionVisitor#initializeObject).
+        checkNotNull(rValue instanceof CInitializerList ? rValue : rValue.getExpression());
         this.lValue = lValue;
         this.rValue = rValue;
         rValue.setParent(this);
         this.operator = operator;
+        // a declaration's assignment is built after its initializer, the full expression
+        if (getFullExpression().isEmpty()) {
+            rValue.getFullExpression().ifPresent(this::setFullExpression);
+        }
     }
 
     public CStatement getrValue() {

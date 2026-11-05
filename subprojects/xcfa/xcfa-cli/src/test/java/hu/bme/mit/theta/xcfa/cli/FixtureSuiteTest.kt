@@ -32,6 +32,8 @@ import org.junit.jupiter.api.fail
  *   these for changes that alter values rather than what parses: a miswritten memory cell parses
  *   perfectly and only shows up as a wrong answer.
  *
+ * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
+ *
  * Unlike [CanarySuiteTest] this **fails** rather than skips when its prerequisites are missing: the
  * fixtures are the part of the gate that must run everywhere, and a silent skip would let a change
  * through unguarded. It never fetches sv-benchmarks; it only says where it looked.
@@ -105,24 +107,31 @@ class FixtureSuiteTest {
     return rows.map { row ->
       val (fixture, arithmetic, architecture, expect) = row
       val feature = row.getOrElse(4) { "" }
-      DynamicTest.dynamicTest("fixture $fixture") {
+      val memoryModel = row.getOrElse(5) { "" }
+      val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
+      DynamicTest.dynamicTest("fixture $name") {
         val input = File(home, "fixtures/$fixture")
         check(input.isFile) { "fixture file not found: $input" }
-        val actual = run(theta, input, arithmetic, architecture, expect, properties)
-        if (actual != expect) fail("expected=$expect actual=$actual -- $feature")
+        val (actual, diagnosis) =
+          run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
+        if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
       }
     }
   }
 
-  /** The outcome of one fixture, in the vocabulary [fixtures.tsv] uses. */
+  /**
+   * The outcome of one fixture, in the vocabulary [fixtures.tsv] uses, and why the run ended the
+   * way it did (see [SuiteSupport.diagnose]).
+   */
   private fun run(
     theta: File,
     input: File,
     arithmetic: String,
     architecture: String,
+    memoryModel: String,
     expect: String,
     properties: File,
-  ): String {
+  ): Pair<String, String> {
     val verdict = expect.substringBefore(':')
     val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE"
     val property =
@@ -139,17 +148,23 @@ class FixtureSuiteTest {
       addAll(listOf("--property", property.absolutePath))
       addAll(listOf("--architecture", architecture))
       addAll(listOf("--arithmetic", arithmetic))
+      if (memoryModel.isNotEmpty()) addAll(listOf("--memory-model", memoryModel))
     }
     val command = SuiteSupport.thetaCommand(theta, input, options)
     val timeout = if (isVerdictFixture) VERDICT_TIMEOUT_SECONDS else PARSE_TIMEOUT_SECONDS
-    val output = SuiteSupport.execute(command, theta, timeout).output
+    val result = SuiteSupport.execute(command, theta, timeout)
+    val output = result.output
+    val diagnosis = SuiteSupport.diagnose(result, timeout)
 
     if (!isVerdictFixture) {
-      return when {
-        output.contains("ParsingResult Success") -> "PARSE-OK"
-        output.contains("Frontend failed!") -> "FRONTEND-FAIL"
-        else -> "OTHER"
-      }
+      // Procedure passes run after the parser has reported success, and may still refuse.
+      val actual =
+        when {
+          output.contains("Frontend failed!") -> "FRONTEND-FAIL"
+          output.contains("ParsingResult Success") -> "PARSE-OK"
+          else -> "OTHER"
+        }
+      return actual to diagnosis
     }
     val actual =
       when {
@@ -159,7 +174,7 @@ class FixtureSuiteTest {
       }
     // The expectation may name a property after the verdict; echo it back on a match so the
     // comparison is against the registry's own spelling.
-    return if (actual == verdict) expect else actual
+    return (if (actual == verdict) expect else actual) to diagnosis
   }
 
   /**

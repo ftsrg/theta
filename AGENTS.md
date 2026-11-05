@@ -24,13 +24,17 @@ Required env: `LD_LIBRARY_PATH=$PROJECT_DIR/lib/` (for native solvers). Some set
 
 If your local `.idea/workspace.xml` has IntelliJ run configurations (it's gitignored and per-developer — not in a fresh clone), they're a useful source of example invocations: read a config's main class + program args + JVM args and replicate on the command line.
 
+## Soundness
+
+A wrong verdict is never acceptable, in any configuration: non-default options (`--memory-model flat|bytes`, `--arithmetic bitvector`, a specific backend) count as much as the default portfolio path. Give a verdict only when it is certainly right. If an encoding cannot model a construct faithfully, throw (e.g. `UnsupportedFrontendElementException`) so the run fails loudly instead of answering Safe or Unsafe.
+
 ## Local verification loop
 
 Warning: **`timeout N theta-start.sh …` does NOT kill the verifier.** The script does not `exec` — it launches a child JVM — so the timeout kills the *script* and leaves the JVM orphaned, still holding the pipe. Any caller reading that pipe (a `$(...)` capture, a `while read` loop) then hangs **forever**, long after the timeout should have fired, and the run looks stuck rather than timed out. Kill the JVM itself (`pkill -f 'theta.jar.*<input path>'`) to release it. This is why a batched local suite appears to wedge on one task — it is not the task being slow.
 
 - Fat jar for fast iteration: `./gradlew :theta-xcfa-cli:shadowJar` → `subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-<version>-all.jar`.
 - Running the jar directly needs `LD_LIBRARY_PATH=<dist>/lib` (legacy Z3) and `--smt-home <dist>/solvers`. The packaged `theta-start.sh` (template at `scripts/theta-start.sh`) sets these but hardcodes `-Xmx14210m -Xss120m`.
-- Full distribution: `./gradlew buildArchiveTheta-svcomp -x test` → `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp.zip`. After any rebuild also `rm -rf subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp` — a stale extracted directory is silently reused.
+- Full distribution: `./gradlew buildArchiveTheta-svcomp -x test` → `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp.zip`. The canary and fixture suites re-extract it into `Theta-svcomp/` when the zip is newer; anything else run from that directory needs it removed after a rebuild.
 - Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64` (success marker: `ParsingResult Success`).
 - Canary regression gate: `./gradlew :theta-xcfa-cli:canaryTest` builds the `Theta-svcomp` distribution and runs ~268 real sv-benchmarks tasks (parse-only by default — `--backend NONE` per task; `-Ptheta.canary.mode=full` checks verdicts instead) plus the feature-guard fixtures. The fixtures alone — the fast half, a few minutes — are `:theta-xcfa-cli:fixtureTest`. **Run this before any frontend or pass change lands.** For each new frontend/grammar capability add a `canaries/fixtures/` program that fails before your change and passes after, and a `fixtures/fixtures.tsv` row. See `subprojects/xcfa/xcfa-cli/canaries/README.md`.
 
@@ -61,7 +65,7 @@ Two doc systems exist. **Prefer per-subproject `README.md` / `AGENTS.md` for edi
 - `CEGAR-algorithms.md` — CEGAR configuration options + best practices. Read before touching `common/analysis`.
 - `Portfolio.md` — portfolio mechanism: automatic algorithm/config selection.
 - `LBE.md` — Large Block Encoding design note (+ `LBE-images/`), Dec 2021.
-- `Tools.md` — the competition tool variants (Theta / EmergenTheta / Thorn / ThetaCHC).
+- `Tools.md` — the competition tool variants (Theta / EmergenTheta / SymbolicTheta / Thorn / ThetaCHC).
 - `copyright-header.txt` — header prepended to every source file.
 
 ### `doc/wiki/` — MkDocs-Material site (published wiki)
@@ -78,11 +82,13 @@ If a task has a trivial, direct need for a specific paper, the publication list 
 
 ## Formatting
 
-Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `\format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
+Spotless (google-java-format AOSP + ktfmt) is required but not run automatically: `./gradlew spotlessApply` locally, or comment `/format` on the GitHub PR. Every source file needs the copyright header (`doc/copyright-header.txt`).
 
 Spotless is configured `ratchetFrom("origin/master")` (`buildSrc/src/main/kotlin/java-common.gradle.kts`), so it only formats files that differ from `origin/master` — running `spotlessApply` is safe and does not reformat the whole repo. Do not defeat the ratchet to format everything.
 
 `checkCopyright` derives the expected year from a file's **last commit date** (`git log -1`), so run `applyCopyright` *after* committing, never before — otherwise it writes the previous year and the check then fails.
+
+Both copyright tasks need the full git history and refuse to run in a shallow clone (where every file older than the boundary would get the boundary commit's year): run `git fetch --unshallow` first.
 
 ## Committing
 
@@ -111,7 +117,7 @@ Current pointers:
 - Binding a formalism to a checking algorithm (CEGAR, BMC/k-ind/IMC, IC3, MDD, CHC, LTL): `subprojects/common/analysis/USING.md`.
 - Shared utilities (logging, DispatchTable, tuples, visualization, DSL scopes, deterministic collections): `subprojects/common/common/USING.md`.
 - Getting/driving SMT solvers (factories, managers, unsat cores, interpolation, Horn, pooling, backend choice): `subprojects/solver/solver/USING.md`.
-- Round-tripping core exprs/stmts through text (parse `toString()` back) or JSON-serializing ARG/Trace: `subprojects/common/grammar/USING.md`.
+- Round-tripping core exprs/stmts through text (parse `toString()` back): `subprojects/common/grammar/USING.md`.
 
 ## Running one module's tests
 

@@ -1,0 +1,9 @@
+var p: boolean = false
+
+trans {
+    p := !p;
+}
+
+init {}
+
+env {}

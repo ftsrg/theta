@@ -40,18 +40,15 @@ dependencies {
     implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
-    implementation(project(":theta-grammar"))
     implementation(project(":theta-llvm2xcfa"))
     implementation(project(":theta-litmus2xcfa"))
     implementation(project(":theta-graph-solver"))
     implementation(project(":theta-cat"))
     implementation(project(":theta-cfa"))
-    implementation(project(":theta-xcfa-dss-decomposition"))
-    implementation(project(":theta-xcfa-dss-analysis"))
-    implementation(project(":theta-xcfa-dss-actor"))
     implementation(files(rootDir.resolve(Deps.z3legacy)))
     implementation(Deps.z3)
     implementation("com.zaxxer:nuprocess:2.0.5")
+    implementation(Deps.kotlinxSerializationJson)
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
     implementation(project(":theta-btor2-frontend"))
     implementation(project(":theta-btor2xcfa"))
@@ -68,7 +65,7 @@ archivePackaging {
         inputFlags = "--svcomp --portfolio STABLE"
         // One version per solver family: the portfolios pin the same versions, and shipping
         // several invites the code and the archive to drift apart.
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19", "bitwuzla:0.9.1")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -76,7 +73,15 @@ archivePackaging {
     variant {
         toolName = "EmergenTheta-svcomp"
         inputFlags = "--svcomp --portfolio EMERGENT"
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19")
+        readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
+        smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
+        inputSource = file("src/main/resources/archive-packaging/input.c")
+    }
+    variant {
+        toolName = "SymbolicTheta-svcomp"
+        inputFlags = "--svcomp --portfolio SYMBOLIC"
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19", "bitwuzla:0.9.1")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -163,6 +168,9 @@ val canaryTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 
@@ -208,6 +216,9 @@ val fixtureTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 

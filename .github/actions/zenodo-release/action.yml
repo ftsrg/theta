@@ -6,7 +6,9 @@ inputs:
     artifact:
         required: true
     prevrecord:
-        required: true
+        description: 'Record to version; if empty, found by title or created on first release'
+        required: false
+        default: ''
     token:
         required: true
 runs:

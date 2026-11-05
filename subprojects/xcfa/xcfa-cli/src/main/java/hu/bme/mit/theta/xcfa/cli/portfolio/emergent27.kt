@@ -18,14 +18,12 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.cli.checkers.checkDssSupports
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-/**
- * Runs only DSS: min-cut blocks with self loops absorbed, each block checked by predicate CEGAR
- * (Cartesian) first and by k-induction when that fails.
- */
+/** Only DSS; fails on properties that no pass reduces to error-location reachability. */
 fun emergent27(
   xcfa: XCFA,
   mcm: MCM,
@@ -34,27 +32,26 @@ fun emergent27(
   logger: Logger,
   uniqueLogger: Logger,
 ): STM {
+  checkDssSupports(portfolioConfig.inputConfig.property)
+
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseDssConfig = baseDssConfig(xcfa, mcm, parseContext, portfolioConfig, false)
+  val baseDssConfig = baseDssConfig(portfolioConfig)
 
   fun getStm(inProcess: Boolean): STM {
     val dss =
       ConfigNode(
-        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-CEGAR_PRED_CART-KIND-$inProcess",
+        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-CEGAR-KIND-$inProcess",
         baseDssConfig.copy(
           backendConfig =
             baseDssConfig.backendConfig.copy(
-              parseInProcess = true,
               timeoutMs = 0,
               inProcess = inProcess,
               specConfig =
                 baseDssConfig.backendConfig.specConfig!!.copy(
                   decomposition = DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS,
-                  checkerBackends =
-                    listOf(DssCheckerBackend.CEGAR_PRED_CART, DssCheckerBackend.KIND),
+                  checkerBackends = listOf(Backend.CEGAR, Backend.KIND),
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
-                  checkerFallback = true,
                 ),
             )
         ),

@@ -42,7 +42,7 @@ constructor(
   val xcfa: XCFA?,
   val processes: Map<Int, XcfaProcessState>,
   val sGlobal: S,
-  val mutexes: Map<MutexLock, Set<Int>> = emptyMap(),
+  val mutexState: MutexState = MutexState(),
   val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
   val bottom: Boolean = false,
 ) : ExprState, WrapperState {
@@ -58,14 +58,8 @@ constructor(
     sGlobal = state,
   )
 
-  init {
-    check((mutexes[ATOMIC_MUTEX]?.size ?: 0) <= 1) {
-      "Atomic mutex can be held by at most one process, but ${mutexes[ATOMIC_MUTEX]} hold it."
-    }
-    check(mutexes.values.all { it.isNotEmpty() }) {
-      "No mutex can be held by an empty set of processes, but $mutexes contains empty mutexes."
-    }
-  }
+  val mutexes: Map<MutexLock, Map<Int, Int>>
+    get() = mutexState.mutexes
 
   override fun isBottom(): Boolean {
     return bottom || sGlobal.isBottom
@@ -79,7 +73,7 @@ constructor(
 
   internal fun apply(a: XcfaAction): XcfaState<S> {
     val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-    if (mutexes[ATOMIC_MUTEX]?.any { it != a.pid } == true) {
+    if (mutexes[ATOMIC_MUTEX]?.keys?.any { it != a.pid } == true) {
       return copy(bottom = true)
     }
 
@@ -122,6 +116,12 @@ constructor(
         }
 
         is InvokeLabel -> {
+          if (label.isLibraryFunction) {
+            changes.add { state ->
+              state.copy(mutexState = state.mutexState.apply(label, state.sGlobal))
+            }
+            return@forEach
+          }
           val proc =
             xcfa?.procedures?.find { proc -> proc.name == label.name }
               ?: error("No such method ${label.name}.")
@@ -263,54 +263,11 @@ constructor(
     return copy(processes = newProcesses)
   }
 
-  private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> {
-    val blockingMutexes = label.blockingMutexes(sGlobal)
-    if (blockingMutexes.known().any { it in mutexes && pid !in mutexes[it]!! }) {
-      return copy(bottom = true)
-    }
+  private fun enterMutex(label: FenceLabel, pid: Int): XcfaState<S> =
+    mutexState.enter(label, pid, sGlobal)?.let { copy(mutexState = it) } ?: copy(bottom = true)
 
-    val newMutexes = LinkedHashMap(mutexes)
-    label.acquiredMutexes(sGlobal).forEach {
-      if (!it.isKnown()) {
-        throw UnsupportedOperationException("Ambiguous mutex lock is not supported.")
-      }
-      newMutexes[it] = (newMutexes[it] ?: setOf()) + pid
-    }
-
-    return copy(mutexes = newMutexes)
-  }
-
-  private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> {
-    val newMutexes = LinkedHashMap(mutexes)
-    val releasedMutexes = label.releasedMutexes(sGlobal)
-
-    releasedMutexes.known().forEach {
-      if (!it.isKnown()) {
-        // we do not know which mutex to release: this case is rather complicated...
-        // ideas:
-        // - use an SMT array as part of the expression state to track mutex lock sets
-        //   (drawback: we need a two-dimensional array as some mutexes may be locked by several
-        //   threads, and SMT solver reasoning power might not be very strong on these with unknown
-        //   indices)
-        // - release all mutexes of the current thread that is possibly the released one, and store
-        //   the ambiguously released mutexes in the successor states: later mutex locks should
-        //   check and add an assume label to ensure that only allowed lock is performed (either it
-        //   was the actually unlocked mutex in the ambiguous case, or it was not locked at all)
-        //   that the refiner also sees when checking the counterexample
-        //   (drawback: these assumptions get increasingly more complicated as a trace gets longer)
-        // currently, we have AmbiguousMutexPass to account for many cases
-        throw UnsupportedOperationException("Ambiguous mutex release is not supported.")
-      }
-      val holders = newMutexes[it]
-      when {
-        holders == null || pid !in holders -> {}
-        holders.size == 1 -> newMutexes.remove(it)
-        else -> newMutexes[it] = holders - pid
-      }
-    }
-
-    return copy(mutexes = newMutexes)
-  }
+  private fun exitMutex(label: FenceLabel, pid: Int): XcfaState<S> =
+    copy(mutexState = mutexState.exit(label, pid, sGlobal))
 
   private fun withProcesses(nP: Map<Int, XcfaProcessState>): XcfaState<S> {
     return copy(processes = nP)
@@ -329,10 +286,6 @@ constructor(
 
   override fun toString(): String {
     return "$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
-  }
-
-  companion object {
-    private var unknownMutexLockCnt = 0
   }
 }
 

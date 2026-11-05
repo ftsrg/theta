@@ -66,8 +66,8 @@ final class JavaSMTTypeTransformer {
         } else if (type instanceof BvType bvType) {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {
-            // JavaSMT's mantissa excludes the hidden bit, Theta's significand includes it
-            return FormulaType.getFloatingPointType(
+            // Theta's significand includes the hidden bit
+            return FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                     fpType.getExponent(), fpType.getSignificand() - 1);
         } else if (type instanceof ArrayType<?, ?> arrayType) {
             final FormulaType<?> indexSort = toSort(arrayType.getIndexType());

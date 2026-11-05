@@ -63,6 +63,12 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
     initProcedures.add(Pair(toAdd, params))
   }
 
+  internal fun replaceEntryPoints(entries: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>>) {
+    entries.forEach { addProcedure(it.first) }
+    initProcedures.clear()
+    initProcedures.addAll(entries)
+  }
+
   fun removeProcedure(toRemove: XcfaProcedureBuilder) {
     check(!initProcedures.any { it.first == toRemove }) {
       "Cannot remove an entry point procedure!"
@@ -157,6 +163,19 @@ constructor(
     lastOptimized = phase
     if (phase >= manager.passes.size - 1) optimized = that
     return phase >= manager.passes.size - 1
+  }
+
+  /** A procedure copied and rewritten model-wide during a pass has completed that phase too. */
+  internal fun completeOptimizationPhase() {
+    lastOptimized++
+    partlyOptimized = this
+    if (lastOptimized >= manager.passes.size - 1) optimized = this
+  }
+
+  /** A copy made by a pass running on [running] has completed the phase [running] is in. */
+  internal fun completeOptimizationPhaseOf(running: XcfaProcedureBuilder) {
+    lastOptimized = running.lastOptimized
+    completeOptimizationPhase()
   }
 
   fun build(parent: XCFA): XcfaProcedure {

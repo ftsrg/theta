@@ -157,14 +157,17 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
       edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
         fence.blockingMutexes(state).forEach { mutex ->
           if (!mutex.isKnown() || state.mutexes.keys.any { !it.isKnown() }) {
-            state.mutexes.values.flatten().toSet().forEach { pid2 ->
-              if (pid2 !in firstProcesses) {
-                firstProcesses.add(pid2)
-                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+            state.mutexes.values
+              .flatMap { it.keys }
+              .toSet()
+              .forEach { pid2 ->
+                if (pid2 !in firstProcesses) {
+                  firstProcesses.add(pid2)
+                  checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+                }
               }
-            }
           } else {
-            state.mutexes[mutex]?.forEach { pid2 ->
+            state.mutexes[mutex]?.keys?.forEach { pid2 ->
               if (pid2 !in firstProcesses) {
                 firstProcesses.add(pid2)
                 checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
@@ -192,28 +195,64 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
       return enabledActions.toSet()
     }
     val sourceSet = firstActions.toMutableSet()
+    val firstActionPids = firstActions.map { it.pid }.toSet()
+    // blocked actions with their blocking pids associated
+    val edgesBlockedByOtherThreads: Map<XcfaAction, Set<Int>> =
+      state.processes
+        .filter { enabledActions.none { action -> action.pid == it.key } }
+        .flatMap { (pid, processState) ->
+          processState.locs.peek().outgoingEdges.mapNotNull { edge ->
+            val blockingPids =
+              edge
+                .getFlatLabels()
+                .flatMap { label ->
+                  (label as? FenceLabel)?.blockingMutexes(state)?.flatMap { mutex ->
+                    state.mutexes[mutex]?.keys?.filter { it != pid && it !in firstActionPids }
+                      ?: emptyList()
+                  } ?: emptyList()
+                }
+                .toSet()
+            if (blockingPids.isEmpty()) null else XcfaAction(pid, edge) to blockingPids
+          }
+        }
+        .toMap()
     val otherActions =
-      (enabledActions.toMutableSet() subtract sourceSet)
+      ((enabledActions.toSet() union edgesBlockedByOtherThreads.keys) subtract sourceSet)
         .toMutableSet() // actions not in the source set
     var addedNewAction = true
     while (addedNewAction) {
       addedNewAction = false
-      val actionsToRemove = mutableSetOf<XcfaAction>()
-      for (action in otherActions) {
+      val remaining = otherActions.toMutableSet()
+      while (remaining.isNotEmpty()) {
+        val otherAction = remaining.first()
+        remaining.remove(otherAction)
         // for every action that is not in the source set it is checked whether it should be added
         // to the source set
         // (because it is dependent with an action already in the source set)
-        if (sourceSet.any { dependent(state, it, action) }) {
-          if (action.isBackward) {
-            return enabledActions
-              .toSet() // see POR algorithm for the reason of handling backward edges this way
+        if (sourceSet.any { dependent(state, it, otherAction) }) {
+          if (otherAction.isBackward) {
+            // see POR algorithm cycle condition for the reason of handling backward edges this way
+            return enabledActions.toSet()
           }
-          sourceSet.add(action)
-          actionsToRemove.add(action)
-          addedNewAction = true
+
+          val blockingPids = edgesBlockedByOtherThreads[otherAction] ?: emptySet()
+          if (blockingPids.isEmpty()) {
+            // if no blocking processes are found, add the action directly to the source set
+            addedNewAction = sourceSet.add(otherAction) || addedNewAction
+            edgesBlockedByOtherThreads.forEach { (action, blockingPids) ->
+              if (blockingPids == setOf(otherAction.pid)) {
+                otherActions.remove(action)
+              }
+            }
+          } else {
+            // otherwise, add the blocking actions
+            val blockingActions = enabledActions.filter { it.pid in blockingPids }.toSet()
+            addedNewAction = sourceSet.addAll(blockingActions) || addedNewAction
+            otherActions.removeAll(blockingActions)
+          }
+          otherActions.remove(otherAction)
         }
       }
-      actionsToRemove.forEach(otherActions::remove)
     }
     return sourceSet
   }

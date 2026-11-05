@@ -1,0 +1,40 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.analysis.dss.actor
+
+/** Stub behavior for testing the runtime: echoes once on startup and once per new sender. */
+class EchoBlockAnalysis(
+  private val blockId: String,
+  private val originatesViolation: Boolean = false,
+) : DssBlockBehavior {
+
+  private val seenPostConditionSenders = mutableSetOf<String>()
+  private val seenViolationConditionSenders = mutableSetOf<String>()
+
+  override fun initialMessages(): Collection<DssMessage> = buildList {
+    add(DssPostConditionMessage(blockId))
+    if (originatesViolation) add(DssViolationConditionMessage(blockId))
+  }
+
+  override fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage> =
+    if (seenPostConditionSenders.add(message.senderId)) listOf(DssPostConditionMessage(blockId))
+    else emptyList()
+
+  override fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage> =
+    if (seenViolationConditionSenders.add(message.senderId))
+      listOf(DssViolationConditionMessage(blockId))
+    else emptyList()
+}

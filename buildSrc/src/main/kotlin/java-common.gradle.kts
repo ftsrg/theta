@@ -37,7 +37,6 @@ dependencies {
 
     implementation(Deps.Kotlin.stdlib)
     implementation(Deps.guava)
-    implementation(Deps.gson)
     implementation(files(*(Deps.mpfr_java.map(rootDir::resolve).toTypedArray())))
     implementation(Deps.hawtjni)
 
@@ -127,12 +126,14 @@ spotless {
     isEnforceCheck = false
 
     java {
+        targetExclude("**/build/**")
         importOrder("java|javax", "hu.bme.", "")
         removeUnusedImports()
         googleJavaFormat("1.35.0").aosp().reflowLongStrings()
         formatAnnotations()
     }
     kotlin {
+        targetExclude("**/build/**")
         ktfmt("0.51").googleStyle()
     }
     kotlinGradle {

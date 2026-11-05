@@ -23,7 +23,10 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.xcfa.analysis.MutexState
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -32,6 +35,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.model.AtomicFenceLabel.Companion.ATOMIC_MUTEX
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 
@@ -39,7 +43,7 @@ import java.util.*
 internal class XcfaOcTraceExtractor(
   private val xcfa: XCFA,
   private val ocChecker: OcChecker<E>,
-  eventGraph: XcfaToEventGraph.EventGraph,
+  private val eventGraph: XcfaToEventGraph.EventGraph,
 ) {
 
   private val threads: Set<Thread> = eventGraph.threads
@@ -120,7 +124,7 @@ internal class XcfaOcTraceExtractor(
 
     for ((index, event) in eventTrace.withIndex()) {
       val edge = checkNotNull(lastEdge)
-      extend(stateList.last(), event.pid, edge.source, explState.innerState)?.let {
+      extend(stateList.last(), event.pid, edge.source, explState.innerState, model)?.let {
         (midActions, midStates) ->
         actionList.addAll(midActions)
         stateList.addAll(midStates)
@@ -164,7 +168,7 @@ internal class XcfaOcTraceExtractor(
                 )
               },
             sGlobal = explState,
-            mutexes = state.mutexes.update(edge, event.pid),
+            mutexState = state.mutexState.update(edge, event.pid),
           )
         )
         lastEdge = nextEdge ?: break
@@ -174,7 +178,8 @@ internal class XcfaOcTraceExtractor(
     for ((pid, loc) in targets) {
       val process = stateList.last().processes[pid] ?: continue
       if (process.locs.peek() == loc) continue
-      extend(stateList.last(), pid, loc, explState.innerState)?.let { (midActions, midStates) ->
+      extend(stateList.last(), pid, loc, explState.innerState, model)?.let { (midActions, midStates)
+        ->
         actionList.addAll(midActions)
         stateList.addAll(midStates)
       }
@@ -258,6 +263,7 @@ internal class XcfaOcTraceExtractor(
     pid: Int,
     to: XcfaLocation,
     explState: ExplState,
+    model: Valuation,
   ): Pair<List<XcfaAction>, List<XcfaState<PtrState<ExplState>>>>? {
     val actions = mutableListOf<XcfaAction>()
     val states = mutableListOf<XcfaState<PtrState<ExplState>>>()
@@ -266,13 +272,18 @@ internal class XcfaOcTraceExtractor(
     // extend the trace until the target location is reached
     while (
       currentState.processes[pid]!!.locs.peek() != to ||
-        (currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid) != pid
+        (currentState.mutexes[ATOMIC_MUTEX]?.keys?.first() ?: pid) != pid
     ) {
       // finish atomic block first
-      val stepPid = currentState.mutexes[ATOMIC_MUTEX]?.first() ?: pid
+      val stepPid = currentState.mutexes[ATOMIC_MUTEX]?.keys?.first() ?: pid
+      val outgoing = currentState.processes[stepPid]!!.locs.peek().outgoingEdges
+      // local branches have no events: follow the edge whose path guard holds in the model
       val edge =
-        currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
-      check(stepPid == pid || edge.label.collectVars().isEmpty()) {
+        outgoing.firstOrNull { e ->
+          eventGraph.edgeGuards[stepPid to e]?.let { ExprUtils.simplify(it, model) == True() }
+            ?: false
+        } ?: outgoing.firstOrNull() ?: return null
+      check(stepPid == pid || !edge.label.hasEvents()) {
         "Atomic mutex is held by another thread which still has events in its atomic block."
       }
       actions.add(XcfaAction(stepPid, edge.renamedFor(stepPid)))
@@ -286,22 +297,28 @@ internal class XcfaOcTraceExtractor(
               )
             },
           sGlobal = PtrState(explState),
-          mutexes = currentState.mutexes.update(edge, stepPid),
+          mutexState = currentState.mutexState.update(edge, stepPid),
         )
       states.add(currentState)
     }
     return actions to states
   }
 
+  private val globals = xcfa.globalVars.map { it.wrappedVar }.toSet()
+
+  /** Whether the label accesses shared state, which (unlike procedure locals) has events. */
+  private fun XcfaLabel.hasEvents() =
+    dereferences.isNotEmpty() || collectVars().any { it in globals }
+
   // the labels are already thread-specific, but findDataRace (witness writer) peeks a frame
   private fun noLookup() = LinkedList(listOf(mapOf<VarDecl<*>, VarDecl<*>>()))
 
-  private fun Map<MutexLock, Set<Int>>.update(edge: XcfaEdge, pid: Int): Map<MutexLock, Set<Int>> {
-    val map = this.toMutableMap()
+  private fun MutexState.update(edge: XcfaEdge, pid: Int): MutexState {
+    val map = mutexes.toMutableMap()
     edge.getFlatLabels().forEach {
-      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX] = setOf(pid)
+      if (it is AtomicBeginLabel) map[ATOMIC_MUTEX] = mapOf(pid to 1)
       if (it is AtomicEndLabel) map.remove(ATOMIC_MUTEX)
     }
-    return map
+    return copy(mutexes = map)
   }
 }

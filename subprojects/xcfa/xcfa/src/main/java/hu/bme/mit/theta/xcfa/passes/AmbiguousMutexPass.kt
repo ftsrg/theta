@@ -32,7 +32,6 @@ import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
@@ -40,6 +39,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intValue
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.math.BigInteger
+import java.util.Collections
+import java.util.IdentityHashMap
 
 class AmbiguousMutexPass : ProcedurePass {
 
@@ -50,85 +51,69 @@ class AmbiguousMutexPass : ProcedurePass {
   }
 
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
-
-  private val XcfaLabel.fenceToSimplify: Boolean
-    get() = this is FenceLabel && this.lock !is LitExpr<*>
+  private val processed = Collections.newSetFromMap(IdentityHashMap<XcfaBuilder, Boolean>())
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    builder.getEdges().toSet().forEach { edge ->
-      if (!edge.getFlatLabels().any { it.fenceToSimplify }) {
-        return@forEach
-      }
+    if (!processed.add(builder.parent)) return builder
+    val procedures = builder.parent.getProcedures().toList()
+    val unresolved =
+      procedures
+        .flatMap { it.getEdges() }
+        .flatMap { it.getFlatLabels() }
+        .filter { it.mutexAddresses.any { address -> address !is LitExpr<*> } }
+    if (unresolved.isEmpty()) return builder
 
-      val split = edge.splitIf { it.fenceToSimplify }
-      val namePrefix = "${edge.source.name}_${edge.target.name}_split"
-      var lastTarget: XcfaLocation? = null
-      split.forEachIndexed { index, e ->
-        val alternatives: List<List<XcfaLabel>> =
-          e.getFlatLabels().fold(mutableListOf<MutableList<XcfaLabel>>()) { accumulated, label ->
-            var newAccumulated = accumulated
-            if (label is FenceLabel && label.lock !is LitExpr<*>) {
-              // lazy initialization of possible literal values for variables
-              if (!this::possibleLiteralValues.isInitialized) {
-                possibleLiteralValues = collectPossibleLiteralValues(builder)
+    possibleLiteralValues = collectPossibleLiteralValues(builder)
+    val replacements = mutableMapOf<XcfaLabel, List<List<XcfaLabel>>>()
+    // Resolve the whole model before committing any literal alternatives: symbolic and literal
+    // aliases must use the same encoding if even one operation needs the fallback.
+    for (label in unresolved) {
+      val addresses = label.mutexAddresses
+      val vars = addresses.flatMap { ExprUtils.getVars(it) }.toSet()
+      val valuations =
+        vars
+          .fold(setOf<Valuation>(ImmutableValuation.empty())) { combinations, variable ->
+            combinations
+              .flatMap { valuation ->
+                (possibleLiteralValues[variable] ?: setOf(null)).map { value ->
+                  MutableValuation.copyOf(valuation).also {
+                    if (value != null) it.put(variable, value)
+                  }
+                }
               }
+              .toSet()
+          }
+          .ifEmpty { setOf(ImmutableValuation.empty()) }
+      val alternatives = mutableListOf<List<XcfaLabel>>()
+      for (valuation in valuations) {
+        val simplified = addresses.map { ExprUtils.simplify(it, valuation) }
+        if (simplified.any { it !is LitExpr<*> }) {
+          return SymbolicMutexPass().runChecked(builder)
+        }
+        val guard = And(valuation.toMap().map { (v, value) -> Eq(v.ref, value) })
+        alternatives.add(
+          listOf(StmtLabel(AssumeStmt.of(guard)), label.withMutexAddresses(simplified))
+        )
+      }
+      replacements[label] = alternatives.distinct()
+    }
 
-              val simplifiedAlternatives: Set<Pair<Expr<BoolType>?, Expr<*>>> =
-                label.lock
-                  .getPossibleValuations(possibleLiteralValues)
-                  .ifEmpty { setOf(ImmutableValuation.empty()) }
-                  .map { possibleValuation: Valuation ->
-                    val simplified =
-                      ExprUtils.simplify(label.lock, possibleValuation) as? LitExpr<*>
-                    val guard =
-                      simplified?.let {
-                        And(possibleValuation.toMap().map { (v, value) -> Eq(v.ref, value) })
-                      }
-                    guard to (simplified ?: label.lock)
-                  }
-                  .toSet()
-              val elseGuard =
-                ExprUtils.simplify(
-                  Not(
-                    Or(simplifiedAlternatives.mapNotNull { it.first }.ifEmpty { listOf(False()) })
-                  )
-                )
-              newAccumulated =
-                simplifiedAlternatives
-                  .flatMap { (guard, simplifiedLock) ->
-                    val newLabels: List<XcfaLabel> =
-                      if (simplifiedLock != label.lock) {
-                        listOf(StmtLabel(AssumeStmt.of(guard)), label.withLock(simplifiedLock))
-                      } else {
-                        listOf(StmtLabel(AssumeStmt.of(elseGuard)), label)
-                      }
-                    if (newAccumulated.isEmpty()) {
-                      mutableListOf(newLabels.toMutableList())
-                    } else {
-                      newAccumulated.map { it.apply { addAll(newLabels) } }
-                    }
-                  }
-                  .toMutableList()
-            } else {
-              if (newAccumulated.isEmpty()) {
-                newAccumulated.add(mutableListOf(label))
-              } else {
-                newAccumulated.forEach { it.add(label) }
+    for (procedure in procedures) {
+      for (edge in procedure.getEdges().toList()) {
+        if (edge.getFlatLabels().none { it in replacements }) continue
+        procedure.removeEdge(edge)
+        for (part in edge.splitIf { it in replacements }) {
+          val alternatives =
+            part.getFlatLabels().fold(listOf(emptyList<XcfaLabel>())) { acc, label ->
+              acc.flatMap { prefix ->
+                (replacements[label] ?: listOf(listOf(label))).map { prefix + it }
               }
             }
-            newAccumulated
+          alternatives.forEach {
+            procedure.addEdge(part.withLabel(SequenceLabel(it, part.label.metadata)))
           }
-
-        val source = lastTarget ?: edge.source
-        val target =
-          if (index == split.size - 1) edge.target
-          else XcfaLocation("${namePrefix}_$index", metadata = edge.source.metadata)
-        lastTarget = target
-        alternatives.forEach { alternative ->
-          builder.addEdge(XcfaEdge(source, target, SequenceLabel(alternative), edge.metadata))
         }
       }
-      builder.removeEdge(edge)
     }
 
     return builder
@@ -206,11 +191,12 @@ class AmbiguousMutexPass : ProcedurePass {
                     }
                   }
                 }
-              } else if (label is FenceLabel) {
-                interestingToProcess.addAll(ExprUtils.getVars(label.lock))
+              } else {
+                label.mutexAddresses.forEach { interestingToProcess.addAll(ExprUtils.getVars(it)) }
               }
             }
-            val isFence = previousFence || edge.getFlatLabels().any { it is FenceLabel }
+            val isFence =
+              previousFence || edge.getFlatLabels().any { it.mutexAddresses.isNotEmpty() }
             waitlist[edge.target] = VisitItem(pendingHavocs.toSet(), conditions.toMap(), isFence)
           }
         }

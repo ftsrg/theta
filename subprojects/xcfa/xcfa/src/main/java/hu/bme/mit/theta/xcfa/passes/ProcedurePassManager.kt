@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 
 open class ProcedurePassManager(val passes: List<List<ProcedurePass>>) {
@@ -51,6 +52,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
       // also before ReferenceElimination: the pointer arguments it writes through are still `&x`
@@ -81,6 +84,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlineProceduresPass(parseContext),
       NondetFunctionPass(parseContext),
     ),
+    // starts copies of thread routines that store their result for pthread_join
+    listOf(ThreadResultPass()),
     listOf(CloneProcedureForStaticThreadsPass()),
     listOf(
       // Clean up procedures after inlining
@@ -92,15 +97,20 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      // after inlining, so a read through a callee's parameter is a read through the literal here
+      StringLiteralInitPass(),
       SimplifyExprsPass(parseContext, property), // before unroll to have more chance of unrolling
       UnrollPass(specificRecursionUnrollLimit = -1),
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, property), // after unroll to simplify with fewer loops
       UnusedLocRemovalPass(),
-      RemoveDeadEnds(parseContext),
+      RemoveDeadEnds(
+        parseContext,
+        enabled = property.inputProperty == ErrorDetection.ERROR_LOCATION,
+      ),
       EliminateSelfLoops(),
     ),
-    listOf(StaticCoiPass()),
+    listOf(StaticCoiPass(property)),
     listOf(
       // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),
@@ -125,7 +135,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
         SimplifyExprsPass(parseContext, property),
       )
     } ?: emptyList(),
-    listOf(DataRaceToReachabilityPass(property, parseContext)),
     listOf(OverflowDetectionPass(property, parseContext)),
     // spells out the mem* copies before anything below havocs the same objects
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
@@ -144,6 +153,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EmptyEdgeRemovalPass(),
       UnusedLocRemovalPass(),
     ),
+    // on the finished XCFA, as the portfolio applies it: the mem* calls are spelled out and every
+    // other unresolved call is havoced by now, so their accesses are instrumented too
+    listOf(DataRaceToReachabilityPass(property, parseContext)),
   )
 
 class NontermValidationPasses(
@@ -168,6 +180,8 @@ class NontermValidationPasses(
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
     ),

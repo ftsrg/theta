@@ -9,6 +9,7 @@ archived artifacts are linked from the [repository README](../README.md).
 |---|---|---|
 | Theta | `Theta-svcomp` | the default [portfolio](Portfolio.md) of abstraction-refinement analyses |
 | EmergenTheta | `EmergenTheta-svcomp` | emerging (not yet mature) analyses |
+| SymbolicTheta | `SymbolicTheta-svcomp` | `--portfolio SYMBOLIC`: generalized saturation over MDDs, aimed at concurrency |
 | Thorn | `Thorn-svcomp` | `--portfolio HORN`: software verification via CHC encoding (Eldarica, Golem, Z3) |
 | ThetaCHC | `Theta-chccomp` | CHC-COMP entry; see [`chc-frontend`](../subprojects/frontends/chc-frontend/README.md) |
 

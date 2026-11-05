@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,24 +23,29 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.CachingFileSerializer
-import hu.bme.mit.theta.xcfa.cli.utils.getGson
-import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.lang.System.err
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
 
+/**
+ * A fresh folder inside [resultFolder] for the child process's outputs. [resultFolder] is created
+ * first, as every other writer of it does: `--output-directory` may name one that does not exist.
+ */
+internal fun createChildResultFolder(resultFolder: File): Path {
+  resultFolder.mkdirs()
+  return createTempDirectory(resultFolder.toPath())
+}
+
 class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
-  val xcfa: XCFA?,
   val config: XcfaConfig<F, B>,
-  val parseContext: ParseContext?,
   val logger: Logger,
 ) : SafetyChecker<EmptyProof, EmptyCex, XcfaPrec<*>> {
 
@@ -49,7 +54,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
   }
 
   override fun check(): SafetyResult<EmptyProof, EmptyCex> {
-    val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
+    val tempDir = createChildResultFolder(config.outputConfig.resultFolder)
     Runtime.getRuntime()
       .addShutdownHook(
         Thread {
@@ -59,41 +64,14 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         }
       )
 
+    val childConfig =
+      config.copy(
+        inputConfig = config.inputConfig.copy(xcfaWCtx = null),
+        outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
+        backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
+      )
     val configJson =
-      if (config.backendConfig.parseInProcess) {
-        val config =
-          config.copy(
-            inputConfig = config.inputConfig.copy(xcfaWCtx = null),
-            outputConfig = config.outputConfig.copy(resultFolder = tempDir.toFile()),
-            backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
-          )
-        CachingFileSerializer.serialize("config.json", config) { getGson().toJson(config) }
-      } else {
-        xcfa!!
-        parseContext!!
-        val xcfaJson =
-          CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
-        val parseContextJson =
-          CachingFileSerializer.serialize("parseContext.json", parseContext) {
-            getGson(xcfa).toJson(parseContext)
-          }
-
-        val config =
-          config.copy(
-            inputConfig = config.inputConfig.copy(input = xcfaJson, parseCtx = parseContextJson),
-            frontendConfig = config.frontendConfig.copy(inputType = InputType.JSON),
-            backendConfig = config.backendConfig.copy(inProcess = false, timeoutMs = 0),
-            outputConfig =
-              config.outputConfig.copy(
-                resultFolder = tempDir.toFile(),
-                cOutputConfig = config.outputConfig.cOutputConfig.copy(enabled = false),
-                xcfaOutputConfig = config.outputConfig.xcfaOutputConfig.copy(enabled = false),
-                chcOutputConfig = config.outputConfig.chcOutputConfig.copy(enabled = false),
-                argConfig = config.outputConfig.argConfig.copy(enabled = false),
-              ),
-          )
-        CachingFileSerializer.serialize("config.json", config) { getGson(xcfa).toJson(config) }
-      }
+      CachingFileSerializer.serialize("config.json", childConfig) { childConfig.toJson() }
 
     val heapSize =
       "-Xmx${if(config.backendConfig.memlimit == 0L) 1420L else config.backendConfig.memlimit/1024/1024 }m"
