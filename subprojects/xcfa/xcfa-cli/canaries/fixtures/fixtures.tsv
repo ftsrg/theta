@@ -164,7 +164,7 @@ typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an 
 typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
 malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
 malloc_subobject_copy.c	efficient	ILP32	SAFE	a struct copy into a malloc'd block writes its own sub-objects
-malloc_untyped_subobjects.c	efficient	ILP32	SAFE	an untyped malloc whose sub-objects are reached falls back to flat
+malloc_untyped_subobjects.c	efficient	ILP32	SAFE	a wrapper malloc of unknown length whose sub-objects are reached falls back to flat
 malloc_member_array_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	an array member of a malloc'd struct is a valid sub-object
 malloc_cell_subobjects.c	efficient	ILP32	SAFE	a malloc stored into a struct field is typed by it and gets its sub-objects
 malloc_union_member.c	efficient	ILP32	SAFE	a union member of a malloc'd struct is allocated
@@ -275,6 +275,22 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+heap_oob_wrapper.c	efficient	ILP32	UNSAFE:valid-memsafety	a block from a void * wrapper takes the element type of its callers	flat
+flat_symbolic_size_oob.c	efficient	LP64	UNSAFE:valid-memsafety	out-of-bounds write on a symbolic-size block (size recorded in cells)	multi
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints; the third overruns	multi
+heap_oob_int.c	efficient	ILP32	UNSAFE:valid-memsafety	a heap block is bounded by its element cells, not its bytes	multi
+heap_oob_long.c	efficient	LP64	UNSAFE:valid-memsafety	eight bytes hold one long under LP64	multi
+heap_oob_wrapper.c	efficient	ILP32	UNSAFE:valid-memsafety	a block from a void * wrapper takes the element type of its callers	multi
+heap_wrapper_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a block from a void * wrapper is in bounds	multi
+heap_oob_thread.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread writing past a heap block is caught	multi
+heap_struct_array_ok.c	efficient	LP64	SAFE:valid-memsafety	the last member of the last element of a malloc'd struct array is in bounds	multi
+heap_struct_array_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc'd struct array is bounded by its elements' cells	multi
+heap_full_block_ok.c	efficient	ILP32	SAFE:valid-memsafety	memset, memcpy, calloc and realloc over whole int blocks stay in bounds	multi
+heap_untyped_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a block with no element type is bounded under bytes
+heap_sub_element_free.c	efficient	ILP32	SAFE:valid-memsafety	a block smaller than its element is live and may be freed
+user_alloca_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	__builtin_alloca is sized in bytes and bounded in cells	multi
+user_alloca_direct_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a direct alloca call is sized in bytes and bounded in cells	multi
+user_alloca_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a byte-sized alloca block is in bounds	multi
 oc_branch_after_null_check.c	bitvector	ILP32	SAFE	a branch condition after a null check reads the same value on both edges
 spin_iteration_read_race.c	bitvector	ILP32	UNSAFE:no-data-race	a read inside an effect-free spinning iteration still races
 spin_iteration_write_race.c	bitvector	ILP32	UNSAFE:no-data-race	a value-preserving write inside a spinning iteration still races

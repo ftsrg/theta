@@ -35,7 +35,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -47,12 +46,11 @@ import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.boundPointee
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
-import hu.bme.mit.theta.xcfa.utils.containsUnion
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import hu.bme.mit.theta.xcfa.utils.memsafetyBound
 
 private const val REALLOCATES = "reallocates"
 
@@ -67,7 +65,8 @@ private const val MAX_HEAP_ELEMENTS = 64
  * residue class (see `POINTER_BASE_CLASSES`).
  *
  * Under flat addressing a block is instead the next slot of the address line, sized by the request
- * (see `bumpAllocate`).
+ * (see `bumpAllocate`). Memsafety records the size in the unit accesses index in: bytes under the
+ * bytes model, else whole elements in cells (see `memsafetyBound`).
  *
  * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
  * and the object's size becomes the new one. A program must use realloc's return value whether or
@@ -146,7 +145,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val arg = invokeLabel.params[1]
     val sizeLabels =
       (if (parseContext.isCheckMemsafety)
-        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
+        listOf(
+          builder.parent.allocate(parseContext, ret, builder.memsafetyBound(parseContext, ret, arg))
+        )
       else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
       val reserved =
@@ -180,7 +181,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
     }
     return if (parseContext.isCheckMemsafety) {
-      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
+      listOf(
+        keepBase,
+        builder.parent.allocate(
+          parseContext,
+          ret,
+          builder.memsafetyBound(parseContext, ret, newSize),
+        ),
+      )
     } else {
       listOf(keepBase)
     }
@@ -196,20 +204,6 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   private fun fail(invokeLabel: InvokeLabel): List<XcfaLabel> {
     val ret = invokeLabel.params[0] as RefExpr<*>
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
-  }
-
-  /**
-   * The size recorded for memsafety: bytes under the byte model, else cells, as accesses count
-   * them. A byte count would accept an overrun. A union is the exception: stepping a pointer to it
-   * is refused, so only its first cell is ever reached.
-   */
-  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> {
-    if (parseContext.memoryModel.byteAddressed()) return bytes
-    builder.mallocCells(parseContext, ret, bytes)?.let {
-      return it
-    }
-    if (builder.boundPointee(parseContext, ret)?.let(::containsUnion) == true) return bytes
-    throw RequiresByteAddressedMemoryException("A block of a type the cell models cannot size.")
   }
 
   /**

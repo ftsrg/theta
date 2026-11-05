@@ -1339,17 +1339,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * How many bytes a value of this type occupies.
      *
-     * <p>A struct's {@code width()} is not its size -- it is pointer-wide, like the handle a struct
-     * is passed around by -- so `sizeof(struct node)` came out **4**, whatever the struct held.
-     * Memory sizes are recorded from `malloc(sizeof(struct node))`, and a struct's members are
-     * addressed by their *index*, so the fifth member of a five-member struct sat at offset 4 and
-     * the bound check `offset < size` read `4 < 4` and called a perfectly good access an invalid
-     * dereference. A struct of four members or fewer never tripped it, which is why it survived so
-     * long.
-     *
-     * <p>The size of a struct is the size of what is in it (a union's, the largest member's).
-     * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
-     * that is a little small would bring the bound check back down onto real accesses.
+     * <p>Outside the bytes model this is the size of what is in the type (a union's, its largest
+     * member's), not its pointer-wide {@code width()}. Memsafety divides a block's byte count by it
+     * to count the block's elements ({@code AllocationUtils.allocationCells}). Padding is not
+     * modelled, so a block of a hard-coded byte count never gets fewer elements than it holds.
      */
     private int sizeOf(CComplexType type) {
         // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
@@ -2130,7 +2123,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(unused, "cType", signedInt);
                 return unused;
             }
-            case "__builtin_alloca", "__builtin_alloca_with_align" -> {
+            case "alloca", "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
             }
             case "__builtin_va_start", "__builtin_va_end", "__builtin_va_copy" -> {
@@ -3339,7 +3332,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return cCall.getRet().getRef();
     }
 
-    private static final String ALLOCA = "alloca";
+    /**
+     * A program's own `alloca`, sized in bytes; the frontend's `alloca` of a stack object is sized
+     * in cells. Must match `AllocaFunctionPass.USER_ALLOCA`.
+     */
+    private static final String ALLOCA = "__builtin_alloca";
 
     /**
      * Models {@code __builtin_uadd*_overflow(a, b, res)} and {@code __builtin_umul*_overflow}: the
