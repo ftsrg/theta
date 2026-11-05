@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
+import hu.bme.mit.theta.xcfa.cli.utils.needsNanBits
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
@@ -477,6 +478,18 @@ private fun backend(
                       logger.result("%s", "Property couldn't be determined: ${e.message}")
                       return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                     }
+                  val cex = result.asUnsafe().cex as? Trace<XcfaState<PtrState<*>>, XcfaAction>
+                  if (
+                    cex != null &&
+                      parseContext != null &&
+                      needsNanBits(cex) { concretizeTrace(it, config, parseContext) }
+                  ) {
+                    logger.result(
+                      "%s",
+                      "Counterexample needs the bits of a NaN, which are over-approximated",
+                    )
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  }
                   if (!portfolioRun) {
                     property?.also { logger.result("(Property %s)", it.name) }
                   }

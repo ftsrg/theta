@@ -1102,9 +1102,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformFpFromIeeeBv(final FpFromIeeeBvExpr expr) {
-        // The inverse of fp.to_ieee_bv; equally unavailable over generic SMT-LIB.
-        throw new UnsupportedOperationException(
-                "IEEE bit reinterpretation (fp.to_ieee_bv) is not available over generic SMT-LIB");
+        // Standard SMT-LIB, unlike the other direction: every NaN pattern denotes the one NaN.
+        return String.format(
+                "((_ to_fp %d %d) %s)",
+                expr.getFpType().getExponent(),
+                expr.getFpType().getSignificand(),
+                toTerm(expr.getOp()));
     }
 
     protected String transformFpToFp(final FpToFpExpr expr) {
