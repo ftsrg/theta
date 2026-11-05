@@ -109,7 +109,6 @@ fun getPortfolioChecker(
       portfolioStm.execute(logger) as Pair<Pair<String, XcfaConfig<*, *>>, SafetyResult<*, *>>
     } catch (e: ErrorCodeException) {
       if (e.code != ExitCodes.UNRELIABLE_UNSAFE.code) throw e
-      // The winning config prints the result line in a portfolio run; here none won.
       val unknown =
         SafetyResult.unknown<
           ARG<XcfaState<PtrState<*>>, XcfaAction>,
