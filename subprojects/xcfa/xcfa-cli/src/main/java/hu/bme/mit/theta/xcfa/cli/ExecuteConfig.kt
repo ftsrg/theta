@@ -466,6 +466,12 @@ private fun backend(
                 checker.check()
               }
               .let ResultMapper@{ result ->
+                if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
+                  // Downgraded before the property or the raw result is printed: output parsers
+                  // match on both.
+                  logger.benchmark("Over-approximating model used: an unsafe result is unreliable.")
+                  return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                }
                 if (result.isUnsafe) {
                   // need to determine what kind
                   val property =
@@ -502,10 +508,6 @@ private fun backend(
           } else {
             SafetyResult.unknown<EmptyProof, EmptyCex>()
           }
-        } else if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
-          logger.benchmark("%s", "Analysis result: $result")
-          logger.benchmark("Over-approximating model used: unsafe result is unreliable.")
-          SafetyResult.unknown<EmptyProof, EmptyCex>()
         } else {
           result
         }
