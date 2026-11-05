@@ -32,6 +32,7 @@ import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /** A bounded engine with block encoding counts loop iterations, not edges. */
 class BlockEncodingTest {
@@ -105,6 +106,28 @@ class BlockEncodingTest {
     val src = "$header\nint main() { $step $step $step __VERIFIER_assert($property); }"
     assertTrue(check(src, blockEncoding = true, maxBound = 2).isSafe)
     assertTrue(check(src, blockEncoding = false, maxBound = 2).let { !it.isSafe && !it.isUnsafe })
+  }
+
+  // longjmp stays an unresolved call: removing it would remove the jump back to setjmp.
+  @Test
+  fun aCallAfterTheLastErrorPathIsNotDropped() {
+    val src =
+      """
+      $header
+      typedef void* jmp_buf;
+      extern int setjmp(jmp_buf env);
+      extern void longjmp(jmp_buf env, int val);
+      jmp_buf buf;
+      int main() {
+        volatile int count = 0;
+        setjmp(buf);
+        __VERIFIER_assert(count == 0);
+        if (count < 5) { count++; longjmp(buf, 1); }
+      }
+      """
+        .trimIndent()
+    assertThrows<IllegalArgumentException> { check(src, blockEncoding = true, maxBound = 5) }
+    assertThrows<IllegalArgumentException> { check(src, blockEncoding = false, maxBound = 5) }
   }
 
   @Test

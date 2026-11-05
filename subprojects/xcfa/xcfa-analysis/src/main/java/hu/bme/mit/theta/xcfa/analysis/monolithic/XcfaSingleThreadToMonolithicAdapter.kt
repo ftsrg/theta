@@ -89,7 +89,8 @@ private constructor(
     property,
     parseContext,
     initValues,
-    if (blockEncoding && property.verifiedProperty == ERROR_LOCATION) BlockEncoding(parseContext)
+    if (blockEncoding && property.verifiedProperty == ERROR_LOCATION && onlyLocalLabels(model))
+      BlockEncoding(parseContext)
     else null,
   )
 
@@ -284,3 +285,9 @@ private constructor(
     )
   }
 }
+
+/** Block encoding drops edges that cannot reach the error, so every label must be local. */
+private fun onlyLocalLabels(model: XCFA): Boolean =
+  model.initProcedures.singleOrNull()?.first?.edges?.all { edge ->
+    edge.getAllLabels().all { it is StmtLabel || it is NopLabel }
+  } == true
