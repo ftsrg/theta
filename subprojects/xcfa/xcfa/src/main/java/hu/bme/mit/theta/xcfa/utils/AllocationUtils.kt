@@ -42,6 +42,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.Obj
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
+import hu.bme.mit.theta.xcfa.model.ParamDirection
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder
@@ -184,18 +185,65 @@ fun boundTarget(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The type of the block an allocation's result [ret] is bound to in this procedure: the pointee of
- * the typed pointer variable or memory cell (`n->next = (T *) tmp`) it is stored into, or null when
- * there is none or it points to `void`.
+ * The type of the block an allocation's result [ret] is bound to: the pointee of the typed pointer
+ * variable or memory cell (`n->next = (T *) tmp`) it is stored into. A `void *` variable says
+ * nothing, so it is followed through its copies and, if returned, into the callers, which have to
+ * agree. Null when that gives no type.
  */
 fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>): CComplexType? {
   val target =
     getEdges().firstNotNullOfOrNull { e ->
       e.getFlatLabels().firstNotNullOfOrNull { boundTarget(it, ret) ?: boundCell(it, ret) }
     } ?: return null
-  val type = runCatching { CComplexType.getType(target, parseContext) }.getOrNull()
-  val pointee = (type as? CPointer)?.embeddedType ?: return null
-  return pointee.takeIf { it !is CVoid }
+  val pointee = target.pointeeType(parseContext) ?: return null
+  if (pointee !is CVoid) return pointee
+  val found = mutableListOf<CComplexType>()
+  if (!collectPointees(parseContext, ret, mutableSetOf(), found)) return null
+  val flat = parseContext.memoryModel.flatAddressing()
+  return found
+    .distinctBy {
+      Triple(it.javaClass, ObjectLayout.cellModelSize(it, flat), (it as? CStruct)?.unitCount)
+    }
+    .singleOrNull()
+}
+
+private fun Expr<*>.pointeeType(parseContext: ParseContext): CComplexType? =
+  (runCatching { CComplexType.getType(this, parseContext) }.getOrNull() as? CPointer)?.embeddedType
+
+/**
+ * Adds what [ret] is bound to in [found]. False if it reaches a `void *` that cannot be followed.
+ */
+private fun XcfaProcedureBuilder.collectPointees(
+  parseContext: ParseContext,
+  ret: Expr<*>,
+  seen: MutableSet<Pair<XcfaProcedureBuilder, VarDecl<*>>>,
+  found: MutableList<CComplexType>,
+): Boolean {
+  val decl = (ret as? RefExpr<*>)?.decl as? VarDecl<*> ?: return false
+  if (!seen.add(this to decl)) return true
+  val targets =
+    getEdges().flatMap { e ->
+      e.getFlatLabels().mapNotNull { boundTarget(it, ret) ?: boundCell(it, ret) }
+    }
+  return targets.all { target ->
+    val pointee = target.pointeeType(parseContext) ?: return@all true
+    if (pointee !is CVoid) {
+      found.add(pointee)
+      return@all true
+    }
+    val variable = (target as? RefExpr<*>)?.decl ?: return@all false
+    if (getParams().none { it.first == variable && it.second != ParamDirection.IN })
+      return@all collectPointees(parseContext, target, seen, found)
+    parent.getProcedures().all { caller ->
+      caller.getEdges().all { e ->
+        e.getFlatLabels().all { label ->
+          label !is InvokeLabel ||
+            label.name != name ||
+            caller.collectPointees(parseContext, label.params[0], seen, found)
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -213,8 +261,7 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
  * The cells a `malloc` of [bytes] spans: whole elements of the typed pointer its result [ret] is
  * bound to, each one [CStruct.inlineCells] cells under flat and one unit otherwise, or for a struct
  * ending in a flexible array member its header and the whole trailing elements. Null when there is
- * no such pointer, or its pointee is flexible elsewhere or contains a union; the byte count, never
- * fewer than the cells, then stays the bound, which can miss an overrun but not invent one.
+ * no such pointer, or its pointee is flexible elsewhere or contains a union.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -266,7 +313,7 @@ private fun flexibleMemberCells(
 }
 
 /** A union's members overlap at offset 0, each spanning its own cells: no one count covers them. */
-private fun containsUnion(type: CComplexType): Boolean =
+fun containsUnion(type: CComplexType): Boolean =
   when (type) {
     is CArray -> containsUnion(type.embeddedType)
     is CStruct -> type.isUnion || type.fields.any { containsUnion(it.get2()) }

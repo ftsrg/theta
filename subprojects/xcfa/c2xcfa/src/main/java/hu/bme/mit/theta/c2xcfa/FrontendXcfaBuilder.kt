@@ -1226,7 +1226,8 @@ class FrontendXcfaBuilder(
       // CInitializerList for its single .expression throws.
       val scalarInit = unwrapScalarInitializer(initExpr)
       if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
-        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
+        val value = scalarInit.expression.asPointerValue(type, parseContext)
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(value)))
       } else if (declaredElsewhere(declaration)) {
         initStmtList.add(HavocStmtLabel(globalDeclaration))
       } else {
@@ -2104,7 +2105,8 @@ class FrontendXcfaBuilder(
                 metadata = getMetadata(statement),
               )
             } else {
-              val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
+              val castRExpression =
+                memberType.castTo(rExpression.asPointerValue(memberType, parseContext))
               val type = CComplexType.getType(castRExpression, parseContext)
 
               val deref = Dereference(op, offset, type.smtType)
@@ -2747,15 +2749,13 @@ class FrontendXcfaBuilder(
     val key: VarDecl<*> = builder.getParams()[0].first
     check(returnLoc != null)
     val type = CComplexType.getType(key.ref, parseContext)
+    val value = (expr?.expression ?: type.nullValue).asPointerValue(type, parseContext)
     val edge =
       XcfaEdge(
         endExpr,
         returnLoc,
         StmtLabel(
-          Stmts.Assign(
-            cast(key, key.type),
-            cast(type.castTo(expr?.expression ?: type.nullValue), key.type),
-          ),
+          Stmts.Assign(cast(key, key.type), cast(type.castTo(value), key.type)),
           metadata = getMetadata(statement, fullExprSource = expr ?: statement),
         ),
         metadata = getMetadata(statement),
@@ -3016,6 +3016,22 @@ class FrontendXcfaBuilder(
   override fun visit(statement: CNullStatement, param: ParamPack): XcfaLocation {
     return param.lastLoc
   }
+}
+
+/**
+ * This expression as the value of a pointer of type [type]. Under the cell models a pointer sum
+ * names no object, so it has to be a reference, which keeps the base and the offset apart.
+ */
+private fun Expr<*>.asPointerValue(type: CComplexType, parseContext: ParseContext): Expr<*> {
+  if (
+    parseContext.memoryModel.flatAddressing() ||
+      (type !is CPointer && type !is CArray) ||
+      this is hu.bme.mit.theta.core.type.anytype.Reference<*, *> ||
+      !hasArithmetic()
+  )
+    return this
+  return asPointerArithReference(type, parseContext)
+    ?: throw UnsupportedPointerSplitException("Pointer arithmetic not supported: $this")
 }
 
 private fun Expr<*>.hasArithmetic(): Boolean =

@@ -445,3 +445,16 @@ lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL	a jump past a block's entry i
 lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL	a case label past a block's entry is refused
 lifetime_thread_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies when the thread returns
 lifetime_pthread_exit.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies at pthread_exit
+pointer_return_mid_object.c	efficient	ILP32	SAFE	a returned mid-object pointer keeps its offset
+pointer_return_mid_object_unsafe.c	efficient	ILP32	UNSAFE	a returned mid-object pointer still reads the right cell
+pointer_return_sum.c	efficient	ILP32	SAFE	a returned pointer sum names the element, not another object
+pointer_return_plain.c	efficient	ILP32	SAFE	a returned plain pointer stays one value
+pointer_sum_global_initializer.c	efficient	ILP32	SAFE	a pointer sum initializing a global keeps its offset
+pointer_sum_stored_in_member.c	efficient	ILP32	SAFE	a pointer sum stored into a member keeps its offset
+thread_result_mid_object.c	efficient	ILP32	SAFE:valid-memsafety	a joined mid-object thread result is a valid pointer
+thread_result_mid_object_value.c	efficient	ILP32	UNSAFE:valid-memsafety	a joined mid-object thread result reads the right cell
+malloc_wrapper_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block allocated through a void pointer wrapper is bounded in elements
+malloc_wrapper_in_bounds.c	efficient	ILP32	SAFE:valid-memsafety	the last element of a block from a void pointer wrapper is in bounds
+malloc_void_local_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block first held in a void pointer is bounded in elements
+malloc_wrapper_two_types.c	efficient	ILP32	SAFE:valid-memsafety	a wrapper used at two types gets each block sized in bytes
+malloc_opaque_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block whose type cannot be recovered is still bounded exactly

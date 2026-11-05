@@ -769,6 +769,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       return false
     }
 
+    // The caller binds the returned value to the original variable, which the split leaves unused.
+    if (builder.getParams().any { it.first == original && it.second != ParamDirection.IN }) {
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: mid-object pointer returned by ${builder.name}"
+      )
+    }
     val baseVar = Var("${original.name}_base", baseType)
     val offsetVar = Var("${original.name}_offset", offsetType)
     val isGlobal = builder.parent.getVars().any { it.wrappedVar == original }

@@ -306,7 +306,17 @@ fun multithreadPortfolio27(
                 oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
               edges.add(Edge(config_OC_MEM_YICES, config_OC_MEM_FLAT, anyError))
               edges.add(Edge(config_OC_MEM_FLAT, config_OC_MEM, anyError))
+              // Only reached when the multi model refused the program: Yices cannot do this under
+              // flat if the program joins on a thread's result.
+              val config_OC_MEM_FLAT_Z3 =
+                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
+              edges.add(Edge(config_OC_MEM, config_OC_MEM_FLAT_Z3, anythingButTimeout))
               edges.add(Edge(config_OC_MEM, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              val config_OC_MEM_BYTES =
+                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
+              edges.add(Edge(config_OC_MEM_FLAT_Z3, config_OC_MEM_BYTES, anythingButTimeout))
+              edges.add(Edge(config_OC_MEM_FLAT_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
+              edges.add(Edge(config_OC_MEM_BYTES, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
               config_OC_MEM_YICES
             } else {
               // Addresses are only known to be disjoint under the multi memory model, which removes
@@ -370,7 +380,8 @@ fun multithreadPortfolio27(
           if (ArithmeticTrait.ARR in parseContext.arithmeticTraits) {
             val config_OC_MULTI =
               oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
-            val config_OC_FLAT = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
+            val config_OC_FLAT =
+              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
             // yices has no arrays, which symbolic mutexes need
             val config_OC_FLAT_Z3 =
               oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)

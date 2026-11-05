@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -46,6 +47,7 @@ import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.boundPointee
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
+import hu.bme.mit.theta.xcfa.utils.containsUnion
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -196,11 +198,19 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
 
-  /** The size recorded for memsafety: cells under the cell models where known, else bytes. */
-  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
-    if (!parseContext.memoryModel.byteAddressed())
-      builder.mallocCells(parseContext, ret, bytes) ?: bytes
-    else bytes
+  /**
+   * The size recorded for memsafety: bytes under the byte model, else cells, as accesses count
+   * them. A byte count would accept an overrun. A union is the exception: stepping a pointer to it
+   * is refused, so only its first cell is ever reached.
+   */
+  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> {
+    if (parseContext.memoryModel.byteAddressed()) return bytes
+    builder.mallocCells(parseContext, ret, bytes)?.let {
+      return it
+    }
+    if (builder.boundPointee(parseContext, ret)?.let(::containsUnion) == true) return bytes
+    throw RequiresByteAddressedMemoryException("A block of a type the cell models cannot size.")
+  }
 
   /**
    * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a
