@@ -782,9 +782,21 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             throw new RequiresByteAddressedMemoryException(
                     "Arithmetic on a void pointer is not supported.");
         }
+        refuseUnionStep(pointee);
         final boolean aggregate =
                 pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
         return aggregate ? cellCountExpr(pointee) : null;
+    }
+
+    /**
+     * Under multi/flat a union is one cell holding its base, and only a declared array has an
+     * object for each element, so a step through a pointer cannot find the element's cells.
+     */
+    private void refuseUnionStep(CComplexType pointee) {
+        if (!byteAddressed() && pointee instanceof CStruct s && s.isUnion()) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Stepping a pointer to a union is not supported.");
+        }
     }
 
     /** The value of {@code ++}/{@code --} on an operand of the given type. */
@@ -4140,6 +4152,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     if (row != null) {
                         return row;
                     }
+                    if (!isLiteralZero(index)) refuseUnionStep(elemType);
                     if (elemType instanceof CStruct && isLiteralZero(index)) {
                         // p[0] on a pointer-to-struct IS the pointee object, and a struct's value
                         // is its base id -- so the element's value is the pointer itself. A cell

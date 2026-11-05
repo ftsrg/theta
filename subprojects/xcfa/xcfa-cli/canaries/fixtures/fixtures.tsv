@@ -409,3 +409,13 @@ oc_conditionally_set_pointer_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis k
 oc_conditionally_set_pointer_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
 oc_heap_pointer_field_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	flat
 oc_heap_pointer_field_unsafe.c	bitvector	ILP32	UNSAFE	OC value analysis keeps this verdict	multi
+memsafety_malloc_union_member_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a malloc bound to a union covers all of its members
+memsafety_malloc_union_member_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a malloc bound to a union covers all of its members	flat
+memsafety_malloc_union_struct_member_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a union member spanning several cells stays in bounds
+memsafety_malloc_union_struct_member_safe.c	bitvector	ILP32	SAFE:valid-memsafety	a union member spanning several cells stays in bounds	flat
+memsafety_malloc_union_array_safe.c	bitvector	ILP32	SAFE:valid-memsafety	an element of a malloc'd array of unions is in bounds
+memsafety_malloc_union_overrun_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	an access past a malloc'd union is an overrun
+memsafety_malloc_union_overrun_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	an access past a malloc'd union is an overrun	flat
+union_pointer_subscript_safe.c	efficient	ILP32	SAFE	elements of a malloc'd array of unions do not alias
+union_pointer_subscript_unsafe.c	efficient	ILP32	UNSAFE	subscripting a pointer to a union finds a reachable error
+union_pointer_increment_safe.c	efficient	ILP32	SAFE	stepping a pointer to a union reaches the next element

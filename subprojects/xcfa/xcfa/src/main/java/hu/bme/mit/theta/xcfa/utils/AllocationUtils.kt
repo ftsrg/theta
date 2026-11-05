@@ -213,8 +213,8 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
  * The cells a `malloc` of [bytes] spans: whole elements of the typed pointer its result [ret] is
  * bound to, each one [CStruct.inlineCells] cells under flat and one unit otherwise, or for a struct
  * ending in a flexible array member its header and the whole trailing elements. Null when there is
- * no such pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the
- * cells, then stays the bound, which can miss an overrun but not invent one.
+ * no such pointer, or its pointee is flexible elsewhere or contains a union; the byte count, never
+ * fewer than the cells, then stays the bound, which can miss an overrun but not invent one.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -222,7 +222,7 @@ fun XcfaProcedureBuilder.mallocCells(
   bytes: Expr<*>,
 ): Expr<*>? {
   val pointee = boundPointee(parseContext, ret) ?: return null
-  if (pointee is CArray) return null
+  if (pointee is CArray || containsUnion(pointee)) return null
   flexibleMemberCells(parseContext, pointee, bytes)?.let {
     return it
   }
@@ -264,6 +264,14 @@ private fun flexibleMemberCells(
     Mul(elements, type.getValue("${CStruct.inlineCells(element)}")),
   )
 }
+
+/** A union's members overlap at offset 0, each spanning its own cells: no one count covers them. */
+private fun containsUnion(type: CComplexType): Boolean =
+  when (type) {
+    is CArray -> containsUnion(type.embeddedType)
+    is CStruct -> type.isUnion || type.fields.any { containsUnion(it.get2()) }
+    else -> false
+  }
 
 private fun hasFlexibleMember(type: CComplexType): Boolean =
   when (type) {
