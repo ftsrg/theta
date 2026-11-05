@@ -19,6 +19,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
@@ -366,26 +367,45 @@ fun multithreadPortfolio27(
               checker,
             )
 
-          val config_OC_MULTI =
-            oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
-          val config_OC_FLAT = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
-          // yices has no arrays, which symbolic mutexes need
-          val config_OC_FLAT_Z3 =
-            oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)
-          // Only reached when the flat slices failed for a reason other than time, mostly the
-          // frontend rejecting the program: the byte-level memory model encodes some of those.
-          val config_OC_BYTES =
-            oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
+          if (ArithmeticTrait.ARR in parseContext.arithmeticTraits) {
+            val config_OC_MULTI =
+              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
+            val config_OC_FLAT = oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
+            // yices has no arrays, which symbolic mutexes need
+            val config_OC_FLAT_Z3 =
+              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)
+            // Only reached when the flat slices failed for a reason other than time, mostly the
+            // frontend rejecting the program: the byte-level memory model encodes some of those.
+            val config_OC_BYTES =
+              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
 
-          edges.add(Edge(config_OC_MULTI, config_OC_FLAT, anyError))
-          // the first matching edge is taken, so the non-timeout edge goes first
-          edges.add(Edge(config_OC_FLAT, config_OC_FLAT_Z3, anythingButTimeout))
-          edges.add(Edge(config_OC_FLAT, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-          edges.add(Edge(config_OC_FLAT_Z3, config_OC_BYTES, anythingButTimeout))
-          edges.add(Edge(config_OC_FLAT_Z3, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-          edges.add(Edge(config_OC_BYTES, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
+            edges.add(Edge(config_OC_MULTI, config_OC_FLAT, anyError))
+            // the first matching edge is taken, so the non-timeout edge goes first
+            edges.add(Edge(config_OC_FLAT, config_OC_FLAT_Z3, anythingButTimeout))
+            edges.add(Edge(config_OC_FLAT, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
+            edges.add(Edge(config_OC_FLAT_Z3, config_OC_BYTES, anythingButTimeout))
+            edges.add(Edge(config_OC_FLAT_Z3, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
+            edges.add(Edge(config_OC_BYTES, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
 
-          config_OC_MULTI
+            config_OC_MULTI
+          } else {
+            val config_OC_MULTI =
+              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
+            val config_OC_FLAT =
+              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
+            // Only reached when the flat slice failed for a reason other than time, mostly the
+            // frontend rejecting the program: the byte-level memory model encodes some of those.
+            val config_OC_BYTES =
+              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
+
+            edges.add(Edge(config_OC_MULTI, config_OC_FLAT, anyError))
+            // the first matching edge is taken, so the non-timeout edge goes first
+            edges.add(Edge(config_OC_FLAT, config_OC_BYTES, anythingButTimeout))
+            edges.add(Edge(config_OC_FLAT, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
+            edges.add(Edge(config_OC_BYTES, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
+
+            config_OC_MULTI
+          }
         }
 
         else -> {
