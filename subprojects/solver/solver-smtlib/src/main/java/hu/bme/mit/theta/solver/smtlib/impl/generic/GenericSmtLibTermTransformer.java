@@ -91,6 +91,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
@@ -172,7 +173,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("ite", exprIteOperator());
 
                         // Abstract
-                        put("=", exprRelationalOperator(EqExpr::create2));
+                        put("=", exprCoreEq());
                         put("<=", exprRelationalOperator(LeqExpr::create2));
                         put("<", exprRelationalOperator(LtExpr::create2));
                         put(">=", exprRelationalOperator(GeqExpr::create2));
@@ -208,12 +209,12 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("bvadd", exprMultiaryOperator(BvAddExpr::create));
                         put("bvsub", exprBinaryOperator(BvSubExpr::create));
                         put("bvneg", exprUnaryOperator(BvNegExpr::create));
-                        put("bvmul", exprMultiaryOperator(BvAddExpr::create));
+                        put("bvmul", exprMultiaryOperator(BvMulExpr::create));
                         put("bvudiv", exprBinaryOperator(BvUDivExpr::create));
                         put("bvsdiv", exprBinaryOperator(BvSDivExpr::create));
                         put("bvsmod", exprBinaryOperator(BvSModExpr::create));
-                        put("bvsrem", exprBinaryOperator(BvURemExpr::create));
-                        put("bvurem", exprBinaryOperator(BvSRemExpr::create));
+                        put("bvsrem", exprBinaryOperator(BvSRemExpr::create));
+                        put("bvurem", exprBinaryOperator(BvURemExpr::create));
                         put("bvand", exprMultiaryOperator(BvAndExpr::create));
                         put("bvor", exprMultiaryOperator(BvOrExpr::create));
                         put("bvxor", exprMultiaryOperator(BvXorExpr::create));
@@ -894,6 +895,20 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var op1 = transformTerm(ops.get(0), model, vars);
             final var op2 = transformTerm(ops.get(1), model, vars);
             return function.apply(op1, op2);
+        };
+    }
+
+    private OperatorCreatorFunction exprCoreEq() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Binary operator expected");
+
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
+            if (op1.getType() instanceof FpType type1 && op2.getType() instanceof FpType type2)
+                return FpExprs.FpAssign(cast(op1, type1), cast(op2, type2));
+
+            return EqExpr.create2(op1, op2);
         };
     }
 

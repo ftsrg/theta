@@ -89,7 +89,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
 
     @Override
     public BvType getType() {
-        return BvType.of(size);
+        return BvType.of(size, sgn);
     }
 
     @Override
