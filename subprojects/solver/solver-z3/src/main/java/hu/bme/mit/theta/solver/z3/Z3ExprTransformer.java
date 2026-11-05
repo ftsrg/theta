@@ -194,6 +194,7 @@ final class Z3ExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
@@ -863,6 +864,15 @@ final class Z3ExprTransformer {
     private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
+    }
+
+    /** An uninterpreted function per function and sort, named after the operator label. */
+    private com.microsoft.z3.Expr transformFpMathFunc(final FpMathFuncExpr expr) {
+        final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+        final Sort sort = transformer.toSort(expr.getType());
+        final FuncDecl<?> func =
+                context.mkFuncDecl(expr.getOperatorLabel(), new Sort[] {sort}, sort);
+        return context.mkApp(func, opTerm);
     }
 
     private com.microsoft.z3.Expr transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {

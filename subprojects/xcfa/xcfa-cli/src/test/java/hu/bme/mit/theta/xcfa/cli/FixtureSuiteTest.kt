@@ -30,7 +30,7 @@ import org.junit.jupiter.api.fail
  *   the outcome.
  * - `SAFE` / `UNSAFE`, optionally `:<property>` -- run the real verifier and check the verdict. Use
  *   these for changes that alter values rather than what parses: a miswritten memory cell parses
- *   perfectly and only shows up as a wrong answer.
+ *   perfectly and only shows up as a wrong answer. `UNKNOWN` pins a verdict the tool must withhold.
  *
  * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
  *
@@ -133,7 +133,7 @@ class FixtureSuiteTest {
     properties: File,
   ): Pair<String, String> {
     val verdict = expect.substringBefore(':')
-    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE"
+    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE" || verdict == "UNKNOWN"
     val property =
       File(
         properties,
@@ -170,6 +170,7 @@ class FixtureSuiteTest {
       when {
         output.contains("(SafetyResult Safe)") -> "SAFE"
         output.contains("(SafetyResult Unsafe") -> "UNSAFE"
+        output.contains("(SafetyResult Unknown") -> "UNKNOWN"
         else -> "OTHER"
       }
     // The expectation may name a property after the verdict; echo it back on a match so the
