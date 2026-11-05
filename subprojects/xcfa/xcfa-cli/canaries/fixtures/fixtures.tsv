@@ -275,3 +275,13 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+memcpy_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the accesses a memcpy spells out get the valid-deref guard
+memcpy_inbounds_memsafety.c	efficient	LP64	SAFE:valid-memsafety	an in-bounds memcpy passes the valid-deref guard
+memset_null_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset through NULL is an invalid dereference
+memset_symbolic_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	a memset loop with a symbolic count is guarded
+memset_heap_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset past the end of a heap block is an invalid dereference
+memset_count_reread.c	efficient	LP64	SAFE	the memset count is read once, before the first write
+memset_value_reread.c	efficient	LP64	SAFE	the memset value is read once, before the first write
+memcpy_count_reread.c	efficient	LP64	SAFE	the memcpy count is read once, before the first write
+memset_struct_symbolic.c	efficient	LP64	UNSAFE	memset of structs with a symbolic count is a loop under bytes, not a call left in place
+memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap

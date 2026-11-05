@@ -111,6 +111,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass(property)),
+    // ahead of the memsafety and overflow guards, so the accesses it spells out are checked
+    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     listOf(
       // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),
@@ -136,8 +138,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       )
     } ?: emptyList(),
     listOf(OverflowDetectionPass(property, parseContext)),
-    // spells out the mem* copies before anything below havocs the same objects
-    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
     listOf(AmbiguousMutexPass()),
