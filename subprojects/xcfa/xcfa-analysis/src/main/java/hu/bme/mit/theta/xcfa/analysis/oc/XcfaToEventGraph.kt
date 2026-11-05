@@ -192,11 +192,16 @@ internal class XcfaToEventGraph(
       .process()
     addCrossThreadRelations()
     addJoinOrders()
+    val allEvents = events.values.flatMap { it.values.flatten() }
+    val before = closePo(allEvents, pos)
+    // RF-Some would make a read take such a candidate, ruling out every execution: a read that no
+    // write can precede is simply unconstrained.
+    rfs.values.forEach { rels -> rels.removeIf { before[it.from]?.get(it.to.id) == true } }
     if (pruneCandidates) {
       val analysis =
         XcfaOcValueAnalysis(
-          events.values.flatMap { it.values.flatten() },
-          pos,
+          allEvents,
+          before,
           rfs,
           wss,
           localDefinitions,

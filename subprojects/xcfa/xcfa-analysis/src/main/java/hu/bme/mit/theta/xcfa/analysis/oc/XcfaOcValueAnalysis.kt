@@ -42,6 +42,30 @@ import java.math.BigInteger
 import java.util.BitSet
 import java.util.IdentityHashMap
 
+/** For every event, the events strictly before it in every execution containing both. */
+internal fun closePo(events: Collection<E>, pos: List<R>): Map<E, BitSet> {
+  val successors = pos.groupBy({ it.from }, { it.to })
+  val nodes = (events + pos.flatMap { listOf(it.from, it.to) }).toSet()
+  val indegree = HashMap<E, Int>()
+  pos.forEach { indegree.merge(it.to, 1, Int::plus) }
+  val queue = ArrayDeque(nodes.filter { it !in indegree })
+  val result = nodes.associateWith { BitSet() }
+  var closed = 0
+  while (queue.isNotEmpty()) {
+    val e = queue.removeFirst()
+    closed++
+    successors[e]?.forEach { next ->
+      result.getValue(next).apply {
+        or(result.getValue(e))
+        set(e.id)
+      }
+      if (indegree.merge(next, -1, Int::plus) == 0) queue.add(next)
+    }
+  }
+  check(closed == nodes.size) { "Program order is cyclic." }
+  return result
+}
+
 /** A binding of a local SSA constant, active under [guard]. A null [value] leaves it free. */
 internal class LocalDefinition(val guard: Set<Expr<BoolType>>, val value: Expr<*>?)
 
@@ -57,7 +81,7 @@ internal class LocalDefinition(val guard: Set<Expr<BoolType>>, val value: Expr<*
  */
 internal class XcfaOcValueAnalysis(
   private val events: Collection<E>,
-  pos: List<R>,
+  private val before: Map<E, BitSet>,
   private val rfs: MutableMap<VarDecl<*>, MutableSet<R>>,
   private val wss: MutableMap<VarDecl<*>, MutableSet<R>>,
   private val definitions: Map<ConstDecl<*>, List<LocalDefinition>>,
@@ -88,8 +112,6 @@ internal class XcfaOcValueAnalysis(
   private val addressValues = if (checksDereferences) values else HashMap()
 
   private var forAddress = false
-
-  private val before: Map<E, BitSet> = closePo(pos)
 
   private val candidates: Map<E, List<R>> =
     allCandidates.mapValues { (read, rels) ->
@@ -413,30 +435,6 @@ internal class XcfaOcValueAnalysis(
   }
 
   private fun ordered(from: E, to: E) = before.getValue(to)[from.id]
-
-  /** For every event, the events strictly before it in every execution containing both. */
-  private fun closePo(pos: List<R>): Map<E, BitSet> {
-    val successors = pos.groupBy({ it.from }, { it.to })
-    val nodes = (events + pos.flatMap { listOf(it.from, it.to) }).toSet()
-    val indegree = HashMap<E, Int>()
-    pos.forEach { indegree.merge(it.to, 1, Int::plus) }
-    val queue = ArrayDeque(nodes.filter { it !in indegree })
-    val result = nodes.associateWith { BitSet() }
-    var closed = 0
-    while (queue.isNotEmpty()) {
-      val e = queue.removeFirst()
-      closed++
-      successors[e]?.forEach { next ->
-        result.getValue(next).apply {
-          or(result.getValue(e))
-          set(e.id)
-        }
-        if (indegree.merge(next, -1, Int::plus) == 0) queue.add(next)
-      }
-    }
-    check(closed == nodes.size) { "Program order is cyclic." }
-    return result
-  }
 
   private fun Set<LitExpr<*>>?.join(other: Set<LitExpr<*>>?): Set<LitExpr<*>>? =
     if (this == null || other == null) null else this + other

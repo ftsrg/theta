@@ -443,3 +443,5 @@ lifetime_main_return.c	efficient	ILP32	SAFE:valid-memsafety	returning from main 
 lifetime_main_return_array.c	efficient	ILP32	SAFE:valid-memsafety	returning from main does not release its arrays for running threads
 lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL	a jump past a block's entry is refused
 lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL	a case label past a block's entry is refused
+lifetime_thread_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies when the thread returns
+lifetime_pthread_exit.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies at pthread_exit
