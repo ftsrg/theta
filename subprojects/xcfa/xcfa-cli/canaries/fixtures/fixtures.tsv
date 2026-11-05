@@ -278,3 +278,4 @@ stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs it
 fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient), fmod (truncated quotient) and modf (signed fraction, inf) are modeled exactly
 fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
 fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
+dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
