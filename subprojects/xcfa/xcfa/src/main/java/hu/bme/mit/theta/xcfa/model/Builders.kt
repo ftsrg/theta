@@ -42,6 +42,9 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    */
   val overApproximatedVars: MutableMap<VarDecl<*>, ClosedRange<BigInteger>?> = LinkedHashMap()
 
+  /** For a stubbed `*printf` call: its return variable, and the variable that holds its format. */
+  val formatArguments: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+
   fun getVars(): Set<XcfaGlobalVar> = vars
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures

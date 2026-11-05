@@ -22,6 +22,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import java.math.BigInteger
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -71,5 +72,12 @@ class LibraryModelsTest {
     val xcfa = build("strlen-after-buffer-stub.c")
     assertFalse(xcfa.hasVar("__theta_strlen_index_var_"))
     assertFalse(xcfa.recorded("call_strlen_ret").isEmpty())
+  }
+
+  @Test
+  fun `the return of snprintf is bounded by its format literals`() {
+    val xcfa = build("snprintf-bound.c")
+    val bounds = xcfa.recorded("call_snprintf_ret").values
+    assertEquals(listOf(BigInteger.valueOf(22)), bounds.map { it?.endInclusive })
   }
 }

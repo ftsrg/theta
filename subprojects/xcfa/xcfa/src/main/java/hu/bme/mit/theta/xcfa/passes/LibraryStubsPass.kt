@@ -161,6 +161,17 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strerror" to Stub(freshString = 128),
       )
 
+    /** The argument position of the format, for the calls whose return a format bounds. */
+    private val FORMAT_INDEX =
+      mapOf(
+        "sprintf" to 2,
+        "snprintf" to 3,
+        "vsnprintf" to 3,
+        "asprintf" to 2,
+        "vasprintf" to 2,
+        "fprintf" to 2,
+      )
+
     /** The stubbed calls that write through a pointer, filling only [DEFAULT_FILL_CELLS] cells. */
     internal val BUFFER_WRITING: Set<String> = STUBS.filterValues { it.writes != Writes.None }.keys
 
@@ -218,12 +229,14 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     // argument as a read into a fresh variable first, the way CLibraryFunctionsPass models
     // `printf`. This is the argument *value*; what a pointer argument points AT is a separate
     // question, answered (for the written buffers only) below.
+    var format: VarDecl<*>? = null
     for (i in 1 until invoke.params.size) {
       val arg = invoke.params[i]
       if (arg is LitExpr<*>) continue // a constant reads nothing
       val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
       builder.addVar(read)
       out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
+      if (i == FORMAT_INDEX[invoke.name]) format = read
     }
 
     uniqueWarningLogger.write(
@@ -279,6 +292,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     if (ret != null && spec.freshString != null) {
       val string = freshString(ret, spec.freshString, invoke, builder)
       if (string != null) return out + string
+    }
+    if (ret != null && format != null && spec.returns == null) {
+      builder.parent.formatArguments[ret] = format
     }
     if (ret != null) {
       val fixed = spec.returns
