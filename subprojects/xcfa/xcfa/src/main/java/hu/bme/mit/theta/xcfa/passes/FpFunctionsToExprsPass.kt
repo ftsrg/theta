@@ -640,8 +640,29 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
+  /**
+   * `fmod(x, y)` from the IEEE remainder `r`: they differ only when `r` is non-zero with the sign
+   * opposite to `x`, and then `fmod` is `r ± |y|`. The true `fmod` is representable, so that
+   * addition is exact; NaN, infinite and zero cases already agree with `fp.rem`.
+   */
   private fun handleFmod(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException("Fmod not yet supported!")
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
+    val (x, y) = args
+    val r = FpExprs.Rem(x, y)
+    val zero = FpExprs.PositiveZero(ret.type)
+    val rhs =
+      IteExpr.of(
+        And(FpExprs.Gt(x, zero), FpExprs.Lt(r, zero)),
+        FpExprs.Add(FpRoundingMode.RNE, listOf(r, FpExprs.Abs(y))),
+        IteExpr.of(
+          And(FpExprs.Lt(x, zero), FpExprs.Gt(r, zero)),
+          FpExprs.Sub(FpRoundingMode.RNE, r, FpExprs.Abs(y)),
+          r,
+        ),
+      )
+    return SequenceLabel(labels + assignFp(callStmt, ret, type, rhs))
   }
 
   private fun handleFmin(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
