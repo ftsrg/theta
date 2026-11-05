@@ -35,6 +35,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.typeInterval
 
 /**
  * Standard-library functions that nothing defines and [UnresolvedInvokeToHavocPass] refuses.
@@ -47,7 +48,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * These are stubbed explicitly instead. Each entry states which arguments the function WRITES
  * THROUGH, and those pointees are filled with fresh nondeterministic values rather than being left
  * at their old contents -- leaving them would be a specific wrong value, which can hide a bug as
- * easily as invent one, where unconstrained is a safe over-approximation.
+ * easily as invent one, where unconstrained is a safe over-approximation. It is safe for a Safe
+ * verdict only, so each value made up here is recorded in [XcfaBuilder.overApproximatedVars].
  *
  * ⚠️ Not modelled here, deliberately:
  * - a call flagged [InvokeLabel.isLibraryFunction]. That flag means "an later pass or the analysis
@@ -96,22 +98,28 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      *   havoc the return. A havoc'd return means the caller's error path is always reachable, which
      *   invents failures the modelled program cannot have; where the standard assumption is
      *   success, say so here instead.
+     * @param input the written buffers hold input from the environment, which can be any value in C
+     *   too. Otherwise the call computes them, and their havoc is an over-approximation.
      */
-    private data class Stub(val writes: Writes = Writes.None, val returns: Long? = null)
+    private data class Stub(
+      val writes: Writes = Writes.None,
+      val returns: Long? = null,
+      val input: Boolean = false,
+    )
 
     private val STUBS: Map<String, Stub> =
       mapOf(
         // stdio: reads produce nondeterministic data in the caller's buffer
-        "fgets" to Stub(Writes.At(setOf(1))),
-        "fscanf" to Stub(Writes.VariadicFrom(3)), // (ret, stream, fmt, &a, &b, ...)
-        "__isoc99_fscanf" to Stub(Writes.VariadicFrom(3)),
-        "scanf" to Stub(Writes.VariadicFrom(2)), // (ret, fmt, &a, &b, ...)
-        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2)),
+        "fgets" to Stub(Writes.At(setOf(1)), input = true),
+        "fscanf" to Stub(Writes.VariadicFrom(3), input = true), // (ret, stream, fmt, &a, &b, ...)
+        "__isoc99_fscanf" to Stub(Writes.VariadicFrom(3), input = true),
+        "scanf" to Stub(Writes.VariadicFrom(2), input = true), // (ret, fmt, &a, &b, ...)
+        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2), input = true),
         "sscanf" to Stub(Writes.VariadicFrom(3)),
         "__isoc99_sscanf" to Stub(Writes.VariadicFrom(3)),
-        "read" to Stub(Writes.At(setOf(2))),
-        "fread" to Stub(Writes.At(setOf(1))),
-        "getline" to Stub(Writes.At(setOf(1, 2))),
+        "read" to Stub(Writes.At(setOf(2)), input = true),
+        "fread" to Stub(Writes.At(setOf(1)), input = true),
+        "getline" to Stub(Writes.At(setOf(1, 2)), input = true),
         // stdio: writes go to a stream we do not model, so only the return matters
         "fopen" to Stub(),
         "fclose" to Stub(),
@@ -218,6 +226,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       for (n in 0 until DEFAULT_FILL_CELLS) {
         val fresh = Var("__stub_${invoke.name}_${counter++}", cell.smtType)
         builder.addVar(fresh)
+        if (!spec.input) builder.overApproximatedVars[fresh] = typeInterval(cell, parseContext)
         val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
         val deref =
           Dereference.of(
@@ -239,10 +248,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         // without it. Something else in those inputs participates. Do not remove it on the grounds
         // that a small repro shows no difference.
         //
-        // Emitted here rather than left to [HavocPromotionAndRange], which adds exactly this assume
-        // but runs BEFORE this pass in the pipeline, so a havoc introduced here never reaches it --
-        // stamping `cType` on the variable to make that pass pick it up was tried and measured at
-        // zero effect for the same reason.
+        // Emitted here: [HavocPromotionAndRange] bounds only a variable with a `cType`.
         out.add(StmtLabel(cell.limit(fresh.ref), metadata = invoke.metadata))
         out.add(
           StmtLabel(
@@ -259,6 +265,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       val fixed = spec.returns
       if (fixed == null) {
         out.add(StmtLabel(HavocStmt.of(ret), metadata = invoke.metadata))
+        builder.overApproximatedVars[ret] = typeInterval(ret.ref, parseContext)
       } else {
         val type = CComplexType.getType(ret.ref, parseContext)
         out.add(
