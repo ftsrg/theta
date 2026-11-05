@@ -66,10 +66,7 @@ enum class MacroExprs(val id: String, val value: (ParseContext) -> Expr<*>) {
 
   // Floating-point — double
   DBL_DIG("DBL_DIG", { CComplexType.getSignedInt(it).getValue("15") }),
-  DBL_EPSILON(
-    "DBL_EPSILON",
-    { CComplexType.getDouble(it).getValue("2.220446049250313e-16") },
-  ),
+  DBL_EPSILON("DBL_EPSILON", { CComplexType.getDouble(it).getValue("2.220446049250313e-16") }),
   DBL_MANT_DIG("DBL_MANT_DIG", { CComplexType.getSignedInt(it).getValue("53") }),
   DBL_MAX("DBL_MAX", { CComplexType.getDouble(it).getValue("1.7976931348623157e+308") }),
   DBL_MAX_10_EXP("DBL_MAX_10_EXP", { CComplexType.getSignedInt(it).getValue("308") }),
