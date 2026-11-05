@@ -112,6 +112,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
     private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
 
+    /** Parameters declared with array syntax: C adjusts their type to a pointer. */
+    private final Set<VarDecl<?>> arrayParameters = new HashSet<>();
+
+    /** The declaration of each array variable, for an extent only its initializer gives. */
+    private final Map<VarDecl<?>, CDeclaration> arrayDeclarations = new HashMap<>();
+
+    public boolean isArrayParameter(VarDecl<?> variable) {
+        return arrayParameters.contains(variable);
+    }
+
+    /** The element count [variable]'s initializer gives it, or null when it has none. */
+    public Integer initializerExtent(VarDecl<?> variable) {
+        final CDeclaration declaration = arrayDeclarations.get(variable);
+        return declaration == null || declaration.getInitExpr() == null
+                ? null
+                : Integer.valueOf(initializerElements(declaration.getInitExpr()));
+    }
+
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
         // was evaluated (see #declareBeforeInitializer). Registering twice would append a second,
@@ -457,6 +475,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);
+        if (type instanceof CArray) {
+            arrayDeclarations.put(varDecl, declaration);
+        }
         // A static local is registered in the scope so uses resolve to it, but it is not one of the
         // procedure's variables -- it is declared among the globals instead.
         if (procedureLocal) {
@@ -886,7 +907,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-            if (functionParam.getName() != null) createVars(functionParam);
+            if (functionParam.getName() != null) {
+                createVars(functionParam);
+                if (functionParam.getActualType() instanceof CArray) {
+                    arrayParameters.addAll(functionParam.getVarDecls());
+                }
+            }
         }
         CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
         if (blockItemListContext != null) {

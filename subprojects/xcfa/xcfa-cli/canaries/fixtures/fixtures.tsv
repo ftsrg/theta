@@ -206,6 +206,11 @@ atomic_pointer_step.c	efficient	LP64	SAFE	GCC __atomic_* add/sub step a pointer 
 atomic_user_defined.c	efficient	LP64	SAFE	a defined function named like a C11 atomic operation is called, not modelled
 sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
 sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	multi
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	flat
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	bytes
+sizeof_array_object_violation.c	efficient	ILP32	UNSAFE	sizeof(a)/sizeof(a[0]) is the element count, so a reachable error under it is found
+sizeof_vla_refused.c	efficient	ILP32	FRONTEND-FAIL	sizeof of a VLA is refused instead of reporting a wrong constant
 fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
