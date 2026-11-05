@@ -468,7 +468,6 @@ private fun backend(
               .let ResultMapper@{ result ->
                 if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
                   if (config.backendConfig.portfolioStep) {
-                    // A portfolio only moves on when a config fails: report this as a failure.
                     logger.benchmark(
                       "Over-approximating model used: handing over to the next config."
                     )
