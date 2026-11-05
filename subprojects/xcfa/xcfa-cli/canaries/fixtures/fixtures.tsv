@@ -292,3 +292,4 @@ malloc_char_view_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a char view of a
 alloca_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	an alloca bound is in cells: the third int of a 10-byte block overruns it
 alloca_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the second int of a 10-byte alloca block is in bounds
 flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints under multi too
+bytes_addr_of_short_array.c	efficient	LP64	SAFE:valid-memsafety	the address of an array shorter than a pointer is no access under bytes	bytes
