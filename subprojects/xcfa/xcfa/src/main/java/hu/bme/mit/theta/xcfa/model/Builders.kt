@@ -90,6 +90,7 @@ constructor(
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
   unsafeUnrollUsed: Boolean = false,
   var prop: Expr<BoolType> = True(),
+  overApproximationUsed: Boolean = false,
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -102,6 +103,10 @@ constructor(
     private set
 
   var unsafeUnrollUsed: Boolean = unsafeUnrollUsed
+    private set
+
+  /** Set when a construct was modeled by a sound over-approximation: Unsafe is then unreliable. */
+  var overApproximationUsed: Boolean = overApproximationUsed
     private set
 
   lateinit var parent: XcfaBuilder
@@ -386,6 +391,10 @@ constructor(
     unsafeUnrollUsed = true
   }
 
+  fun setOverApproximation() {
+    overApproximationUsed = true
+  }
+
   fun deepCopy(identifier: String = ""): XcfaProcedureBuilder {
     val newLocs =
       locs.associateWith {
@@ -411,6 +420,7 @@ constructor(
         metaData = metaData.toMutableMap(),
         unsafeUnrollUsed = unsafeUnrollUsed,
         prop = prop,
+        overApproximationUsed = overApproximationUsed,
       )
       .also { proc ->
         proc.lastOptimized = lastOptimized

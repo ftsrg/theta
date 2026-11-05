@@ -506,9 +506,17 @@ class FrontendXcfaBuilder(
     builder.createFinalLoc(getMetadata(function))
     val ret = builder.finalLoc.get()
     builder.addLoc(ret)
-    val end = compound.accept(this, ParamPack(builder, init, null, null, ret))
-    val edge = XcfaEdge(end, ret, metadata = getMetadata(function))
-    builder.addEdge(edge)
+    // Returns lead through the epilogue, so it also runs on an early exit.
+    val epilogue = function.epilogue
+    val exit =
+      if (epilogue == null) ret
+      else getAnonymousLoc(builder, getMetadata(function)).also { builder.addLoc(it) }
+    val end = compound.accept(this, ParamPack(builder, init, null, null, exit))
+    builder.addEdge(XcfaEdge(end, exit, metadata = getMetadata(function)))
+    if (epilogue != null) {
+      val epilogueEnd = epilogue.accept(this, ParamPack(builder, exit, null, null, ret))
+      builder.addEdge(XcfaEdge(epilogueEnd, ret, metadata = getMetadata(function)))
+    }
     return builder
   }
 

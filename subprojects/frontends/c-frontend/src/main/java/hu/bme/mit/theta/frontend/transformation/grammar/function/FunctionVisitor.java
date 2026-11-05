@@ -226,6 +226,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
 
+    /** Every stack object registered in the current function, for its epilogue. */
+    private final List<Expr<?>> functionScoped = new ArrayList<>();
+
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
         scopedAllocas.push(new ArrayList<>());
@@ -284,6 +287,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // An alloca'd object's variable *holds* its base, so the variable is what to
                 // release.
                 scopedAllocas.peek().add(varDecl.getRef());
+                functionScoped.add(varDecl.getRef());
             }
         }
     }
@@ -326,6 +330,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             if (registered.get(i).add(varDecl)) {
                 releases.get(i).add(address);
+                functionScoped.add(address);
             }
             return;
         }
@@ -877,6 +882,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        functionScoped.clear();
         currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
@@ -893,6 +899,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             new ArrayList<>(flatVariables),
                             parseContext,
                             atomicVariables);
+            // A return skips the scope-end markers of the blocks it leaves. Not for main: the model
+            // lets other threads go on using its locals after it returns.
+            if (parseContext.isCheckMemsafety() && !funcDecl.getName().equals("main")) {
+                final CCompound epilogue = new CCompound(parseContext);
+                for (Expr<?> release : new LinkedHashSet<>(functionScoped)) {
+                    epilogue.addCStatement(
+                            new CCall(
+                                    SCOPE_END,
+                                    List.of(new CExpr(release, parseContext)),
+                                    parseContext));
+                }
+                cFunction.setEpilogue(epilogue);
+            }
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
