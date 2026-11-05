@@ -354,7 +354,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     return SequenceLabel(labels + assignFp(callStmt, ret, type, rhs))
   }
 
-  /** C `remainder` is the IEEE-754 remainder (quotient rounded to nearest-even), i.e. `fp.rem`. */
+  /** C `remainder` is the IEEE-754 remainder (Annex F, F.10.7.2), i.e. `fp.rem`. */
   private fun handleRemainder(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
     val (ret, type) = fpReturn(callStmt)
@@ -363,9 +363,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * `modf(x, &ip)`: `ip = trunc(x)` and the result is `x - ip`, which is exact. The fraction takes
-   * the sign of `x` (`modf(-3.0)` is `-0.0`, which the subtraction alone gets wrong), and it is
-   * `±0` for an infinite `x`.
+   * `modf(x, &ip)` (Annex F, F.10.3.12): `ip = trunc(x)` and the result is `x - ip`, which is
+   * exact. The fraction takes the sign of `x` (`modf(-3.0)` is `-0.0`, which the subtraction alone
+   * gets wrong), and it is `±0` for an infinite `x`.
    */
   private fun handleModf(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
@@ -693,9 +693,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * `fmod(x, y)` from the IEEE remainder `r`: they differ only when `r` is non-zero with the sign
-   * opposite to `x`, and then `fmod` is `r ± |y|`. The true `fmod` is representable, so that
-   * addition is exact; NaN, infinite and zero cases already agree with `fp.rem`.
+   * `fmod(x, y)` (Annex F, F.10.7.1) from the IEEE remainder `r`: they differ only when `r` is
+   * non-zero with the sign opposite to `x`, and then `fmod` is `r ± |y|`. The true `fmod` is
+   * representable, so that addition is exact; NaN, infinite and zero cases agree with `fp.rem`.
    */
   private fun handleFmod(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")

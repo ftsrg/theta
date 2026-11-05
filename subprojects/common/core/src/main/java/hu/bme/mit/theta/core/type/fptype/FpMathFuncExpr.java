@@ -115,55 +115,58 @@ public final class FpMathFuncExpr extends UnaryExpr<FpType, FpType> {
             return null;
         }
 
-        /** The special values; `Eq(x, 0)` is IEEE equality, so it matches both zeros. */
+        /**
+         * The special values of C11 Annex F, F.10 (N1570); NaN propagation is F.10 ¶11. `Eq(x, 0)`
+         * is IEEE equality, so it matches both zeros.
+         */
         private List<Case> cases(final Expr<FpType> x, final Consts c) {
             final List<Case> cases = new ArrayList<>();
             cases.add(new Case(IsNan(x), c.nan()));
             switch (this) {
-                case EXP -> {
+                case EXP -> { // F.10.3.1
                     cases.add(new Case(Eq(x, c.zero()), c.one()));
                     cases.add(new Case(FpAssign(x, c.negInf()), c.zero()));
                     cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
                 }
-                case EXPM1 -> {
+                case EXPM1 -> { // F.10.3.3
                     cases.add(new Case(Eq(x, c.zero()), x));
                     cases.add(new Case(FpAssign(x, c.negInf()), c.minusOne()));
                     cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
                 }
-                case LOG -> {
+                case LOG -> { // F.10.3.7
                     cases.add(new Case(Lt(x, c.zero()), c.nan()));
                     cases.add(new Case(Eq(x, c.zero()), c.negInf()));
                     cases.add(new Case(FpAssign(x, c.one()), c.zero()));
                     cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
                 }
-                case LOG1P -> {
+                case LOG1P -> { // F.10.3.9
                     cases.add(new Case(Lt(x, c.minusOne()), c.nan()));
                     cases.add(new Case(FpAssign(x, c.minusOne()), c.negInf()));
                     cases.add(new Case(Eq(x, c.zero()), x));
                     cases.add(new Case(FpAssign(x, c.posInf()), c.posInf()));
                 }
-                case SIN -> {
+                case SIN -> { // F.10.1.6
                     cases.add(new Case(IsInfinite(x), c.nan()));
                     cases.add(new Case(Eq(x, c.zero()), x));
                 }
-                case COS -> {
+                case COS -> { // F.10.1.5
                     cases.add(new Case(IsInfinite(x), c.nan()));
                     cases.add(new Case(Eq(x, c.zero()), c.one()));
                 }
-                case TANH, ERF -> {
+                case TANH, ERF -> { // F.10.2.6, F.10.5.1
                     cases.add(new Case(Eq(x, c.zero()), x));
                     cases.add(new Case(FpAssign(x, c.posInf()), c.one()));
                     cases.add(new Case(FpAssign(x, c.negInf()), c.minusOne()));
                 }
-                case ACOS -> {
+                case ACOS -> { // F.10.1.1
                     cases.add(new Case(outsideUnit(x, c), c.nan()));
                     cases.add(new Case(FpAssign(x, c.one()), c.zero()));
                 }
-                case ASIN -> {
+                case ASIN -> { // F.10.1.2
                     cases.add(new Case(outsideUnit(x, c), c.nan()));
                     cases.add(new Case(Eq(x, c.zero()), x));
                 }
-                case ATANH -> {
+                case ATANH -> { // F.10.2.3
                     cases.add(new Case(outsideUnit(x, c), c.nan()));
                     cases.add(new Case(FpAssign(x, c.one()), c.posInf()));
                     cases.add(new Case(FpAssign(x, c.minusOne()), c.negInf()));
