@@ -90,7 +90,7 @@ class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
 }
 
 val XCFA.isInlined: Boolean by LazyDelegate {
-  !this.procedures.any { p ->
+  !this.initProcedures.map { it.first }.any { p ->
     p.edges.any { e ->
       e.getFlatLabels().any { l -> l is InvokeLabel && this.procedures.any { it.name == l.name } }
     }

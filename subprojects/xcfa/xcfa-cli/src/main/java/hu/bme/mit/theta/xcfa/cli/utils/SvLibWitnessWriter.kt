@@ -169,12 +169,11 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
   val initVal = initState.sGlobal.getVal()
   val globalVarMap = initVal.toMap()
     .filter { (varDecl, _) -> varDecl in xcfa.globalVars.map { it.wrappedVar } }
-  val model = SmtLibModel(globalVarMap.map { (varDecl, expr) -> varDecl.name to expr.toString() }.toMap())
+  val model = SmtLibModel(emptyMap()) // TODO extract function definitions from trace model
 
   val entryProcedure = xcfa.initProcedures.firstOrNull()?.first ?: throw IllegalStateException("no entry procedure")
   val property = actions.flatMap { it.label.getFlatLabels() }.mapNotNull { (it.metadata as? SvLibSourceMetadata)?.source }
     .findLast { it.contains(":check-true") } ?: throw IllegalStateException("no property violation found")
-
 
   var currentProcedure: XcfaProcedure = entryProcedure
   val steps = states.zipWithNext().zip(actions).flatMap { (states, action) ->
@@ -196,16 +195,16 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
               steps.add(ChoiceStep(index.toInt()))
             }
           }
-          (label.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
+          if (xcfa.isInlined) (label.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
             Regex("call (\\S+) \\(").find(metadata)?.groups?.get(1)?.value?.let { procedureName ->
               currentProcedure = xcfa.procedures.find { procedureName == it.name }
                 ?: throw IllegalStateException("call to unknown procedure")
-              steps.add(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal()))
+              steps.add(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal().filterLocal(currentProcedure)))
             }
           }
           if (stmt is HavocStmt<*>) {
-            newExplState.sGlobal.getVal().toMap()[stmt.varDecl]?.let { value ->
-              val varDecl = prevState.varLookup[0].reverseMapping()[stmt.varDecl] ?: stmt.varDecl
+            val varDecl = prevState.varLookup[0].reverseMapping()[stmt.varDecl] ?: stmt.varDecl
+            newExplState.sGlobal.getVal().toMap()[varDecl]?.let { value ->
               steps.add(HavocStep(varDecl, value))
             }
           }
@@ -215,7 +214,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
     }
 
     if (!prevState.paramsInitialized && newState.paramsInitialized) {
-      steps.addFirst(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal()))
+      steps.addFirst(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal().filterLocal(currentProcedure)))
     }
 
     steps
@@ -241,19 +240,11 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
     parseContext: ParseContext
   ): ExplState {
     val currentState = state.processes.values.first()
-    val currentLoc = currentState.locs.peek() // no concurrency in SV-LIB
-    val xcfa = state.xcfa ?: throw IllegalStateException("no XCFA associated with trace")
-    val currentProcedure = xcfa.procedures.find { currentLoc in it.locs }
-      ?: throw IllegalStateException("no procedure associated with trace")
-    val globalVars = xcfa.globalVars.map(XcfaGlobalVar::wrappedVar)
+    val globalVars = (state.xcfa ?: throw IllegalStateException("no XCFA associated with trace"))
+      .globalVars.map(XcfaGlobalVar::wrappedVar)
 
     val genericValuationMap: Map<Decl<*>, LitExpr<*>> = valuation
       .changeVars(globalVars.associateWith { it } + currentState.varLookup[0].reverseMapping()).toMap()
-      .filterKeys { varDecl ->
-        (varDecl in currentProcedure.vars || varDecl in globalVars) && currentProcedure.params.all { (param, dir) ->
-          param != varDecl || dir != ParamDirection.IN
-        }
-      }
 
     return ExplState.of(ImmutableValuation.from(genericValuationMap))
   }
@@ -321,6 +312,14 @@ private fun Valuation.toSvLib(): String {
     "(${GenericSmtLibSymbolTable.encodeSymbol(varDecl.name)} ${transformer.toTerm(litExpr)})"
   }
 }
+
+private fun Valuation.filterLocal(procedure: XcfaProcedure): Valuation =
+  this.toMap().filterKeys { varDecl ->
+    (varDecl in procedure.vars) && procedure.params.all { (param, dir) ->
+      param != varDecl || dir != ParamDirection.IN
+    }
+  }.let(ImmutableValuation::from)
+
 
 private fun String.indent(spaces: Int = 4)
   = this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }
