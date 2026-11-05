@@ -279,3 +279,6 @@ overflow_pointer_member.c	bitvector	LP64	SAFE:no-overflow	pointer and member-add
 overflow_pointer_member.c	efficient	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow	flat
 overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked
 overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked	flat
+stub_dependent_overflow.c	efficient	LP64	UNKNOWN:no-overflow	an overflow that needs an over-approximated stub value is not reported
+stub_dependent_reach.c	efficient	LP64	UNKNOWN	an error path that needs an over-approximated stub value is not reported
+stub_independent_overflow.c	efficient	LP64	UNSAFE:no-overflow	an overflow that does not use the stub value is still reported

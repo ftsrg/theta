@@ -21,7 +21,7 @@ Each phase below is one group in `CPasses`, in order.
 | | `PthreadArrayHandleUnrollPass` | unroll `for (i…) pthread_create(&t[i], …)` (or `t + i`) so the handle index is a constant | **before `CLibraryFunctionsPass`**, which rejects a non-constant handle index, and **before `ReferenceElimination`**, which folds `&t[i]` away. There is no `SimplifyExprsPass` this early, which is why it substitutes the loop variable itself. Letting simplification do it instead has no valid pass order: simplification must follow `ReferenceElimination` (or it folds an object's naming variable into its base id and later passes stop recognising the object), `ReferenceElimination` must follow the three passes that read `&x` as a reference, and `CLibraryFunctionsPass` cannot follow it at all because an address-taken local is re-based onto a runtime counter, leaving a thread handle with no static identity |
 | | `CLibraryFunctionsPass`, `AtomicFunctionsPass` | model the pthread and `_Atomic`/`__atomic_*` families as XCFA labels | before `ReferenceElimination`: they read `&x` arguments as references |
 | | `PthreadBarrierPass` | model `pthread_barrier_*` as blocking steps on per-barrier atomic globals | before `ReferenceElimination`: a barrier is identified by its `&barrier` argument |
-| | `LibraryStubsPass` | model the stdio/string calls nothing defines | **before `ReferenceElimination`**: a written pointer argument must still be `&x`, because a folded base id no longer carries its pointee type and the stub would then silently write nothing. **Before the instrumentation phase**, or the writes it does emit are never checked for races or memory safety. After `CLibraryFunctionsPass`, which flags the calls it handles itself |
+| | `LibraryStubsPass` | model the stdio/string calls nothing defines, and record each over-approximated value (see the rules below) | **before `ReferenceElimination`**: a written pointer argument must still be `&x`, because a folded base id no longer carries its pointee type and the stub would then silently write nothing. **Before the instrumentation phase**, or the writes it does emit are never checked for races or memory safety. After `CLibraryFunctionsPass`, which flags the calls it handles itself |
 | memory | `ReferenceElimination` | give every address-taken object a base id, turning `&x` into a pointer value and `*p` into a dereference | after every pass that needs to see a reference (all of group 1) |
 | | `CallocFunctionPass` | lower `calloc` to `malloc` + a `memset` skipped when the block is NULL | before `MallocFunctionPass` and `MemoryFunctionsPass`, which model the two halves |
 | | `MallocFunctionPass`, `AllocaFunctionPass` | turn allocation calls into assignments out of the shared base counter; `malloc`/`realloc` may also return NULL, `alloca` never does | after the frontend published its static-base high-water mark, so the counter is seeded past it |
@@ -58,6 +58,11 @@ Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
 - **Havoc rather than leave stale.** Where a write is only partly modelled (a straddled tail cell, a
   region a stub writes through a pointer), the affected cells are havoc'd. Unconstrained is a safe
   over-approximation; the old value is one specific wrong value.
+- **An over-approximated value is recorded.** It is safe for a Safe verdict only: a
+  counterexample that needs it may not exist in C. A pass that havocs a value which C computes (a
+  stub's result, a formatted buffer) adds the variable to `XcfaBuilder.overApproximatedVars`, with
+  the interval of its C type. Values from the environment (input, `rand`) are not recorded. xcfa-cli
+  turns an Unsafe result into Unknown if its counterexample depends on a recorded value.
 - **Refuse loudly rather than model approximately.** A tool error scores nothing under SV-COMP; a
   wrong answer scores much worse. A pass that cannot state a construct exactly declines it, and logs
   why -- the call is then left in place and surfaces later as "No such method ...". When the bytes
