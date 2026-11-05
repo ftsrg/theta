@@ -114,6 +114,12 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
             feasiblePaths.removeIf { path ->
               old.simplify(path, parseContext).let { (it as? StmtLabel)?.stmt == Assume(False()) }
             }
+            if (old is InvokeLabel) {
+              old.collectVarsWithAccessType(builder).filterValues { it.isWritten }.forEach { (outArg, _) ->
+                localValuation.remove(outArg)
+                feasiblePaths.forEach { it.remove(outArg) }
+              }
+            }
             if (old.isAssume) feasiblePaths.singleOrNull()?.let { localValuation.putAll(it) }
             if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, builder)) {
               old

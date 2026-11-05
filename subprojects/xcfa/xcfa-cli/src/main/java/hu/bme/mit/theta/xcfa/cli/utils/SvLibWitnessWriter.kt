@@ -196,7 +196,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
             }
           }
           if (xcfa.isInlined) (label.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
-            Regex("call (\\S+) \\(").find(metadata)?.groups?.get(1)?.value?.let { procedureName ->
+            Regex("\\(call (\\S+) \\(").find(metadata)?.groups?.get(1)?.value?.let { procedureName ->
               currentProcedure = xcfa.procedures.find { procedureName == it.name }
                 ?: throw IllegalStateException("call to unknown procedure")
               steps.add(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal().filterLocal(currentProcedure)))
