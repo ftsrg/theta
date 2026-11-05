@@ -116,6 +116,31 @@ class CInvariantExportTest {
   }
 
   @Test
+  fun testNestedBoundsDecidedByTheTypeArePruned() {
+    val intRange = { _: hu.bme.mit.theta.core.decl.VarDecl<*> ->
+      BigInteger.valueOf(-2147483648L) to BigInteger.valueOf(2147483647L)
+    }
+    val expr = Not(And(Leq(int(1), a), Leq(b, int(2147483647L))))
+    assertEquals(Not(Leq(int(1), a)), ExprUtils.simplify(pruneByRange(expr, intRange)))
+    val impossible = Or(Leq(int(1), a), Gt(b, int(2147483647L)))
+    assertEquals(Leq(int(1), a), ExprUtils.simplify(pruneByRange(impossible, intRange)))
+  }
+
+  @ParameterizedTest
+  @MethodSource("conjunctions")
+  fun testPruningKeepsTheMeaningInsideTheRange(conjuncts: List<Expr<BoolType>>) {
+    val small = { _: hu.bme.mit.theta.core.decl.VarDecl<*> ->
+      BigInteger.valueOf(-2) to BigInteger.valueOf(2)
+    }
+    val pruned = conjuncts.map { pruneByRange(it, small) }
+    for (x in -2L..2L) for (y in -2L..2L) {
+      assertEquals(holds(conjuncts, x, y), holds(pruned, x, y)) {
+        "$conjuncts -> $pruned at $x, $y"
+      }
+    }
+  }
+
+  @Test
   fun testBoundsImpliedByTheTypeAreDropped() {
     val range = { _: hu.bme.mit.theta.core.decl.VarDecl<*> ->
       BigInteger.valueOf(-2147483648L) to BigInteger.valueOf(2147483647L)

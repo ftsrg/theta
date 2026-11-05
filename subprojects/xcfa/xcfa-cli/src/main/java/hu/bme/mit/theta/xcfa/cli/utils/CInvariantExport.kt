@@ -23,6 +23,13 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.core.type.booltype.IffExpr
@@ -122,7 +129,8 @@ private fun loopInvariant(
             }
         continue
       }
-      for (simple in conjunctsOf(ExprUtils.simplify(conjunct))) {
+      val range = { decl: VarDecl<*> -> CInvariantPrinter.typeRange(decl, parseContext) }
+      for (simple in conjunctsOf(ExprUtils.simplify(pruneByRange(conjunct, range)))) {
         when (simple) {
           is TrueExpr -> {}
           is FalseExpr -> infeasible = true
@@ -290,6 +298,36 @@ internal fun mergeBounds(
   }
   return others + bounds
 }
+
+/**
+ * [expr] with the bounds inside it that the [range] of each variable decides replaced by their
+ * value, so `!(1 <= i && n <= INT_MAX)` can simplify to `!(1 <= i)`. The range checks of the
+ * overflow property end up nested like this.
+ */
+internal fun pruneByRange(
+  expr: Expr<BoolType>,
+  range: (VarDecl<*>) -> Pair<BigInteger, BigInteger>?,
+): Expr<BoolType> =
+  when (expr) {
+    is NotExpr -> Not(pruneByRange(expr.op, range))
+    is AndExpr -> And(expr.ops.map { pruneByRange(it, range) })
+    is OrExpr -> Or(expr.ops.map { pruneByRange(it, range) })
+    is IffExpr -> Iff(pruneByRange(expr.leftOp, range), pruneByRange(expr.rightOp, range))
+    is ImplyExpr -> Imply(pruneByRange(expr.leftOp, range), pruneByRange(expr.rightOp, range))
+    else -> {
+      val bound = lowerBound(expr)
+      when {
+        bound == null || bound.coefficients.isEmpty() -> expr
+        alwaysHolds(bound.coefficients, bound.constant, range) -> True()
+        alwaysHolds(
+          bound.coefficients.mapValues { it.value.negate() },
+          bound.constant.negate().dec(),
+          range,
+        ) -> False()
+        else -> expr
+      }
+    }
+  }
 
 /** Whether `term + constant >= 0` holds for all values in the [range] of each variable. */
 private fun alwaysHolds(
