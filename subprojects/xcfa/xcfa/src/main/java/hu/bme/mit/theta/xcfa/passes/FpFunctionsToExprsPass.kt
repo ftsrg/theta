@@ -36,6 +36,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.*
+import hu.bme.mit.theta.core.type.fptype.FpTranscendentalExpr.Function
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -153,14 +154,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     addHandler(arrayOf("copysign", "copysignf", "copysignl")) { builder, callStmt ->
       handleCopysign(builder, callStmt)
     }
-    addTranscendental(arrayOf("exp", "expf", "expl"), ::expFacts)
-    addTranscendental(arrayOf("expm1", "expm1f", "expm1l"), ::expm1Facts)
-    addTranscendental(arrayOf("log", "logf", "logl"), ::logFacts)
-    addTranscendental(arrayOf("log1p", "log1pf", "log1pl"), ::log1pFacts)
-    addTranscendental(arrayOf("sin", "sinf", "sinl"), ::sinFacts)
-    addTranscendental(arrayOf("cos", "cosf", "cosl"), ::cosFacts)
-    addTranscendental(arrayOf("tanh", "tanhf", "tanhl"), ::oddSigmoidFacts)
-    addTranscendental(arrayOf("erf", "erff", "erfl"), ::oddSigmoidFacts)
+    addTranscendental(arrayOf("exp", "expf", "expl"), Function.EXP, ::expFacts)
+    addTranscendental(arrayOf("expm1", "expm1f", "expm1l"), Function.EXPM1, ::expm1Facts)
+    addTranscendental(arrayOf("log", "logf", "logl"), Function.LOG, ::logFacts)
+    addTranscendental(arrayOf("log1p", "log1pf", "log1pl"), Function.LOG1P, ::log1pFacts)
+    addTranscendental(arrayOf("sin", "sinf", "sinl"), Function.SIN, ::sinFacts)
+    addTranscendental(arrayOf("cos", "cosf", "cosl"), Function.COS, ::cosFacts)
+    addTranscendental(arrayOf("tanh", "tanhf", "tanhl"), Function.TANH, ::oddSigmoidFacts)
+    addTranscendental(arrayOf("erf", "erff", "erfl"), Function.ERF, ::oddSigmoidFacts)
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
       handleIsnormal(builder, callStmt)
     }
@@ -402,12 +403,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * A transcendental function has no counterpart in the FP theory, so its result is havoced and
+   * A transcendental function has no counterpart in the FP theory: it becomes an
+   * [FpTranscendentalExpr], which solvers encode as an uninterpreted function, and its result is
    * constrained by [facts]. Being an over-approximation, it marks the procedure: an Unsafe verdict
    * is then reported as Unknown.
    */
   private fun addTranscendental(
     names: Array<String>,
+    function: Function,
     facts: (x: Expr<FpType>, r: Expr<FpType>, one: Expr<FpType>) -> List<Expr<BoolType>>,
   ) {
     addHandler(names) { builder, callStmt ->
@@ -422,7 +425,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       builder.setOverApproximation()
       SequenceLabel(
         labels +
-          StmtLabel(HavocStmt.of(ret), metadata = callStmt.metadata) +
+          assignFp(callStmt, ret, type, FpExprs.Transcendental(function, x)) +
           StmtLabel(Stmts.Assume(assumption), metadata = callStmt.metadata)
       )
     }

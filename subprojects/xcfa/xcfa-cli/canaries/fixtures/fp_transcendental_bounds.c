@@ -1,5 +1,6 @@
-// Transcendental functions are havoced and constrained by range and special-value facts
-// (FpFunctionsToExprsPass). A property that follows from those facts alone is provable.
+// Transcendental functions are uninterpreted functions constrained by range and special-value
+// facts (FpFunctionsToExprsPass). A property that follows from those facts is provable, and so is
+// one that needs only functional consistency (equal arguments give equal results).
 extern void abort(void);
 void reach_error(){ abort(); }
 extern float __VERIFIER_nondet_float(void);
@@ -18,6 +19,7 @@ int main() {
   if (x > 0.0f && t < 0.0f) reach_error();
   if (logf(1.0f) != 0.0f) reach_error();
   if (expf(0.0f) != 1.0f) reach_error();
+  if (expf(x) != e) reach_error();
   double s = sin((double) x);
   if (s > 1.0 || s < -1.0) reach_error();
   return 0;

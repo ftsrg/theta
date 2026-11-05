@@ -166,6 +166,11 @@ public final class FpExprs {
         return FpRoundToIntegralExpr.of(roundingMode, op);
     }
 
+    public static FpTranscendentalExpr Transcendental(
+            final FpTranscendentalExpr.Function function, final Expr<FpType> op) {
+        return FpTranscendentalExpr.of(function, op);
+    }
+
     public static FpSqrtExpr Sqrt(final FpRoundingMode roundingMode, final Expr<FpType> op) {
         return FpSqrtExpr.of(roundingMode, op);
     }

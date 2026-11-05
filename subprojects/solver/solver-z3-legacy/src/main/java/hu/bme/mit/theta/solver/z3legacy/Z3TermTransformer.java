@@ -76,6 +76,7 @@ import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
+import hu.bme.mit.theta.core.type.fptype.FpTranscendentalExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -164,6 +165,11 @@ final class Z3TermTransformer {
         this.addFunc("fp.rem", this.exprBinaryOperator(FpRemExpr::create));
         this.addFunc("fprem", this.exprBinaryOperator(FpRemExpr::create));
         this.addFunc("fp.abs", this.exprUnaryOperator(FpAbsExpr::create));
+        for (final FpTranscendentalExpr.Function f : FpTranscendentalExpr.Function.values()) {
+            this.addFunc(
+                    f.getLabel(),
+                    this.exprUnaryOperator(op -> FpTranscendentalExpr.create(f, op)));
+        }
         this.addFunc("fp.leq", this.exprBinaryOperator(FpLeqExpr::create));
         this.addFunc("fp.lt", this.exprBinaryOperator(FpLtExpr::create));
         this.addFunc("fp.geq", this.exprBinaryOperator(FpGeqExpr::create));
