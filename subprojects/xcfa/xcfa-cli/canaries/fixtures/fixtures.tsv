@@ -419,3 +419,6 @@ memsafety_malloc_union_overrun_unsafe.c	bitvector	ILP32	UNSAFE:valid-memsafety	a
 union_pointer_subscript_safe.c	efficient	ILP32	SAFE	elements of a malloc'd array of unions do not alias
 union_pointer_subscript_unsafe.c	efficient	ILP32	UNSAFE	subscripting a pointer to a union finds a reachable error
 union_pointer_increment_safe.c	efficient	ILP32	SAFE	stepping a pointer to a union reaches the next element
+global_enum_sized_struct_safe.c	efficient	ILP32	SAFE	a global of a struct with an enum-sized array keeps its declaration
+global_enum_sized_struct_unsafe.c	efficient	ILP32	UNSAFE	a global of a struct with an enum-sized array keeps its declaration
+global_enum_sized_struct_multi_declarator_safe.c	efficient	ILP32	SAFE	each declarator keeps its own initializer
