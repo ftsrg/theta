@@ -25,3 +25,9 @@
   restore the requested arithmetic before falling back to `flat`.
 - Frontend failures normally log and exit. Re-throw only the specific typed limitations that the
   caller can recover from; do not convert unrelated frontend failures into fallback attempts.
+- `utils/CInvariantExport.kt` exports loop invariants only over names that are declared once at
+  file scope and in the function (`FunctionVisitor.variablesInScope`). This is a workaround, not a C
+  rule: Goblint binds a re-declared name to another declaration, so it confirms false invariants and
+  refutes true ones ([goblint#747](https://github.com/goblint/analyzer/issues/747)). The cost is that
+  validators which resolve these names correctly get no invariant for those loops. Remove the
+  restriction when Goblint resolves such names correctly.

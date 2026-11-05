@@ -99,7 +99,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         staticLocals.clear();
         initializedGlobals.clear();
         currentStatementContext.clear();
+        fileScopeNames.clear();
+        functionNameCounts.clear();
     }
+
+    /** The C names declared at file scope, see {@link #variablesInScope}. */
+    private final Set<String> fileScopeNames = new HashSet<>();
+
+    /** How many times each C name was declared so far in the current function. */
+    private final Map<String, Integer> functionNameCounts = new HashMap<>();
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
     private int loopDepth = 0;
@@ -238,13 +246,25 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         scopedRegistered.pop();
     }
 
-    /** The variable each C name refers to here: the innermost declaration, if not a function. */
+    /**
+     * The variable each C name refers to here: the innermost declaration, if not a function. Names
+     * declared more than once at file scope and in this function are left out. This is a
+     * workaround: C resolves them correctly here, but some witness validators bind them to another
+     * declaration (see the xcfa-cli AGENTS.md).
+     */
     private Map<String, VarDecl<?>> variablesInScope() {
         final Map<String, VarDecl<?>> innermost = new LinkedHashMap<>();
         for (Tuple2<String, Map<String, VarDecl<?>>> scope : variables) {
             scope.get2().forEach(innermost::putIfAbsent);
         }
         innermost.values().removeIf(functions::containsKey);
+        innermost
+                .keySet()
+                .removeIf(
+                        name ->
+                                functionNameCounts.getOrDefault(name, 0)
+                                                + (fileScopeNames.contains(name) ? 1 : 0)
+                                        > 1);
         return innermost;
     }
 
@@ -460,6 +480,10 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: Variable already exists: " + name + "\n");
             varDecl = peek.get2().get(name);
+        } else if (variables.size() == 1) {
+            fileScopeNames.add(name);
+        } else {
+            functionNameCounts.merge(name, 1, Integer::sum);
         }
         peek.get2().put(name, varDecl);
         // A static local is registered in the scope so uses resolve to it, but it is not one of the
@@ -887,6 +911,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
         currentFunction = funcDecl.getName();
         flatVariables.clear();
+        functionNameCounts.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
             if (functionParam.getName() != null) createVars(functionParam);
         }
