@@ -259,22 +259,33 @@ fun getLoopElements(backEdge: XcfaEdge): Pair<Set<XcfaLocation>, Set<XcfaEdge>> 
 
 private fun getLoopEdges(initLoc: XcfaLocation): Set<XcfaEdge> {
   val loopEdges = mutableSetOf<XcfaEdge>()
-  val visited = mutableSetOf<XcfaEdge>()
+  // Identity sets: hashing an edge hashes its whole label, and a stack lookup is linear.
+  val visited = Collections.newSetFromMap(IdentityHashMap<XcfaEdge, Boolean>())
+  val onStack = Collections.newSetFromMap(IdentityHashMap<XcfaLocation, Boolean>())
+  val searched = IdentityHashMap<XcfaLocation, MutableList<XcfaEdge?>>()
   val stack = Stack<XcfaLocation>()
   stack.push(initLoc)
+  onStack.add(initLoc)
   while (stack.isNotEmpty()) {
     val loc = stack.peek()
     val edge = loc.outgoingEdges.firstOrNull { it !in visited }
     if (edge == null) {
-      stack.pop()
+      onStack.remove(stack.pop())
       continue
     }
     visited.add(edge)
-    if (edge.target in stack) {
-      val (_, edges) = getLoopElements(edge)
-      loopEdges.addAll(edges)
+    if (edge.target in onStack) {
+      // getLoopElements depends only on the loop head and its single non-loop edge, if any, and a
+      // head can have many back edges: search each such pair once.
+      val entry = edge.target.incomingEdges.filter { it != edge }.singleOrNull()
+      val entries = searched.getOrPut(edge.target) { mutableListOf() }
+      if (entries.none { it === entry }) {
+        entries.add(entry)
+        loopEdges.addAll(getLoopElements(edge).second)
+      }
     } else {
       stack.push(edge.target)
+      onStack.add(edge.target)
     }
   }
   return loopEdges

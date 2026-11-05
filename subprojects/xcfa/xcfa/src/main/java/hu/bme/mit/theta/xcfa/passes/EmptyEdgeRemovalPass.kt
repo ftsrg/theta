@@ -21,17 +21,20 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
+import java.util.IdentityHashMap
 
 /** Removes edges that only contain NopLabels (possibly nested) */
 class EmptyEdgeRemovalPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    // A collapse moves edges but keeps their label objects: no edge becomes stuck later, and the
+    // costly simplification behind isNop is cached per label for the rescan after each collapse.
+    builder.getEdges().filter { it.label.isSureStuck() }.forEach { builder.removeEdge(it) }
+    val nop = IdentityHashMap<XcfaLabel, Boolean>()
     while (true) {
-      builder.getEdges().filter { it.label.isSureStuck() }.forEach { builder.removeEdge(it) }
-
       val edge =
         builder.getEdges().find {
-          it.label.isNop() &&
+          nop.getOrPut(it.label) { it.label.isNop() } &&
             !it.metadata.isSubstantial() &&
             !it.target.error &&
             !it.target.final &&
