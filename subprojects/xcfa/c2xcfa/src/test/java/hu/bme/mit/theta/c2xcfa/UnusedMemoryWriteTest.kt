@@ -76,7 +76,7 @@ class UnusedMemoryWriteTest {
     }
 
   @Test
-  fun unusedMutexArrayIsNotInitialized() {
+  fun mutexArrayOnlyInitializesAccessedBase() {
     val writes =
       memoryWrites(
         """
@@ -90,7 +90,7 @@ class UnusedMemoryWriteTest {
         """,
         MemoryModelType.flat,
       )
-    assertEquals(0, writes)
+    assertEquals(1, writes, "only the accessed mutex base is initialized, not its payload")
   }
 
   @Test

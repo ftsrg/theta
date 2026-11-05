@@ -68,6 +68,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
+      MemoryFunctionsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
       // optimizing
@@ -137,8 +138,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       )
     } ?: emptyList(),
     listOf(OverflowDetectionPass(property, parseContext)),
-    // spells out the mem* copies before anything below havocs the same objects
-    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
     listOf(AmbiguousMutexPass()),
