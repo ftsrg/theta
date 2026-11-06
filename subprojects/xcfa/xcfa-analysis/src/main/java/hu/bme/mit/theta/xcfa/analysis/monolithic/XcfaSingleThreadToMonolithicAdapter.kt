@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.InvariantProof
 import hu.bme.mit.theta.analysis.algorithm.TransitionInvariantProof
+import hu.bme.mit.theta.analysis.algorithm.bounded.LivenessWitness
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprAction
@@ -37,6 +38,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
@@ -59,6 +61,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.witnesses.InvariantCheckMetaData
 
 class XcfaSingleThreadToMonolithicAdapter
 private constructor(
@@ -144,6 +148,7 @@ private constructor(
 
       // Build initializer expressions
       val defaultValues = if (initValues) trans.getDefaultValues(setOf(locVar, edgeVar)) else True()
+      val vars = StmtUtils.getVars(trans).toList()
 
       // Build monolithic expression
       return MonolithicExpr(
@@ -161,11 +166,92 @@ private constructor(
             else -> True()
           },
         transOffsetIndex = transUnfold.indexing,
-        vars = StmtUtils.getVars(trans).toList(),
+        vars = vars,
         ctrlVars = listOf(locVar, edgeVar),
         events = events(tranList),
+        livenessWitness = livenessWitness(vars.toSet()),
       )
     }
+
+  /** The invariants of a termination witness, checked at the locations that carry them. */
+  private fun livenessWitness(modelVars: Set<VarDecl<*>>): LivenessWitness? {
+    val checks =
+      locations.flatMapIndexed { index, location ->
+        (location.metadata as? InvariantCheckMetaData)?.checks.orEmpty().map { index to it }
+      }
+    if (checks.isEmpty()) return null
+    check(property.verifiedProperty == TERMINATION) {
+      "Witness invariants are checked only for termination"
+    }
+    fun at(variable: VarDecl<*>, indices: List<Int>) =
+      Or(indices.map { Eq(variable.ref, smtInt(it)) })
+
+    val stateInvariant =
+      And(
+        checks
+          .filter { !it.second.isTransition }
+          .map { (index, check) -> Imply(at(locVar, listOf(index)), check.expr) }
+      )
+    val prevLocVar = Decls.Var("__theta_anyprev___loc_", locVar.type)
+    val transitions = checks.filter { it.second.isTransition }.groupBy { it.second.entry }
+    val transitionInvariant =
+      And(
+        transitions.values.map { group ->
+          // Any two visits of the evaluation point are related, whichever of its locations they are
+          // at
+          val first = group.first().second
+          check(group.all { it.second == first }) {
+            "A transition invariant over variables of different scopes is not supported"
+          }
+          val indices = group.map { it.first }
+          Imply(And(at(locVar, indices), at(prevLocVar, indices)), first.expr)
+        }
+      )
+    val anyPrev =
+      checks.flatMap { it.second.anyPrev.entries }.associate { it.toPair() } +
+        (prevLocVar to locVar)
+    val unknown =
+      (ExprUtils.getVars(stateInvariant) + ExprUtils.getVars(transitionInvariant) - anyPrev.keys)
+        .filter { it !in modelVars }
+    check(unknown.isEmpty()) { "Witness invariants over variables not in the model: $unknown" }
+    val saveAt =
+      cycleCover(transitions.values.flatten().map { locations[it.first] }.toSet()).map {
+        locations.indexOf(it)
+      }
+    return LivenessWitness(stateInvariant, transitionInvariant, anyPrev, at(locVar, saveAt))
+  }
+
+  /**
+   * [required] and, for each cycle without these, the target of a back edge of a depth-first search
+   * on it. Every cycle passes a location of the result, so every infinite run visits one infinitely
+   * often.
+   */
+  private fun cycleCover(required: Set<XcfaLocation>): Set<XcfaLocation> {
+    val successors = edges.groupBy({ it.source }, { it.target })
+    val cover = LinkedHashSet(required)
+    val visited = HashSet(required)
+    val onPath = HashSet<XcfaLocation>()
+    for (root in locations) {
+      if (!visited.add(root)) continue
+      val path = ArrayDeque(listOf(root to successors[root].orEmpty().iterator()))
+      onPath += root
+      while (path.isNotEmpty()) {
+        val (location, next) = path.last()
+        if (!next.hasNext()) {
+          path.removeLast()
+          onPath -= location
+          continue
+        }
+        val successor = next.next()
+        if (successor in onPath) cover += successor
+        else if (visited.add(successor)) {
+          path.addLast(successor to successors[successor].orEmpty().iterator())
+          onPath += successor
+        }
+      }
+    }
+    return cover
+  }
 
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>

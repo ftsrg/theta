@@ -21,3 +21,10 @@ variables are unbounded (`CastVisitor.signedCast` keeps them as they are). For `
 i = i + 1;` an inductive invariant like `__saved_ -> i > __saved_main::i` proves that no state
 repeats, so BMC/KIND/IMC/IC3/MDD could answer that the program terminates. Termination validation
 refuses this case (`LivenessWitness` needs finite types), verification does not.
+
+## MDD confirms a wrong termination witness
+
+With a `LivenessWitness`, MDD (`--backend MDD`, bitvector arithmetic) answered Safe for
+`bounded-count-down.c` with a wrong state invariant after exploring 5 states, without reporting an
+under-approximation. Plain bitvector MDD on the same program does not finish in 120 s. Termination
+validation refuses MDD, MDD_CEGAR and IC3 for now (`ConfigToChecker.kt`).
