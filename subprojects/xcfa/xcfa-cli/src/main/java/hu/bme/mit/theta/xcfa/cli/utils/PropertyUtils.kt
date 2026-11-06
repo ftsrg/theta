@@ -85,10 +85,6 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
       } ?: iP
     }
 
-fun isTerminationCorrectnessWitness(property: XcfaProperty): Boolean =
-  property.inputProperty == TERMINATION &&
-    property.witness?.witness?.entryType == EntryType.INVARIANTS
-
 class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
   override fun convert(input: String): XcfaProperty {
     val errorDetection =

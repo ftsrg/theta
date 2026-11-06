@@ -36,7 +36,8 @@ import org.junit.jupiter.params.provider.MethodSource
 /**
  * Validation of termination correctness witnesses: their invariants are checked in the
  * liveness-to-safety reduction. A rejected witness gives Unsafe, as for correctness witnesses of
- * other properties; one that cannot be checked gives no verdict.
+ * other properties. Undefined behavior gives Unknown, and a witness that cannot be checked gives no
+ * verdict.
  */
 class XcfaCliTerminationValidateTest {
   companion object {
@@ -45,6 +46,7 @@ class XcfaCliTerminationValidateTest {
 
     private const val SAFE = "Safe"
     private const val UNSAFE = "Unsafe"
+    private const val UNKNOWN = "Unknown"
     private const val UNSOLVED = "unsolved"
     private val VERDICT = Regex("""\(SafetyResult (\w+)""")
 
@@ -68,8 +70,14 @@ class XcfaCliTerminationValidateTest {
         Arguments.of("count-down.c", "count-down.wrong-direction.yml"),
         Arguments.of("bounded-count-down.c", "bounded-count-down.wrong-state.yml"),
         Arguments.of("stay-positive.c", "stay-positive.yml"),
-        // terminates only by signed overflow, which the bitvector model wraps around
+      )
+
+    /** count-up.c leaves its loop only by a signed overflow. */
+    @JvmStatic
+    fun undefinedBehavior(): Stream<Arguments> =
+      Stream.of(
         Arguments.of("count-up.c", "count-up.yml"),
+        Arguments.of("count-up.c", "count-up.body.yml"),
       )
 
     @JvmStatic
@@ -95,6 +103,12 @@ class XcfaCliTerminationValidateTest {
   @MethodSource("invalidWitnesses")
   fun testInvalidWitness(program: String, witness: String) {
     assertEquals(UNSAFE, validate(program, witness))
+  }
+
+  @ParameterizedTest
+  @MethodSource("undefinedBehavior")
+  fun testUndefinedBehavior(program: String, witness: String) {
+    assertEquals(UNKNOWN, validate(program, witness))
   }
 
   @ParameterizedTest

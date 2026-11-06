@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
 /**
@@ -24,11 +25,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
  * [stateInvariant] must hold in every reachable state. [transitionInvariant] must hold for every
  * reachable state and each earlier state saved by the reduction: each key of [anyPrev] stands for
  * the earlier value of the variable it maps to. States are saved only where [saveCondition] holds,
- * so it must hold on a location of every cycle.
+ * so it must hold on a location of every cycle. A run that reaches [undefinedBehavior] gives no
+ * verdict.
  */
 data class LivenessWitness(
   val stateInvariant: Expr<BoolType>,
   val transitionInvariant: Expr<BoolType>,
   val anyPrev: Map<VarDecl<*>, VarDecl<*>>,
   val saveCondition: Expr<BoolType>,
+  val undefinedBehavior: Expr<BoolType> = False(),
 )

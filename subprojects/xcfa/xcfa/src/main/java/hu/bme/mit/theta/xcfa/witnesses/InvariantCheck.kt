@@ -52,5 +52,18 @@ data class InvariantCheckMetaData(val checks: List<InvariantCheck>) : MetaData()
   override fun withoutLocationMarks(): MetaData = EmptyMetaData
 }
 
+/** Marks the location that a run reaches after undefined behavior. Passes keep such a location. */
+data object UndefinedBehaviorMetaData : MetaData() {
+
+  override fun combine(other: MetaData): MetaData {
+    check(other == this || other is EmptyMetaData) { "Cannot combine $this with $other" }
+    return this
+  }
+
+  override fun isSubstantial(): Boolean = false
+
+  override fun keepsLocation(): Boolean = true
+}
+
 val XCFA.hasInvariantChecks: Boolean
   get() = procedures.any { proc -> proc.locs.any { it.metadata is InvariantCheckMetaData } }

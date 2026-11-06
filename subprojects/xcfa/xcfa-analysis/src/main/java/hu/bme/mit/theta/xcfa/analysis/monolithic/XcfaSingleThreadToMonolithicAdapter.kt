@@ -63,6 +63,7 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.InvariantCheckMetaData
+import hu.bme.mit.theta.xcfa.witnesses.UndefinedBehaviorMetaData
 
 class XcfaSingleThreadToMonolithicAdapter
 private constructor(
@@ -179,7 +180,9 @@ private constructor(
       locations.flatMapIndexed { index, location ->
         (location.metadata as? InvariantCheckMetaData)?.checks.orEmpty().map { index to it }
       }
-    if (checks.isEmpty()) return null
+    val undefinedBehavior =
+      locations.indices.filter { locations[it].metadata == UndefinedBehaviorMetaData }
+    if (checks.isEmpty() && undefinedBehavior.isEmpty()) return null
     check(property.verifiedProperty == TERMINATION) {
       "Witness invariants are checked only for termination"
     }
@@ -218,7 +221,13 @@ private constructor(
       cycleCover(transitions.values.flatten().map { locations[it.first] }.toSet()).map {
         locations.indexOf(it)
       }
-    return LivenessWitness(stateInvariant, transitionInvariant, anyPrev, at(locVar, saveAt))
+    return LivenessWitness(
+      stateInvariant,
+      transitionInvariant,
+      anyPrev,
+      at(locVar, saveAt),
+      at(locVar, undefinedBehavior),
+    )
   }
 
   /**

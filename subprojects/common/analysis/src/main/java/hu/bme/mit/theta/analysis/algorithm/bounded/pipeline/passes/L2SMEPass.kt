@@ -60,6 +60,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
   private lateinit var saveMap: Map<VarDecl<*>, VarDecl<*>>
   private lateinit var repeated: Expr<BoolType>
   private var hasWitness = false
+  private var undefinedBehavior: Expr<BoolType> = False()
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
     if (e1.getType() is FpType) FpExprs.FpAssign(e1 as Expr<FpType>, e2 as Expr<FpType>)
@@ -74,6 +75,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     val oneIndexing = VarIndexingFactory.indexing(1)
     val witness = monolithicExpr.livenessWitness
     hasWitness = witness != null
+    undefinedBehavior = witness?.undefinedBehavior ?: False()
     val saveList =
       listOf(reprEq(savedVar.ref, False())) +
         listOfNotNull(witness?.saveCondition) +
@@ -105,7 +107,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
             ExprUtils.changeDecls(it.saveCondition, saveMap),
             ExprUtils.changeDecls(it.transitionInvariant, earlier),
           )
-        And(it.stateInvariant, SmartBoolExprs.Imply(savedVar.ref, saved))
+        And(it.stateInvariant, Not(it.undefinedBehavior), SmartBoolExprs.Imply(savedVar.ref, saved))
       }
     val newIndexing =
       saveMap.values
@@ -145,6 +147,8 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     if (!safetyResult.isUnsafe)
       return MonolithicExprPassResult(SafetyResult.unknown(safetyResult.stats.orElse(null)))
     val trace = safetyResult.asUnsafe().cex
+    if (ExprUtils.simplify(undefinedBehavior, trace.states.last().`val`) == BoolExprs.True())
+      return MonolithicExprPassResult(SafetyResult.unknown(safetyResult.stats.orElse(null)))
     val newStates = trace.states.map { ExplState.of(it.filterVars(vars)) }
     // Otherwise, the path violates an invariant of the witness and is no lasso
     val isLasso =
