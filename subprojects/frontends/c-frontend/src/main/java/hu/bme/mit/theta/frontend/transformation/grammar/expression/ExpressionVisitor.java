@@ -3954,20 +3954,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 return;
             }
             if (type instanceof CPointer pointer) {
-                markEveryMemberAccessed(pointer.getEmbeddedType());
+                parseContext.markEveryMemberAccessed(pointer.getEmbeddedType());
             } else if (type instanceof CArray array) {
-                markEveryMemberAccessed(array.getEmbeddedType());
-            }
-        }
-    }
-
-    private void markEveryMemberAccessed(CComplexType type) {
-        if (type instanceof CArray array) {
-            markEveryMemberAccessed(array.getEmbeddedType());
-        } else if (type instanceof CStruct struct) {
-            for (Tuple2<String, CComplexType> field : struct.getFields()) {
-                parseContext.markMemberAccessed(struct, field.get1());
-                markEveryMemberAccessed(field.get2());
+                parseContext.markEveryMemberAccessed(array.getEmbeddedType());
             }
         }
     }

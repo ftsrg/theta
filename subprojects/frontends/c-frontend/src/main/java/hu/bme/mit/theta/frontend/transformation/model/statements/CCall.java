@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
@@ -37,6 +38,8 @@ public class CCall extends CStatement {
         params.forEach(
                 param -> {
                     if (param != null) param.setParent(this);
+                    final Expr<?> value = argumentValue(param);
+                    if (value != null) parseContext.markCopiedValue(value);
                 });
         Optional<Object> cTypeOpt =
                 parseContext.getMetadata().getMetadataValue(functionId, "cType");
@@ -44,6 +47,19 @@ public class CCall extends CStatement {
                 (CComplexType) cTypeOpt.orElseGet(() -> new CSignedInt(null, parseContext));
         ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
         parseContext.getMetadata().create(ret.getRef(), "cType", type);
+    }
+
+    /** The value {@code param} passes, as c2xcfa reads it; null if it has none. */
+    private static Expr<?> argumentValue(CStatement param) {
+        if (param instanceof CCompound compound) {
+            final List<CStatement> statements = compound.getcStatementList();
+            return statements.isEmpty()
+                    ? null
+                    : argumentValue(statements.get(statements.size() - 1));
+        }
+        return param instanceof CExpr || param instanceof CAssignment
+                ? param.getExpression()
+                : null;
     }
 
     public List<CStatement> getParams() {

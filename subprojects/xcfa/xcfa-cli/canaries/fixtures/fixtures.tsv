@@ -614,3 +614,5 @@ pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the differ
 container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
 fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
 fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
+global_struct_copy.c	efficient	ILP32	SAFE	a struct copy initializes every member of the globals it reads, nested ones too
+global_struct_copy_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	a struct copy and a by-value struct argument allocate the nested members of globals

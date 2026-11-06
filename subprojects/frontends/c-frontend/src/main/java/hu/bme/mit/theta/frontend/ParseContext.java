@@ -15,14 +15,17 @@
  */
 package hu.bme.mit.theta.frontend;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -387,6 +390,43 @@ public class ParseContext {
     /** Records that an access could not be attributed to a type, so every member may be read. */
     public void markEveryMemberAccessed() {
         everyMemberAccessed = true;
+    }
+
+    /** Records that every member of [type], and of each aggregate it contains, may be read. */
+    public void markEveryMemberAccessed(CComplexType type) {
+        if (type instanceof CArray array) {
+            markEveryMemberAccessed(array.getEmbeddedType());
+        } else if (type instanceof CStruct struct) {
+            for (Tuple2<String, CComplexType> field : struct.getFields()) {
+                markMemberAccessed(struct, field.get1());
+                markEveryMemberAccessed(field.get2());
+            }
+        }
+    }
+
+    /** A struct or union value that is copied as a whole has all of its members read. */
+    public void markCopiedValue(Expr<?> value) {
+        Object type = metadata.getMetadataValue(value, "cType").orElse(null);
+        if (type instanceof CSimpleType simpleType) {
+            type = simpleType.getActualType();
+        }
+        if (type instanceof CStruct struct) {
+            markEveryMemberAccessed(struct);
+        }
+    }
+
+    /** Whether [markEveryMemberAccessed] holds for [type]. */
+    public boolean isEveryMemberAccessed(CComplexType type) {
+        if (type instanceof CArray array) {
+            return isEveryMemberAccessed(array.getEmbeddedType());
+        } else if (type instanceof CStruct struct) {
+            return struct.getFields().stream()
+                    .allMatch(
+                            field ->
+                                    isMemberAccessed(struct, field.get1())
+                                            && isEveryMemberAccessed(field.get2()));
+        }
+        return true;
     }
 
     public boolean isMemberAccessed(CStruct type, String member) {

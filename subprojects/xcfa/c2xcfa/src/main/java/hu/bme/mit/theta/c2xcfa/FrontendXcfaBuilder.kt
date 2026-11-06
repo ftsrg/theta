@@ -948,9 +948,22 @@ class FrontendXcfaBuilder(
     source: Expr<*>,
     type: CStruct,
     metadata: MetaData,
-  ): List<XcfaLabel>? =
-    if (type.isUnion) unionCopy(target, source, type, metadata)
+  ): List<XcfaLabel>? {
+    requireMembersMarked(type)
+    return if (type.isUnion) unionCopy(target, source, type, metadata)
     else structCopy(target, source, type, metadata)
+  }
+
+  /**
+   * A copy reads every member, so global initialization must not have dropped any of them (see
+   * [initModeOf]); the frontend marks them where it builds the copy.
+   */
+  private fun requireMembersMarked(type: CStruct) {
+    if (!parseContext.isEveryMemberAccessed(type))
+      throw UnsupportedFrontendElementException(
+        "Copy of a ${describe(type)} whose members were not recorded as read"
+      )
+  }
 
   private fun structCopy(
     target: Expr<*>,
@@ -1096,6 +1109,7 @@ class FrontendXcfaBuilder(
     type: CStruct,
     metadata: MetaData,
   ): Pair<Expr<*>, List<XcfaLabel>> {
+    requireMembersMarked(type)
     val tmp = Var("__theta_structarg" + structArgCnt++, type.smtType)
     parseContext.metadata.create(tmp.ref, "cType", type)
     builder.addVar(tmp)

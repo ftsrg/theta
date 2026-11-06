@@ -42,6 +42,9 @@ public class CAssignment extends CStatement {
         this.rValue = rValue;
         rValue.setParent(this);
         this.operator = operator;
+        if (!(rValue instanceof CInitializerList)) {
+            parseContext.markCopiedValue(rValue.getExpression());
+        }
         // a declaration's assignment is built after its initializer, the full expression
         if (getFullExpression().isEmpty()) {
             rValue.getFullExpression().ifPresent(this::setFullExpression);

@@ -71,6 +71,23 @@ class UnusedMemoryWriteTest {
     return builder.getProcedures().sumOf { proc -> proc.getEdges().sumOf { writesIn(it.label) } }
   }
 
+  /** The memory writes of global initialization, the first edge of `main`. */
+  private fun initWrites(src: String): Int {
+    val parseContext = ParseContext()
+    val program =
+      parseTypeAware(CharStreams.fromString(src.trimIndent()))
+        .accept(FunctionVisitor(parseContext, NullLogger.getInstance()))
+    val builder =
+      FrontendXcfaBuilder(
+          parseContext,
+          XcfaProperty(ErrorDetection.ERROR_LOCATION),
+          NullLogger.getInstance(),
+        )
+        .buildXcfa(program as CProgram)
+    val main = builder.getProcedures().single { it.name == "main" }
+    return main.initLoc.outgoingEdges.sumOf { writesIn(it.label) }
+  }
+
   private fun writesIn(label: XcfaLabel): Int =
     when (label) {
       is SequenceLabel -> label.labels.sumOf(::writesIn)
@@ -142,6 +159,17 @@ class UnusedMemoryWriteTest {
     val allRead =
       emittedWrites("$declarations int main() { return s1.a + s1.in.x + s1.in.y + s2.a; }")
     assertEquals(allRead, compared)
+  }
+
+  @Test
+  fun copiedStructsAreInitializedInEveryMember() {
+    val declarations = "struct In { int x; int y; }; struct S { int a; struct In in; } s1, s2;"
+    val allRead = initWrites("$declarations int main() { return s1.a + s1.in.x + s1.in.y + s2.a; }")
+    val assigned = initWrites("$declarations int main() { s1 = s2; return 0; }")
+    val passed =
+      initWrites("$declarations int f(struct S s) { return 0; } int main() { return f(s2); }")
+    assertEquals(allRead, assigned)
+    assertEquals(allRead, passed)
   }
 
   @Test
