@@ -66,6 +66,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
+      // first in its phase: it reads the whole model once, before any procedure's addresses and
+      // C types are folded away
+      MixedWidthViewPass(parseContext),
       ReferenceElimination(parseContext),
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),

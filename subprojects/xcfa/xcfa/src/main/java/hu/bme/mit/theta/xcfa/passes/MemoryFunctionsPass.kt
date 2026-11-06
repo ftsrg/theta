@@ -569,44 +569,6 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     return Triple(pointee, cells, BigInteger.valueOf((bits / 8).toLong()))
   }
 
-  /** How many cells [type] occupies when all of them are scalars; null if any is not. */
-  private fun flatCells(type: CComplexType): Int? =
-    when {
-      type is CArray -> {
-        val dimension = ObjectLayout.constantDimension(type)
-        val element = flatCells(type.embeddedType)
-        if (dimension == null || element == null) null else dimension * element
-      }
-
-      type is CStruct && type.inlinesAggregates() ->
-        if (type.fields.any { flatCells(it.get2()) == null }) null else type.unitCount
-
-      type is CStruct ->
-        if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
-        else type.unitCount
-
-      else -> 1
-    }
-
-  /** The type of cell [index] of a flat aggregate. */
-  private fun cellTypeAt(type: CComplexType, index: Int): CComplexType =
-    when {
-      type is CArray -> {
-        val stride = flatCells(type.embeddedType) ?: 1
-        cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
-      }
-
-      type is CStruct && type.inlinesAggregates() -> {
-        val field = type.fields.lastOrNull { type.unitOffsetOf(it.get1()) <= index } ?: return type
-        cellTypeAt(field.get2(), index - type.unitOffsetOf(field.get1()))
-      }
-
-      type is CStruct ->
-        type.fields.firstOrNull { type.unitOffsetOf(it.get1()) == index }?.get2() ?: type
-
-      else -> type
-    }
-
   /** How many elements `n` bytes are, or null if that is not a whole, known number of them. */
   private fun elementCount(bytes: Expr<*>, element: CComplexType): Int? {
     val n = literalValue(bytes) ?: return null
@@ -1155,3 +1117,41 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
 
 /** Enough for any `sizeof` a benchmark copies; past it, a loop would be the honest model. */
 private const val MAX_ELEMENTS = 4096L
+
+/** How many cells [type] occupies when all of them are scalars; null if any is not. */
+internal fun flatCells(type: CComplexType): Int? =
+  when {
+    type is CArray -> {
+      val dimension = ObjectLayout.constantDimension(type)
+      val element = flatCells(type.embeddedType)
+      if (dimension == null || element == null) null else dimension * element
+    }
+
+    type is CStruct && type.inlinesAggregates() ->
+      if (type.fields.any { flatCells(it.get2()) == null }) null else type.unitCount
+
+    type is CStruct ->
+      if (type.isUnion || type.fields.any { it.get2() is CStruct || it.get2() is CArray }) null
+      else type.unitCount
+
+    else -> 1
+  }
+
+/** The type of cell [index] of a flat aggregate. */
+internal fun cellTypeAt(type: CComplexType, index: Int): CComplexType =
+  when {
+    type is CArray -> {
+      val stride = flatCells(type.embeddedType) ?: 1
+      cellTypeAt(type.embeddedType, if (stride > 0) index % stride else 0)
+    }
+
+    type is CStruct && type.inlinesAggregates() -> {
+      val field = type.fields.lastOrNull { type.unitOffsetOf(it.get1()) <= index } ?: return type
+      cellTypeAt(field.get2(), index - type.unitOffsetOf(field.get1()))
+    }
+
+    type is CStruct ->
+      type.fields.firstOrNull { type.unitOffsetOf(it.get1()) == index }?.get2() ?: type
+
+    else -> type
+  }

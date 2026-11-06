@@ -575,3 +575,7 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+mixed_width_byte_write.c	efficient	LP64	UNSAFE	a write through a narrower view changes the wider object, found under the bytes retry
+mixed_width_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed-width view is refused when the model is pinned to one without byte cells	multi
+mixed_width_zeroed_struct.c	efficient	LP64	SAFE	a byte view inside a field reads what memset wrote, not an unwritten cell
+mixed_width_stored_pointer.c	efficient	LP64	UNSAFE	a mixed-width view through a pointer stored in a struct field is detected
