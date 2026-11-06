@@ -293,3 +293,14 @@ alloca_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	an alloca bound is in
 alloca_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the second int of a 10-byte alloca block is in bounds
 flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints under multi too
 bytes_addr_of_short_array.c	efficient	LP64	SAFE:valid-memsafety	the address of an array shorter than a pointer is no access under bytes	bytes
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid	flat
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid	bytes
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell	flat
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell	bytes
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell	flat
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell	bytes
+memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells
+memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells	bytes

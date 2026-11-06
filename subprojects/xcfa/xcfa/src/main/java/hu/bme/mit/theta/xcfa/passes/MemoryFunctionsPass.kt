@@ -77,7 +77,8 @@ import java.math.BigInteger
  * call still not modelled is left in place and fails loudly as "No such method".
  *
  * The count and the fill value are read once, before the first write, as the writes may change what
- * those expressions read. The pass runs ahead of the memsafety guards, which check its accesses.
+ * those expressions read. The pass runs ahead of the memsafety guards. A straight-line region gets
+ * one guard, on its first cell, as one guard per cell costs far more and checks nothing more.
  *
  * A pointer to a **struct** has no single element type, so it takes the other route: a whole-object
  * copy, driven by the object's cell layout rather than by any element width. That is the only
@@ -206,7 +207,10 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     src: Expr<*>,
     types: List<CComplexType>,
   ): List<XcfaLabel> {
-    val reads = types.mapIndexed { i, type -> deref(src, indexOf(i, src), type) as Expr<*> }
+    val reads =
+      types.mapIndexed { i, type ->
+        regionCell(deref(src, indexOf(i, src), type), i, types.size) as Expr<*>
+      }
     val saves = mutableListOf<XcfaLabel>()
     val values =
       if (invoke.name !in MOVE) reads
@@ -220,7 +224,10 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     return saves +
       types.mapIndexed { i, type ->
         StmtLabel(
-          MemoryAssignStmt.create(deref(dst, indexOf(i, dst), type), cast(values[i], type.smtType)),
+          MemoryAssignStmt.create(
+            regionCell(deref(dst, indexOf(i, dst), type), i, types.size),
+            cast(values[i], type.smtType),
+          ),
           metadata = invoke.metadata,
         )
       }
@@ -234,8 +241,11 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     if (parseContext.memoryModel.byteAddressed()) {
       val byte = CUnsignedChar(null, parseContext)
       val (c, save) = readOnce(builder, byte.castTo(value), byte, invoke)
-      return byteWise(invoke, save) { i ->
-        MemoryAssignStmt.create(deref(dst, indexOf(i, dst), byte), cast(c, byte.smtType))
+      return byteWise(invoke, save) { i, cells ->
+        MemoryAssignStmt.create(
+          regionCell(deref(dst, indexOf(i, dst), byte), i, cells),
+          cast(c, byte.smtType),
+        )
       }
     }
 
@@ -250,7 +260,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         (0 until cells).map { i ->
           val cellType = cellTypeAt(pointee, i)
           MemoryAssignStmt.create(
-            deref(dst, indexOf(i, dst), cellType),
+            regionCell(deref(dst, indexOf(i, dst), cellType), i, cells),
             cast(cellType.nullValue, cellType.smtType),
           )
         }
@@ -278,7 +288,10 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       else readOnce(builder, element.castTo(value), element, invoke)
     val stmts =
       (0 until count).map { i ->
-        MemoryAssignStmt.create(deref(dst, indexOf(i, dst), element), cast(filler, element.smtType))
+        MemoryAssignStmt.create(
+          regionCell(deref(dst, indexOf(i, dst), element), i, count),
+          cast(filler, element.smtType),
+        )
       }
     return SequenceLabel(
       save + stmts.map { StmtLabel(it, metadata = invoke.metadata) } + returns(invoke, dst)
@@ -321,7 +334,7 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       (0 until cells).flatMap { i ->
         val fresh = Var("__nondet_mem_${nondetMemCounter++}", byteType.smtType)
         builder.addVar(fresh)
-        val cell = deref(mem, indexOf(i, mem), byteType)
+        val cell = regionCell(deref(mem, indexOf(i, mem), byteType), i, cells)
         listOf(
           StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata),
           StmtLabel(
@@ -608,15 +621,22 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
   private fun byteWise(
     invoke: InvokeLabel,
     save: List<XcfaLabel>,
-    stmt: (Int) -> MemoryAssignStmt<*, *, *>,
+    stmt: (Int, Int) -> MemoryAssignStmt<*, *, *>,
   ): XcfaLabel? {
     val n = literalValue(invoke.params[3]) ?: return giveUp(invoke)
     if (n.signum() < 0 || n > BigInteger.valueOf(MAX_ELEMENTS)) return giveUp(invoke)
     return SequenceLabel(
       save +
-        (0 until n.toInt()).map { StmtLabel(stmt(it), metadata = invoke.metadata) } +
+        (0 until n.toInt()).map { StmtLabel(stmt(it, n.toInt()), metadata = invoke.metadata) } +
         returns(invoke, invoke.params[1])
     )
+  }
+
+  /** Marks cell [i] of a region of [cells] contiguous cells for one guard on the first cell. */
+  private fun regionCell(cell: Dereference<*, *, *>, i: Int, cells: Int): Dereference<*, *, *> {
+    if (i > 0) parseContext.metadata.create(cell, MemsafetyPass.GUARD_COVERED, true)
+    else if (cells > 1) parseContext.metadata.create(cell, MemsafetyPass.GUARDED_SPAN, cells - 1)
+    return cell
   }
 
   /** [value] as an expression the writes cannot change, and the labels that make it one. */
