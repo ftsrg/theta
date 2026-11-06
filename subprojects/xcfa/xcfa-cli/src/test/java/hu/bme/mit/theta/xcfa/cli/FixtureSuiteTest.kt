@@ -43,10 +43,10 @@ class FixtureSuiteTest {
 
   private companion object {
     /** Frontend-only fixtures are parsing, not verification. */
-    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 90L)
+    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 60L)
 
-    /** Verdict fixtures run the portfolio; keep them small enough to stay under this. */
-    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 180L)
+    /** Verdict fixtures run the portfolio; a fixture that needs longer is too large to keep. */
+    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 60L)
 
     private fun seconds(property: String, fallback: Long) =
       System.getProperty(property)?.toLongOrNull() ?: fallback

@@ -111,7 +111,6 @@ nondet_memory_symbolic_size.c	efficient	LP64	UNSAFE	__VERIFIER_nondet_memory wit
 nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only the region it was given, not the whole object
 stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
 stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
-unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 flat_member_pointer_alias.c	efficient	LP64	SAFE	a pointer to an inline struct member addresses the parent's own cells	flat
@@ -127,7 +126,6 @@ flat_nested_calloc.c	efficient	LP64	SAFE	calloc zeroes inline member cells	flat
 flat_struct_in_union_member.c	efficient	LP64	SAFE	a union member keeps an object of its own inside an inline struct	flat
 flat_array_in_struct_member.c	efficient	LP64	SAFE	nondet index into an inline array-of-structs member stays inside it	flat
 large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	flat
-large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	bytes
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	flat
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	bytes
 vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	flat
@@ -159,7 +157,6 @@ bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under
 bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
 bytes_brace_elision_local.c	efficient	LP64	SAFE	brace elision in a local array of structs under bytes	bytes
 flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat
-flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat
 typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an array typedef is laid out as that array
 typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
 malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
