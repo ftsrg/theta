@@ -259,7 +259,9 @@ fun getLoopElements(backEdge: XcfaEdge): Pair<Set<XcfaLocation>, Set<XcfaEdge>> 
 
 private fun getLoopEdges(initLoc: XcfaLocation): Set<XcfaEdge> {
   val loopEdges = mutableSetOf<XcfaEdge>()
-  // Identity sets: hashing an edge hashes its whole label, and a stack lookup is linear.
+  // Identity sets: hashing an edge hashes its whole label, and a stack lookup is linear. They are
+  // correct only if each edge endpoint is the object held in `locs`, which
+  // XcfaProcedureBuilder.checkEdgesHaveLocations enforces after each pass.
   val visited = Collections.newSetFromMap(IdentityHashMap<XcfaEdge, Boolean>())
   val onStack = Collections.newSetFromMap(IdentityHashMap<XcfaLocation, Boolean>())
   val searched = IdentityHashMap<XcfaLocation, MutableList<XcfaEdge?>>()
