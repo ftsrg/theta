@@ -21,4 +21,4 @@ Of the repo's three text stacks for core objects, this is the **machine round-tr
 
 - [dsl/](src/main/java/hu/bme/mit/theta/grammar/dsl/) — `ExpressionWrapper`/`StatementWrapper`/`TypeWrapper` (lazy: hold text + scope, `instantiate(env)` parses), `SimpleScope`, `Utils.kt` (`textWithWS`, `ThrowingErrorListener` — parse errors throw instead of printing).
 
-Consumers: `xcfa/xcfa` (`Dsl.kt`, `XcfaLabel.kt`). (`c-frontend`/`btor2-frontend` declare the dep but don't use it — see `possible-issues.md`.)
+Consumers: `xcfa/xcfa` (`Dsl.kt`, `XcfaLabel.kt`). (`c-frontend`/`btor2-frontend` declare the dep but don't use it.)
