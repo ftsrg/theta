@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
@@ -90,6 +91,7 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import java.util.IdentityHashMap
 
@@ -327,6 +329,59 @@ class FrontendXcfaBuilder(
       fullExpression = fullExprSource.fullExpression.orElse(null),
     )
 
+  /**
+   * Builds [guard] up to its decision and returns where the decision is taken. If every path there
+   * neither blocks nor writes a variable in scope at the loop, the states at that location are the
+   * states where the guard is evaluated, so it gets a [LoopHead].
+   */
+  private fun buildLoopGuard(
+    loop: CStatement,
+    variablesAtGuard: Map<String, VarDecl<*>>,
+    guard: CStatement,
+    param: ParamPack,
+  ): XcfaLocation {
+    val testEnd = buildWithoutPostStatement(guard, param)
+    if (!isTransparent(param.lastLoc, testEnd, variablesAtGuard.values.toSet())) return testEnd
+    val metadata =
+      (getMetadata(loop) as CMetaData).copy(
+        loopHead = LoopHead(loop, variablesAtGuard, param.builder.name)
+      )
+    val head = getAnonymousLoc(param.builder, metadata = metadata)
+    param.builder.addEdge(XcfaEdge(testEnd, head, metadata = EmptyMetaData))
+    return head
+  }
+
+  /** Whether every path from [start] reaches [end] with no assumption, call or write to [vars]. */
+  private fun isTransparent(
+    start: XcfaLocation,
+    end: XcfaLocation,
+    vars: Set<VarDecl<*>>,
+  ): Boolean {
+    val visited = HashSet<XcfaLocation>()
+    val queue = ArrayDeque(listOf(start))
+    while (queue.isNotEmpty()) {
+      val loc = queue.removeFirst()
+      if (loc === end || !visited.add(loc)) continue
+      // the evaluation of a guard is short; a long walk has left it
+      if (visited.size > 64 || loc.outgoingEdges.isEmpty()) return false
+      for (edge in loc.outgoingEdges) {
+        val transparent =
+          edge.label.getFlatLabels().all { label ->
+            when (val stmt = (label as? StmtLabel)?.stmt) {
+              null -> label is NopLabel
+              is SkipStmt -> true
+              is AssignStmt<*> -> stmt.varDecl !in vars
+              is HavocStmt<*> -> stmt.varDecl !in vars
+              else -> false
+            }
+          }
+        if (!transparent) return false
+        queue.add(edge.target)
+      }
+    }
+    return true
+  }
+
   /** A pointer-indexed, Fitsall-valued memsafety ghost array, zero everywhere at the start. */
   private fun addGhostArray(
     builder: XcfaBuilder,
@@ -510,9 +565,17 @@ class FrontendXcfaBuilder(
     builder.createFinalLoc(getMetadata(function))
     val ret = builder.finalLoc.get()
     builder.addLoc(ret)
-    val end = compound.accept(this, ParamPack(builder, init, null, null, ret))
-    val edge = XcfaEdge(end, ret, metadata = getMetadata(function))
-    builder.addEdge(edge)
+    // Returns lead through the epilogue, so it also runs on an early exit.
+    val epilogue = function.epilogue
+    val exit =
+      if (epilogue == null) ret
+      else getAnonymousLoc(builder, getMetadata(function)).also { builder.addLoc(it) }
+    val end = compound.accept(this, ParamPack(builder, init, null, null, exit))
+    builder.addEdge(XcfaEdge(end, exit, metadata = getMetadata(function)))
+    if (epilogue != null) {
+      val epilogueEnd = epilogue.accept(this, ParamPack(builder, exit, null, null, ret))
+      builder.addEdge(XcfaEdge(epilogueEnd, ret, metadata = getMetadata(function)))
+    }
     return builder
   }
 
@@ -2453,7 +2516,12 @@ class FrontendXcfaBuilder(
     xcfaEdge = XcfaEdge(lastBody, innerEndLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val lastPre =
-      buildWithoutPostStatement(guard, ParamPack(builder, innerEndLoc, null, null, returnLoc))
+      buildLoopGuard(
+        statement,
+        statement.variablesAtGuard,
+        guard,
+        ParamPack(builder, innerEndLoc, null, null, returnLoc),
+      )
     // The guard test is re-evaluated on every loop cycle, whereas the `do` statement itself is
     // entered only once. The waypoint location comes from the label's metadata (see
     // TraceToWitness),
@@ -2533,7 +2601,13 @@ class FrontendXcfaBuilder(
       else init.accept(this, ParamPack(builder, initLoc, null, null, returnLoc))
     val lastTest =
       if (guard == null) lastInit
-      else buildWithoutPostStatement(guard, ParamPack(builder, lastInit!!, null, null, returnLoc))
+      else
+        buildLoopGuard(
+          statement,
+          statement.variablesAtGuard,
+          guard,
+          ParamPack(builder, lastInit!!, null, null, returnLoc),
+        )
     // The guard-branch edges below are re-traversed on every loop cycle, whereas the `for`
     // statement itself is entered only once. Anchoring them to the body's metadata (as CWhile does)
     // makes a cycled witness waypoint point at the loop body rather than the `for` keyword.
@@ -2869,7 +2943,12 @@ class FrontendXcfaBuilder(
     val innerLoop = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(innerLoop)
     val testEndLoc =
-      buildWithoutPostStatement(guard, ParamPack(builder, initLoc, null, null, returnLoc))
+      buildLoopGuard(
+        statement,
+        statement.variablesAtGuard,
+        guard,
+        ParamPack(builder, initLoc, null, null, returnLoc),
+      )
     val assume =
       StmtLabel(
         Assume(

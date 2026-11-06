@@ -72,6 +72,8 @@ fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
         ?: proc.deepCopy(passManager, unsafeUnrollUsed)
     builder.addEntryPoint(initProc, params)
   }
+  builder.overApproximatedVars.putAll(overApproximatedVars)
+  builder.overApproximationScratchVars.addAll(overApproximationScratchVars)
   return builder.build()
 }
 

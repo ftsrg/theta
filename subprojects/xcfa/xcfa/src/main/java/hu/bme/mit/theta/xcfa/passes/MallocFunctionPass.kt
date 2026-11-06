@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -196,10 +197,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
 
-  /** The size recorded for memsafety: cells under flat addressing where known, else bytes. */
+  /**
+   * The size recorded for memsafety, in the unit of dereference offsets: cells unless every cell is
+   * a byte. Without a known cell count the byte count would let overruns through.
+   */
   private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
-    if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
-      builder.mallocCells(parseContext, ret, bytes) ?: bytes
+    if (!parseContext.memoryModel.byteAddressed())
+      builder.mallocCells(parseContext, ret, bytes)
+        ?: throw RequiresByteAddressedMemoryException("allocation of unknown element type")
     else bytes
 
   /**

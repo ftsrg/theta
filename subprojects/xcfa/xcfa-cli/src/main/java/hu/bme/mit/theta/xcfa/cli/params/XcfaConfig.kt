@@ -316,6 +316,8 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
+  /** Set by the portfolio for the configs it runs, so a config without a verdict can hand over. */
+  var portfolioStep: Boolean = false,
   @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
@@ -549,6 +551,11 @@ data class BoundedConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--block-encoding"],
+    description = "One step per loop-free block instead of per edge (single-threaded reachability)",
+  )
+  var blockEncoding: Boolean = false,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),

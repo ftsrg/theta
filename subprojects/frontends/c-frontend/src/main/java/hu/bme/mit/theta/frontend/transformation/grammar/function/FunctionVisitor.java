@@ -99,7 +99,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         staticLocals.clear();
         initializedGlobals.clear();
         currentStatementContext.clear();
+        fileScopeNames.clear();
+        functionNameCounts.clear();
     }
+
+    /** The C names declared at file scope, see {@link #variablesInScope}. */
+    private final Set<String> fileScopeNames = new HashSet<>();
+
+    /** How many times each C name was declared so far in the current function. */
+    private final Map<String, Integer> functionNameCounts = new HashMap<>();
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
     private int loopDepth = 0;
@@ -111,6 +119,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
     private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
+
+    /** Parameters declared with array syntax: C adjusts their type to a pointer. */
+    private final Set<VarDecl<?>> arrayParameters = new HashSet<>();
+
+    /** The declaration of each array variable, for an extent only its initializer gives. */
+    private final Map<VarDecl<?>, CDeclaration> arrayDeclarations = new HashMap<>();
+
+    public boolean isArrayParameter(VarDecl<?> variable) {
+        return arrayParameters.contains(variable);
+    }
+
+    /** The element count [variable]'s initializer gives it, or null when it has none. */
+    public Integer initializerExtent(VarDecl<?> variable) {
+        final CDeclaration declaration = arrayDeclarations.get(variable);
+        return declaration == null || declaration.getInitExpr() == null
+                ? null
+                : Integer.valueOf(initializerElements(declaration.getInitExpr()));
+    }
 
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
@@ -226,6 +252,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
 
+    /** Every stack object registered in the current function, for its epilogue. */
+    private final List<Expr<?>> functionScoped = new ArrayList<>();
+
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
         scopedAllocas.push(new ArrayList<>());
@@ -236,6 +265,28 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         variables.pop();
         scopedAllocas.pop();
         scopedRegistered.pop();
+    }
+
+    /**
+     * The variable each C name refers to here: the innermost declaration, if not a function. Names
+     * declared more than once at file scope and in this function are left out. This is a
+     * workaround: C resolves them correctly here, but some witness validators bind them to another
+     * declaration (see the xcfa-cli AGENTS.md).
+     */
+    private Map<String, VarDecl<?>> variablesInScope() {
+        final Map<String, VarDecl<?>> innermost = new LinkedHashMap<>();
+        for (Tuple2<String, Map<String, VarDecl<?>>> scope : variables) {
+            scope.get2().forEach(innermost::putIfAbsent);
+        }
+        innermost.values().removeIf(functions::containsKey);
+        innermost
+                .keySet()
+                .removeIf(
+                        name ->
+                                functionNameCounts.getOrDefault(name, 0)
+                                                + (fileScopeNames.contains(name) ? 1 : 0)
+                                        > 1);
+        return innermost;
     }
 
     /**
@@ -284,6 +335,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // An alloca'd object's variable *holds* its base, so the variable is what to
                 // release.
                 scopedAllocas.peek().add(varDecl.getRef());
+                functionScoped.add(varDecl.getRef());
             }
         }
     }
@@ -326,6 +378,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             if (registered.get(i).add(varDecl)) {
                 releases.get(i).add(address);
+                functionScoped.add(address);
             }
             return;
         }
@@ -450,8 +503,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: Variable already exists: " + name + "\n");
             varDecl = peek.get2().get(name);
+        } else if (variables.size() == 1) {
+            fileScopeNames.add(name);
+        } else {
+            functionNameCounts.merge(name, 1, Integer::sum);
         }
         peek.get2().put(name, varDecl);
+        if (type instanceof CArray) {
+            arrayDeclarations.put(varDecl, declaration);
+        }
         // A static local is registered in the scope so uses resolve to it, but it is not one of the
         // procedure's variables -- it is declared among the globals instead.
         if (procedureLocal) {
@@ -877,10 +937,17 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        functionScoped.clear();
         currentFunction = funcDecl.getName();
         flatVariables.clear();
+        functionNameCounts.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-            if (functionParam.getName() != null) createVars(functionParam);
+            if (functionParam.getName() != null) {
+                createVars(functionParam);
+                if (functionParam.getActualType() instanceof CArray) {
+                    arrayParameters.addAll(functionParam.getVarDecls());
+                }
+            }
         }
         CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
         if (blockItemListContext != null) {
@@ -893,6 +960,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             new ArrayList<>(flatVariables),
                             parseContext,
                             atomicVariables);
+            // A return skips the scope-end markers of the blocks it leaves. Not for main: the model
+            // lets other threads go on using its locals after it returns.
+            if (parseContext.isCheckMemsafety() && !funcDecl.getName().equals("main")) {
+                final CCompound epilogue = new CCompound(parseContext);
+                for (Expr<?> release : new LinkedHashSet<>(functionScoped)) {
+                    epilogue.addCStatement(
+                            new CCall(
+                                    SCOPE_END,
+                                    List.of(new CExpr(release, parseContext)),
+                                    parseContext));
+                }
+                cFunction.setEpilogue(epilogue);
+            }
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
@@ -1050,9 +1130,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
         final int whileMark = scopeMark();
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement body = withScopeReleases(ctx.statement().accept(this), whileMark);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CWhile cWhile = new CWhile(body, guard, parseContext);
+        cWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cWhile);
         popScope();
         return cWhile;
@@ -1071,9 +1153,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
         final int doWhileMark = scopeMark();
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement body = withScopeReleases(ctx.statement().accept(this), doWhileMark);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CDoWhile cDoWhile = new CDoWhile(body, guard, parseContext);
+        cDoWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cDoWhile);
         popScope();
         return cDoWhile;
@@ -1095,6 +1179,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         final var forCondition = ctx.forCondition();
         CStatement init =
                 inFullExpression(forCondition.forInit(), () -> forCondition.forInit().accept(this));
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement test =
                 inFullExpression(forCondition.forTest(), () -> forCondition.forTest().accept(this));
         if (test == null) {
@@ -1123,6 +1208,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         test,
                         incr,
                         parseContext);
+        cFor.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cFor);
         popScope();
         return cFor;
