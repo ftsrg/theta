@@ -118,7 +118,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     }
   }
 
-  UnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+  // the loop heads of a termination witness must remain
+  UnrollPass.UNROLL_LIMIT =
+    if (config.inputConfig.property.isTerminationWitnessValidation) 0
+    else config.frontendConfig.loopUnroll
   UnrollPass.FORCE_UNROLL_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   UnrollPass.UNROLL_RECURSION_LIMIT =
@@ -366,6 +369,14 @@ private fun buildFrontend(
       check(cConfig.arithmetic != ArchitectureConfig.ArithmeticType.integer) {
         "--memory-model bytes requires bitvector arithmetic, not --arithmetic integer"
       }
+      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      parseContext.arithmetic = cConfig.arithmetic
+    }
+    // The liveness-to-safety reduction validating a termination witness needs finitely many states
+    if (
+      config.inputConfig.property.isTerminationWitnessValidation &&
+        cConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient
+    ) {
       cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
       parseContext.arithmetic = cConfig.arithmetic
     }

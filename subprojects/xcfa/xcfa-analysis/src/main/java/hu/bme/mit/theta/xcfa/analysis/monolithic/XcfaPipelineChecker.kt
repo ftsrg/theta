@@ -42,6 +42,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.witnesses.hasInvariantChecks
 
 class XcfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
@@ -64,6 +65,9 @@ constructor(
     LocationInvariants,
   >(
     if (parseContext.multiThreading) {
+      check(!xcfa.hasInvariantChecks) {
+        "Witness invariants are checked only in sequential programs"
+      }
       try {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
       } catch (e: IllegalStateException) {
