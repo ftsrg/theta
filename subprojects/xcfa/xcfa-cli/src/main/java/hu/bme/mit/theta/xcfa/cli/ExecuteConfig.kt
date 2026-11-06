@@ -73,7 +73,7 @@ fun runConfig(
   val (xcfa, mcm, parseContext) =
     parseInputFiles(config, logger, uniqueLogger) // this handles pre-analysis logging as well
 
-  validateInputOptions(config, logger, uniqueLogger)
+  validateInputOptions(config, parseContext, logger, uniqueLogger)
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
@@ -123,7 +123,12 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
-private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+private fun validateInputOptions(
+  config: XcfaConfig<*, *>,
+  parseContext: ParseContext?,
+  logger: Logger,
+  uniqueLogger: Logger,
+) {
   rule("NoLbeFullWhenCegar") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL ||
@@ -182,6 +187,10 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     // Modeling signed overflow as wraparound makes overflow detection vacuous.
     (config.frontendConfig.specConfig as? CFrontendConfig)?.enableSignedWraparound == true &&
       config.inputConfig.property.inputProperty == ErrorDetection.OVERFLOW
+  }
+  rule("NoBlockEncodingWhenMultithreaded") {
+    (config.backendConfig.specConfig as? BoundedConfig)?.blockEncoding == true &&
+      parseContext?.multiThreading == true
   }
   rule("SensibleOutputOptions", false) {
     config.outputConfig.enabled == NONE &&

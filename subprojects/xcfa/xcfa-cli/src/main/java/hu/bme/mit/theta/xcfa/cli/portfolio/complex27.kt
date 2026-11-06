@@ -63,6 +63,8 @@ fun complex27(
 
   var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
   val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  // Single-threaded only: multithreaded programs that are not inlined also reach this chain.
+  val blockEncoding = !parseContext.multiThreading
   val baseMddConfig = baseMddConfig(portfolioConfig)
   val baseIc3Config = baseIc3Config(portfolioConfig)
 
@@ -98,7 +100,7 @@ fun complex27(
           itpEnabled = false,
           timeoutMs = timeout,
           bmcSolver = solver,
-          blockEncoding = true,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
@@ -115,7 +117,7 @@ fun complex27(
           timeoutMs = timeout,
           bmcSolver = solver,
           indSolver = solver,
-          blockEncoding = true,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
@@ -131,7 +133,7 @@ fun complex27(
           itpEnabled = true,
           timeoutMs = timeout,
           itpSolver = solver,
-          blockEncoding = true,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
