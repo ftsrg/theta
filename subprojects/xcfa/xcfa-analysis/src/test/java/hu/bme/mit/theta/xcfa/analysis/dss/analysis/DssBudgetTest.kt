@@ -16,16 +16,29 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.decl.Decls.Const
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.solver.UnknownSolverStatusException
+import hu.bme.mit.theta.xcfa.analysis.dss.HangingSolverFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 class DssBudgetTest {
 
@@ -69,6 +82,52 @@ class DssBudgetTest {
       assertThrows(DssBudgetExceededException::class.java) { overrun(1) { solver.check() } }
       solver.close()
     }
+  }
+
+  @Test
+  fun `a deadline interrupts a query still running when it passes`() {
+    val solver = DeadlineSolverFactory(HangingSolverFactory).createSolver()
+    val e =
+      assertThrows(DssBudgetExceededException::class.java) {
+        DssDeadline.within(50) { solver.check() }
+      }
+    assertTrue(e.cause is UnknownSolverStatusException) { "$e" }
+  }
+
+  @Test
+  fun `an exception leaving an expired deadline is an overrun, and before it only itself`() {
+    val late = assertThrows(DssBudgetExceededException::class.java) { overrun(1) { error("late") } }
+    assertTrue(late.cause is IllegalStateException) { "$late" }
+    assertThrows(IllegalStateException::class.java) {
+      DssDeadline.within(10_000) { error("early") }
+    }
+  }
+
+  /** [holes] + 1 pigeons, each in a hole, no two in the same one: unsatisfiable, hard to refute. */
+  private fun pigeonhole(holes: Int): List<Expr<BoolType>> {
+    val sits = List(holes + 1) { p -> List(holes) { h -> Const("p${p}h$h", Bool()).ref } }
+    val placed = sits.map { Or(it) }
+    val apart =
+      (0 until holes).flatMap { h ->
+        (0..holes).flatMap { p -> (p + 1..holes).map { q -> Not(And(sits[p][h], sits[q][h])) } }
+      }
+    return placed + apart
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["Z3", "Z3:new", "JavaSMT:MATHSAT5"])
+  fun `a deadline stops a long query of an interruptible backend`(name: String) {
+    ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
+    DeadlineSolverManager.ensureRegistered(name)
+    val factory = SolverManager.resolveSolverFactory(DeadlineSolverManager.nameFor(name))
+    val solver = factory.createSolver()
+    solver.add(pigeonhole(12))
+    assertTimeoutPreemptively(Duration.ofSeconds(30)) {
+      assertThrows(DssBudgetExceededException::class.java) {
+        DssDeadline.within(200) { solver.check() }
+      }
+    }
+    solver.close()
   }
 
   @Test

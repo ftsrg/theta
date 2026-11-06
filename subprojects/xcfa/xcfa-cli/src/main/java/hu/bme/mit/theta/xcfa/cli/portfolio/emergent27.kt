@@ -26,8 +26,11 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 /** First budget of a block checker; it grows 4-fold per round (see `DssCheckerRoster`). */
 private const val EMERGENT_CHECKER_BUDGET_MS = 30_000L
 
-/** Retried on when legacy Z3 fails a block (unknown results, interpolation errors). */
-private const val EMERGENT_FALLBACK_SOLVER = "JavaSMT:MATHSAT5"
+/** Of the block checkers and DSS's own queries; legacy Z3 is far slower on floats. */
+private const val EMERGENT_SOLVER = "JavaSMT:MATHSAT5"
+
+/** Retried on when MathSAT fails a block. */
+private const val EMERGENT_FALLBACK_SOLVER = "Z3:new"
 
 /** Only DSS; fails on properties that no pass reduces to error-location reachability. */
 fun emergent27(
@@ -62,6 +65,7 @@ fun emergent27(
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
                   checkerBudgetMs = EMERGENT_CHECKER_BUDGET_MS,
                   explChecker = true,
+                  solver = EMERGENT_SOLVER,
                   fallbackSolver = EMERGENT_FALLBACK_SOLVER,
                   blockLocalPool = true,
                 ),

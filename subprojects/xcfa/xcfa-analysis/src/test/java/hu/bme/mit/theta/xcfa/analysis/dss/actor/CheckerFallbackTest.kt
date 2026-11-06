@@ -19,7 +19,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.analysis.dss.HangingSolverFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DeadlineSolverFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
@@ -210,6 +212,30 @@ class CheckerFallbackTest {
 
   private fun budgeted(checkers: List<CheckerFactory>) =
     DssCheckerRoster(checkers, PriorityCheckerSelectionStrategy(), budgetMs = 50)
+
+  /** Stuck in one solver query until interrupted; [masking] hides the interruption's exception. */
+  private fun hung(masking: Boolean): CheckerFactory = { _ ->
+    SafetyChecker { _ ->
+      val solver = DeadlineSolverFactory(HangingSolverFactory).createSolver()
+      try {
+        solver.check()
+      } catch (e: Exception) {
+        if (masking) throw IllegalStateException("the checker gave up") else throw e
+      }
+      error("an interrupted query cannot answer")
+    }
+  }
+
+  @Test
+  fun `with a budget a checker stuck in one solver query is interrupted for the next one`() {
+    for (masking in listOf(false, true)) {
+      val used = mutableListOf<String>()
+      val checkers = listOf(recording("hung", used, hung(masking)), recording("cegar", used, cegar))
+      val messages = initialMessages(checkers, checkerFallback = false, roster = budgeted(checkers))
+      assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+      assertEquals(listOf("hung", "cegar"), used)
+    }
+  }
 
   @Test
   fun `with a budget a checker that overruns it gives the turn to the next one`() {

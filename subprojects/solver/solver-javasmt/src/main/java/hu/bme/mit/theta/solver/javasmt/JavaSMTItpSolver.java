@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.InterpolatingProverEnvironment;
 import org.sosy_lab.java_smt.api.SolverContext;
@@ -63,7 +64,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             final JavaSMTTransformationManager transformationManager,
             final JavaSMTTermTransformer termTransformer,
             final SolverContext context,
-            final InterpolatingProverEnvironment interpolatingProverEnvironment) {
+            final InterpolatingProverEnvironment interpolatingProverEnvironment,
+            final ShutdownManager shutdownManager) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.context = context;
@@ -74,7 +76,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                         transformationManager,
                         termTransformer,
                         context,
-                        interpolatingProverEnvironment);
+                        interpolatingProverEnvironment,
+                        shutdownManager);
         this.interpolatingProverEnvironment = interpolatingProverEnvironment;
 
         markers = new StackImpl<>();
@@ -236,6 +239,11 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
     @Override
     public Collection<Expr<BoolType>> getAssertions() {
         return solver.getAssertions();
+    }
+
+    @Override
+    public void interrupt() {
+        solver.interrupt();
     }
 
     @Override

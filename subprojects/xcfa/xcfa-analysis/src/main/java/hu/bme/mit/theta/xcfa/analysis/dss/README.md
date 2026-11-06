@@ -53,8 +53,10 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
 | `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
 
-A checker over its budget is stopped at its next solver call (`DssBudget.kt`) and retried in the
-next round, so a block never counts as safe unless some checker finished it. The checker that
+A checker over its budget is stopped (`DssBudget.kt`): a watchdog interrupts its running solver
+call, and it is retried in the next round, so a block never counts as safe unless some checker
+finished it. Only solvers that implement `SolverBase.interrupt` (Z3, `Z3:new`, JavaSMT) can be
+stopped mid-call; on the others, the checker stops at its next call. The checker that
 finished a block's last analysis starts its next one.
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when

@@ -21,14 +21,17 @@ import hu.bme.mit.theta.solver.Interpolant
 import hu.bme.mit.theta.solver.ItpPattern
 import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverBase
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.solver.UCSolver
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 /** A block checker ran past the budget [DssDeadline] gave it; the next checker gets its turn. */
-class DssBudgetExceededException(budgetMs: Long) :
-  RuntimeException("DSS block analysis exceeded its budget of $budgetMs ms")
+class DssBudgetExceededException(budgetMs: Long, cause: Throwable? = null) :
+  RuntimeException("DSS block analysis exceeded its budget of $budgetMs ms", cause)
 
 /** Whether [this] or one of its causes is a [DssBudgetExceededException]. */
 fun Throwable.isDssBudgetExceeded(): Boolean =
@@ -36,33 +39,93 @@ fun Throwable.isDssBudgetExceeded(): Boolean =
 
 /**
  * The deadline of the block analysis running on this thread. Theta's checkers cannot be
- * interrupted, but they spend their time in solver calls, so the solvers of [DeadlineSolverManager]
- * check the deadline before each call; a single call can still overrun it.
+ * interrupted, but they spend their time in solver calls: the solvers of [DeadlineSolverManager]
+ * refuse to start a call once the deadline has passed, and a watchdog interrupts
+ * ([SolverBase.interrupt]) the calls still running when it passes.
+ *
+ * An interrupted call may surface as any solver or checker failure, so every exception that leaves
+ * an expired deadline counts as an overrun, not as a failure of the checker.
  */
 object DssDeadline {
 
-  private class Deadline(val budgetMs: Long, val endNanos: Long)
+  private class Deadline(val budgetMs: Long) {
+    private val endNanos = System.nanoTime() + budgetMs * 1_000_000
+    private val running = mutableListOf<SolverBase>()
+    private var ended = false
+
+    val isOver: Boolean
+      @Synchronized get() = ended || System.nanoTime() - endNanos > 0
+
+    /** Interrupting under the lock keeps [leave], and so the solver's closing, from overlapping. */
+    @Synchronized
+    fun end() {
+      ended = true
+      running.forEach { it.interrupt() }
+    }
+
+    @Synchronized
+    fun enter(solver: SolverBase) {
+      if (isOver) throw DssBudgetExceededException(budgetMs)
+      running.add(solver)
+    }
+
+    @Synchronized
+    fun leave(solver: SolverBase) {
+      running.remove(solver)
+    }
+  }
+
+  private val watchdog =
+    ScheduledThreadPoolExecutor(1) { task ->
+        Thread(task, "dss-deadline-watchdog").apply { isDaemon = true }
+      }
+      .apply { removeOnCancelPolicy = true }
 
   private val current = ThreadLocal<Deadline?>()
 
   /** Runs [action] with [budgetMs] milliseconds (no limit for null), then restores the old one. */
   fun <T> within(budgetMs: Long?, action: () -> T): T {
     val outer = current.get()
-    current.set(budgetMs?.let { Deadline(it, System.nanoTime() + it * 1_000_000) })
+    val deadline = budgetMs?.let(::Deadline)
+    val watch = deadline?.let { watchdog.schedule(it::end, it.budgetMs, TimeUnit.MILLISECONDS) }
+    current.set(deadline)
     try {
       return action()
+    } catch (e: Exception) {
+      throw if (deadline != null) overrunOrSelf(deadline, e) else e
     } finally {
+      watch?.cancel(false)
       current.set(outer)
     }
   }
 
   fun check() {
     val deadline = current.get() ?: return
-    if (System.nanoTime() > deadline.endNanos) throw DssBudgetExceededException(deadline.budgetMs)
+    if (deadline.isOver) throw DssBudgetExceededException(deadline.budgetMs)
   }
+
+  /**
+   * Runs [query] on [solver]; the watchdog interrupts [solver] if the deadline passes meanwhile.
+   */
+  internal fun <T> query(solver: SolverBase, query: () -> T): T {
+    val deadline = current.get() ?: return query()
+    deadline.enter(solver)
+    try {
+      return query()
+    } catch (e: Exception) {
+      throw overrunOrSelf(deadline, e)
+    } finally {
+      deadline.leave(solver)
+    }
+  }
+
+  private fun overrunOrSelf(deadline: Deadline, e: Exception): Exception =
+    if (deadline.isOver && e !is InterruptedException && !e.isDssBudgetExceeded())
+      DssBudgetExceededException(deadline.budgetMs, e)
+    else e
 }
 
-/** Solvers named `dss-deadline:<solver>`: `<solver>`'s, checking [DssDeadline] before each call. */
+/** Solvers named `dss-deadline:<solver>`: `<solver>`'s, with every query under [DssDeadline]. */
 object DeadlineSolverManager : SolverManager() {
 
   const val PREFIX = "dss-deadline:"
@@ -96,33 +159,28 @@ class DeadlineSolverFactory(private val inner: SolverFactory) : SolverFactory {
 }
 
 private class DeadlineSolver(private val inner: Solver) : Solver by inner {
-  override fun check(): SolverStatus {
-    DssDeadline.check()
-    return inner.check()
-  }
+  override fun check(): SolverStatus = DssDeadline.query(inner) { inner.check() }
 
   override fun simplify(expr: Expr<BoolType>): Expr<BoolType> = inner.simplify(expr)
+
+  override fun interrupt() = inner.interrupt()
 }
 
 private class DeadlineUCSolver(private val inner: UCSolver) : UCSolver by inner {
-  override fun check(): SolverStatus {
-    DssDeadline.check()
-    return inner.check()
-  }
+  override fun check(): SolverStatus = DssDeadline.query(inner) { inner.check() }
 
   override fun simplify(expr: Expr<BoolType>): Expr<BoolType> = inner.simplify(expr)
+
+  override fun interrupt() = inner.interrupt()
 }
 
 private class DeadlineItpSolver(private val inner: ItpSolver) : ItpSolver by inner {
-  override fun check(): SolverStatus {
-    DssDeadline.check()
-    return inner.check()
-  }
+  override fun check(): SolverStatus = DssDeadline.query(inner) { inner.check() }
 
-  override fun getInterpolant(pattern: ItpPattern): Interpolant {
-    DssDeadline.check()
-    return inner.getInterpolant(pattern)
-  }
+  override fun getInterpolant(pattern: ItpPattern): Interpolant =
+    DssDeadline.query(inner) { inner.getInterpolant(pattern) }
 
   override fun simplify(expr: Expr<BoolType>): Expr<BoolType> = inner.simplify(expr)
+
+  override fun interrupt() = inner.interrupt()
 }

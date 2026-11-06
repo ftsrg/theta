@@ -17,8 +17,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - Checkers are injected factories (`(XCFA) -> XcfaChecker`); this package never builds one itself.
 - Build checkers and solvers inside `withSolverConstructionLock` and run them inside
   `runWorkerConfig`, whose solver scope releases them; otherwise the heap fills up.
-- A checker budget is only enforced at solver calls: budgeted checkers must take their solvers
-  from `DeadlineSolverManager` (`blockCheckers` in `xcfa-cli` does), and no wrapper may turn a
+- A checker budget is only enforced at solver calls (refused past the deadline, interrupted by
+  `DssDeadline`'s watchdog while running): budgeted checkers must take their solvers from
+  `DeadlineSolverManager` (`blockCheckers` in `xcfa-cli` does), and no wrapper may turn a
   `DssBudgetExceededException` into a result or a checker failure (`BoundedChecker` falls back to
   its uninterpolated proof when interpolation runs out, which is still a proof).
 - Sent violation conditions are exact; a per-path condition may under-approximate, never
