@@ -147,6 +147,11 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             if (property.inputProperty == ErrorDetection.TERMINATION)
               XcfaTraceConcretizer().concretizeLasso(trace, cexSolverFactory, parseContext)
             else null
+          // A rejected termination witness has a path to a violated invariant, often no lasso
+          if (lasso == null && property.isTerminationWitnessValidation) {
+            logger.benchmark("No lasso found, writing no violation witness")
+            return
+          }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             lasso?.trace
               ?: withTimeout(CONCRETIZATION_TIMEOUT_SECONDS) {
@@ -189,6 +194,11 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         }
       } catch (e: Exception) {
+        if (property.isTerminationWitnessValidation) {
+          logger.benchmark("Could not emit witness, writing no violation witness")
+          logger.info(e.message)
+          return
+        }
         logger.benchmark(
           "Could not emit witness, writing reachability witness with target only if possible"
         )

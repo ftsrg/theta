@@ -71,7 +71,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
       AllocaFunctionPass(parseContext),
-      MemoryFunctionsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
       // optimizing
@@ -120,7 +119,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass(property)),
-    // ahead of the memsafety and overflow guards, so the accesses it spells out are checked
+    // ahead of the memsafety and overflow guards, so the accesses it spells out are checked, and
+    // after the passes that rebuild expressions, which would lose its one-guard-per-region marks
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     listOf(
       // before the memsafety/overflow guards, so those see cells constrained to their C type

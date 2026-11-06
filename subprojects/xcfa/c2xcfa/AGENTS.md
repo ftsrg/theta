@@ -25,3 +25,4 @@ Gradle module: `:theta-c2xcfa`. Turns the C frontend's `CProgram` into an XCFA. 
 7. Library functions and intrinsics (`malloc`, `alloca`, `pthread_*`, `__VERIFIER_*`, scope ends) are emitted here as `InvokeLabel`s and resolved later by the passes in `:theta-xcfa` (`xcfa/passes`). Changing what an intrinsic means usually belongs in the pass, not here.
 8. An lvalue that is not handled must fail with a message (`unhandledLhs`), not be dropped or approximated.
 9. Every memory model must keep working (`multi`, `flat`, `bytes`; `ParseContext.memoryModel`). Code that reasons about cells has to say which models it supports.
+10. **A branch guard reads the value before the post statements of its expression.** `visit(CIf)` and `visit(CSwitch)` put the assume first and call `buildPostStatement` on each branch after it. In the other order, `switch (i++)` compares the incremented value.

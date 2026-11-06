@@ -77,6 +77,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.witnesses.UndefinedBehaviorMetaData
 import java.math.BigInteger
 
 class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseContext) :
@@ -84,25 +85,30 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
 
-    if (property.inputProperty != ErrorDetection.OVERFLOW) {
-      return builder
-    }
-
-    property.transformSpecification(ErrorDetection.ERROR_LOCATION)
-
-    // remove all edges to the error location
-
     val errorLoc =
-      builder.errorLoc
-        .map {
-          it.incomingEdges.forEach(builder::removeEdge)
-          it
-        }
-        .or {
-          builder.createErrorLoc()
-          builder.errorLoc
-        }
-        .get()
+      if (property.inputProperty == ErrorDetection.OVERFLOW) {
+        property.transformSpecification(ErrorDetection.ERROR_LOCATION)
+
+        // remove all edges to the error location
+        builder.errorLoc
+          .map {
+            it.incomingEdges.forEach(builder::removeEdge)
+            it
+          }
+          .or {
+            builder.createErrorLoc()
+            builder.errorLoc
+          }
+          .get()
+      } else if (property.isTerminationWitnessValidation) {
+        // A witness confirms termination only of runs without undefined behavior
+        XcfaLocation(
+          "__undefined_behavior_" + XcfaLocation.uniqueCounter(),
+          metadata = UndefinedBehaviorMetaData,
+        )
+      } else {
+        return builder
+      }
 
     val limitVisitor = getLimitVisitor(parseContext)
 
@@ -195,7 +201,8 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
           val target =
             XcfaLocation(
               "__overflow__" + XcfaLocation.uniqueCounter() + "__tmp",
-              metadata = edge.source.metadata,
+              // a point inside the edge: no loop head or witness check of the source
+              metadata = edge.source.metadata.withoutLocationMarks(),
             )
           flushToEdges(target)
           builder.addEdge(

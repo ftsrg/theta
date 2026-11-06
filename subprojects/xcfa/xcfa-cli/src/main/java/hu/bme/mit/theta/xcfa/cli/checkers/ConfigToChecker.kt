@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.witnesses.hasInvariantChecks
 import kotlin.random.Random
 
 /**
@@ -37,6 +38,17 @@ import kotlin.random.Random
  * unseeded, identical runs can take very different times.
  */
 internal fun explorationRandom() = Random(-1)
+
+private val invariantCheckingBackends =
+  setOf(
+    Backend.BMC,
+    Backend.KIND,
+    Backend.IMC,
+    Backend.KINDIMC,
+    Backend.BOUNDED,
+    Backend.PORTFOLIO,
+    Backend.NONE,
+  )
 
 fun getSafetyChecker(
   xcfa: XCFA?,
@@ -52,6 +64,10 @@ fun getSafetyChecker(
     xcfa!!
     mcm!!
     parseContext!!
+    // The bounded backends check them in their liveness-to-safety reduction
+    check(!xcfa.hasInvariantChecks || config.backendConfig.backend in invariantCheckingBackends) {
+      "Backend ${config.backendConfig.backend} cannot validate a termination witness"
+    }
     when (config.backendConfig.backend) {
       Backend.CEGAR -> getCegarChecker(xcfa, mcm, parseContext, config, logger)
       Backend.BMC,
