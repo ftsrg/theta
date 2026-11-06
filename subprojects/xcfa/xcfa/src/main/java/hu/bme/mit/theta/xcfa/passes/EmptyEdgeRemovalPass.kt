@@ -36,10 +36,15 @@ class EmptyEdgeRemovalPass : ProcedurePass {
             !it.target.error &&
             !it.target.final &&
             !it.source.initial &&
-            ((it.source.outgoingEdges.size == 1 && !it.source.name.contains("__THETA_")) ||
-              (it.target.incomingEdges.size == 1) && !it.target.name.contains("__THETA_"))
+            ((it.source.outgoingEdges.size == 1 &&
+              !it.source.name.contains("__THETA_") &&
+              !it.source.metadata.keepsLocation()) ||
+              (it.target.incomingEdges.size == 1) &&
+                !it.target.name.contains("__THETA_") &&
+                !it.target.metadata.keepsLocation())
         } ?: return builder
-      val collapseBefore = edge.source.outgoingEdges.size == 1
+      val collapseBefore =
+        edge.source.outgoingEdges.size == 1 && !edge.source.metadata.keepsLocation()
       builder.removeEdge(edge)
       if (collapseBefore) {
         val incomingEdges = edge.source.incomingEdges.toList()

@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 fun getCegarChecker(
   xcfa: XCFA,
@@ -182,6 +183,20 @@ fun getCegarChecker(
     MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
   }
 
+  /** The proof states of [nodes] by the location of each process. */
+  fun locationInvariants(nodes: List<XcfaState<PtrState<*>>>): Map<XcfaLocation, List<ExprState>> {
+    val locmap = LinkedHashMap<XcfaLocation, MutableList<ExprState>>()
+    xcfa.procedures.flatMap { it.locs }.forEach { locmap[it] = mutableListOf() }
+    for (state in nodes) {
+      for (process in state.processes.values) {
+        val loc = process.locs.peek() ?: continue
+        locmap.getOrPut(loc) { mutableListOf() } +=
+          generalizeProofState(state.sGlobal.innerState, process)
+      }
+    }
+    return locmap
+  }
+
   return object :
     SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     override fun check(
@@ -192,22 +207,7 @@ fun getCegarChecker(
         val arg = ret.asSafe().proof
 
         val locmap =
-          xcfa.procedures
-            .flatMap { it.locs }
-            .associateWith { loc ->
-              arg.nodes
-                .filter {
-                  (it.state as XcfaState<PtrState<*>>).processes.any { it.value.locs.peek() == loc }
-                }
-                .flatMap { node ->
-                  val state = node.state as XcfaState<PtrState<*>>
-                  state.processes.values
-                    .filter { it.locs.peek() == loc }
-                    .map { process -> generalizeProofState(state.sGlobal.innerState, process) }
-                    .stream()
-                }
-                .toList()
-            }
+          locationInvariants(arg.nodes.toList().map { it.state as XcfaState<PtrState<*>> })
 
         return SafetyResult.safe(LocationInvariants(locmap), null, ret.prec.orElse(null))
       } else {
