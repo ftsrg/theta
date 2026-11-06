@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -52,6 +53,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 
 /**
  * The number of pointer-base residue classes: every memory object has a base id, and the id modulo
@@ -210,9 +212,8 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
 }
 
 /**
- * The size to record for an allocation of [bytes], in the unit the valid-deref bound compares: a
- * dereference's offset counts cells under the cell-per-value models and bytes under the bytes
- * model.
+ * The size to record for an allocation of [bytes], in the unit of dereference offsets: cells unless
+ * every cell is a byte. Without a known cell count the byte count would let overruns through.
  */
 fun XcfaProcedureBuilder.recordedSize(
   parseContext: ParseContext,
@@ -220,14 +221,15 @@ fun XcfaProcedureBuilder.recordedSize(
   bytes: Expr<*>,
 ): Expr<*> =
   if (parseContext.memoryModel.byteAddressed()) bytes
-  else mallocCells(parseContext, ret, bytes) ?: bytes
+  else
+    mallocCells(parseContext, ret, bytes)
+      ?: throw RequiresByteAddressedMemoryException("allocation of unknown element type")
 
 /**
- * The cells an allocation of [bytes] spans: whole elements of the typed pointer its result [ret] is
- * bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a flexible array member
- * its header and the whole trailing elements. Null when there is no such pointer, or its pointee is
- * flexible elsewhere; the byte count, never fewer than the cells, then stays the bound, which can
- * miss an overrun but not invent one.
+ * The cells a `malloc` of [bytes] spans under the cell models: whole elements of the typed pointer
+ * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or under flat addressing for
+ * a struct ending in a flexible array member its header and the whole trailing elements. Null when
+ * there is no such pointer, or its pointee is flexible otherwise.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -236,11 +238,17 @@ fun XcfaProcedureBuilder.mallocCells(
 ): Expr<*>? {
   val pointee = boundPointee(parseContext, ret) ?: return null
   if (pointee is CArray) return null
-  flexibleMemberCells(parseContext, pointee, bytes)?.let {
-    return it
+  val flat = parseContext.memoryModel.flatAddressing()
+  if (flat) {
+    flexibleMemberCells(parseContext, pointee, bytes)?.let {
+      return it
+    }
+  } else if (hasFlexibleMember(pointee)) {
+    // Only the flat layout counts the trailing elements of a flexible member.
+    throw UnsupportedPointerSplitException("allocation of a struct with a flexible array member")
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, parseContext.memoryModel.flatAddressing())
+  val elementBytes = ObjectLayout.cellModelSize(pointee, flat)
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)

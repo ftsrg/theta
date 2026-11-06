@@ -153,6 +153,9 @@ final class Z3TermTransformer {
         this.addFunc("fp.rem", this.exprBinaryOperator(FpRemExpr::create));
         this.addFunc("fprem", this.exprBinaryOperator(FpRemExpr::create));
         this.addFunc("fp.abs", this.exprUnaryOperator(FpAbsExpr::create));
+        for (final FpMathFuncExpr.Function f : FpMathFuncExpr.Function.values()) {
+            this.addFunc(f.getLabel(), this.exprUnaryOperator(op -> FpMathFuncExpr.create(f, op)));
+        }
         this.addFunc("fp.leq", this.exprBinaryOperator(FpLeqExpr::create));
         this.addFunc("fp.lt", this.exprBinaryOperator(FpLtExpr::create));
         this.addFunc("fp.geq", this.exprBinaryOperator(FpGeqExpr::create));

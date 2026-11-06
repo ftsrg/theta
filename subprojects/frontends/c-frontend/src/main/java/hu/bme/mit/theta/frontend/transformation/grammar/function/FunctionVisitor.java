@@ -112,6 +112,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
     private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
 
+    /** Parameters declared with array syntax: C adjusts their type to a pointer. */
+    private final Set<VarDecl<?>> arrayParameters = new HashSet<>();
+
+    /** The declaration of each array variable, for an extent only its initializer gives. */
+    private final Map<VarDecl<?>, CDeclaration> arrayDeclarations = new HashMap<>();
+
+    public boolean isArrayParameter(VarDecl<?> variable) {
+        return arrayParameters.contains(variable);
+    }
+
+    /** The element count [variable]'s initializer gives it, or null when it has none. */
+    public Integer initializerExtent(VarDecl<?> variable) {
+        final CDeclaration declaration = arrayDeclarations.get(variable);
+        return declaration == null || declaration.getInitExpr() == null
+                ? null
+                : Integer.valueOf(initializerElements(declaration.getInitExpr()));
+    }
+
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
         // was evaluated (see #declareBeforeInitializer). Registering twice would append a second,
@@ -226,6 +244,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
 
+    /** Every stack object registered in the current function, for its epilogue. */
+    private final List<Expr<?>> functionScoped = new ArrayList<>();
+
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
         scopedAllocas.push(new ArrayList<>());
@@ -284,6 +305,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                 // An alloca'd object's variable *holds* its base, so the variable is what to
                 // release.
                 scopedAllocas.peek().add(varDecl.getRef());
+                functionScoped.add(varDecl.getRef());
             }
         }
     }
@@ -326,6 +348,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
             if (registered.get(i).add(varDecl)) {
                 releases.get(i).add(address);
+                functionScoped.add(address);
             }
             return;
         }
@@ -452,6 +475,9 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);
+        if (type instanceof CArray) {
+            arrayDeclarations.put(varDecl, declaration);
+        }
         // A static local is registered in the scope so uses resolve to it, but it is not one of the
         // procedure's variables -- it is declared among the globals instead.
         if (procedureLocal) {
@@ -877,10 +903,16 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        functionScoped.clear();
         currentFunction = funcDecl.getName();
         flatVariables.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-            if (functionParam.getName() != null) createVars(functionParam);
+            if (functionParam.getName() != null) {
+                createVars(functionParam);
+                if (functionParam.getActualType() instanceof CArray) {
+                    arrayParameters.addAll(functionParam.getVarDecls());
+                }
+            }
         }
         CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
         if (blockItemListContext != null) {
@@ -893,6 +925,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             new ArrayList<>(flatVariables),
                             parseContext,
                             atomicVariables);
+            // A return skips the scope-end markers of the blocks it leaves. Not for main: the model
+            // lets other threads go on using its locals after it returns.
+            if (parseContext.isCheckMemsafety() && !funcDecl.getName().equals("main")) {
+                final CCompound epilogue = new CCompound(parseContext);
+                for (Expr<?> release : new LinkedHashSet<>(functionScoped)) {
+                    epilogue.addCStatement(
+                            new CCall(
+                                    SCOPE_END,
+                                    List.of(new CExpr(release, parseContext)),
+                                    parseContext));
+                }
+                cFunction.setEpilogue(epilogue);
+            }
             recordMetadata(ctx, cFunction);
             return cFunction;
         }

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import java.math.BigInteger
 import java.util.*
 
 @DslMarker annotation class XcfaDsl
@@ -34,6 +35,16 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
   private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList()
   val metaData: MutableMap<String, Any> = LinkedHashMap()
 
+  /**
+   * Variables whose havoc over-approximates a library call, each with the interval of its C type
+   * (null if unknown). A counterexample that depends on one of them may not exist in C, so its
+   * Unsafe verdict is not reliable.
+   */
+  val overApproximatedVars: MutableMap<VarDecl<*>, ClosedRange<BigInteger>?> = LinkedHashMap()
+
+  /** For a stubbed `*printf` call: its return variable, and the variable that holds its format. */
+  val formatArguments: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+
   fun getVars(): Set<XcfaGlobalVar> = vars
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures
@@ -46,6 +57,7 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
       globalVars = vars,
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
+      overApproximatedVars = overApproximatedVars,
     )
   }
 
@@ -90,6 +102,7 @@ constructor(
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
   unsafeUnrollUsed: Boolean = false,
   var prop: Expr<BoolType> = True(),
+  overApproximationUsed: Boolean = false,
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -104,8 +117,17 @@ constructor(
   var unsafeUnrollUsed: Boolean = unsafeUnrollUsed
     private set
 
+  /** Set when a construct was modeled by a sound over-approximation: Unsafe is then unreliable. */
+  var overApproximationUsed: Boolean = overApproximationUsed
+    private set
+
   lateinit var parent: XcfaBuilder
   private lateinit var built: XcfaProcedure
+
+  /** [XcfaBuilder.overApproximatedVars] of the parent; a throwaway map for a detached builder. */
+  val overApproximatedVars: MutableMap<VarDecl<*>, ClosedRange<BigInteger>?>
+    get() = if (this::parent.isInitialized) parent.overApproximatedVars else LinkedHashMap()
+
   private lateinit var optimized: XcfaProcedureBuilder
   private lateinit var partlyOptimized: XcfaProcedureBuilder
   private var lastOptimized: Int = -1
@@ -386,6 +408,10 @@ constructor(
     unsafeUnrollUsed = true
   }
 
+  fun setOverApproximation() {
+    overApproximationUsed = true
+  }
+
   fun deepCopy(identifier: String = ""): XcfaProcedureBuilder {
     val newLocs =
       locs.associateWith {
@@ -411,6 +437,7 @@ constructor(
         metaData = metaData.toMutableMap(),
         unsafeUnrollUsed = unsafeUnrollUsed,
         prop = prop,
+        overApproximationUsed = overApproximationUsed,
       )
       .also { proc ->
         proc.lastOptimized = lastOptimized

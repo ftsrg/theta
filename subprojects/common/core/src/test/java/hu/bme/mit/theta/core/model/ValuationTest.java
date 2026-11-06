@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,18 @@ package hu.bme.mit.theta.core.model;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NegativeZero;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +55,19 @@ public class ValuationTest {
         final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
         Assertions.assertEquals(
                 val.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
+    }
+
+    @Test
+    public void testFpUsesAssign() {
+        final ConstDecl<FpType> cx = Const("x", FpType.of(8, 24));
+        for (final var lit : List.of(NaN(cx.getType()), NegativeZero(cx.getType()))) {
+            final Valuation immutable = ImmutableValuation.builder().put(cx, lit).build();
+            final MutableValuation mutable = MutableValuation.copyOf(immutable);
+            for (final Valuation val : List.of(immutable, mutable)) {
+                Assertions.assertEquals(FpAssign(cx.getRef(), lit), val.toExpr());
+                Assertions.assertEquals(Bool(true), val.toExpr().eval(val));
+            }
+        }
     }
 
     @Test

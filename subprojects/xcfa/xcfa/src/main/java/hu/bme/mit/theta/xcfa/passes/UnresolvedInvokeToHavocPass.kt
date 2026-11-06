@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.typeInterval
 import hu.bme.mit.theta.xcfa.utils.withinTypeRange
 import java.math.BigInteger
 
@@ -84,6 +85,29 @@ class UnresolvedInvokeToHavocPass(
 
     private fun isUnmodeledSync(name: String) =
       SYNC_FUNCTION.matches(name) && !STATELESS_SYNC_FUNCTION.matches(name)
+
+    /**
+     * Calls whose result comes from the environment, so any value is possible in C too. Every other
+     * havoc'd result is an over-approximation of a computed value (see
+     * [XcfaBuilder.overApproximatedVars]).
+     */
+    private val ENVIRONMENT_FUNCTIONS =
+      setOf(
+        "getchar",
+        "rand",
+        "random",
+        "time",
+        "clock",
+        "getpid",
+        "getppid",
+        "getuid",
+        "geteuid",
+        "getgid",
+        "getegid",
+      )
+
+    private fun readsEnvironment(name: String) =
+      name in ENVIRONMENT_FUNCTIONS || name.startsWith("__VERIFIER_nondet")
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -122,6 +146,10 @@ class UnresolvedInvokeToHavocPass(
             )
             val returnSlot = invokeLabel.params[0] as RefExpr<*>
             val havoc = HavocStmt.of(returnSlot.decl as VarDecl<*>)
+            if (!readsEnvironment(invokeLabel.name)) {
+              builder.overApproximatedVars[returnSlot.decl as VarDecl<*>] =
+                typeInterval(returnSlot, parseContext)
+            }
             builder.addEdge(
               XcfaEdge(
                 it.source,

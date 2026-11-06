@@ -206,6 +206,11 @@ atomic_pointer_step.c	efficient	LP64	SAFE	GCC __atomic_* add/sub step a pointer 
 atomic_user_defined.c	efficient	LP64	SAFE	a defined function named like a C11 atomic operation is called, not modelled
 sizeof_long_double.c	efficient	LP64	SAFE	sizeof(long double) is the binary128 width (16 bytes)
 sizeof_array_type_name.c	efficient	LP64	SAFE	sizeof of an array type name multiplies the element size by the dimensions
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	multi
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	flat
+sizeof_array_object.c	efficient	ILP32	SAFE	sizeof of an array object is its whole size; decayed forms and array parameters are pointer-sized	bytes
+sizeof_array_object_violation.c	efficient	ILP32	UNSAFE	sizeof(a)/sizeof(a[0]) is the element count, so a reachable error under it is found
+sizeof_vla_refused.c	efficient	ILP32	FRONTEND-FAIL	sizeof of a VLA is refused instead of reporting a wrong constant
 fpclassify_classes.c	efficient	LP64	SAFE	__fpclassify{,f,l} and isnormal classify NaN/inf/zero/subnormal/normal incl. long double
 stdbool_macros.c	efficient	ILP32	SAFE	<stdbool.h> provides bool, true and false
 size_t_pthread_h.c	efficient	LP64	SAFE	size_t from the <pthread.h> model is 64 bits wide on LP64
@@ -285,7 +290,6 @@ memset_value_reread.c	efficient	LP64	SAFE	the memset value is read once, before 
 memcpy_count_reread.c	efficient	LP64	SAFE	the memcpy count is read once, before the first write
 memset_struct_symbolic.c	efficient	LP64	UNSAFE	memset of structs with a symbolic count is a loop under bytes, not a call left in place
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap
-malloc_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc bound is in cells: the fourth int of a 3-int block overruns it
 malloc_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the last int of a 3-int block is in bounds
 malloc_struct_cells_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a struct element of a malloc block spans its member cells
 malloc_char_view_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a char view of a malloc int block reaches all its bytes
@@ -304,3 +308,30 @@ memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the
 memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell	bytes
 memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells
 memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells	bytes
+overflow_pointer_member.c	bitvector	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow (bitvector)	flat
+overflow_pointer_member.c	efficient	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow	flat
+overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked
+overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked	flat
+stub_dependent_overflow.c	efficient	LP64	UNKNOWN:no-overflow	an overflow that needs an over-approximated stub value is not reported
+stub_dependent_reach.c	efficient	LP64	UNKNOWN	an error path that needs an over-approximated stub value is not reported
+stub_independent_overflow.c	efficient	LP64	UNSAFE:no-overflow	an overflow that does not use the stub value is still reported
+strlen_exact.c	efficient	LP64	SAFE:no-overflow	strlen counts the characters before the terminator exactly
+strlen_exact_overflow.c	efficient	LP64	UNSAFE:no-overflow	the exact strlen is not treated as an over-approximated value
+printf_bound.c	efficient	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals
+printf_bound.c	bitvector	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals (bitvector)
+memmove_symbolic_reach.c	bitvector	LP64	UNSAFE	memmove with a symbolic length onto a later overlapping region copies from the last element down
+strlen_after_buffer_stub.c	efficient	LP64	UNKNOWN	strlen is not exact over cells that a buffer stub left stale
+malloc_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc bound counts cells, not bytes
+malloc_struct_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a struct element of a malloc bound spans its member cells
+malloc_void_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc of unknown cell count retries under bytes
+scalar_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken local is released on an early return
+thread_result_dangling_local.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread local is released when the thread returns
+recursive_call_arg_conversion_safe.c	efficient	LP64	SAFE	a non-inlined call converts its argument to the parameter type (261 -> unsigned char 5)
+recursive_call_arg_conversion_safe.c	bitvector	LP64	SAFE	a non-inlined call converts a wider bitvector argument to the parameter width
+recursive_call_arg_conversion_unsafe.c	efficient	LP64	UNSAFE	the argument conversion of a non-inlined call keeps a reachable error (262 -> 6)
+recursive_call_arg_conversion_unsafe.c	bitvector	LP64	UNSAFE	the argument conversion of a non-inlined call keeps a reachable error (bitvector)
+fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient), fmod (truncated quotient) and modf (signed fraction, inf) are modeled exactly
+fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
+fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
+dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
+memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes

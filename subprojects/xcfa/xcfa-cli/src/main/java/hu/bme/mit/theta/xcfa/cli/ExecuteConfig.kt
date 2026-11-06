@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.utils.unsafeDependsOnOverApproximation
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -466,7 +467,33 @@ private fun backend(
                 checker.check()
               }
               .let ResultMapper@{ result ->
+                if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
+                  if (config.backendConfig.portfolioStep) {
+                    logger.benchmark(
+                      "Over-approximating model used: handing over to the next config."
+                    )
+                    exitOnError(config.debugConfig.stacktrace, throwDontExit) {
+                      throw ErrorCodeException(ExitCodes.UNRELIABLE_UNSAFE.code)
+                    }
+                  }
+                  // Downgraded before the property or the raw result is printed: output parsers
+                  // match on both.
+                  logger.benchmark("Over-approximating model used: an unsafe result is unreliable.")
+                  return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                }
                 if (result.isUnsafe) {
+                  // A portfolio or in-process run only relays a result that its child checked.
+                  if (
+                    !portfolioRun &&
+                      xcfa != null &&
+                      unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
+                  ) {
+                    logger.result(
+                      "%s",
+                      "Unsafe result depends on an over-approximated library value",
+                    )
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  }
                   // need to determine what kind
                   val property =
                     try {
