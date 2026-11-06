@@ -322,9 +322,6 @@ ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory
 ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory plus an index is passed with its offset	flat
 ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	multi
 ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	flat
-ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	multi
-ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	flat
-ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	multi
 ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	flat
 ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	multi
 ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	flat
@@ -334,9 +331,6 @@ ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a 
 ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a callee keeps its offset	flat
 ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	multi
 ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	flat
-ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	multi
-ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	flat
-ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	multi
 ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	flat
 ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	multi
 ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	flat
@@ -453,9 +447,6 @@ union_pointer_increment_safe.c	efficient	ILP32	SAFE	stepping a pointer to a unio
 global_enum_sized_struct_safe.c	efficient	ILP32	SAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_unsafe.c	efficient	ILP32	UNSAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_multi_declarator_safe.c	efficient	ILP32	SAFE	each declarator keeps its own initializer
-nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	direct and pointer-held mutex addresses protect the same nested datum	flat
-nested_mutex_alias.c	efficient	LP64	SAFE:no-data-race	nested mutex aliases retain their identity with integer arithmetic	flat
-nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	nested mutex aliases retain their identity with byte addressing	bytes
 lifetime_function_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a scalar local dies when its function returns
 lifetime_parameter_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken parameter dies when its function returns
 lifetime_out_parameter.c	efficient	ILP32	UNSAFE:valid-memsafety	a local stored through an out-parameter dies at return

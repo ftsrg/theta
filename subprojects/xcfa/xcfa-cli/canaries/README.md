@@ -18,7 +18,7 @@ restores the execute bits a zip cannot carry, so it needs nothing but a JVM. Jav
 
 ## Modes
 
-- **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 268
+- **parse** (default): frontend-only smoke test (`--backend NONE`) over `canaries.tsv` — 33
   real sv-benchmarks tasks, one PASS per `ParsingResult Success`. The frontend *builds the
   XCFA* under `--backend NONE`, so this catches c2xcfa regressions, not just ANTLR ones.
 - **full** (`-Ptheta.canary.mode=full`): real `--portfolio STABLE` run comparing the printed
@@ -29,8 +29,10 @@ Both suites are plain JUnit (`CanarySuiteTest`, `FixtureSuiteTest`) sharing `Sui
 run wherever Gradle does. They invoke the shipped `theta-start.sh` — the entry point SV-COMP itself
 uses — and fall back to launching `theta.jar` directly where there is no POSIX shell.
 
-`canaries.tsv` is a broad ~3-per-subfolder sample: good at detecting *general* breakage, but a
-given task only *happens* to exercise a feature. That is what the fixtures are for.
+`canaries.tsv` is a greedy cover of the `XCFA-TRAITS` line the frontend prints (property, arithmetic,
+SMT types, label kinds, source constructs, size class, data model): every trait occurs in at least
+three canaries, or in all tasks that have it. It catches *general* breakage, but a given task only
+*happens* to exercise a feature. That is what the fixtures are for.
 
 ## Feature guards — `gradle :theta-xcfa-cli:fixtureTest`
 
