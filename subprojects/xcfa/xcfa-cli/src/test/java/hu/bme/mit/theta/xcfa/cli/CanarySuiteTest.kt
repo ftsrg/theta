@@ -133,12 +133,14 @@ class CanarySuiteTest {
     val result =
       SuiteSupport.execute(SuiteSupport.thetaCommand(dist, input, options), dist, timeout)
 
+    val diagnosis by lazy { SuiteSupport.diagnose(result, timeout) }
     if (mode == "parse") {
       return when {
         result.timedOut -> Outcome("TIMEOUT", "parse timeout (${timeout}s)")
-        result.output.contains("Frontend failed!") -> Outcome("FAIL", "Frontend failed!")
+        result.output.contains("Frontend failed!") ->
+          Outcome("FAIL", "Frontend failed!\n$diagnosis")
         result.output.contains("ParsingResult Success") -> Outcome("PASS", "ok")
-        else -> Outcome("FAIL", "no ParsingResult Success in output")
+        else -> Outcome("FAIL", "no ParsingResult Success in output\n$diagnosis")
       }
     }
 
@@ -152,9 +154,9 @@ class CanarySuiteTest {
       }
     return when (got) {
       expected -> Outcome("PASS", "expected=$expected got=$got")
-      "unknown" -> Outcome("UNKNOWN", "expected=$expected got=$got")
-      "error" -> Outcome("ERROR", "expected=$expected got=$got")
-      else -> Outcome("FAIL", "expected=$expected got=$got")
+      "unknown" -> Outcome("UNKNOWN", "expected=$expected got=$got\n$diagnosis")
+      "error" -> Outcome("ERROR", "expected=$expected got=$got\n$diagnosis")
+      else -> Outcome("FAIL", "expected=$expected got=$got\n$diagnosis")
     }
   }
 }

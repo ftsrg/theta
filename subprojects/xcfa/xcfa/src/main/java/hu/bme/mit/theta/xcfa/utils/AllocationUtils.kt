@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 
 /**
  * The number of pointer-base residue classes: every memory object has a base id, and the id modulo
@@ -203,18 +204,17 @@ fun XcfaProcedureBuilder.boundPointee(parseContext: ParseContext, ret: Expr<*>):
  * cell: the frontend converts it to the cell's pointer type, while the cell's own recorded type is
  * its address.
  */
-private fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
+fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
   val stmt = (label as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *> ?: return null
   if (ret !is RefExpr<*> || ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
   return stmt.expr
 }
 
 /**
- * The cells a `malloc` of [bytes] spans under flat addressing: whole elements of the typed pointer
- * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or for a struct ending in a
- * flexible array member its header and the whole trailing elements. Null when there is no such
- * pointer, or its pointee is flexible elsewhere; the byte count, never fewer than the cells, then
- * stays the bound, which can miss an overrun but not invent one.
+ * The cells a `malloc` of [bytes] spans under the cell models: whole elements of the typed pointer
+ * its result [ret] is bound to, each one [CStruct.inlineCells] cells, or under flat addressing for
+ * a struct ending in a flexible array member its header and the whole trailing elements. Null when
+ * there is no such pointer, or its pointee is flexible otherwise.
  */
 fun XcfaProcedureBuilder.mallocCells(
   parseContext: ParseContext,
@@ -223,11 +223,17 @@ fun XcfaProcedureBuilder.mallocCells(
 ): Expr<*>? {
   val pointee = boundPointee(parseContext, ret) ?: return null
   if (pointee is CArray) return null
-  flexibleMemberCells(parseContext, pointee, bytes)?.let {
-    return it
+  val flat = parseContext.memoryModel.flatAddressing()
+  if (flat) {
+    flexibleMemberCells(parseContext, pointee, bytes)?.let {
+      return it
+    }
+  } else if (hasFlexibleMember(pointee)) {
+    // Only the flat layout counts the trailing elements of a flexible member.
+    throw UnsupportedPointerSplitException("allocation of a struct with a flexible array member")
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, true)
+  val elementBytes = ObjectLayout.cellModelSize(pointee, flat)
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)

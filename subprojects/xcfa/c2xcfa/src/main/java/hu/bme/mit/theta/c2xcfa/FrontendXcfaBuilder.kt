@@ -86,6 +86,7 @@ import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -403,6 +404,14 @@ class FrontendXcfaBuilder(
       ghosts.forEach { addGhostArray(builder, it, initStmtList) }
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
+      // A thread-local variable is one object per thread, but it is built here as a single global,
+      // which every thread would share: wrong values and false races. Exact without threads.
+      if (parseContext.multiThreading && globalDeclaration.get1().actualType.isThreadLocal) {
+        throw UnsupportedFrontendElementException(
+          "Thread-local variables are not supported in multithreaded programs: " +
+            globalDeclaration.get1().name
+        )
+      }
       initializeGlobalVariable(
         builder,
         globalDeclaration.get2().ref,
@@ -552,9 +561,17 @@ class FrontendXcfaBuilder(
     builder.createFinalLoc(getMetadata(function))
     val ret = builder.finalLoc.get()
     builder.addLoc(ret)
-    val end = compound.accept(this, ParamPack(builder, init, null, null, ret))
-    val edge = XcfaEdge(end, ret, metadata = getMetadata(function))
-    builder.addEdge(edge)
+    // Returns lead through the epilogue, so it also runs on an early exit.
+    val epilogue = function.epilogue
+    val exit =
+      if (epilogue == null) ret
+      else getAnonymousLoc(builder, getMetadata(function)).also { builder.addLoc(it) }
+    val end = compound.accept(this, ParamPack(builder, init, null, null, exit))
+    builder.addEdge(XcfaEdge(end, exit, metadata = getMetadata(function)))
+    if (epilogue != null) {
+      val epilogueEnd = epilogue.accept(this, ParamPack(builder, exit, null, null, ret))
+      builder.addEdge(XcfaEdge(epilogueEnd, ret, metadata = getMetadata(function)))
+    }
     return builder
   }
 
@@ -1253,6 +1270,8 @@ class FrontendXcfaBuilder(
       val scalarInit = unwrapScalarInitializer(initExpr)
       if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
+      } else if (declaredElsewhere(declaration)) {
+        initStmtList.add(HavocStmtLabel(globalDeclaration))
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }
@@ -1322,13 +1341,17 @@ class FrontendXcfaBuilder(
           "A global initialized with a whole aggregate value is not supported under the bytes model."
         )
       }
-      val cell = cell(leaf.byteOffset, leaf.type)
+      val unitType =
+        if (leaf.isBitfield) ByteInitializer.storageUnitType(leaf.type, parseContext) else leaf.type
+      val cell = cell(leaf.byteOffset, unitType)
       val value = leaf.type.castTo(leaf.value.expression)
       initStmtList.add(
         AssignStmtLabel(
           cell,
           if (leaf.isBitfield)
-            leaf.type.castTo(BitfieldSlice.write(cell, value, leaf.bitInUnit, leaf.width))
+            unitType.castTo(
+              BitfieldSlice.write(cell, unitType.castTo(value), leaf.bitInUnit, leaf.width)
+            )
           else value,
         )
       )
@@ -2080,7 +2103,9 @@ class FrontendXcfaBuilder(
               FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
             )
           } else {
-            cellType.castTo(rExpression)
+            // Convert to the member's own type first: a `_Bool` member stored in a wider cell
+            // must take `x != 0`, not the low bit of `x`.
+            cellType.castTo(CComplexType.getType(lValue, parseContext).castTo(rExpression))
           }
         val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)
@@ -2348,6 +2373,19 @@ class FrontendXcfaBuilder(
         val (byValue, prep) = copyStructArgument(builder, argExpr, argType, getMetadata(statement))
         prepLabels.addAll(prep)
         params.add(byValue)
+      } else if (
+        !parseContext.memoryModel.flatAddressing() &&
+          (argType is CPointer || argType is CArray) &&
+          argExpr !is hu.bme.mit.theta.core.type.anytype.Reference<*, *> &&
+          argExpr.hasArithmetic()
+      ) {
+        // Passing a pointer is assigning it to the parameter, so it needs the same reading as
+        // `p = q + i` (see the assignment above): passed raw, `&a[i]` on an array of structs was
+        // the integer `a + i*k`, a base id of no object, and the callee accessed garbage cells.
+        params.add(
+          argExpr.asPointerArithReference(argType, parseContext)
+            ?: throw UnsupportedPointerSplitException("Pointer arithmetic not supported: $argExpr")
+        )
       } else {
         params.add(argExpr)
       }
@@ -3073,6 +3111,15 @@ private fun <T : Type> Expr<T>.replaceExpr(target: Expr<*>, replacement: Expr<*>
   else this.withOps(this.ops.map { (it as Expr<Type>).replaceExpr(target, replacement) }) as Expr<T>
 
 /**
+ * Whether pointers to these two types step over the same elements: any two scalars (one cell each),
+ * or equal aggregates. Pointers are scalars too.
+ */
+private fun CComplexType.sameElementAs(other: CComplexType): Boolean {
+  fun CComplexType.aggregate() = this is CStruct || this is CArray
+  return if (aggregate() || other.aggregate()) this == other else true
+}
+
+/**
  * Reads a `pointer + integer(s)` expression as the address of an element -- `q + i` as `&q[i]`,
  * i.e. `ref(deref(q, i))` -- so it can be assigned to a pointer variable through
  * [hu.bme.mit.theta.xcfa.passes.ReferenceElimination]'s base/offset split. Subtraction arrives here
@@ -3098,6 +3145,13 @@ private fun Expr<*>.asPointerArithReference(
       is CArray -> baseType.embeddedType
       else -> return null
     }
+  // The index counts elements of the arithmetic's own pointee: in `(char *)p - k` that is bytes,
+  // not elements of `p`'s pointee, so reading it as `&p[-k]` lands in the wrong cell (the
+  // `container_of` idiom read a garbage cell). Such a reinterpreting step is refused.
+  val arithElemType =
+    (runCatching { CComplexType.getType(this, parseContext) }.getOrNull() as? CPointer)
+      ?.embeddedType
+  if (arithElemType != null && !arithElemType.sameElementAs(elemType)) return null
   // The net index: the arithmetic with the pointer contribution removed. Cast to a *signed* long so
   // subtraction (which arrives as `+ (-i)`) and the accumulated offset of chained arithmetic
   // compose

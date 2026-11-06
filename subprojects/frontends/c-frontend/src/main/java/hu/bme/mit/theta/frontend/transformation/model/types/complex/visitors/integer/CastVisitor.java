@@ -57,6 +57,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clon
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong.CUnsignedLongLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CSignedShort;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import java.math.BigInteger;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
@@ -297,6 +298,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CBool) {
             return param;
+        } else if (that instanceof CReal) {
+            // a floating-point value stays FP under integer arithmetic
+            return Ite(Eq(param, that.getNullValue()), Int(0), Int(1));
         } else {
             return Ite(Eq(param, Int(0)), Int(0), Int(1));
         }

@@ -18,14 +18,20 @@ import java.net.URI
 import java.net.URL
 import java.nio.file.Files
 import java.security.MessageDigest
+import java.util.zip.ZipInputStream
 
 tasks.register("downloadJavaSmtLibs") {
     val outputDir = rootProject.layout.projectDirectory.dir("lib")
     
     // Capture dependencies at configuration time to avoid script object references
     val javasmtDeps = Deps.javasmtDeps
-    val expectedFiles = javasmtDeps.values.flatten().toSet()
+    val z3Version = Deps.z3Version
+    val z3Natives = Deps.z3Natives
+    val z3NativeAssets = Deps.z3NativeAssets
+    val expectedFiles = javasmtDeps.values.flatten().toSet() + z3Natives
 
+    inputs.property("javasmtDeps", javasmtDeps.keys.toList())
+    inputs.property("z3Version", z3Version)
     outputs.files(expectedFiles.map { outputDir.file(it) })
     outputs.cacheIf { true }
     outputs.upToDateWhen { 
@@ -121,6 +127,27 @@ tasks.register("downloadJavaSmtLibs") {
                 tmpFile.copyTo(targetFile, overwrite = true)
                 tmpFile.delete()
             }
+        }
+
+        z3NativeAssets.getValue(archSuffix).forEach { asset ->
+            val assetUrl = URI.create(
+                "https://github.com/Z3Prover/z3/releases/download/z3-$z3Version/z3-$z3Version-$asset"
+            ).toURL()
+            println("Fetching from: $assetUrl")
+
+            var extracted = 0
+            ZipInputStream(assetUrl.openStream()).use { zip ->
+                generateSequence { zip.nextEntry }.forEach { entry ->
+                    // The Windows jar drops the prefix that the loaders here look for.
+                    val name = entry.name.substringAfterLast('/')
+                        .let { if (it == "z3java.dll") "libz3java.dll" else it }
+                    if (name in z3Natives && "/python/" !in entry.name) {
+                        outputDir.asFile.resolve(name).outputStream().use { zip.copyTo(it) }
+                        extracted++
+                    }
+                }
+            }
+            if (extracted != 2) throw GradleException("Expected 2 Z3 natives in $asset, found $extracted")
         }
 
         println("Done. Libraries saved to: ${outputDir.asFile.absolutePath}")

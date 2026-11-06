@@ -28,9 +28,10 @@ import org.junit.jupiter.api.fail
  * - `PARSE-OK` / `FRONTEND-FAIL` -- run the frontend only (`--backend NONE`) and check whether it
  *   built the XCFA. A fixture builds only if its change is present, so reverting the change flips
  *   the outcome.
- * - `SAFE` / `UNSAFE`, optionally `:<property>` -- run the real verifier and check the verdict. Use
- *   these for changes that alter values rather than what parses: a miswritten memory cell parses
- *   perfectly and only shows up as a wrong answer.
+ * - `SAFE` / `UNSAFE` / `UNKNOWN`, optionally `:<property>` -- run the real verifier and check the
+ *   verdict. Use these for changes that alter values rather than what parses: a miswritten memory
+ *   cell parses perfectly and only shows up as a wrong answer. `UNKNOWN` is for a verdict that the
+ *   tool must withhold.
  *
  * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
  *
@@ -112,13 +113,17 @@ class FixtureSuiteTest {
       DynamicTest.dynamicTest("fixture $name") {
         val input = File(home, "fixtures/$fixture")
         check(input.isFile) { "fixture file not found: $input" }
-        val actual = run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
-        if (actual != expect) fail("expected=$expect actual=$actual -- $feature")
+        val (actual, diagnosis) =
+          run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
+        if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
       }
     }
   }
 
-  /** The outcome of one fixture, in the vocabulary [fixtures.tsv] uses. */
+  /**
+   * The outcome of one fixture, in the vocabulary [fixtures.tsv] uses, and why the run ended the
+   * way it did (see [SuiteSupport.diagnose]).
+   */
   private fun run(
     theta: File,
     input: File,
@@ -127,9 +132,9 @@ class FixtureSuiteTest {
     memoryModel: String,
     expect: String,
     properties: File,
-  ): String {
+  ): Pair<String, String> {
     val verdict = expect.substringBefore(':')
-    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE"
+    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE" || verdict == "UNKNOWN"
     val property =
       File(
         properties,
@@ -148,24 +153,30 @@ class FixtureSuiteTest {
     }
     val command = SuiteSupport.thetaCommand(theta, input, options)
     val timeout = if (isVerdictFixture) VERDICT_TIMEOUT_SECONDS else PARSE_TIMEOUT_SECONDS
-    val output = SuiteSupport.execute(command, theta, timeout).output
+    val result = SuiteSupport.execute(command, theta, timeout)
+    val output = result.output
+    val diagnosis = SuiteSupport.diagnose(result, timeout)
 
     if (!isVerdictFixture) {
-      return when {
-        output.contains("ParsingResult Success") -> "PARSE-OK"
-        output.contains("Frontend failed!") -> "FRONTEND-FAIL"
-        else -> "OTHER"
-      }
+      // Procedure passes run after the parser has reported success, and may still refuse.
+      val actual =
+        when {
+          output.contains("Frontend failed!") -> "FRONTEND-FAIL"
+          output.contains("ParsingResult Success") -> "PARSE-OK"
+          else -> "OTHER"
+        }
+      return actual to diagnosis
     }
     val actual =
       when {
         output.contains("(SafetyResult Safe)") -> "SAFE"
         output.contains("(SafetyResult Unsafe") -> "UNSAFE"
+        output.contains("(SafetyResult Unknown") -> "UNKNOWN"
         else -> "OTHER"
       }
     // The expectation may name a property after the verdict; echo it back on a match so the
     // comparison is against the registry's own spelling.
-    return if (actual == verdict) expect else actual
+    return (if (actual == verdict) expect else actual) to diagnosis
   }
 
   /**

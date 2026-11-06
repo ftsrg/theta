@@ -51,7 +51,12 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
-      CLibraryFunctionsPass(parseContext),
+      CLibraryFunctionsPass(
+        parseContext,
+        modelStringLength = property.inputProperty != ErrorDetection.TERMINATION,
+      ),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
       // also before ReferenceElimination: the pointer arguments it writes through are still `&x`
@@ -82,6 +87,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       InlineProceduresPass(parseContext),
       NondetFunctionPass(parseContext),
     ),
+    // starts copies of thread routines that store their result for pthread_join
+    listOf(ThreadResultPass()),
     listOf(CloneProcedureForStaticThreadsPass()),
     listOf(
       // Clean up procedures after inlining
@@ -93,6 +100,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ReferenceElimination(parseContext)
     ),
     listOf(
+      // after inlining, which gives each format argument its literal; before StringLiteralInitPass,
+      // which can drop the literal's initialization
+      PrintfReturnBoundPass(parseContext),
       // after inlining, so a read through a callee's parameter is a read through the literal here
       StringLiteralInitPass(),
       SimplifyExprsPass(parseContext, property), // before unroll to have more chance of unrolling
@@ -176,6 +186,8 @@ class NontermValidationPasses(
       // rewrites `&t[i]`
       PthreadArrayHandleUnrollPass(parseContext),
       CLibraryFunctionsPass(parseContext),
+      // before ReferenceElimination, which folds the `&barrier` handle away
+      PthreadBarrierPass(parseContext),
       // must run before ReferenceElimination
       AtomicFunctionsPass(parseContext),
     ),

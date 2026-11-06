@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
@@ -33,7 +34,7 @@ import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> OcChecker<E>,
+  internal val checker: (SolverFactory, XcfaOcMemoryConsistencyModel) -> OcChecker<E>,
   internal val supportsProperty: (ErrorDetection, XcfaOcMemoryConsistencyModel) -> Boolean,
 ) {
 

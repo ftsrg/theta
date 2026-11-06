@@ -15,19 +15,29 @@
  */
 package hu.bme.mit.theta.solver.validator;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverBase;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
+import java.util.List;
 import java.util.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -85,5 +95,39 @@ public class SolverValidatorWrapperTest {
         wrapped.pop(3);
 
         verify(wrappee).pop(3);
+    }
+
+    private static final Expr<BoolType> X = Const("x", Bool()).getRef();
+
+    /**
+     * A wrapped solver that answers UNSAT to {@code x}, cross-checked by a reference that answers
+     * {@code referenceStatus}.
+     */
+    private static Solver unsatCrossCheckedBy(final SolverStatus referenceStatus) {
+        final Solver backend = mock(Solver.class);
+        when(backend.check()).thenReturn(SolverStatus.UNSAT);
+        when(backend.getAssertions()).thenReturn(List.of(X));
+        final Solver reference = mock(Solver.class);
+        when(reference.check()).thenReturn(referenceStatus);
+        when(reference.getModel()).thenReturn(ImmutableValuation.empty());
+        final SolverFactory backendFactory = mock(SolverFactory.class);
+        when(backendFactory.createSolver()).thenReturn(backend);
+        final SolverFactory referenceFactory = mock(SolverFactory.class);
+        when(referenceFactory.createSolver()).thenReturn(reference);
+        final Solver solver =
+                SolverValidatorWrapperFactory.create(backendFactory, referenceFactory)
+                        .createSolver();
+        solver.add(X);
+        return solver;
+    }
+
+    @Test
+    public void anUnsatTheReferenceAgreesWithPasses() {
+        assertDoesNotThrow(unsatCrossCheckedBy(SolverStatus.UNSAT)::check);
+    }
+
+    @Test
+    public void anUnsatTheReferenceRefutesFails() {
+        assertThrows(SolverValidationException.class, unsatCrossCheckedBy(SolverStatus.SAT)::check);
     }
 }

@@ -1183,8 +1183,59 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // `sizeof *p` / `sizeof x`: the operand is an expression, with or without parentheses.
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
-            final var type = CComplexType.getType(expr, parseContext);
-            return sizeOfValue(sizeOf(type));
+            return sizeOfValue(sizeOfOperand(operand, CComplexType.getType(expr, parseContext)));
+        }
+    }
+
+    /**
+     * The size `sizeof` reports for an expression operand. An array keeps its array type only as a
+     * designator; a parameter declared as one really is a pointer, and any other form (`a + 1`, `c
+     * ? a : b`, `(0, a)`) carries the array's cType but has decayed to a pointer.
+     */
+    private long sizeOfOperand(ParseTree operand, CComplexType type) {
+        if (!(type instanceof CArray array)) {
+            return sizeOf(type);
+        }
+        final ParseTree designator = arrayDesignator(operand);
+        if (designator == null) {
+            return sizeOf(CComplexType.getUnsignedLong(parseContext));
+        }
+        if (designator instanceof PrimaryExpressionIdContext && functionVisitor != null) {
+            final VarDecl<?> variable = getVar(designator.getText());
+            if (functionVisitor.isArrayParameter(variable)) {
+                return sizeOf(CComplexType.getUnsignedLong(parseContext));
+            }
+            final Integer extent = functionVisitor.initializerExtent(variable);
+            if (array.getArrayDimension() == null && extent != null) {
+                return Math.multiplyExact(extent, sizeOf(array.getEmbeddedType()));
+            }
+        }
+        return sizeOf(type);
+    }
+
+    /**
+     * The node of [operand] that designates an array, looking through parentheses; null when the
+     * operand is any other form of expression. Decided on the syntax, as a subscript or member
+     * access can fold to the same `Add` that pointer arithmetic produces.
+     */
+    private static ParseTree arrayDesignator(ParseTree operand) {
+        ParseTree current = operand;
+        while (true) {
+            if (current instanceof PrimaryExpressionBraceExpressionContext parenthesized) {
+                current = parenthesized.expression();
+            } else if (current instanceof PrimaryExpressionIdContext
+                    || current instanceof PrimaryExpressionStringsContext
+                    || current instanceof PrimaryExpressionTypeInitializerContext
+                    || (current instanceof PostfixExpressionContext postfix
+                            && !postfix.pfExprs.isEmpty())) {
+                return current;
+            } else if (current instanceof UnaryExpressionCastContext unary) {
+                return unary.unaryOperator().getText().equals("*") ? unary : null;
+            } else if (current.getChildCount() == 1) {
+                current = current.getChild(0);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -1277,7 +1328,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
      * that is a little small would bring the bound check back down onto real accesses.
      */
-    private int sizeOf(CComplexType type) {
+    private long sizeOf(CComplexType type) {
+        // A whole array's size is observable (`sizeof(a) / sizeof(a[0])`), whichever cells hold it.
+        // A VLA's dimension may have changed since its declaration, so it cannot be re-evaluated.
+        if (type instanceof CArray array) {
+            final Integer count = ObjectLayout.constantDimension(array);
+            if (count == null) {
+                throw new UnsupportedFrontendElementException(
+                        "sizeof an array without a constant size");
+            }
+            return Math.multiplyExact(count, sizeOf(array.getEmbeddedType()));
+        }
         // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
         // declared (padded) byte size -- the same layout subscripts, members, and pointer
         // arithmetic use, and the size that then bounds them exactly in the memsafety check.
@@ -2315,14 +2376,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType declaredType,
             ObjectLayout.Field field,
             CComplexType offsetType) {
-        final int unitBits = declaredType.width();
+        final CComplexType unitType =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                        .ByteInitializer.storageUnitType(declaredType, parseContext);
+        final int unitBits = unitType.width();
         final int unitBytes = unitBits / 8;
         final int unitByteOffset = (field.bitOffset() / unitBits) * unitBytes;
         final int bitInUnit = field.bitOffset() - unitByteOffset * 8;
         if (bitInUnit + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(
-                    "Bitfield member [%s] straddles two storage units, which the bytes memory model"
-                            + " does not support.".formatted(memberName));
+                    ("Bitfield member [%s] straddles two storage units, which the bytes memory"
+                                    + " model does not support.")
+                            .formatted(memberName));
         }
         final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
@@ -2332,8 +2397,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
-                        declaredType.getSmtType());
-        parseContext.getMetadata().create(cell, "cType", declaredType);
+                        unitType.getSmtType());
+        parseContext.getMetadata().create(cell, "cType", unitType);
         final boolean signed =
                 declaredType
                                 instanceof
@@ -3966,10 +4031,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
      * (they are queued like any other side effect of the surrounding expression) and the last
-     * statement's value is the expression's value. This is what `container_of` expands to. When
-     * there is no value to yield -- no function visitor, or the block does not end in an expression
-     * -- fall back to the old null result: in statement position the value is discarded anyway, and
-     * a value position fails downstream exactly as it always did.
+     * statement's value is the expression's value. This is what `container_of` expands to. A block
+     * that does not end in an expression still has its statements queued, but yields null, as does
+     * any statement expression without a function visitor: in statement position the value is
+     * discarded anyway, and a value position fails downstream exactly as it always did.
      */
     private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
         if (functionVisitor == null) {
@@ -3985,6 +4050,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (value == null) {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: statement expression yields no value\n");
+            preStatements.add(statement);
             return null;
         }
         queueValueStatement(statement);
