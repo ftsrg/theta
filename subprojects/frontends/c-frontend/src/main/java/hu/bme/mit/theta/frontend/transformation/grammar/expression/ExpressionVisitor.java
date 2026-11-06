@@ -2560,20 +2560,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
                 && embeddedType.width() == structType.unionCellWidth()) {
             // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is
-            // the
-            // reinterpretation of those bits, not a slice. Only the full-width case is modelled --
-            // the whole cell is the float's pattern -- which is the newlib idiom
-            // `union { double value; struct { uint32_t lsw, msw; } parts; }`. The cell is stamped
-            // so
-            // an assignment splices FpToIeeeBv of the value back (see FrontendXcfaBuilder).
+            // the reinterpretation of those bits, not a slice. Only the full-width case is
+            // modelled, the newlib idiom `union { double value; struct { uint32_t lsw, msw; }
+            // parts; }`. An assignment splices the value's bits back (see FrontendXcfaBuilder).
             final FpType fpType = (FpType) embeddedType.getSmtType();
             final Expr<?> value =
                     hu.bme.mit.theta.core.type.fptype.FpExprs.FromIeeeBv(
                             cast(access, (BvType) cellType.getSmtType()), fpType);
             parseContext.getMetadata().create(value, "cType", embeddedType);
-            // The whole cell is the float's pattern: an assignment read-modify-writes bits [0,
-            // width) -- i.e. all of them -- with FpToIeeeBv of the value (see the IEEE_FLOAT path
-            // in FrontendXcfaBuilder).
+            // The whole cell is the float's pattern: an assignment writes bits [0, width), i.e.
+            // all of them (see the IEEE_FLOAT path in FrontendXcfaBuilder).
             parseContext
                     .getMetadata()
                     .create(
