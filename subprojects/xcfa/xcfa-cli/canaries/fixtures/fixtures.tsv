@@ -589,3 +589,6 @@ gnu_cast_to_union.c	efficient	LP64	SAFE	GNU cast to union sets the member of the
 gnu_cast_to_union.bug.c	efficient	LP64	UNSAFE	GNU cast to union: the member holds the operand, not a fixed value
 alloca_release_skipped_branch_leak.c	efficient	LP64	UNSAFE:valid-memcleanup	the release at return of an alloca skipped on this path does not free a heap block at its address	bytes
 alloca_release_skipped_branch_heap.c	efficient	LP64	SAFE:valid-memsafety	the release at return of an alloca skipped on this path keeps a live heap block at its address	bytes
+scanf_string_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	scanf %s may store more characters than the buffer holds
+scanf_string_width.c	efficient	LP64	SAFE:valid-memsafety	scanf %9s into a pointer to a ten-character buffer stays in bounds
+sscanf_string_overflow.c	efficient	LP64	UNKNOWN:valid-memsafety	sscanf %s may overflow its target; the word length is over-approximated

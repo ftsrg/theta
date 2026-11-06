@@ -39,6 +39,19 @@ class LibraryModelParsingTest {
   }
 
   @Test
+  fun `scanf writes bound strings by their width`() {
+    assertEquals(listOf(ScanWrite(true, null), ScanWrite(false, 1)), scanWrites("%s%n"))
+    assertEquals(
+      listOf(ScanWrite(false, 1), ScanWrite(true, 10), ScanWrite(false, 4)),
+      scanWrites("%u.%*d %9[^ ] %4c"),
+    )
+    assertEquals(listOf(ScanWrite(true, 51)), scanWrites("%%%50ls"))
+    assertEquals(listOf(ScanWrite(false, 1), ScanWrite(false, 1)), scanWrites("%ms %m[a-z]"))
+    assertEquals(null, scanWrites("%[abc"))
+    assertEquals(null, scanWrites("%y"))
+  }
+
+  @Test
   fun `inet_aton forms give the host order value`() {
     assertEquals(0x7f000001L, parseIpv4("127.0.0.1"))
     assertEquals(0x7f000001L, parseIpv4("127.1"))

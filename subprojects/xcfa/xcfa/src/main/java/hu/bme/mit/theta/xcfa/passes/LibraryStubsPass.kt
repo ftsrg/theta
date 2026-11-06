@@ -50,6 +50,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
@@ -233,6 +234,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     /** The argument position of the format, for the calls that read their `%s` arguments. */
     private val READ_FORMAT_INDEX =
       mapOf("printf" to 1, "fprintf" to 2, "sprintf" to 2, "snprintf" to 3, "asprintf" to 2)
+
+    /** The `scanf` calls that read a string argument rather than a stream. */
+    private val STRING_SCANS = setOf("sscanf", "__isoc99_sscanf")
 
     /** The calls whose first argument is a string they read; `perror` also takes NULL. */
     private val STRING_ARGUMENT = setOf("puts", "fputs")
@@ -447,6 +451,18 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       }
     }
 
+    if (invoke.name in STRING_SCANS) {
+      // Whether a target is assigned depends on the string's contents, which are not modelled.
+      val assigned = Var("__stub_${invoke.name}_assigned_${counter++}", Bool())
+      val probes = extentProbes(invoke, 3, 2, false, { assigned.ref }, builder)
+      if (probes.isNotEmpty()) {
+        builder.addVar(assigned)
+        builder.overApproximatedVars[assigned] = null
+        out.add(StmtLabel(HavocStmt.of(assigned), metadata = invoke.metadata))
+        out.addAll(probes)
+      }
+    }
+
     // The return value: a fixed one where the call is assumed to succeed, otherwise a havoc.
     val ret = (invoke.params.getOrNull(0) as? RefExpr<*>)?.decl as? VarDecl<*>
     if (ret != null && spec.freshString != null) {
@@ -641,6 +657,69 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         out.add(store(deref, Ite<Type>(assigned, value, deref), invoke))
       }
     }
+    val assigned = { k: Int ->
+      if (conversions == null) Bool(true) else Geq(ret.ref, retType.getValue("${k + 1}"))
+    }
+    out.addAll(extentProbes(invoke, model.from, model.format, true, assigned, builder))
+    return out
+  }
+
+  /**
+   * Under memory safety, a read of the last cell that each `%s`, `%[` or `%Nc` target of a
+   * `scanf`-family call may write, guarded by [assigned] of the target's index: the stub writes
+   * only the first cell, so the guards would miss an overflow. A string's length is an [input],
+   * else over-approximated, as is every char target of a format whose text is not known.
+   */
+  private fun extentProbes(
+    invoke: InvokeLabel,
+    from: Int,
+    format: Int,
+    input: Boolean,
+    assigned: (Int) -> Expr<BoolType>,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel> {
+    if (!parseContext.isCheckMemsafety) return listOf()
+    val writes =
+      invoke.params.getOrNull(format)?.let { f ->
+        literalsOf(builder).textsOf(f)?.map { scanWrites(it) ?: return@let null }?.let(::widest)
+      }
+    val ulong = CComplexType.getUnsignedLong(parseContext)
+    val out = mutableListOf<XcfaLabel>()
+    for ((k, i) in (from until invoke.params.size).withIndex()) {
+      val write = if (writes == null) ScanWrite(true, null) else writes.getOrNull(k) ?: break
+      if (!write.string && write.cells!! <= 1) continue
+      val arg = invoke.params[i]
+      if (write.cells != null && write.cells <= declaredLength(arg, builder)) continue
+      val cell = pointeeCellType(arg)
+      if (writes == null && (cell == null || cell.width() > 8)) continue
+      checkNotNull(cell) { "The extent of ${invoke.name} argument $k is not checked" }
+      val last =
+        if (!write.string) ulong.getValue("${write.cells!! - 1}")
+        else {
+          val length = Var("__stub_${invoke.name}_length_${counter++}", ulong.smtType)
+          builder.addVar(length)
+          if (!input || writes == null) {
+            builder.overApproximatedVars[length] = typeInterval(ulong, parseContext)
+          }
+          val bounds =
+            listOfNotNull(
+              Geq(length.ref, ulong.unitValue),
+              write.cells?.let { Leq(length.ref, ulong.getValue("${it - 1}")) },
+            )
+          out.add(StmtLabel(HavocStmt.of(length), metadata = invoke.metadata))
+          out.add(StmtLabel(ulong.limit(length.ref), metadata = invoke.metadata))
+          out.add(StmtLabel(Assume(And(bounds)), metadata = invoke.metadata))
+          length.ref
+        }
+      @Suppress("UNCHECKED_CAST")
+      val deref =
+        Dereference.of(arg as Expr<Type>, cast(last, arg.type) as Expr<Type>, cell.smtType as Type)
+      parseContext.metadata.create(deref, "cType", cell)
+      val probe = Var("__stub_${invoke.name}_probe_${counter++}", Bool())
+      builder.addVar(probe)
+      @Suppress("UNCHECKED_CAST") val read = Eq(deref as Expr<Type>, cell.nullValue as Expr<Type>)
+      out.add(AssignStmtLabel(probe, And(assigned(k), read), metadata = invoke.metadata))
+    }
     return out
   }
 
@@ -703,6 +782,15 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       out.add(store(deref, Ite<Type>(Lt(retType.getValue("$i"), ret.ref), value, deref), invoke))
     }
     return out
+  }
+
+  /** The element count of the array variable [arg], not a parameter, or 0 when it is not one. */
+  private fun declaredLength(arg: Expr<*>, builder: XcfaProcedureBuilder): Long {
+    val decl = (arg as? RefExpr<*>)?.decl ?: return 0
+    if (builder.getParams().any { it.first == decl }) return 0
+    val array =
+      runCatching { CComplexType.getType(arg, parseContext) }.getOrNull() as? CArray ?: return 0
+    return ObjectLayout.constantDimension(array)?.toLong() ?: 0
   }
 
   /** `ret := x` with its bytes reversed, from the remainders of `x` divided by powers of 256. */
@@ -772,6 +860,67 @@ internal fun scanConversions(format: String): Int? {
     if (!suppressed) count++
   }
   return count
+}
+
+/**
+ * What a `scanf` conversion writes to its target: [cells] of them, or for a [string] at most that
+ * many with its terminating 0 (null: no bound).
+ */
+internal data class ScanWrite(val string: Boolean, val cells: Long?)
+
+/**
+ * What the `scanf` format [format] writes to each argument it assigns, in order, or null if it
+ * cannot be parsed.
+ */
+internal fun scanWrites(format: String): List<ScanWrite>? {
+  val writes = mutableListOf<ScanWrite>()
+  var i = 0
+  while (i < format.length) {
+    if (format[i++] != '%') continue
+    if (i < format.length && format[i] == '%') {
+      i++
+      continue
+    }
+    val suppressed = i < format.length && format[i] == '*'
+    if (suppressed) i++
+    val start = i
+    while (i < format.length && format[i].isDigit()) i++
+    val width = format.substring(start, i).takeIf { it.isNotEmpty() }?.toLongOrNull()
+    val modifiers = i
+    while (i < format.length && format[i] in "hljztLqm") i++
+    // `%ms` stores a pointer to a block it allocates.
+    val allocates = 'm' in format.substring(modifiers, i)
+    if (i >= format.length) return null
+    val write =
+      when (format[i++]) {
+        's' -> ScanWrite(true, width?.plus(1))
+        '[' -> {
+          if (i < format.length && format[i] == '^') i++
+          if (i < format.length && format[i] == ']') i++
+          while (i < format.length && format[i] != ']') i++
+          if (i++ >= format.length) return null
+          ScanWrite(true, width?.plus(1))
+        }
+        'c' -> ScanWrite(false, width ?: 1)
+        in "diouxXaAeEfFgGpn" -> ScanWrite(false, 1)
+        else -> return null
+      }
+    if (!suppressed) writes.add(if (allocates) ScanWrite(false, 1) else write)
+  }
+  return writes
+}
+
+/**
+ * Per argument, the larger of the writes of several possible formats; null if their shapes differ.
+ */
+private fun widest(formats: List<List<ScanWrite>>): List<ScanWrite>? {
+  val first = formats.firstOrNull() ?: return null
+  if (formats.any { it.size != first.size }) return null
+  return first.indices.map { k ->
+    val writes = formats.map { it[k] }
+    val cells = if (writes.any { it.cells == null }) null else writes.maxOf { it.cells!! }
+    ScanWrite(writes.any { it.string }, cells)
+  }
 }
 
 /**
