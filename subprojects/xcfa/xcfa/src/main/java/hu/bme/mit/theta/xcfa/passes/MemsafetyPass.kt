@@ -50,7 +50,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
@@ -77,6 +76,16 @@ import java.util.Optional
 class MemsafetyPass(private val property: XcfaProperty, private val parseContext: ParseContext) :
   ProcedurePass {
 
+  companion object {
+    /** On a dereference: how many further address units its one guard covers. */
+    const val GUARDED_SPAN = "memsafetyGuardedSpan"
+
+    /** On a dereference: it needs no guard, as a [GUARDED_SPAN] of the same region covers it. */
+    const val GUARD_COVERED = "memsafetyGuardCovered"
+
+    private const val STATIC_SIZES_KEY = "staticObjectSizes"
+  }
+
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!parseContext.isCheckMemsafety) return blockNullDerefs(builder)
 
@@ -98,10 +107,6 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
 
     property.transformSpecification(ErrorDetection.ERROR_LOCATION)
     return builder
-  }
-
-  private companion object {
-    const val STATIC_SIZES_KEY = "staticObjectSizes"
   }
 
   private val pointerType = CPointer(null, null, parseContext)
@@ -227,6 +232,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   }
                   val sizeKey = deref.array
                   val indexInObject = deref.offset.toFitsall()
+                  val lastIndex = Add(indexInObject, fitsall.getValue("${lastByte(deref)}"))
                   And(
                     And(shortCircuitConds),
                     Or(
@@ -236,7 +242,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                       // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
                         ArrayReadExpr.create<Type, Type>(sizeVar.ref, sizeKey),
-                        indexInObject,
+                        lastIndex,
                       ), // freed/not big enough ptr
                       Lt(indexInObject, fitsall.nullValue), // negative index
                     ),
@@ -384,14 +390,20 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   }
 
   /**
-   * The offset of [deref]'s last byte from its first under the bytes model, from the width of the
-   * value it accesses (its recorded C type is its address); 0 elsewhere.
+   * The offset of the last address unit [deref]'s guard covers from its first: its [GUARDED_SPAN],
+   * and under the bytes model the width of the value it accesses (its recorded C type is its
+   * address).
    */
   private fun lastByte(deref: Dereference<*, *, *>): Int {
-    if (!parseContext.memoryModel.byteAddressed()) return 0
-    val bits = (deref.type as? BvType)?.size ?: return 0
-    return maxOf((bits + 7) / 8 - 1, 0)
+    val span =
+      parseContext.metadata.getMetadataValue(deref, GUARDED_SPAN).map { it as Int }.orElse(0)
+    if (!parseContext.memoryModel.byteAddressed()) return span
+    val bits = (deref.type as? BvType)?.size ?: return span
+    return span + maxOf((bits + 7) / 8 - 1, 0)
   }
+
+  private fun needsGuard(deref: Dereference<*, *, *>): Boolean =
+    !parseContext.metadata.getMetadataValue(deref, GUARD_COVERED).isPresent
 
   /**
    * The valid-deref check of [deref] under flat addressing, which has no object base to read off
@@ -615,7 +627,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   }
 
   private fun deref(it: XcfaLabel): Boolean {
-    return it.dereferences.isNotEmpty()
+    return it.derefsWithShortCircuitCond.isNotEmpty()
   }
 
   private fun XcfaProcedureBuilder.ptrSizeAssign(it: XcfaLabel): Boolean {
@@ -640,7 +652,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       when (this) {
         is AssumeStmt -> cond.derefsWithShortCircuitCond
         is AssignStmt<*> -> expr.derefsWithShortCircuitCond
-        is MemoryAssignStmt<*, *, *> -> expr.derefsWithShortCircuitCond + listOf(deref to listOf())
+        is MemoryAssignStmt<*, *, *> ->
+          expr.derefsWithShortCircuitCond +
+            (if (needsGuard(deref)) listOf(deref to listOf()) else listOf())
         else -> emptyList()
       }
 
@@ -678,7 +692,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
             }
 
         is Dereference<*, *, *> -> {
-          ops.flatMap { it.derefsWithShortCircuitCond } + listOf(this to listOf())
+          ops.flatMap { it.derefsWithShortCircuitCond } +
+            (if (needsGuard(this)) listOf(this to listOf()) else listOf())
         }
 
         else -> {

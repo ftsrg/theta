@@ -109,4 +109,19 @@ class OverApproximationGuardTest {
       )
     assertFalse(dependsOnOverApproximation(labels, recorded))
   }
+
+  @Test
+  fun `a recorded fact about the value does not decide the trace`() {
+    val fact = And(Geq(n.ref, x.ref), Leq(n.ref, Int(1)))
+    val labels = listOf(StmtLabel(Havoc(n)), assume(fact), assume(Gt(x.ref, Int(0))))
+    assertFalse(dependsOnOverApproximation(labels, recorded) { it == fact })
+    assertTrue(dependsOnOverApproximation(labels, recorded))
+  }
+
+  @Test
+  fun `a recorded value used beyond its facts still decides the trace`() {
+    val fact = Leq(n.ref, Int(1))
+    val labels = listOf(StmtLabel(Havoc(n)), assume(fact), assume(Gt(n.ref, Int(0))))
+    assertTrue(dependsOnOverApproximation(labels, recorded) { it == fact })
+  }
 }

@@ -35,7 +35,8 @@ class XCFA(
   var unsafeUnrollUsed: Boolean = false,
   /** See [XcfaBuilder.overApproximatedVars]; passes may still add to it while this is built. */
   val overApproximatedVars: Map<VarDecl<*>, ClosedRange<BigInteger>?> = emptyMap(),
-  var overApproximationUsed: Boolean = false,
+  /** See [XcfaBuilder.overApproximationScratchVars]. */
+  val overApproximationScratchVars: Set<VarDecl<*>> = emptySet(),
 ) {
 
   private var cachedHash: Int? = null
@@ -64,11 +65,6 @@ class XCFA(
     initProcedures = initProcedureBuilders.toSet().map { Pair(it.first.build(this), it.second) }
     unsafeUnrollUsed =
       (procedureBuilders + initProcedureBuilders.map { it.first }).any { it.unsafeUnrollUsed }
-    overApproximationUsed =
-      overApproximationUsed ||
-        (procedureBuilders + initProcedureBuilders.map { it.first }).any {
-          it.overApproximationUsed
-        }
   }
 
   /** Recreate an existing XCFA by substituting the procedures and initProcedures fields. */

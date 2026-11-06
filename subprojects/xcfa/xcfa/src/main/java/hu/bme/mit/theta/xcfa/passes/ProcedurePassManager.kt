@@ -119,6 +119,8 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass(property)),
+    // ahead of the memsafety and overflow guards, so the accesses it spells out are checked
+    listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
     listOf(
       // before the memsafety/overflow guards, so those see cells constrained to their C type
       NarrowCellRangePass(parseContext),

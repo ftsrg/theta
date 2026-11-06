@@ -181,14 +181,7 @@ internal class XcfaToEventGraph(
   fun create(): EventGraph {
     XcfaEvent.resetIds()
     Thread.resetIds()
-    ThreadProcessor(
-        Thread.of(
-          xcfa.initProcedures.first().first,
-          parseContext,
-        ),
-        true,
-      )
-      .process()
+    ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
     addCrossThreadRelations()
     addJoinOrders()
     val allEvents = events.values.flatMap { it.values.flatten() }

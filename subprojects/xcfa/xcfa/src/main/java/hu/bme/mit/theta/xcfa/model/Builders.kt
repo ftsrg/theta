@@ -42,6 +42,14 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    */
   val overApproximatedVars: MutableMap<VarDecl<*>, ClosedRange<BigInteger>?> = LinkedHashMap()
 
+  /**
+   * Variables that only the model of an over-approximated call reads and writes: its recorded value
+   * and the copies of its arguments. An assumption over these alone is a fact that pass stated,
+   * which the real value satisfies too (`-1 <= sin(x) <= 1`), so it does not make a counterexample
+   * depend on the value. Only literals are substituted into them later, which keeps this true.
+   */
+  val overApproximationScratchVars: MutableSet<VarDecl<*>> = LinkedHashSet()
+
   /** For a stubbed `*printf` call: its return variable, and the variable that holds its format. */
   val formatArguments: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
 
@@ -58,6 +66,7 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
       procedureBuilders = procedures,
       initProcedureBuilders = initProcedures,
       overApproximatedVars = overApproximatedVars,
+      overApproximationScratchVars = overApproximationScratchVars,
     )
   }
 
@@ -102,7 +111,6 @@ constructor(
   val metaData: MutableMap<String, Any> = LinkedHashMap(),
   unsafeUnrollUsed: Boolean = false,
   var prop: Expr<BoolType> = True(),
-  overApproximationUsed: Boolean = false,
 ) {
 
   lateinit var initLoc: XcfaLocation
@@ -117,10 +125,6 @@ constructor(
   var unsafeUnrollUsed: Boolean = unsafeUnrollUsed
     private set
 
-  /** Set when a construct was modeled by a sound over-approximation: Unsafe is then unreliable. */
-  var overApproximationUsed: Boolean = overApproximationUsed
-    private set
-
   lateinit var parent: XcfaBuilder
   private lateinit var built: XcfaProcedure
 
@@ -128,9 +132,17 @@ constructor(
   val overApproximatedVars: MutableMap<VarDecl<*>, ClosedRange<BigInteger>?>
     get() = if (this::parent.isInitialized) parent.overApproximatedVars else LinkedHashMap()
 
+  /** [XcfaBuilder.overApproximationScratchVars] of the parent; a throwaway set when detached. */
+  val overApproximationScratchVars: MutableSet<VarDecl<*>>
+    get() = if (this::parent.isInitialized) parent.overApproximationScratchVars else LinkedHashSet()
+
   private lateinit var optimized: XcfaProcedureBuilder
   private lateinit var partlyOptimized: XcfaProcedureBuilder
   private var lastOptimized: Int = -1
+
+  /** No edge can be added or removed any more. */
+  internal val isOptimized: Boolean
+    get() = this::optimized.isInitialized
 
   fun getParams(): List<Pair<VarDecl<*>, ParamDirection>> =
     when {
@@ -361,7 +373,7 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    locs.remove(toRemove)
+    if (locs.remove(toRemove)) toRemove.metadata.onLocationLost()
     if (toRemove.error) {
       errorLoc = Optional.empty()
     }
@@ -379,6 +391,7 @@ constructor(
       val toRemove = locs.filterTo(LinkedHashSet(), pred)
       if (toRemove.isEmpty()) break
       locs.removeAll(toRemove)
+      toRemove.forEach { it.metadata.onLocationLost() }
       // An edge whose *target* vanished is just as orphaned as one whose source did, so drop
       // everything incident to a removed location and unhook it from the endpoint that survives.
       edges.removeIf { edge ->
@@ -408,10 +421,6 @@ constructor(
     unsafeUnrollUsed = true
   }
 
-  fun setOverApproximation() {
-    overApproximationUsed = true
-  }
-
   fun deepCopy(identifier: String = ""): XcfaProcedureBuilder {
     val newLocs =
       locs.associateWith {
@@ -437,7 +446,6 @@ constructor(
         metaData = metaData.toMutableMap(),
         unsafeUnrollUsed = unsafeUnrollUsed,
         prop = prop,
-        overApproximationUsed = overApproximationUsed,
       )
       .also { proc ->
         proc.lastOptimized = lastOptimized
