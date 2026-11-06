@@ -281,7 +281,6 @@ class XcfaOcChecker(
                   val race = races.first { model.holds(it.condition) }
                   val (e1, e2) =
                     race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
-                  logger.info("Data race: $e1 and $e2")
                   extractor.raceTrace(e1, e2)
                 }
               } catch (e: Exception) {
