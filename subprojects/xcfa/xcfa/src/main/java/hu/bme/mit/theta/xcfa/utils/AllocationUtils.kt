@@ -398,7 +398,7 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
  * The size memsafety records for a fresh block of [bytes] bound to [ret]: the bytes under the bytes
  * model, else its whole elements in cells ([allocationCells]), the unit accesses index in. A block
  * that cells cannot bound is refused, so that the program is rebuilt under bytes: its element type
- * is unknown, or it is not empty but holds no whole element (size 0 would mean it is freed).
+ * is unknown, or it is not empty but holds no whole element (0 cells would forbid every access).
  */
 fun XcfaProcedureBuilder.memsafetyBound(
   parseContext: ParseContext,
