@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -24,13 +26,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /** Interface for a valuation, which is a mapping from declarations to literal expressions. */
 public abstract class Valuation implements Substitution {
@@ -58,8 +57,7 @@ public abstract class Valuation implements Substitution {
     }
 
     protected Expr<BoolType> getValEquality(Decl<?> decl, LitExpr<?> value) {
-        if (decl.getType() instanceof FpType)
-            return FpAssignExpr.create(decl.getRef(), value);
+        if (decl.getType() instanceof FpType) return FpAssignExpr.create(decl.getRef(), value);
         return Eq(decl.getRef(), value);
     }
 
