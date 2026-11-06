@@ -233,7 +233,7 @@ fun XcfaProcedureBuilder.mallocCells(
     throw UnsupportedPointerSplitException("allocation of a struct with a flexible array member")
   }
   if (hasFlexibleMember(pointee)) return null
-  val elementBytes = ObjectLayout.cellModelSize(pointee, flat)
+  val elementBytes = ObjectLayout.sizeofBytes(pointee, parseContext.architecture)
   val elementCells = CStruct.inlineCells(pointee)
   if (elementBytes == 1 && elementCells == 1) return bytes
   val type = CComplexType.getType(bytes, parseContext)
@@ -257,11 +257,11 @@ private fun flexibleMemberCells(
     return null
   val type = CComplexType.getType(bytes, parseContext)
   // The header's size is what `sizeof` gives the struct, which counts the member as nothing.
-  val header = ObjectLayout.cellModelSize(struct, true)
+  val header = ObjectLayout.sizeofBytes(struct, parseContext.architecture)
   val elements =
     Div(
       Sub(type.castTo(bytes), type.getValue("$header")),
-      type.getValue("${ObjectLayout.cellModelSize(element, true)}"),
+      type.getValue("${ObjectLayout.sizeofBytes(element, parseContext.architecture)}"),
     )
   return Add(
     type.getValue("${CStruct.inlineCells(struct)}"),
