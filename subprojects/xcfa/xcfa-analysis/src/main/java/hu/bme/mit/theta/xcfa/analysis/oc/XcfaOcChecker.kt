@@ -186,7 +186,7 @@ class XcfaOcChecker(
             property.verifiedProperty,
             memoryModel == SC,
             // the Z3 propagator crashes if its first check is an exit query under a solver scope
-            decisionProcedure == OcDecisionProcedureType.IDL,
+            decisionProcedure != OcDecisionProcedureType.PROPAGATOR,
           )
           .create()
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
