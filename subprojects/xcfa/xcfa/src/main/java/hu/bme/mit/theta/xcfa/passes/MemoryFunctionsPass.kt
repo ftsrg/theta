@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
@@ -128,6 +129,20 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       }
     }
 
+    // A formatted write ends where its source string ends, which needs a loop as well.
+    while (true) {
+      val edge =
+        builder.getEdges().firstOrNull { e ->
+          e.label.getFlatLabels().any {
+            it is InvokeLabel && it.name == FormatAccessPass.BOUNDED_WRITE
+          }
+        } ?: break
+      val labels = edge.label.getFlatLabels()
+      val idx =
+        labels.indexOfFirst { it is InvokeLabel && it.name == FormatAccessPass.BOUNDED_WRITE }
+      boundedWrite(builder, edge, labels, idx, labels[idx] as InvokeLabel)
+    }
+
     // Same treatment for a nondet fill whose region is too large (or too unknown) to write out cell
     // by cell. A fresh snapshot, because the loop above may have replaced the edge this one is on.
     builder.getEdges().toList().forEach { edge ->
@@ -143,7 +158,9 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
       val labels = edge.label.getFlatLabels()
       if (
         labels.none {
-          it is InvokeLabel && it.name in COPY + FILL + NONDET_FILL && it.name !in defined
+          it is InvokeLabel &&
+            it.name in COPY + FILL + NONDET_FILL + FormatAccessPass.STRING_READ &&
+            it.name !in defined
         }
       ) {
         return@forEach
@@ -153,7 +170,8 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
           if (label !is InvokeLabel || label.name in defined) label
           else if (label.name in COPY) copy(label, builder) ?: label
           else if (label.name in FILL) fill(label, builder) ?: label
-          else if (label.name in NONDET_FILL) nondetFill(label, builder) ?: label else label
+          else if (label.name in NONDET_FILL) nondetFill(label, builder) ?: label
+          else if (label.name == FormatAccessPass.STRING_READ) stringRead(label, builder) else label
         }
       if (rewritten != labels) {
         builder.removeEdge(edge)
@@ -629,6 +647,85 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
         (0 until n.toInt()).map { StmtLabel(stmt(it, n.toInt()), metadata = invoke.metadata) } +
         returns(invoke, invoke.params[1])
     )
+  }
+
+  /** Reads the first character of a string, which is what the guards check. */
+  private fun stringRead(invoke: InvokeLabel, builder: XcfaProcedureBuilder): XcfaLabel {
+    val byte = CUnsignedChar(null, parseContext)
+    val string = invoke.params[0]
+    val read = Var("__mem_string_read_" + counter++, byte.smtType)
+    builder.addVar(read)
+    return AssignStmtLabel(
+      read,
+      deref(string, indexOf(0, string), byte),
+      read.type,
+      invoke.metadata,
+    )
+  }
+
+  /**
+   * `sprintf(dst, "...%s...", src)`: walks `src` to its terminator, then reads the last byte the
+   * call writes, as the guard of a contiguous region. `snprintf` writes at most `size` bytes.
+   */
+  private fun boundedWrite(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    labels: List<XcfaLabel>,
+    idx: Int,
+    invoke: InvokeLabel,
+  ) {
+    val source = invoke.params[2]
+    val byte = CUnsignedChar(null, parseContext)
+    val idxType = CComplexType.getUnsignedLong(parseContext)
+    val i = Var("__mem_write_i_" + counter++, idxType.smtType)
+    val read = Var("__mem_write_read_" + counter++, byte.smtType)
+    builder.addVar(i)
+    builder.addVar(read)
+    val head = XcfaLocation("__mem_write_head_" + counter++, metadata = EmptyMetaData)
+    builder.addLoc(head)
+    val after = labels.subList(idx + 1, labels.size)
+    val cell = deref(source, i.ref, byte)
+    val zero = cast(byte.nullValue, byte.smtType)
+    val size = invoke.params.getOrNull(3)
+    val written = Add(cast(idxType.castTo(invoke.params[1]), idxType.smtType), i.ref)
+    val last: Expr<*> =
+      if (size == null) written
+      else {
+        val limit =
+          Sub(
+            cast(idxType.castTo(size), idxType.smtType),
+            cast(idxType.getValue("1"), idxType.smtType),
+          )
+        Ite<Type>(Lt(written, limit), written, limit)
+      }
+    builder.removeEdge(edge)
+    builder.addEdge(
+      XcfaEdge(
+        edge.source,
+        head,
+        SequenceLabel(labels.subList(0, idx) + AssignStmtLabel(i, idxType.getValue("0"), i.type)),
+        edge.metadata,
+      )
+    )
+    builder.addEdge(
+      XcfaEdge(
+        head,
+        head,
+        SequenceLabel(
+          listOf(
+            StmtLabel(AssumeStmt.of(Not(Eq(cell, zero)))),
+            AssignStmtLabel(i, Add(i.ref, idxType.getValue("1")), i.type),
+          )
+        ),
+        EmptyMetaData,
+      )
+    )
+    val lastLabels =
+      listOf(
+        StmtLabel(AssumeStmt.of(Eq(deref(source, i.ref, byte), zero))),
+        AssignStmtLabel(read, deref(invoke.params[0], last, byte), read.type, invoke.metadata),
+      )
+    builder.addEdge(XcfaEdge(head, edge.target, SequenceLabel(lastLabels + after), EmptyMetaData))
   }
 
   /** Marks cell [i] of a region of [cells] contiguous cells for one guard on the first cell. */

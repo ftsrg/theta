@@ -104,6 +104,7 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(
       // after inlining, which gives each format argument its literal; before StringLiteralInitPass,
       // which can drop the literal's initialization
+      FormatAccessPass(parseContext),
       PrintfReturnBoundPass(parseContext),
       // after inlining, so a read through a callee's parameter is a read through the literal here
       StringLiteralInitPass(),

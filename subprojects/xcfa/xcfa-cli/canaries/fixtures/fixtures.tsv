@@ -547,3 +547,7 @@ dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MI
 alloca_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	an alloca of a partial element is bounded by its whole elements
 cas_value_return_busy_wait.c	efficient	ILP32	SAFE:valid-memsafety	a CAS wrapper returns a local value without publishing its address	flat
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes
+printf_use_after_free.c	efficient	LP64	UNSAFE:valid-memsafety	printf reads the string of a %s, so a freed one is invalid
+printf_terminated_string.c	efficient	LP64	SAFE:valid-memsafety	a terminated string passes the checks of a %s
+snprintf_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	snprintf with a size beyond the buffer writes past it
+snprintf_fits.c	efficient	LP64	SAFE:valid-memsafety	snprintf of a string that fits stays in the buffer
