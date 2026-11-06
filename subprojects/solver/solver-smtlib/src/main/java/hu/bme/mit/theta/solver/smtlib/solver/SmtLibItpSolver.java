@@ -287,4 +287,25 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             throw new SmtLibSolverException("Could not parse solver output: " + response, e);
         }
     }
+
+    /**
+     * Throws if {@code response} is a solver error. A driver that reads an interpolant as a term
+     * has to call this first, as {@code (error "...")} is a well-formed term as well.
+     */
+    protected final void throwIfSolverError(final String response) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        final String reason;
+        try {
+            reason = parser.general_response_error().reason.getText();
+        } catch (SmtLibSolverException e) {
+            return; // not an error response
+        }
+        throw new SmtLibSolverException(reason);
+    }
 }
