@@ -21,11 +21,14 @@ import hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -67,9 +70,9 @@ class XcfaCliTerminationValidateTest {
     @JvmStatic
     fun invalidWitnesses(): Stream<Arguments> =
       Stream.of(
-        Arguments.of("count-down.c", "count-down.wrong-direction.yml"),
-        Arguments.of("bounded-count-down.c", "bounded-count-down.wrong-state.yml"),
-        Arguments.of("stay-positive.c", "stay-positive.yml"),
+        Arguments.of("count-down.c", "count-down.wrong-direction.yml", true),
+        Arguments.of("bounded-count-down.c", "bounded-count-down.wrong-state.yml", true),
+        Arguments.of("stay-positive.c", "stay-positive.yml", false),
       )
 
     /** count-up.c leaves its loop only by a signed overflow. */
@@ -101,8 +104,11 @@ class XcfaCliTerminationValidateTest {
 
   @ParameterizedTest
   @MethodSource("invalidWitnesses")
-  fun testInvalidWitness(program: String, witness: String) {
-    assertEquals(UNSAFE, validate(program, witness))
+  fun testInvalidWitness(program: String, witness: String, terminates: Boolean) {
+    val output = createTempDirectory()
+    assertEquals(UNSAFE, validate(program, witness, output = output))
+    // a violation witness of termination needs a lasso, which a terminating program does not have
+    if (terminates) assertFalse(output.resolve("witness.yml").exists())
   }
 
   @ParameterizedTest
@@ -149,6 +155,7 @@ class XcfaCliTerminationValidateTest {
     program: String,
     witness: String,
     extraArgs: List<String> = listOf(),
+    output: Path = createTempDirectory(),
   ): String {
     val backend = if ("--backend" in extraArgs) listOf() else listOf("--backend", "KIND")
     return run(
@@ -156,7 +163,7 @@ class XcfaCliTerminationValidateTest {
         extraArgs +
         task(program) +
         listOf("--witness", resource("/c/termination/witnesses/$witness")) +
-        outputTo(createTempDirectory().toString())
+        outputTo(output.toString())
     )
   }
 

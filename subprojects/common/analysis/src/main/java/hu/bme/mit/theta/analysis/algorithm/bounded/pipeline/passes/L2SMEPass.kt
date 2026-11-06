@@ -58,8 +58,6 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
   private lateinit var action: ExprAction
   private lateinit var savedVar: VarDecl<BoolType>
   private lateinit var saveMap: Map<VarDecl<*>, VarDecl<*>>
-  private lateinit var repeated: Expr<BoolType>
-  private var hasWitness = false
   private var undefinedBehavior: Expr<BoolType> = False()
 
   private fun reprEq(e1: Expr<*>, e2: Expr<*>) =
@@ -74,7 +72,6 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     val savedInitExpr = And(vars.map { reprEq(it.ref, saveMap[it]!!.ref) }.toList())
     val oneIndexing = VarIndexingFactory.indexing(1)
     val witness = monolithicExpr.livenessWitness
-    hasWitness = witness != null
     undefinedBehavior = witness?.undefinedBehavior ?: False()
     val saveList =
       listOf(reprEq(savedVar.ref, False())) +
@@ -88,7 +85,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
       saveMap.entries.fold(savedVar.ref as Expr<BoolType>) { acc, (key, value) ->
         And(acc, reprEq(key.ref, value.ref))
       }
-    repeated = And(prop, monolithicExpr.propExpr)
+    val repeated = And(prop, monolithicExpr.propExpr)
     val checked =
       witness?.let {
         // Without repeating a state, a run can be infinite only in an infinite state space
@@ -150,12 +147,7 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     if (ExprUtils.simplify(undefinedBehavior, trace.states.last().`val`) == BoolExprs.True())
       return MonolithicExprPassResult(SafetyResult.unknown(safetyResult.stats.orElse(null)))
     val newStates = trace.states.map { ExplState.of(it.filterVars(vars)) }
-    // Otherwise, the path violates an invariant of the witness and is no lasso
-    val isLasso =
-      !hasWitness || ExprUtils.simplify(repeated, trace.states.last().`val`) == BoolExprs.True()
-    val hondaIndex =
-      if (isLasso) trace.states.indexOfLast { !(it.`val`.toMap()[savedVar] as BoolLitExpr).value }
-      else -1
+    val hondaIndex = trace.states.indexOfLast { !(it.`val`.toMap()[savedVar] as BoolLitExpr).value }
 
     return MonolithicExprPassResult(
         SafetyResult.unsafe(Trace.of(newStates, trace.actions.map { action }), safetyResult.proof)
