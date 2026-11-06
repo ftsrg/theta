@@ -515,12 +515,16 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       if (!seen.add(loc)) break
     }
     val onlyOnEntry =
-      labels.none { (edge, _) -> edge.getFlatLabels().any { it !in entry && it.writesAny(ghosts) } }
+      labels.none { (edge, _) ->
+        edge.getFlatLabels().any { it !in entry && it.writesAny(ghosts, xcfa) }
+      }
     return sizes.takeIf { onlyOnEntry }
   }
 
-  private fun XcfaLabel.writesAny(ghosts: List<VarDecl<*>>): Boolean =
-    collectVarsWithAccessType().any { (variable, access) -> variable in ghosts && access.isWritten }
+  private fun XcfaLabel.writesAny(ghosts: List<VarDecl<*>>, builder: XcfaBuilder): Boolean =
+    collectVarsWithAccessType(builder).any { (variable, access) ->
+      variable in ghosts && access.isWritten
+    }
 
   private fun inObject(address: Expr<*>, start: LitExpr<*>, size: LitExpr<*>): Expr<BoolType> {
     val index = Sub(address, cast(start, address.type)).toFitsall()

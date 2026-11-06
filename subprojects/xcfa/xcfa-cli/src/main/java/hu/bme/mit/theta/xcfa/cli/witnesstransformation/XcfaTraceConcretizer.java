@@ -179,7 +179,7 @@ public class XcfaTraceConcretizer {
      * Returns null if none of them repeats the state, or if the trace uses pointer dereferences, as
      * the variables then do not hold the whole state.
      */
-    public static ConcreteLasso concretizeLasso(
+    public ConcreteLasso concretizeLasso(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext) {
@@ -209,7 +209,7 @@ public class XcfaTraceConcretizer {
             final List<XcfaAction> cycle =
                     sbeTrace.getActions().subList(start, sbeTrace.getActions().size());
             try (var wpp = new WithPushPop(solver)) {
-                for (VarDecl<?> decl : writtenVars(cycle)) {
+                for (VarDecl<?> decl : writtenVars(cycle, sbeTrace.getState(0).getXcfa())) {
                     solver.add(
                             sameValue(
                                     PathUtils.unfold(decl.getRef(), indexings.get(start)),
@@ -229,7 +229,7 @@ public class XcfaTraceConcretizer {
         return null;
     }
 
-    private static boolean sameLocations(XcfaState<?> a, XcfaState<?> b) {
+    private boolean sameLocations(XcfaState<?> a, XcfaState<?> b) {
         return a.getProcesses().keySet().equals(b.getProcesses().keySet())
                 && a.getProcesses().entrySet().stream()
                         .allMatch(
@@ -242,11 +242,11 @@ public class XcfaTraceConcretizer {
                                                                 .getLocs()));
     }
 
-    private static Set<VarDecl<?>> writtenVars(List<XcfaAction> actions) {
+    private Set<VarDecl<?>> writtenVars(List<XcfaAction> actions, XCFA xcfa) {
         final Set<VarDecl<?>> vars = new LinkedHashSet<>();
         for (XcfaAction action : actions) {
             for (XcfaLabel label : getFlatLabels(action.getLabel())) {
-                collectVarsWithAccessType(label)
+                collectVarsWithAccessType(label, xcfa)
                         .forEach(
                                 (decl, access) -> {
                                     if (isWritten(access)) vars.add(decl);
@@ -257,7 +257,7 @@ public class XcfaTraceConcretizer {
     }
 
     @SuppressWarnings("unchecked")
-    private static Expr<BoolType> sameValue(Expr<?> a, Expr<?> b) {
+    private Expr<BoolType> sameValue(Expr<?> a, Expr<?> b) {
         return a.getType() instanceof FpType
                 ? FpExprs.FpAssign((Expr<FpType>) a, (Expr<FpType>) b)
                 : AbstractExprs.Eq(a, b);
@@ -278,7 +278,7 @@ public class XcfaTraceConcretizer {
      */
     private record SplitTrace(Trace<XcfaState<?>, XcfaAction> trace, List<Integer> positions) {}
 
-    private static SplitTrace splitLabels(Trace<XcfaState<PtrState<?>>, XcfaAction> trace) {
+    private SplitTrace splitLabels(Trace<XcfaState<PtrState<?>>, XcfaAction> trace) {
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
         List<Integer> positions = new ArrayList<>();
@@ -371,7 +371,7 @@ public class XcfaTraceConcretizer {
         return new SplitTrace(Trace.of(sbeStates, sbeActions), positions);
     }
 
-    private static Trace<XcfaState<ExplState>, XcfaAction> toConcreteTrace(
+    private Trace<XcfaState<ExplState>, XcfaAction> toConcreteTrace(
             Trace<XcfaState<?>, XcfaAction> sbeTrace,
             List<? extends Valuation> valuations,
             ParseContext parseContext) {

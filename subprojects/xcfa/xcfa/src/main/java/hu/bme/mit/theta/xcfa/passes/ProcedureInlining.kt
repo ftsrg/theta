@@ -53,7 +53,7 @@ internal fun XcfaProcedureBuilder.calleeOf(label: InvokeLabel): XcfaProcedureBui
  */
 internal fun XcfaProcedureBuilder.convertCallArguments(
   label: XcfaLabel,
-  parseContext: ParseContext,
+  parseContext: ParseContext?,
 ): XcfaLabel =
   when (label) {
     is SequenceLabel ->
@@ -69,7 +69,9 @@ internal fun XcfaProcedureBuilder.convertCallArguments(
             label.params.mapIndexed { i, arg ->
               val (param, direction) = params[i]
               if (direction != ParamDirection.IN) arg
-              else CComplexType.getType(param.ref, parseContext).castTo(arg)
+              else
+                parseContext?.let { CComplexType.getType(param.ref, parseContext).castTo(arg) }
+                  ?: arg
             }
         )
     }
