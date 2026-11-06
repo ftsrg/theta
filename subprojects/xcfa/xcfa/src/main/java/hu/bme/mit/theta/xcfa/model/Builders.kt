@@ -132,6 +132,10 @@ constructor(
   private lateinit var partlyOptimized: XcfaProcedureBuilder
   private var lastOptimized: Int = -1
 
+  /** No edge can be added or removed any more. */
+  internal val isOptimized: Boolean
+    get() = this::optimized.isInitialized
+
   fun getParams(): List<Pair<VarDecl<*>, ParamDirection>> =
     when {
       this::optimized.isInitialized -> optimized.params
