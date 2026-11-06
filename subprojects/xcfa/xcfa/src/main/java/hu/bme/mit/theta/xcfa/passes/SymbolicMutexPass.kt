@@ -34,7 +34,9 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.defaultValue
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intValue
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.util.Collections
@@ -160,6 +162,11 @@ class SymbolicMutexPass : ProcedurePass {
           }
       }
     val byName = procedures.associateBy { it.name }
+    val shared = model.getVars().filter { !it.atomic }.map { it.wrappedVar }.toSet()
+    fun needsSnapshot(label: XcfaLabel) =
+      label is FenceLabel &&
+        label !is AtomicFenceLabel &&
+        (label.lock.dereferences.isNotEmpty() || ExprUtils.getVars(label.lock).any { it in shared })
     val nextTid =
       if (labels.any { it is StartLabel }) global("__theta_next_thread_id", Int(roots.size))
       else null
@@ -198,10 +205,29 @@ class SymbolicMutexPass : ProcedurePass {
           else -> listOf(listOf(label))
         }
       for (edge in procedure.getEdges().toList()) {
-        val alternatives = replace(edge.label)
         procedure.removeEdge(edge)
-        alternatives.forEach {
-          procedure.addEdge(edge.withLabel(SequenceLabel(it, edge.label.metadata)))
+        val parts =
+          if (edge.getAllLabels().any { needsSnapshot(it) }) edge.splitIf(::needsSnapshot)
+          else listOf(edge)
+        for (part in parts) {
+          var operation = part
+          val fence = part.getFlatLabels().singleOrNull()
+          if (fence != null && needsSnapshot(fence)) {
+            fence as FenceLabel
+            val handle = Var("__theta_mutex_handle_${temporary++}", fence.lock.type)
+            procedure.addVar(handle)
+            val acquired =
+              XcfaLocation("loc${XcfaLocation.uniqueCounter()}", metadata = part.metadata)
+            // Keep address evaluation instrumentable without splitting the guarded ownership
+            // update.
+            val snapshot =
+              StmtLabel(Assign(handle.typed, fence.lock.typed), metadata = fence.metadata)
+            procedure.addEdge(part.withTarget(acquired).withLabel(SequenceLabel(listOf(snapshot))))
+            operation = part.withSource(acquired).withLabel(fence.withLock(handle.ref))
+          }
+          replace(operation.label).forEach {
+            procedure.addEdge(operation.withLabel(SequenceLabel(it, operation.label.metadata)))
+          }
         }
       }
     }
