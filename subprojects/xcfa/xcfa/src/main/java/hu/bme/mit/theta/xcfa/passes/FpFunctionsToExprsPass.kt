@@ -36,12 +36,14 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr.Function
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.typeInterval
 import java.util.function.BiFunction
 
 // TODO: type-right conversions (because sqrt and sqrtf might have different domains)
@@ -274,6 +276,25 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
   private var tmpCounter = 0
 
+  /**
+   * A fresh variable that holds a value C computes but the model only over-approximates. It is
+   * recorded in [XcfaProcedureBuilder.overApproximatedVars], and its havoc is what xcfa-cli looks
+   * for in a counterexample: an Unsafe verdict whose trace depends on it is reported as Unknown.
+   */
+  private fun <T : Type> overApproximated(
+    builder: XcfaProcedureBuilder,
+    callStmt: InvokeLabel,
+    role: String,
+    type: T,
+    cType: CComplexType? = null,
+  ): VarDecl<T> {
+    val v = Var("__fp_${callStmt.name}_${role}_${tmpCounter++}", type)
+    builder.addVar(v)
+    cType?.let { parseContext.metadata.create(v.ref, "cType", it) }
+    builder.overApproximatedVars[v] = cType?.let { typeInterval(it, parseContext) }
+    return v
+  }
+
   /** The return slot of a floating-point call and its C type. */
   private fun fpReturn(callStmt: InvokeLabel): Pair<VarDecl<FpType>, CComplexType> {
     val ret = callStmt.params[0]
@@ -403,9 +424,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     val (ret, type) = fpReturn(callStmt)
     val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
     val (x, y) = args
-    val nanSign = Var("__fp_${callStmt.name}_nansign_${tmpCounter++}", Bool())
-    builder.addVar(nanSign)
-    builder.setOverApproximation()
+    val nanSign = overApproximated(builder, callStmt, "nansign", Bool())
     val rhs =
       IteExpr.of(
         FpExprs.IsNan(y),
@@ -434,44 +453,63 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     val (labels, args) = freshArgs(builder, callStmt, argType, 1)
     val x = args[0]
     val retDecl = (ret as RefExpr<*>).decl as VarDecl<*>
-    val zero = TypeUtils.cast(retType.nullValue, retDecl.type)
+    // Havocking a fresh variable rather than the return slot keeps every other havoc of that
+    // variable (a nondeterministic input, say) out of the over-approximation record.
+    val value = overApproximated(builder, callStmt, "signbit", retDecl.type, retType)
+    val zero = TypeUtils.cast(retType.nullValue, value.type)
     val sign =
       Or(
         FpExprs.IsNan(x),
         IteExpr.of(
           isNegative(x),
-          Not(AbstractExprs.Eq(retDecl.ref, zero)),
-          AbstractExprs.Eq(retDecl.ref, zero),
+          Not(AbstractExprs.Eq(value.ref, zero)),
+          AbstractExprs.Eq(value.ref, zero),
         ),
       )
-    builder.setOverApproximation()
+    builder.overApproximationScratchVars += value
+    builder.overApproximationScratchVars += ExprUtils.getVars(x)
     return SequenceLabel(
       labels +
-        StmtLabel(HavocStmt.of(retDecl), metadata = callStmt.metadata) +
-        StmtLabel(retType.limit(retDecl.ref), metadata = callStmt.metadata) +
-        StmtLabel(Stmts.Assume(sign), metadata = callStmt.metadata)
+        StmtLabel(HavocStmt.of(value), metadata = callStmt.metadata) +
+        StmtLabel(retType.limit(value.ref), metadata = callStmt.metadata) +
+        StmtLabel(Stmts.Assume(sign), metadata = callStmt.metadata) +
+        StmtLabel(
+          Stmts.Assign(
+            TypeUtils.cast(retDecl, retDecl.type),
+            TypeUtils.cast(value.ref, retDecl.type),
+          ),
+          metadata = callStmt.metadata,
+        )
     )
   }
 
   /**
    * A math function with no counterpart in the FP theory: it becomes an [FpMathFuncExpr], which
    * solvers encode as an uninterpreted function, and its result is constrained by the function's
-   * [facts][Function.facts]. Being an over-approximation, it marks the procedure: an Unsafe verdict
-   * is then reported as Unknown.
+   * [facts][Function.facts]. The value is an over-approximation: it goes through a recorded,
+   * havocked variable that is pinned to the uninterpreted term, so an Unsafe verdict that depends
+   * on it is reported as Unknown. The pin is an `FpAssign` (bitwise equality), as an IEEE `==`
+   * would rule out NaN. The pin and the facts do not count as uses of the value: a trace that only
+   * passes through the call, without using its result, stays Unsafe.
    */
   private fun addMathFunc(names: Array<String>, function: Function) {
     addHandler(names) { builder, callStmt ->
       Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
       val (ret, type) = fpReturn(callStmt)
       val (labels, args) = freshArgs(builder, callStmt, type, 1)
-      builder.setOverApproximation()
+      val value = overApproximated(builder, callStmt, "value", ret.type)
+      val term = FpExprs.FpAssign(value.ref, FpExprs.MathFunc(function, args[0]))
+      val facts = And(function.facts(args[0], value.ref))
+      // Both hold for the real function too (it is functionally consistent, and the facts are true
+      // of it), and they read only scratch variables, so xcfa-cli does not count them as uses.
+      builder.overApproximationScratchVars += value
+      builder.overApproximationScratchVars += ExprUtils.getVars(args[0])
       SequenceLabel(
         labels +
-          assignFp(callStmt, ret, type, FpExprs.MathFunc(function, args[0])) +
-          StmtLabel(
-            Stmts.Assume(And(function.facts(args[0], ret.ref))),
-            metadata = callStmt.metadata,
-          )
+          StmtLabel(HavocStmt.of(value), metadata = callStmt.metadata) +
+          StmtLabel(Stmts.Assume(term), metadata = callStmt.metadata) +
+          StmtLabel(Stmts.Assume(facts), metadata = callStmt.metadata) +
+          assignFp(callStmt, ret, type, value.ref)
       )
     }
   }

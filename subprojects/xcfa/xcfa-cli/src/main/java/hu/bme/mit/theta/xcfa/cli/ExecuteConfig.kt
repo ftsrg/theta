@@ -467,20 +467,6 @@ private fun backend(
                 checker.check()
               }
               .let ResultMapper@{ result ->
-                if (result.isUnsafe && (xcfa?.overApproximationUsed ?: false)) {
-                  if (config.backendConfig.portfolioStep) {
-                    logger.benchmark(
-                      "Over-approximating model used: handing over to the next config."
-                    )
-                    exitOnError(config.debugConfig.stacktrace, throwDontExit) {
-                      throw ErrorCodeException(ExitCodes.UNRELIABLE_UNSAFE.code)
-                    }
-                  }
-                  // Downgraded before the property or the raw result is printed: output parsers
-                  // match on both.
-                  logger.benchmark("Over-approximating model used: an unsafe result is unreliable.")
-                  return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
-                }
                 if (result.isUnsafe) {
                   // A portfolio or in-process run only relays a result that its child checked.
                   if (
@@ -488,6 +474,19 @@ private fun backend(
                       xcfa != null &&
                       unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
                   ) {
+                    // Within a portfolio, another config may still settle the task (a Safe verdict
+                    // is sound under over-approximation), so hand over instead of ending on
+                    // Unknown.
+                    if (config.backendConfig.portfolioStep) {
+                      logger.benchmark(
+                        "Unsafe result depends on an over-approximated value: handing over to the next config."
+                      )
+                      exitOnError(config.debugConfig.stacktrace, throwDontExit) {
+                        throw ErrorCodeException(ExitCodes.UNRELIABLE_UNSAFE.code)
+                      }
+                    }
+                    // Downgraded before the property or the raw result is printed: output parsers
+                    // match on both.
                     logger.result(
                       "%s",
                       "Unsafe result depends on an over-approximated library value",

@@ -1,6 +1,6 @@
 // An uninterpreted math function admits values the real function never returns, so a
-// counterexample through one is not trusted: the over-approximation flag turns Unsafe into
-// Unknown. Here expf(1.0f) is about 2.718, never 100, yet the model reaches the error.
+// counterexample that depends on one is not trusted: it turns Unsafe into Unknown.
+// Here expf(1.0f) is about 2.718, never 100, yet the model reaches the error.
 extern void abort(void);
 void reach_error(){ abort(); }
 extern float expf(float x);
