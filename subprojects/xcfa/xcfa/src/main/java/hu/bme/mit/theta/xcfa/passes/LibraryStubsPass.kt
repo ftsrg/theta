@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Rem
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
@@ -402,6 +403,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         Model.Plain -> null
       }
     if (exact != null) return out + exact
+    when (model) {
+      Model.Line -> out.addAll(lastCellProbe(invoke, 1, 2, builder))
+      Model.Receive -> out.addAll(lastCellProbe(invoke, 2, 3, builder))
+      else -> {}
+    }
 
     uniqueWarningLogger.write(
       Logger.Level.INFO,
@@ -782,6 +788,38 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       out.add(store(deref, Ite<Type>(Lt(retType.getValue("$i"), ret.ref), value, deref), invoke))
     }
     return out
+  }
+
+  /**
+   * Under memory safety, a read of the last of the `n` (argument [size]) characters of [buffer]
+   * that `fgets`, `read` or `recv` may fill where [line] or [receive] does not apply: the stub
+   * writes only the first one, and the input may fill all of them.
+   */
+  private fun lastCellProbe(
+    invoke: InvokeLabel,
+    buffer: Int,
+    size: Int,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel> {
+    if (!parseContext.isCheckMemsafety) return listOf()
+    val buf = invoke.params.getOrNull(buffer) ?: return listOf()
+    val n = invoke.params.getOrNull(size) ?: return listOf()
+    val constant = ExprUtils.simplify(n).asConstantBigInteger()
+    if (constant != null && constant <= declaredLength(buf, builder).toBigInteger()) return listOf()
+    // `n` counts bytes, which only a character cell matches.
+    val cell = pointeeCellType(buf)?.takeIf { it.width() == 8 } ?: return listOf()
+    val ulong = CComplexType.getUnsignedLong(parseContext)
+    val sizeType = runCatching { CComplexType.getType(n, parseContext) }.getOrDefault(ulong)
+    val last = Sub(ulong.castTo(n), ulong.unitValue)
+    @Suppress("UNCHECKED_CAST")
+    val deref =
+      Dereference.of(buf as Expr<Type>, cast(last, buf.type) as Expr<Type>, cell.smtType as Type)
+    parseContext.metadata.create(deref, "cType", cell)
+    val probe = Var("__stub_${invoke.name}_probe_${counter++}", Bool())
+    builder.addVar(probe)
+    @Suppress("UNCHECKED_CAST") val read = Eq(deref as Expr<Type>, cell.nullValue as Expr<Type>)
+    val filled = Geq(sizeType.castTo(n), sizeType.unitValue)
+    return listOf(AssignStmtLabel(probe, And(filled, read), metadata = invoke.metadata))
   }
 
   /** The element count of the array variable [arg], not a parameter, or 0 when it is not one. */

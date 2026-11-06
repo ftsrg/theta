@@ -595,3 +595,5 @@ sscanf_string_overflow.c	efficient	LP64	UNKNOWN:valid-memsafety	sscanf %s may ov
 pointer_integer_reused_address.c	efficient	ILP32	UNKNOWN:valid-memsafety	a pointer converted to an integer makes Safe unreliable: a freed address may be reused
 pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the difference of two pointers converted to integers is no address
 container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
+fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
+fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
