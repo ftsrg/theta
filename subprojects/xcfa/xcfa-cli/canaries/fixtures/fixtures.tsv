@@ -579,3 +579,5 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+gnu_cast_to_union.c	efficient	LP64	SAFE	GNU cast to union sets the member of the operand type
+gnu_cast_to_union.bug.c	efficient	LP64	UNSAFE	GNU cast to union: the member holds the operand, not a fixed value
