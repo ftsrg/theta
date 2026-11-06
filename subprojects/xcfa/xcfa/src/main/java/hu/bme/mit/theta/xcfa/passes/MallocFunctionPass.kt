@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -49,8 +50,8 @@ import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
-import hu.bme.mit.theta.xcfa.utils.recordedSize
 
 private const val REALLOCATES = "reallocates"
 
@@ -144,9 +145,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val arg = invokeLabel.params[1]
     val sizeLabels =
       (if (parseContext.isCheckMemsafety)
-        listOf(
-          builder.parent.allocate(parseContext, ret, builder.recordedSize(parseContext, ret, arg))
-        )
+        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
       else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
       val reserved =
@@ -180,10 +179,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
     }
     return if (parseContext.isCheckMemsafety) {
-      listOf(
-        keepBase,
-        builder.parent.allocate(parseContext, ret, builder.recordedSize(parseContext, ret, newSize)),
-      )
+      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
     } else {
       listOf(keepBase)
     }
@@ -200,6 +196,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invokeLabel.params[0] as RefExpr<*>
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
+
+  /**
+   * The size recorded for memsafety, in the unit of dereference offsets: cells unless every cell is
+   * a byte. Without a known cell count the byte count would let overruns through.
+   */
+  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
+    if (!parseContext.memoryModel.byteAddressed())
+      builder.mallocCells(parseContext, ret, bytes)
+        ?: throw RequiresByteAddressedMemoryException("allocation of unknown element type")
+    else bytes
 
   /**
    * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a

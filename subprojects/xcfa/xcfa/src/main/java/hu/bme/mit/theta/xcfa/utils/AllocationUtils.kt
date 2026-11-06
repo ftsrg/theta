@@ -33,7 +33,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
@@ -210,20 +209,6 @@ fun boundCell(label: XcfaLabel, ret: Expr<*>): Expr<*>? {
   if (ret !is RefExpr<*> || ExprUtils.getVars(stmt.expr).none { it == ret.decl }) return null
   return stmt.expr
 }
-
-/**
- * The size to record for an allocation of [bytes], in the unit of dereference offsets: cells unless
- * every cell is a byte. Without a known cell count the byte count would let overruns through.
- */
-fun XcfaProcedureBuilder.recordedSize(
-  parseContext: ParseContext,
-  ret: Expr<*>,
-  bytes: Expr<*>,
-): Expr<*> =
-  if (parseContext.memoryModel.byteAddressed()) bytes
-  else
-    mallocCells(parseContext, ret, bytes)
-      ?: throw RequiresByteAddressedMemoryException("allocation of unknown element type")
 
 /**
  * The cells a `malloc` of [bytes] spans under the cell models: whole elements of the typed pointer

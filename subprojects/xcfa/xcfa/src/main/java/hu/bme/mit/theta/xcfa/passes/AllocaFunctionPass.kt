@@ -42,7 +42,6 @@ import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocVar
-import hu.bme.mit.theta.xcfa.utils.recordedSize
 import java.math.BigInteger
 
 /**
@@ -118,17 +117,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
               if (parseContext.isCheckMemsafety) {
                 addressLabels +
                   listOfNotNull(
-                    // Only the program's own alloca, typed `void *`, counts bytes: the frontend's
-                    // stack arrays and [SubObjects] pass the size in cells already.
-                    builder.parent.allocate(
-                      parseContext,
-                      ret,
-                      if ((retType as? CPointer)?.embeddedType is CVoid) {
-                        builder.recordedSize(parseContext, ret, arg)
-                      } else {
-                        arg
-                      },
-                    ),
+                    builder.parent.allocate(parseContext, ret, arg),
                     probeInvalidLength(builder, ret, arg, retType),
                   )
               } else {
