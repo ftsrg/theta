@@ -20,9 +20,11 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -35,6 +37,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.typeInterval
 
 /**
  * Standard-library functions that nothing defines and [UnresolvedInvokeToHavocPass] refuses.
@@ -47,7 +50,8 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * These are stubbed explicitly instead. Each entry states which arguments the function WRITES
  * THROUGH, and those pointees are filled with fresh nondeterministic values rather than being left
  * at their old contents -- leaving them would be a specific wrong value, which can hide a bug as
- * easily as invent one, where unconstrained is a safe over-approximation.
+ * easily as invent one, where unconstrained is a safe over-approximation. It is safe for a Safe
+ * verdict only, so each value made up here is recorded in [XcfaBuilder.overApproximatedVars].
  *
  * ⚠️ Not modelled here, deliberately:
  * - a call flagged [InvokeLabel.isLibraryFunction]. That flag means "an later pass or the analysis
@@ -96,22 +100,31 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      *   havoc the return. A havoc'd return means the caller's error path is always reachable, which
      *   invents failures the modelled program cannot have; where the standard assumption is
      *   success, say so here instead.
+     * @param input the written buffers hold input from the environment, which can be any value in C
+     *   too. Otherwise the call computes them, and their havoc is an over-approximation.
+     * @param freshString the call returns a fresh string of fewer than this many characters, with
+     *   any content.
      */
-    private data class Stub(val writes: Writes = Writes.None, val returns: Long? = null)
+    private data class Stub(
+      val writes: Writes = Writes.None,
+      val returns: Long? = null,
+      val input: Boolean = false,
+      val freshString: Int? = null,
+    )
 
     private val STUBS: Map<String, Stub> =
       mapOf(
         // stdio: reads produce nondeterministic data in the caller's buffer
-        "fgets" to Stub(Writes.At(setOf(1))),
-        "fscanf" to Stub(Writes.VariadicFrom(3)), // (ret, stream, fmt, &a, &b, ...)
-        "__isoc99_fscanf" to Stub(Writes.VariadicFrom(3)),
-        "scanf" to Stub(Writes.VariadicFrom(2)), // (ret, fmt, &a, &b, ...)
-        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2)),
+        "fgets" to Stub(Writes.At(setOf(1)), input = true),
+        "fscanf" to Stub(Writes.VariadicFrom(3), input = true), // (ret, stream, fmt, &a, &b, ...)
+        "__isoc99_fscanf" to Stub(Writes.VariadicFrom(3), input = true),
+        "scanf" to Stub(Writes.VariadicFrom(2), input = true), // (ret, fmt, &a, &b, ...)
+        "__isoc99_scanf" to Stub(Writes.VariadicFrom(2), input = true),
         "sscanf" to Stub(Writes.VariadicFrom(3)),
         "__isoc99_sscanf" to Stub(Writes.VariadicFrom(3)),
-        "read" to Stub(Writes.At(setOf(2))),
-        "fread" to Stub(Writes.At(setOf(1))),
-        "getline" to Stub(Writes.At(setOf(1, 2))),
+        "read" to Stub(Writes.At(setOf(2)), input = true),
+        "fread" to Stub(Writes.At(setOf(1)), input = true),
+        "getline" to Stub(Writes.At(setOf(1, 2)), input = true),
         // stdio: writes go to a stream we do not model, so only the return matters
         "fopen" to Stub(),
         "fclose" to Stub(),
@@ -130,7 +143,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "vsnprintf" to Stub(Writes.At(setOf(1))),
         "vasprintf" to Stub(Writes.At(setOf(1))),
         "asprintf" to Stub(Writes.At(setOf(1))),
-        // string/memory inspection -- these only READ, so the return is the whole effect
+        // string/memory inspection -- these only READ, so the return is the whole effect.
+        // CLibraryFunctionsPass models most `strlen` calls exactly; this stub takes the rest.
         "strlen" to Stub(),
         "strnlen" to Stub(),
         "strcmp" to Stub(),
@@ -143,8 +157,23 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strspn" to Stub(),
         "strcspn" to Stub(),
         "strpbrk" to Stub(),
-        "strerror" to Stub(),
+        // glibc and musl messages in the C locale are shorter than this
+        "strerror" to Stub(freshString = 128),
       )
+
+    /** The argument position of the format, for the calls whose return a format bounds. */
+    private val FORMAT_INDEX =
+      mapOf(
+        "sprintf" to 2,
+        "snprintf" to 3,
+        "vsnprintf" to 3,
+        "asprintf" to 2,
+        "vasprintf" to 2,
+        "fprintf" to 2,
+      )
+
+    /** The stubbed calls that write through a pointer, filling only [DEFAULT_FILL_CELLS] cells. */
+    internal val BUFFER_WRITING: Set<String> = STUBS.filterValues { it.writes != Writes.None }.keys
 
     /** How many cells of a written pointee to fill when its extent is not otherwise known. */
     private const val DEFAULT_FILL_CELLS = 1
@@ -175,7 +204,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
    * model.
    */
   private fun InvokeLabel.stubbable(defined: Set<String>) =
-    name in STUBS && name !in defined && !isLibraryFunction
+    name in STUBS &&
+      name !in defined &&
+      !isLibraryFunction &&
+      // a fresh string is allocated, which memory safety would report as a leak
+      !(STUBS.getValue(name).freshString != null && parseContext.isCheckMemsafety)
 
   /** The argument positions this call writes through, resolved against the actual arity. */
   private fun writtenIndices(stub: Stub, invoke: InvokeLabel): List<Int> =
@@ -196,12 +229,14 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     // argument as a read into a fresh variable first, the way CLibraryFunctionsPass models
     // `printf`. This is the argument *value*; what a pointer argument points AT is a separate
     // question, answered (for the written buffers only) below.
+    var format: VarDecl<*>? = null
     for (i in 1 until invoke.params.size) {
       val arg = invoke.params[i]
       if (arg is LitExpr<*>) continue // a constant reads nothing
       val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
       builder.addVar(read)
       out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
+      if (i == FORMAT_INDEX[invoke.name]) format = read
     }
 
     uniqueWarningLogger.write(
@@ -219,6 +254,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       for (n in 0 until DEFAULT_FILL_CELLS) {
         val fresh = Var("__stub_${invoke.name}_${counter++}", cell.smtType)
         builder.addVar(fresh)
+        if (!spec.input) builder.overApproximatedVars[fresh] = typeInterval(cell, parseContext)
         val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
         val deref =
           Dereference.of(
@@ -240,10 +276,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         // without it. Something else in those inputs participates. Do not remove it on the grounds
         // that a small repro shows no difference.
         //
-        // Emitted here rather than left to [HavocPromotionAndRange], which adds exactly this assume
-        // but runs BEFORE this pass in the pipeline, so a havoc introduced here never reaches it --
-        // stamping `cType` on the variable to make that pass pick it up was tried and measured at
-        // zero effect for the same reason.
+        // Emitted here: [HavocPromotionAndRange] bounds only a variable with a `cType`.
         out.add(StmtLabel(cell.limit(fresh.ref), metadata = invoke.metadata))
         out.add(
           StmtLabel(
@@ -256,16 +289,69 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
 
     // The return value: a fixed one where the call is assumed to succeed, otherwise a havoc.
     val ret = (invoke.params.getOrNull(0) as? RefExpr<*>)?.decl as? VarDecl<*>
+    if (ret != null && spec.freshString != null) {
+      val string = freshString(ret, spec.freshString, invoke, builder)
+      if (string != null) return out + string
+    }
+    if (ret != null && format != null && spec.returns == null) {
+      builder.parent.formatArguments[ret] = format
+    }
     if (ret != null) {
       val fixed = spec.returns
       if (fixed == null) {
         out.add(StmtLabel(HavocStmt.of(ret), metadata = invoke.metadata))
+        builder.overApproximatedVars[ret] = typeInterval(ret.ref, parseContext)
       } else {
         val type = CComplexType.getType(ret.ref, parseContext)
         out.add(
           AssignStmtLabel(ret, cast(type.getValue("$fixed"), ret.type), metadata = invoke.metadata)
         )
       }
+    }
+    return out
+  }
+
+  /**
+   * `ret := malloc(cells)`, never null, with any characters in all cells but the last, which is 0.
+   * Null when [ret] is not a pointer to a scalar.
+   */
+  private fun freshString(
+    ret: VarDecl<*>,
+    cells: Int,
+    invoke: InvokeLabel,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel>? {
+    val cell = pointeeCellType(ret.ref) ?: return null
+    val out = mutableListOf<XcfaLabel>()
+    val size = CComplexType.getUnsignedLong(parseContext).getValue("$cells")
+    out.add(InvokeLabel("malloc", listOf(ret.ref, size), invoke.metadata))
+    val nullValue = CComplexType.getType(ret.ref, parseContext).nullValue
+    out.add(StmtLabel(Assume(Neq(ret.ref, nullValue)), metadata = invoke.metadata))
+    for (n in 0 until cells) {
+      val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
+      val deref =
+        Dereference.of(
+          ret.ref as Expr<Type>,
+          cast(index, ret.type) as Expr<Type>,
+          cell.smtType as Type,
+        )
+      parseContext.metadata.create(deref, "cType", CPointer(null, cell, parseContext))
+      val value =
+        if (n == cells - 1) cell.nullValue
+        else {
+          val fresh = Var("__stub_${invoke.name}_${counter++}", cell.smtType)
+          builder.addVar(fresh)
+          builder.overApproximatedVars[fresh] = typeInterval(cell, parseContext)
+          out.add(StmtLabel(HavocStmt.of(fresh), metadata = invoke.metadata))
+          out.add(StmtLabel(cell.limit(fresh.ref), metadata = invoke.metadata))
+          fresh.ref
+        }
+      out.add(
+        StmtLabel(
+          MemoryAssignStmt.create(deref, cast(value, cell.smtType)),
+          metadata = invoke.metadata,
+        )
+      )
     }
     return out
   }

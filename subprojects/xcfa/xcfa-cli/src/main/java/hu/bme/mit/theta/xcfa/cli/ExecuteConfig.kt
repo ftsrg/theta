@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.utils.unsafeDependsOnOverApproximation
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -485,6 +486,18 @@ private fun backend(
                   return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                 }
                 if (result.isUnsafe) {
+                  // A portfolio or in-process run only relays a result that its child checked.
+                  if (
+                    !portfolioRun &&
+                      xcfa != null &&
+                      unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
+                  ) {
+                    logger.result(
+                      "%s",
+                      "Unsafe result depends on an over-approximated library value",
+                    )
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  }
                   // need to determine what kind
                   val property =
                     try {

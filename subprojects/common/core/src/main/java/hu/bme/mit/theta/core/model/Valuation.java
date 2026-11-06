@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.model;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -24,6 +25,8 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +45,24 @@ public abstract class Valuation implements Substitution {
 
     /**
      * Convert a valuation into an expression. For example if the valuation assigns 1 to x and 2 to
-     * y, the expression is (x == 1 and y == 2).
+     * y, the expression is (x == 1 and y == 2). Floating-point values use {@code FpAssign} (SMT
+     * {@code =}), as {@code fp.eq} never holds for NaN and does not tell -0 from +0.
      *
      * @return
      */
     public Expr<BoolType> toExpr() {
         final List<Expr<BoolType>> exprs = new ArrayList<>();
         for (final Decl<?> decl : getDecls()) {
-            final Expr<BoolType> expr = Eq(decl.getRef(), eval(decl).get());
-            exprs.add(expr);
+            exprs.add(eqExpr(decl, eval(decl).get()));
         }
         return SmartBoolExprs.And(exprs);
+    }
+
+    private static Expr<BoolType> eqExpr(final Decl<?> decl, final LitExpr<?> value) {
+        if (decl.getType() instanceof FpType fpType) {
+            return FpAssign(TypeUtils.cast(decl.getRef(), fpType), TypeUtils.cast(value, fpType));
+        }
+        return Eq(decl.getRef(), value);
     }
 
     /**

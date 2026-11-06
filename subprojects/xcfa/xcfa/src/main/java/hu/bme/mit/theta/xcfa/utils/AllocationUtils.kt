@@ -68,6 +68,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
+import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.math.BigInteger
 
 /**
@@ -433,6 +434,9 @@ fun allocationCells(parseContext: ParseContext, pointee: CComplexType, bytes: Ex
     flexibleMemberCells(parseContext, pointee, bytes)?.let {
       return it
     }
+  } else if (hasFlexibleMember(pointee)) {
+    // Only the flat layout counts the trailing elements of a flexible member.
+    throw UnsupportedPointerSplitException("allocation of a struct with a flexible array member")
   }
   if (hasFlexibleMember(pointee)) return null
   val elementBytes = ObjectLayout.cellModelSize(pointee, flat)

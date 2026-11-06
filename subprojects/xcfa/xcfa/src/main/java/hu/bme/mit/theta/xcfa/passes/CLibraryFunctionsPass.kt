@@ -53,6 +53,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.defaultValue
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.integerOf
@@ -69,7 +70,23 @@ import java.math.BigInteger
  * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
  * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
  */
-class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+class CLibraryFunctionsPass(
+  val parseContext: ParseContext,
+  /** Model `strlen` exactly; off where the loop's unbounded memory could look like divergence. */
+  private val modelStringLength: Boolean = false,
+) : ProcedurePass {
+
+  /** The procedures that the program defines; a call to one of them is not a library call. */
+  private var defined: Set<String> = emptySet()
+
+  /** The model that [bufferStubCalled] was computed for. */
+  private var scanned: XcfaBuilder? = null
+
+  /**
+   * A stub writes a buffer somewhere: it fills one cell and leaves the rest stale, where C has a
+   * terminated string. An exact `strlen` over those cells could then prove a wrong Safe.
+   */
+  private var bufferStubCalled = false
 
   /**
    * The C zero of the variable's own type. The pthread functions return `int`, which is the SMT
@@ -167,6 +184,19 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     checkNotNull(builder.metaData["deterministic"])
+    defined = builder.parent.getProcedures().mapNotNull { it.name }.toSet()
+    // Before the first LibraryStubsPass of the phase, so every such call is still an InvokeLabel.
+    if (scanned !== builder.parent) {
+      scanned = builder.parent
+      bufferStubCalled =
+        builder.parent.getProcedures().any { procedure ->
+          procedure.getEdges().any { edge ->
+            edge.getAllLabels().any {
+              it is InvokeLabel && it.name in LibraryStubsPass.BUFFER_WRITING && it.name !in defined
+            }
+          }
+        }
+    }
     val atomicLocations = getAtomicBlockInnerLocations(builder).toSet()
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
@@ -253,6 +283,35 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                 val exitLabel = SequenceLabel(listOf(exitAssume, copyCurrent))
                 val exitEdge = XcfaEdge(loc, target, exitLabel, metadata)
                 builder.addEdge(exitEdge)
+              }
+
+              "strlen" -> {
+                // The index of the first 0 cell. The index has no C type, so it gets no overflow
+                // check, and the cell reads get the usual memory-safety checks.
+                val str = invokeLabel.params[1]
+                val ret = invokeLabel.params[0] as RefExpr<*>
+                val index = Decls.Var("__theta_strlen_index_var_${uniqueCounter++}", str.type)
+                builder.addVar(index)
+                val loc =
+                  XcfaLocation(
+                    "${it.source.name}_strlen_${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                val init = AssignStmtLabel(index, str.type.integerOf(0))
+                builder.addEdge(XcfaEdge(it.source, loc, SequenceLabel(listOf(init)), metadata))
+                val cell = Dereference.of(str, index.ref, charType(str))
+                val next =
+                  listOf(
+                    StmtLabel(AssumeStmt.of(NeqExpr.create2(cell, cell.type.integerOf(0)))),
+                    AssignStmtLabel(index.ref, Add(listOf(index.ref, str.type.integerOf(1)))),
+                  )
+                builder.addEdge(XcfaEdge(loc, loc, SequenceLabel(next), metadata))
+                val exit =
+                  listOf(
+                    StmtLabel(AssumeStmt.of(EqExpr.create2(cell, cell.type.integerOf(0)))),
+                    AssignStmtLabel(ret, cast(index.ref, ret.type)),
+                  )
+                builder.addEdge(XcfaEdge(loc, target, SequenceLabel(exit), metadata))
               }
 
               "pthread_join" -> {
@@ -579,7 +638,24 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
   }
 
-  private fun predicate(it: XcfaLabel): Boolean = it is InvokeLabel && it.name in supportedFunctions
+  private fun predicate(it: XcfaLabel): Boolean =
+    it is InvokeLabel &&
+      (it.name in supportedFunctions || (it.name == "strlen" && modelsStringLength(it)))
+
+  /**
+   * `strlen` on a plain variable, when the program does not define it and no stub writes a buffer.
+   * A pointer sum would name no object under the multi model (`Dereference(p + k, i)`), so such a
+   * call stays a stub.
+   */
+  private fun modelsStringLength(invoke: InvokeLabel): Boolean {
+    if (!modelStringLength || bufferStubCalled) return false
+    if (invoke.name in defined || invoke.params.size != 2) return false
+    val ret = invoke.params[0] as? RefExpr<*> ?: return false
+    val str = invoke.params[1] as? RefExpr<*> ?: return false
+    if (ret.type != str.type) return false
+    val type = CComplexType.getType(str, parseContext)
+    return type is CPointer || type is CArray
+  }
 
   private fun Expr<*>.isNullPointer() = asConstant()?.signum() == 0
 
