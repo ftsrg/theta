@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -104,15 +105,18 @@ public class NamedType extends CSimpleType {
             case "void":
                 type = new CVoid(this, parseContext);
                 break;
+            case Enum.UNKNOWN_TYPE_NAME:
+                throw new UnsupportedFrontendElementException(
+                        "an enumeration whose values could not all be computed");
             default:
                 {
                     uniqueWarningLogger.write(
                             Level.INFO,
                             "WARNING: Unknown simple type " + namedType.replace("%", "%%") + "\n");
                     if (namedType.startsWith("enum ")) {
-                        // An enum whose definition was never seen is still an int in C. The CVoid
-                        // fallback gave such variables a unit-sized SMT sort, so any assignment
-                        // to them died casting a full-width value into it.
+                        // An enum whose definition was never seen is incomplete, so only pointed
+                        // to; an int stands in for it. The CVoid fallback gave such variables a
+                        // unit-sized SMT sort, so any assignment to them died casting into it.
                         type = new CSignedInt(this, parseContext);
                     } else {
                         type = new CVoid(this, parseContext);
