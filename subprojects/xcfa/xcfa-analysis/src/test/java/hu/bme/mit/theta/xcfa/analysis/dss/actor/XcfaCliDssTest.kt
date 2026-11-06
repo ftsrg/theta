@@ -33,6 +33,8 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 
+private const val CUT = "--dss-cut-on-timeout"
+
 class XcfaCliDssTest {
 
   companion object {
@@ -120,6 +122,7 @@ class XcfaCliDssTest {
           listOf("--dss-direction", "BIDIRECTIONAL", "--dss-executor", "PROCESS"),
           listOf("--dss-checker-backends", "KIND,CEGAR", "--dss-checker-budget", "60000"),
           listOf("--dss-expl-checker", "--dss-checker-budget", "60000"),
+          listOf("--dss-checker-backends", "KIND,CEGAR", "--dss-checker-budget", "1", CUT),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-fallback-solver", "Z3:new"),
           listOf("--dss-solver", "Z3"),
           listOf("--dss-block-local-pool"),
@@ -127,6 +130,13 @@ class XcfaCliDssTest {
         .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
         .stream()
   }
+
+  /**
+   * With a 1 ms budget, every checker runs out of it: blocks are cut until none has a cut. Only on
+   * loop-free programs, as DSS need not terminate once a loop is cut into a cycle of blocks.
+   */
+  private val cutting =
+    arrayOf("--dss-checker-backends", "KIND,CEGAR", "--dss-checker-budget", "1", CUT)
 
   private fun expected(program: String) =
     if (program.endsWith("unsafe")) "SafetyResult Unsafe" else "SafetyResult Safe"
@@ -228,6 +238,25 @@ class XcfaCliDssTest {
         "--dss-expl-checker",
       )
     assertTrue(thrown != null && "--dss-expl-checker" in output) { output }
+  }
+
+  @Test
+  fun `cutting on timeout without a checker budget is rejected`() {
+    val (output, thrown) = runDss("safe", CUT)
+    assertTrue(thrown != null && "--dss-cut-on-timeout" in output) { output }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
+  fun `a block that every checker runs out of is cut, and the run starts over`(executor: String) {
+    for (program in listOf("safe", "unsafe")) {
+      val (output, thrown) =
+        runDss(program, *cutting, "--dss-executor", executor, "--loglevel", "INFO")
+      if (thrown != null) throw AssertionError(output, thrown)
+      assertTrue("starting over with it cut" in output) { output }
+      val verdict = output.lines().last { it.contains("SafetyResult") }
+      assertTrue(verdict.contains(expected(program))) { output }
+    }
   }
 
   @Test

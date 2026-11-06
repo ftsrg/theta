@@ -56,6 +56,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssMeetingActor
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssMeetingSide
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssNetwork
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssResult
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssRun
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssWorkerLauncher
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.PredicateBlockBehavior
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.backwardInvariants
@@ -68,6 +69,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.actor.serveDssBlocks
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.stitchViolationPath
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.violationTrace
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
@@ -93,6 +95,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cut
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cutBlock
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.getStatistics
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
@@ -163,22 +167,35 @@ fun getDssChecker(
       DssDecomposition.NONE -> SingleBlockDecomposition
     }
   val direction = dssConfig.direction
-  val forwardGraph: BlockGraph? =
-    if (direction == DssDirection.BACKWARD) null else decomposition.decompose(procedure)
   val reversal = if (direction == DssDirection.FORWARD) null else reverseProgram(xcfa)
-  val backwardGraph: BlockGraph? =
+  // Shared block boundaries are where the two directions can meet
+  fun backwardOf(forward: BlockGraph?): BlockGraph? =
     reversal?.let {
-      // Shared block boundaries are where the two directions can meet
       val graph =
-        if (forwardGraph != null) reverseBlockGraph(forwardGraph, it)
+        if (forward != null) reverseBlockGraph(forward, it)
         else decomposition.decompose(it.procedure)
       graph.checkConsistency()
       graph.withIdPrefix(BACKWARD_BLOCK_PREFIX)
     }
-  forwardGraph?.checkConsistency()
-  for (graph in listOfNotNull(forwardGraph, backwardGraph)) {
-    logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", graph.getStatistics())
+  var forwardGraph: BlockGraph? =
+    if (direction == DssDirection.BACKWARD) null
+    else decomposition.decompose(procedure).also { it.checkConsistency() }
+  var backwardGraph: BlockGraph? = backwardOf(forwardGraph)
+  // A cut is of a forward block (of a backward one in BACKWARD); BIDIRECTIONAL then rebuilds the
+  // backward graph from the forward one, so that the two directions still share their boundaries
+  fun cutBlockAt(id: String) {
+    val forward = forwardGraph
+    if (forward == null) backwardGraph = cutToRestart(backwardGraph!!, id)
+    else {
+      forwardGraph = cutToRestart(forward, id)
+      backwardGraph = backwardOf(forwardGraph)
+    }
   }
+  val cuts = dssConfig.workerCuts.toMutableList()
+  cuts.forEach(::cutBlockAt)
+  fun graphStatistics() =
+    listOfNotNull(forwardGraph, backwardGraph).joinToString(" | ") { "${it.getStatistics()}" }
+  logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", graphStatistics())
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
@@ -218,6 +235,10 @@ fun getDssChecker(
   require(!finisherSelection || !dssConfig.explChecker) {
     "--dss-expl-checker adds a checker after the FINISHER finisher, which must be the last of " +
       "--dss-checker-backends"
+  }
+  require(!dssConfig.cutOnTimeout || dssConfig.checkerBudgetMs > 0) {
+    "--dss-cut-on-timeout cuts blocks that the checkers run out of their budget on, so it needs " +
+      "--dss-checker-budget"
   }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
@@ -265,115 +286,147 @@ fun getDssChecker(
   val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val bidirectional = direction == DssDirection.BIDIRECTIONAL
-  fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure, finishing: Set<String>) =
-    { block: Block ->
-      PredicateBlockBehavior(
-          program,
-          programProcedure,
-          block,
-          checkerRoster,
-          useGlobalPredicatePool = dssConfig.globalPredicatePool,
-          resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
-          reuseBlockPrecision = dssConfig.reuseBlockPrecision,
-          blockLocalPool = dssConfig.blockLocalPool,
-          checkerFallback = true,
-          solverFactory = dssSolverFactory,
-          trackSummaries = bidirectional,
-          finishing = block.id in finishing,
-          generalizationGas = if (dssConfig.generalizeViolations) dssConfig.generalizationGas else 0,
-        )
-        .also { behaviors[block.id] = it }
-    }
-  val networks =
-    listOfNotNull(
-      forwardGraph?.let { DssNetwork(it, behaviorsOf(xcfa, procedure, it.finishingBlocks())) },
-      backwardGraph?.let {
-        DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure, it.finishingBlocks()))
-      },
-    )
   val forwardIndex = if (forwardGraph != null) 0 else null
-  val backwardIndex = if (backwardGraph == null) null else networks.lastIndex
+  val backwardIndex = if (backwardGraph == null) null else if (forwardGraph == null) 0 else 1
   val forwardCodec by lazy { DssExprCodec(xcfa) }
   val backwardCodec by lazy { DssExprCodec(reversal!!.xcfa) }
-  val backwardIds = backwardGraph?.blocks?.mapTo(hashSetOf()) { it.id }.orEmpty()
-  val codecOf = { id: String -> if (id in backwardIds) backwardCodec else forwardCodec }
-
-  if (dssConfig.workerPort != 0) {
-    val blocks =
-      networks
-        .flatMap { network -> network.blockGraph.blocks.map { it.id to (it to network) } }
-        .toMap()
-    serveDssBlocks(
-      dssConfig.workerPort,
-      dssConfig.workerIndex,
-      fingerprint(networks.map { it.blockGraph }),
-      dssConfig.workerBlocks.associateWith { id ->
-        blocks.getValue(id).let { (block, network) -> network.behaviorFor(block) }
-      },
-      codecOf,
-    )
-    kotlin.system.exitProcess(0)
-  }
-
+  val processWitnesses = ConcurrentHashMap<String, DssBlockWitness>()
   var meeting: DssMeetingActor? = null
   var conjectures: DssConjectureActor? = null
-  val coordinator: DssCoordinatorFactory? =
-    if (!bidirectional) {
-      if (!dssConfig.conjectureInvariants) null
-      else
-        { connection ->
-          DssConjectureActor(
-              connection,
-              networks.single().blockGraph,
-              dssSolverFactory,
-              dssConfig.conjectureGas,
-            )
-            .also { conjectures = it }
-        }
-    } else
-      { connection ->
-        DssMeetingActor(
-            connection,
-            procedure,
-            DssMeetingSide(
-              forwardGraph!!,
-              procedure.locs.associateWith { it },
-              if (uncertifiedFinisher) forwardGraph.finishingBlocks() else emptySet(),
-            ),
-            DssMeetingSide(
-              backwardGraph!!,
-              reversal!!.originalOf,
-              if (uncertifiedFinisher) backwardGraph.finishingBlocks() else emptySet(),
-            ),
-            dssSolverFactory,
-            sharedVars = procedure.vars + xcfa.globalVars.map { it.wrappedVar },
-            shareInvariants = dssConfig.shareInvariants,
+  var finished: DssRun? = null
+  // A cut starts the run over: the other blocks' summaries were computed for the old graphs
+  while (finished == null) {
+    val forward = forwardGraph
+    val backward = backwardGraph
+    val cutGraph = forward ?: backward!!
+    behaviors.clear()
+    processWitnesses.clear()
+    meeting = null
+    conjectures = null
+    fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure, finishing: Set<String>) =
+      { block: Block ->
+        PredicateBlockBehavior(
+            program,
+            programProcedure,
+            block,
+            checkerRoster,
+            useGlobalPredicatePool = dssConfig.globalPredicatePool,
+            resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
+            reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+            blockLocalPool = dssConfig.blockLocalPool,
+            checkerFallback = true,
+            solverFactory = dssSolverFactory,
+            trackSummaries = bidirectional,
+            finishing = block.id in finishing,
+            generalizationGas =
+              if (dssConfig.generalizeViolations) dssConfig.generalizationGas else 0,
+            cutOnTimeout = dssConfig.cutOnTimeout,
+            hasCut = {
+              cutTargetOf(block.id, forward)?.let { target ->
+                cutBlock(cutGraph.blocks.single { it.id == target }) != null
+              } == true
+            },
           )
-          .also { meeting = it }
+          .also { behaviors[block.id] = it }
       }
+    val networks =
+      listOfNotNull(
+        forward?.let { DssNetwork(it, behaviorsOf(xcfa, procedure, it.finishingBlocks())) },
+        backward?.let {
+          DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure, it.finishingBlocks()))
+        },
+      )
+    val backwardIds = backward?.blocks?.mapTo(hashSetOf()) { it.id }.orEmpty()
+    val codecOf = { id: String -> if (id in backwardIds) backwardCodec else forwardCodec }
 
-  val processWitnesses = ConcurrentHashMap<String, DssBlockWitness>()
-  val dssRun =
+    if (dssConfig.workerPort != 0) {
+      val blocks =
+        networks
+          .flatMap { network -> network.blockGraph.blocks.map { it.id to (it to network) } }
+          .toMap()
+      serveDssBlocks(
+        dssConfig.workerPort,
+        dssConfig.workerIndex,
+        fingerprint(networks.map { it.blockGraph }),
+        dssConfig.workerBlocks.associateWith { id ->
+          blocks.getValue(id).let { (block, network) -> network.behaviorFor(block) }
+        },
+        codecOf,
+      )
+      kotlin.system.exitProcess(0)
+    }
+
+    val coordinator: DssCoordinatorFactory? =
+      if (!bidirectional) {
+        if (!dssConfig.conjectureInvariants) null
+        else
+          { connection ->
+            DssConjectureActor(
+                connection,
+                networks.single().blockGraph,
+                dssSolverFactory,
+                dssConfig.conjectureGas,
+              )
+              .also { conjectures = it }
+          }
+      } else
+        { connection ->
+          DssMeetingActor(
+              connection,
+              procedure,
+              DssMeetingSide(
+                forward!!,
+                procedure.locs.associateWith { it },
+                if (uncertifiedFinisher) forward.finishingBlocks() else emptySet(),
+              ),
+              DssMeetingSide(
+                backward!!,
+                reversal!!.originalOf,
+                if (uncertifiedFinisher) backward.finishingBlocks() else emptySet(),
+              ),
+              dssSolverFactory,
+              sharedVars = procedure.vars + xcfa.globalVars.map { it.wrappedVar },
+              shareInvariants = dssConfig.shareInvariants,
+            )
+            .also { meeting = it }
+        }
+
     try {
-      when (dssConfig.executor) {
-        DssExecutor.CONCURRENT ->
-          runDssNetworks(networks, coordinator, maxParallelBlocks = dssConfig.maxParallelBlocks)
-        DssExecutor.SEQUENTIAL -> runDssNetworksSequentially(networks, coordinator)
-        DssExecutor.PROCESS ->
-          runDssNetworksInProcesses(
-            networks.map { it.blockGraph },
-            getDssWorkerLauncher(config, dssConfig),
-            codecOf,
-            coordinator,
-            witnesses = processWitnesses,
-          )
-      }
+      finished =
+        when (dssConfig.executor) {
+          DssExecutor.CONCURRENT ->
+            runDssNetworks(networks, coordinator, maxParallelBlocks = dssConfig.maxParallelBlocks)
+          DssExecutor.SEQUENTIAL -> runDssNetworksSequentially(networks, coordinator)
+          DssExecutor.PROCESS ->
+            runDssNetworksInProcesses(
+              networks.map { it.blockGraph },
+              getDssWorkerLauncher(config, dssConfig.copy(workerCuts = cuts.toList())),
+              codecOf,
+              coordinator,
+              witnesses = processWitnesses,
+            )
+        }
     } catch (e: RuntimeException) {
-      val undecided =
-        generateSequence<Throwable>(e) { it.cause }.firstOrNull { it is DssUndecidedQueryException }
-          ?: throw e
-      logger.write(Logger.Level.RESULT, "%s\n", undecided.message)
-      return@SafetyChecker SafetyResult.unknown()
+      val causes = generateSequence<Throwable>(e) { it.cause }
+      val request = causes.filterIsInstance<DssBlockCutRequest>().firstOrNull()
+      if (request == null) {
+        val undecided = causes.firstOrNull { it is DssUndecidedQueryException } ?: throw e
+        logger.write(Logger.Level.RESULT, "%s\n", undecided.message)
+        return@SafetyChecker SafetyResult.unknown()
+      }
+      val target =
+        checkNotNull(cutTargetOf(request.blockId, forward)) {
+          "DSS block ${request.blockId} asked to be cut, but no block reverses it"
+        }
+      cutBlockAt(target)
+      cuts += target
+      logger.write(
+        Logger.Level.INFO,
+        "DSS: every checker ran out of its budget on block %s, starting over with it cut%s: %s\n",
+        request.blockId,
+        if (target == request.blockId) "" else " (as block $target)",
+        graphStatistics(),
+      )
     } finally {
       // Block checkers register counterexample monitors globally; later CEGAR runs would see them
       MonitorCheckpoint.reset()
@@ -387,6 +440,8 @@ fun getDssChecker(
         )
       }
     }
+  }
+  val dssRun = checkNotNull(finished)
 
   val witnesses =
     if (dssConfig.executor == DssExecutor.PROCESS) processWitnesses
@@ -434,6 +489,22 @@ fun getDssChecker(
       SafetyResult.unsafe(trace, EmptyProof.getInstance())
     }
   }
+}
+
+private fun cutToRestart(blockGraph: BlockGraph, id: String): BlockGraph =
+  checkNotNull(blockGraph.cut(id)) { "DSS block $id was to be cut, but it has no cut" }
+
+/**
+ * The block that `--dss-cut-on-timeout` cuts for block [id], or null if none: a backward block of
+ * `BIDIRECTIONAL` keeps the id of the forward block it reverses, with a suffix if that was split.
+ */
+private fun cutTargetOf(id: String, forward: BlockGraph?): String? {
+  if (forward == null || forward.blocks.any { it.id == id }) return id
+  val reversed = id.removePrefix(BACKWARD_BLOCK_PREFIX)
+  return forward.blocks
+    .map { it.id }
+    .filter { reversed == it || reversed.startsWith("$it.") }
+    .maxByOrNull { it.length }
 }
 
 /** Block ids of the backward network, apart from the forward network's. */

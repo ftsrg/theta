@@ -34,6 +34,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.BlockXcfaExtraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster.Companion.BUDGET_GROWTH
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
@@ -53,6 +54,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withoutAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cutBlock
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -100,6 +102,8 @@ class PredicateBlockBehavior(
   private val trackSummaries: Boolean = false,
   finishing: Boolean = false,
   generalizationGas: Int = 0,
+  private val cutOnTimeout: Boolean = false,
+  private val hasCut: () -> Boolean = { cutBlock(block) != null },
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -679,10 +683,15 @@ class PredicateBlockBehavior(
   /** The checker that finished this block's last analysis; it starts the next one. */
   private var lastFinisher: Int? = null
 
+  private val cuttable: Boolean by lazy { hasCut() }
+
   /**
    * Gives every checker the roster's budget in turn, multiplying it after each round; a checker
    * that fails other than by running out of budget is dropped. There is no unlimited round, so a
    * checker that never finishes cannot stop the others from being retried with more time.
+   *
+   * With [cutOnTimeout], a round that every remaining checker runs out of asks for the block to be
+   * cut ([DssBlockCutRequest]) instead, unless [hasCut] finds no cut for it.
    */
   private fun <T> runWithBudgets(analysis: (CheckerFactory) -> T): T {
     val first = lastFinisher
@@ -693,6 +702,8 @@ class PredicateBlockBehavior(
     while (order.any { !failed[it] }) {
       for (index in order) {
         if (failed[index]) continue
+        // An executor shutting down interrupts the thread; the rounds would go on forever
+        if (Thread.interrupted()) throw InterruptedException()
         try {
           val result = DssDeadline.within(budget) { analysis(checkerRoster[index]) }
           lastFinisher = index
@@ -705,6 +716,7 @@ class PredicateBlockBehavior(
           failure?.addSuppressed(e) ?: run { failure = e }
         }
       }
+      if (cutOnTimeout && order.any { !failed[it] } && cuttable) throw DssBlockCutRequest(block.id)
       budget =
         if (budget > Long.MAX_VALUE / 1_000_000 / BUDGET_GROWTH) budget else budget * BUDGET_GROWTH
     }

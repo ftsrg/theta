@@ -33,6 +33,13 @@ import java.util.concurrent.TimeUnit
 class DssBudgetExceededException(budgetMs: Long, cause: Throwable? = null) :
   RuntimeException("DSS block analysis exceeded its budget of $budgetMs ms", cause)
 
+/**
+ * Every checker of a block analysis ran out of its budget, and the block has a cut: DSS starts over
+ * with the block cut (`--dss-cut-on-timeout`). It must reach the run's driver as it is.
+ */
+class DssBlockCutRequest(val blockId: String, cause: Throwable? = null) :
+  RuntimeException("Every checker ran out of its budget on DSS block $blockId", cause)
+
 /** Whether [this] or one of its causes is a [DssBudgetExceededException]. */
 fun Throwable.isDssBudgetExceeded(): Boolean =
   generateSequence(this) { it.cause }.any { it is DssBudgetExceededException }

@@ -204,6 +204,13 @@ data class DssConfig(
   )
   var checkerBudgetMs: Long = 0,
   @Parameter(
+    names = ["--dss-cut-on-timeout"],
+    description =
+      "With --dss-checker-budget: a block that every checker runs out of its budget on is cut " +
+        "into smaller blocks, and DSS starts over",
+  )
+  var cutOnTimeout: Boolean = false,
+  @Parameter(
     names = ["--dss-solver"],
     description =
       "Solver of the block checkers and of DSS's own queries (default: Z3, or Z3:new for " +
@@ -224,6 +231,9 @@ data class DssConfig(
   @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
   @Parameter(names = ["--dss-worker-blocks"], hidden = true)
   var workerBlocks: List<String> = emptyList(),
+  /** The blocks cut so far, in order, so that a worker's block graph is the main process's. */
+  @Parameter(names = ["--dss-worker-cuts"], hidden = true)
+  var workerCuts: List<String> = emptyList(),
 ) : SpecBackendConfig
 
 /** The cex monitor's registry is global, so concurrent checkers must go without it. */

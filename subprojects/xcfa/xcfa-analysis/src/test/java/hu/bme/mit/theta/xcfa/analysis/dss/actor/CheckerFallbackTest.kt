@@ -22,6 +22,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.dss.HangingSolverFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DeadlineSolverFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
@@ -61,6 +62,20 @@ class CheckerFallbackTest {
       main.start()
     }
 
+  /** x := 5; x > 3 on a single edge into the error location: a block without a cut. */
+  private val uncuttable: XCFA =
+    xcfa("uncuttable") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          (init to err) {
+            "x" assign "5"
+            assume("(> x 3)")
+          }
+        }
+      main.start()
+    }
+
   private class SolverBroke : RuntimeException("solver broke")
 
   private val crashing: CheckerFactory = { _ -> throw SolverBroke() }
@@ -79,14 +94,17 @@ class CheckerFallbackTest {
     checkers: List<CheckerFactory>,
     checkerFallback: Boolean,
     roster: DssCheckerRoster = DssCheckerRoster(checkers),
+    cutOnTimeout: Boolean = false,
+    xcfa: XCFA = program,
   ) =
-    program.procedures.single().let { procedure ->
+    xcfa.procedures.single().let { procedure ->
       PredicateBlockBehavior(
-        program,
+        xcfa,
         procedure,
         SingleBlockDecomposition.decompose(procedure).blocks.single(),
         roster,
         checkerFallback = checkerFallback,
+        cutOnTimeout = cutOnTimeout,
       )
     }
 
@@ -253,6 +271,33 @@ class CheckerFallbackTest {
       listOf(recording("slow", used, busy(120, cegar)), recording("stuck", used, busy(10_000)))
     val messages = initialMessages(checkers, checkerFallback = false, roster = budgeted(checkers))
     assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
+    assertEquals(listOf("slow", "stuck", "slow"), used)
+  }
+
+  @Test
+  fun `cutting on timeout, a round that every checker runs out of asks for the block to be cut`() {
+    for (first in listOf(busy(10_000), crashing)) {
+      val used = mutableListOf<String>()
+      val checkers = listOf(recording("first", used, first), recording("stuck", used, busy(10_000)))
+      val block =
+        behavior(checkers, checkerFallback = false, budgeted(checkers), cutOnTimeout = true)
+      val e = assertThrows(DssBlockCutRequest::class.java) { block.initialMessages() }
+      assertEquals("SB1", e.blockId)
+      assertEquals(listOf("first", "stuck"), used)
+    }
+  }
+
+  @Test
+  fun `cutting on timeout, a block without a cut gets a growing budget instead`() {
+    val used = mutableListOf<String>()
+    val checkers =
+      listOf(recording("slow", used, busy(120, cegar)), recording("stuck", used, busy(10_000)))
+    val block =
+      behavior(checkers, false, budgeted(checkers), cutOnTimeout = true, xcfa = uncuttable)
+    assertEquals(
+      listOf(DssMessageType.VIOLATION_CONDITION),
+      block.initialMessages().map { it.type },
+    )
     assertEquals(listOf("slow", "stuck", "slow"), used)
   }
 

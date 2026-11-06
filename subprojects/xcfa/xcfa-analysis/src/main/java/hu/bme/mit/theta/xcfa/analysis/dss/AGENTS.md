@@ -22,6 +22,13 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   `DeadlineSolverManager` (`blockCheckers` in `xcfa-cli` does), and no wrapper may turn a
   `DssBudgetExceededException` into a result or a checker failure (`BoundedChecker` falls back to
   its uninterpolated proof when interpolation runs out, which is still a proof).
+- A `DssBlockCutRequest` must reach `getDssChecker`, which restarts with the block cut (`PROCESS`
+  rebuilds it by class name, and its workers redo the cuts from `DssConfig.workerCuts`).
+- A block cut must keep the block's paths: every piece takes all of the block's edges out of each
+  location it passes through, and a piece reaching an exit that has successors ends there.
+- In `BIDIRECTIONAL` a cut is of a forward block (a backward block's request cuts the forward
+  block it reverses, `cutTargetOf`), and the backward graph is rebuilt from the cut forward one,
+  so the two directions keep sharing their block boundaries.
 - Sent violation conditions are exact; a per-path condition may under-approximate, never
   over-approximate. A `ViolationGeneralizer` generalization over-approximates, so it is only a
   probe target: a probe's UNSAFE result is discarded, and a generalization never reaches a

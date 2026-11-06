@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cut
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
@@ -174,6 +175,26 @@ class DssVerdictTest {
      */
     private val backwardDivergent =
       setOf("guarded loop", "error inside a loop", "nondeterministic counter")
+
+    @JvmStatic
+    fun cutCases(): Stream<Arguments> =
+      programs.keys.flatMap { p -> listOf(true, false).map { Arguments.of(p, it) } }.stream()
+
+    /**
+     * Backward DSS may diverge once a cut makes a loop a cycle of blocks (see [backwardDivergent]).
+     */
+    @JvmStatic
+    fun directionCutCases(): Stream<Arguments> =
+      programs.keys
+        .flatMap { p ->
+          Direction.entries.flatMap { d -> listOf(true, false).map { Arguments.of(p, d, it) } }
+        }
+        .filterNot {
+          it.get()[0] in backwardDivergent &&
+            it.get()[1] == Direction.BACKWARD &&
+            it.get()[2] == true
+        }
+        .stream()
 
     private fun branchXcfa(safe: Boolean): XCFA =
       xcfa("branch") {
@@ -502,6 +523,7 @@ class DssVerdictTest {
     wholeProgram: XCFA,
     decomposition: Decomposition,
     direction: Direction,
+    cutEvery: Boolean = false,
   ): DssRun {
     val procedure = wholeProgram.procedures.single()
     val reversal = reverseProgram(wholeProgram)
@@ -512,12 +534,15 @@ class DssVerdictTest {
     }
     return assertTimeoutPreemptively<DssRun>(END_TO_END_TIMEOUT) {
       if (direction == Direction.BACKWARD) {
-        val graph = decomposition.decompose(reversal.procedure).also { it.checkConsistency() }
+        val graph =
+          decomposition.decompose(reversal.procedure).cutEveryIf(cutEvery).also {
+            it.checkConsistency()
+          }
         runDssNetworksSequentially(
           listOf(DssNetwork(graph, behaviors(reversal.xcfa, reversal.procedure)))
         )
       } else {
-        val forward = decomposition.decompose(procedure)
+        val forward = decomposition.decompose(procedure).cutEveryIf(cutEvery)
         val backward = reverseBlockGraph(forward, reversal).withIdPrefix("R.")
         backward.checkConsistency()
         runDssNetworksSequentially(
@@ -552,6 +577,33 @@ class DssVerdictTest {
     val xcfa = programs.getValue(program)(safe)
     assertEquals(expected(safe), checkDirection(xcfa, decomposition, direction).result)
   }
+
+  /** As `--dss-cut-on-timeout` cuts blocks, of the decomposition `EMERGENT` runs DSS with. */
+  @ParameterizedTest(name = "{0}, safe={1}")
+  @MethodSource("cutCases")
+  fun `cutting every block keeps the verdict`(program: String, safe: Boolean) {
+    val xcfa = programs.getValue(program)(safe)
+    val decomposed = Decomposition.MIN_CUT_ABSORB.decompose(xcfa.procedures.single())
+    val cut = decomposed.cutEveryIf(true)
+    assertTrue(cut.blocks.size > decomposed.blocks.size) { "nothing to cut in $decomposed" }
+    assertEquals(expected(safe), checkDecomposed(xcfa, cut))
+  }
+
+  /** As `--dss-cut-on-timeout` cuts in the new directions: BIDIRECTIONAL cuts the forward graph. */
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("directionCutCases")
+  fun `cutting every block keeps the verdict in both new directions`(
+    program: String,
+    direction: Direction,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val run = checkDirection(xcfa, Decomposition.MIN_CUT_ABSORB, direction, cutEvery = true)
+    assertEquals(expected(safe), run.result)
+  }
+
+  private fun BlockGraph.cutEveryIf(cut: Boolean): BlockGraph =
+    if (!cut) this else blocks.map { it.id }.sorted().fold(this) { g, id -> g.cut(id) ?: g }
 
   @Test
   fun `without the global predicate pool, violation conditions refute the spurious error`() {

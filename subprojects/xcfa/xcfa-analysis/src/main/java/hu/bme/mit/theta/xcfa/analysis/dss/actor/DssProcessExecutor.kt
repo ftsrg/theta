@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import java.io.BufferedInputStream
@@ -246,9 +247,11 @@ private class DssWorkerConnection(
     val message = readString(input)
     val stackTrace = readString(input)
     val remote = DssWorkerException("$className in the worker of $blockId: $message", stackTrace)
-    return if (className == DssUndecidedQueryException::class.java.name)
-      DssUndecidedQueryException(remote)
-    else remote
+    return when (className) {
+      DssUndecidedQueryException::class.java.name -> DssUndecidedQueryException(remote)
+      DssBlockCutRequest::class.java.name -> DssBlockCutRequest(blockId, remote)
+      else -> remote
+    }
   }
 
   private val exitDescription: String
