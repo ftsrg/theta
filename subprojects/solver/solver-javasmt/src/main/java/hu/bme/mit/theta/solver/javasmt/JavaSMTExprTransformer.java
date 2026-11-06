@@ -911,7 +911,7 @@ final class JavaSMTExprTransformer {
                 BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
                 BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
                 FloatingPointNumber.Sign.of(expr.getHidden()),
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getType().getExponent(), expr.getType().getSignificand() - 1));
     }
 
@@ -1082,7 +1082,7 @@ final class JavaSMTExprTransformer {
     private Formula transformFpFromBv(final FpFromBvExpr expr) {
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
         final FloatingPointType fpSort =
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
@@ -1114,7 +1114,7 @@ final class JavaSMTExprTransformer {
         // would instead round the integer value.
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
         final FloatingPointType fpSort =
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.fromIeeeBitvector(val, fpSort);
     }
@@ -1125,7 +1125,8 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.castTo(
                 op,
                 true, // ignored
-                FloatingPointType.getFloatingPointType(expr.getExpBits(), expr.getSignBits() - 1),
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
+                        expr.getExpBits(), expr.getSignBits() - 1),
                 transformFpRoundingMode(expr.getRoundingMode()));
     }
 

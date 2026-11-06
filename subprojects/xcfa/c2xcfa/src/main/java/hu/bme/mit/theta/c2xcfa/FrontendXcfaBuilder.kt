@@ -85,6 +85,7 @@ import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import java.math.BigInteger
@@ -1206,6 +1207,8 @@ class FrontendXcfaBuilder(
       val scalarInit = unwrapScalarInitializer(initExpr)
       if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
+      } else if (declaredElsewhere(declaration)) {
+        initStmtList.add(HavocStmtLabel(globalDeclaration))
       } else {
         initStmtList.add(AssignStmtLabel(globalDeclaration, type.nullValue))
       }

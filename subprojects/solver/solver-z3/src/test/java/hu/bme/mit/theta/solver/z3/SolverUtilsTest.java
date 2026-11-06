@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,10 +33,14 @@ import org.junit.jupiter.api.Test;
 
 public class SolverUtilsTest {
 
+    protected SolverFactory solverFactory() {
+        return Z3SolverFactory.getInstance();
+    }
+
     @Test
     public void testModels() {
         // Arrange
-        final SolverFactory factory = Z3SolverFactory.getInstance();
+        final SolverFactory factory = solverFactory();
 
         final ConstDecl<IntType> cx = Const("x", Int());
         final ConstDecl<IntType> cy = Const("y", Int());
