@@ -768,23 +768,31 @@ class FrontendXcfaBuilder(
   ) = subObjects.subobjectCell(parent, parentType, index, subobjectType)
 
   /**
-   * The IEEE bits of [value]: a fresh bitvector `b` with `to_fp(b) = value` (SMT `=`). This is
-   * exact for a number. SMT-LIB has a single NaN without fixed bits, so for a NaN `b` is any NaN
-   * pattern: an over-approximation of the payload, which xcfa-cli checks before it reports Unsafe.
+   * The IEEE bits of [value]: `a := value; havoc b; assume to_fp(b) = a` (SMT `=`). This is exact
+   * for a number. SMT-LIB has a single NaN without fixed bits, so for a NaN `b` is any NaN pattern:
+   * an over-approximation of the payload. Thus `b` is recorded in `overApproximatedVars`, and `a`
+   * and `b` are scratch variables (the real bits satisfy the assumption too).
    */
   private fun ieeeBitsOf(
     builder: XcfaProcedureBuilder,
     value: Expr<*>,
+    type: CComplexType,
     metadata: MetaData,
   ): Pair<Expr<BvType>, List<XcfaLabel>> {
     @Suppress("UNCHECKED_CAST") val fpValue = value as Expr<FpType>
     val bits = Var(FP_BITS_PREFIX + fpBitsCnt++, BvType.of(FpToIeeeBvExpr.bitWidth(fpValue.type)))
+    val arg = Var("${bits.name}_value", fpValue.type)
     builder.addVar(bits)
+    builder.addVar(arg)
+    parseContext.metadata.create(arg.ref, "cType", type)
+    builder.overApproximatedVars[bits] = null
+    builder.overApproximationScratchVars += listOf(arg, bits)
     return bits.ref to
       listOf(
+        StmtLabel(Stmts.Assign(arg, fpValue), metadata = metadata),
         StmtLabel(HavocStmt.of(bits), metadata = metadata),
         StmtLabel(
-          Assume(FpExprs.FpAssign(FpExprs.FromIeeeBv(bits.ref, fpValue.type), fpValue)),
+          Assume(FpExprs.FpAssign(FpExprs.FromIeeeBv(bits.ref, fpValue.type), arg.ref)),
           metadata = metadata,
         ),
       )
@@ -2102,9 +2110,11 @@ class FrontendXcfaBuilder(
         // cell width, so the splice replaces the whole cell.
         val isIeeeFloat =
           parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.IEEE_FLOAT).isPresent
-        val memberValue = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+        val memberType = CComplexType.getType(lValue, parseContext)
+        val memberValue = memberType.castTo(rExpression)
         val fpBits =
-          if (isIeeeFloat) ieeeBitsOf(builder, memberValue, getMetadata(statement)) else null
+          if (isIeeeFloat) ieeeBitsOf(builder, memberValue, memberType, getMetadata(statement))
+          else null
         // Convert to the member's own type first: a `_Bool` member stored in a wider cell must
         // take `x != 0`, not the low bit of `x`.
         val spliced = fpBits?.first ?: cellType.castTo(memberValue)

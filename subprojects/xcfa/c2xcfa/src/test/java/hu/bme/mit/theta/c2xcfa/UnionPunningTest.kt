@@ -441,6 +441,7 @@ class UnionPunningTest {
     val labels = xcfa.procedures.flatMap { p -> p.edges.flatMap { it.getFlatLabels() } }
     assertTrue(labels.any { "fpfromieeebv" in it.toString() && FP_BITS_PREFIX in it.toString() })
     assertTrue(labels.none { "fptoieeebv" in it.toString() })
+    assertTrue(xcfa.overApproximatedVars.keys.any { FP_BITS_PREFIX in it.name })
   }
 
   @Test

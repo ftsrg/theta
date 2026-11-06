@@ -28,8 +28,9 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 /**
- * Floating-point union members store their IEEE bits. The bits of a NaN are any NaN pattern, so a
- * counterexample that needs one must not be reported (nan-payload.c is safe when compiled by gcc).
+ * Floating-point union members store their IEEE bits. The bits of a NaN are any NaN pattern, so
+ * they are an over-approximated value: an Unsafe result that depends on them is Unknown
+ * (nan-payload.c is safe when compiled by gcc).
  */
 class XcfaCliFloatUnionTest {
   companion object {
@@ -38,7 +39,8 @@ class XcfaCliFloatUnionTest {
       Stream.of(
         Arguments.of("bits-safe.c", "Safe"),
         Arguments.of("nan-roundtrip-safe.c", "Safe"),
-        Arguments.of("bits-unsafe.c", "Unsafe"),
+        Arguments.of("bits-unsafe.c", "Unknown"),
+        Arguments.of("bits-independent-unsafe.c", "Unsafe"),
         Arguments.of("nan-payload.c", "Unknown"),
       )
   }
