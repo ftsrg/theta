@@ -15,23 +15,35 @@
  */
 package org.sosy_lab.java_smt.solvers.yices2;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.sri.yices.Config;
 import com.sri.yices.Context;
+import com.sri.yices.Parameters;
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Set;
 import org.sosy_lab.common.ShutdownNotifier;
+import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.BooleanFormulaManager;
 import org.sosy_lab.java_smt.api.ProverEnvironment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverContext.ProverOptions;
+import org.sosy_lab.java_smt.api.SolverException;
 
 /**
  * A Yices prover whose context runs in {@code push-pop} mode, as JavaSMT 5 opened it. JavaSMT 6
  * opens every Yices context in {@code interactive} mode, which made the OC checks on libvsync and
  * pthread-complex time out where they used to finish in a few minutes. It lives in JavaSMT's
  * package because the context factory method it overrides is package-private.
+ *
+ * <p>Checks also use the search parameters Yices tunes for the context, as JavaSMT 5 did by passing
+ * none. JavaSMT 6 passes a fresh parameter record, which holds the generic defaults: that alone
+ * made the OC checks on workstealqueue_mutex-2 about 1.6 times slower.
  */
 public final class PushPopYices2Prover extends Yices2Prover {
+
+    private Parameters params;
 
     private PushPopYices2Prover(
             Yices2FormulaCreator creator,
@@ -56,13 +68,79 @@ public final class PushPopYices2Prover extends Yices2Prover {
                 (String) field(parameters.getClass(), parameters, "solverType"));
     }
 
+    @Override
+    protected boolean isUnsatImpl() throws SolverException, InterruptedException {
+        if (generateUnsatCores) {
+            return super.isUnsatImpl();
+        }
+        final boolean unsat =
+                !satCheckWithShutdownNotifier(
+                        () -> curEnv.check(params()), curEnv, shutdownNotifier);
+        if (unsat
+                && (int) field(Yices2AbstractProver.class, this, "stackSizeToUnsat")
+                        == Integer.MAX_VALUE) {
+            setField(Yices2AbstractProver.class, this, "stackSizeToUnsat", size());
+        }
+        return unsat;
+    }
+
+    @Override
+    public boolean isUnsatWithAssumptions(Collection<BooleanFormula> assumptions)
+            throws SolverException, InterruptedException {
+        checkState(!closed);
+        changedSinceLastSatQuery = false;
+        wasLastSatCheckSatisfiable = false;
+        final int[] terms = new int[assumptions.size()];
+        int i = 0;
+        for (BooleanFormula f : assumptions) {
+            terms[i++] = creator.extractInfo(f);
+        }
+        final boolean unsat =
+                !satCheckWithShutdownNotifier(
+                        () -> curEnv.checkWithAssumptions(params(), terms),
+                        curEnv,
+                        shutdownNotifier);
+        if (!unsat) {
+            wasLastSatCheckSatisfiable = true;
+        }
+        return unsat;
+    }
+
+    /** The search parameters Yices tunes for this context, the ones a null record selects. */
+    private Parameters params() {
+        if (params == null) {
+            params = new Parameters();
+            params.defaultsForContext(curEnv);
+        }
+        return params;
+    }
+
+    @Override
+    public void close() {
+        if (params != null) {
+            params.close();
+            params = null;
+        }
+        super.close();
+    }
+
+    private static void setField(Class<?> owner, Object object, String name, Object value) {
+        try {
+            final Field field = owner.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(object, value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unexpected JavaSMT Yices2AbstractProver layout", e);
+        }
+    }
+
     private static Object field(Class<?> owner, Object object, String name) {
         try {
             final Field field = owner.getDeclaredField(name);
             field.setAccessible(true);
             return field.get(object);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unexpected JavaSMT Yices2SolverContext layout", e);
+            throw new IllegalStateException("Unexpected JavaSMT Yices2 layout", e);
         }
     }
 
