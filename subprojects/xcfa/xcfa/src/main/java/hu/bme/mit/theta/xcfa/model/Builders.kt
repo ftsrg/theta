@@ -361,7 +361,7 @@ constructor(
     check(!this::optimized.isInitialized) {
       "Cannot add/remove new elements after optimization passes!"
     }
-    locs.remove(toRemove)
+    if (locs.remove(toRemove)) toRemove.metadata.onLocationLost()
     if (toRemove.error) {
       errorLoc = Optional.empty()
     }
@@ -379,6 +379,7 @@ constructor(
       val toRemove = locs.filterTo(LinkedHashSet(), pred)
       if (toRemove.isEmpty()) break
       locs.removeAll(toRemove)
+      toRemove.forEach { it.metadata.onLocationLost() }
       // An edge whose *target* vanished is just as orphaned as one whose source did, so drop
       // everything incident to a removed location and unhook it from the endpoint that survives.
       edges.removeIf { edge ->
