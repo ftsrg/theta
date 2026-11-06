@@ -337,3 +337,6 @@ fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict that de
 fp_mathfunc_independent_reach.c	efficient	LP64	UNSAFE	an error path through a math call that does not use its result is still reported
 dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes
+switch_no_matching_label.c	efficient	ILP32	UNSAFE	a switch without a default skips its body when no label matches
+switch_stacked_labels.c	efficient	ILP32	SAFE	every label stacked on a switch statement selects it
+switch_nested_label.c	efficient	ILP32	FRONTEND-FAIL	a case label nested inside a switch body statement is refused, not dropped
