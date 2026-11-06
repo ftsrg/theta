@@ -83,8 +83,9 @@ import kotlinx.serialization.encodeToString
 /**
  * The concretizer checks the whole trace again, with another solver than the analysis. That check
  * can take longer than the analysis itself, and then the target-only witness is written instead.
+ * The bound is short: a portfolio step that prints its result late gets only 10% more time.
  */
-private const val CONCRETIZATION_TIMEOUT_SECONDS = 60L
+private const val CONCRETIZATION_TIMEOUT_SECONDS = 10L
 
 /** [block] in a daemon thread: a native solver call cannot be interrupted, only left behind. */
 private fun <T> withTimeout(seconds: Long, block: () -> T): T {

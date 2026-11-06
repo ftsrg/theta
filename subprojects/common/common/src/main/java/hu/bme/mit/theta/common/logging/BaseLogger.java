@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.common.logging;
 
+import java.util.Arrays;
+import java.util.IllegalFormatException;
+
 /** Base class for loggers. Only prints entries above a given level. */
 public abstract class BaseLogger implements Logger {
 
@@ -27,7 +30,15 @@ public abstract class BaseLogger implements Logger {
     @Override
     public Logger write(final Level level, final String pattern, final Object... objects) {
         if (level.ordinal() <= minLevel.ordinal()) {
-            writeStr(String.format(pattern, objects));
+            String text;
+            try {
+                text = String.format(pattern, objects);
+            } catch (IllegalFormatException e) {
+                // a message built from program text can contain '%': log it, never fail on it
+                final String raw = pattern.replace("%n", System.lineSeparator());
+                text = objects.length == 0 ? raw : raw + " " + Arrays.toString(objects);
+            }
+            writeStr(text);
         }
         return this;
     }
