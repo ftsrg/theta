@@ -136,6 +136,6 @@ internal class BlockEncoding(parseContext: ParseContext) {
   }
 
   companion object {
-    const val CHOICE_PREFIX = "__block_choice_"
+    const val CHOICE_PREFIX = "__theta_block_choice_"
   }
 }
