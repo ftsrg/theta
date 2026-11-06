@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
@@ -2860,6 +2861,22 @@ class FrontendXcfaBuilder(
     }
     val hasDefault =
       body.getcStatementList().any { chain -> switchLabelChain(chain).any { it is CDefault } }
+    // The labels compare the value of the controlling expression, so as in an `if`, its post
+    // statements (the increment of `switch (i++)`) run after the guard.
+    val addGuardedEntry = { guard: AssumeStmt, source: CStatement, target: XcfaLocation ->
+      val guarded = getAnonymousLoc(builder, metadata = getMetadata(source))
+      builder.addLoc(guarded)
+      val assume =
+        StmtLabel(
+          guard,
+          choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect for default?
+          metadata = getMetadata(source, fullExprSource = testValue),
+        )
+      builder.addEdge(XcfaEdge(checkNotNull(endInit), guarded, assume, getMetadata(source)))
+      val afterGuard =
+        buildPostStatement(testValue, ParamPack(builder, guarded, breakLoc, continueLoc, returnLoc))
+      builder.addEdge(XcfaEdge(afterGuard, target, metadata = EmptyMetaData))
+    }
     var lastLocation: XcfaLocation? = null
     for (cStatement in body.getcStatementList()) {
       val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
@@ -2871,23 +2888,13 @@ class FrontendXcfaBuilder(
       }
       val chain = switchLabelChain(cStatement)
       for (label in chain.dropLast(1)) {
-        val afterGuard =
-          buildPostStatement(
-            testValue,
-            ParamPack(builder, checkNotNull(endInit), breakLoc, continueLoc, returnLoc),
-          )
-        val assume =
-          StmtLabel(
-            if (label is CCase) {
-              Stmts.Assume(switchTestEq(testValue.expression, label.expr.expression))
-            } else {
-              Stmts.Assume(defaultExpr)
-            },
-            choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect for default?
-            metadata = getMetadata(label, fullExprSource = testValue),
-          )
-        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(label))
-        builder.addEdge(xcfaEdge)
+        val guard =
+          if (label is CCase) {
+            Stmts.Assume(switchTestEq(testValue.expression, label.expr.expression))
+          } else {
+            Stmts.Assume(defaultExpr)
+          }
+        addGuardedEntry(guard, label, location)
       }
       lastLocation =
         chain.last().accept(this, ParamPack(builder, location, endLoc, continueLoc, returnLoc))
@@ -2898,18 +2905,7 @@ class FrontendXcfaBuilder(
     }
     if (!hasDefault) {
       // No label matching means the whole body is skipped.
-      val afterGuard =
-        buildPostStatement(
-          testValue,
-          ParamPack(builder, checkNotNull(endInit), breakLoc, continueLoc, returnLoc),
-        )
-      val assume =
-        StmtLabel(
-          Stmts.Assume(defaultExpr),
-          choiceType = ChoiceType.MAIN_PATH,
-          metadata = getMetadata(statement, fullExprSource = testValue),
-        )
-      builder.addEdge(XcfaEdge(afterGuard, endLoc, assume, metadata = getMetadata(statement)))
+      addGuardedEntry(Stmts.Assume(defaultExpr), statement, endLoc)
     }
     return endLoc
   }

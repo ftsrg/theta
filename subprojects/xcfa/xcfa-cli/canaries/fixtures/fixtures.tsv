@@ -340,3 +340,4 @@ memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic 
 switch_no_matching_label.c	efficient	ILP32	UNSAFE	a switch without a default skips its body when no label matches
 switch_stacked_labels.c	efficient	ILP32	SAFE	every label stacked on a switch statement selects it
 switch_nested_label.c	efficient	ILP32	FRONTEND-FAIL	a case label nested inside a switch body statement is refused, not dropped
+switch_postincrement_test.c	efficient	ILP32	SAFE	the labels of switch (i++) see the value before the increment
