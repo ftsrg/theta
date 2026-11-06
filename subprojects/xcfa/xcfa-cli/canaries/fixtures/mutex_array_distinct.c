@@ -1,5 +1,4 @@
-// Planted bug: two elements of a mutex array are distinct locks (the handle of `&m[i]` stays the
-// element's cell under the cell models, see union_element_address.c).
+// Distinct mutex array elements protect independent critical sections.
 extern void abort(void);
 void reach_error(void) { abort(); }
 #include <pthread.h>

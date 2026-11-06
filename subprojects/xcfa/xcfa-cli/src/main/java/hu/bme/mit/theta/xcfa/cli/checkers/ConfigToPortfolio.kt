@@ -63,8 +63,7 @@ fun getPortfolioChecker(
 
   val portfolioStm =
     when (portfolioName) {
-      "COMPLEX" -> complex26(xcfa, mcm, parseContext, config, logger, uniqueLogger)
-
+      "COMPLEX",
       "STABLE",
       "COMPLEX27" -> complex27(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 

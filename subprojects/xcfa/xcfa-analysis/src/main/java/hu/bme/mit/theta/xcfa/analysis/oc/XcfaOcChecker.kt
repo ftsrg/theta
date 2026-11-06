@@ -25,14 +25,19 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.NotExpr
+import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.AssumingSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
@@ -43,6 +48,8 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.utils.defaultValue
+import java.util.IdentityHashMap
 import kotlin.time.measureTime
 
 /**
@@ -144,6 +151,9 @@ class XcfaOcChecker(
               cutBounds = bounds,
               markUnrollExits = maxExitQueries != 0,
             ),
+            // recursive calls are spliced in only now, and their arguments can be computed
+            // addresses
+            ReferenceElimination(parseContext),
             AssumeFalseRemovalPass(property),
             MutexToVarPass(),
           )
@@ -169,7 +179,16 @@ class XcfaOcChecker(
 
     init {
       logger.mainStep("Creating event graph...")
-      eg = XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty).create()
+      eg =
+        XcfaToEventGraph(
+            xcfa,
+            parseContext,
+            property.verifiedProperty,
+            memoryModel == SC,
+            // the Z3 propagator crashes if its first check is an exit query under a solver scope
+            decisionProcedure != OcDecisionProcedureType.PROPAGATOR,
+          )
+          .create()
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
         this.ppos = ppos
         this.wss = wss
@@ -180,7 +199,22 @@ class XcfaOcChecker(
       checker.solver.close()
     }
 
+    /** Declares every clock the encoding has to cover, so it comes before [encoded]. */
+    private val races by lazy {
+      if (property.verifiedProperty == DATA_RACE) raceCandidates(eg, ppos, checker) else null
+    }
+
+    /** Below the scope of the queries: they differ in their targets only, and share the rest. */
+    private val encoded by lazy {
+      races
+      checker.prepare(eg.events, eg.pos, ppos, eg.rfs, wss).also {
+        if (it) addToSolver(eg, checker.solver)
+      }
+    }
+
     private fun <T> query(block: (OcChecker<E>) -> T): T {
+      // learned clauses outlive an assumption, but not a solver scope
+      if (encoded && checker.solver is AssumingSolver) return block(checker)
       checker.solver.push()
       try {
         return block(checker)
@@ -192,8 +226,7 @@ class XcfaOcChecker(
     fun checkProperty(): SafetyResult<EmptyProof, Cex> = query { checkProperty(it) }
 
     private fun checkProperty(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
-      val races =
-        if (property.verifiedProperty == DATA_RACE) raceCandidates(eg, ppos, checker) else null
+      val races = races
       val targets = races?.map { it.condition } ?: eg.violations.map { it.guard }
       if (targets.isEmpty()) return SafetyResult.safe(EmptyProof.getInstance())
 
@@ -239,11 +272,10 @@ class XcfaOcChecker(
                 val extractor = XcfaOcTraceExtractor(xcfa, checker, eg)
                 if (races == null) extractor.trace
                 else {
-                  val model = checker.solver.model
-                  val race = races.first { it.condition.holdsIn(model) }
+                  val model = GuardValues(checker.solver.model)
+                  val race = races.first { model.holds(it.condition) }
                   val (e1, e2) =
-                    race.pairs.first { (e1, e2) -> race.pairCondition(e1, e2).holdsIn(model) }
-                  logger.info("Data race: $e1 and $e2")
+                    race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
                   extractor.raceTrace(e1, e2)
                 }
               } catch (e: Exception) {
@@ -282,9 +314,9 @@ class XcfaOcChecker(
           when {
             status?.isUnsat == true -> emptyList()
             status?.isSat == true -> {
-              val model = checker.solver.model
+              val model = GuardValues(checker.solver.model)
               remaining
-                .filter { key -> exitsByKey.getValue(key).any { it.guard.holdsIn(model) } }
+                .filter { key -> exitsByKey.getValue(key).any { model.holds(it.guard) } }
                 .ifEmpty { null }
             }
             else -> null // undecided
@@ -301,21 +333,44 @@ class XcfaOcChecker(
       return reached
     }
 
+    private var queryCount = 0
+
     private fun solve(checker: OcChecker<E>, target: Expr<BoolType>): SolverStatus? {
       logger.info("Adding constraints...")
-      addToSolver(eg, checker.solver)
+      if (!encoded) addToSolver(eg, checker.solver)
       lemmas.forEach { checker.solver.add(it) }
-      checker.solver.add(target)
+      if (encoded && checker.solver is AssumingSolver) {
+        lemmas.clear()
+        val query = Decls.Const("__theta_oc_query_${queryCount++}", Bool())
+        checker.solver.add(Imply(query.ref, target))
+        checker.assumption = query.ref
+      } else {
+        checker.solver.add(target)
+      }
       return checker.check(eg.events, eg.pos, ppos, eg.rfs, wss)
     }
   }
 
-  private fun Expr<BoolType>.holdsIn(model: Valuation): Boolean =
-    try {
-      (eval(model) as? BoolLitExpr)?.value == true
-    } catch (_: Exception) {
-      false
-    }
+  /** Guards share their subterms, so evaluating them as trees takes exponential time. */
+  private class GuardValues(private val model: Valuation) {
+    private val values = IdentityHashMap<Expr<BoolType>, Boolean>()
+
+    fun holds(guard: Expr<BoolType>): Boolean =
+      try {
+        value(guard)
+      } catch (_: Exception) {
+        false
+      }
+
+    private fun value(expr: Expr<BoolType>): Boolean =
+      values[expr]
+        ?: when (expr) {
+          is AndExpr -> expr.ops.all { value(it) }
+          is OrExpr -> expr.ops.any { value(it) }
+          is NotExpr -> !value(expr.op)
+          else -> (expr.eval(model) as BoolLitExpr).value
+        }.also { values[expr] = it }
+  }
 
   private fun addToSolver(eg: XcfaToEventGraph.EventGraph, solver: Solver) {
     // Value assignment
@@ -346,6 +401,8 @@ class XcfaOcChecker(
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }
+            } else if (parseContext.isGhostMemoryBase(rel.to.array)) {
+              conseq = And(conseq, Eq(rel.to.const.ref, rel.to.const.type.defaultValue))
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }

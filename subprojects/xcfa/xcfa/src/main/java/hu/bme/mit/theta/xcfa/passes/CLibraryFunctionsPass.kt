@@ -587,8 +587,8 @@ class CLibraryFunctionsPass(
                     ret.type == value.type &&
                     threadResultsUsed(builder)
                 ) {
-                  addSingle(AssignStmtLabel(ret, value, metadata))
-                } else addSingle(NopLabel)
+                  addSingle(exitOf(builder, AssignStmtLabel(ret, value, metadata), metadata))
+                } else addSingle(exitOf(builder, NopLabel, metadata))
               }
 
               "pthread_key_create" -> {
@@ -855,6 +855,19 @@ class CLibraryFunctionsPass(
    * Whether some `pthread_join` may store a thread's result: one not lowered yet, or one already
    * lowered, which has created [THREAD_RESULTS]. Only then are thread starts instrumented.
    */
+  /** A `pthread_exit` label, which in the initial thread also marks where its locals die. */
+  private fun exitOf(
+    builder: XcfaProcedureBuilder,
+    exit: XcfaLabel,
+    metadata: MetaData,
+  ): XcfaLabel =
+    if (
+      parseContext.isCheckMemsafety &&
+        builder.parent.getInitProcedures().any { it.first == builder }
+    )
+      SequenceLabel(listOf(exit, InvokeLabel(MAIN_THREAD_EXIT, listOf(), metadata)), metadata)
+    else exit
+
   private fun threadResultsUsed(builder: XcfaProcedureBuilder): Boolean =
     builder.parent.getVars().any { it.wrappedVar.name == THREAD_RESULTS } ||
       builder.parent.getProcedures().any { proc ->

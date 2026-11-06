@@ -339,8 +339,12 @@ class SymbolicMutexPass : ProcedurePass {
               assign(label.successVar.typed, label.successVar.type.integerOf(value).typed)
             when (label.successful) {
               true -> listOf(acquire + result(0))
-              false -> listOf(listOf(assume(Not(canAcquire)), result(1)))
-              null -> listOf(acquire + result(0), listOf(assume(Not(canAcquire)), result(1)))
+              false -> listOf(listOf(assume(Not(canAcquire)), result(MutexTryLockLabel.EBUSY)))
+              null ->
+                listOf(
+                  acquire + result(0),
+                  listOf(assume(Not(canAcquire)), result(MutexTryLockLabel.EBUSY)),
+                )
             }
           }
           else ->

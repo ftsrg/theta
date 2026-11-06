@@ -53,6 +53,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.STATIC_OBJECT
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.typeInterval
@@ -71,6 +72,10 @@ import java.math.BigInteger
  * at their old contents -- leaving them would be a specific wrong value, which can hide a bug as
  * easily as invent one, where unconstrained is a safe over-approximation. It is safe for a Safe
  * verdict only, so each value made up here is recorded in [XcfaBuilder.overApproximatedVars].
+ *
+ * Under the memory-safety properties a call also leaves markers for what it reads and writes, which
+ * [FormatAccessPass] resolves. Only `*printf`, `puts` and `fputs` do; other stubs access nothing
+ * the guards see.
  *
  * ⚠️ Not modelled here, deliberately:
  * - a call flagged [InvokeLabel.isLibraryFunction]. That flag means "an later pass or the analysis
@@ -121,8 +126,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      *   success, say so here instead.
      * @param input the written buffers hold input from the environment, which can be any value in C
      *   too. Otherwise the call computes them, and their havoc is an over-approximation.
-     * @param freshString the call returns a fresh string of fewer than this many characters, with
-     *   any content.
+     * @param freshString the call returns a string in static storage of fewer than this many
+     *   characters, with any content.
      * @param model an exact model of the call, used where it applies.
      * @param envReturn the environment gives a return value in `[lo, hi]` (`hi` null: the type's
      *   maximum), each one possible in C.
@@ -224,6 +229,13 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         // glibc and musl messages in the C locale are shorter than this
         "strerror" to Stub(freshString = 128),
       )
+
+    /** The argument position of the format, for the calls that read their `%s` arguments. */
+    private val READ_FORMAT_INDEX =
+      mapOf("printf" to 1, "fprintf" to 2, "sprintf" to 2, "snprintf" to 3, "asprintf" to 2)
+
+    /** The calls whose first argument is a string they read; `perror` also takes NULL. */
+    private val STRING_ARGUMENT = setOf("puts", "fputs")
 
     /** The argument position of the format, for the calls whose return a format bounds. */
     private val FORMAT_INDEX =
@@ -336,8 +348,6 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     name in STUBS &&
       name !in defined &&
       !isLibraryFunction &&
-      // a fresh string is allocated, which memory safety would report as a leak
-      !(STUBS.getValue(name).freshString != null && parseContext.isCheckMemsafety) &&
       // the address arguments would be written
       (name != "accept" || params.drop(2).all { isNullLiteral(it) })
 
@@ -362,6 +372,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     // question, answered (for the written buffers only) below.
     var format: VarDecl<*>? = null
     val model = spec.model
+    val arguments = invoke.params.toMutableList<Expr<*>>()
     for (i in 1 until invoke.params.size) {
       val arg = invoke.params[i]
       if (arg is LitExpr<*>) continue // a constant reads nothing
@@ -371,8 +382,11 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
       builder.addVar(read)
       out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
+      arguments[i] = read.ref
       if (i == FORMAT_INDEX[invoke.name]) format = read
     }
+    if (parseContext.isCheckMemsafety) out.addAll(accessMarkers(invoke, arguments, builder))
+    if (written.isNotEmpty()) builder.parent.bufferStubCalls++
 
     val exact =
       when (model) {
@@ -460,9 +474,42 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     return out
   }
 
+  /** What the guards need of this call; `arguments` hold the values it reads. */
+  private fun accessMarkers(
+    invoke: InvokeLabel,
+    arguments: List<Expr<*>>,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel> {
+    fun marker(name: String, params: List<Expr<*>>) =
+      InvokeLabel(name, params, metadata = invoke.metadata)
+    if (invoke.name in STRING_ARGUMENT && arguments.size > 1) {
+      return listOf(marker(FormatAccessPass.PLAIN_STRING_READ, listOf(arguments[1])))
+    }
+    val formatAt = READ_FORMAT_INDEX[invoke.name]?.takeIf { it < arguments.size } ?: return listOf()
+    val format = (arguments[formatAt] as? RefExpr<*>)?.decl as? VarDecl<*> ?: return listOf()
+    val id = builder.parent.formatMarkers.size
+    builder.parent.formatMarkers[id] = format
+    val marker = CComplexType.getSignedInt(parseContext).getValue("$id")
+    val rest = arguments.subList(formatAt + 1, arguments.size)
+    return listOfNotNull(
+      marker(FormatAccessPass.FORMAT_READS, listOf(marker) + rest),
+      if (invoke.name == "sprintf") {
+        marker(FormatAccessPass.FORMAT_WRITE, listOf(marker, arguments[1]) + rest)
+      } else null,
+      if (invoke.name == "snprintf") {
+        marker(
+          FormatAccessPass.FORMAT_WRITE_BOUNDED,
+          listOf(marker, arguments[1], invoke.params[2]) + rest,
+        )
+      } else null,
+    )
+  }
+
   /**
-   * `ret := malloc(cells)`, never null, with any characters in all cells but the last, which is 0.
-   * Null when [ret] is not a pointer to a scalar.
+   * `ret` := a fresh static object of [cells] cells, with any characters in all cells but the last,
+   * which is 0. Static, as C gives it: not a leak, and not a heap block to free. A fresh object per
+   * call rather than one shared buffer, whose rewrites would race between threads. Null when [ret]
+   * is not a pointer to a scalar.
    */
   private fun freshString(
     ret: VarDecl<*>,
@@ -473,9 +520,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     val cell = pointeeCellType(ret.ref) ?: return null
     val out = mutableListOf<XcfaLabel>()
     val size = CComplexType.getUnsignedLong(parseContext).getValue("$cells")
-    out.add(InvokeLabel("malloc", listOf(ret.ref, size), invoke.metadata))
-    val nullValue = CComplexType.getType(ret.ref, parseContext).nullValue
-    out.add(StmtLabel(Assume(Neq(ret.ref, nullValue)), metadata = invoke.metadata))
+    out.add(InvokeLabel(STATIC_OBJECT, listOf(ret.ref, size), invoke.metadata))
     for (n in 0 until cells) {
       val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
       val deref =

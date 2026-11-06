@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.abstracttype.PosExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
@@ -54,6 +55,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.TypeUtils.getDefaultValue
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
@@ -105,6 +107,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     currentBuilder = builder
+    removeUnusedLifetimeMarkers(builder)
     val references =
       builder.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } }
 
@@ -158,6 +161,41 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     return builder
   }
 
+  /** Atomic lowering can consume the last real address use, leaving only lifetime markers. */
+  private fun removeUnusedLifetimeMarkers(builder: XcfaProcedureBuilder) {
+    fun marker(label: XcfaLabel): Boolean =
+      label is InvokeLabel &&
+        (label.name == FunctionVisitor.SCOPE_START || label.name == FunctionVisitor.SCOPE_END)
+    val addressed =
+      builder
+        .getEdges()
+        .flatMap { it.getFlatLabels() }
+        .filterNot(::marker)
+        .flatMap { it.references }
+        .mapNotNull(::getDirectReferencedDecl)
+        .toSet()
+    for (edge in builder.getEdges().toList()) {
+      val labels = edge.getFlatLabels()
+      val kept =
+        labels.filterNot { label ->
+          if (!marker(label)) false
+          else {
+            val address = (label as InvokeLabel).params.getOrNull(1) as? Reference<*, *>
+            val variable = address?.let(::getDirectReferencedDecl)
+            if (variable == null || variable in addressed) false
+            else {
+              val type = CComplexType.getType(variable.ref, parseContext)
+              type !is CArray && type !is CStruct
+            }
+          }
+        }
+      if (kept.size != labels.size) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(SequenceLabel(kept, edge.label.metadata)))
+      }
+    }
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun globalReferredVars(
     builder: XcfaProcedureBuilder
@@ -171,7 +209,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
           }
           .mapNotNull(::getDirectReferencedDecl)
           .toSet()
-          .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
+          .filter {
+            builder.parent.getVars().any { global ->
+              global.wrappedVar == it && !global.threadLocal
+            }
+          }
           .associateWith {
             val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
             val varDecl = Var(it.name + "*", ptrType.smtType)
@@ -257,6 +299,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         .mapNotNull(::getDirectReferencedDecl)
         .toSet()
         .filter { !globalReferredVars.containsKey(it) }
+        // still global before ThreadLocalVarPass, which makes them locals this pass can handle
+        .filter { v -> builder.parent.getVars().none { it.wrappedVar == v && it.threadLocal } }
         .associateWith { v ->
           val ptrType = CPointer(null, CComplexType.getType(v.ref, parseContext), parseContext)
 
@@ -332,9 +376,136 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         addRefInitializations(builder, globalReferredVars) // we only need this for main
       }
       addRefInitializations(builder, referredVars)
+      if (parseContext.isCheckMemsafety) lowerLifetimes(builder, referredVars)
       return true
     }
     return false
+  }
+
+  /**
+   * Gives a local a fresh base on each entry to its block, so a release does not outlive the block,
+   * and releases escaping addresses at procedure exit. Block-end releases remain necessary for
+   * aliases used later in the same procedure.
+   */
+  private fun lowerLifetimes(
+    builder: XcfaProcedureBuilder,
+    referredVars: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
+  ) {
+    val escaping = escapingLocalAddresses(builder, referredVars.values.map { it.first }.toSet())
+    val allocations: Map<Any?, List<XcfaLabel>> =
+      referredVars.values.associate { (pointer, labels) -> pointer to labels.labels }
+    fun lifetimeOnly(label: XcfaLabel): Boolean =
+      label is NopLabel ||
+        (label is StmtLabel && label.stmt is SkipStmt) ||
+        (label is InvokeLabel &&
+          (label.name == FunctionVisitor.SCOPE_END || label.name == MAIN_THREAD_EXIT))
+    // The frontend also puts scope ends on the common return path. Keep block exits from which
+    // the procedure can still use a local alias, even when that alias never leaves the procedure.
+    val returnTail = builder.finalLoc.map { mutableSetOf(it) }.orElseGet { mutableSetOf() }
+    do {
+      val added =
+        builder.getLocs().filter { location ->
+          location !in returnTail &&
+            location.outgoingEdges.isNotEmpty() &&
+            location.outgoingEdges.all { edge ->
+              edge.target in returnTail && edge.getFlatLabels().all(::lifetimeOnly)
+            }
+        }
+      returnTail.addAll(added)
+    } while (added.isNotEmpty())
+    for (edge in LinkedHashSet(builder.getEdges())) {
+      val labels = edge.getFlatLabels()
+      if (
+        labels.none {
+          it is InvokeLabel &&
+            (it.name == FunctionVisitor.SCOPE_START || it.name == FunctionVisitor.SCOPE_END)
+        }
+      )
+        continue
+      val lowered =
+        labels.flatMapIndexed { index, label ->
+          val pointer = ((label as? InvokeLabel)?.params?.getOrNull(1) as? RefExpr<*>)?.decl
+          when {
+            label !is InvokeLabel -> listOf(label)
+            label.name == FunctionVisitor.SCOPE_START -> allocations[pointer] ?: listOf(label)
+            label.name == FunctionVisitor.SCOPE_END &&
+              pointer in allocations &&
+              pointer !in escaping &&
+              edge.target in returnTail &&
+              labels.drop(index + 1).all(::lifetimeOnly) -> emptyList()
+            else -> listOf(label)
+          }
+        }
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
+    }
+    val releases = escaping.map { builder.parent.deallocate(parseContext, it.ref) }
+    for (edge in builder.lifetimeEndEdges()) {
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(edge.getFlatLabels() + releases, edge.label.metadata))
+      )
+    }
+  }
+
+  /**
+   * Follows address values through local copies. Reading a cell consumes its address rather than
+   * exporting it; storing an address, returning it, or passing it to a call may let it outlive us.
+   */
+  private fun escapingLocalAddresses(
+    builder: XcfaProcedureBuilder,
+    pointers: Set<VarDecl<Type>>,
+  ): Set<VarDecl<Type>> {
+    val aliases = mutableMapOf<VarDecl<*>, MutableSet<VarDecl<Type>>>()
+    pointers.forEach { aliases[it] = mutableSetOf(it) }
+    fun addresses(expr: Expr<*>): Set<VarDecl<Type>> =
+      when (expr) {
+        is RefExpr<*> -> aliases[expr.decl] ?: emptySet()
+        is Reference<*, *> -> {
+          val cell = expr.expr as? Dereference<*, *, *>
+          if (cell != null) (addresses(cell.array) + addresses(cell.offset))
+          else addresses(expr.expr)
+        }
+        is Dereference<*, *, *> -> emptySet()
+        else -> expr.ops.flatMap { addresses(it) }.toSet()
+      }
+    val labels = builder.getEdges().flatMap { it.getFlatLabels() }
+    val assignments = labels.filterIsInstance<StmtLabel>().filter { it.ghostWriteIndex == null }
+    var changed: Boolean
+    do {
+      changed = false
+      for (label in assignments) {
+        val stmt = label.stmt as? AssignStmt<*> ?: continue
+        val sources = addresses(stmt.expr)
+        if (sources.isNotEmpty()) {
+          changed = aliases.getOrPut(stmt.varDecl) { mutableSetOf() }.addAll(sources) || changed
+        }
+      }
+    } while (changed)
+    val outputs =
+      builder.parent.getVars().map { it.wrappedVar }.toSet() +
+        builder.getParams().filter { it.second != ParamDirection.IN }.map { it.first }
+    return buildSet {
+      for (label in labels) {
+        when (label) {
+          is StmtLabel -> {
+            if (label.ghostWriteIndex != null) continue
+            when (val stmt = label.stmt) {
+              is AssignStmt<*> -> if (stmt.varDecl in outputs) addAll(addresses(stmt.expr))
+              is MemoryAssignStmt<*, *, *> -> addAll(addresses(stmt.expr))
+              else -> Unit
+            }
+          }
+          is InvokeLabel ->
+            if (
+              label.name != FunctionVisitor.SCOPE_START && label.name != FunctionVisitor.SCOPE_END
+            )
+              label.params.forEach { addAll(addresses(it)) }
+          is StartLabel -> label.params.forEach { addAll(addresses(it)) }
+          else -> Unit
+        }
+      }
+    }
   }
 
   private fun addRefInitializations(
@@ -400,9 +571,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * under the bytes model, cells otherwise. A statically unsized one gets the unknown-extent slot.
    */
   private fun referencedUnits(type: CComplexType): Long =
-    if (parseContext.memoryModel.byteAddressed())
-      ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8).toLong()
-    else
+    if (parseContext.memoryModel.byteAddressed()) {
+      val units = ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8).toLong()
+      // The slot of an address-taken array holds the array's base, whatever the array's own size.
+      if (type is CArray) maxOf(units, CPointer(null, null, parseContext).width() / 8L) else units
+    } else
       when (type) {
         is CStruct -> if (type.isUnion) 1L else type.unitCount.toLong()
         else -> flatCellCount(type)?.toLong() ?: FlatAddressSpace.UNKNOWN_EXTENT.toLong()
@@ -544,6 +717,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       return false
     }
 
+    // A thread parameter is bound to one value, which has no room for a base and an offset.
+    builder
+      .getEdges()
+      .flatMap { it.label.getFlatLabels() }
+      .filterIsInstance<StartLabel>()
+      .forEach {
+        if (it.params.any { param -> param.stripPos() is Reference<*, *> }) {
+          throw UnsupportedPointerSplitException(
+            "Unsupported pointer arithmetic: mid-object thread argument of ${it.name}"
+          )
+        }
+      }
     var changed = normalizeNestedReferenceAssignments(builder)
     val splitVars = discoverSplitVars(builder)
     if (splitVars.isEmpty()) return changed
@@ -566,9 +751,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * argument.
    *
    * Seed the halves at the procedure entry from the still-bound parameter: `p_base = p`, `p_offset
-   * = 0`. The offset is zero because a pointer argument is a base id at offset 0 -- the model
-   * cannot carry a mid-object pointer across a call (passing a bare split variable is rejected
-   * outright), so whatever the caller binds to `p` is exactly the base.
+   * = 0`. When inlining later binds a mid-object address to `p`, the next run of this pass splits
+   * `p` and through the copy `p_base` too, so the offset reaches every access.
    */
   private fun seedSplitParams(
     builder: XcfaProcedureBuilder,
@@ -719,9 +903,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       return false
     }
 
+    // The caller binds the returned value to the original variable, which the split leaves unused.
+    if (builder.getParams().any { it.first == original && it.second != ParamDirection.IN }) {
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: mid-object pointer returned by ${builder.name}"
+      )
+    }
     val baseVar = Var("${original.name}_base", baseType)
     val offsetVar = Var("${original.name}_offset", offsetType)
     val isGlobal = builder.parent.getVars().any { it.wrappedVar == original }
+    if (builder.parent.getVars().any { it.wrappedVar == original && it.threadLocal }) {
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: mid-object pointer in thread-local ${original.name}"
+      )
+    }
     if (isGlobal) {
       if (builder.parent.getVars().none { it.wrappedVar == baseVar }) {
         builder.parent.addVar(XcfaGlobalVar(baseVar))
@@ -857,7 +1052,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is InvokeLabel ->
         InvokeLabel(
           name = name,
-          params = params.map { it.changeComplexReferredVars(splitVars) },
+          params = params.map { it.asCallArgument(name, splitVars) },
           metadata = metadata,
           tempLookup = tempLookup,
           isLibraryFunction = isLibraryFunction,
@@ -1272,6 +1467,27 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       parseContext.metadata.create(rewritten, "cType", CComplexType.getType(this, parseContext))
     }
     return rewritten
+  }
+
+  /**
+   * A split pointer passed to a procedure of this program is spelled like any computed address,
+   * `ref(deref(base, offset))`: inlining turns it into an assignment the next run of this pass
+   * splits, so the offset survives the call. Other callees take one value, and are refused below.
+   */
+  @Suppress("UNCHECKED_CAST")
+  private fun Expr<*>.asCallArgument(
+    callee: String,
+    splitVars: Map<VarDecl<*>, SplitVarPair>,
+  ): Expr<*> {
+    val split = splitPairOf(splitVars)
+    if (split == null || currentBuilder.parent.getProcedures().none { it.name == callee }) {
+      return changeComplexReferredVars(splitVars)
+    }
+    val cell =
+      Dereference(split.base.ref as Expr<Type>, split.offset.ref as Expr<Type>, split.base.type)
+    return Reference(cell, type).also {
+      parseContext.metadata.create(it, "cType", CComplexType.getType(this, parseContext))
+    }
   }
 
   @Suppress("UNCHECKED_CAST")

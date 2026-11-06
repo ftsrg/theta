@@ -86,14 +86,14 @@ class ThreadResultPass : ProcedurePass {
             name.startsWith(THREAD_RESULT_ID_PREFIX)
         }
         .map { AssignStmtLabel(it.wrappedVar, checkNotNull(it.initValue)) }
-    val init = entry.initLoc
-    val body = XcfaLocation("${init.name}__theta_thread_results", metadata = init.metadata)
-    entry.addLoc(body)
-    init.outgoingEdges.toList().forEach {
+    // On the entry edges themselves: later passes place the initializations of the ghost state and
+    // of address-taken objects there, which would otherwise end up after the code using them.
+    entry.initLoc.outgoingEdges.toList().forEach {
       entry.removeEdge(it)
-      entry.addEdge(it.withSource(body))
+      entry.addEdge(
+        it.withLabel(SequenceLabel(initializers + it.getFlatLabels(), it.label.metadata))
+      )
     }
-    entry.addEdge(XcfaEdge(init, body, SequenceLabel(initializers), init.metadata))
   }
 
   private fun XcfaLabel.resultId(): VarDecl<*>? =

@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
@@ -51,6 +52,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpToIeeeBvExpr
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -88,6 +91,8 @@ import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import java.util.IdentityHashMap
 
@@ -120,6 +125,8 @@ class FrontendXcfaBuilder(
 
   private var structArgCnt =
     0 // names the per-call temporaries a by-value struct argument copies into
+
+  private var fpBitsCnt = 0 // names the bits of float union member writes
 
   /**
    * If a compound statement has pre-statements, the metadata has to appear before the pre-list, but
@@ -323,6 +330,59 @@ class FrontendXcfaBuilder(
       fullExpression = fullExprSource.fullExpression.orElse(null),
     )
 
+  /**
+   * Builds [guard] up to its decision and returns where the decision is taken. If every path there
+   * neither blocks nor writes a variable in scope at the loop, the states at that location are the
+   * states where the guard is evaluated, so it gets a [LoopHead].
+   */
+  private fun buildLoopGuard(
+    loop: CStatement,
+    variablesAtGuard: Map<String, VarDecl<*>>,
+    guard: CStatement,
+    param: ParamPack,
+  ): XcfaLocation {
+    val testEnd = buildWithoutPostStatement(guard, param)
+    if (!isTransparent(param.lastLoc, testEnd, variablesAtGuard.values.toSet())) return testEnd
+    val metadata =
+      (getMetadata(loop) as CMetaData).copy(
+        loopHead = LoopHead(loop, variablesAtGuard, param.builder.name)
+      )
+    val head = getAnonymousLoc(param.builder, metadata = metadata)
+    param.builder.addEdge(XcfaEdge(testEnd, head, metadata = EmptyMetaData))
+    return head
+  }
+
+  /** Whether every path from [start] reaches [end] with no assumption, call or write to [vars]. */
+  private fun isTransparent(
+    start: XcfaLocation,
+    end: XcfaLocation,
+    vars: Set<VarDecl<*>>,
+  ): Boolean {
+    val visited = HashSet<XcfaLocation>()
+    val queue = ArrayDeque(listOf(start))
+    while (queue.isNotEmpty()) {
+      val loc = queue.removeFirst()
+      if (loc === end || !visited.add(loc)) continue
+      // the evaluation of a guard is short; a long walk has left it
+      if (visited.size > 64 || loc.outgoingEdges.isEmpty()) return false
+      for (edge in loc.outgoingEdges) {
+        val transparent =
+          edge.label.getFlatLabels().all { label ->
+            when (val stmt = (label as? StmtLabel)?.stmt) {
+              null -> label is NopLabel
+              is SkipStmt -> true
+              is AssignStmt<*> -> stmt.varDecl !in vars
+              is HavocStmt<*> -> stmt.varDecl !in vars
+              else -> false
+            }
+          }
+        if (!transparent) return false
+        queue.add(edge.target)
+      }
+    }
+    return true
+  }
+
   /** A pointer-indexed, Fitsall-valued memsafety ghost array, zero everywhere at the start. */
   private fun addGhostArray(
     builder: XcfaBuilder,
@@ -349,13 +409,12 @@ class FrontendXcfaBuilder(
       ghosts.forEach { addGhostArray(builder, it, initStmtList) }
     }
     for (globalDeclaration in cProgram.globalDeclarations) {
-      // A thread-local variable is one object per thread, but it is built here as a single global,
-      // which every thread would share: wrong values and false races. Exact without threads.
-      if (parseContext.multiThreading && globalDeclaration.get1().actualType.isThreadLocal) {
-        throw UnsupportedFrontendElementException(
-          "Thread-local variables are not supported in multithreaded programs: " +
-            globalDeclaration.get1().name
-        )
+      // A thread-local variable is one object per thread: ThreadLocalVarPass splits it, with its
+      // initial value set at each thread's start. Without threads it is simply a global.
+      // Read off the specifiers: the array type a declarator builds does not carry the flag.
+      if (parseContext.multiThreading && globalDeclaration.get1().type.isThreadLocal) {
+        addThreadLocalVar(builder, globalDeclaration.get2(), globalDeclaration.get1())
+        continue
       }
       initializeGlobalVariable(
         builder,
@@ -583,7 +642,24 @@ class FrontendXcfaBuilder(
       parent?.let { BigInteger.valueOf(it.first.toLong()) },
     )
     recordObjectAtomicity(base, type)
+    val unit = parent?.second
+    if (unit != null && !parseContext.memoryModel.byteAddressed()) {
+      parseContext.recordStaticSubObjectAddress(
+        staticAddress(parent.first),
+        BigInteger.valueOf(unit.toLong()),
+        staticAddress(base),
+      )
+    }
   }
+
+  private fun staticAddress(base: Int) =
+    BigInteger(
+      FlatMemoryPass.flatBaseValue(
+        base,
+        objectUnits(staticObjects.getValue(base).type),
+        parseContext,
+      )
+    )
 
   /** The static object, and the cell of it, that [objectExpr] is stored in, if any. */
   private fun parentCell(objectExpr: Expr<*>): Pair<Int, Int?>? {
@@ -631,10 +707,16 @@ class FrontendXcfaBuilder(
     }
   }
 
+  /** Sizing a sub-object reads its base from a cell, so it has to go along with that cell. */
   private fun XcfaLabel.isNeededInitWrite(): Boolean {
-    val deref = ((this as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>)?.deref ?: return true
-    val obj = staticObjectBases[deref.array]?.let(staticObjects::get) ?: return true
-    return obj.needsCell(deref.offset.asConstantBigInteger()?.toInt())
+    val cells =
+      ((this as? StmtLabel)?.stmt as? MemoryAssignStmt<*, *, *>)?.let { listOf(it.deref) }
+        ?: ghostWriteIndex?.dereferences
+        ?: return true
+    return cells.all { deref ->
+      val obj = staticObjectBases[deref.array]?.let(staticObjects::get)
+      obj == null || obj.needsCell(deref.offset.asConstantBigInteger()?.toInt())
+    }
   }
 
   private fun giveStructObjectStorage(
@@ -709,18 +791,34 @@ class FrontendXcfaBuilder(
   ) = subObjects.subobjectCell(parent, parentType, index, subobjectType)
 
   /**
-   * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
-   * ones, mantissa's top bit set. 0x7FC00000 for a 32-bit float, 0x7FF8000000000000 for a 64-bit
-   * double. Used to give the otherwise-unspecified fpToIEEEBV(NaN) a single deterministic value.
+   * The IEEE bits of [value]: `a := value; havoc b; assume to_fp(b) = a` (SMT `=`). This is exact
+   * for a number. SMT-LIB has a single NaN without fixed bits, so for a NaN `b` is any NaN pattern:
+   * an over-approximation of the payload. Thus `b` is recorded in `overApproximatedVars`, and `a`
+   * and `b` are scratch variables (the real bits satisfy the assumption too).
    */
-  private fun canonicalNaNBits(fpType: hu.bme.mit.theta.core.type.fptype.FpType): Expr<BvType> {
-    val width = fpType.exponent + fpType.significand
-    val mantissaBits = fpType.significand - 1
-    val exponentAllOnes =
-      java.math.BigInteger.ONE.shiftLeft(fpType.exponent).subtract(BigInteger.ONE)
-    val pattern =
-      exponentAllOnes.shiftLeft(mantissaBits).or(BigInteger.ONE.shiftLeft(mantissaBits - 1))
-    return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width)
+  private fun ieeeBitsOf(
+    builder: XcfaProcedureBuilder,
+    value: Expr<*>,
+    type: CComplexType,
+    metadata: MetaData,
+  ): Pair<Expr<BvType>, List<XcfaLabel>> {
+    @Suppress("UNCHECKED_CAST") val fpValue = value as Expr<FpType>
+    val bits = Var(FP_BITS_PREFIX + fpBitsCnt++, BvType.of(FpToIeeeBvExpr.bitWidth(fpValue.type)))
+    val arg = Var("${bits.name}_value", fpValue.type)
+    builder.addVar(bits)
+    builder.addVar(arg)
+    parseContext.metadata.create(arg.ref, "cType", type)
+    builder.overApproximatedVars[bits] = null
+    builder.overApproximationScratchVars += listOf(arg, bits)
+    return bits.ref to
+      listOf(
+        StmtLabel(Stmts.Assign(arg, fpValue), metadata = metadata),
+        StmtLabel(HavocStmt.of(bits), metadata = metadata),
+        StmtLabel(
+          Assume(FpExprs.FpAssign(FpExprs.FromIeeeBv(bits.ref, fpValue.type), arg.ref)),
+          metadata = metadata,
+        ),
+      )
   }
 
   private fun fixedArraySize(type: CArray) = subObjects.fixedArraySize(type)
@@ -1006,6 +1104,27 @@ class FrontendXcfaBuilder(
     return tmp.ref to labels
   }
 
+  private fun addThreadLocalVar(
+    builder: XcfaBuilder,
+    variable: VarDecl<*>,
+    declaration: CDeclaration,
+  ) {
+    val type = declaration.actualType
+    if (
+      type is CPointer ||
+        type is CArray ||
+        type is CStruct ||
+        type.isAtomic ||
+        declaration.initExpr != null
+    ) {
+      throw UnsupportedFrontendElementException(
+        "Only uninitialized non-atomic scalar thread-local variables are supported in " +
+          "multithreaded programs: ${declaration.name}"
+      )
+    }
+    builder.addVar(XcfaGlobalVar(variable, type.nullValue, threadLocal = true))
+  }
+
   private fun initializeGlobalVariable(
     builder: XcfaBuilder,
     globalDeclaration: Expr<*>,
@@ -1214,7 +1333,8 @@ class FrontendXcfaBuilder(
       // CInitializerList for its single .expression throws.
       val scalarInit = unwrapScalarInitializer(initExpr)
       if (scalarInit != null && scalarInit.expression !is UnsupportedInitializer) {
-        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(scalarInit.expression)))
+        val value = scalarInit.expression.asPointerValue(type, parseContext)
+        initStmtList.add(AssignStmtLabel(globalDeclaration, type.castTo(value)))
       } else if (declaredElsewhere(declaration)) {
         initStmtList.add(HavocStmtLabel(globalDeclaration))
       } else {
@@ -1487,6 +1607,9 @@ class FrontendXcfaBuilder(
       unsignedTypeOfWidth(wordWidth)
         ?: CComplexType.getUnsignedLong(parseContext).takeIf { it.width() >= wordWidth }
         ?: CComplexType.getUnsignedLongLong(parseContext)
+    // A non-zero float initializer has no bits here (see collectUnionLeaves): the word stays
+    // unconstrained, as the bytes of a byte-laid-out union do.
+    if (leaves.any { it.value == null }) return wordType to listOf(null)
     // A member filling the whole word keeps its own representation, which a read of a member
     // sharing it takes as is (the two differ for a negative value under integer arithmetic).
     val whole =
@@ -2028,39 +2151,30 @@ class FrontendXcfaBuilder(
         val cellType =
           cellSpliceType(bitfieldCell, CComplexType.getType(bitfieldCell, parseContext))
         // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
-        // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
-        // float, offset 0 and width == cell width, so the splice replaces the whole cell.
+        // bit pattern, not an integer cast of it. For a full-width float, offset 0 and width ==
+        // cell width, so the splice replaces the whole cell.
         val isIeeeFloat =
           parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.IEEE_FLOAT).isPresent
-        val spliced =
-          if (isIeeeFloat) {
-            @Suppress("UNCHECKED_CAST")
-            val fpExpr = rExpression as Expr<hu.bme.mit.theta.core.type.fptype.FpType>
-            // fpToIEEEBV is *unspecified for NaN*: the solver may then read a NaN's bits as any
-            // 32/64-bit value, so `value = NaN; word = ...; value = word` could turn NaN into a
-            // normal float and break the pervasive `x != x` NaN test -- 14 float-newlib tasks came
-            // back wrong from exactly this. Force NaN to a canonical quiet-NaN encoding so no
-            // ToIeeeBv is ever applied to a NaN; the from-bits direction is total and needs no
-            // guard, and canonical NaN bits still classify as NaN in the program's own bit checks.
-            hu.bme.mit.theta.core.type.anytype.IteExpr.of(
-              FpExprs.IsNan(fpExpr),
-              canonicalNaNBits(fpExpr.type),
-              FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
-            )
-          } else {
-            // Convert to the member's own type first: a `_Bool` member stored in a wider cell
-            // must take `x != 0`, not the low bit of `x`.
-            cellType.castTo(CComplexType.getType(lValue, parseContext).castTo(rExpression))
-          }
+        val memberType = CComplexType.getType(lValue, parseContext)
+        val memberValue = memberType.castTo(rExpression)
+        val fpBits =
+          if (isIeeeFloat) ieeeBitsOf(builder, memberValue, memberType, getMetadata(statement))
+          else null
+        // Convert to the member's own type first: a `_Bool` member stored in a wider cell must
+        // take `x != 0`, not the low bit of `x`.
+        val spliced = fpBits?.first ?: cellType.castTo(memberValue)
         val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)
         val offset = cast(bitfieldCell.offset, op.type)
         val deref = Dereference(op, offset, cellType.smtType)
         parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
-        StmtLabel(
-          MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
-          metadata = getMetadata(statement),
-        )
+        val write =
+          StmtLabel(
+            MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
+            metadata = getMetadata(statement),
+          )
+        if (fpBits == null) write
+        else SequenceLabel(fpBits.second + write, metadata = getMetadata(statement))
       } else
       // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
       // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
@@ -2092,7 +2206,8 @@ class FrontendXcfaBuilder(
                 metadata = getMetadata(statement),
               )
             } else {
-              val castRExpression = CComplexType.getType(target, parseContext).castTo(rExpression)
+              val castRExpression =
+                memberType.castTo(rExpression.asPointerValue(memberType, parseContext))
               val type = CComplexType.getType(castRExpression, parseContext)
 
               val deref = Dereference(op, offset, type.smtType)
@@ -2457,7 +2572,12 @@ class FrontendXcfaBuilder(
     xcfaEdge = XcfaEdge(lastBody, innerEndLoc, metadata = getMetadata(statement))
     builder.addEdge(xcfaEdge)
     val lastPre =
-      buildWithoutPostStatement(guard, ParamPack(builder, innerEndLoc, null, null, returnLoc))
+      buildLoopGuard(
+        statement,
+        statement.variablesAtGuard,
+        guard,
+        ParamPack(builder, innerEndLoc, null, null, returnLoc),
+      )
     // The guard test is re-evaluated on every loop cycle, whereas the `do` statement itself is
     // entered only once. The waypoint location comes from the label's metadata (see
     // TraceToWitness),
@@ -2537,7 +2657,13 @@ class FrontendXcfaBuilder(
       else init.accept(this, ParamPack(builder, initLoc, null, null, returnLoc))
     val lastTest =
       if (guard == null) lastInit
-      else buildWithoutPostStatement(guard, ParamPack(builder, lastInit!!, null, null, returnLoc))
+      else
+        buildLoopGuard(
+          statement,
+          statement.variablesAtGuard,
+          guard,
+          ParamPack(builder, lastInit!!, null, null, returnLoc),
+        )
     // The guard-branch edges below are re-traversed on every loop cycle, whereas the `for`
     // statement itself is entered only once. Anchoring them to the body's metadata (as CWhile does)
     // makes a cycled witness waypoint point at the loop body rather than the `for` keyword.
@@ -2735,15 +2861,13 @@ class FrontendXcfaBuilder(
     val key: VarDecl<*> = builder.getParams()[0].first
     check(returnLoc != null)
     val type = CComplexType.getType(key.ref, parseContext)
+    val value = (expr?.expression ?: type.nullValue).asPointerValue(type, parseContext)
     val edge =
       XcfaEdge(
         endExpr,
         returnLoc,
         StmtLabel(
-          Stmts.Assign(
-            cast(key, key.type),
-            cast(type.castTo(expr?.expression ?: type.nullValue), key.type),
-          ),
+          Stmts.Assign(cast(key, key.type), cast(type.castTo(value), key.type)),
           metadata = getMetadata(statement, fullExprSource = expr ?: statement),
         ),
         metadata = getMetadata(statement),
@@ -2873,7 +2997,12 @@ class FrontendXcfaBuilder(
     val innerLoop = getAnonymousLoc(builder, metadata = getMetadata(statement))
     builder.addLoc(innerLoop)
     val testEndLoc =
-      buildWithoutPostStatement(guard, ParamPack(builder, initLoc, null, null, returnLoc))
+      buildLoopGuard(
+        statement,
+        statement.variablesAtGuard,
+        guard,
+        ParamPack(builder, initLoc, null, null, returnLoc),
+      )
     val assume =
       StmtLabel(
         Assume(
@@ -3006,6 +3135,22 @@ class FrontendXcfaBuilder(
   }
 }
 
+/**
+ * This expression as the value of a pointer of type [type]. Under the cell models a pointer sum
+ * names no object, so it has to be a reference, which keeps the base and the offset apart.
+ */
+private fun Expr<*>.asPointerValue(type: CComplexType, parseContext: ParseContext): Expr<*> {
+  if (
+    parseContext.memoryModel.flatAddressing() ||
+      (type !is CPointer && type !is CArray) ||
+      this is hu.bme.mit.theta.core.type.anytype.Reference<*, *> ||
+      !hasArithmetic()
+  )
+    return this
+  return asPointerArithReference(type, parseContext)
+    ?: throw UnsupportedPointerSplitException("Pointer arithmetic not supported: $this")
+}
+
 private fun Expr<*>.hasArithmetic(): Boolean =
   when (this) {
     is AddExpr -> true
@@ -3021,16 +3166,40 @@ private fun Expr<*>.hasArithmetic(): Boolean =
     else -> ops.any { it.hasArithmetic() }
   }
 
-/** Every pointer/array-typed leaf reachable in this expression (a pointer *value*, i.e. a base). */
+/**
+ * Every pointer/array-typed leaf reachable in this expression (a pointer *value*, i.e. a base). A
+ * loaded pointer is such a value itself: the variables addressing its cell say nothing about the
+ * object it points to.
+ */
 private fun Expr<*>.pointerLeaves(parseContext: ParseContext): List<Expr<*>> {
-  if (this is RefExpr<*>) {
-    when (CComplexType.getType(this, parseContext)) {
+  if (this is RefExpr<*> || this is Dereference<*, *, *>) {
+    return when (CComplexType.getType(this, parseContext)) {
       is CPointer,
-      is CArray -> return listOf(this)
-      else -> {}
+      is CArray -> listOf(this)
+      else ->
+        if (this is Dereference<*, *, *>) listOf()
+        else ops.flatMap { it.pointerLeaves(parseContext) }
     }
   }
   return ops.flatMap { it.pointerLeaves(parseContext) }
+}
+
+/**
+ * Whether every addition or subtraction on the way to [base] steps over elements of [elemType]. A
+ * cast around a sum changes no address, so `(void *)&a[i]` passes while `(T *)((char *)p + k)` does
+ * not, whatever its outermost type says.
+ */
+private fun Expr<*>.stepsOver(
+  elemType: CComplexType,
+  base: Expr<*>,
+  parseContext: ParseContext,
+): Boolean {
+  if (this == base) return true
+  if (this is AddExpr || this is SubExpr) {
+    val step = (CComplexType.getType(this, parseContext) as? CPointer)?.embeddedType
+    if (step != null && !step.sameElementAs(elemType)) return false
+  }
+  return ops.all { it.stepsOver(elemType, base, parseContext) }
 }
 
 /** This expression with every occurrence of [target] replaced by [replacement]. */
@@ -3041,11 +3210,15 @@ private fun <T : Type> Expr<T>.replaceExpr(target: Expr<*>, replacement: Expr<*>
 
 /**
  * Whether pointers to these two types step over the same elements: any two scalars (one cell each),
- * or equal aggregates. Pointers are scalars too.
+ * or equal aggregates. Pointers are scalars too. A `void *` steps over bytes, not over cells.
  */
 private fun CComplexType.sameElementAs(other: CComplexType): Boolean {
   fun CComplexType.aggregate() = this is CStruct || this is CArray
-  return if (aggregate() || other.aggregate()) this == other else true
+  return when {
+    this is CVoid || other is CVoid -> false
+    aggregate() || other.aggregate() -> this == other
+    else -> true
+  }
 }
 
 /**
@@ -3068,19 +3241,19 @@ private fun Expr<*>.asPointerArithReference(
   val leaves = pointerLeaves(parseContext)
   if (leaves.size != 1) return null
   val base = leaves[0]
+  if (base is hu.bme.mit.theta.core.type.anytype.Reference<*, *>) return null
   val elemType =
     when (val baseType = CComplexType.getType(base, parseContext)) {
       is CPointer -> baseType.embeddedType
       is CArray -> baseType.embeddedType
       else -> return null
     }
+  if (elemType is CVoid) return null
   // The index counts elements of the arithmetic's own pointee: in `(char *)p - k` that is bytes,
-  // not elements of `p`'s pointee, so reading it as `&p[-k]` lands in the wrong cell (the
-  // `container_of` idiom read a garbage cell). Such a reinterpreting step is refused.
-  val arithElemType =
-    (runCatching { CComplexType.getType(this, parseContext) }.getOrNull() as? CPointer)
-      ?.embeddedType
-  if (arithElemType != null && !arithElemType.sameElementAs(elemType)) return null
+  // not
+  // elements of `p`'s pointee, so reading it as `&p[-k]` lands in the wrong cell. Such a step is
+  // refused.
+  if (!stepsOver(elemType, base, parseContext)) return null
   // The net index: the arithmetic with the pointer contribution removed. Cast to a *signed* long so
   // subtraction (which arrives as `+ (-i)`) and the accumulated offset of chained arithmetic
   // compose

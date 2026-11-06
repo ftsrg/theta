@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,17 +30,19 @@ public abstract class BaseLogger implements Logger {
     @Override
     public Logger write(final Level level, final String pattern, final Object... objects) {
         if (level.ordinal() <= minLevel.ordinal()) {
-            String text;
-            try {
-                text = String.format(pattern, objects);
-            } catch (IllegalFormatException e) {
-                // a message built from program text can contain '%': log it, never fail on it
-                final String raw = pattern.replace("%n", System.lineSeparator());
-                text = objects.length == 0 ? raw : raw + " " + Arrays.toString(objects);
-            }
-            writeStr(text);
+            writeStr(format(pattern, objects));
         }
         return this;
+    }
+
+    // Callers interpolate names and solver output into the pattern, which may contain a stray '%'.
+    private static String format(final String pattern, final Object... objects) {
+        try {
+            return String.format(pattern, objects);
+        } catch (final IllegalFormatException e) {
+            final String raw = pattern.replace("%n", System.lineSeparator());
+            return objects.length == 0 ? raw : raw + " " + Arrays.toString(objects);
+        }
     }
 
     protected abstract void writeStr(String str);

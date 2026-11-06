@@ -21,7 +21,6 @@ fun XcfaProcedure.deepCopy(
   passManager: ProcedurePassManager,
   unsafeUnrollUsed: Boolean = false,
   identifier: String = "",
-  overApproximationUsed: Boolean = false,
 ): XcfaProcedureBuilder {
   // The suffix is what tells two copies of the same procedure apart (the OC checker copies one per
   // thread, keyed by pid). With no identifier there is nothing to tell apart, and appending a bare
@@ -53,7 +52,6 @@ fun XcfaProcedure.deepCopy(
       metaData = mutableMapOf(),
       unsafeUnrollUsed = unsafeUnrollUsed,
       prop = prop,
-      overApproximationUsed = overApproximationUsed,
     )
     .also { proc ->
       proc.copyMetaLocs(
@@ -67,22 +65,15 @@ fun XcfaProcedure.deepCopy(
 fun XCFA.optimizeFurther(passManager: ProcedurePassManager): XCFA {
   if (passManager.passes.isEmpty()) return this
   val builder = XcfaBuilder(name, globalVars.toMutableSet())
-  procedures.forEach {
-    builder.addProcedure(
-      it.deepCopy(passManager, unsafeUnrollUsed, overApproximationUsed = overApproximationUsed)
-    )
-  }
+  procedures.forEach { builder.addProcedure(it.deepCopy(passManager, unsafeUnrollUsed)) }
   initProcedures.forEach { (proc, params) ->
     val initProc =
       builder.getProcedures().find { it.name == proc.name }
-        ?: proc.deepCopy(
-          passManager,
-          unsafeUnrollUsed,
-          overApproximationUsed = overApproximationUsed,
-        )
+        ?: proc.deepCopy(passManager, unsafeUnrollUsed)
     builder.addEntryPoint(initProc, params)
   }
   builder.overApproximatedVars.putAll(overApproximatedVars)
+  builder.overApproximationScratchVars.addAll(overApproximationScratchVars)
   return builder.build()
 }
 
@@ -94,7 +85,13 @@ fun XcfaProcedure.optimizeFurther(
   val procedureBuilder = deepCopy(passManager, identifier = identifier)
   if (name != null) procedureBuilder.name = name
   val xcfaBuilder = XcfaBuilder(parent.name, parent.globalVars.toMutableSet())
-  procedureBuilder.parent = xcfaBuilder
+  // Passes may inspect siblings; keep their builders separate from the source model.
+  parent.procedures.forEach { procedure ->
+    xcfaBuilder.addProcedure(
+      if (procedure === this) procedureBuilder else procedure.deepCopy(ProcedurePassManager())
+    )
+  }
+  xcfaBuilder.addProcedure(procedureBuilder)
   procedureBuilder.optimize()
   return procedureBuilder.build(parent)
 }

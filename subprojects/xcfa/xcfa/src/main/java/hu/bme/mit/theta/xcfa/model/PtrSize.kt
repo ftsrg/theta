@@ -59,6 +59,13 @@ fun XcfaLabel.isGhostArrayInit(): Boolean =
     (stmt as AssignStmt<*>).varDecl.let { it.name in GHOST_ARRAYS && it.type is ArrayType<*, *> } &&
     (stmt as AssignStmt<*>).expr is ArrayLitExpr<*, *>
 
+/** The pointer a write to a memsafety ghost array is keyed by, if this is such a write. */
+val XcfaLabel.ghostWriteIndex: Expr<*>?
+  get() =
+    ((this as? StmtLabel)?.stmt as? AssignStmt<*>)
+      ?.takeIf { it.varDecl.name in GHOST_ARRAYS }
+      ?.let { (it.expr as? ArrayWriteExpr<*, *>)?.index }
+
 /** Writes [value] at pointer [index] of a pointer-indexed, Fitsall-valued ghost array. */
 fun writeGhost(
   parseContext: ParseContext,
