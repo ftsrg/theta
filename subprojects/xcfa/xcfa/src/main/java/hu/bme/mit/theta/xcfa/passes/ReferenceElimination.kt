@@ -348,12 +348,14 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   /**
    * Gives a local a fresh base on each entry to its block, so a release does not outlive the block,
-   * and ends its lifetime where the procedure exits: a `return` leaves every open block.
+   * and releases escaping addresses at procedure exit. Block-end releases remain necessary for
+   * aliases used later in the same procedure.
    */
   private fun lowerLifetimes(
     builder: XcfaProcedureBuilder,
     referredVars: Map<VarDecl<*>, Pair<VarDecl<Type>, SequenceLabel>>,
   ) {
+    val escaping = escapingLocalAddresses(builder, referredVars.values.map { it.first }.toSet())
     val allocations: Map<Any?, List<XcfaLabel>> =
       referredVars.values.associate { (pointer, labels) -> pointer to labels.labels }
     for (edge in LinkedHashSet(builder.getEdges())) {
@@ -367,12 +369,72 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
     }
-    val releases = referredVars.values.map { builder.parent.deallocate(parseContext, it.first.ref) }
+    val releases = escaping.map { builder.parent.deallocate(parseContext, it.ref) }
     for (edge in builder.lifetimeEndEdges()) {
       builder.removeEdge(edge)
       builder.addEdge(
         edge.withLabel(SequenceLabel(edge.getFlatLabels() + releases, edge.label.metadata))
       )
+    }
+  }
+
+  /**
+   * Follows address values through local copies. Reading a cell consumes its address rather than
+   * exporting it; storing an address, returning it, or passing it to a call may let it outlive us.
+   */
+  private fun escapingLocalAddresses(
+    builder: XcfaProcedureBuilder,
+    pointers: Set<VarDecl<Type>>,
+  ): Set<VarDecl<Type>> {
+    val aliases = mutableMapOf<VarDecl<*>, MutableSet<VarDecl<Type>>>()
+    pointers.forEach { aliases[it] = mutableSetOf(it) }
+    fun addresses(expr: Expr<*>): Set<VarDecl<Type>> =
+      when (expr) {
+        is RefExpr<*> -> aliases[expr.decl] ?: emptySet()
+        is Reference<*, *> -> {
+          val cell = expr.expr as? Dereference<*, *, *>
+          if (cell != null) (addresses(cell.array) + addresses(cell.offset))
+          else addresses(expr.expr)
+        }
+        is Dereference<*, *, *> -> emptySet()
+        else -> expr.ops.flatMap { addresses(it) }.toSet()
+      }
+    val labels = builder.getEdges().flatMap { it.getFlatLabels() }
+    val assignments = labels.filterIsInstance<StmtLabel>().filter { it.ghostWriteIndex == null }
+    var changed: Boolean
+    do {
+      changed = false
+      for (label in assignments) {
+        val stmt = label.stmt as? AssignStmt<*> ?: continue
+        val sources = addresses(stmt.expr)
+        if (sources.isNotEmpty()) {
+          changed = aliases.getOrPut(stmt.varDecl) { mutableSetOf() }.addAll(sources) || changed
+        }
+      }
+    } while (changed)
+    val outputs =
+      builder.parent.getVars().map { it.wrappedVar }.toSet() +
+        builder.getParams().filter { it.second != ParamDirection.IN }.map { it.first }
+    return buildSet {
+      for (label in labels) {
+        when (label) {
+          is StmtLabel -> {
+            if (label.ghostWriteIndex != null) continue
+            when (val stmt = label.stmt) {
+              is AssignStmt<*> -> if (stmt.varDecl in outputs) addAll(addresses(stmt.expr))
+              is MemoryAssignStmt<*, *, *> -> addAll(addresses(stmt.expr))
+              else -> Unit
+            }
+          }
+          is InvokeLabel ->
+            if (
+              label.name != FunctionVisitor.SCOPE_START && label.name != FunctionVisitor.SCOPE_END
+            )
+              label.params.forEach { addAll(addresses(it)) }
+          is StartLabel -> label.params.forEach { addAll(addresses(it)) }
+          else -> Unit
+        }
+      }
     }
   }
 
