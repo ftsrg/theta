@@ -185,7 +185,6 @@ internal class XcfaToEventGraph(
         Thread.of(
           xcfa.initProcedures.first().first,
           parseContext,
-          allocationSites = allocationSites,
         ),
         true,
       )
@@ -338,8 +337,6 @@ internal class XcfaToEventGraph(
           else -> false
         }
       }
-
-  private val allocationSites = AllocationSitesPass(xcfa, parseContext)
 
   private inner class ThreadProcessor(
     private val thread: Thread,
@@ -813,7 +810,6 @@ internal class XcfaToEventGraph(
           last.first(),
           newHistory,
           lastWrites,
-          allocationSites,
         )
       // a literal of the handle's own type: Eq(bv, Int) would cast the handle to Int, which some
       // solvers (e.g. Yices) do not support

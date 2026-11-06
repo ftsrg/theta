@@ -35,7 +35,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
@@ -51,23 +51,24 @@ import java.math.BigInteger
  * [XcfaOcValueAnalysis]. Applies only if the program uses the counter for nothing else; memory
  * safety checks do, as they bound addresses by it.
  */
-internal class AllocationSitesPass(xcfa: XCFA, private val parseContext: ParseContext) :
-  ProcedurePass {
+internal class AllocationSitesPass(private val parseContext: ParseContext) : ProcedurePass {
 
   private val pointerType = CPointer(null, null, parseContext)
 
-  private val counter: VarDecl<*>? =
-    xcfa.globalVars.map { it.wrappedVar }.find { it.name == MALLOC_VAR_NAME }
+  private var counter: VarDecl<*>? = null
 
-  private val enabled: Boolean
+  private var enabled = false
 
-  private var next: BigInteger
+  private var next = BigInteger.ZERO
 
-  init {
+  private var initialized = false
+
+  private fun initialize(xcfa: XcfaBuilder) {
+    counter = xcfa.getVars().map { it.wrappedVar }.find { it.name == MALLOC_VAR_NAME }
     var highest =
       if (parseContext.memoryModel.flatAddressing()) parseContext.flatAddressSpace.end()
       else BigInteger.ZERO
-    val labels = xcfa.procedures.flatMap { p -> p.edges.map { it.getFlatLabels() } }
+    val labels = xcfa.getProcedures().flatMap { p -> p.getEdges().map { it.getFlatLabels() } }
     enabled =
       counter != null &&
         parseContext.memoryModel.flatAddressing() &&
@@ -88,10 +89,12 @@ internal class AllocationSitesPass(xcfa: XCFA, private val parseContext: ParseCo
           true
         }
     next = highest
+    initialized = true
   }
 
   /** Runs on the copy of a procedure for one thread, so that each thread has its own addresses. */
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!initialized) initialize(builder.parent)
     if (!enabled) return builder
     builder.getEdges().toList().forEach { edge ->
       val labels = edge.getFlatLabels()
@@ -140,8 +143,9 @@ internal class AllocationSitesPass(xcfa: XCFA, private val parseContext: ParseCo
 
   /** How much `__malloc = __malloc + extent` adds, if that is what [label] is. */
   private fun extent(label: XcfaLabel): BigInteger? {
+    val counter = counter ?: return null
     val stmt = (label as? StmtLabel)?.stmt as? AssignStmt<*> ?: return null
-    if (stmt.varDecl != counter || counter!! !in ExprUtils.getVars(stmt.expr)) return null
+    if (stmt.varDecl != counter || counter !in ExprUtils.getVars(stmt.expr)) return null
     val zero = pointerType.nullValue
     val valuation = ImmutableValuation.builder().put(counter, zero).build()
     return value(ExprUtils.simplify(stmt.expr, valuation))
@@ -161,8 +165,7 @@ internal class AllocationSitesPass(xcfa: XCFA, private val parseContext: ParseCo
 
   private fun assignAddress(label: XcfaLabel, address: BigInteger): XcfaLabel {
     val literal: LitExpr<*> = pointerType.getValue(address.toString())
-    val stmt = (label as StmtLabel).stmt
-    return when (stmt) {
+    return when (val stmt = (label as StmtLabel).stmt) {
       is AssignStmt<*> ->
         label.copy(
           stmt = Assign(cast(stmt.varDecl, stmt.varDecl.type), cast(literal, stmt.varDecl.type))

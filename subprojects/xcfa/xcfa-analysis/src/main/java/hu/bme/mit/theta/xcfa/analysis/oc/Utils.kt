@@ -93,6 +93,8 @@ private constructor(
       cnt = 0
     }
 
+    private lateinit var allocationSitesPass: AllocationSitesPass
+
     fun of(
       procedure: XcfaProcedure,
       parseContext: ParseContext,
@@ -103,12 +105,14 @@ private constructor(
       startEvent: XcfaEvent? = null,
       startHistory: List<String> = listOf(),
       lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
-      allocationSites: AllocationSitesPass? = null,
     ): Thread {
+      if (!::allocationSitesPass.isInitialized) {
+        allocationSitesPass = AllocationSitesPass(parseContext)
+      }
       val passManager =
         ProcedurePassManager(
           listOfNotNull(
-            allocationSites,
+            allocationSitesPass,
             WitnessOptimizer(params, parseContext),
             AtomicReadsOneWritePass(),
           )
