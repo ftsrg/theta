@@ -128,6 +128,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnrollRecursion else -1
   UnrollPass.COLLAPSE_BUSY_WAITS =
     config.inputConfig.property.verifiedProperty != ErrorDetection.TERMINATION
+  UnrollPass.BUSY_WAITS_IGNORE_DEAD_STORES =
+    config.inputConfig.property.inputProperty == ErrorDetection.ERROR_LOCATION
   SpinLoopEffectPass.ENABLED = !config.frontendConfig.disableSpinLoopEffects
   FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
   ARGWebDebugger.on = config.debugConfig.argdebug
