@@ -106,9 +106,15 @@ fun getHornChecker(
       { monolithicExpr ->
         val vars = monolithicExpr.vars
         val types = vars.map { it.type }.toTypedArray()
-        val oldParams = vars.associateWith { Param("|" + it.name + "|", it.type) }
+        val oldParams =
+          vars.withIndex().associate { (i, v) ->
+            v to Param("|" + v.name.trim('|') + "_$i|", v.type)
+          }
         val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
-        val newParams = vars.associateWith { Param("|" + it.name + "_new|", it.type) }
+        val newParams =
+          vars.withIndex().associate { (i, v) ->
+            v to Param("|" + v.name.trim('|') + "_${i}_new|", v.type)
+          }
         val inv = Relation("inv", *types)
 
         inv(*oldParamList) += ExprUtils.changeDecls(monolithicExpr.initExpr, oldParams)
