@@ -280,6 +280,33 @@ malloc_null_ternary.c	efficient	ILP32	UNSAFE	the NULL branch of a ?: around a de
 malloc_null_ternary_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	the NULL branch of a ?: around a dereference is not checked
 bool_cast_even_nonzero.c	bitvector	ILP32	UNSAFE	_Bool conversion compares against zero, not truncation to bit 0 (even non-zero must be true)
 stmtexpr_side_effect_reach.c	efficient	ILP32	UNSAFE	statement expression runs its statements even when the block yields no value
+memcpy_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the accesses a memcpy spells out get the valid-deref guard
+memcpy_inbounds_memsafety.c	efficient	LP64	SAFE:valid-memsafety	an in-bounds memcpy passes the valid-deref guard
+memset_null_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset through NULL is an invalid dereference
+memset_symbolic_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	a memset loop with a symbolic count is guarded
+memset_heap_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset past the end of a heap block is an invalid dereference
+memset_count_reread.c	efficient	LP64	SAFE	the memset count is read once, before the first write
+memset_value_reread.c	efficient	LP64	SAFE	the memset value is read once, before the first write
+memcpy_count_reread.c	efficient	LP64	SAFE	the memcpy count is read once, before the first write
+memset_struct_symbolic.c	efficient	LP64	UNSAFE	memset of structs with a symbolic count is a loop under bytes, not a call left in place
+memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap
+malloc_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the last int of a 3-int block is in bounds
+malloc_struct_cells_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a struct element of a malloc block spans its member cells
+malloc_char_view_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a char view of a malloc int block reaches all its bytes
+alloca_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the second int of a 10-byte alloca block is in bounds
+flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints under multi too
+bytes_addr_of_short_array.c	efficient	LP64	SAFE:valid-memsafety	the address of an array shorter than a pointer is no access under bytes	bytes
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid	flat
+memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid	bytes
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell	flat
+memset_int_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a memset region ends at its last cell	bytes
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell	flat
+memset_int_region_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the guard of a memset region covers its last cell	bytes
+memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells
+memset_struct_region_memsafety.c	efficient	LP64	SAFE:valid-memsafety	the guard of a struct memset spans the member cells	bytes
 overflow_pointer_member.c	bitvector	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow (bitvector)	flat
 overflow_pointer_member.c	efficient	LP64	SAFE:no-overflow	pointer and member-address sums are not checked as signed overflow	flat
 overflow_int_in_pointer_index.c	efficient	LP64	UNSAFE:no-overflow	an int sum inside a pointer offset is still checked
@@ -306,3 +333,4 @@ fp_libm_exact.c	efficient	LP64	SAFE	nan, fdim, remainder (round-to-even quotient
 fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninterpreted functions under range and special-value facts; signbit is nonzero iff negative
 fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
 dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
+memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes

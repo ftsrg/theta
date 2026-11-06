@@ -400,9 +400,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    * under the bytes model, cells otherwise. A statically unsized one gets the unknown-extent slot.
    */
   private fun referencedUnits(type: CComplexType): Long =
-    if (parseContext.memoryModel.byteAddressed())
-      ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8).toLong()
-    else
+    if (parseContext.memoryModel.byteAddressed()) {
+      val units = ((ObjectLayout.sizeBits(type, parseContext.architecture) + 7) / 8).toLong()
+      // The slot of an address-taken array holds the array's base, whatever the array's own size.
+      if (type is CArray) maxOf(units, CPointer(null, null, parseContext).width() / 8L) else units
+    } else
       when (type) {
         is CStruct -> if (type.isUnion) 1L else type.unitCount.toLong()
         else -> flatCellCount(type)?.toLong() ?: FlatAddressSpace.UNKNOWN_EXTENT.toLong()
