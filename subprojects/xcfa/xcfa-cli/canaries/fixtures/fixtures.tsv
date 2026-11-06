@@ -579,3 +579,5 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
+struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
