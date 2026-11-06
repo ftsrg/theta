@@ -656,6 +656,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
+            final Expr<?> pointerDifference = pointerDifference(ctx, exprs, types);
+            if (pointerDifference != null) {
+                return pointerDifference;
+            }
             final Expr<?> pointerArithmetic = pointerArithmetic(ctx, exprs, types);
             if (pointerArithmetic != null) {
                 return pointerArithmetic;
@@ -682,6 +686,85 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return add;
         }
         return ctx.multiplicativeExpression(0).accept(this);
+    }
+
+    /**
+     * A pointer difference {@code p - q} (also {@code p + i - q - j}): a {@code ptrdiff_t}, the
+     * address distance divided by the element stride. Under bitvectors the distance is taken
+     * unsigned and then reinterpreted, as a signed subtraction of two addresses on either side of
+     * the sign boundary would report an overflow no same-object difference can have. Returns null
+     * unless the operands are one pointer minus a later one.
+     */
+    private Expr<?> pointerDifference(
+            CParser.AdditiveExpressionContext ctx, List<Expr<?>> exprs, List<CComplexType> types) {
+        final List<Integer> pointers = new ArrayList<>();
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i) instanceof CArray
+                    || (types.get(i) instanceof CPointer p && !p.isFunctionPointer())) {
+                pointers.add(i);
+            }
+        }
+        if (pointers.size() != 2) return null;
+        final int minuend = pointers.get(0);
+        final int subtrahend = pointers.get(1);
+        if (isSubtracted(ctx, minuend) || !isSubtracted(ctx, subtrahend)) return null;
+        final CComplexType pointee = pointeeOf(types.get(minuend));
+        refuseReinterpretedStep(exprs.get(minuend), pointee);
+        refuseReinterpretedStep(exprs.get(subtrahend), pointeeOf(types.get(subtrahend)));
+        final Expr<?> stride = pointerStride(pointee);
+
+        final CComplexType diffType = CComplexType.getSignedLong(parseContext);
+        final CComplexType addressType =
+                parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
+                        ? CComplexType.getUnsignedLong(parseContext)
+                        : diffType;
+        final List<Expr<?>> terms = new ArrayList<>();
+        for (int i = 0; i <= subtrahend; i++) {
+            Expr<?> term = addressType.castTo(exprs.get(i));
+            if (i != minuend && i != subtrahend && stride != null) {
+                term = addressType.castTo(Mul(List.of(term, addressType.castTo(stride))));
+            }
+            terms.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        final Expr<?> distance = Add(terms);
+        parseContext.getMetadata().create(distance, "cType", addressType);
+        Expr<?> diff = diffType.castTo(addressType.castTo(distance));
+        if (stride != null) {
+            final Expr<?> divisor = diffType.castTo(stride);
+            diff =
+                    diff.getType() instanceof IntType
+                            ? createIntDiv(diff, divisor)
+                            : Div(diff, divisor);
+            parseContext.getMetadata().create(innerDiv(diff), "cType", diffType);
+            diff = diffType.castTo(diff);
+        }
+        parseContext.getMetadata().create(diff, "cType", diffType);
+
+        // The integer terms after `q` are added to the difference by the usual conversions.
+        final List<CComplexType> restTypes = new ArrayList<>(List.of(diffType));
+        restTypes.addAll(types.subList(subtrahend + 1, types.size()));
+        final CComplexType resultType = getSmallestCommonType(restTypes, parseContext);
+        final List<Expr<?>> rest = new ArrayList<>(List.of(resultType.castTo(diff)));
+        for (int i = subtrahend + 1; i < exprs.size(); i++) {
+            final Expr<?> term = resultType.castTo(exprs.get(i));
+            rest.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        if (rest.size() == 1) return rest.get(0);
+        final Expr<?> sum = Add(rest);
+        parseContext.getMetadata().create(sum, "cType", resultType);
+        final Expr<?> result = resultType.castTo(sum);
+        parseContext.getMetadata().create(result, "cType", resultType);
+        return result;
+    }
+
+    private static boolean isSubtracted(CParser.AdditiveExpressionContext ctx, int operand) {
+        return operand > 0 && ctx.signs.get(operand - 1).getText().equals("-");
+    }
+
+    private static CComplexType pointeeOf(CComplexType pointerOrArray) {
+        return pointerOrArray instanceof CPointer p
+                ? p.getEmbeddedType()
+                : ((CArray) pointerOrArray).getEmbeddedType();
     }
 
     /**

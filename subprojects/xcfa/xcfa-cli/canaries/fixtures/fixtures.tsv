@@ -579,3 +579,7 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+pointer_difference.c	efficient	LP64	SAFE	pointer difference: ptrdiff_t width, element units for struct and int pointers
+pointer_difference.c	bitvector	LP64	SAFE	pointer difference: byte distance divided by the element size under bytes	bytes
+pointer_difference_no_overflow.c	bitvector	LP64	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
+pointer_difference_no_overflow.c	bitvector	ILP32	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
