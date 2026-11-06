@@ -109,6 +109,8 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
       @Suppress("UNCHECKED_CAST") val proof = TransitionInvariantProof(invariant, saveMap) as Pr
       return MonolithicExprPassResult(SafetyResult.safe(proof, safetyResult.stats.orElse(null)))
     }
+    if (!safetyResult.isUnsafe)
+      return MonolithicExprPassResult(SafetyResult.unknown(safetyResult.stats.orElse(null)))
     val trace = safetyResult.asUnsafe().cex
     val newStates = trace.states.map { ExplState.of(it.filterVars(vars)) }
     val hondaIndex = trace.states.indexOfLast { !(it.`val`.toMap()[savedVar] as BoolLitExpr).value }
