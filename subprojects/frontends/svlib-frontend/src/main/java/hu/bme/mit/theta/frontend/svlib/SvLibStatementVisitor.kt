@@ -35,6 +35,7 @@ class SvLibStatementVisitor(
   private val termTransformer = SvLibTermTransformer(symbolTable)
   var current: XcfaLocation = procedure.initLoc
     private set
+
   val taggedLocations: MutableMap<String, MutableSet<XcfaLocation>> = LinkedHashMap()
   val labeledLocations: MutableMap<String, XcfaLocation> = LinkedHashMap()
   val gotos: MutableMap<XcfaEdge, String> = LinkedHashMap()
@@ -52,39 +53,49 @@ class SvLibStatementVisitor(
 
   override fun visitAssignStatement(ctx: AssignStatementContext) {
     val vars = ctx.symbol().map { symbolTable.getVar(it.original) }
-    val exprs = vars.zip(ctx.term()).map { (varDecl, term) ->
-      termTransformer.toExpr(term.original, varDecl.getType())
-    }
-
-    val label = if (vars.size == 1) {
-      AssignStmtLabel(vars.first(), exprs.first(), metadata = ctx.metadata)
-    } else {
-      val tempVars = vars.filter { varDecl -> exprs.any { varDecl in ExprUtils.getVars(it) } }.associateWith { it.createTemp() }
-      tempVars.values.forEach(procedure::addVar)
-
-      val assignments = vars.zip(exprs).map { (varDecl, expr) ->
-        AssignStmtLabel(tempVars[varDecl] ?: varDecl, expr, metadata = ctx.metadata)
+    val exprs =
+      vars.zip(ctx.term()).map { (varDecl, term) ->
+        termTransformer.toExpr(term.original, varDecl.getType())
       }
-      val tempAssignments = tempVars.map { (varDecl, tempVar) ->
-        AssignStmtLabel(varDecl, tempVar.ref, metadata = ctx.metadata)
+
+    val label =
+      if (vars.size == 1) {
+        AssignStmtLabel(vars.first(), exprs.first(), metadata = ctx.metadata)
+      } else {
+        val tempVars =
+          vars
+            .filter { varDecl -> exprs.any { varDecl in ExprUtils.getVars(it) } }
+            .associateWith { it.createTemp() }
+        tempVars.values.forEach(procedure::addVar)
+
+        val assignments =
+          vars.zip(exprs).map { (varDecl, expr) ->
+            AssignStmtLabel(tempVars[varDecl] ?: varDecl, expr, metadata = ctx.metadata)
+          }
+        val tempAssignments =
+          tempVars.map { (varDecl, tempVar) ->
+            AssignStmtLabel(varDecl, tempVar.ref, metadata = ctx.metadata)
+          }
+        SequenceLabel(assignments + tempAssignments, metadata = ctx.metadata)
       }
-      SequenceLabel(assignments + tempAssignments, metadata = ctx.metadata)
-    }
 
     current = current.extend(label)
   }
 
   override fun visitHavocStatement(ctx: HavocStatementContext) {
-    val labels = ctx.symbol().map { symbol ->
-      val variable = symbolTable.getVar(symbol.original)
-      StmtLabel(Stmts.Havoc(variable), metadata = ctx.metadata)
-    }
-    val label = if (labels.size == 1) labels.first() else SequenceLabel(labels, metadata = ctx.metadata)
+    val labels =
+      ctx.symbol().map { symbol ->
+        val variable = symbolTable.getVar(symbol.original)
+        StmtLabel(Stmts.Havoc(variable), metadata = ctx.metadata)
+      }
+    val label =
+      if (labels.size == 1) labels.first() else SequenceLabel(labels, metadata = ctx.metadata)
 
     current = current.extend(label)
   }
 
-  override fun visitSequenceStatement(ctx: SequenceStatementContext) = ctx.statement().forEach(::visit)
+  override fun visitSequenceStatement(ctx: SequenceStatementContext) =
+    ctx.statement().forEach(::visit)
 
   override fun visitIfStatement(ctx: IfStatementContext) {
     val condition = termTransformer.toExpr(ctx.term().original, Bool())
@@ -95,7 +106,8 @@ class SvLibStatementVisitor(
     visit(ctx.statement(0))
     procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
-    current = ifStart.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
+    current =
+      ifStart.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
     if (ctx.statement().size > 1) visit(ctx.statement(1))
     procedure.addEdge(XcfaEdge(current, ifEnd, NopLabel, EmptyMetaData))
 
@@ -105,7 +117,8 @@ class SvLibStatementVisitor(
   override fun visitWhileStatement(ctx: WhileStatementContext) {
     val condition = termTransformer.toExpr(ctx.term().original, Bool())
     val loopHead = current
-    val loopExit = loopHead.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
+    val loopExit =
+      loopHead.extend(StmtLabel(Stmts.Assume(Not(condition)), metadata = ctx.term().metadata))
 
     loops.push(Loop(loopHead, loopExit))
     current = loopHead.extend(StmtLabel(Stmts.Assume(condition), metadata = ctx.term().metadata))
@@ -119,9 +132,7 @@ class SvLibStatementVisitor(
   override fun visitContinueStatement(ctx: ContinueStatementContext) {
     if (loops.isEmpty()) throw ctx.illegal("continue outside while")
 
-    procedure.addEdge(
-      XcfaEdge(current, loops.peak().head, NopLabel, ctx.metadata)
-    )
+    procedure.addEdge(XcfaEdge(current, loops.peak().head, NopLabel, ctx.metadata))
 
     current = newLoc()
   }
@@ -129,38 +140,43 @@ class SvLibStatementVisitor(
   override fun visitBreakStatement(ctx: BreakStatementContext) {
     if (loops.isEmpty()) throw ctx.illegal("break outside while")
 
-    procedure.addEdge(
-      XcfaEdge(current, loops.peak().exit, NopLabel, ctx.metadata)
-    )
+    procedure.addEdge(XcfaEdge(current, loops.peak().exit, NopLabel, ctx.metadata))
 
     current = newLoc()
   }
 
   override fun visitCallStatement(ctx: CallStatementContext) {
     val name = ctx.symbol(0).original
-    val calledProcedure = procedure.parent.getProcedures().find { it.name == name }
-      ?: throw ctx.illegal("no such procedure '$name'")
+    val calledProcedure =
+      procedure.parent.getProcedures().find { it.name == name }
+        ?: throw ctx.illegal("no such procedure '$name'")
     if (calledProcedure.getParams().size != ctx.symbol().size - 1 + ctx.term().size)
       throw ctx.illegal("mismatched arguments for procedure '$name'")
 
-    val (inputParams, outputParams) = calledProcedure.getParams().partition { (_, dir) -> dir == ParamDirection.IN }
-    val inputs = inputParams.map { it.first }.zip(ctx.term()).associate { (param, term) ->
-      param to termTransformer.toExpr(term.original, param.type)
-    }
-    val outputs = outputParams.map { it.first }.zip(ctx.symbol().drop(1)).associate { (param, arg) ->
-      param to symbolTable.getVar(arg.original).ref
-    }
-    val args = calledProcedure.getParams().map { (param, _) ->
-      inputs[param] ?: outputs[param] ?: throw ctx.illegal("mismatched arguments for procedure '$name'")
-    }
+    val (inputParams, outputParams) =
+      calledProcedure.getParams().partition { (_, dir) -> dir == ParamDirection.IN }
+    val inputs =
+      inputParams
+        .map { it.first }
+        .zip(ctx.term())
+        .associate { (param, term) -> param to termTransformer.toExpr(term.original, param.type) }
+    val outputs =
+      outputParams
+        .map { it.first }
+        .zip(ctx.symbol().drop(1))
+        .associate { (param, arg) -> param to symbolTable.getVar(arg.original).ref }
+    val args =
+      calledProcedure.getParams().map { (param, _) ->
+        inputs[param]
+          ?: outputs[param]
+          ?: throw ctx.illegal("mismatched arguments for procedure '$name'")
+      }
 
     current = current.extend(InvokeLabel(name, args, metadata = ctx.metadata))
   }
 
   override fun visitReturnStatement(ctx: ReturnStatementContext) {
-    procedure.addEdge(
-      XcfaEdge(current, procedure.finalLoc.get(), NopLabel, ctx.metadata)
-    )
+    procedure.addEdge(XcfaEdge(current, procedure.finalLoc.get(), NopLabel, ctx.metadata))
 
     current = newLoc()
   }
@@ -184,17 +200,20 @@ class SvLibStatementVisitor(
     ctx.statement().forEachIndexed { i, stmtContext ->
       current = choiceStart
       visit(stmtContext)
-      procedure.addEdge(
-        XcfaEdge(current, choiceEnd, NopLabel, SvLibSourceMetadata("choice $i"))
-      )
+      procedure.addEdge(XcfaEdge(current, choiceEnd, NopLabel, SvLibSourceMetadata("choice $i")))
     }
 
     current = choiceEnd
   }
 
   override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
-    val tags = ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().original }.toSet()
-    current = current.extend(NopLabel, "__THETA_",tags)
+    val tags =
+      ctx
+        .attributeSvLib()
+        .filterIsInstance<TagAttributeContext>()
+        .map { it.symbol().original }
+        .toSet()
+    current = current.extend(NopLabel, "__THETA_", tags)
     tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
 
     val annotatedStart = current
@@ -204,7 +223,12 @@ class SvLibStatementVisitor(
     ctx.attributeSvLib().filterIsInstance<TagPropertyContext>().forEach { attribute ->
       when (val property = attribute.property()) {
         is CheckTruePropertyContext -> {
-          current = procedure.insertCheck(annotatedStart, termTransformer.toExpr(property.relationalTerm().original, Bool()), attribute.metadata)
+          current =
+            procedure.insertCheck(
+              annotatedStart,
+              termTransformer.toExpr(property.relationalTerm().original, Bool()),
+              attribute.metadata,
+            )
         }
         else -> throw property.unsupported("property '${property.original}'")
       }
@@ -215,20 +239,23 @@ class SvLibStatementVisitor(
 
   private fun applyGotos() {
     gotos.forEach { (placeholder, label) ->
-      val labeledLocation = labeledLocations[label]
-        ?: throw IllegalStateException("Invalid goto statement: no such label '$label' in procedure '${procedure.name}'")
-      val goto = XcfaEdge(
-        placeholder.source,
-        labeledLocation,
-        NopLabel,
-        metadata = placeholder.metadata
-      )
+      val labeledLocation =
+        labeledLocations[label]
+          ?: throw IllegalStateException(
+            "Invalid goto statement: no such label '$label' in procedure '${procedure.name}'"
+          )
+      val goto =
+        XcfaEdge(placeholder.source, labeledLocation, NopLabel, metadata = placeholder.metadata)
       procedure.removeEdge(placeholder)
       procedure.addEdge(goto)
     }
   }
 
-  private fun XcfaLocation.extend(label: XcfaLabel, locationPrefix: String = "l", locationTags: Set<String> = setOf()): XcfaLocation {
+  private fun XcfaLocation.extend(
+    label: XcfaLabel,
+    locationPrefix: String = "l",
+    locationTags: Set<String> = setOf(),
+  ): XcfaLocation {
     val to = newLoc(locationPrefix, locationTags)
     procedure.addEdge(XcfaEdge(this, to, label, label.metadata))
     return to

@@ -229,7 +229,8 @@ public class Btor2XcfaTraceConcretizer {
                                                                     Map.Entry::getValue))))));
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
-                    var accesses = collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
+                    var accesses =
+                            collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
                     varSoFar.addAll(
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))

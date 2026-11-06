@@ -61,23 +61,34 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
     witnessfile: File,
     ltlSpecification: String,
     architecture: ArchitectureType?,
-    logger: Logger
+    logger: Logger,
   ) {
     if (safetyResult.isSafe) {
       when (val proof = safetyResult.asSafe().proof) {
         is LocationInvariants -> witnessfile.writeText(proof.toSvLibCorrectnessWitness())
         is DssInvariants -> witnessfile.writeText(proof.toSvLibCorrectnessWitness())
-        else -> writeTrivialCorrectnessWitness(safetyResult, inputFile, property, parseContext, witnessfile, ltlSpecification, architecture)
+        else ->
+          writeTrivialCorrectnessWitness(
+            safetyResult,
+            inputFile,
+            property,
+            parseContext,
+            witnessfile,
+            ltlSpecification,
+            architecture,
+          )
       }
     } else if (safetyResult.isUnsafe) {
       when (val cex = safetyResult.asUnsafe().cex) {
-        is Trace<*, *>  -> {
-          val concreteTrace = SvLibXcfaTraceConcretizer().concretize(
-            cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-            cexSolverFactory,
-            parseContext,
-            wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-          )
+        is Trace<*, *> -> {
+          val concreteTrace =
+            SvLibXcfaTraceConcretizer()
+              .concretize(
+                cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+                cexSolverFactory,
+                parseContext,
+                wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+              )
           witnessfile.writeText(concreteTrace.toSvLibViolationWitness())
         }
         else -> generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
@@ -92,7 +103,7 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
     parseContext: ParseContext,
     witnessfile: File,
     ltlSpecification: String,
-    architecture: ArchitectureType?
+    architecture: ArchitectureType?,
   ) {
     witnessfile.writeText("()\n")
   }
@@ -100,15 +111,15 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
   override fun generateEmptyViolationWitness(
     inputFile: File,
     ltlSpecification: String,
-    architecture: ArchitectureType?
+    architecture: ArchitectureType?,
   ): String {
     throw UnsupportedOperationException("SV-LIB violation witnesses are not supported")
   }
 }
 
 private fun LocationInvariants.toSvLibCorrectnessWitness(): String {
-  val statesByTag: Map<String, MutableList<ExprState>> = this.partitions.entries
-    .fold(LinkedHashMap()) { tagStates, (location, states) ->
+  val statesByTag: Map<String, MutableList<ExprState>> =
+    this.partitions.entries.fold(LinkedHashMap()) { tagStates, (location, states) ->
       if (states.isNotEmpty()) {
         (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
           tagStates.getOrPut(tag, { mutableListOf() }).addAll(states)
@@ -117,13 +128,14 @@ private fun LocationInvariants.toSvLibCorrectnessWitness(): String {
       tagStates
     }
 
-  val invariantsByTag: Map<String, Expr<BoolType>> = statesByTag
-    .mapValues { (_, states) ->
-      val invariants = states.mapNotNull { state ->
-        val invariant = ExprUtils.simplify(state.getInvariant())
-        if (ExprUtils.getVars(invariant).any { it.name.startsWith(tmpVarPrefix) }) null
-        else invariant
-      }
+  val invariantsByTag: Map<String, Expr<BoolType>> =
+    statesByTag.mapValues { (_, states) ->
+      val invariants =
+        states.mapNotNull { state ->
+          val invariant = ExprUtils.simplify(state.getInvariant())
+          if (ExprUtils.getVars(invariant).any { it.name.startsWith(tmpVarPrefix) }) null
+          else invariant
+        }
       ExprUtils.simplify(BoolExprs.Or(invariants))
     }
 
@@ -131,33 +143,36 @@ private fun LocationInvariants.toSvLibCorrectnessWitness(): String {
 }
 
 private fun DssInvariants.toSvLibCorrectnessWitness(): String {
-  val invariantsByTag: Map<String, Expr<BoolType>> = this.invariants.entries
-    .fold(LinkedHashMap<String, MutableList<Expr<BoolType>>>()) { tagInvariants, (location, invariants) ->
-      if (invariants?.isNotEmpty() == true) {
-        (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
-          tagInvariants.getOrPut(tag, { mutableListOf() }).addAll(invariants)
+  val invariantsByTag: Map<String, Expr<BoolType>> =
+    this.invariants.entries
+      .fold(LinkedHashMap<String, MutableList<Expr<BoolType>>>()) {
+        tagInvariants,
+        (location, invariants) ->
+        if (invariants?.isNotEmpty() == true) {
+          (location.metadata as? SvLibTagMetadata)?.tags?.forEach { tag ->
+            tagInvariants.getOrPut(tag, { mutableListOf() }).addAll(invariants)
+          }
         }
+        tagInvariants
       }
-      tagInvariants
-    }
-    .mapValues { (_, invariants) ->
-      ExprUtils.simplify(BoolExprs.Or(invariants))
-    }
+      .mapValues { (_, invariants) -> ExprUtils.simplify(BoolExprs.Or(invariants)) }
 
   return invariantsByTag.toSvLibCorrectnessWitness()
 }
 
 private fun Map<String, Expr<BoolType>>.toSvLibCorrectnessWitness(): String {
   val transformer = SvLibExprTransformer()
-  val annotations = this.map { (tag, invariant) ->
-    """
+  val annotations =
+    this.map { (tag, invariant) ->
+      """
       (annotate-tag
         ${GenericSmtLibSymbolTable.encodeSymbol(tag)}
         :invariant
       ${transformer.toTerm(invariant).indent()}
       )
-      """.trimIndent()
-  }
+      """
+        .trimIndent()
+    }
 
   return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"
 }
@@ -167,84 +182,113 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
   val xcfa = initState.xcfa ?: throw IllegalStateException("no XCFA associated with trace")
 
   val initVal = initState.sGlobal.getVal()
-  val globalVarMap = initVal.toMap()
-    .filter { (varDecl, _) -> varDecl in xcfa.globalVars.map { it.wrappedVar } }
+  val globalVarMap =
+    initVal.toMap().filter { (varDecl, _) -> varDecl in xcfa.globalVars.map { it.wrappedVar } }
   val model = SmtLibModel(emptyMap()) // TODO extract function definitions from trace model
 
-  val entryProcedure = xcfa.initProcedures.firstOrNull()?.first ?: throw IllegalStateException("no entry procedure")
-  val property = actions.flatMap { it.label.getFlatLabels() }.mapNotNull { (it.metadata as? SvLibSourceMetadata)?.source }
-    .findLast { it.contains(":check-true") } ?: throw IllegalStateException("no property violation found")
+  val entryProcedure =
+    xcfa.initProcedures.firstOrNull()?.first ?: throw IllegalStateException("no entry procedure")
+  val property =
+    actions
+      .flatMap { it.label.getFlatLabels() }
+      .mapNotNull { (it.metadata as? SvLibSourceMetadata)?.source }
+      .findLast { it.contains(":check-true") }
+      ?: throw IllegalStateException("no property violation found")
 
   var currentProcedure: XcfaProcedure = entryProcedure
-  val steps = states.zipWithNext().zip(actions).flatMap { (states, action) ->
-    val (prevExplState, newExplState) = states
-    val prevState = prevExplState.processes.values.first() // no concurrency in SV-LIB
-    val newState = newExplState.processes.values.first()   // no concurrency in SV-LIB
+  val steps =
+    states.zipWithNext().zip(actions).flatMap { (states, action) ->
+      val (prevExplState, newExplState) = states
+      val prevState = prevExplState.processes.values.first() // no concurrency in SV-LIB
+      val newState = newExplState.processes.values.first() // no concurrency in SV-LIB
 
-    val steps = mutableListOf<SvLibViolationWitnessStep>()
-    action.label.getFlatLabels().forEach { label ->
-      when (label) {
-        is InvokeLabel -> {
-          currentProcedure = xcfa.procedures.find { label.name == it.name }
-            ?: throw IllegalStateException("call to unknown procedure")
-        }
-        is StmtLabel -> {
-          val stmt = label.stmt
-          (action.edge.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
-            Regex("choice (\\d+)").find(metadata)?.groups?.get(1)?.value?.let { index ->
-              steps.add(ChoiceStep(index.toInt()))
-            }
-          }
-          if (xcfa.isInlined) (label.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
-            Regex("\\(call (\\S+) \\(").find(metadata)?.groups?.get(1)?.value?.let { procedureName ->
-              currentProcedure = xcfa.procedures.find { procedureName == it.name }
+      val steps = mutableListOf<SvLibViolationWitnessStep>()
+      action.label.getFlatLabels().forEach { label ->
+        when (label) {
+          is InvokeLabel -> {
+            currentProcedure =
+              xcfa.procedures.find { label.name == it.name }
                 ?: throw IllegalStateException("call to unknown procedure")
-              steps.add(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal().filterLocal(currentProcedure)))
+          }
+          is StmtLabel -> {
+            val stmt = label.stmt
+            (action.edge.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
+              Regex("choice (\\d+)").find(metadata)?.groups?.get(1)?.value?.let { index ->
+                steps.add(ChoiceStep(index.toInt()))
+              }
+            }
+            if (xcfa.isInlined)
+              (label.metadata as? SvLibSourceMetadata)?.source?.let { metadata ->
+                Regex("\\(call (\\S+) \\(").find(metadata)?.groups?.get(1)?.value?.let {
+                  procedureName ->
+                  currentProcedure =
+                    xcfa.procedures.find { procedureName == it.name }
+                      ?: throw IllegalStateException("call to unknown procedure")
+                  steps.add(
+                    InitProcVarsStep(
+                      currentProcedure,
+                      newExplState.sGlobal.getVal().filterLocal(currentProcedure),
+                    )
+                  )
+                }
+              }
+            if (stmt is HavocStmt<*>) {
+              val varDecl = prevState.varLookup[0].reverseMapping()[stmt.varDecl] ?: stmt.varDecl
+              newExplState.sGlobal.getVal().toMap()[varDecl]?.let { value ->
+                steps.add(HavocStep(varDecl, value))
+              }
             }
           }
-          if (stmt is HavocStmt<*>) {
-            val varDecl = prevState.varLookup[0].reverseMapping()[stmt.varDecl] ?: stmt.varDecl
-            newExplState.sGlobal.getVal().toMap()[varDecl]?.let { value ->
-              steps.add(HavocStep(varDecl, value))
-            }
-          }
+          else -> {}
         }
-        else -> {}
       }
+
+      if (!prevState.paramsInitialized && newState.paramsInitialized) {
+        steps.addFirst(
+          InitProcVarsStep(
+            currentProcedure,
+            newExplState.sGlobal.getVal().filterLocal(currentProcedure),
+          )
+        )
+      }
+
+      steps
     }
 
-    if (!prevState.paramsInitialized && newState.paramsInitialized) {
-      steps.addFirst(InitProcVarsStep(currentProcedure, newExplState.sGlobal.getVal().filterLocal(currentProcedure)))
-    }
-
-    steps
-  }
-
-  val witness = SvLibViolationWitness(
-    model,
-    ImmutableValuation.from(globalVarMap),
-    entryProcedure,
-    steps,
-    property
-  )
+  val witness =
+    SvLibViolationWitness(
+      model,
+      ImmutableValuation.from(globalVarMap),
+      entryProcedure,
+      steps,
+      property,
+    )
   return witness.toString()
 }
 
 class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
-  override fun isProgramVar(decl: VarDecl<*>, parseContext: ParseContext?) = !decl.name.startsWith(tmpVarPrefix)
+  override fun isProgramVar(decl: VarDecl<*>, parseContext: ParseContext?) =
+    !decl.name.startsWith(tmpVarPrefix)
 
   override fun isSbe(label: XcfaLabel) = true // doesn't matter for SV-LIB witness
 
   override fun concreteState(
-    state: XcfaState<*>, valuation: Valuation, varSoFar: Set<VarDecl<*>>, nondetVars: Set<VarDecl<*>>,
-    parseContext: ParseContext
+    state: XcfaState<*>,
+    valuation: Valuation,
+    varSoFar: Set<VarDecl<*>>,
+    nondetVars: Set<VarDecl<*>>,
+    parseContext: ParseContext,
   ): ExplState {
     val currentState = state.processes.values.first()
-    val globalVars = (state.xcfa ?: throw IllegalStateException("no XCFA associated with trace"))
-      .globalVars.map(XcfaGlobalVar::wrappedVar)
+    val globalVars =
+      (state.xcfa ?: throw IllegalStateException("no XCFA associated with trace"))
+        .globalVars
+        .map(XcfaGlobalVar::wrappedVar)
 
-    val genericValuationMap: Map<Decl<*>, LitExpr<*>> = valuation
-      .changeVars(globalVars.associateWith { it } + currentState.varLookup[0].reverseMapping()).toMap()
+    val genericValuationMap: Map<Decl<*>, LitExpr<*>> =
+      valuation
+        .changeVars(globalVars.associateWith { it } + currentState.varLookup[0].reverseMapping())
+        .toMap()
 
     return ExplState.of(ImmutableValuation.from(genericValuationMap))
   }
@@ -263,46 +307,39 @@ private data class SvLibViolationWitness(
         (model ${if (model.decls.isEmpty()) "" else "$model"})
         (init-global-vars ${globalVarValuation.toSvLib()})
         (entry-proc ${entryProcedure.name})
-        (steps${if (steps.isEmpty()) "" else "\n" + steps.joinToString("\n", ) { "          $it" }})
+        (steps${if (steps.isEmpty()) "" else "\n" + steps.joinToString("\n" ) { "          $it" }})
         (incorrect-annotation $violatedProperty)
       ))
-    """.trimIndent()
+    """
+      .trimIndent()
   }
 }
 
 private sealed class SvLibViolationWitnessStep
 
-private data class InitProcVarsStep(
-  val procedure: XcfaProcedure,
-  val arguments: Valuation,
-) : SvLibViolationWitnessStep() {
+private data class InitProcVarsStep(val procedure: XcfaProcedure, val arguments: Valuation) :
+  SvLibViolationWitnessStep() {
 
-  override fun toString()
-    = "(init-proc-vars ${procedure.name} ${arguments.toSvLib()})"
+  override fun toString() = "(init-proc-vars ${procedure.name} ${arguments.toSvLib()})"
 }
 
-private data class HavocStep(
-  val varDecl: VarDecl<*>,
-  val value: LitExpr<*>,
-) : SvLibViolationWitnessStep() {
+private data class HavocStep(val varDecl: VarDecl<*>, val value: LitExpr<*>) :
+  SvLibViolationWitnessStep() {
 
-  override fun toString()
-    = "(havoc (${GenericSmtLibSymbolTable.encodeSymbol(varDecl.name)} ${SvLibExprTransformer().toTerm(value)}))"
+  override fun toString() =
+    "(havoc (${GenericSmtLibSymbolTable.encodeSymbol(varDecl.name)} ${SvLibExprTransformer().toTerm(value)}))"
 }
 
-private data class ChoiceStep(
-  val branchIndex: Int,
-) : SvLibViolationWitnessStep() {
+private data class ChoiceStep(val branchIndex: Int) : SvLibViolationWitnessStep() {
 
   override fun toString() = "(choice $branchIndex)"
 }
 
-private data class LeapStep(
-  val tag: String,
-  val valuation: Valuation,
-) : SvLibViolationWitnessStep() {
+private data class LeapStep(val tag: String, val valuation: Valuation) :
+  SvLibViolationWitnessStep() {
 
-  override fun toString() = "(leap ${GenericSmtLibSymbolTable.encodeSymbol(tag)} ${valuation.toSvLib()})"
+  override fun toString() =
+    "(leap ${GenericSmtLibSymbolTable.encodeSymbol(tag)} ${valuation.toSvLib()})"
 }
 
 private fun Valuation.toSvLib(): String {
@@ -314,12 +351,12 @@ private fun Valuation.toSvLib(): String {
 }
 
 private fun Valuation.filterLocal(procedure: XcfaProcedure): Valuation =
-  this.toMap().filterKeys { varDecl ->
-    (varDecl in procedure.vars) && procedure.params.all { (param, dir) ->
-      param != varDecl || dir != ParamDirection.IN
+  this.toMap()
+    .filterKeys { varDecl ->
+      (varDecl in procedure.vars) &&
+        procedure.params.all { (param, dir) -> param != varDecl || dir != ParamDirection.IN }
     }
-  }.let(ImmutableValuation::from)
+    .let(ImmutableValuation::from)
 
-
-private fun String.indent(spaces: Int = 4)
-  = this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }
+private fun String.indent(spaces: Int = 4) =
+  this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }

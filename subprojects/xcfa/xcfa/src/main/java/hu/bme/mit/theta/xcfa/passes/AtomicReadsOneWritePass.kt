@@ -136,7 +136,8 @@ class AtomicReadsOneWritePass : ProcedurePass {
       outgoing.forEach { e ->
         // Write the local back only on the branches that actually modify it: an unconditional
         // write-back would add a spurious write event to the global on a read-only branch.
-        val written = e.collectVarsWithAccessType(builder).any { (v, at) -> v in shared && at.isWritten }
+        val written =
+          e.collectVarsWithAccessType(builder).any { (v, at) -> v in shared && at.isWritten }
         val newLabels = e.getFlatLabels().map { it.replaceAccesses(localVersions) }
         val finalAssigns =
           if (!written) listOf()

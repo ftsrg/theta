@@ -37,7 +37,7 @@ public class IntToBvExpr extends UnaryExpr<IntType, BvType> {
     }
 
     public static IntToBvExpr of(final Expr<IntType> op, final int size) {
-       return new IntToBvExpr(op, size);
+        return new IntToBvExpr(op, size);
     }
 
     public static IntToBvExpr create(final Expr<IntType> op, final int size) {

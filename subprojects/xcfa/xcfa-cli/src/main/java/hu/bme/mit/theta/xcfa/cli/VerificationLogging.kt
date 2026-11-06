@@ -97,49 +97,51 @@ internal fun postVerificationLogging(
         writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants, logger)
       }
 
-      val witnessWriters = when {
-        config.outputConfig.witnessConfig.enabled == WitnessLevel.SVCOMP -> {
-          val witnessWriter = XcfaWitnessWriter.getSvCompWitnessWriter(
-            config.frontendConfig.inputType,
-            config.inputConfig.property,
-            parseContext,
-            safetyResult,
-          )
-          when {
-            witnessWriter == null -> {
-              logger.info(
-                "No suitable SV-COMP witness writer found for the given property (${config.inputConfig.property.inputProperty}), category (${if (parseContext.multiThreading) "concurrency" else "not concurrency"}) and safety result ($safetyResult)."
+      val witnessWriters =
+        when {
+          config.outputConfig.witnessConfig.enabled == WitnessLevel.SVCOMP -> {
+            val witnessWriter =
+              XcfaWitnessWriter.getSvCompWitnessWriter(
+                config.frontendConfig.inputType,
+                config.inputConfig.property,
+                parseContext,
+                safetyResult,
               )
-              emptyList()
+            when {
+              witnessWriter == null -> {
+                logger.info(
+                  "No suitable SV-COMP witness writer found for the given property (${config.inputConfig.property.inputProperty}), category (${if (parseContext.multiThreading) "concurrency" else "not concurrency"}) and safety result ($safetyResult)."
+                )
+                emptyList()
+              }
+              config.frontendConfig.inputType == InputType.SVLIB ->
+                if (config.outputConfig.svLibOutputConfig.generateWitness) listOf(witnessWriter)
+                else emptyList()
+              else -> listOf(witnessWriter)
             }
-            config.frontendConfig.inputType == InputType.SVLIB ->
-              if (config.outputConfig.svLibOutputConfig.generateWitness) listOf(witnessWriter)
-              else emptyList()
-            else -> listOf(witnessWriter)
-          }
-        }
-
-        forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
-          if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
-            val trace = retrieveTrace(safetyResult)
-            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-              concretizeTrace(trace, config, parseContext)
-
-            writeTraceAsDot(resultFolder, concrTrace, logger)
-
-            writeTraceAsPlantuml(resultFolder, trace, logger)
-
-            writeTraceAsOptimizedPlantuml(resultFolder, concrTrace, logger)
-
-            writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
           }
 
-          if (config.frontendConfig.inputType == InputType.SVLIB) listOf(SvLibWitnessWriter())
-          else listOf(GraphmlWitnessWriter(), YamlWitnessWriter())
-        }
+          forceEnabledOutput || config.outputConfig.witnessConfig.enabled == WitnessLevel.ALL -> {
+            if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
+              val trace = retrieveTrace(safetyResult)
+              val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
+                concretizeTrace(trace, config, parseContext)
 
-        else -> emptyList()
-      }
+              writeTraceAsDot(resultFolder, concrTrace, logger)
+
+              writeTraceAsPlantuml(resultFolder, trace, logger)
+
+              writeTraceAsOptimizedPlantuml(resultFolder, concrTrace, logger)
+
+              writeTraceAsCinPlantUml(resultFolder, concrTrace, logger)
+            }
+
+            if (config.frontendConfig.inputType == InputType.SVLIB) listOf(SvLibWitnessWriter())
+            else listOf(GraphmlWitnessWriter(), YamlWitnessWriter())
+          }
+
+          else -> emptyList()
+        }
 
       witnessWriters.forEach { witnessWriter ->
         try {
@@ -159,7 +161,9 @@ internal fun postVerificationLogging(
             logger,
           )
         } catch (e: Exception) {
-          logger.info("Could not emit witness in the required ${witnessWriter.extension} format: ${e.stackTraceToString()}")
+          logger.info(
+            "Could not emit witness in the required ${witnessWriter.extension} format: ${e.stackTraceToString()}"
+          )
         }
       }
 

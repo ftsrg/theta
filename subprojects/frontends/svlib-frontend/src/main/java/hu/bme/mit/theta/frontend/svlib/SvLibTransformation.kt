@@ -36,14 +36,13 @@ class SvLibTermTransformer(private val symbolTable: SvLibSymbolTable = SvLibSymb
   private var termTransformer: SmtLibTermTransformer = GenericSmtLibTermTransformer(symbolTable)
 
   fun <T : Type> toExpr(term: String, type: T): Expr<T> =
-    termTransformer
-      .toExpr(term, type, SmtLibModel(emptyMap()))
-      .changeVars(symbolTable.constToVar)
+    termTransformer.toExpr(term, type, SmtLibModel(emptyMap())).changeVars(symbolTable.constToVar)
 }
 
 class SvLibExprTransformer {
   private val symbolTable = SvLibSymbolTable()
-  private val transformationManager: SmtLibTransformationManager = GenericSmtLibTransformationManager(symbolTable)
+  private val transformationManager: SmtLibTransformationManager =
+    GenericSmtLibTransformationManager(symbolTable)
 
   fun toTerm(expr: Expr<*>): String {
     ExprUtils.getVars(expr).forEach(symbolTable::registerVar)
@@ -52,8 +51,9 @@ class SvLibExprTransformer {
   }
 }
 
-class SvLibSymbolTable : GenericSmtLibSymbolTable  {
-  private val transformationManager: SmtLibTransformationManager = GenericSmtLibTransformationManager(this)
+class SvLibSymbolTable : GenericSmtLibSymbolTable {
+  private val transformationManager: SmtLibTransformationManager =
+    GenericSmtLibTransformationManager(this)
   private val varConstants: BiMap<VarDecl<*>, ConstDecl<*>> = HashBiMap.create()
 
   constructor() : super()
@@ -73,8 +73,8 @@ class SvLibSymbolTable : GenericSmtLibSymbolTable  {
     varConstants.putIfAbsent(varDecl, constDecl)
   }
 
-  fun getVar(symbol: String) = constToVar[getConst(symbol)]
-    ?: throw IllegalStateException("Unknown SV-LIB variable '$symbol'")
+  fun getVar(symbol: String) =
+    constToVar[getConst(symbol)] ?: throw IllegalStateException("Unknown SV-LIB variable '$symbol'")
 
   override fun put(constDecl: ConstDecl<*>, symbol: String, declaration: String) {
     constToSymbol[constDecl] = symbol
@@ -88,7 +88,8 @@ class SvLibSymbolTable : GenericSmtLibSymbolTable  {
     val paramSorts = paramTypes.map(transformationManager::toSort)
 
     val symbolName = encodeSymbol(decl.name)
-    val symbolDeclaration = "(declare-fun $symbolName (${paramSorts.joinToString(" ")}) $returnSort)"
+    val symbolDeclaration =
+      "(declare-fun $symbolName (${paramSorts.joinToString(" ")}) $returnSort)"
     put(decl, symbolName, symbolDeclaration)
   }
 

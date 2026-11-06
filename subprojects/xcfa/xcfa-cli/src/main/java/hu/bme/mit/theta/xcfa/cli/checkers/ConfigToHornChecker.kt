@@ -86,12 +86,7 @@ fun getHornChecker(
   val xcfa =
     xcfa.optimizeFurther(
       ProcedurePassManager(
-        listOf(
-          NormalizePass(),
-          DeterministicPass(),
-          NoParallelEdgesPass(),
-          EliminateSelfLoops(),
-        )
+        listOf(NormalizePass(), DeterministicPass(), NoParallelEdgesPass(), EliminateSelfLoops())
       )
     )
 
@@ -178,7 +173,8 @@ fun getHornChecker(
       },
       logger,
     )
-      as SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
+      as
+      SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>
   }
 
   if (
@@ -201,7 +197,11 @@ fun getHornChecker(
         .toCHC(property == ErrorDetection.TERMINATION, hornConfig.rankingFuncConstr)
     val checker = hornChecker(chc)
 
-    return SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    return SafetyChecker<
+      LocationInvariants,
+      Trace<XcfaState<out PtrState<*>>, XcfaAction>,
+      XcfaPrec<*>,
+    > {
       val result = checker.check(null)
 
       if (result.isSafe) {
@@ -332,10 +332,7 @@ private fun getProperTrace(
     checkState(loc == xcfa.initProcedures[0].first.initLoc)
   }
 
-  return SafetyResult.unsafe(
-    Trace.of(states.reversed(), actions.reversed()),
-    LocationInvariants(),
-  )
+  return SafetyResult.unsafe(Trace.of(states.reversed(), actions.reversed()), LocationInvariants())
 }
 
 fun getShortestPath(start: XcfaLocation, end: XcfaLocation): Pair<Int, List<XcfaEdge>> {
@@ -362,25 +359,33 @@ fun getLocationInvariants(
   invariants: Invariant?,
   vars: List<VarDecl<*>>,
 ): SafetyResult.Safe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>> {
-  val emptyInvariant = SafetyResult.safe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(LocationInvariants())
+  val emptyInvariant =
+    SafetyResult.safe<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(
+      LocationInvariants()
+    )
   if (invariants == null) return emptyInvariant
 
   val locationNames = xcfa.initProcedures[0].first.locs.associateBy { it.name }
 
-  val locationInvariants = invariants.lookup.entries.mapNotNull { (relation, expr) ->
-    if (relation.arity != vars.size) return@mapNotNull null
+  val locationInvariants =
+    invariants.lookup.entries
+      .mapNotNull { (relation, expr) ->
+        if (relation.arity != vars.size) return@mapNotNull null
 
-    var funcDef = expr as? FuncLitExpr<*, *> ?: return@mapNotNull null
-    val varLookup = vars.associateBy {
-      val param = funcDef.param
-      funcDef = funcDef.result as? FuncLitExpr<*, *> ?: funcDef
-      param
-    }
-    val invariant = funcDef.result.changeVars(varLookup) as? Expr<BoolType> ?: return@mapNotNull null
+        var funcDef = expr as? FuncLitExpr<*, *> ?: return@mapNotNull null
+        val varLookup =
+          vars.associateBy {
+            val param = funcDef.param
+            funcDef = funcDef.result as? FuncLitExpr<*, *> ?: funcDef
+            param
+          }
+        val invariant =
+          funcDef.result.changeVars(varLookup) as? Expr<BoolType> ?: return@mapNotNull null
 
-    val location = locationNames[relation.name] ?: return@mapNotNull null
-    location to listOf(BasicExprState.of(invariant))
-  }.toMap()
+        val location = locationNames[relation.name] ?: return@mapNotNull null
+        location to listOf(BasicExprState.of(invariant))
+      }
+      .toMap()
 
   return SafetyResult.safe(LocationInvariants(locationInvariants))
 }
@@ -428,7 +433,11 @@ private fun threadModularChecker(
   logger: Logger,
   hornChecker: (List<Relation>) -> HornChecker,
   monolithicChecker:
-    () -> SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>>,
+    () -> SafetyChecker<
+        LocationInvariants,
+        Trace<XcfaState<out PtrState<*>>, XcfaAction>,
+        XcfaPrec<*>,
+      >,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> =
   SafetyChecker { prec ->
     val result =

@@ -298,10 +298,7 @@ class XcfaCliVerifyTest {
 
   @ParameterizedTest
   @MethodSource("svLibFiles")
-  fun testSvLibVerify(
-    filePath: String,
-    extraArgs: String?,
-  ) {
+  fun testSvLibVerify(filePath: String, extraArgs: String?) {
     main(
       arrayOf(
         "--input-type",

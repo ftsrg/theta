@@ -32,18 +32,30 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.misc.Interval
 
-internal fun newLoc(prefix: String = "l", tags: Set<String> = setOf())
-  = XcfaLocation(prefix + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
+internal fun newLoc(prefix: String = "l", tags: Set<String> = setOf()) =
+  XcfaLocation(prefix + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
 
 private var tmpVarCnt = 0
 const val tmpVarPrefix = "__theta"
+
 internal fun VarDecl<*>.createTemp() = Decls.Var("${tmpVarPrefix}_${name}_${tmpVarCnt++}", type)
 
-internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition: Expr<BoolType>, metadata: SvLibSourceMetadata): XcfaLocation {
+internal fun XcfaProcedureBuilder.insertCheck(
+  location: XcfaLocation,
+  condition: Expr<BoolType>,
+  metadata: SvLibSourceMetadata,
+): XcfaLocation {
   val originalOutgoingEdges = location.outgoingEdges.toMutableList()
   val nextLoc = newLoc()
 
-  addEdge(XcfaEdge(location, errorLoc.get(), StmtLabel(Assume(Not(condition)), metadata = metadata), metadata))
+  addEdge(
+    XcfaEdge(
+      location,
+      errorLoc.get(),
+      StmtLabel(Assume(Not(condition)), metadata = metadata),
+      metadata,
+    )
+  )
   addEdge(XcfaEdge(location, nextLoc, StmtLabel(Assume(condition), metadata = metadata), metadata))
 
   originalOutgoingEdges.forEach {
@@ -55,13 +67,15 @@ internal fun XcfaProcedureBuilder.insertCheck(location: XcfaLocation, condition:
 }
 
 internal fun ParserRuleContext.unsupported(message: String) =
-  UnsupportedOperationException("Unsupported SV-LIB element (${start.line}:${start.charPositionInLine}): $message")
+  UnsupportedOperationException(
+    "Unsupported SV-LIB element (${start.line}:${start.charPositionInLine}): $message"
+  )
 
 internal fun ParserRuleContext.illegal(message: String) =
   IllegalStateException("Invalid statement (${start.line}:${start.charPositionInLine}): $message")
 
-open class SvLibVisitor<T>(protected val charStream: CharStream, protected val logger: Logger)
-  : SvLibBaseVisitor<T>() {
+open class SvLibVisitor<T>(protected val charStream: CharStream, protected val logger: Logger) :
+  SvLibBaseVisitor<T>() {
   val ParserRuleContext.original: String
     get() = charStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
 

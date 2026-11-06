@@ -121,20 +121,20 @@ private fun List<DereferenceAccessMap>.mergeDerefs(): DereferenceAccessMap =
   }
 
 /** Returns the list of accessed variables by the edge associated with an AccessType object. */
-fun XcfaEdge.collectVarsWithAccessType(xcfa: XCFA)
-  = label.collectVarsWithAccessType(xcfa.procedureBuilders)
+fun XcfaEdge.collectVarsWithAccessType(xcfa: XCFA) =
+  label.collectVarsWithAccessType(xcfa.procedureBuilders)
 
-fun XcfaEdge.collectVarsWithAccessType(procedure: XcfaProcedureBuilder)
-  = label.collectVarsWithAccessType(procedure.parent.getProcedures())
+fun XcfaEdge.collectVarsWithAccessType(procedure: XcfaProcedureBuilder) =
+  label.collectVarsWithAccessType(procedure.parent.getProcedures())
 
-fun XcfaLabel.collectVarsWithAccessType(xcfa: XCFA)
-  = collectVarsWithAccessType(xcfa.procedureBuilders)
+fun XcfaLabel.collectVarsWithAccessType(xcfa: XCFA) =
+  collectVarsWithAccessType(xcfa.procedureBuilders)
 
-fun XcfaLabel.collectVarsWithAccessType(xcfa: XcfaBuilder)
-  = collectVarsWithAccessType(xcfa.getProcedures())
+fun XcfaLabel.collectVarsWithAccessType(xcfa: XcfaBuilder) =
+  collectVarsWithAccessType(xcfa.getProcedures())
 
-fun XcfaLabel.collectVarsWithAccessType(procedure: XcfaProcedureBuilder)
-  = collectVarsWithAccessType(procedure.parent.getProcedures())
+fun XcfaLabel.collectVarsWithAccessType(procedure: XcfaProcedureBuilder) =
+  collectVarsWithAccessType(procedure.parent.getProcedures())
 
 /**
  * Returns the list of accessed variables by the label. The variable is associated with an
@@ -156,10 +156,15 @@ fun XcfaLabel.collectVarsWithAccessType(procedures: Set<XcfaProcedureBuilder>): 
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType(procedures) }.mergeVarAccesses()
     is InvokeLabel -> {
       val allVars = params.flatMap { ExprUtils.getVars(it) }.toSet()
-      val writtenVars = procedures.find { it.name == name }?.getParams()?.map { (_, dir) -> dir }
-        ?.zip(params)?.filter { (dir, _) -> dir != ParamDirection.IN }
-        ?.flatMap { (_, arg) -> ExprUtils.getVars(arg) }?.toSet()
-        ?: emptySet()
+      val writtenVars =
+        procedures
+          .find { it.name == name }
+          ?.getParams()
+          ?.map { (_, dir) -> dir }
+          ?.zip(params)
+          ?.filter { (dir, _) -> dir != ParamDirection.IN }
+          ?.flatMap { (_, arg) -> ExprUtils.getVars(arg) }
+          ?.toSet() ?: emptySet()
       val readVars = allVars - writtenVars
 
       readVars.associateWith { READ } + writtenVars.associateWith { WRITE }
@@ -185,7 +190,9 @@ fun XcfaLabel.collectVarsWithAccessType(procedures: Set<XcfaProcedureBuilder>): 
 fun XcfaLabel.collectGlobalVars(xcfa: XCFA): GlobalVarAccessMap =
   collectVarsWithAccessType(xcfa)
     .mapNotNull { labelVar ->
-      xcfa.globalVars.firstOrNull { it.wrappedVar == labelVar.key }?.let { Pair(it, labelVar.value) }
+      xcfa.globalVars
+        .firstOrNull { it.wrappedVar == labelVar.key }
+        ?.let { Pair(it, labelVar.value) }
     }
     .toMap()
 

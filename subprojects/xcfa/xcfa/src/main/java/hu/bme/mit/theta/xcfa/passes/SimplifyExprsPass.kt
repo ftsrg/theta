@@ -49,8 +49,10 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  */
 private const val MAX_PATHS = 4
 
-class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: XcfaProperty? = null) :
-  ProcedurePass {
+class SimplifyExprsPass(
+  val parseContext: ParseContext? = null,
+  val property: XcfaProperty? = null,
+) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
@@ -115,10 +117,13 @@ class SimplifyExprsPass(val parseContext: ParseContext? = null, val property: Xc
               old.simplify(path, parseContext).let { (it as? StmtLabel)?.stmt == Assume(False()) }
             }
             if (old is InvokeLabel) {
-              old.collectVarsWithAccessType(builder).filterValues { it.isWritten }.forEach { (outArg, _) ->
-                localValuation.remove(outArg)
-                feasiblePaths.forEach { it.remove(outArg) }
-              }
+              old
+                .collectVarsWithAccessType(builder)
+                .filterValues { it.isWritten }
+                .forEach { (outArg, _) ->
+                  localValuation.remove(outArg)
+                  feasiblePaths.forEach { it.remove(outArg) }
+                }
             }
             if (old.isAssume) feasiblePaths.singleOrNull()?.let { localValuation.putAll(it) }
             if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, builder)) {

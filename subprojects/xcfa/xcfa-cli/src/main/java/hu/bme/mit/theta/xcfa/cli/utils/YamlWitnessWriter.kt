@@ -119,12 +119,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         if (trace is Trace<*, *>) {
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-            XcfaTraceConcretizer().concretize(
-              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-              cexSolverFactory,
-              parseContext,
-              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-            )
+            XcfaTraceConcretizer()
+              .concretize(
+                trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+                cexSolverFactory,
+                parseContext,
+                wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+              )
 
           val witness =
             violationWitnessFromConcreteTrace(

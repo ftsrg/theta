@@ -262,8 +262,10 @@ class DataRaceToReachabilityPass(
     return builder
   }
 
-  private fun XcfaProcedureBuilder.racingVars(label: XcfaLabel, potentialRacingVars: Set<VarDecl<*>>): VarAccessMap =
-    label.collectVarsWithAccessType(this).filter { it.key in potentialRacingVars }
+  private fun XcfaProcedureBuilder.racingVars(
+    label: XcfaLabel,
+    potentialRacingVars: Set<VarDecl<*>>,
+  ): VarAccessMap = label.collectVarsWithAccessType(this).filter { it.key in potentialRacingVars }
 
   /**
    * `_Atomic` data cannot be raced on, so an access through a pointer that addresses it is not a

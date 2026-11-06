@@ -428,7 +428,8 @@ fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
       WitnessConfig(
         enabled = portfolioConfig.outputConfig.witnessConfig.enabled,
         concretizerSolver = portfolioConfig.outputConfig.witnessConfig.concretizerSolver,
-        validateConcretizerSolver = portfolioConfig.outputConfig.witnessConfig.validateConcretizerSolver,
+        validateConcretizerSolver =
+          portfolioConfig.outputConfig.witnessConfig.validateConcretizerSolver,
         inputFileForWitness =
           portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
             ?: portfolioConfig.inputConfig.input,

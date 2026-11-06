@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,7 +63,11 @@ class NormalizePass : ProcedurePass {
 
       is NopLabel -> {}
       is StmtLabel ->
-        if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(True()) && !label.metadata.isSubstantial()))
+        if (
+          !(label.stmt is AssumeStmt &&
+            label.stmt.cond.equals(True()) &&
+            !label.metadata.isSubstantial())
+        )
           collector.forEach { it.add(label) }
 
       else -> collector.forEach { it.add(label) }

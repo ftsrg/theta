@@ -16,6 +16,11 @@
 
 package hu.bme.mit.theta.core.type.fptype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
+import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
+
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
@@ -23,70 +28,65 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
-import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
-
 public class FpIsZeroExpr extends UnaryExpr<FpType, BoolType> {
     private static final int HASH_SEED = 4927;
     private static final String OPERATOR_LABEL = "isZero";
 
     private FpIsZeroExpr(final Expr<FpType> op) {
-      super(op);
-      checkAllTypesEqual(op);
+        super(op);
+        checkAllTypesEqual(op);
     }
 
     public static FpIsZeroExpr of(final Expr<FpType> op) {
-      return new FpIsZeroExpr(op);
+        return new FpIsZeroExpr(op);
     }
 
     public static FpIsZeroExpr create(final Expr<?> op) {
-      final Expr<FpType> newOp = castFp(op);
-      return FpIsZeroExpr.of(newOp);
+        final Expr<FpType> newOp = castFp(op);
+        return FpIsZeroExpr.of(newOp);
     }
 
     @Override
     public FpIsZeroExpr with(Expr<FpType> op) {
-      if (op == getOp()) {
-        return this;
-      } else {
-        return FpIsZeroExpr.of(op);
-      }
+        if (op == getOp()) {
+            return this;
+        } else {
+            return FpIsZeroExpr.of(op);
+        }
     }
 
     @Override
     public BoolType getType() {
-      return Bool();
+        return Bool();
     }
 
     @Override
     public BoolLitExpr eval(final Valuation val) {
-      final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
+        final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
 
-      OrExpr or = Or(Bool(opVal.isNegativeZero()), Bool(opVal.isPositiveZero()));
-      return or.eval(val);
+        OrExpr or = Or(Bool(opVal.isNegativeZero()), Bool(opVal.isPositiveZero()));
+        return or.eval(val);
     }
 
     @Override
     public boolean equals(final Object obj) {
-      if (this == obj) {
-        return true;
-      } else if (obj != null && this.getClass() == obj.getClass()) {
-        final FpIsZeroExpr that = (FpIsZeroExpr) obj;
-        return this.getOp().equals(that.getOp());
-      } else {
-        return false;
-      }
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final FpIsZeroExpr that = (FpIsZeroExpr) obj;
+            return this.getOp().equals(that.getOp());
+        } else {
+            return false;
+        }
     }
 
     @Override
     protected int getHashSeed() {
-      return HASH_SEED;
+        return HASH_SEED;
     }
 
     @Override
     public String getOperatorLabel() {
-      return OPERATOR_LABEL;
+        return OPERATOR_LABEL;
     }
 }

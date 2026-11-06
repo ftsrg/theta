@@ -592,13 +592,14 @@ internal fun concretizeTrace(
       parseContext,
     )
   } else {
-    XcfaTraceConcretizer().concretize(
-      trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-      getSolver(
-        config.outputConfig.witnessConfig.concretizerSolver,
-        config.outputConfig.witnessConfig.validateConcretizerSolver,
-      ),
-      parseContext,
-      wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property, parseContext),
-    )
+    XcfaTraceConcretizer()
+      .concretize(
+        trace as Trace<XcfaState<PtrState<*>>, XcfaAction>,
+        getSolver(
+          config.outputConfig.witnessConfig.concretizerSolver,
+          config.outputConfig.witnessConfig.validateConcretizerSolver,
+        ),
+        parseContext,
+        wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property, parseContext),
+      )
   }

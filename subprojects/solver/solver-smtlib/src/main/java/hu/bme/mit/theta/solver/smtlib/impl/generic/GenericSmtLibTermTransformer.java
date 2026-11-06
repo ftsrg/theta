@@ -105,8 +105,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
@@ -1048,10 +1048,12 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 final var expr = transformTerm(ops.get(0), model, vars);
 
                 if (expr.getType() instanceof BvType type) {
-                    return FpExprs.FromIeeeBv(cast(expr, type), FpExprs.FpType(exponent, significand));
+                    return FpExprs.FromIeeeBv(
+                            cast(expr, type), FpExprs.FpType(exponent, significand));
                 }
 
-                throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
+                throw new SmtLibSolverException(
+                        "to_fp for type " + expr.getType() + " is not supported");
             } else {
                 final var roundingMode = fpOperatorRoundingMode(ops.get(0));
                 final var expr = transformTerm(ops.get(1), model, vars);
@@ -1059,10 +1061,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 if (expr.getType() instanceof FpType type) {
                     return FpExprs.ToFp(roundingMode, cast(expr, type), exponent, significand);
                 } else if (expr.getType() instanceof BvType type) {
-                    return FpExprs.FromBv(roundingMode, cast(expr, type), FpExprs.FpType(exponent, significand), type.getSigned());
+                    return FpExprs.FromBv(
+                            roundingMode,
+                            cast(expr, type),
+                            FpExprs.FpType(exponent, significand),
+                            type.getSigned());
                 }
 
-                throw new SmtLibSolverException("to_fp for type " + expr.getType() + " is not supported");
+                throw new SmtLibSolverException(
+                        "to_fp for type " + expr.getType() + " is not supported");
             }
         };
     }
@@ -1078,7 +1085,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var roundingMode = fpOperatorRoundingMode(ops.get(0));
             final var expr = transformTerm(ops.get(1), model, vars);
 
-            return FpExprs.FromBv(roundingMode, castBv(expr), FpExprs.FpType(exponent, significand), false);
+            return FpExprs.FromBv(
+                    roundingMode, castBv(expr), FpExprs.FpType(exponent, significand), false);
         };
     }
 

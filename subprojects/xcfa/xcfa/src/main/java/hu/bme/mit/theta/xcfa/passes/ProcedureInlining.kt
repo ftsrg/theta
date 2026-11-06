@@ -240,11 +240,11 @@ internal fun inlineCallSite(
           cast(param.first, param.first.type),
           cast(
             parseContext?.let {
-                CComplexType.getType(param.first.ref, it).castTo(invokeLabel.params[i])
-              } ?: invokeLabel.params[i],
-              param.first.type,
-            ),
-          )
+              CComplexType.getType(param.first.ref, it).castTo(invokeLabel.params[i])
+            } ?: invokeLabel.params[i],
+            param.first.type,
+          ),
+        )
       inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
     }
 
@@ -260,12 +260,11 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(varDecl, varDecl.type),
           cast(
-              parseContext?.let {
-                CComplexType.getType(varDecl.ref, it).castTo(param.first.ref)
-              } ?: param.first.ref,
-              varDecl.type,
-            ),
-          )
+            parseContext?.let { CComplexType.getType(varDecl.ref, it).castTo(param.first.ref) }
+              ?: param.first.ref,
+            varDecl.type,
+          ),
+        )
       outStmts.add(StmtLabel(stmt, metadata = EmptyMetaData))
     }
   }
@@ -277,7 +276,12 @@ internal fun inlineCallSite(
   if (inStmts.isEmpty()) inStmts.add(StmtLabel(Stmts.Skip(), metadata = metadata))
 
   builder.addEdge(
-    XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts, metadata = metadata), metadata)
+    XcfaEdge(
+      source,
+      checkNotNull(newLocs[initLoc]),
+      SequenceLabel(inStmts, metadata = metadata),
+      metadata,
+    )
   )
   if (finalLoc.isPresent)
     builder.addEdge(

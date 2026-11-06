@@ -75,8 +75,7 @@ public class XcfaTraceConcretizer {
 
     protected boolean isSbe(XcfaLabel label) {
         final var otherMetadata = getCMetaData(label);
-        final var otherAstNodes =
-            otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
+        final var otherAstNodes = otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
         final var metadata = getCMetaData(label);
         final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
         return otherAstNodes.equals(astNodes);
@@ -274,7 +273,8 @@ public class XcfaTraceConcretizer {
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
-                    var accesses = collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
+                    var accesses =
+                            collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
                     final var written =
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))

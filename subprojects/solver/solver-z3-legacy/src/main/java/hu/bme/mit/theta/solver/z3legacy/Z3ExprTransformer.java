@@ -570,7 +570,7 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3legacy.Expr transformIntToBv(final IntToBvExpr expr) {
         final com.microsoft.z3legacy.IntExpr opTerm =
-            (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
+                (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
         return context.mkInt2BV(expr.getSize(), opTerm);
     }
 

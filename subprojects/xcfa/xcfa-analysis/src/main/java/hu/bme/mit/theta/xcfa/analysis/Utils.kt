@@ -90,11 +90,13 @@ class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
 }
 
 val XCFA.isInlined: Boolean by LazyDelegate {
-  !this.initProcedures.map { it.first }.any { p ->
-    p.edges.any { e ->
-      e.getFlatLabels().any { l -> l is InvokeLabel && this.procedures.any { it.name == l.name } }
+  !this.initProcedures
+    .map { it.first }
+    .any { p ->
+      p.edges.any { e ->
+        e.getFlatLabels().any { l -> l is InvokeLabel && this.procedures.any { it.name == l.name } }
+      }
     }
-  }
 }
 
 fun XcfaProcessState.foldVarLookup(): Map<VarDecl<*>, VarDecl<*>> =

@@ -48,7 +48,12 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
         val flatLabels = edge.getFlatLabels()
         flatLabels.forEachIndexed { index, label ->
           if (label is StmtLabel) {
-            findDirectObservers(edge, label, flatLabels.subList(index + 1, flatLabels.size), builder)
+            findDirectObservers(
+              edge,
+              label,
+              flatLabels.subList(index + 1, flatLabels.size),
+              builder,
+            )
             findIndirectObservers(label, builder)
           }
         }
@@ -79,7 +84,12 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
           this.stmt is HavocStmt<*>) &&
         dereferencesWithAccessType.none { it.value.isWritten }
 
-  private fun findDirectObservers(edge: XcfaEdge, label: XcfaLabel, remaining: List<XcfaLabel>, builder: XcfaProcedureBuilder) {
+  private fun findDirectObservers(
+    edge: XcfaEdge,
+    label: XcfaLabel,
+    remaining: List<XcfaLabel>,
+    builder: XcfaProcedureBuilder,
+  ) {
     val writtenVars =
       label.collectVarsWithAccessType(builder).filter { it.value.isWritten }.map { it.key }.toSet()
     if (writtenVars.isEmpty()) return

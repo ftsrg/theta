@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.ConsoleLogger
@@ -8,18 +24,19 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import java.io.FileInputStream
+import java.nio.file.Path
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.io.FileInputStream
-import java.nio.file.Path
 
 internal class SvLibFrontendTest {
 
   @Test
   fun testParsing() {
-    val source = """
+    val source =
+      """
         (define-proc foo
           ((x Int))
           ((y Int))
@@ -27,7 +44,8 @@ internal class SvLibFrontendTest {
           (sequence)
         )
         
-        """.trimIndent()
+        """
+        .trimIndent()
 
     val parser = SvLibParser(CommonTokenStream(SvLibLexer(CharStreams.fromString(source))))
     val tree = parser.script()
@@ -48,13 +66,12 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("if-simple-safe.svlib")
     val procedure = xcfa.procedures.first()
 
-    val branchingLocCount = procedure.edges
-      .groupBy(XcfaEdge::source)
-      .count { (_, edges) -> edges.size >= 2 }
+    val branchingLocCount =
+      procedure.edges.groupBy(XcfaEdge::source).count { (_, edges) -> edges.size >= 2 }
 
     assertTrue(
       branchingLocCount >= 2,
-      "Expected if and check-true translations to create branching locations"
+      "Expected if and check-true translations to create branching locations",
     )
   }
 
@@ -72,10 +89,7 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("check-true-middle.svlib")
     val procedure = xcfa.procedures.first()
 
-    val checkLocation = procedure.edges
-        .filter { it.target.error }
-        .map(XcfaEdge::source)
-        .first()
+    val checkLocation = procedure.edges.filter { it.target.error }.map(XcfaEdge::source).first()
 
     assertEquals(2, procedure.edges.count { it.source == checkLocation })
   }
@@ -85,11 +99,12 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("check-true-annotate-tag.svlib")
     val procedure = xcfa.procedures.first()
 
-    val taggedLocation = procedure.locs.find { loc ->
-      loc.metadata.let { metadata ->
-        metadata is SvLibTagMetadata && metadata.tags.contains("xto0")
+    val taggedLocation =
+      procedure.locs.find { loc ->
+        loc.metadata.let { metadata ->
+          metadata is SvLibTagMetadata && metadata.tags.contains("xto0")
+        }
       }
-    }
 
     assertNotNull(taggedLocation)
     assertEquals(2, taggedLocation!!.outgoingEdges.size)
@@ -119,10 +134,10 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("havoc.svlib")
     val procedure = xcfa.procedures.first()
 
-    assertTrue(procedure.edges
-      .map(XcfaEdge::label)
-      .filterIsInstance<StmtLabel>()
-      .any { it.stmt is HavocStmt<*> }
+    assertTrue(
+      procedure.edges.map(XcfaEdge::label).filterIsInstance<StmtLabel>().any {
+        it.stmt is HavocStmt<*>
+      }
     )
   }
 
@@ -140,7 +155,8 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("goto.svlib")
     val procedure = xcfa.procedures.first()
 
-    val loopHead = procedure.locs.find { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 } ?: fail()
+    val loopHead =
+      procedure.locs.find { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 } ?: fail()
     assertTrue(loopHead.outgoingEdges.any { it.target == procedure.errorLoc.get() })
 
     var cycleFound = false
@@ -194,13 +210,17 @@ internal class SvLibFrontendTest {
     val finalLoc = procedure.finalLoc.orElseThrow()
 
     assertEquals(2, procedure.edges.count { it.target == finalLoc })
-    assertTrue(procedure.locs.any { loc ->
-      loc.incomingEdges.size >= 2 && loc.outgoingEdges.any { it.label.toString().contains("(< x 3)") }
-    })
-    assertTrue(procedure.edges
-      .filter { it.target == finalLoc && it.label.toString().contains("Nop") }
-      .map(XcfaEdge::source)
-      .any { it.outgoingEdges.size == 1 }
+    assertTrue(
+      procedure.locs.any { loc ->
+        loc.incomingEdges.size >= 2 &&
+          loc.outgoingEdges.any { it.label.toString().contains("(< x 3)") }
+      }
+    )
+    assertTrue(
+      procedure.edges
+        .filter { it.target == finalLoc && it.label.toString().contains("Nop") }
+        .map(XcfaEdge::source)
+        .any { it.outgoingEdges.size == 1 }
     )
   }
 
@@ -209,10 +229,16 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("loop-simple-safe.svlib")
     val procedure = xcfa.procedures.first()
 
-    val incomingCounts = procedure.edges.groupBy(XcfaEdge::target).mapValues { (_, edges) -> edges.size }
-    val outgoingCounts = procedure.edges.groupBy(XcfaEdge::source).mapValues { (_, edges) -> edges.size }
+    val incomingCounts =
+      procedure.edges.groupBy(XcfaEdge::target).mapValues { (_, edges) -> edges.size }
+    val outgoingCounts =
+      procedure.edges.groupBy(XcfaEdge::source).mapValues { (_, edges) -> edges.size }
 
-    assertTrue(procedure.locs.any { loc -> (incomingCounts[loc] ?: 0) >= 2 && (outgoingCounts[loc] ?: 0) >= 2 })
+    assertTrue(
+      procedure.locs.any { loc ->
+        (incomingCounts[loc] ?: 0) >= 2 && (outgoingCounts[loc] ?: 0) >= 2
+      }
+    )
   }
 
   @Test
@@ -220,7 +246,8 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("annotated-loop-head.svlib")
     val procedure = xcfa.procedures.first()
 
-    val loopHeads = procedure.locs.filter { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 }
+    val loopHeads =
+      procedure.locs.filter { it.incomingEdges.size == 2 && it.outgoingEdges.size == 2 }
     assertEquals(2, loopHeads.size)
 
     loopHeads.forEach { loopHead ->

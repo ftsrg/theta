@@ -886,9 +886,10 @@ data class ChcOutputConfig(
 data class SvLibOutputConfig(
   @Parameter(
     names = ["--enable-svlib-witness"],
-    description = "Activates witness generation regardless of the presence of (get-witness) in the input."
+    description =
+      "Activates witness generation regardless of the presence of (get-witness) in the input.",
   )
-  var generateWitness: Boolean = false,
+  var generateWitness: Boolean = false
 ) : Config
 
 @Serializable

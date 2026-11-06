@@ -28,7 +28,8 @@ class SvLibTagMetadata(val tags: Set<String> = setOf()) : MetaData() {
 
 class SvLibSourceMetadata(val source: String) : MetaData() {
   override fun combine(other: MetaData) =
-    if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}") else this
+    if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}")
+    else this
 
   override fun isSubstantial() = source.isNotEmpty()
 

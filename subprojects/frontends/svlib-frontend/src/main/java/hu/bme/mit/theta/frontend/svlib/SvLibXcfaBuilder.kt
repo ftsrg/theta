@@ -31,8 +31,11 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import org.antlr.v4.runtime.CharStream
 
-class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, charStream: CharStream, logger: Logger)
-  : SvLibVisitor<Unit>(charStream, logger) {
+class SvLibXcfaBuilder(
+  private val procedurePassManager: ProcedurePassManager,
+  charStream: CharStream,
+  logger: Logger,
+) : SvLibVisitor<Unit>(charStream, logger) {
   private val xcfaBuilder = XcfaBuilder("SvLibMain")
   private val globalSymbolTable = SvLibSymbolTable()
   private val procedures = LinkedHashMap<XcfaProcedureBuilder, SvLibSymbolTable>()
@@ -56,24 +59,26 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
-    val procedure = declareProcedure(
-      ctx.symbol(),
-      ctx.procDeclarationArguments(0),
-      ctx.procDeclarationArguments(1),
-      ctx.procDeclarationArguments(2),
-    )
+    val procedure =
+      declareProcedure(
+        ctx.symbol(),
+        ctx.procDeclarationArguments(0),
+        ctx.procDeclarationArguments(1),
+        ctx.procDeclarationArguments(2),
+      )
     defineProcedure(procedure, ctx.statement())
   }
 
   override fun visitDefineProcsRec(ctx: DefineProcsRecContext) {
-    val procedures = ctx.procDeclaration().map {
-      declareProcedure(
-        it.symbol(),
-        it.procDeclarationArguments(0),
-        it.procDeclarationArguments(1),
-        it.procDeclarationArguments(2),
-      )
-    }
+    val procedures =
+      ctx.procDeclaration().map {
+        declareProcedure(
+          it.symbol(),
+          it.procDeclarationArguments(0),
+          it.procDeclarationArguments(1),
+          it.procDeclarationArguments(2),
+        )
+      }
     procedures.zip(ctx.statement()).forEach { (procedure, statement) ->
       defineProcedure(procedure, statement)
     }
@@ -81,13 +86,15 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
 
   override fun visitVerifyCall(ctx: VerifyCallContext) {
     val name = ctx.symbol().original
-    val procedure = procedures.keys.find { it.name == name }
-      ?: throw ctx.symbol().illegal("no such procedure '$name'")
+    val procedure =
+      procedures.keys.find { it.name == name }
+        ?: throw ctx.symbol().illegal("no such procedure '$name'")
 
     val termTransformer = SvLibTermTransformer(globalSymbolTable)
-    val args = procedure.getParams().zip(ctx.term()).map { (param, term) ->
-      termTransformer.toExpr(term.original, param.first.type)
-    }
+    val args =
+      procedure.getParams().zip(ctx.term()).map { (param, term) ->
+        termTransformer.toExpr(term.original, param.first.type)
+      }
 
     xcfaBuilder.addEntryPoint(procedure, args)
   }
@@ -108,7 +115,7 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
               locations.forEach {
                 it.insertCheck(
                   property.relationalTerm().original,
-                  SvLibSourceMetadata("${ctx.symbol().original} ${attribute.original}")
+                  SvLibSourceMetadata("${ctx.symbol().original} ${attribute.original}"),
                 )
               }
             }
@@ -123,11 +130,13 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
     generateWitness = true
   }
 
-  override fun visitSelectTrace(ctx: SelectTraceContext) = throw ctx.unsupported("command 'select-trace'")
+  override fun visitSelectTrace(ctx: SelectTraceContext) =
+    throw ctx.unsupported("command 'select-trace'")
 
   override fun visitDeclareFunCommand(ctx: DeclareFunCommandContext) {
     val sorts = ctx.cmd_declareFun().sort().map { sortOf(it) }
-    val type = if (sorts.size == 1) sorts.first()
+    val type =
+      if (sorts.size == 1) sorts.first()
       else sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) }
     val name = ctx.cmd_declareFun().symbol().original
     globalSymbolTable.put(Decls.Const(name, type), name, ctx.original)
@@ -165,8 +174,10 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
   }
 
   private fun defineProcedure(procedure: XcfaProcedureBuilder, body: StatementContext) {
-    val procedureSymbolTable = procedures[procedure] ?: throw body.illegal("no such procedure '${procedure.name}'")
-    val statementVisitor = SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
+    val procedureSymbolTable =
+      procedures[procedure] ?: throw body.illegal("no such procedure '${procedure.name}'")
+    val statementVisitor =
+      SvLibStatementVisitor(procedure, procedureSymbolTable, charStream, logger)
     statementVisitor.parseProcedureBody(body)
     procedure.addEdge(
       XcfaEdge(statementVisitor.current, procedure.finalLoc.get(), metadata = EmptyMetaData)
@@ -177,47 +188,54 @@ class SvLibXcfaBuilder(private val procedurePassManager: ProcedurePassManager, c
 
   private fun sortOf(sort: SortContext): Type =
     when (sort) {
-      is SimpleSortContext -> when (sort.identifier().symbol().original) {
-        "Int" -> IntExprs.Int()
-        "Bool" -> Bool()
-        "Real" -> RatExprs.Rat()
-        "FloatingPoint" -> {
-          if (sort.identifier().index().size != 2) throw sort.unsupported("sort '${sort.original}'")
-          val exponent = sort.identifier().index(0).original.toInt()
-          val significand = sort.identifier().index(1).original.toInt()
-          FpExprs.FpType(exponent, significand)
+      is SimpleSortContext ->
+        when (sort.identifier().symbol().original) {
+          "Int" -> IntExprs.Int()
+          "Bool" -> Bool()
+          "Real" -> RatExprs.Rat()
+          "FloatingPoint" -> {
+            if (sort.identifier().index().size != 2)
+              throw sort.unsupported("sort '${sort.original}'")
+            val exponent = sort.identifier().index(0).original.toInt()
+            val significand = sort.identifier().index(1).original.toInt()
+            FpExprs.FpType(exponent, significand)
+          }
+          "BitVec" -> {
+            if (sort.identifier().index().size != 1)
+              throw sort.unsupported("sort '${sort.original}'")
+            val size = sort.identifier().index(0).original.toInt()
+            BvExprs.BvType(size)
+          }
+          else -> throw sort.unsupported("sort '${sort.original}'")
         }
-        "BitVec" -> {
-          if (sort.identifier().index().size != 1) throw sort.unsupported("sort '${sort.original}'")
-          val size = sort.identifier().index(0).original.toInt()
-          BvExprs.BvType(size)
+      is ParametricSortContext ->
+        when (sort.identifier().original) {
+          "Array" -> {
+            val indexType: Type = sortOf(sort.sort(0))
+            val elementType: Type = sortOf(sort.sort(1))
+            ArrayExprs.Array(indexType, elementType)
+          }
+          else -> throw sort.unsupported("sort '${sort.original}'")
         }
-        else -> throw sort.unsupported("sort '${sort.original}'")
-      }
-      is ParametricSortContext -> when (sort.identifier().original) {
-        "Array" -> {
-          val indexType: Type = sortOf(sort.sort(0))
-          val elementType: Type = sortOf(sort.sort(1))
-          ArrayExprs.Array(indexType, elementType)
-        }
-        else -> throw sort.unsupported("sort '${sort.original}'")
-      }
       else -> throw sort.unsupported("sort '${sort.original}'")
     }
 
-  private fun createGlobalVar(name: String, type: Type) = Decls.Var(name, type).also {
-    xcfaBuilder.addVar(XcfaGlobalVar(it))
-    globalSymbolTable.registerVar(it)
-  }
+  private fun createGlobalVar(name: String, type: Type) =
+    Decls.Var(name, type).also {
+      xcfaBuilder.addVar(XcfaGlobalVar(it))
+      globalSymbolTable.registerVar(it)
+    }
 
-  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibSourceMetadata) = context.let { (procedure, symbolTable) ->
-    procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()), metadata)
-  }
+  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibSourceMetadata) =
+    context.let { (procedure, symbolTable) ->
+      procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()), metadata)
+    }
 
-  private fun ProcDeclarationArgumentsContext.getVars()
-    = symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.original, sortOf(sort)) }
+  private fun ProcDeclarationArgumentsContext.getVars() =
+    symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.original, sortOf(sort)) }
 
   private val XcfaLocation.context
-    get() = procedures.entries.find { (procedure, _) -> this in procedure.getLocs() }?.toPair()
-      ?: throw IllegalStateException("Location does not belong to a procedure")
+    get() =
+      procedures.entries.find { (procedure, _) -> this in procedure.getLocs() }?.toPair()
+        ?: throw IllegalStateException("Location does not belong to a procedure")
 }

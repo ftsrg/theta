@@ -133,86 +133,88 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
 
 fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext?): XcfaLabel =
   if (parseContext == null) simplify(valuation)
-  else when (this) {
-    is StmtLabel -> {
-      val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
-      when (stmt) {
-        is MemoryAssignStmt<*, *, *> -> {
-          simplified as MemoryAssignStmt<*, *, *>
-          if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-            parseContext.metadata.create(
-              simplified.expr,
-              "cType",
-              CComplexType.getType(stmt.expr, parseContext),
-            )
-          if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-            parseContext.metadata.create(
-              simplified.deref,
-              "cType",
-              CComplexType.getType(stmt.deref, parseContext),
-            )
-          StmtLabel(simplified, metadata = metadata)
-        }
-
-        is AssignStmt<*> -> {
-          simplified as AssignStmt<*>
-          val expr = simplified.expr.withMetadata(parseContext, stmt.expr)
-          AssignStmtLabel(simplified.varDecl, expr, metadata = metadata)
-        }
-
-        is AssumeStmt -> {
-          simplified as AssumeStmt
-          if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
-            parseContext.metadata.create(
-              simplified.cond,
-              "cType",
-              CComplexType.getType(stmt.cond, parseContext),
-            )
+  else
+    when (this) {
+      is StmtLabel -> {
+        val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
+        when (stmt) {
+          is MemoryAssignStmt<*, *, *> -> {
+            simplified as MemoryAssignStmt<*, *, *>
+            if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+              parseContext.metadata.create(
+                simplified.expr,
+                "cType",
+                CComplexType.getType(stmt.expr, parseContext),
+              )
+            if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
+              parseContext.metadata.create(
+                simplified.deref,
+                "cType",
+                CComplexType.getType(stmt.deref, parseContext),
+              )
+            StmtLabel(simplified, metadata = metadata)
           }
-          parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
-          StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+
+          is AssignStmt<*> -> {
+            simplified as AssignStmt<*>
+            val expr = simplified.expr.withMetadata(parseContext, stmt.expr)
+            AssignStmtLabel(simplified.varDecl, expr, metadata = metadata)
+          }
+
+          is AssumeStmt -> {
+            simplified as AssumeStmt
+            if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
+              parseContext.metadata.create(
+                simplified.cond,
+                "cType",
+                CComplexType.getType(stmt.cond, parseContext),
+              )
+            }
+            parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
+            StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+          }
+
+          else -> this
         }
-
-        else -> this
       }
+
+      is StartLabel ->
+        StartLabel(
+          name,
+          params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
+          pidVar,
+          metadata,
+          tempLookup,
+        )
+
+      is InvokeLabel ->
+        // Fold known values into the arguments -- notably the array index of a thread/mutex handle
+        // `&t[i]`, so an unrolled create/join loop yields the constant `&t[0]`, `&t[1]`, … that
+        // CLibraryFunctionsPass keys each handle on.
+        InvokeLabel(
+          name,
+          // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
+          // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
+          // SMT type instead -- carry it over, as the statement branches above do.
+          params.map { param ->
+            val simplified = ExprUtils.simplify(param, valuation)
+            // a literal is shared, so it cannot carry the pointer type the library-call lowering
+            // reads off the argument; the later simplification runs fold it anyway
+            if (simplified is LitExpr<*> && param.isPointerTyped(parseContext)) param
+            else simplified.withCTypeOf(parseContext, param)
+          },
+          metadata,
+          tempLookup,
+          isLibraryFunction,
+        )
+
+      is SequenceLabel ->
+        SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
+
+      is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
+
+      else -> this
     }
-
-    is StartLabel ->
-      StartLabel(
-        name,
-        params.map { ExprUtils.simplify(it, valuation).withMetadata(parseContext, it) },
-        pidVar,
-        metadata,
-        tempLookup,
-      )
-
-    is InvokeLabel ->
-      // Fold known values into the arguments -- notably the array index of a thread/mutex handle
-      // `&t[i]`, so an unrolled create/join loop yields the constant `&t[0]`, `&t[1]`, … that
-      // CLibraryFunctionsPass keys each handle on.
-      InvokeLabel(
-        name,
-        // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
-        // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
-        // SMT type instead -- carry it over, as the statement branches above do.
-        params.map { param ->
-          val simplified = ExprUtils.simplify(param, valuation)
-          // a literal is shared, so it cannot carry the pointer type the library-call lowering
-          // reads off the argument; the later simplification runs fold it anyway
-          if (simplified is LitExpr<*> && param.isPointerTyped(parseContext)) param
-          else simplified.withCTypeOf(parseContext, param)
-        },
-        metadata,
-        tempLookup,
-        isLibraryFunction,
-      )
-
-    is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
-
-    is FenceLabel -> withLock(ExprUtils.simplify(lock, valuation))
-
-    else -> this
-  }
 
 fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel =
   when (this) {

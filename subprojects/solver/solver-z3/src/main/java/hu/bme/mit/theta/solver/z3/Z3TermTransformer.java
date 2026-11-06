@@ -267,12 +267,13 @@ final class Z3TermTransformer {
                             true);
                 });
         this.environment.put(
-            Tuple2.of("int_to_bv", 1),
-            (term, model, vars) -> {
-                BvType type = (BvType) transformSort(term.getSort());
-                Expr<IntType> op = (Expr<IntType>) this.transform(term.getArgs()[0], model, vars);
-                return IntToBvExpr.of(op, type.getSize());
-            });
+                Tuple2.of("int_to_bv", 1),
+                (term, model, vars) -> {
+                    BvType type = (BvType) transformSort(term.getSort());
+                    Expr<IntType> op =
+                            (Expr<IntType>) this.transform(term.getArgs()[0], model, vars);
+                    return IntToBvExpr.of(op, type.getSize());
+                });
         this.environment.put(
                 Tuple2.of("extract", 1),
                 (term, model, vars) -> {
