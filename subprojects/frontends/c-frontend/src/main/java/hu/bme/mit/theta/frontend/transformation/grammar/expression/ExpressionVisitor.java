@@ -3864,15 +3864,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (ret != null) {
                 return ret;
             }
-            // ..then enumeration constants (modeled as plain int values)
-            final Long enumValue =
-                    hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum
-                            .getConstantValue(name);
-            if (enumValue != null) {
-                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> litExpr = signedInt.getValue(Long.toString(enumValue));
-                parseContext.getMetadata().create(litExpr, "cType", signedInt);
-                return litExpr;
+            // ..then enumeration constants
+            final hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum.Constant
+                    constant =
+                            hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum
+                                    .getConstant(name);
+            if (constant != null) {
+                if (constant.value() == null) {
+                    throw new UnsupportedFrontendElementException(
+                            "enumeration constant " + name + " of an unknown value");
+                }
+                return constant.type()
+                        .complexType(parseContext)
+                        .getValue(constant.value().toString());
             }
             // Reaching here means `name` was used as a VALUE and resolved to nothing -- not a
             // variable, not a modelled macro, not an enum constant. In practice it is a library

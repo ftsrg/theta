@@ -22,7 +22,10 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
@@ -40,8 +43,10 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CSt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration> {
     private final ParseContext parseContext;
@@ -675,6 +680,36 @@ public class DeclarationVisitor extends IncludeHandlingCBaseVisitor<CDeclaration
             // fall through
         }
         return -1;
+    }
+
+    /**
+     * The exact value of an integer constant expression, or null when it does not fold to a
+     * literal. A bitvector literal is read as signed or unsigned by the expression's C type, so one
+     * with no recorded type is not read at all.
+     */
+    public BigInteger foldIntegerConstant(CParser.ConstantExpressionContext ctx) {
+        if (functionVisitor == null) {
+            return null;
+        }
+        try {
+            final Expr<?> expr = ctx.accept(functionVisitor).getExpression();
+            final Expr<?> folded = ExprUtils.simplify(expr);
+            if (folded instanceof IntLitExpr intLit) {
+                return intLit.getValue();
+            }
+            final Optional<Object> type =
+                    parseContext.getMetadata().getMetadataValue(expr, "cType");
+            if (folded instanceof BvLitExpr bvLit
+                    && type.isPresent()
+                    && type.get() instanceof CInteger integer) {
+                return integer.isSsigned()
+                        ? BvUtils.signedBvLitExprToBigInteger(bvLit)
+                        : BvUtils.unsignedBvLitExprToBigInteger(bvLit);
+            }
+        } catch (RuntimeException e) {
+            // not a constant this frontend can fold
+        }
+        return null;
     }
 
     @Override
