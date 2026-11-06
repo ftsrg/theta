@@ -146,7 +146,7 @@ public final class MutablePartitionedValuation extends Valuation {
     public Expr<BoolType> toExpr() {
         return SmartBoolExprs.And(
                 getDecls().stream()
-                        .map(e -> Eq(e.getRef(), eval(e).get()))
+                        .map(e -> getValEquality(e, eval(e).get()))
                         .collect(toImmutableList()));
     }
 

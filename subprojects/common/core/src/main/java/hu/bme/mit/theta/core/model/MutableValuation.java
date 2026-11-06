@@ -89,7 +89,7 @@ public final class MutableValuation extends Valuation {
     public Expr<BoolType> toExpr() {
         return SmartBoolExprs.And(
                 declToExpr.entrySet().stream()
-                        .map(e -> Eq(e.getKey().getRef(), e.getValue()))
+                        .map(e -> getValEquality(e.getKey(), e.getValue()))
                         .collect(toImmutableList()));
     }
 

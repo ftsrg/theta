@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.core.model;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -24,10 +22,15 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /** Interface for a valuation, which is a mapping from declarations to literal expressions. */
 public abstract class Valuation implements Substitution {
@@ -49,10 +52,15 @@ public abstract class Valuation implements Substitution {
     public Expr<BoolType> toExpr() {
         final List<Expr<BoolType>> exprs = new ArrayList<>();
         for (final Decl<?> decl : getDecls()) {
-            final Expr<BoolType> expr = Eq(decl.getRef(), eval(decl).get());
-            exprs.add(expr);
+            exprs.add(getValEquality(decl, eval(decl).get()));
         }
         return SmartBoolExprs.And(exprs);
+    }
+
+    protected Expr<BoolType> getValEquality(Decl<?> decl, LitExpr<?> value) {
+        if (decl.getType() instanceof FpType)
+            return FpAssignExpr.create(decl.getRef(), value);
+        return Eq(decl.getRef(), value);
     }
 
     /**
