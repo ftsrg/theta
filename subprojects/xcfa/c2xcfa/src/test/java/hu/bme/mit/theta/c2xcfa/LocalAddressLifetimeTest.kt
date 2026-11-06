@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -60,6 +61,12 @@ class LocalAddressLifetimeTest {
             arrayOf<Any>(model, "int *", "int *p = &local; int *q = p; return q;", true),
             arrayOf<Any>(model, "int *", "int *p = &local; return &*p;", true),
             arrayOf<Any>(model, "int", "saved = &local; return local;", true),
+            arrayOf<Any>(
+              model,
+              "int",
+              "//scope\n int *p; { int local = 1; p = &local; } return *p;",
+              true,
+            ),
             arrayOf<Any>(model, "int", "*out = &local; return local;", true),
             arrayOf<Any>(model, "int", "escape(&local); return local;", true),
           )
@@ -86,7 +93,7 @@ class LocalAddressLifetimeTest {
       int *saved;
       extern void escape(int *);
       $resultType f(int **out) {
-        int local = 1;
+        ${if (body.startsWith("//scope")) "" else "int local = 1;"}
         $body
       }
       int main(void) { int *p; f(&p); return 0; }
@@ -101,6 +108,12 @@ class LocalAddressLifetimeTest {
         .buildXcfa(program)
     // Inspect lifetime lowering before simplification can propagate the address or drop its writes.
     for (phase in 0..2) builder.getProcedures().forEach { it.optimize(phase) }
+    if (body.startsWith("__atomic_compare_exchange_n")) {
+      assertTrue(
+        builder.getProcedures().flatMap { it.getVars() }.none { it.name.endsWith("local*") },
+        "lowered CAS must keep its expected value scalar",
+      )
+    }
     fun clearsLocal(expr: Expr<*>): Boolean =
       (expr is ArrayWriteExpr<*, *> &&
         expr.index.toString().contains("local*") &&

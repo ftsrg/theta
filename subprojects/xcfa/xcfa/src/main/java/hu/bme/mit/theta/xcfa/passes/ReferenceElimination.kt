@@ -107,6 +107,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     currentBuilder = builder
+    removeUnusedLifetimeMarkers(builder)
     val references =
       builder.getEdges().flatMap { it.label.getFlatLabels().flatMap { it.references } }
 
@@ -158,6 +159,41 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       return DeterministicPass().runChecked(NormalizePass().runChecked(builder))
     }
     return builder
+  }
+
+  /** Atomic lowering can consume the last real address use, leaving only lifetime markers. */
+  private fun removeUnusedLifetimeMarkers(builder: XcfaProcedureBuilder) {
+    fun marker(label: XcfaLabel): Boolean =
+      label is InvokeLabel &&
+        (label.name == FunctionVisitor.SCOPE_START || label.name == FunctionVisitor.SCOPE_END)
+    val addressed =
+      builder
+        .getEdges()
+        .flatMap { it.getFlatLabels() }
+        .filterNot(::marker)
+        .flatMap { it.references }
+        .mapNotNull(::getDirectReferencedDecl)
+        .toSet()
+    for (edge in builder.getEdges().toList()) {
+      val labels = edge.getFlatLabels()
+      val kept =
+        labels.filterNot { label ->
+          if (!marker(label)) false
+          else {
+            val address = (label as InvokeLabel).params.getOrNull(1) as? Reference<*, *>
+            val variable = address?.let(::getDirectReferencedDecl)
+            if (variable == null || variable in addressed) false
+            else {
+              val type = CComplexType.getType(variable.ref, parseContext)
+              type !is CArray && type !is CStruct
+            }
+          }
+        }
+      if (kept.size != labels.size) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(SequenceLabel(kept, edge.label.metadata)))
+      }
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -358,13 +394,47 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val escaping = escapingLocalAddresses(builder, referredVars.values.map { it.first }.toSet())
     val allocations: Map<Any?, List<XcfaLabel>> =
       referredVars.values.associate { (pointer, labels) -> pointer to labels.labels }
+    fun lifetimeOnly(label: XcfaLabel): Boolean =
+      label is NopLabel ||
+        (label is StmtLabel && label.stmt is SkipStmt) ||
+        (label is InvokeLabel &&
+          (label.name == FunctionVisitor.SCOPE_END || label.name == MAIN_THREAD_EXIT))
+    // The frontend also puts scope ends on the common return path. Keep block exits from which
+    // the procedure can still use a local alias, even when that alias never leaves the procedure.
+    val returnTail = builder.finalLoc.map { mutableSetOf(it) }.orElseGet { mutableSetOf() }
+    do {
+      val added =
+        builder.getLocs().filter { location ->
+          location !in returnTail &&
+            location.outgoingEdges.isNotEmpty() &&
+            location.outgoingEdges.all { edge ->
+              edge.target in returnTail && edge.getFlatLabels().all(::lifetimeOnly)
+            }
+        }
+      returnTail.addAll(added)
+    } while (added.isNotEmpty())
     for (edge in LinkedHashSet(builder.getEdges())) {
       val labels = edge.getFlatLabels()
-      if (labels.none { it is InvokeLabel && it.name == FunctionVisitor.SCOPE_START }) continue
+      if (
+        labels.none {
+          it is InvokeLabel &&
+            (it.name == FunctionVisitor.SCOPE_START || it.name == FunctionVisitor.SCOPE_END)
+        }
+      )
+        continue
       val lowered =
-        labels.flatMap { label ->
-          if (label !is InvokeLabel || label.name != FunctionVisitor.SCOPE_START) listOf(label)
-          else allocations[(label.params[1] as? RefExpr<*>)?.decl] ?: listOf(label)
+        labels.flatMapIndexed { index, label ->
+          val pointer = ((label as? InvokeLabel)?.params?.getOrNull(1) as? RefExpr<*>)?.decl
+          when {
+            label !is InvokeLabel -> listOf(label)
+            label.name == FunctionVisitor.SCOPE_START -> allocations[pointer] ?: listOf(label)
+            label.name == FunctionVisitor.SCOPE_END &&
+              pointer in allocations &&
+              pointer !in escaping &&
+              edge.target in returnTail &&
+              labels.drop(index + 1).all(::lifetimeOnly) -> emptyList()
+            else -> listOf(label)
+          }
         }
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
