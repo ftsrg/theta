@@ -1,0 +1,26 @@
+- entry_type: 'invariant_set'
+  metadata:
+    format_version: '2.1'
+    uuid: '3ac9281c-daaf-5364-8f53-ac56e89bec12'
+    creation_time: '2026-11-06T12:00:00Z'
+    producer:
+      name: 'hand-written'
+      version: '1'
+    task:
+      input_files:
+      - 'stay-positive.c'
+      input_file_hashes:
+        'stay-positive.c': 'a6423a4fc3ee9d2ed87139325b302475f21dbc56380ed97635c461a22ac00d1b'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - invariant:
+      type: 'loop_transition_invariant'
+      location:
+        file_name: 'stay-positive.c'
+        line: 5
+        column: 3
+        function: 'main'
+      value: '0'
+      format: 'ext_c_expression'

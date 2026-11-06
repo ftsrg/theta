@@ -1,0 +1,26 @@
+- entry_type: 'invariant_set'
+  metadata:
+    format_version: '2.1'
+    uuid: 'c7a01ded-a3af-5f95-b181-ff5f7414e0b2'
+    creation_time: '2026-11-06T12:00:00Z'
+    producer:
+      name: 'hand-written'
+      version: '1'
+    task:
+      input_files:
+      - 'count-down.c'
+      input_file_hashes:
+        'count-down.c': 'ef3dca7a33f409baf0f1b0414153305c84392771578d7074deb53ffdcbcc1dce'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - invariant:
+      type: 'loop_transition_invariant'
+      location:
+        file_name: 'count-down.c'
+        line: 5
+        column: 3
+        function: 'main'
+      value: 'i < \at(i, AnyPrev)'
+      format: 'ext_c_expression'
