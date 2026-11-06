@@ -260,8 +260,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(size)
         else -> return null
       }
-    val flat = parseContext.memoryModel.flatAddressing()
-    val count = value.toLong() / ObjectLayout.cellModelSize(struct, flat)
+    val count = value.toLong() / ObjectLayout.sizeofBytes(struct, parseContext.architecture)
     return count.takeIf { it <= MAX_HEAP_ELEMENTS }?.toInt()
   }
 

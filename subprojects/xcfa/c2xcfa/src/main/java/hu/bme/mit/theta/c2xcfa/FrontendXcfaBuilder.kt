@@ -52,6 +52,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
+import hu.bme.mit.theta.core.type.fptype.FpToIeeeBvExpr
+import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
@@ -123,6 +125,8 @@ class FrontendXcfaBuilder(
 
   private var structArgCnt =
     0 // names the per-call temporaries a by-value struct argument copies into
+
+  private var fpBitsCnt = 0 // names the bits of float union member writes
 
   /**
    * If a compound statement has pre-statements, the metadata has to appear before the pre-list, but
@@ -787,18 +791,26 @@ class FrontendXcfaBuilder(
   ) = subObjects.subobjectCell(parent, parentType, index, subobjectType)
 
   /**
-   * The canonical quiet-NaN bit pattern for [fpType], as a bitvector literal: sign 0, exponent all
-   * ones, mantissa's top bit set. 0x7FC00000 for a 32-bit float, 0x7FF8000000000000 for a 64-bit
-   * double. Used to give the otherwise-unspecified fpToIEEEBV(NaN) a single deterministic value.
+   * The IEEE bits of [value]: a fresh bitvector `b` with `to_fp(b) = value` (SMT `=`). This is
+   * exact for a number. SMT-LIB has a single NaN without fixed bits, so for a NaN `b` is any NaN
+   * pattern: an over-approximation of the payload, which xcfa-cli checks before it reports Unsafe.
    */
-  private fun canonicalNaNBits(fpType: hu.bme.mit.theta.core.type.fptype.FpType): Expr<BvType> {
-    val width = fpType.exponent + fpType.significand
-    val mantissaBits = fpType.significand - 1
-    val exponentAllOnes =
-      java.math.BigInteger.ONE.shiftLeft(fpType.exponent).subtract(BigInteger.ONE)
-    val pattern =
-      exponentAllOnes.shiftLeft(mantissaBits).or(BigInteger.ONE.shiftLeft(mantissaBits - 1))
-    return BvUtils.bigIntegerToUnsignedBvLitExpr(pattern, width)
+  private fun ieeeBitsOf(
+    builder: XcfaProcedureBuilder,
+    value: Expr<*>,
+    metadata: MetaData,
+  ): Pair<Expr<BvType>, List<XcfaLabel>> {
+    @Suppress("UNCHECKED_CAST") val fpValue = value as Expr<FpType>
+    val bits = Var(FP_BITS_PREFIX + fpBitsCnt++, BvType.of(FpToIeeeBvExpr.bitWidth(fpValue.type)))
+    builder.addVar(bits)
+    return bits.ref to
+      listOf(
+        StmtLabel(HavocStmt.of(bits), metadata = metadata),
+        StmtLabel(
+          Assume(FpExprs.FpAssign(FpExprs.FromIeeeBv(bits.ref, fpValue.type), fpValue)),
+          metadata = metadata,
+        ),
+      )
   }
 
   private fun fixedArraySize(type: CArray) = subObjects.fixedArraySize(type)
@@ -1587,6 +1599,9 @@ class FrontendXcfaBuilder(
       unsignedTypeOfWidth(wordWidth)
         ?: CComplexType.getUnsignedLong(parseContext).takeIf { it.width() >= wordWidth }
         ?: CComplexType.getUnsignedLongLong(parseContext)
+    // A non-zero float initializer has no bits here (see collectUnionLeaves): the word stays
+    // unconstrained, as the bytes of a byte-laid-out union do.
+    if (leaves.any { it.value == null }) return wordType to listOf(null)
     // A member filling the whole word keeps its own representation, which a read of a member
     // sharing it takes as is (the two differ for a negative value under integer arithmetic).
     val whole =
@@ -2128,39 +2143,28 @@ class FrontendXcfaBuilder(
         val cellType =
           cellSpliceType(bitfieldCell, CComplexType.getType(bitfieldCell, parseContext))
         // A floating-point union member: the value spliced in is the right-hand side's raw IEEE
-        // bit pattern, not an integer cast of it. Everything else is identical -- for a full-width
-        // float, offset 0 and width == cell width, so the splice replaces the whole cell.
+        // bit pattern, not an integer cast of it. For a full-width float, offset 0 and width ==
+        // cell width, so the splice replaces the whole cell.
         val isIeeeFloat =
           parseContext.metadata.getMetadataValue(lValue, BitfieldSlice.IEEE_FLOAT).isPresent
-        val spliced =
-          if (isIeeeFloat) {
-            @Suppress("UNCHECKED_CAST")
-            val fpExpr = rExpression as Expr<hu.bme.mit.theta.core.type.fptype.FpType>
-            // fpToIEEEBV is *unspecified for NaN*: the solver may then read a NaN's bits as any
-            // 32/64-bit value, so `value = NaN; word = ...; value = word` could turn NaN into a
-            // normal float and break the pervasive `x != x` NaN test -- 14 float-newlib tasks came
-            // back wrong from exactly this. Force NaN to a canonical quiet-NaN encoding so no
-            // ToIeeeBv is ever applied to a NaN; the from-bits direction is total and needs no
-            // guard, and canonical NaN bits still classify as NaN in the program's own bit checks.
-            hu.bme.mit.theta.core.type.anytype.IteExpr.of(
-              FpExprs.IsNan(fpExpr),
-              canonicalNaNBits(fpExpr.type),
-              FpExprs.ToIeeeBv(fpExpr) as Expr<BvType>,
-            )
-          } else {
-            // Convert to the member's own type first: a `_Bool` member stored in a wider cell
-            // must take `x != 0`, not the low bit of `x`.
-            cellType.castTo(CComplexType.getType(lValue, parseContext).castTo(rExpression))
-          }
+        val memberValue = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+        val fpBits =
+          if (isIeeeFloat) ieeeBitsOf(builder, memberValue, getMetadata(statement)) else null
+        // Convert to the member's own type first: a `_Bool` member stored in a wider cell must
+        // take `x != 0`, not the low bit of `x`.
+        val spliced = fpBits?.first ?: cellType.castTo(memberValue)
         val newCell = BitfieldSlice.write(bitfieldCell, spliced, bitOffset, fieldWidth)
         val op = cast(bitfieldCell.array, bitfieldCell.array.type)
         val offset = cast(bitfieldCell.offset, op.type)
         val deref = Dereference(op, offset, cellType.smtType)
         parseContext.metadata.create(deref, "cType", CPointer(null, cellType, parseContext))
-        StmtLabel(
-          MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
-          metadata = getMetadata(statement),
-        )
+        val write =
+          StmtLabel(
+            MemoryAssignStmt.create(deref, cast(newCell, deref.type)),
+            metadata = getMetadata(statement),
+          )
+        if (fpBits == null) write
+        else SequenceLabel(fpBits.second + write, metadata = getMetadata(statement))
       } else
       // Dispatch on the lvalue with its width/sign wrappers PEELED. An integer promotion or a
       // signedness change can leave a `BvPosExpr`/`BvSignChangeExpr` (both `PosExpr`), or a
