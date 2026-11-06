@@ -227,13 +227,15 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
                   steps.add(
                     InitProcVarsStep(
                       currentProcedure,
-                      newExplState.sGlobal.getVal().filterLocal(currentProcedure),
+                      newExplState.sGlobal.getVal().filterLocal(currentProcedure, xcfa),
                     )
                   )
                 }
               }
             if (stmt is HavocStmt<*>) {
-              val varDecl = prevState.varLookup[0].reverseMapping()[stmt.varDecl] ?: stmt.varDecl
+              val varDecl =
+                prevState.varLookup.firstOrNull()?.reverseMapping()?.get(stmt.varDecl)
+                  ?: stmt.varDecl
               newExplState.sGlobal.getVal().toMap()[varDecl]?.let { value ->
                 steps.add(HavocStep(varDecl, value))
               }
@@ -247,20 +249,24 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
         steps.addFirst(
           InitProcVarsStep(
             currentProcedure,
-            newExplState.sGlobal.getVal().filterLocal(currentProcedure),
+            newExplState.sGlobal.getVal().filterLocal(currentProcedure, xcfa),
           )
         )
       }
 
       steps
     }
+  val entryInit =
+    if (states.none { it.processes.values.first().paramsInitialized })
+      listOf(InitProcVarsStep(entryProcedure, initVal.filterLocal(entryProcedure, xcfa)))
+    else emptyList()
 
   val witness =
     SvLibViolationWitness(
       model,
       ImmutableValuation.from(globalVarMap),
       entryProcedure,
-      steps,
+      entryInit + steps,
       property,
     )
   return witness.toString()
@@ -285,10 +291,11 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
         .globalVars
         .map(XcfaGlobalVar::wrappedVar)
 
+    // Traces not built by the abstract analysis (e.g. CHC) have no lookup: vars are not renamed.
+    val lookup = currentState.varLookup.firstOrNull()
     val genericValuationMap: Map<Decl<*>, LitExpr<*>> =
-      valuation
-        .changeVars(globalVars.associateWith { it } + currentState.varLookup[0].reverseMapping())
-        .toMap()
+      if (lookup == null) valuation.toMap()
+      else valuation.changeVars(globalVars.associateWith { it } + lookup.reverseMapping()).toMap()
 
     return ExplState.of(ImmutableValuation.from(genericValuationMap))
   }
@@ -350,13 +357,22 @@ private fun Valuation.toSvLib(): String {
   }
 }
 
-private fun Valuation.filterLocal(procedure: XcfaProcedure): Valuation =
-  this.toMap()
+/**
+ * Inlining copies callee locals into the caller, so a var belongs to the smallest procedure that
+ * declares it.
+ */
+private fun Valuation.filterLocal(procedure: XcfaProcedure, xcfa: XCFA): Valuation {
+  val ownVars =
+    procedure.vars.filter { varDecl ->
+      xcfa.procedures.filter { varDecl in it.vars }.minBy { it.vars.size } == procedure
+    }
+  return this.toMap()
     .filterKeys { varDecl ->
-      (varDecl in procedure.vars) &&
+      (varDecl in ownVars) &&
         procedure.params.all { (param, dir) -> param != varDecl || dir != ParamDirection.IN }
     }
     .let(ImmutableValuation::from)
+}
 
 private fun String.indent(spaces: Int = 4) =
   this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }

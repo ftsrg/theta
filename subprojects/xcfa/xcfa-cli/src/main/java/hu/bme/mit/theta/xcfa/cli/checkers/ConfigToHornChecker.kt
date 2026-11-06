@@ -290,6 +290,16 @@ private fun getProperTrace(
   while (proofNode != null) {
     loc(proofNode)?.also { currentLoc ->
       if (lastLoc == null) {
+        // The solver may inline the predicates between this node and the error location.
+        val errorLoc = xcfa.initProcedures[0].first.errorLoc.orElse(null)
+        if (errorLoc != null && errorLoc != currentLoc) {
+          val (length, edges) = getShortestPath(currentLoc, errorLoc)
+          checkState(length < Int.MAX_VALUE)
+          for (xcfaEdge in edges.reversed()) {
+            states.add(XcfaState(xcfa, xcfaEdge.target, PtrState(ExplState.top())))
+            actions.add(XcfaAction(0, xcfaEdge))
+          }
+        }
         states.add(XcfaState(xcfa, currentLoc, PtrState(toState(proofNode as ProofNode))))
       } else {
         val edges = currentLoc.outgoingEdges.filter { it.target == lastLoc }
@@ -316,7 +326,8 @@ private fun getProperTrace(
           // TODO collect parallel edges into nondet label?
           for (xcfaEdge in edges.reversed()) {
             loc = xcfaEdge.source
-            states.add(XcfaState(xcfa, loc, PtrState(toState(proofNode as ProofNode))))
+            val state = if (loc == currentLoc) toState(proofNode as ProofNode) else ExplState.top()
+            states.add(XcfaState(xcfa, loc, PtrState(state)))
             actions.add(XcfaAction(0, xcfaEdge))
           }
           checkState(loc == currentLoc)
