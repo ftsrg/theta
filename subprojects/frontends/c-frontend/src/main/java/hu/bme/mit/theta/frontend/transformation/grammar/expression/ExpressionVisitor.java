@@ -57,7 +57,6 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -1313,21 +1312,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return value;
     }
 
-    /**
-     * How many bytes a value of this type occupies.
-     *
-     * <p>A struct's {@code width()} is not its size -- it is pointer-wide, like the handle a struct
-     * is passed around by -- so `sizeof(struct node)` came out **4**, whatever the struct held.
-     * Memory sizes are recorded from `malloc(sizeof(struct node))`, and a struct's members are
-     * addressed by their *index*, so the fifth member of a five-member struct sat at offset 4 and
-     * the bound check `offset < size` read `4 < 4` and called a perfectly good access an invalid
-     * dereference. A struct of four members or fewer never tripped it, which is why it survived so
-     * long.
-     *
-     * <p>The size of a struct is the size of what is in it (a union's, the largest member's).
-     * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
-     * that is a little small would bring the bound check back down onto real accesses.
-     */
+    /** How many bytes `sizeof` reports for a value of this type. */
     private long sizeOf(CComplexType type) {
         // A whole array's size is observable (`sizeof(a) / sizeof(a[0])`), whichever cells hold it.
         // A VLA's dimension may have changed since its declaration, so it cannot be re-evaluated.
@@ -1339,14 +1324,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             }
             return Math.multiplyExact(count, sizeOf(array.getEmbeddedType()));
         }
-        // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
-        // declared (padded) byte size -- the same layout subscripts, members, and pointer
-        // arithmetic use, and the size that then bounds them exactly in the memsafety check.
-        if (byteAddressed()) {
-            return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
-        }
-        return ObjectLayout.cellModelSize(
-                type, parseContext.getMemoryModel() == MemoryModelType.flat);
+        return ObjectLayout.sizeofBytes(type, parseContext.getArchitecture());
     }
 
     @Override
