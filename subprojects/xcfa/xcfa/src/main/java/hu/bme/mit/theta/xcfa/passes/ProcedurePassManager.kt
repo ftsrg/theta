@@ -212,6 +212,7 @@ class NontermValidationPasses(
       InlineProceduresPass(parseContext),
       EliminateSelfLoops(),
     ),
+    listOf(ThreadLocalVarPass(parseContext)),
     listOf(
       // handling remaining function calls
       MemsafetyPass(property, parseContext),

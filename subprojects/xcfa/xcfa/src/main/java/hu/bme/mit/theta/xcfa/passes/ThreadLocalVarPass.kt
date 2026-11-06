@@ -23,7 +23,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -58,11 +57,9 @@ class ThreadLocalVarPass(private val parseContext: ParseContext) : ProcedurePass
         val decl = global.wrappedVar
         val local = Var(decl.name, decl.type)
         builder.addVar(local)
-        parseContext.metadata.create(
-          local.ref,
-          "cType",
-          CComplexType.getType(decl.ref, parseContext),
-        )
+        parseContext.metadata.getMetadataValue(decl.ref, "cType").ifPresent {
+          parseContext.metadata.create(local.ref, "cType", it)
+        }
         Pair(decl as VarDecl<*>, local as VarDecl<*>)
       }
     val inits =

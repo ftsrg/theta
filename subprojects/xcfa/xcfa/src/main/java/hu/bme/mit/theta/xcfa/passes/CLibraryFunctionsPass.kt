@@ -591,25 +591,10 @@ class CLibraryFunctionsPass(
                 } else addSingle(exitOf(builder, NopLabel, metadata))
               }
 
-              "pthread_key_create" -> {
-                // `*key = <fresh key>`, and the call keeps only the key value: the thread-specific
-                // slots are addressed by it, like by the key argument of pthread_{get,set}specific
-                val key = pointee(invokeLabel.params[1])
-                val id = key.type.integerOf(++uniqueCounter)
-                val params = invokeLabel.params.toMutableList()
-                params[1] = id
-                addSeq(
-                  listOf(
-                    AssignStmtLabel(key, id, metadata),
-                    invokeLabel.copy(params = params, isLibraryFunction = true),
-                  )
-                )
-              }
-
+              "pthread_key_create",
               "pthread_getspecific",
               "pthread_setspecific" -> {
-                invokeLabel.isLibraryFunction = true
-                addSingle(invokeLabel)
+                addSeq(atomically(modelThreadSpecificCall(builder, invokeLabel, parseContext)))
               }
 
               else -> error("Unsupported library function ${invokeLabel.name}")
@@ -630,16 +615,6 @@ class CLibraryFunctionsPass(
       is CArray -> t.embeddedType.smtType
       else -> error("strcpy on a non-pointer argument of type $t: $ptr")
     }
-
-  /** `*ptr`: the variable itself for `&x`, otherwise a [Dereference] at offset 0. */
-  private fun pointee(ptr: Expr<*>): Expr<*> {
-    if (ptr is Reference<*, *> && ptr.expr is RefExpr<*>) return ptr.expr
-    val pointee =
-      (CComplexType.getType(ptr, parseContext) as? CPointer)?.embeddedType
-        ?: error("pthread_key_create on a non-pointer argument: $ptr")
-    val offset = CComplexType.getSignedLong(parseContext).nullValue
-    return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
-  }
 
   private fun choiceVar(builder: XcfaProcedureBuilder): VarDecl<BoolType> =
     Decls.Var("__theta_pthread_choice_${uniqueCounter++}", Bool()).also(builder::addVar)

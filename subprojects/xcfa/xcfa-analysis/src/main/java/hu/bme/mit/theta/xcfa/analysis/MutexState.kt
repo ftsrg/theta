@@ -133,7 +133,7 @@ data class MutexState(
   }
 
   companion object {
-    private val libraryFunctions =
+    internal val libraryFunctions =
       setOf(
         "pthread_mutex_init",
         "pthread_mutexattr_init",

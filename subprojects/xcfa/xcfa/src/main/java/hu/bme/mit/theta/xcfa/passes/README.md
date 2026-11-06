@@ -29,7 +29,7 @@ Each phase below is one group in `CPasses`, in order.
 | calls | `FunctionPointerCallsPass` | expand a call through a function pointer into a dispatch over its candidates | before `InlineProceduresPass`, so the direct calls it produces can be inlined |
 | | `InlineProceduresPass`, `NondetFunctionPass`, `InlinedProcedureRemovalPass` | inline what can be inlined (in a procedure that cannot be inlined, convert each call's arguments to the parameters' C types instead), model `__VERIFIER_nondet_*`, drop the bodies left behind | removal after inlining |
 | | `ThreadResultPass` | start a copy of each routine whose result `pthread_join` reads, which stores its return value under the result id `CLibraryFunctionsPass` passes it | after inlining, so the copy is of the finished body; in its own phase, as it adds procedures; before `CloneProcedureForStaticThreadsPass`, which may specialize the copies |
-| | `ThreadLocalVarPass` | give each thread a local copy of a `__thread` global | after inlining, so a call left over can be refused; before the second `ReferenceElimination`, which then places an address-taken copy per thread |
+| | `ThreadLocalVarPass` | give each thread a local copy of a `__thread` global and of the pthread TLS slot array emitted by `CLibraryFunctionsPass` | after inlining, so a call left over can be refused; before the second `ReferenceElimination`, which then places an address-taken copy per thread |
 | | `ReferenceElimination` (again) | inlining binds `&…` arguments to parameters only now, and no reference may reach the analyses | after `InlineProceduresPass` |
 | cleanup | `PrintfReturnBoundPass` | bound the return of a stubbed `*printf` call by the longest text of its format literals | after inlining, which assigns each format argument its literal; before `StringLiteralInitPass`, which can drop the literal's initialization |
 | | `FormatAccessPass` | under memory safety, turn the markers of a stubbed formatted call into the string reads and writes its format implies | after inlining, for the same reason as `PrintfReturnBoundPass`; before `MemoryFunctionsPass`, which lowers those reads and writes |
@@ -51,6 +51,11 @@ Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
 `AssumeFalseRemovalPass`, `AtomicReadsOneWritePass` and `WitnessOptimizer` by the OC checker,
 `SsaPass`/`NoUninitVar`/`HavocToUninitVar` by the monolithic and Horn adapters, and
 `DereferenceToArrayPass` by the backends that want memory as arrays rather than as dereferences.
+
+`CLibraryFunctionsPass` lowers `pthread_key_create`, `pthread_getspecific` and
+`pthread_setspecific` to statements: a shared counter allocates fresh keys at runtime, and each
+thread starts with a null-initialized array of slots. Non-null key destructors are refused because
+their callbacks at thread exit are not modeled.
 
 ## Rules the passes follow
 

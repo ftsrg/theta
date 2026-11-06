@@ -117,6 +117,9 @@ constructor(
 
         is InvokeLabel -> {
           if (label.isLibraryFunction) {
+            check(label.name in MutexState.libraryFunctions) {
+              "Unsupported library function: ${label.name}"
+            }
             changes.add { state ->
               state.copy(mutexState = state.mutexState.apply(label, state.sGlobal))
             }

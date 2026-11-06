@@ -1,4 +1,13 @@
 fixture	arithmetic	architecture	expect	feature	memory_model
+pthread_tls_basic_safe.c	efficient	ILP32	SAFE	pthread TLS slots start null and retain each thread's own value
+pthread_tls_basic_safe.c	bitvector	LP64	SAFE	pthread TLS slots use pointer-width values	bytes
+pthread_tls_isolation_unsafe.c	efficient	LP64	UNSAFE	new threads do not inherit their creator's TLS values
+pthread_tls_fresh_keys_safe.c	efficient	LP64	SAFE	repeated calls to one pthread_key_create site allocate distinct keys
+pthread_tls_destructor_unsupported.c	efficient	ILP32	FRONTEND-FAIL	TLS destructors must be refused until their callbacks are modeled
+pthread_barrier_capacity_unsafe.c	efficient	LP64	UNSAFE	input-dependent capacity one lets both mutex-protected waits pass
+pthread_barrier_reuse_unsafe.c	efficient	ILP32	UNSAFE	the last barrier departure reopens the next round
+pthread_barrier_serial_early_unsafe.c	efficient	ILP32	UNSAFE	the first departing barrier waiter can receive the serial-thread value
+pthread_barrier_serial_unique_safe.c	efficient	ILP32	SAFE	exactly one serial-thread value is returned in a barrier round
 union_punning.c	efficient	LP64	PARSE-OK	union punning: pointer + pointer-wide unsigned alias
 builtin_object_size.c	efficient	LP64	PARSE-OK	__builtin_object_size grammar + fallback
 typeof_type.c	efficient	LP64	PARSE-OK	__typeof__(type-name)
