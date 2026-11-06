@@ -587,3 +587,5 @@ pointer_compare_wide.c	bitvector	LP64	SAFE	pointers compare and select as unsign
 pointer_compare_wide.c	bitvector	ILP32	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
 gnu_cast_to_union.c	efficient	LP64	SAFE	GNU cast to union sets the member of the operand type
 gnu_cast_to_union.bug.c	efficient	LP64	UNSAFE	GNU cast to union: the member holds the operand, not a fixed value
+alloca_release_skipped_branch_leak.c	efficient	LP64	UNSAFE:valid-memcleanup	the release at return of an alloca skipped on this path does not free a heap block at its address	bytes
+alloca_release_skipped_branch_heap.c	efficient	LP64	SAFE:valid-memsafety	the release at return of an alloca skipped on this path keeps a live heap block at its address	bytes
