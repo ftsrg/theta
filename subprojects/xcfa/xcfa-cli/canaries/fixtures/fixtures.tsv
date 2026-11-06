@@ -547,6 +547,10 @@ dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MI
 alloca_int_overrun.c	efficient	LP64	UNSAFE:valid-memsafety	an alloca of a partial element is bounded by its whole elements
 cas_value_return_busy_wait.c	efficient	ILP32	SAFE:valid-memsafety	a CAS wrapper returns a local value without publishing its address	flat
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes
+switch_no_matching_label.c	efficient	ILP32	UNSAFE	a switch without a default skips its body when no label matches
+switch_stacked_labels.c	efficient	ILP32	SAFE	every label stacked on a switch statement selects it
+switch_nested_label.c	efficient	ILP32	FRONTEND-FAIL	a case label nested inside a switch body statement is refused, not dropped
+switch_postincrement_test.c	efficient	ILP32	SAFE	the labels of switch (i++) see the value before the increment
 printf_use_after_free.c	efficient	LP64	UNSAFE:valid-memsafety	printf reads the string of a %s, so a freed one is invalid
 printf_terminated_string.c	efficient	LP64	SAFE:valid-memsafety	a terminated string passes the checks of a %s
 snprintf_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	snprintf with a size beyond the buffer writes past it

@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
@@ -2459,17 +2460,11 @@ class FrontendXcfaBuilder(
     return location
   }
 
-  override fun visit(statement: CCase, param: ParamPack): XcfaLocation {
-    val builder: XcfaProcedureBuilder = param.builder
-    val lastLoc = param.lastLoc
-    val breakLoc = param.breakLoc
-    val continueLoc = param.continueLoc
-    val returnLoc = param.returnLoc
-    return statement.statement.accept(
-      this,
-      ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc),
+  // Labels directly in a switch body are consumed by visit(CSwitch), which gives them their guards.
+  override fun visit(statement: CCase, param: ParamPack): XcfaLocation =
+    throw UnsupportedFrontendElementException(
+      "A case label nested inside a statement of the switch body is not supported"
     )
-  }
 
   override fun visit(statement: CCompound, param: ParamPack): XcfaLocation {
     val builder: XcfaProcedureBuilder = param.builder
@@ -2536,17 +2531,11 @@ class FrontendXcfaBuilder(
     return unreachableLoc
   }
 
-  override fun visit(statement: CDefault, param: ParamPack): XcfaLocation {
-    val builder: XcfaProcedureBuilder = param.builder
-    val lastLoc = param.lastLoc
-    val breakLoc = param.breakLoc
-    val continueLoc = param.continueLoc
-    val returnLoc = param.returnLoc
-    return statement.statement.accept(
-      this,
-      ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc),
+  // Labels directly in a switch body are consumed by visit(CSwitch), which gives them their guards.
+  override fun visit(statement: CDefault, param: ParamPack): XcfaLocation =
+    throw UnsupportedFrontendElementException(
+      "A default label nested inside a statement of the switch body is not supported"
     )
-  }
 
   override fun visit(statement: CDoWhile, param: ParamPack): XcfaLocation {
     val builder: XcfaProcedureBuilder = param.builder
@@ -2916,13 +2905,31 @@ class FrontendXcfaBuilder(
     Preconditions.checkState(body is CCompound, "Switch body has to be a CompoundStatement!")
     var defaultExpr: Expr<BoolType?>? = True()
     for (cStatement in (body as CCompound).getcStatementList()) {
-      if (cStatement is CCase) {
+      for (label in switchLabelChain(cStatement).filterIsInstance<CCase>()) {
         defaultExpr =
           BoolExprs.And(
             defaultExpr,
-            BoolExprs.Not(switchTestEq(testValue.expression, cStatement.expr.expression)),
+            BoolExprs.Not(switchTestEq(testValue.expression, label.expr.expression)),
           )
       }
+    }
+    val hasDefault =
+      body.getcStatementList().any { chain -> switchLabelChain(chain).any { it is CDefault } }
+    // The labels compare the value of the controlling expression, so as in an `if`, its post
+    // statements (the increment of `switch (i++)`) run after the guard.
+    val addGuardedEntry = { guard: AssumeStmt, source: CStatement, target: XcfaLocation ->
+      val guarded = getAnonymousLoc(builder, metadata = getMetadata(source))
+      builder.addLoc(guarded)
+      val assume =
+        StmtLabel(
+          guard,
+          choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect for default?
+          metadata = getMetadata(source, fullExprSource = testValue),
+        )
+      builder.addEdge(XcfaEdge(checkNotNull(endInit), guarded, assume, getMetadata(source)))
+      val afterGuard =
+        buildPostStatement(testValue, ParamPack(builder, guarded, breakLoc, continueLoc, returnLoc))
+      builder.addEdge(XcfaEdge(afterGuard, target, metadata = EmptyMetaData))
     }
     var lastLocation: XcfaLocation? = null
     for (cStatement in body.getcStatementList()) {
@@ -2933,44 +2940,34 @@ class FrontendXcfaBuilder(
         xcfaEdge = XcfaEdge(lastLocation, location, metadata = EmptyMetaData)
         builder.addEdge(xcfaEdge)
       }
-      if (cStatement is CCase) {
-        val afterGuard =
-          buildPostStatement(
-            testValue,
-            ParamPack(builder, checkNotNull(endInit), breakLoc, continueLoc, returnLoc),
-          )
-        val assume =
-          StmtLabel(
-            Stmts.Assume(switchTestEq(testValue.expression, cStatement.expr.expression)),
-            choiceType = ChoiceType.MAIN_PATH,
-            metadata = getMetadata(cStatement, fullExprSource = testValue),
-          )
-        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
-        builder.addEdge(xcfaEdge)
-      } else if (cStatement is CDefault) {
-        val afterGuard =
-          buildPostStatement(
-            testValue,
-            ParamPack(builder, endInit!!, breakLoc, continueLoc, returnLoc),
-          )
-        val assume =
-          StmtLabel(
-            Stmts.Assume(defaultExpr),
-            choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect?
-            metadata = getMetadata(cStatement, fullExprSource = testValue),
-          )
-        xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(cStatement))
-        builder.addEdge(xcfaEdge)
+      val chain = switchLabelChain(cStatement)
+      for (label in chain.dropLast(1)) {
+        val guard =
+          if (label is CCase) {
+            Stmts.Assume(switchTestEq(testValue.expression, label.expr.expression))
+          } else {
+            Stmts.Assume(defaultExpr)
+          }
+        addGuardedEntry(guard, label, location)
       }
       lastLocation =
-        cStatement.accept(this, ParamPack(builder, location, endLoc, continueLoc, returnLoc))
+        chain.last().accept(this, ParamPack(builder, location, endLoc, continueLoc, returnLoc))
     }
     if (lastLocation != null) {
       val xcfaEdge: XcfaEdge = XcfaEdge(lastLocation, endLoc, metadata = EmptyMetaData)
       builder.addEdge(xcfaEdge)
     }
+    if (!hasDefault) {
+      // No label matching means the whole body is skipped.
+      addGuardedEntry(Stmts.Assume(defaultExpr), statement, endLoc)
+    }
     return endLoc
   }
+
+  /** The labels of [statement], outermost first, then the statement they label. */
+  private fun switchLabelChain(statement: CStatement): List<CStatement> =
+    generateSequence(statement) { (it as? CCase)?.statement ?: (it as? CDefault)?.statement }
+      .toList()
 
   override fun visit(statement: CWhile, param: ParamPack): XcfaLocation {
     val builder: XcfaProcedureBuilder = param.builder
