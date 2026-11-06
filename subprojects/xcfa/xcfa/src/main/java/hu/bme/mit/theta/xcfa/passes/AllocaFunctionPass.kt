@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.STATIC_OBJECT
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
@@ -84,7 +85,8 @@ fun XcfaProcedureBuilder.lifetimeEndEdges(): List<XcfaEdge> {
  *
  * A sub-object of a heap block ([HEAP_SUBOBJECT], see `MallocFunctionPass`) is allocated the same
  * way but lives as long as its block, so it is not released at return. Like `alloca` memory it is
- * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported.
+ * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported. A
+ * library call's static object ([STATIC_OBJECT], see `LibraryStubsPass`) is never released.
  *
  * Known gap: `free()`ing the block is accepted rather than reported as an invalid free.
  *
@@ -142,7 +144,8 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-            if (invokeLabel.name != HEAP_SUBOBJECT) allocated.add(ret)
+            if (invokeLabel.name != HEAP_SUBOBJECT && invokeLabel.name != STATIC_OBJECT)
+              allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
@@ -269,7 +272,10 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   private fun predicate(it: XcfaLabel): Boolean {
     return it is InvokeLabel &&
-      (it.name == "alloca" || it.name == USER_ALLOCA || it.name == HEAP_SUBOBJECT)
+      (it.name == "alloca" ||
+        it.name == USER_ALLOCA ||
+        it.name == HEAP_SUBOBJECT ||
+        it.name == STATIC_OBJECT)
   }
 
   private companion object {
