@@ -215,4 +215,38 @@ class PointerUtilsTest {
     val pointerPartitions = xcfa.getPointerPartitions()
     expected(pointerPartitions)
   }
+
+  @ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = ["load", "havoc", "unassigned"])
+  fun unknownPointerValuesPropagateThroughAliases(source: String) {
+    val model =
+      xcfa("unknown") {
+        val main =
+          procedure("main") {
+            val p = "p" type Int()
+            val q = "q" type Int()
+            val known = "known" type Int()
+            val value = "value" type Int()
+            (init to final) {
+              known.assign("1")
+              when (source) {
+                "load" -> p.assign("(deref 7 0 Int)")
+                "havoc" -> {
+                  p.assign("1")
+                  havoc(p)
+                }
+              }
+              q.assign("1")
+              q.assign("p")
+              value.assign("(deref q 0 Int)")
+              value.assign("(deref known 0 Int)")
+            }
+          }
+        main.start()
+      }
+    val vars = model.procedures.flatMap { it.vars }.associateBy { it.name }
+    assertNull(vars.getValue("q").ref.pointsTo(model))
+    assertEquals(setOf(Int(1)), vars.getValue("known").ref.pointsTo(model))
+    assertPartitionEquals(model.getPointerPartitions(), listOf(setOf("known") to setOf(Int(1))))
+  }
 }

@@ -20,11 +20,9 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -36,6 +34,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.STATIC_OBJECT
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.typeInterval
 
@@ -102,8 +101,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
      *   success, say so here instead.
      * @param input the written buffers hold input from the environment, which can be any value in C
      *   too. Otherwise the call computes them, and their havoc is an over-approximation.
-     * @param freshString the call returns a fresh string of fewer than this many characters, with
-     *   any content.
+     * @param freshString the call returns a string in static storage of fewer than this many
+     *   characters, with any content.
      */
     private data class Stub(
       val writes: Writes = Writes.None,
@@ -204,11 +203,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
    * model.
    */
   private fun InvokeLabel.stubbable(defined: Set<String>) =
-    name in STUBS &&
-      name !in defined &&
-      !isLibraryFunction &&
-      // a fresh string is allocated, which memory safety would report as a leak
-      !(STUBS.getValue(name).freshString != null && parseContext.isCheckMemsafety)
+    name in STUBS && name !in defined && !isLibraryFunction
 
   /** The argument positions this call writes through, resolved against the actual arity. */
   private fun writtenIndices(stub: Stub, invoke: InvokeLabel): List<Int> =
@@ -312,8 +307,10 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
   }
 
   /**
-   * `ret := malloc(cells)`, never null, with any characters in all cells but the last, which is 0.
-   * Null when [ret] is not a pointer to a scalar.
+   * `ret` := a fresh static object of [cells] cells, with any characters in all cells but the last,
+   * which is 0. Static, as C gives it: not a leak, and not a heap block to free. A fresh object per
+   * call rather than one shared buffer, whose rewrites would race between threads. Null when [ret]
+   * is not a pointer to a scalar.
    */
   private fun freshString(
     ret: VarDecl<*>,
@@ -324,9 +321,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     val cell = pointeeCellType(ret.ref) ?: return null
     val out = mutableListOf<XcfaLabel>()
     val size = CComplexType.getUnsignedLong(parseContext).getValue("$cells")
-    out.add(InvokeLabel("malloc", listOf(ret.ref, size), invoke.metadata))
-    val nullValue = CComplexType.getType(ret.ref, parseContext).nullValue
-    out.add(StmtLabel(Assume(Neq(ret.ref, nullValue)), metadata = invoke.metadata))
+    out.add(InvokeLabel(STATIC_OBJECT, listOf(ret.ref, size), invoke.metadata))
     for (n in 0 until cells) {
       val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
       val deref =

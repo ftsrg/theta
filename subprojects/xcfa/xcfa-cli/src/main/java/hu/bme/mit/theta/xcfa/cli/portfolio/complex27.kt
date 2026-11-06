@@ -399,7 +399,7 @@ fun complex27(
   logger.benchmark("Using portfolio: $mainTrait\n")
 
   // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
-  if (xcfa.isInlined && mainTrait == MULTITHREAD)
+  if (mainTrait == MULTITHREAD)
     return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
   if (mainTrait == TERMINATION)
     return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)

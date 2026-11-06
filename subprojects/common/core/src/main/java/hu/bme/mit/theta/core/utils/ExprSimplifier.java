@@ -523,10 +523,6 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
         final Set<Expr<BoolType>> ops = CollectionUtil.createSet();
 
-        if (expr.getOps().isEmpty()) {
-            return True();
-        }
-
         for (final Expr<BoolType> op : expr.getOps()) {
             final Expr<BoolType> opVisited = simplify(op, val);
             if (opVisited instanceof FalseExpr) {

@@ -124,7 +124,7 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         Map<CDeclaration, GlobalDeclarationLevel> ret = new LinkedHashMap<>();
         for (int i = 0; i < declarations.size(); i++) {
             CDeclaration declaration = declarations.get(i);
-            if (i >= first && initDeclarators.get(i).initializer() != null) {
+            if (i >= first && initDeclarators.get(i - first).initializer() != null) {
                 ret.put(declaration, GlobalDeclarationLevel.DEFINED);
             } else if (!declaration.getType().isExtern()) {
                 ret.put(declaration, GlobalDeclarationLevel.DECLARED);

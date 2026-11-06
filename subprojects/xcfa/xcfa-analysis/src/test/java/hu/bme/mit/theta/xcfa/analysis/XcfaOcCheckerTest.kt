@@ -214,10 +214,9 @@ class XcfaOcCheckerTest {
   }
 
   @Test
-  fun testThreadLocalUnsupported() {
-    // one object per thread, but built as a single shared global: refused instead
+  fun testThreadLocalAggregateUnsupported() {
     Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
-      check("/32thread_local_unsupported.c", property, OcDecisionProcedureType.IDL)
+      check("/32thread_local_aggregate.c", property, OcDecisionProcedureType.IDL)
     }
   }
 
