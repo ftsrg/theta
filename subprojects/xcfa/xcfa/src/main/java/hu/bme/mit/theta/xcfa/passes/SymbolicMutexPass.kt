@@ -204,6 +204,9 @@ class SymbolicMutexPass : ProcedurePass {
           }
           else -> listOf(listOf(label))
         }
+      // A handle is live only from its snapshot to the operation, so one per type suffices, and
+      // clearing it there keeps it from distinguishing otherwise equal states.
+      val handles = mutableMapOf<Type, VarDecl<*>>()
       for (edge in procedure.getEdges().toList()) {
         procedure.removeEdge(edge)
         val parts =
@@ -211,11 +214,21 @@ class SymbolicMutexPass : ProcedurePass {
           else listOf(edge)
         for (part in parts) {
           var operation = part
+          var clear: XcfaLabel? = null
           val fence = part.getFlatLabels().singleOrNull()
           if (fence != null && needsSnapshot(fence)) {
             fence as FenceLabel
-            val handle = Var("__theta_mutex_handle_${temporary++}", fence.lock.type)
-            procedure.addVar(handle)
+            val handle =
+              handles.getOrPut(fence.lock.type) {
+                Var("__theta_mutex_handle_${temporary++}", fence.lock.type).also {
+                  procedure.addVar(it)
+                }
+              }
+            clear =
+              StmtLabel(
+                Assign(handle.typed, handle.type.defaultValue.typed),
+                metadata = fence.metadata,
+              )
             val acquired =
               XcfaLocation("loc${XcfaLocation.uniqueCounter()}", metadata = part.metadata)
             // Keep address evaluation instrumentable without splitting the guarded ownership
@@ -226,7 +239,8 @@ class SymbolicMutexPass : ProcedurePass {
             operation = part.withSource(acquired).withLabel(fence.withLock(handle.ref))
           }
           replace(operation.label).forEach {
-            procedure.addEdge(operation.withLabel(SequenceLabel(it, operation.label.metadata)))
+            val labels = if (clear == null) it else it + clear
+            procedure.addEdge(operation.withLabel(SequenceLabel(labels, operation.label.metadata)))
           }
         }
       }
