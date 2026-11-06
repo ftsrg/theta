@@ -585,3 +585,6 @@ malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size
 calloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	calloc(0, n) may return a pointer that free accepts
 malloc_zero_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a non-null block of size 0 has no accessible byte
 malloc_zero_double_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a block of size 0 twice is a double free
+malloc_first_member_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is an array
+malloc_first_union_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is a union
+malloc_inner_member_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a member that does not start the block is invalid

@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -53,6 +54,8 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
 import hu.bme.mit.theta.xcfa.utils.memsafetyBound
 
 private const val REALLOCATES = "reallocates"
+
+private const val FREES = "frees"
 
 /** The local flag choosing whether an allocation fails. */
 private const val FAILS = "__theta_alloc_fails"
@@ -82,8 +85,9 @@ private const val MAX_HEAP_ELEMENTS = 64
  * object does, for each element when its size is a constant. When that is impossible -- the block
  * is untyped, its element count is not constant, it ends in a flexible array member, or it is
  * reallocated -- and the program reaches sub-objects at all, the multi model refuses and the
- * program is rebuilt under flat, which lays them out inline. The type is the one the result is
- * first bound to; a block later used as an unrelated struct type is not covered.
+ * program is rebuilt under flat, which lays them out inline. The same holds for a block whose first
+ * member is a sub-object when the program frees memory. The type is the one the result is first
+ * bound to; a block later used as an unrelated struct type is not covered.
  *
  * Either call may also fail and return NULL (C11 7.22.3), leaving a reallocated block intact.
  *
@@ -237,11 +241,25 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       refuseUnlessFlat("a flexible array member")
       return listOf()
     }
+    if (layout.subObjectCells(struct).any { it.first == 0 }) refuseFirstMemberIfFreed(builder)
     val labels = mutableListOf<XcfaLabel>()
     for (index in 0 until count) {
       layout.allocateMembers(ret, struct, struct, index * struct.unitCount, labels, HEAP_SUBOBJECT)
     }
     return labels
+  }
+
+  /**
+   * A sub-object at cell 0 has a base of its own, but in C its address is the block's: freeing it
+   * frees the block, which the free check would report as invalid. Flat lays the member out inline,
+   * and bytes also a union, which flat keeps as a sub-object.
+   */
+  private fun refuseFirstMemberIfFreed(builder: XcfaProcedureBuilder) {
+    if (!parseContext.isCheckMemsafety || !parseContext.isAggregateMemberUsed) return
+    if (!frees(builder.parent)) return
+    val what = "a freed block whose first member is a separate object"
+    if (parseContext.memoryModel.flatAddressing()) throw RequiresByteAddressedMemoryException(what)
+    throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
   }
 
   private fun hasSubObjects(type: CComplexType): Boolean =
@@ -273,6 +291,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.memoryModel.flatAddressing() || !parseContext.isAggregateMemberUsed) return
     throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
   }
+
+  /** Whether any procedure calls `free`. */
+  private fun frees(xcfa: XcfaBuilder): Boolean =
+    xcfa.metaData.getOrPut(FREES) {
+      xcfa.getProcedures().any { proc ->
+        proc.getEdges().any { edge ->
+          edge.getFlatLabels().any { it is InvokeLabel && it.name == "free" }
+        }
+      }
+    } as Boolean
 
   /** Whether any procedure calls `realloc`, decided before the first one is rewritten. */
   private fun reallocates(xcfa: XcfaBuilder): Boolean =
