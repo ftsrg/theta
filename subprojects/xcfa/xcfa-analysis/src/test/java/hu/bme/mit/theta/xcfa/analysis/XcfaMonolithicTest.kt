@@ -136,6 +136,7 @@ class XcfaMonolithicTest {
         "/03nondetfunction.c",
         "/04multithread.c",
         "/07mutex.c",
+        "/39mutex_after_main.c",
         "/10ptr.c",
       )
     }
