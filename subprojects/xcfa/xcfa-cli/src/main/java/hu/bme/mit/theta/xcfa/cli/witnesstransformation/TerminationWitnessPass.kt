@@ -20,6 +20,11 @@ import hu.bme.mit.theta.c2xcfa.getBoolExpressionFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -213,8 +218,19 @@ class TerminationWitnessPass(
         NullLogger.getInstance(),
         vars + anyPrev.keys,
       )
+    // The memory passes do not rewrite an expression kept in metadata
+    if (expr.readsMemory())
+      throw UnsupportedFrontendElementException(
+        "Witness invariant reading memory at ${invariant.location}: ${invariant.value}"
+      )
     return InvariantCheck(entry, expr, anyPrev, isTransition)
   }
+
+  private fun Expr<*>.readsMemory(): Boolean =
+    this is Dereference<*, *, *> ||
+      this is Reference<*, *> ||
+      (this is RefExpr<*> && decl.type is ArrayType<*, *>) ||
+      ops.any { it.readsMemory() }
 
   private fun cName(decl: VarDecl<*>): String =
     parseContext.metadata.getMetadataValue(decl.name, "cName").orElse(decl.name) as String
