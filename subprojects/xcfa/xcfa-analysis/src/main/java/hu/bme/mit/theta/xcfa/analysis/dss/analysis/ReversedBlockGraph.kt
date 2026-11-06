@@ -58,7 +58,10 @@ private fun reverseBlocks(
   val toHub = init.outgoingEdges.single()
   blocks += edgeBlock("init", toHub)
   toHub.target.outgoingEdges.forEachIndexed { i, edge -> blocks += edgeBlock("error$i", edge) }
-  procedure.errorLoc.ifPresent { blocks += edgeBlock("entry", it.incomingEdges.single()) }
+  // Only `__rev_err` is not a clone, and its edge belongs to no forward block
+  procedure.errorLoc
+    .filter { it !in reversal.originalOf }
+    .ifPresent { blocks += edgeBlock("entry", it.incomingEdges.single()) }
 
   for (block in forward.blocks.sortedBy { it.id }) {
     val edges = block.edges.mapNotNullTo(linkedSetOf()) { reversedEdgeOf[it] }

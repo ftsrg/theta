@@ -70,6 +70,11 @@ enum class DssCheckerSelectionMethod {
   PRIORITY,
   /** A block's first analysis runs every checker, later ones start with the fastest. */
   FASTEST,
+  /**
+   * The last checker is a finisher: only the blocks whose postconditions no block builds on use it,
+   * first (forward the last blocks, backward the first ones); the others go by priority.
+   */
+  FINISHER,
 }
 
 /** The abstract domain of the `CEGAR` entries of [DssConfig.checkerBackends]. */

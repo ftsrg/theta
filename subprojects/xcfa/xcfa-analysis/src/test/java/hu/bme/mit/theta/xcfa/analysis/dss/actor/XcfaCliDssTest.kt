@@ -69,6 +69,24 @@ class XcfaCliDssTest {
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "PRIORITY"),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "FASTEST"),
           listOf("--dss-checker-backends", "CEGAR,BMC", "--dss-checker-selection", "ROUND_ROBIN"),
+          listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "FINISHER"),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR,KIND",
+            "--dss-checker-selection",
+            "FINISHER",
+            "--dss-direction",
+            "BACKWARD",
+          ),
+          // BIDIRECTIONAL accepts CEGAR block checkers only, the finisher included
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR,CEGAR",
+            "--dss-checker-selection",
+            "FINISHER",
+            "--dss-direction",
+            "BIDIRECTIONAL",
+          ),
           listOf("--dss-direction", "BACKWARD"),
           listOf("--dss-direction", "BACKWARD", "--dss-executor", "PROCESS"),
           listOf("--dss-direction", "BIDIRECTIONAL"),
@@ -126,6 +144,13 @@ class XcfaCliDssTest {
   fun `a backend outside the DSS-compatible subset is rejected`() {
     val (output, thrown) = runDss("safe", "--dss-checker-backends", "OC")
     assertTrue(thrown != null && "OC" in output) { output }
+  }
+
+  @Test
+  fun `a finisher without another backend is rejected`() {
+    val (output, thrown) =
+      runDss("safe", "--dss-checker-selection", "FINISHER", "--dss-checker-backends", "KIND")
+    assertTrue(thrown != null && "at least two" in output) { output }
   }
 
   @Test

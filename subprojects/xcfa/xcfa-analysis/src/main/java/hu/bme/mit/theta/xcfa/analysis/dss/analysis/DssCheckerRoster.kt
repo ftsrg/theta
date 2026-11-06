@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Shared by all blocks of a run, so it must be thread-safe; state is keyed by list index. */
@@ -27,6 +28,10 @@ interface DssCheckerSelectionStrategy {
   /** Whether each block ranks the checkers itself (see [FastestCheckerSelectionStrategy]). */
   val ranksPerBlock: Boolean
     get() = false
+
+  /** The checkers of one block, which [select] then picks from (see [finishingBlocks]). */
+  fun checkersOf(checkers: List<CheckerFactory>, finishing: Boolean): List<CheckerFactory> =
+    checkers
 }
 
 class RoundRobinCheckerSelectionStrategy : DssCheckerSelectionStrategy {
@@ -56,7 +61,33 @@ class FastestCheckerSelectionStrategy :
     get() = true
 }
 
-/** The block checkers of a run, handed out by [strategy]; one instance shared by all blocks. */
+/**
+ * The last checker is a finisher, whose postconditions may be too coarse to build on: it analyzes
+ * only the [finishingBlocks], first there, with the others as fallbacks. The other blocks use the
+ * others by priority.
+ */
+class FinisherCheckerSelectionStrategy :
+  DssCheckerSelectionStrategy by PriorityCheckerSelectionStrategy() {
+
+  override fun checkersOf(
+    checkers: List<CheckerFactory>,
+    finishing: Boolean,
+  ): List<CheckerFactory> {
+    require(checkers.size >= 2) { "A finisher needs another checker for the other blocks" }
+    val others = checkers.dropLast(1)
+    return if (finishing) listOf(checkers.last()) + others else others
+  }
+}
+
+/**
+ * The blocks whose postconditions no other block builds on, as they have no successors: forward the
+ * last blocks, backward the program's first ones, as the original entry is the reversed error. The
+ * meeting actor of `BIDIRECTIONAL` still reads their postconditions.
+ */
+fun BlockGraph.finishingBlocks(): Set<String> =
+  blocks.filter { it.successorIds.isEmpty() }.mapTo(linkedSetOf()) { it.id }
+
+/** The block checkers of a run, handed out by [strategy]; each block uses its [forBlock] view. */
 class DssCheckerRoster(
   private val checkers: List<CheckerFactory>,
   private val strategy: DssCheckerSelectionStrategy = PriorityCheckerSelectionStrategy(),
@@ -73,6 +104,10 @@ class DssCheckerRoster(
     get() = strategy.ranksPerBlock
 
   operator fun get(index: Int): CheckerFactory = checkers[index]
+
+  /** The roster of one block (see [DssCheckerSelectionStrategy.checkersOf]). */
+  fun forBlock(finishing: Boolean): DssCheckerRoster =
+    DssCheckerRoster(strategy.checkersOf(checkers, finishing), strategy)
 
   fun next(attempt: Int = 0): CheckerFactory {
     val selected = strategy.select(checkers, attempt)

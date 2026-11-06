@@ -71,11 +71,13 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ProgramReversal
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.RoundRobinCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.finishingBlocks
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseBlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseProgram
@@ -216,30 +218,41 @@ fun getDssChecker(
       DssCheckerSelectionMethod.ROUND_ROBIN -> RoundRobinCheckerSelectionStrategy()
       DssCheckerSelectionMethod.PRIORITY -> PriorityCheckerSelectionStrategy()
       DssCheckerSelectionMethod.FASTEST -> FastestCheckerSelectionStrategy()
+      DssCheckerSelectionMethod.FINISHER -> {
+        require(checkers.size >= 2) {
+          "--dss-checker-selection FINISHER: the last --dss-checker-backends entry is the " +
+            "finisher, so at least two are needed"
+        }
+        FinisherCheckerSelectionStrategy()
+      }
     }
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy)
   val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val bidirectional = direction == DssDirection.BIDIRECTIONAL
-  fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure) = { block: Block ->
-    PredicateBlockBehavior(
-        program,
-        programProcedure,
-        block,
-        checkerRoster,
-        useGlobalPredicatePool = dssConfig.globalPredicatePool,
-        resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
-        reuseBlockPrecision = dssConfig.reuseBlockPrecision,
-        checkerFallback = true,
-        solverFactory = dssSolverFactory,
-        trackSummaries = bidirectional,
-      )
-      .also { behaviors[block.id] = it }
-  }
+  fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure, finishing: Set<String>) =
+    { block: Block ->
+      PredicateBlockBehavior(
+          program,
+          programProcedure,
+          block,
+          checkerRoster,
+          useGlobalPredicatePool = dssConfig.globalPredicatePool,
+          resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
+          reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+          checkerFallback = true,
+          solverFactory = dssSolverFactory,
+          trackSummaries = bidirectional,
+          finishing = block.id in finishing,
+        )
+        .also { behaviors[block.id] = it }
+    }
   val networks =
     listOfNotNull(
-      forwardGraph?.let { DssNetwork(it, behaviorsOf(xcfa, procedure)) },
-      backwardGraph?.let { DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure)) },
+      forwardGraph?.let { DssNetwork(it, behaviorsOf(xcfa, procedure, it.finishingBlocks())) },
+      backwardGraph?.let {
+        DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure, it.finishingBlocks()))
+      },
     )
   val forwardIndex = if (forwardGraph != null) 0 else null
   val backwardIndex = if (backwardGraph == null) null else networks.lastIndex

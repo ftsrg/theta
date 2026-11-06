@@ -15,7 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
-import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicIntegerArray
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -76,6 +79,71 @@ class DssCheckerRosterTest {
       }
     val roster = DssCheckerRoster(checkers, rogue)
     assertThrows(IllegalArgumentException::class.java) { roster.next() }
+  }
+
+  private fun DssCheckerRoster.order(checkers: List<CheckerFactory>) =
+    List(size) { checkers.indexOf(next(it)) }
+
+  @Test
+  fun `the finisher leads on finishing blocks and is left out elsewhere`() {
+    val checkers = stubCheckers(3)
+    val roster = DssCheckerRoster(checkers, FinisherCheckerSelectionStrategy())
+    assertEquals(listOf(2, 0, 1), roster.forBlock(finishing = true).order(checkers))
+    assertEquals(listOf(0, 1), roster.forBlock(finishing = false).order(checkers))
+  }
+
+  @Test
+  fun `other strategies give every block every checker`() {
+    val checkers = stubCheckers(3)
+    val roster = DssCheckerRoster(checkers, PriorityCheckerSelectionStrategy())
+    for (finishing in listOf(true, false)) {
+      assertEquals(listOf(0, 1, 2), roster.forBlock(finishing).order(checkers))
+    }
+  }
+
+  @Test
+  fun `a finisher without another checker is rejected`() {
+    val roster = DssCheckerRoster(stubCheckers(1), FinisherCheckerSelectionStrategy())
+    assertThrows(IllegalArgumentException::class.java) { roster.forBlock(true) }
+  }
+
+  /**
+   * `x := 5`, then `x > 3` to the error, `x <= 3` to the final location; LINEAR cuts at the branch.
+   */
+  private val program: XCFA =
+    xcfa("finish") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          (init to "a") { "x" assign "5" }
+          ("a" to err) { assume("(> x 3)") }
+          ("a" to final) { assume("(<= x 3)") }
+        }
+      main.start()
+    }
+
+  private fun BlockGraph.endsOf(ids: Set<String>): Set<XcfaLocation> =
+    blocks.filter { it.id in ids }.mapTo(hashSetOf()) { it.finalLocation }
+
+  @Test
+  fun `forward the last blocks finish`() {
+    val procedure = program.procedures.single()
+    val forward = LinearBlockDecomposition().decompose(procedure)
+    assertEquals(
+      setOf(procedure.errorLoc.get(), procedure.finalLoc.get()),
+      forward.endsOf(forward.finishingBlocks()),
+    )
+  }
+
+  @Test
+  fun `backward the program's first block finishes`() {
+    val procedure = program.procedures.single()
+    val forward = LinearBlockDecomposition().decompose(procedure)
+    val reversal = reverseProgram(program)
+    val backward = reverseBlockGraph(forward, reversal)
+    val finishing = backward.blocks.filter { it.id in backward.finishingBlocks() }
+    assertEquals(listOf(forward.root.id), finishing.map { it.id })
+    assertEquals(reversal.reversedOf.getValue(procedure.initLoc), finishing.single().finalLocation)
   }
 
   @Test

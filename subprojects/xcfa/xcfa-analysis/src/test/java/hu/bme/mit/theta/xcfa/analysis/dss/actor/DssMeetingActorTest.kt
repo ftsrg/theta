@@ -130,7 +130,7 @@ class DssMeetingActorTest {
   @Test
   fun `the reversed blocks share the forward boundaries`() {
     val ids = backward.blocks.map { it.id }.toSet()
-    assertEquals(setOf("R.init", "R.error0", "R.entry", "R.A", "R.B", "R.C"), ids)
+    assertEquals(setOf("R.init", "R.error0", "R.A", "R.B", "R.C"), ids)
   }
 
   @Test

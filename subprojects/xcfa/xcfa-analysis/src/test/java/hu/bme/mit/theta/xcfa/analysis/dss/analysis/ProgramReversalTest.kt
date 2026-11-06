@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -93,11 +94,35 @@ class ProgramReversalTest {
     val hub = procedure.initLoc.outgoingEdges.single().target
     assertEquals(setOf(errorClone), hub.outgoingEdges.map { it.target }.toSet())
     val entryClone = reversal.reversedOf.getValue(original.initLoc)
-    assertEquals(procedure.errorLoc.get(), entryClone.outgoingEdges.single().target)
+    assertEquals(entryClone, procedure.errorLoc.get())
+    assertTrue(entryClone.error && entryClone.outgoingEdges.isEmpty())
     assertTrue(procedure.locs.none { it.error && it != procedure.errorLoc.get() })
     // The final location cannot reach the error
     assertTrue(original.finalLoc.get() !in reversal.reversedOf)
     assertTrue(procedure.locs.none { it in original.locs })
+  }
+
+  @Test
+  fun `an entry that edges enter is followed by a dead-end error`() {
+    val xcfa =
+      xcfa("reentry") {
+        val main =
+          procedure("main") {
+            "x" type Int()
+            (init to "a") { "x" assign "(+ x 1)" }
+            ("a" to init) { assume("(< x 5)") }
+            ("a" to err) { assume("(= x 5)") }
+          }
+        main.start()
+      }
+    val original = xcfa.procedures.single()
+    assertTrue(original.initLoc.incomingEdges.isNotEmpty())
+    val reversal = reverseProgram(xcfa)
+    val entryClone = reversal.reversedOf.getValue(original.initLoc)
+    val error = reversal.procedure.errorLoc.get()
+    assertFalse(entryClone.error)
+    assertTrue(error !in reversal.originalOf && error.outgoingEdges.isEmpty())
+    assertEquals(entryClone, error.incomingEdges.single().source)
   }
 
   @Test

@@ -67,20 +67,24 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * With [trackSummaries], postconditions carry their version and inputs, and an analysis without
  * exit states reports `false` to the observers, so `DssMeetingActor` can certify converged regions.
  * A restriction (`DssRestrictionMessage`) is conjoined to every start state; violation conditions
- * stay exact, as they are computed from the block's own paths only.
+ * stay exact, as they are computed from the block's own paths only. [finishing] marks one of its
+ * network's `finishingBlocks`, which a finisher checker may analyze.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
   private val sourceProcedure: XcfaProcedure,
   private val block: Block,
-  private val checkerRoster: DssCheckerRoster,
+  checkerRoster: DssCheckerRoster,
   private val useGlobalPredicatePool: Boolean = true,
   private val resetPrecisionForEveryRun: Boolean = false,
   private val reuseBlockPrecision: Boolean = false,
   private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
   private val trackSummaries: Boolean = false,
+  finishing: Boolean = false,
 ) : DssBlockBehavior {
+
+  private val checkerRoster = checkerRoster.forBlock(finishing)
 
   private data class Summary(val state: Expr<BoolType>, val precision: Set<Expr<BoolType>>) {
     val isTop: Boolean

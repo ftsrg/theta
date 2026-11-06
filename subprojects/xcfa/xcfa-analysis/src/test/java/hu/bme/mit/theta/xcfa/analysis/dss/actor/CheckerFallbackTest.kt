@@ -21,6 +21,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
@@ -191,6 +192,22 @@ class CheckerFallbackTest {
       assertEquals(listOf(DssMessageType.VIOLATION_CONDITION), messages.map { it.type })
     }
     assertEquals(listOf("flaky", "slow", "flaky", "slow"), used)
+  }
+
+  @Test
+  fun `the finisher analyzes only finishing blocks`() {
+    val procedure = program.procedures.single()
+    val block = SingleBlockDecomposition.decompose(procedure).blocks.single()
+    fun checkersUsed(finishing: Boolean): List<String> {
+      val used = mutableListOf<String>()
+      val checkers = listOf(recording("cegar", used, cegar), recording("finisher", used, cegar))
+      val roster = DssCheckerRoster(checkers, FinisherCheckerSelectionStrategy())
+      PredicateBlockBehavior(program, procedure, block, roster, finishing = finishing)
+        .initialMessages()
+      return used
+    }
+    assertEquals(listOf("finisher"), checkersUsed(finishing = true))
+    assertEquals(listOf("cegar"), checkersUsed(finishing = false))
   }
 
   @Test

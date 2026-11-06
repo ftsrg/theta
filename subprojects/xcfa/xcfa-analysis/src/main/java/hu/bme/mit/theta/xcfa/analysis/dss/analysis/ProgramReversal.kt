@@ -55,8 +55,8 @@ import java.util.Optional
  * entry: its violation conditions are exact sets of states reachable from the entry, and its
  * postconditions over-approximate the states that can reach an error.
  *
- * `__rev_init` leads to the clone of every error location, and the clone of the original entry to
- * `__rev_err`; locations that cannot reach an error are left out. Clones are renamed, as
+ * `__rev_init` leads to the clone of every error location, and the clone of the original entry is
+ * the error; locations that cannot reach an error are left out. Clones are renamed, as
  * [XcfaLocation] equality would otherwise conflate them with the originals.
  */
 class ProgramReversal(
@@ -93,10 +93,18 @@ fun reverseProgram(xcfa: XCFA): ProgramReversal {
     if (canReachError.add(location)) location.incomingEdges.forEach { pending.addLast(it.source) }
   }
 
+  // An entry with incoming edges gets a dead-end `__rev_err` after its clone instead
+  val entryIsError = original.initLoc.incomingEdges.isEmpty()
   val reversedOf =
     original.locs
       .filter { it in canReachError }
-      .associateWith { XcfaLocation(it.name + REVERSED_SUFFIX, metadata = it.metadata) }
+      .associateWith {
+        XcfaLocation(
+          it.name + REVERSED_SUFFIX,
+          error = entryIsError && it == original.initLoc,
+          metadata = it.metadata,
+        )
+      }
   val takenNames = (xcfa.collectVars() + original.vars).map { it.name }.toMutableSet()
   val temporaries = LinkedHashMap<VarDecl<*>, VarDecl<*>>()
   val reversal = LabelReversal { variable ->
@@ -131,9 +139,11 @@ fun reverseProgram(xcfa: XCFA): ProgramReversal {
     .forEach { connect(hub, reversedOf.getValue(it), NopLabel, null) }
   val error =
     reversedOf[original.initLoc]?.let { entry ->
-      XcfaLocation("__rev_err", error = true, metadata = EmptyMetaData).also {
-        connect(entry, it, NopLabel, null)
-      }
+      if (entry.error) entry
+      else
+        XcfaLocation("__rev_err", error = true, metadata = EmptyMetaData).also {
+          connect(entry, it, NopLabel, null)
+        }
     }
 
   val procedure =

@@ -35,7 +35,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-direction` | `FORWARD` | `FORWARD`, `BACKWARD` (DSS on the reversed program), `BIDIRECTIONAL` (both at once, see [Directions](#directions)) |
 | `--dss-share-invariants` | `true` | `BIDIRECTIONAL`: conjoin each direction's converged summaries to the other direction's preconditions |
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one. `BIDIRECTIONAL` accepts `CEGAR` only |
-| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once) |
+| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs, first, only on blocks whose postconditions no block builds on: forward the last blocks, backward the program's first ones; the others go by priority) |
 | `--dss-cegar-domain` | `PRED_CART` | Domain of the `CEGAR` checkers: `PRED_CART`, or `EXPL` tracking the variables of the predicates DSS passes as precision (reported back as `v = v` atoms) |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
 | `--dss-max-parallel-blocks` | `0` | `CONCURRENT`: at most this many block analyses at a time (`0`: no limit) |
@@ -50,8 +50,9 @@ used by several threads. `Z3:new` is thread-safe, but its interpolation fails on
 ## Directions
 
 **Backward** is DSS on the reversed program (`reverseProgram`, `ProgramReversal.kt`). There,
-`__rev_init` leads to every error location, and the original entry leads to `__rev_err`;
-locations that cannot reach an error are left out. An assignment `x := e` becomes
+`__rev_init` leads to every error location, and the original entry is the error location (if
+edges enter it, a dead-end `__rev_err` follows it instead); locations that cannot reach an error
+are left out. An assignment `x := e` becomes
 `assume x == e; havoc x`, and with `x` in `e`, `havoc t; assume x == e[t/x]; x := t; havoc t`.
 The weakest existential precondition of a reversed label is the strongest postcondition of the
 original, so:
