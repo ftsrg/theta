@@ -142,12 +142,20 @@ PS_Divide
     : '/'
     ;
 
+PS_Fp
+    : 'fp'
+    ;
+
 PS_Minus
     : '-'
     ;
 
 PS_Store
     : 'store'
+    ;
+
+PS_ToReal
+    : 'to_real'
     ;
 
 // RESERVED Words
@@ -669,8 +677,10 @@ predefSymbol
     | PS_Unsat
     | PS_Const
     | PS_Divide
+    | PS_Fp
     | PS_Minus
     | PS_Store
+    | PS_ToReal
     ;
 
 predefKeyword

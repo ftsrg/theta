@@ -12,10 +12,10 @@ import SMTLIBv2;
 // Parser Rules
 
 script
-    : commandSvLib+
+    : commandSvLib+ EOF
     ;
 
-witnessFile: (witness)* ;
+witnessFile: (witness)* EOF ;
 
 witness: correctnessWitness | violationWitness ;
 
@@ -106,16 +106,28 @@ traceVariableAssignment
   ;
 
 // a value as SMT-LIB solvers write it in a model, arrays as constant arrays with stores,
-// and a symbol for a Boolean or a constructor of a datatype
+// and a symbol for a Boolean, a rounding mode or a constructor of a datatype
 traceValue
   : spec_constant
   | symbol
   | ParOpen PS_Minus (numeral | decimal) ParClose
-  | ParOpen PS_Divide numeral numeral ParClose
-  | ParOpen PS_Minus ParOpen PS_Divide numeral numeral ParClose ParClose
+  | realFraction
+  | ParOpen PS_Minus realFraction ParClose
   | ParOpen GRW_Underscore symbol numeral ParClose
+  | ParOpen GRW_Underscore symbol numeral numeral ParClose
+  | ParOpen PS_Fp traceValue traceValue traceValue ParClose
   | ParOpen ParOpen GRW_As PS_Const sort ParClose traceValue ParClose
   | ParOpen PS_Store traceValue traceValue traceValue ParClose
+  ;
+
+// a fraction of numerals which are reals, or which to_real converts where numerals are integers
+realFraction
+  : ParOpen PS_Divide (numeral | ParOpen PS_Minus numeral ParClose) numeral ParClose
+  | ParOpen PS_Divide (realNumeral | ParOpen PS_Minus realNumeral ParClose) realNumeral ParClose
+  ;
+
+realNumeral
+  : ParOpen PS_ToReal numeral ParClose
   ;
 
 globalVariableTraceAssignments
