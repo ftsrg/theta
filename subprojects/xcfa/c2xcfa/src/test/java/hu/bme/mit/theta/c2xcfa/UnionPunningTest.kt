@@ -42,6 +42,8 @@ class UnionPunningTest {
     buildXcfa(src, arithmetic)
   }
 
+  private fun resource(name: String) = javaClass.getResource("/union/$name")!!.readText()
+
   private fun buildXcfa(src: String, arithmetic: ArithmeticType = ArithmeticType.efficient): XCFA {
     val parseContext = ParseContext()
     parseContext.arithmetic = arithmetic
@@ -435,15 +437,7 @@ class UnionPunningTest {
   @Test
   fun aFullWidthFloatingPointMemberSharesTheWordAsItsBits() {
     // The write stores fresh bits b with to_fp(b) = value, so no fp.to_ieee_bv is needed.
-    val xcfa =
-      buildXcfa(
-        """
-        typedef unsigned int u32;
-        typedef union { float value; u32 word; } shape;
-        int main() { shape u; u.value = 1.0f; return u.word; }
-        """
-          .trimIndent()
-      )
+    val xcfa = buildXcfa(resource("float_full_width.c"))
     val labels = xcfa.procedures.flatMap { p -> p.edges.flatMap { it.getFlatLabels() } }
     assertTrue(labels.any { "fpfromieeebv" in it.toString() && FP_BITS_PREFIX in it.toString() })
     assertTrue(labels.none { "fptoieeebv" in it.toString() })
@@ -452,14 +446,7 @@ class UnionPunningTest {
   @Test
   fun aFloatingPointMemberNarrowerThanTheWordIsRefused() {
     assertThrows(UnsupportedFrontendElementException::class.java) {
-      build(
-        """
-        typedef unsigned long long u64;
-        typedef union { float value; u64 word; } shape;
-        int main() { shape u; u.value = 1.0f; return (int) u.word; }
-        """
-          .trimIndent()
-      )
+      build(resource("float_narrow.c"))
     }
   }
 }
