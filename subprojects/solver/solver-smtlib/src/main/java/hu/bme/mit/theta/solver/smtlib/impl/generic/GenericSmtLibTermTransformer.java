@@ -683,7 +683,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var value = ctx.getText();
+        final var value = encodeSymbol(getSymbol(ctx));
         switch (value) {
             case "true":
                 return BoolExprs.True();
@@ -1133,6 +1133,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     static String getSymbol(SymbolContext symbol) {
         final var str = symbol.getText();
+        if (symbol.quotedSymbol() != null) {
+            assert str.charAt(0) == '|' && str.charAt(str.length() - 1) == '|'
+                    : "Quoted symbol not quoted.";
+            return str.substring(1, str.length() - 1);
+        }
         return str;
     }
 
