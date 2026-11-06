@@ -270,7 +270,7 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
   override fun isProgramVar(decl: VarDecl<*>, parseContext: ParseContext?) =
     !decl.name.startsWith(tmpVarPrefix)
 
-  override fun isSbe(label: XcfaLabel) = true // doesn't matter for SV-LIB witness
+  override fun isSbe(label: XcfaLabel, other: XcfaLabel) = true // doesn't matter for SV-LIB witness
 
   override fun concreteState(
     state: XcfaState<*>,

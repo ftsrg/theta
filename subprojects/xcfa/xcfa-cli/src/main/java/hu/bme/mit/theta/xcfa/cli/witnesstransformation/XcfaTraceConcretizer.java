@@ -82,8 +82,8 @@ public class XcfaTraceConcretizer {
         return parseContext.getMetadata().getMetadataValue(decl.getName(), "cName").isPresent();
     }
 
-    protected boolean isSbe(XcfaLabel label) {
-        final var otherMetadata = getCMetaData(label);
+    protected boolean isSbe(XcfaLabel label, XcfaLabel other) {
+        final var otherMetadata = getCMetaData(other);
         final var otherAstNodes = otherMetadata == null ? List.of() : otherMetadata.getAstNodes();
         final var metadata = getCMetaData(label);
         final var astNodes = metadata == null ? List.of() : metadata.getAstNodes();
@@ -299,7 +299,7 @@ public class XcfaTraceConcretizer {
                 if (currentList.isEmpty()) {
                     currentList.add(label);
                 } else {
-                    if (isSbe(currentList.get(0))) {
+                    if (isSbe(label, currentList.get(0))) {
                         currentList.add(label);
                     } else {
                         if (currentList.size() == 1) {
