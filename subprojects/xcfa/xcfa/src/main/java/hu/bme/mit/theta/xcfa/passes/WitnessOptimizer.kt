@@ -72,6 +72,8 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       }
     }
 
+    // Other threads may write globals and memory between two edges, so only locals carry over.
+    val localVars = builder.getVars() + builder.getParams().map { it.first }
     val waitlist =
       mutableMapOf(builder.initLoc to mutableListOf(initialValuation to setOf<BigInteger>()))
     while (waitlist.isNotEmpty()) {
@@ -80,17 +82,19 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           if (valuations.size >= loc.incomingEdges.size) loc to valuations else null
         }
       waitlist.remove(loc)
-      val mergedValuation = MutableValuation.copyOf(valuations.map { it.first }.reduce(::intersect))
+      val mergedValuation = valuations.map { it.first }.reduce(::intersect)
 
       loc.outgoingEdges.toList().forEach { edge ->
+        // simplifying an edge updates the valuation, so each edge needs its own copy
+        val edgeValuation = MutableValuation.copyOf(mergedValuation)
         val passedSegments = valuations.flatMap { it.second }.toMutableSet()
         val oldLabels = edge.getFlatLabels()
         val simplifiedLabels =
           oldLabels.flatMap {
-            val simplified = it.simplify(mergedValuation, parseContext)
+            val simplified = it.simplify(edgeValuation, parseContext)
             simplifyStartLabelLogicalThread(simplified, passedSegments) ?: listOf(simplified)
           }
-        builder.parent.getVars().forEach { mergedValuation.remove(it.wrappedVar) }
+        edgeValuation.decls.filter { it !in localVars }.forEach { edgeValuation.remove(it) }
 
         val newLabels =
           simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, passedSegments).filter {
@@ -114,7 +118,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
           builder.removeEdge(edge)
           builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
         }
-        waitlist.getOrPut(edge.target) { mutableListOf() }.add(mergedValuation to passedSegments)
+        waitlist.getOrPut(edge.target) { mutableListOf() }.add(edgeValuation to passedSegments)
       }
     }
 

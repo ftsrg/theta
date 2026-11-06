@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -164,6 +165,21 @@ fun XCFA.getPointsToGraph(initEdges: Set<XcfaEdge> = setOf()): Map<VarDecl<*>, S
       val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
       val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
 
+      val havocked =
+        procedures
+          .flatMap { proc ->
+            (proc.edges - initEdges).flatMap { edge ->
+              edge.getFlatLabels().filterIsInstance<StmtLabel>().mapNotNull {
+                (it.stmt as? HavocStmt<*>)?.varDecl
+              }
+            }
+          }
+          .toSet()
+      val assigned = allAssignments.map { it.varDecl }.toSet()
+      ptrVars
+        .filter { it in havocked || it !in assigned }
+        .forEach { lits.getOrPut(it) { LinkedHashSet() }.add(MallocLitExpr(it.type)) }
+
       val litAssignments =
         allAssignments
           .filter { ptrVars.contains(it.varDecl) && unbox(it.expr) is LitExpr<*> }
@@ -213,6 +229,7 @@ fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
  */
 fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
   val simplified = ExprUtils.simplify(this) as? LitExpr<*>
+  if (simplified is MallocLitExpr<*>) return null
   if (simplified != null) return setOf(simplified)
 
   val results = mutableSetOf<LitExpr<*>>()
@@ -220,7 +237,11 @@ fun Expr<*>.pointsTo(xcfa: XCFA): Set<LitExpr<*>>? {
   // still evaluated once, and is unknown unless it folds to a literal.
   var values = listOf<Map<Decl<*>, LitExpr<*>>>(emptyMap())
   ExprUtils.getVars(this).forEach { v ->
-    val pts = xcfa.pointsToGraph[v]?.takeIf { it.isNotEmpty() } ?: return null
+    // A computed or loaded pointer can name a static object too: its marker is not a fresh base.
+    val pts =
+      xcfa.pointsToGraph[v]?.takeIf {
+        it.isNotEmpty() && it.none { value -> value is MallocLitExpr<*> }
+      } ?: return null
     values = values.flatMap { vs -> pts.map { lit -> vs + (v to lit) } }
   }
   values.forEach { vs ->
@@ -278,7 +299,12 @@ fun pointerPartitions(
   xcfa: XCFA,
   initEdges: Set<XcfaEdge>,
 ): List<Pair<Set<VarDecl<*>>, Set<LitExpr<*>>>> {
-  val pointsTo = xcfa.getPointsToGraph(initEdges).toList()
+  // Leave unresolved pointers to the caller's conservative fallback partition.
+  val pointsTo =
+    xcfa
+      .getPointsToGraph(initEdges)
+      .filterValues { values -> values.isNotEmpty() && values.none { it is MallocLitExpr<*> } }
+      .toList()
 
   val n = pointsTo.size
   val uf = UnionFind(n)

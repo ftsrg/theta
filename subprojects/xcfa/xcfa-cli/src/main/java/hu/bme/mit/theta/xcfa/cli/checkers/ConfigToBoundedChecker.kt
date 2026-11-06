@@ -84,6 +84,7 @@ fun getBoundedChecker(
     boundedConfig.reversed,
     boundedConfig.bmcConfig.bmcSolver,
     boundedConfig.bmcConfig.validateBMCSolver,
+    boundedConfig.blockEncoding,
   )
 }
 
@@ -97,6 +98,7 @@ internal fun getPipelineChecker(
   reversed: Boolean = false,
   cegarSolver: String = "Z3",
   cegarSolverValidate: Boolean = false,
+  blockEncoding: Boolean = false,
 ): XcfaPipelineChecker<PredState> {
   val passes = mutableListOf<MonolithicExprPass<PredState>>()
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION) {
@@ -121,6 +123,7 @@ internal fun getPipelineChecker(
     passes,
     logger,
     config.outputConfig.acceptUnreliableSafe,
+    blockEncoding = blockEncoding,
   )
 }
 

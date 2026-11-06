@@ -170,6 +170,11 @@ public final class FpExprs {
         return FpRoundToIntegralExpr.of(roundingMode, op);
     }
 
+    public static FpMathFuncExpr MathFunc(
+            final FpMathFuncExpr.Function function, final Expr<FpType> op) {
+        return FpMathFuncExpr.of(function, op);
+    }
+
     public static FpSqrtExpr Sqrt(final FpRoundingMode roundingMode, final Expr<FpType> op) {
         return FpSqrtExpr.of(roundingMode, op);
     }

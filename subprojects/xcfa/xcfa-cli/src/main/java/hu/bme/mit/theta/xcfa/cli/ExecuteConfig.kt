@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
+import hu.bme.mit.theta.xcfa.cli.utils.unsafeDependsOnOverApproximation
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -73,7 +74,7 @@ fun runConfig(
   val (xcfa, mcm, parseContext) =
     parseInputFiles(config, logger, uniqueLogger) // this handles pre-analysis logging as well
 
-  validateInputOptions(config, logger, uniqueLogger)
+  validateInputOptions(config, parseContext, logger, uniqueLogger)
 
   val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
@@ -89,9 +90,15 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     when (config.frontendConfig.memoryInit) {
       MemoryInit.ZERO -> true
       MemoryInit.UNCONSTRAINED -> false
-      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+      MemoryInit.AUTO ->
+        config.backendConfig.backend == Backend.MDD &&
+          (config.backendConfig.specConfig as? MddConfig)?.symbolicValues != true
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
+  check(!config.frontendConfig.ptrSizeInMemory || config.backendConfig.backend == Backend.OC) {
+    "--ptr-size-in-memory requires the OC backend"
+  }
+  PtrSizeToMemoryPass.enabled = config.frontendConfig.ptrSizeInMemory
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
   if (config.backendConfig.backend == Backend.CEGAR) {
@@ -123,7 +130,12 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
   ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
-private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+private fun validateInputOptions(
+  config: XcfaConfig<*, *>,
+  parseContext: ParseContext?,
+  logger: Logger,
+  uniqueLogger: Logger,
+) {
   rule("NoLbeFullWhenCegar") {
     config.backendConfig.backend == Backend.CEGAR &&
       (config.frontendConfig.lbeLevel == LbePass.LbeLevel.LBE_FULL ||
@@ -182,6 +194,10 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     // Modeling signed overflow as wraparound makes overflow detection vacuous.
     (config.frontendConfig.specConfig as? CFrontendConfig)?.enableSignedWraparound == true &&
       config.inputConfig.property.inputProperty == ErrorDetection.OVERFLOW
+  }
+  rule("NoBlockEncodingWhenMultithreaded") {
+    (config.backendConfig.specConfig as? BoundedConfig)?.blockEncoding == true &&
+      parseContext?.multiThreading == true
   }
   rule("SensibleOutputOptions", false) {
     config.outputConfig.enabled == NONE &&
@@ -467,6 +483,31 @@ private fun backend(
               }
               .let ResultMapper@{ result ->
                 if (result.isUnsafe) {
+                  // A portfolio or in-process run only relays a result that its child checked.
+                  if (
+                    !portfolioRun &&
+                      xcfa != null &&
+                      unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
+                  ) {
+                    // Within a portfolio, another config may still settle the task (a Safe verdict
+                    // is sound under over-approximation), so hand over instead of ending on
+                    // Unknown.
+                    if (config.backendConfig.portfolioStep) {
+                      logger.benchmark(
+                        "Unsafe result depends on an over-approximated value: handing over to the next config."
+                      )
+                      exitOnError(config.debugConfig.stacktrace, throwDontExit) {
+                        throw ErrorCodeException(ExitCodes.UNRELIABLE_UNSAFE.code)
+                      }
+                    }
+                    // Downgraded before the property or the raw result is printed: output parsers
+                    // match on both.
+                    logger.result(
+                      "%s",
+                      "Unsafe result depends on an over-approximated library value",
+                    )
+                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
+                  }
                   // need to determine what kind
                   val property =
                     try {

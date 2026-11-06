@@ -558,7 +558,13 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final Stack<ParamDecl<?>> vars) {
         final Expr<?> funcExpr;
         if (symbolTable.definesSymbol(funName)) {
-            funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
+            final var decl = symbolTable.getConst(funName);
+            final var mathFunction = SmtLibMathFuncDecls.functionOf(decl);
+            if (mathFunction.isPresent() && funAppParams.size() == 1) {
+                return FpMathFuncExpr.create(
+                        mathFunction.get(), transformTerm(funAppParams.get(0), model, vars));
+            }
+            funcExpr = checkNotNull(decl.getRef());
         } else {
             final var funDefImpl = model.getTerm(funName);
             if (funDefImpl == null) {

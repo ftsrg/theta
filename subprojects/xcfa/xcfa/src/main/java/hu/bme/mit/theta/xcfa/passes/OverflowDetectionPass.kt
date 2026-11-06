@@ -49,6 +49,9 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -119,7 +122,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 it is BvShiftLeftExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
-                  .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
+                  .map(::isSignedArithmetic)
                   .orElse(false)
             }
             .flatMap { listOf(it) + evaluationPrefixesOf(it) }
@@ -271,6 +274,18 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
     return prefixes
   }
 }
+
+/**
+ * True for a signed integer type. Pointers, arrays and structs are [CInteger]s with `isSsigned()`
+ * too, but the property only covers signed integer arithmetic: a pointer sum has no signed
+ * overflow, and checking it reports one for any pointer whose value is unconstrained.
+ */
+private fun isSignedArithmetic(cType: Any?): Boolean =
+  cType is CInteger &&
+    cType.isSsigned &&
+    cType !is CPointer &&
+    cType !is CArray &&
+    cType !is CStruct
 
 private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
   when (this) {

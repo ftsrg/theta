@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,5 +65,16 @@ public class CFunction extends CStatement {
 
     public Set<VarDecl<?>> getAtomicVariables() {
         return atomicVariables;
+    }
+
+    /** Statements run on every exit of the function, after the return value is set. */
+    private CStatement epilogue;
+
+    public CStatement getEpilogue() {
+        return epilogue;
+    }
+
+    public void setEpilogue(CStatement epilogue) {
+        this.epilogue = epilogue;
     }
 }

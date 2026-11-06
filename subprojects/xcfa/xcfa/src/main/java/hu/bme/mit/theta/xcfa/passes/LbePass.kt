@@ -273,6 +273,7 @@ class LbePass(
   private fun removeMiddleLocation(location: XcfaLocation): Boolean {
     if (location.outgoingEdges.size != 1) return false
     if (location.name.contains("__THETA_")) return false // these must remain in the trace
+    if (location.metadata.keepsLocation()) return false
     val outEdge = location.outgoingEdges.first()
     if (
       location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } } ||

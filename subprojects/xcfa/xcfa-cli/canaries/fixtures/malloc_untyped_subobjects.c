@@ -1,5 +1,6 @@
-// The block comes from a wrapper, so where it is allocated its type is unknown and its sub-objects
-// cannot be: the multi model hands the program to flat, which lays the members out inline.
+// The block comes from a wrapper, so where it is allocated its length is a parameter and its
+// sub-objects cannot be allocated: the multi model hands the program to flat, which lays the
+// members out inline.
 #include <stdlib.h>
 extern void abort(void);
 void reach_error(void) { abort(); }

@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
 import java.util.*
 import java.util.function.Predicate
@@ -126,22 +127,21 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
     val enabledProcesses = enabledActionsByProcess.keys.toList().shuffled(random)
     return enabledProcesses.map { pid ->
       val firstProcesses = mutableSetOf(pid)
-      checkMutexBlocks(state, pid, firstProcesses, enabledActionsByProcess)
+      checkBlocks(state, pid, firstProcesses, enabledActionsByProcess)
       firstProcesses.flatMap { enabledActionsByProcess[it] ?: emptyList() }
     }
   }
 
   /**
-   * Checks whether a process is blocked by a mutex and if it is, it adds the process that blocks it
-   * to the set of first processes.
+   * Checks whether a process is blocked by a mutex or join and adds the process that blocks it to
+   * the set of first processes.
    *
    * @param state the current state
    * @param pid the process whose blocking is to be checked
    * @param firstProcesses the set of first processes
    * @param enabledActionsByProcess the enabled actions grouped by processes
-   * @return the set of first processes
    */
-  private fun checkMutexBlocks(
+  private fun checkBlocks(
     state: XcfaState<out PtrState<out ExprState>>,
     pid: Int,
     firstProcesses: MutableSet<Int>,
@@ -154,30 +154,37 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
         enabledActionsByProcess[pid]?.none { action -> action.target == edge.target } ?: true
       }
     disabledOutEdges.forEach { edge ->
-      edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
-        fence.blockingMutexes(state).forEach { mutex ->
-          if (!mutex.isKnown() || state.mutexes.keys.any { !it.isKnown() }) {
-            state.mutexes.values
-              .flatMap { it.keys }
-              .toSet()
-              .forEach { pid2 ->
-                if (pid2 !in firstProcesses) {
-                  firstProcesses.add(pid2)
-                  checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
-                }
-              }
-          } else {
-            state.mutexes[mutex]?.keys?.forEach { pid2 ->
-              if (pid2 !in firstProcesses) {
-                firstProcesses.add(pid2)
-                checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
-              }
-            }
-          }
+      blockingPids(state, pid, edge).forEach { pid2 ->
+        if (firstProcesses.add(pid2)) {
+          checkBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
         }
       }
     }
   }
+
+  private fun blockingPids(
+    state: XcfaState<out PtrState<out ExprState>>,
+    pid: Int,
+    edge: XcfaEdge,
+  ): Set<Int> =
+    edge.label
+      .changeVars(state.processes.getValue(pid).varLookup.peek())
+      .getFlatLabels()
+      .flatMap { label ->
+        when (label) {
+          is JoinLabel ->
+            listOfNotNull(state.threadLookup[label.pidVar]).filter { it in state.processes }
+          is FenceLabel ->
+            label.blockingMutexes(state).flatMap { mutex ->
+              if (!mutex.isKnown() || state.mutexes.keys.any { !it.isKnown() })
+                state.mutexes.values.flatMap { it.keys }
+              else state.mutexes[mutex]?.keys ?: emptySet()
+            }
+          else -> emptyList()
+        }
+      }
+      .filter { it != pid && it in state.processes }
+      .toSet()
 
   /**
    * Calculates a source set of enabled actions starting from a particular action.
@@ -202,16 +209,7 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
         .filter { enabledActions.none { action -> action.pid == it.key } }
         .flatMap { (pid, processState) ->
           processState.locs.peek().outgoingEdges.mapNotNull { edge ->
-            val blockingPids =
-              edge
-                .getFlatLabels()
-                .flatMap { label ->
-                  (label as? FenceLabel)?.blockingMutexes(state)?.flatMap { mutex ->
-                    state.mutexes[mutex]?.keys?.filter { it != pid && it !in firstActionPids }
-                      ?: emptyList()
-                  } ?: emptyList()
-                }
-                .toSet()
+            val blockingPids = blockingPids(state, pid, edge) - firstActionPids
             if (blockingPids.isEmpty()) null else XcfaAction(pid, edge) to blockingPids
           }
         }
@@ -246,7 +244,10 @@ open class XcfaSporLts(protected val xcfa: XCFA, private val random: Random) :
             }
           } else {
             // otherwise, add the blocking actions
-            val blockingActions = enabledActions.filter { it.pid in blockingPids }.toSet()
+            val blockingProcesses = blockingPids.toMutableSet()
+            val byProcess = enabledActions.groupBy { it.pid }
+            blockingPids.forEach { checkBlocks(state, it, blockingProcesses, byProcess) }
+            val blockingActions = enabledActions.filter { it.pid in blockingProcesses }.toSet()
             addedNewAction = sourceSet.addAll(blockingActions) || addedNewAction
             otherActions.removeAll(blockingActions)
           }

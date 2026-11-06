@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -210,6 +211,31 @@ class XcfaCliNonTerminationVerifyTest {
     assertTrue(temp.resolve("witness.yml").exists())
     val witnessContents = temp.resolve("witness.yml").toFile().readText()
     assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
+  }
+
+  @Test
+  fun testCVerifyBoundedWritesCycle() {
+    // array values are not pinned by the trace, so only the lasso constraint makes them repeat
+    val temp = createTempDirectory()
+    val params =
+      arrayOf(
+        "--backend",
+        "BOUNDED",
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource("/c/nontermination/array_lasso.c")!!.path,
+        "--property",
+        javaClass.getResource("/c/nontermination/prop/termination.prp")!!.path,
+        "--stacktrace",
+        "--output-directory",
+        temp.absolutePathString(),
+        "--svcomp",
+      )
+    main(params)
+    assertTrue(isWitnessViolation(temp), "No violation witness was produced!")
+    val witnessContents = temp.resolve("witness.yml").toFile().readText()
+    assertTrue("action: 'cycle'" in witnessContents, "The witness has no cycle!")
   }
 
   @ParameterizedTest
