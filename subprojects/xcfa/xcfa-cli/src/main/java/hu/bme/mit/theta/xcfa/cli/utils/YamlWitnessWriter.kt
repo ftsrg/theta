@@ -67,6 +67,7 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -185,7 +186,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           YamlWitness(
             entryType = EntryType.INVARIANTS,
             metadata = metadata,
-            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
+            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext, property),
           )
 
         witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
@@ -1291,7 +1292,11 @@ private class ThreadIdEmission(
   }
 }
 
-private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<ContentItem> {
+private fun Proof.toContent(
+  inputFile: File,
+  parseContext: ParseContext,
+  property: XcfaProperty? = null,
+): List<ContentItem> {
   if (this is ARG<*, *>) {
     val locMap =
       nodes
@@ -1329,6 +1334,17 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
   if (this is DssInvariants) return toContent(inputFile, parseContext)
   if (this is LocationInvariants && isTransitionInvariant)
     return transitionInvariantContent(inputFile, parseContext)
+  if (
+    this is LocationInvariants &&
+      !StaticCoiPass.enabled &&
+      property?.inputProperty in setOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.OVERFLOW)
+  )
+  // the verdict is already decided: an empty witness is valid, a failed export must not cost it
+  return try {
+      loopInvariantContent(inputFile, parseContext)
+    } catch (_: Throwable) {
+      listOf()
+    }
   return listOf()
 }
 
