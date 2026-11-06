@@ -27,6 +27,8 @@ import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.params.exitProcess
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.TerminationWitnessPass
+import hu.bme.mit.theta.xcfa.witnesses.EntryType
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.FileNotFoundException
@@ -76,10 +78,16 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): XcfaProperty =
         )
         XcfaProperty(
           iP.inputProperty,
-          WitnessInfo(witness) { p: ParseContext -> ApplyWitnessPass(p, witness) },
+          if (iP.inputProperty == TERMINATION && witness.entryType == EntryType.INVARIANTS)
+            WitnessInfo(witness) { p: ParseContext -> TerminationWitnessPass(p, witness) }
+          else WitnessInfo(witness) { p: ParseContext -> ApplyWitnessPass(p, witness) },
         )
       } ?: iP
     }
+
+fun isTerminationCorrectnessWitness(property: XcfaProperty): Boolean =
+  property.inputProperty == TERMINATION &&
+    property.witness?.witness?.entryType == EntryType.INVARIANTS
 
 class StringToXcfaPropertyConverter : IStringConverter<XcfaProperty> {
   override fun convert(input: String): XcfaProperty {

@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
+import hu.bme.mit.theta.xcfa.cli.utils.isTerminationCorrectnessWitness
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.utils.unsafeDependsOnOverApproximation
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
@@ -118,7 +119,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     }
   }
 
-  UnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+  // the loop heads of a termination witness must remain
+  UnrollPass.UNROLL_LIMIT =
+    if (isTerminationCorrectnessWitness(config.inputConfig.property)) 0
+    else config.frontendConfig.loopUnroll
   UnrollPass.FORCE_UNROLL_LIMIT =
     if (config.inputConfig.witness == null) config.frontendConfig.forceUnroll else -1
   UnrollPass.UNROLL_RECURSION_LIMIT =
@@ -366,6 +370,14 @@ private fun buildFrontend(
       check(cConfig.arithmetic != ArchitectureConfig.ArithmeticType.integer) {
         "--memory-model bytes requires bitvector arithmetic, not --arithmetic integer"
       }
+      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+      parseContext.arithmetic = cConfig.arithmetic
+    }
+    // The liveness-to-safety reduction validating a termination witness needs finitely many states
+    if (
+      isTerminationCorrectnessWitness(config.inputConfig.property) &&
+        cConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient
+    ) {
       cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
       parseContext.arithmetic = cConfig.arithmetic
     }
