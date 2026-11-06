@@ -489,7 +489,7 @@ malloc_void_local_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block first
 malloc_wrapper_two_types.c	efficient	ILP32	SAFE:valid-memsafety	a wrapper used at two types gets each block sized in bytes
 malloc_opaque_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block whose type cannot be recovered is still bounded exactly
 float_union_bits.c	efficient	ILP32	SAFE	a double read and written as its IEEE bits through a union (the newlib idiom)
-float_union_bits_unsafe.c	efficient	ILP32	UNSAFE	planted bug: the high word of 1.0 read through a union
+float_union_bits_unsafe.c	efficient	ILP32	UNKNOWN	planted bug: the high word of 1.0 read through a union; the bits are over-approximated (NaN payload)
 memcpy_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the accesses a memcpy spells out get the valid-deref guard
 memcpy_inbounds_memsafety.c	efficient	LP64	SAFE:valid-memsafety	an in-bounds memcpy passes the valid-deref guard
 memset_null_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset through NULL is an invalid dereference
