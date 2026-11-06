@@ -53,6 +53,10 @@ import hu.bme.mit.theta.xcfa.utils.typeInterval
  * easily as invent one, where unconstrained is a safe over-approximation. It is safe for a Safe
  * verdict only, so each value made up here is recorded in [XcfaBuilder.overApproximatedVars].
  *
+ * Under the memory-safety properties a call also leaves markers for what it reads and writes, which
+ * [FormatAccessPass] resolves. Only `*printf`, `puts` and `fputs` do; other stubs access nothing
+ * the guards see.
+ *
  * ⚠️ Not modelled here, deliberately:
  * - a call flagged [InvokeLabel.isLibraryFunction]. That flag means "an later pass or the analysis
  *   handles this one specifically" -- [CLibraryFunctionsPass] sets it on the thread-specific-key
@@ -161,6 +165,13 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strerror" to Stub(freshString = 128),
       )
 
+    /** The argument position of the format, for the calls that read their `%s` arguments. */
+    private val READ_FORMAT_INDEX =
+      mapOf("printf" to 1, "fprintf" to 2, "sprintf" to 2, "snprintf" to 3, "asprintf" to 2)
+
+    /** The calls whose first argument is a string they read; `perror` also takes NULL. */
+    private val STRING_ARGUMENT = setOf("puts", "fputs")
+
     /** The argument position of the format, for the calls whose return a format bounds. */
     private val FORMAT_INDEX =
       mapOf(
@@ -230,14 +241,18 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     // `printf`. This is the argument *value*; what a pointer argument points AT is a separate
     // question, answered (for the written buffers only) below.
     var format: VarDecl<*>? = null
+    val arguments = invoke.params.toMutableList<Expr<*>>()
     for (i in 1 until invoke.params.size) {
       val arg = invoke.params[i]
       if (arg is LitExpr<*>) continue // a constant reads nothing
       val read = Var("__stub_${invoke.name}_arg_${counter++}", arg.type)
       builder.addVar(read)
       out.add(AssignStmtLabel(read, arg, metadata = invoke.metadata))
+      arguments[i] = read.ref
       if (i == FORMAT_INDEX[invoke.name]) format = read
     }
+    if (parseContext.isCheckMemsafety) out.addAll(accessMarkers(invoke, arguments, builder))
+    if (written.isNotEmpty()) builder.parent.bufferStubCalls++
 
     uniqueWarningLogger.write(
       Logger.Level.INFO,
@@ -309,6 +324,37 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
       }
     }
     return out
+  }
+
+  /** What the guards need of this call; `arguments` hold the values it reads. */
+  private fun accessMarkers(
+    invoke: InvokeLabel,
+    arguments: List<Expr<*>>,
+    builder: XcfaProcedureBuilder,
+  ): List<XcfaLabel> {
+    fun marker(name: String, params: List<Expr<*>>) =
+      InvokeLabel(name, params, metadata = invoke.metadata)
+    if (invoke.name in STRING_ARGUMENT && arguments.size > 1) {
+      return listOf(marker(FormatAccessPass.PLAIN_STRING_READ, listOf(arguments[1])))
+    }
+    val formatAt = READ_FORMAT_INDEX[invoke.name]?.takeIf { it < arguments.size } ?: return listOf()
+    val format = (arguments[formatAt] as? RefExpr<*>)?.decl as? VarDecl<*> ?: return listOf()
+    val id = builder.parent.formatMarkers.size
+    builder.parent.formatMarkers[id] = format
+    val marker = CComplexType.getSignedInt(parseContext).getValue("$id")
+    val rest = arguments.subList(formatAt + 1, arguments.size)
+    return listOfNotNull(
+      marker(FormatAccessPass.FORMAT_READS, listOf(marker) + rest),
+      if (invoke.name == "sprintf") {
+        marker(FormatAccessPass.FORMAT_WRITE, listOf(marker, arguments[1]) + rest)
+      } else null,
+      if (invoke.name == "snprintf") {
+        marker(
+          FormatAccessPass.FORMAT_WRITE_BOUNDED,
+          listOf(marker, arguments[1], invoke.params[2]) + rest,
+        )
+      } else null,
+    )
   }
 
   /**

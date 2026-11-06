@@ -334,3 +334,7 @@ fp_mathfunc_bounds.c	efficient	LP64	SAFE	exp/tanh/log/sin/acos/atanh are uninter
 fp_mathfunc_unsafe_unreliable.c	efficient	LP64	UNKNOWN	an Unsafe verdict through an uninterpreted math function is reported as Unknown
 dbl_epsilon_macro.c	efficient	LP64	SAFE	DBL_EPSILON is 2^-52; FLT_EPSILON/FLT_MIN/FLT_MAX parse (no C suffix) with exact values
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap under bytes	bytes
+printf_use_after_free.c	efficient	LP64	UNSAFE:valid-memsafety	printf reads the string of a %s, so a freed one is invalid
+printf_terminated_string.c	efficient	LP64	SAFE:valid-memsafety	a terminated string passes the checks of a %s
+snprintf_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	snprintf with a size beyond the buffer writes past it
+snprintf_fits.c	efficient	LP64	SAFE:valid-memsafety	snprintf of a string that fits stays in the buffer

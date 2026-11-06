@@ -195,10 +195,15 @@ class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
    * Which string literals a variable can hold, over all definitions in the model, and the text of
    * each literal from its initialization.
    */
-  private class Literals(xcfa: XcfaBuilder) {
+  internal class Literals(xcfa: XcfaBuilder) {
     /** The sources of each definition of a variable, or null for a definition of unknown value. */
     private val definitions = mutableMapOf<VarDecl<*>, MutableList<List<VarDecl<*>>?>>()
     private val cells = mutableMapOf<VarDecl<*>, MutableMap<Int, Int>>()
+
+    /** Constant folding replaces a literal by its base id, in values and in cell addresses. */
+    private val bases = mutableMapOf<BigInteger, VarDecl<*>>()
+    private val constants = mutableMapOf<VarDecl<*>, MutableSet<BigInteger>>()
+    private val baseCells = mutableMapOf<BigInteger, MutableMap<Int, Int>>()
 
     init {
       xcfa.getProcedures().forEach { procedure ->
@@ -208,14 +213,24 @@ class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
 
     private fun visit(label: XcfaLabel) {
       when (val stmt = (label as? StmtLabel)?.stmt) {
-        is AssignStmt<*> -> define(stmt.varDecl, sourcesOf(stmt.expr))
+        is AssignStmt<*> -> {
+          val constant = stmt.expr.asConstantBigInteger()
+          if (constant != null && stmt.varDecl.isStringLiteral()) bases[constant] = stmt.varDecl
+          if (constant != null) constants.getOrPut(stmt.varDecl) { mutableSetOf() }.add(constant)
+          define(stmt.varDecl, if (constant != null) listOf() else sourcesOf(stmt.expr))
+        }
         is HavocStmt<*> -> define(stmt.varDecl, null)
         is MemoryAssignStmt<*, *, *> -> {
           val literal = (stmt.deref.array as? RefExpr<*>)?.decl as? VarDecl<*>
+          val base = stmt.deref.array.asConstantBigInteger()
           val index = stmt.deref.offset.asConstantBigInteger()
           val value = stmt.expr.asConstantBigInteger()
-          if (literal != null && literal.isStringLiteral() && index != null && value != null) {
-            cells.getOrPut(literal) { mutableMapOf() }[index.toInt()] = value.toInt()
+          if (index != null && value != null) {
+            if (literal != null && literal.isStringLiteral()) {
+              cells.getOrPut(literal) { mutableMapOf() }[index.toInt()] = value.toInt()
+            }
+            if (base != null)
+              baseCells.getOrPut(base) { mutableMapOf() }[index.toInt()] = value.toInt()
           }
         }
         null ->
@@ -253,6 +268,9 @@ class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
       }
     }
 
+    /** Whether [expr] is the folded base id of a string literal. */
+    fun isLiteralBase(expr: Expr<*>): Boolean = expr.asConstantBigInteger() in bases.keys
+
     /** The texts that [variable] can hold, or null if one of its values is not a known literal. */
     fun textsOf(variable: VarDecl<*>): List<String>? {
       val literals = literalsOf(variable, mutableSetOf()) ?: return null
@@ -264,13 +282,15 @@ class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
       if (variable.isStringLiteral()) return setOf(variable)
       if (!seen.add(variable)) return emptySet()
       val defs = definitions[variable] ?: return null
-      return defs.flatMapTo(mutableSetOf()) { sources ->
+      val folded = constants[variable].orEmpty().map { bases[it] ?: return null }
+      return defs.flatMapTo(folded.toMutableSet()) { sources ->
         (sources ?: return null).flatMap { literalsOf(it, seen) ?: return null }
       }
     }
 
     private fun textOf(literal: VarDecl<*>): String? {
-      val content = cells[literal] ?: return null
+      val base = bases.entries.firstOrNull { it.value == literal }?.key
+      val content = cells[literal] ?: baseCells[base] ?: return null
       val text = StringBuilder()
       var i = 0
       while (true) {
