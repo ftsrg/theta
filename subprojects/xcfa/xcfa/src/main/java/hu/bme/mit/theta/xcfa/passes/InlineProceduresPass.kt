@@ -71,9 +71,6 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
               if (procedure.unsafeUnrollUsed) {
                 builder.setUnsafeUnroll()
               }
-              if (procedure.overApproximationUsed) {
-                builder.setOverApproximation()
-              }
             } else {
               builder.addEdge(e)
             }

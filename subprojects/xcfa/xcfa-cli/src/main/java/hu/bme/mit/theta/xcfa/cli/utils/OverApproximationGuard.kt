@@ -56,18 +56,27 @@ fun unsafeDependsOnOverApproximation(cex: Cex?, xcfa: XCFA): Boolean {
     // The analysis renames the locals of each process, and its labels name these instances. Names
     // identify them: equal instances are not always the same object.
     val byName = recorded.mapKeys { it.key.name }.toMutableMap()
+    val scratch = xcfa.overApproximationScratchVars
+    val scratchNames = scratch.map { it.name }.toMutableSet()
     trace.states.forEach { state ->
       (state as? XcfaState<*>)?.processes?.values?.forEach { process ->
         process.varLookup.forEach { frame ->
           frame.forEach { (original, instance) ->
             if (original in recorded) byName[instance.name] = recorded[original]
+            if (original in scratch) scratchNames += instance.name
           }
         }
       }
     }
+    // An assumption over scratch variables alone, one of them recorded, is a fact of the pass.
+    val isFact: (Expr<BoolType>) -> Boolean = { cond ->
+      val names = ExprUtils.getVars(cond).map { it.name }
+      names.any { it in byName } && names.all { it in scratchNames }
+    }
     return dependsOnOverApproximation(
       trace.actions.flatMap { (it as XcfaAction).label.getFlatLabels() },
       byName,
+      isFact,
     )
   }
   return (xcfa.procedures + xcfa.initProcedures.map { it.first }).any { procedure ->
@@ -83,11 +92,14 @@ fun unsafeDependsOnOverApproximation(cex: Cex?, xcfa: XCFA): Boolean {
  *
  * An assumption that holds for every value of the C type of such a variable (the range that the
  * passes state after its havoc) is not in the slice: the real value satisfies it too. [recorded]
- * maps the variable names to these intervals.
+ * maps the variable names to these intervals. Neither is an assumption that [isFact] accepts (see
+ * [XCFA.overApproximationScratchVars]): the real value satisfies it whatever its other variables
+ * hold.
  */
 internal fun dependsOnOverApproximation(
   labels: List<XcfaLabel>,
   recorded: Map<String, ClosedRange<BigInteger>?>,
+  isFact: (Expr<BoolType>) -> Boolean = { false },
 ): Boolean {
   val relevant = mutableSetOf<String>()
   var memoryRelevant = false
@@ -95,7 +107,7 @@ internal fun dependsOnOverApproximation(
     val label = labels[i]
     when (val stmt = (label as? StmtLabel)?.stmt) {
       is AssumeStmt ->
-        if (!holdsForTheType(stmt.cond, recorded)) {
+        if (!holdsForTheType(stmt.cond, recorded) && !isFact(stmt.cond)) {
           relevant += ExprUtils.getVars(stmt.cond).map { it.name }
           if (stmt.cond.dereferences.isNotEmpty()) memoryRelevant = true
         }

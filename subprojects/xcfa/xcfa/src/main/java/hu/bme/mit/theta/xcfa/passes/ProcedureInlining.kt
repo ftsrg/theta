@@ -173,6 +173,15 @@ internal fun inlineCallSite(
         Decls.Var("${v.name}_inl${XcfaLocation.uniqueCounter()}", v.type)
       }
   val calleeVars = callee.vars.map { frame[it] ?: it }
+  // A renamed copy of an over-approximated variable is just as over-approximated; without this,
+  // a counterexample through an unrolled recursive frame would slip past xcfa-cli's check.
+  frame.forEach { (original, copy) ->
+    if (original in builder.overApproximatedVars) {
+      builder.overApproximatedVars[copy] = builder.overApproximatedVars[original]
+    }
+    if (original in builder.overApproximationScratchVars)
+      builder.overApproximationScratchVars += copy
+  }
   val calleeParams = callee.params.map { (v, dir) -> (frame[v] ?: v) to dir }
 
   val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
