@@ -26,7 +26,6 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -46,6 +45,7 @@ class XcfaCliTerminationValidateTest {
 
     private const val SAFE = "Safe"
     private const val UNSAFE = "Unsafe"
+    private const val UNSOLVED = "unsolved"
     private val VERDICT = Regex("""\(SafetyResult (\w+)""")
 
     @BeforeAll
@@ -100,8 +100,8 @@ class XcfaCliTerminationValidateTest {
   @MethodSource("uncheckableWitnesses")
   fun testUncheckableWitness(program: String, witness: String, extraArgs: List<String>) {
     // a backend that cannot check the witness throws while it is built
-    val verdict = runCatching { validate(program, witness, extraArgs) }.getOrDefault("unsolved")
-    assertNotEquals(SAFE, verdict)
+    val verdict = runCatching { validate(program, witness, extraArgs) }.getOrDefault(UNSOLVED)
+    assertEquals(UNSOLVED, verdict)
   }
 
   @Test
@@ -180,6 +180,6 @@ class XcfaCliTerminationValidateTest {
         print(output.readText())
       }
     }
-    return VERDICT.findAll(output.readText()).lastOrNull()?.groupValues?.get(1) ?: "unsolved"
+    return VERDICT.findAll(output.readText()).lastOrNull()?.groupValues?.get(1) ?: UNSOLVED
   }
 }
