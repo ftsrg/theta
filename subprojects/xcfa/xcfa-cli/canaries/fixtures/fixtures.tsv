@@ -621,3 +621,7 @@ pointer_negative_index.c	efficient	ILP32	SAFE:valid-memsafety	a negative index f
 pointer_negative_index.c	efficient	ILP32	SAFE:valid-memsafety	a negative index from a mid-object pointer stays inside the object	flat
 pointer_negative_index_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a negative index past the start of the object is an invalid dereference	multi
 pointer_negative_index_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a negative index past the start of the object is an invalid dereference	flat
+ternary_array_index.c	efficient	LP64	UNSAFE	an unparenthesized ?: array index selects by its guard
+ternary_funcptr_table_index.c	efficient	LP64	UNSAFE	a call through a function-pointer table indexed by ?: dispatches to the selected element
+index_side_effects.c	efficient	LP64	SAFE	assignment and comma operators in an array index keep their side effects and sequencing
+ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or a case label selects by its guard

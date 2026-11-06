@@ -3999,6 +3999,67 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return ctx.expression().accept(this);
     }
 
+    // Unparenthesized comma, conditional and assignment operators (an array index, a builtin's
+    // argument, a case label) are lowered as if parenthesized: visitChildren kept only the last
+    // operand. Without a function visitor (typeof) only the type matters.
+
+    @Override
+    public Expr<?> visitExpression(CParser.ExpressionContext ctx) {
+        final List<AssignmentExpressionContext> operands = ctx.assignmentExpression();
+        if (operands.size() == 1 || functionVisitor == null) {
+            return operands.get(operands.size() - 1).accept(this);
+        }
+        return lowerAsParenthesized(ctx);
+    }
+
+    @Override
+    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
+        if (ctx.ifFalse == null) {
+            return ctx.logicalOrExpression().accept(this);
+        }
+        if (functionVisitor == null) {
+            final Expr<?> guard = ctx.logicalOrExpression().accept(this);
+            final Expr<?> lhs = ctx.ifTrue == null ? guard : ctx.ifTrue.accept(this);
+            final Expr<?> rhs = ctx.ifFalse.accept(this);
+            final CComplexType type =
+                    getSmallestCommonType(
+                            List.of(
+                                    CComplexType.getType(lhs, parseContext),
+                                    CComplexType.getType(rhs, parseContext)),
+                            parseContext);
+            final Expr<?> ite =
+                    Ite(
+                            Neq(CComplexType.getType(guard, parseContext).getNullValue(), guard),
+                            type.castTo(lhs),
+                            type.castTo(rhs));
+            parseContext.getMetadata().create(ite, "cType", type);
+            return ite;
+        }
+        return lowerAsParenthesized(ctx);
+    }
+
+    @Override
+    public Expr<?> visitAssignmentExpressionAssignmentExpression(
+            CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
+        if (functionVisitor == null) {
+            return ctx.unaryExpression().accept(this);
+        }
+        return lowerAsParenthesized(ctx);
+    }
+
+    private Expr<?> lowerAsParenthesized(org.antlr.v4.runtime.ParserRuleContext ctx) {
+        CStatement statement = ctx.accept(functionVisitor);
+        if (ctx instanceof CParser.ExpressionContext) {
+            queueValueStatement(statement);
+            return statement.getExpression();
+        }
+        // Wrapped so that queueValueStatement defers the operator's own post-statements as well.
+        CCompound wrapper = new CCompound(parseContext);
+        wrapper.addCStatement(statement);
+        queueValueStatement(wrapper);
+        return statement.getExpression();
+    }
+
     @Override
     public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
         uniqueWarningLogger.write(
@@ -4288,7 +4349,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         var assignments = ctx.expression().assignmentExpression();
         var assignment = assignments.get(assignments.size() - 1);
         if (assignment instanceof AssignmentExpressionConditionalExpressionContext cond) {
-            return cond.conditionalExpression().logicalOrExpression().accept(this);
+            return cond.conditionalExpression().accept(this);
         } else {
             throw new RuntimeException("Assignments not supported without a function visitor.");
         }
