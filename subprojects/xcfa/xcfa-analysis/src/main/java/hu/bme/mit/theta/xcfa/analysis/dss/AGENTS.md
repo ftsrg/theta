@@ -17,8 +17,10 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - Checkers are injected factories (`(XCFA) -> XcfaChecker`); this package never builds one itself.
 - Build checkers and solvers inside `withSolverConstructionLock` and run them inside
   `runWorkerConfig`, whose solver scope releases them; otherwise the heap fills up.
-- Violation conditions are exact; a per-path condition may under-approximate, never
-  over-approximate.
+- Sent violation conditions are exact; a per-path condition may under-approximate, never
+  over-approximate. A `ViolationGeneralizer` generalization over-approximates, so it is only a
+  probe target: a probe's UNSAFE result is discarded, and a generalization never reaches a
+  message, a witness record or a path condition.
 - Every violation condition goes through `DssAuxVars.canonicalize`: repeated conditions are
   recognized by structural equality.
 - An undecided query of `DssPredicateOperators` throws `DssUndecidedQueryException`, never a

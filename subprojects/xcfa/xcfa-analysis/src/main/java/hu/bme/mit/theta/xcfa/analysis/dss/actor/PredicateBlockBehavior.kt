@@ -36,6 +36,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ViolationGeneralizer
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectAssumePreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.combinePredPrecs
@@ -69,6 +71,10 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * A restriction (`DssRestrictionMessage`) is conjoined to every start state; violation conditions
  * stay exact, as they are computed from the block's own paths only. [finishing] marks one of its
  * network's `finishingBlocks`, which a finisher checker may analyze.
+ *
+ * With a positive [generalizationGas], a start state is first analyzed against a generalization of
+ * the received conditions ([ViolationGeneralizer]). Only its SAFE result is used: refuting the
+ * weaker target refutes the received conditions too. Its UNSAFE result is discarded.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
@@ -82,9 +88,14 @@ class PredicateBlockBehavior(
   private val solverFactory: SolverFactory? = null,
   private val trackSummaries: Boolean = false,
   finishing: Boolean = false,
+  generalizationGas: Int = 0,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
+
+  private val generalizer = generalizationGas.takeIf { it > 0 }?.let(::ViolationGeneralizer)
+
+  private val statistics = DssBlockStatistics()
 
   private data class Summary(val state: Expr<BoolType>, val precision: Set<Expr<BoolType>>) {
     val isTop: Boolean
@@ -221,9 +232,11 @@ class PredicateBlockBehavior(
     val condition =
       requireNotNull(message.violationCondition) { "Expected a violation condition in $message" }
     val sender = message.senderId
+    statistics.violationConditionsReceived++
     val old = violationConditions.remove(sender).orEmpty().toSet()
     if (operators.isUnsat(condition)) return false
     violationConditions[sender] = mutableListOf(condition)
+    generalizer?.record(sender, condition)
     return condition !in old
   }
 
@@ -267,6 +280,7 @@ class PredicateBlockBehavior(
         startStates.none { it.isTop }
     if (speculative) orderedStartStates += top() to true
     val violationCondition = if (violations.isEmpty()) null else Or(violations)
+    var generalization = generalizationOf(received)
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
@@ -281,6 +295,33 @@ class PredicateBlockBehavior(
       // Without the start state's atoms, the block-end abstraction can forget the precondition
       val startAtoms = listOf(start.state, restriction).collectPreds()
       val startState = start.copy(precision = precision + startAtoms)
+
+      // A speculative run looks for violations only, which a probe cannot find
+      val probe = generalization?.takeUnless { discardSummary }
+      if (probe != null && violationCondition != null) {
+        statistics.probes++
+        val probeStart =
+          startState.copy(precision = startState.precision + listOf(probe.condition).collectPreds())
+        val result =
+          try {
+            run(probeStart, Or(violationCondition, probe.condition), probe = true)
+          } catch (e: InterruptedException) {
+            throw e
+          } catch (e: Exception) {
+            // The exact run below decides; a probe must not fail an analysis that would succeed
+            RunResult.Unsafe(null)
+          }
+        if (result is RunResult.Safe) {
+          statistics.probesRefuted++
+          if (result.postcondition != False()) {
+            summaries += Summary(result.postcondition, result.precision)
+          }
+          continue
+        }
+        statistics.probesFailed++
+        generalizer?.failed(probe)
+        generalization = null
+      }
 
       when (val result = run(startState, violationCondition)) {
         is RunResult.Safe -> {
@@ -359,7 +400,9 @@ class PredicateBlockBehavior(
     violationCondition: Expr<BoolType>?,
     keepSpecificationTargets: Boolean = true,
     recordInvariants: Boolean = true,
+    probe: Boolean = false,
   ): RunResult {
+    statistics.analyses++
     val extraction =
       extractBlockXcfa(
         sourceProcedure,
@@ -383,8 +426,9 @@ class PredicateBlockBehavior(
       (result.prec.orElse(null) as? XcfaPrec<*>)?.let { ownPrecision += it.collectPreds() }
     }
     if (result.isUnsafe) {
+      // A probe's path may end in its may condition, so it says nothing about real error paths
       return RunResult.Unsafe(
-        if (usesPathViolations) pathViolation(result.asUnsafe().cex, extraction) else null
+        if (usesPathViolations && !probe) pathViolation(result.asUnsafe().cex, extraction) else null
       )
     }
     val proof = result.asSafe().proof
@@ -572,8 +616,25 @@ class PredicateBlockBehavior(
     if (condition == null || condition == False()) return emptyList()
     if (block.isRoot && operators.isUnsat(condition)) return emptyList()
     reportedViolationConditions += condition
+    statistics.violationConditionsSent++
+    statistics.largestViolationCondition =
+      maxOf(statistics.largestViolationCondition, ExprUtils.getAtoms(condition).size)
     return listOf(DssViolationConditionMessage(block.id, condition))
   }
+
+  /** A query the solver cannot decide skips the generalization, never the analysis. */
+  private fun generalizationOf(
+    received: List<Pair<String, Expr<BoolType>>>
+  ): ViolationGeneralizer.Generalization? {
+    if (received.isEmpty()) return null
+    return try {
+      generalizer?.generalize(received, operators::isUnsat)
+    } catch (e: DssUndecidedQueryException) {
+      null
+    }
+  }
+
+  override fun statistics(): Map<String, String> = statistics.toMap()
 
   override fun witness(): DssBlockWitness =
     DssBlockWitness(invariants(), violationRecords.toList(), reportedViolationConditions.toList())

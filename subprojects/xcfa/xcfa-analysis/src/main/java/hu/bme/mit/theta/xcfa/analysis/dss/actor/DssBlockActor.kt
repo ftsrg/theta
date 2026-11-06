@@ -37,7 +37,7 @@ class DssBlockActor(
       DssMessageType.EXCEPTION,
       DssMessageType.RESULT -> {
         shutdown = true
-        listOf(DssStatisticsMessage(id))
+        listOf(DssStatisticsMessage(id, behavior.statistics()))
       }
       DssMessageType.STATISTIC -> emptyList()
     }

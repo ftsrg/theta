@@ -63,6 +63,7 @@ class XcfaCliDssTest {
           listOf("--output", "ALL"),
           listOf("--dss-reset-precision"),
           listOf("--dss-reuse-block-precision"),
+          listOf("--dss-generalize-violations", "--dss-generalization-gas", "1"),
           listOf("--dss-global-predicate-pool", "false"),
           listOf("--dss-cegar-domain", "EXPL"),
           listOf("--dss-cegar-domain", "EXPL", "--dss-reuse-block-precision"),

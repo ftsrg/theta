@@ -110,6 +110,19 @@ class DssVerdictTest {
         .stream()
     }
 
+    /** Every loop program, with a cyclic, an acyclic and an absorbing block graph. */
+    @JvmStatic
+    fun generalizationCases(): Stream<Arguments> =
+      loops.keys
+        .flatMap { program ->
+          listOf(Decomposition.LINEAR, Decomposition.ACYCLIC, Decomposition.MIN_CUT_ABSORB)
+            .flatMap { d -> listOf(true, false).map { safe -> Arguments.of(program, d, safe) } }
+        }
+        .filterNot {
+          it.get()[0] == "error inside a loop" && it.get()[2] == true && it.get()[1] in cyclic
+        }
+        .stream()
+
     /** Every program, both new directions, the default and an acyclic decomposition. */
     @JvmStatic
     fun directionCases(): Stream<Arguments> =
@@ -344,6 +357,7 @@ class DssVerdictTest {
     wholeProgram: XCFA,
     blockGraph: BlockGraph,
     useGlobalPredicatePool: Boolean = true,
+    generalizationGas: Int = 0,
   ): DssResult {
     blockGraph.checkConsistency()
     val procedure = wholeProgram.procedures.single()
@@ -352,10 +366,29 @@ class DssVerdictTest {
       runDssActorsSequentially(
         blockGraph,
         behaviorFor = { block ->
-          PredicateBlockBehavior(wholeProgram, procedure, block, roster, useGlobalPredicatePool)
+          PredicateBlockBehavior(
+            wholeProgram,
+            procedure,
+            block,
+            roster,
+            useGlobalPredicatePool,
+            generalizationGas = generalizationGas,
+          )
         },
       )
     }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("generalizationCases")
+  fun `generalized violation conditions keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    assertEquals(expected(safe), checkDecomposed(xcfa, blockGraph, generalizationGas = 2))
   }
 
   private fun expected(safe: Boolean) = if (safe) DssResult.SAFE else DssResult.UNSAFE

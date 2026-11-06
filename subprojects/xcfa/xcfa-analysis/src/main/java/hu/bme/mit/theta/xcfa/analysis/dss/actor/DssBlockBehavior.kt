@@ -27,4 +27,30 @@ interface DssBlockBehavior {
   fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> = emptyList()
 
   fun witness(): DssBlockWitness? = null
+
+  /** Counters for the block's `STATISTIC` message. */
+  fun statistics(): Map<String, String> = emptyMap()
+}
+
+/** The counters of a [PredicateBlockBehavior]. */
+class DssBlockStatistics {
+  var analyses = 0
+  var violationConditionsReceived = 0
+  var violationConditionsSent = 0
+  var largestViolationCondition = 0
+  var probes = 0
+  var probesRefuted = 0
+  var probesFailed = 0
+
+  fun toMap(): Map<String, String> =
+    linkedMapOf(
+        "analyses" to analyses,
+        "vcReceived" to violationConditionsReceived,
+        "vcSent" to violationConditionsSent,
+        "vcMaxAtoms" to largestViolationCondition,
+        "probes" to probes,
+        "probesRefuted" to probesRefuted,
+        "probesFailed" to probesFailed,
+      )
+      .mapValues { it.value.toString() }
 }
