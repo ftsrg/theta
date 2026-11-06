@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class SolverUtilsTest {
                                 context.getFormulaManager()
                                         .getBitvectorFormulaManager()
                                         .makeBitvector(16, BigInteger.ZERO),
-                                FormulaType.getFloatingPointType(5, 10));
+                                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(5, 10));
 
         context.getFormulaManager()
                 .visit(

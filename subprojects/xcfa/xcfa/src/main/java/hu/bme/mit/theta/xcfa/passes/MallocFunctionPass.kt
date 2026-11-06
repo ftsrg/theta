@@ -15,29 +15,77 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.SubObjects
+import hu.bme.mit.theta.xcfa.utils.boundPointee
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+
+private const val REALLOCATES = "reallocates"
+
+/** The local flag choosing whether an allocation fails. */
+private const val FAILS = "__theta_alloc_fails"
+
+/** The most elements of a struct with sub-objects one `malloc` allocates them for. */
+private const val MAX_HEAP_ELEMENTS = 64
 
 /**
  * Transforms `malloc` into an address assignment out of the shared allocation counter, in the heap
  * residue class (see `POINTER_BASE_CLASSES`).
+ *
+ * Under flat addressing a block is instead the next slot of the address line, sized by the request
+ * (see `bumpAllocate`).
  *
  * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
  * and the object's size becomes the new one. A program must use realloc's return value whether or
  * not the block moved, so returning the same base preserves the observable contents exactly and
  * still gives the new bound to the memsafety size domain. What it does not model is the
  * invalidation of the old pointer, the same imprecision the analysis already has around frees;
- * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize.
+ * `realloc(NULL, n)` and `realloc(q, 0)` are likewise left as the in-place resize. Under flat
+ * addressing a block is grown in place, so when the program reallocates at all every heap block
+ * reserves at least [FlatAddressSpace.UNKNOWN_EXTENT] units; only growth beyond that overlaps the
+ * blocks allocated after it.
+ *
+ * A block of a struct type gets the sub-objects its cells hold (see [SubObjects]), as a stack
+ * object does, for each element when its size is a constant. When that is impossible -- the block
+ * is untyped, its element count is not constant, it ends in a flexible array member, or it is
+ * reallocated -- and the program reaches sub-objects at all, the multi model refuses and the
+ * program is rebuilt under flat, which lays them out inline. The type is the one the result is
+ * first bound to; a block later used as an unrelated struct type is not covered.
+ *
+ * Either call may also fail and return NULL (C11 7.22.3), leaving a reallocated block intact.
  *
  * Requires the ProcedureBuilder be `deterministic`.
  */
@@ -46,6 +94,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
     checkNotNull(builder.metaData["deterministic"])
+    reallocates(builder.parent)
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
     // snapshot's init-procedure edges (see ensureMallocVar).
     builder.firstAllocationRetType(parseContext, this::isMalloc)?.let {
@@ -68,7 +117,19 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           val labels =
             if (isMalloc(invokeLabel)) allocate(builder, invokeLabel, mallocVar)
             else reallocate(builder, invokeLabel)
-          builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
+          // Branches must start with an assume, so the outcome is a havoced flag.
+          val fails = failureFlag(builder)
+          val choice =
+            XcfaLocation(
+              "${e.source.name}_malloc${XcfaLocation.uniqueCounter()}",
+              metadata = e.source.metadata,
+            )
+          val havoc = StmtLabel(HavocStmt.of(fails))
+          builder.addEdge(XcfaEdge(e.source, choice, SequenceLabel(listOf(havoc)), e.metadata))
+          val succeed = listOf(StmtLabel(Assume(Not(fails.ref)))) + labels
+          builder.addEdge(XcfaEdge(choice, e.target, SequenceLabel(succeed), e.metadata))
+          val fail = listOf(StmtLabel(Assume(fails.ref))) + fail(invokeLabel)
+          builder.addEdge(XcfaEdge(choice, e.target, SequenceLabel(fail), e.metadata))
         }
       }
     }
@@ -82,6 +143,19 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   ): List<XcfaLabel> {
     val ret = invokeLabel.params[0] as RefExpr<*>
     val arg = invokeLabel.params[1]
+    val sizeLabels =
+      (if (parseContext.isCheckMemsafety)
+        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
+      else listOf()) + subObjects(builder, ret, arg)
+    if (parseContext.memoryModel.flatAddressing()) {
+      val reserved =
+        if (reallocates(builder.parent)) {
+          val type = CComplexType.getType(arg, parseContext)
+          val minimum = type.getValue(FlatAddressSpace.UNKNOWN_EXTENT.toString())
+          Ite<Type>(Gt(type.castTo(arg), minimum), type.castTo(arg), minimum)
+        } else arg
+      return builder.parent.bumpAllocate(parseContext, ret, reserved, heap = true) + sizeLabels
+    }
     val bump =
       AssignStmtLabel(
         mallocVar,
@@ -92,23 +166,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         ret.type,
         EmptyMetaData,
       )
-    val assignRet =
-      AssignStmtLabel(
-        ret,
-        cast(
-          FlatMemoryPass.flatBaseExpr(
-            mallocVar.ref,
-            CComplexType.getType(ret, parseContext),
-            parseContext,
-          ),
-          ret.type,
-        ),
-      )
-    return if (MemsafetyPass.enabled) {
-      listOf(bump, assignRet, builder.parent.allocate(parseContext, ret, arg))
-    } else {
-      listOf(bump, assignRet)
-    }
+    val assignRet = AssignStmtLabel(ret, cast(mallocVar.ref, ret.type))
+    return listOf(bump, assignRet) + sizeLabels
   }
 
   private fun reallocate(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): List<XcfaLabel> {
@@ -116,12 +175,116 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val oldPtr = invokeLabel.params[1]
     val newSize = invokeLabel.params[2]
     val keepBase = AssignStmtLabel(ret, cast(oldPtr, ret.type))
-    return if (MemsafetyPass.enabled) {
-      listOf(keepBase, builder.parent.allocate(parseContext, ret, newSize))
+    builder.boundPointee(parseContext, ret).let {
+      if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
+    }
+    return if (parseContext.isCheckMemsafety) {
+      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
     } else {
       listOf(keepBase)
     }
   }
+
+  private fun failureFlag(builder: XcfaProcedureBuilder): VarDecl<BoolType> {
+    val existing = builder.getVars().firstOrNull { it.name == FAILS }
+    return if (existing != null) cast(existing, Bool())
+    else Var(FAILS, Bool()).also(builder::addVar)
+  }
+
+  /** A failed allocation: NULL, leaving any reallocated block as it was. */
+  private fun fail(invokeLabel: InvokeLabel): List<XcfaLabel> {
+    val ret = invokeLabel.params[0] as RefExpr<*>
+    return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
+  }
+
+  /**
+   * The size recorded for memsafety, in the unit of dereference offsets: cells unless every cell is
+   * a byte. Without a known cell count the byte count would let overruns through.
+   */
+  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
+    if (!parseContext.memoryModel.byteAddressed())
+      builder.mallocCells(parseContext, ret, bytes)
+        ?: throw RequiresByteAddressedMemoryException("allocation of unknown element type")
+    else bytes
+
+  /**
+   * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a
+   * struct that has any.
+   */
+  private fun subObjects(
+    builder: XcfaProcedureBuilder,
+    ret: Expr<*>,
+    bytes: Expr<*>,
+  ): List<XcfaLabel> {
+    if (parseContext.memoryModel.byteAddressed()) return listOf()
+    val pointee = builder.boundPointee(parseContext, ret)
+    if (pointee == null) {
+      refuseUnlessFlat("a block of unknown type")
+      return listOf()
+    }
+    if (!hasSubObjects(pointee)) return listOf()
+    val struct = pointee as? CStruct
+    val count = struct?.let { elementCount(bytes, it) }
+    if (struct == null || count == null) {
+      refuseUnlessFlat(if (struct == null) "a block of arrays" else "a block of unknown length")
+      return listOf()
+    }
+    val layout = SubObjects(parseContext)
+    if (
+      layout.subObjectCells(struct).any { (_, t) ->
+        t is CArray && layout.fixedArraySize(t) == null
+      }
+    ) {
+      refuseUnlessFlat("a flexible array member")
+      return listOf()
+    }
+    val labels = mutableListOf<XcfaLabel>()
+    for (index in 0 until count) {
+      layout.allocateMembers(ret, struct, struct, index * struct.unitCount, labels, HEAP_SUBOBJECT)
+    }
+    return labels
+  }
+
+  private fun hasSubObjects(type: CComplexType): Boolean =
+    when (type) {
+      is CStruct -> !type.isUnion && SubObjects(parseContext).subObjectCells(type).isNotEmpty()
+      is CArray ->
+        hasSubObjects(type.embeddedType) || (type.embeddedType as? CStruct)?.isUnion == true
+      else -> false
+    }
+
+  /** How many [struct] elements a constant [bytes] holds, or null if not constant or too many. */
+  private fun elementCount(bytes: Expr<*>, struct: CStruct): Int? {
+    val value =
+      when (val size = ExprUtils.simplify(bytes)) {
+        is IntLitExpr -> size.value
+        is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(size)
+        else -> return null
+      }
+    val flat = parseContext.memoryModel.flatAddressing()
+    val count = value.toLong() / ObjectLayout.cellModelSize(struct, flat)
+    return count.takeIf { it <= MAX_HEAP_ELEMENTS }?.toInt()
+  }
+
+  /**
+   * Hands a block whose sub-objects cannot be allocated to `--memory-model flat`, when sub-objects
+   * are reached at all. Flat lays aggregates out inline, so only its unions are sub-objects; those
+   * stay unallocated there, as before.
+   */
+  private fun refuseUnlessFlat(what: String) {
+    if (parseContext.memoryModel.flatAddressing() || !parseContext.isAggregateMemberUsed) return
+    throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
+  }
+
+  /** Whether any procedure calls `realloc`, decided before the first one is rewritten. */
+  private fun reallocates(xcfa: XcfaBuilder): Boolean =
+    xcfa.metaData.getOrPut(REALLOCATES) {
+      xcfa.getProcedures().any { proc ->
+        proc.getEdges().any { edge ->
+          edge.getFlatLabels().any { it is InvokeLabel && it.name == "realloc" }
+        }
+      }
+    } as Boolean
 
   private fun isMalloc(it: XcfaLabel): Boolean = it is InvokeLabel && it.name == "malloc"
 

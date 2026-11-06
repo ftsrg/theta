@@ -136,6 +136,22 @@ public class MddCheckerTest {
                         true,
                         5L
                     },
+                    {
+                        Eq(X.getRef(), Int("4294967296")), // x = 2^32
+                        Eq(Prime(X.getRef()), X.getRef()),
+                        Not(Eq(X.getRef(), Int(0))),
+                        true,
+                        1L
+                    },
+                    {
+                        Eq(X.getRef(), Int("4294967296")), // x = 2^32
+                        And(
+                                Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))),
+                                Leq(Prime(X.getRef()), Int("4294967299"))),
+                        Not(Eq(X.getRef(), Int(3))),
+                        true,
+                        4L
+                    },
                 });
     }
 

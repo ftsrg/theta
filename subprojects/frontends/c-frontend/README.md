@@ -56,7 +56,8 @@ The workflow to get a formal model from a C file is the following:
 The _IM_ is an interlinked model of the following elements:
 
 * CAssignment: variable assignment
-* CAssume: an assumption over the range of a variable
+* CAssume: an assumption over the range of a variable, optionally preceded by a havoc of it (a
+  declaration without an initializer that can run more than once: in a loop or outside `main`)
 * CBreak: the _break_ C instruction
 * CCall: function call to a C-type function
 * CCase: a branch (_case_) of a switch-case statement

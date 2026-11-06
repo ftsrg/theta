@@ -65,7 +65,7 @@ archivePackaging {
         inputFlags = "--svcomp --portfolio STABLE"
         // One version per solver family: the portfolios pin the same versions, and shipping
         // several invites the code and the archive to drift apart.
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19", "bitwuzla:0.9.1")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -73,7 +73,7 @@ archivePackaging {
     variant {
         toolName = "EmergenTheta-svcomp"
         inputFlags = "--svcomp --portfolio EMERGENT"
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -81,7 +81,7 @@ archivePackaging {
     variant {
         toolName = "SymbolicTheta-svcomp"
         inputFlags = "--svcomp --portfolio SYMBOLIC"
-        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.12", "bitwuzla:0.9.1")
+        solvers = listOf("cvc5:1.3.4", "mathsat:5.6.19", "bitwuzla:0.9.1")
         readmeTemplate = file("src/main/resources/archive-packaging/README-SVCOMP.md")
         smoketestSource = file("src/main/resources/archive-packaging/smoketest.sh")
         inputSource = file("src/main/resources/archive-packaging/input.c")
@@ -168,6 +168,9 @@ val canaryTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 
@@ -213,6 +216,9 @@ val fixtureTest by
         testLogging {
             events("failed", "skipped")
             showStandardStreams = false
+            // The message carries the run's diagnosis; the stack trace is only the test harness.
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStackTraces = false
         }
     }
 

@@ -38,8 +38,13 @@ import hu.bme.mit.theta.core.utils.FpUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -96,6 +101,27 @@ val LitExpr<*>.intValue: BigInteger?
       is BvLitExpr -> BvToIntExpr.of(this).eval(MutableValuation()).intValue
       else -> null
     }
+
+/**
+ * The values that [cType] can hold under integer arithmetic, as [withinTypeRange] states them. Null
+ * under bitvector arithmetic, where the width bounds the value and no range is stated, and for a
+ * type that is not an integer.
+ */
+fun typeInterval(cType: CComplexType?, parseContext: ParseContext): ClosedRange<BigInteger>? {
+  if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.bitvector) return null
+  if (cType !is CInteger) return null
+  val width = cType.width()
+  val signed = cType.isSsigned && cType !is CPointer && cType !is CArray && cType !is CStruct
+  return if (signed) BigInteger.TWO.pow(width - 1).negate()..BigInteger.TWO.pow(width - 1).dec()
+  else BigInteger.ZERO..BigInteger.TWO.pow(width).dec()
+}
+
+/** [typeInterval] of the C type that the metadata gives [value], if any. */
+fun typeInterval(value: Expr<*>, parseContext: ParseContext): ClosedRange<BigInteger>? =
+  typeInterval(
+    parseContext.metadata.getMetadataValue(value, "cType").orElse(null) as? CComplexType,
+    parseContext,
+  )
 
 /**
  * States that a havoced value is one its C type can actually hold.

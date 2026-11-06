@@ -137,7 +137,7 @@ public class NamedType extends CSimpleType {
                 type.setAtomic();
             }
         }
-        return type;
+        return withPointersToTypedefArray(type, parseContext);
     }
 
     //    public static NamedType getIntType() {

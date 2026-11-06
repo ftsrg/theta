@@ -69,6 +69,7 @@ import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
@@ -292,6 +293,7 @@ final class JavaSMTExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
@@ -903,7 +905,7 @@ final class JavaSMTExprTransformer {
                 BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
                 BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
                 FloatingPointNumber.Sign.of(expr.getHidden()),
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getType().getExponent(), expr.getType().getSignificand() - 1));
     }
 
@@ -1069,7 +1071,7 @@ final class JavaSMTExprTransformer {
     private Formula transformFpFromBv(final FpFromBvExpr expr) {
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
         final FloatingPointType fpSort =
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
@@ -1101,7 +1103,7 @@ final class JavaSMTExprTransformer {
         // would instead round the integer value.
         final BitvectorFormula val = (BitvectorFormula) toTerm(expr.getOp());
         final FloatingPointType fpSort =
-                FloatingPointType.getFloatingPointType(
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
                         expr.getFpType().getExponent(), expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.fromIeeeBitvector(val, fpSort);
     }
@@ -1112,7 +1114,8 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.castTo(
                 op,
                 true, // ignored
-                FloatingPointType.getFloatingPointType(expr.getExpBits(), expr.getSignBits() - 1),
+                FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
+                        expr.getExpBits(), expr.getSignBits() - 1),
                 transformFpRoundingMode(expr.getRoundingMode()));
     }
 
@@ -1211,6 +1214,28 @@ final class JavaSMTExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    /**
+     * An uninterpreted function per function and sort: one name may not carry two signatures, so
+     * the sort is part of the name ({@code fpmath.exp-8-24}).
+     */
+    private Formula transformFpMathFunc(final FpMathFuncExpr expr) {
+        final var type = expr.getType();
+        final Formula opTerm = toTerm(expr.getOp());
+        final var sort = transformer.toSort(type);
+        final var funcDecl =
+                context.getFormulaManager()
+                        .getUFManager()
+                        .declareUF(
+                                "%s-%d-%d"
+                                        .formatted(
+                                                expr.getOperatorLabel(),
+                                                type.getExponent(),
+                                                type.getSignificand()),
+                                sort,
+                                List.of(sort));
+        return context.getFormulaManager().getUFManager().callUF(funcDecl, opTerm);
     }
 
     private Formula transformDereference(final Dereference<?, ?, ?> expr) {

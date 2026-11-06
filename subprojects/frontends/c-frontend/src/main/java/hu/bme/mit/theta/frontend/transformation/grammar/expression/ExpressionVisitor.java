@@ -31,6 +31,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.*;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -56,6 +57,7 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -68,9 +70,11 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CNullStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.BitfieldSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ByteUnionSlice;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -82,6 +86,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -177,6 +182,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 new ArrayList<>(preStatements.subList(from, preStatements.size()));
         preStatements.subList(from, preStatements.size()).clear();
 
+        // The operator's value re-reads the earlier operands only after these statements ran, so
+        // if they may change what those operands read, their outcome is taken now and used instead.
+        if (functionVisitor != null && mayChange(guarded, alreadyEvaluated)) {
+            Expr<BoolType> outcome =
+                    snapshot(
+                            stopWhenTrue
+                                    ? BoolExprs.Or(alreadyEvaluated)
+                                    : BoolExprs.And(alreadyEvaluated));
+            alreadyEvaluated.clear();
+            alreadyEvaluated.add(outcome);
+        }
+
         CCompound body = compoundOf(guarded);
 
         List<Expr<BoolType>> reached =
@@ -222,6 +239,124 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     }
 
     /**
+     * Under the data-race check, an operand that reads shared state is evaluated into a temporary
+     * instead of staying inside the condition: the condition is a single expression, so every read
+     * in it would happen whether or not the short-circuit reaches it, and a read C never performs
+     * can race. The assignment then lands in {@link #preStatements}, where {@link
+     * #guardShortCircuited} guards it like any other effect of the operand.
+     */
+    private Expr<BoolType> captureIfShared(Expr<BoolType> holds, Expr<?> operand) {
+        if (!parseContext.isCheckDataRace()
+                || functionVisitor == null
+                || !functionVisitor.readsShared(operand)) {
+            return holds;
+        }
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> tmp = functionVisitor.createTempVar(signedInt, "shortcircuit");
+        Expr<?> value =
+                typed(Ite(holds, signedInt.getUnitValue(), signedInt.getNullValue()), signedInt);
+        preStatements.add(
+                new CAssignment(tmp.getRef(), new CExpr(value, parseContext), "=", parseContext));
+        return AbstractExprs.Neq(signedInt.getNullValue(), tmp.getRef());
+    }
+
+    /**
+     * Whether running these statements may change the value of an operand already evaluated. Only
+     * the program's own variables and memory can change: call results and temporaries are written
+     * where they are introduced, and nowhere else.
+     *
+     * <p>An assignment to a plain variable writes that variable (or memory, if its address is
+     * taken), and a nondet call writes only its own result. Anything else may write any variable or
+     * memory.
+     */
+    private boolean mayChange(List<CStatement> statements, List<Expr<BoolType>> evaluated) {
+        Set<VarDecl<?>> read =
+                ExprUtils.getVars(evaluated).stream()
+                        .filter(this::isProgramVariable)
+                        .collect(Collectors.toSet());
+        boolean readsMemory = evaluated.stream().anyMatch(ExpressionVisitor::readsMemory);
+        return (!read.isEmpty() || readsMemory)
+                && statements.stream().anyMatch(s -> mayWrite(s, read, readsMemory));
+    }
+
+    private boolean mayWrite(CStatement statement, Set<VarDecl<?>> read, boolean readsMemory) {
+        if (statement == null) {
+            return false;
+        }
+        if (mayWrite(statement.getPreStatements(), read, readsMemory)
+                || mayWrite(statement.getPostStatements(), read, readsMemory)) {
+            return true;
+        }
+        if (statement instanceof CExpr || statement instanceof CNullStatement) {
+            return false;
+        }
+        if (statement instanceof CCompound compound) {
+            return compound.getcStatementList().stream()
+                    .anyMatch(s -> mayWrite(s, read, readsMemory));
+        }
+        if (statement instanceof CIf cIf) {
+            return mayWrite(cIf.getGuard(), read, readsMemory)
+                    || mayWrite(cIf.getBody(), read, readsMemory)
+                    || mayWrite(cIf.getElseStatement(), read, readsMemory);
+        }
+        if (statement instanceof CAssignment assignment
+                && assignment.getlValue() instanceof RefExpr<?> target) {
+            return read.contains(target.getDecl())
+                    || (readsMemory && isProgramVariable(target.getDecl()))
+                    || mayWrite(assignment.getrValue(), read, readsMemory);
+        }
+        if (statement instanceof CCall call
+                && call.getParams().isEmpty()
+                && call.getFunctionId().startsWith("__VERIFIER_nondet_")) {
+            return false;
+        }
+        return true; // any other call, or something unrecognised
+    }
+
+    private boolean isProgramVariable(Decl<?> decl) {
+        return variables.stream().anyMatch(scope -> scope.get2().containsValue(decl));
+    }
+
+    private static boolean readsMemory(Expr<?> expr) {
+        return expr instanceof Dereference<?, ?, ?>
+                || expr.getOps().stream().anyMatch(ExpressionVisitor::readsMemory);
+    }
+
+    /** Stores a truth value in a fresh variable, so that later statements cannot change it. */
+    private Expr<BoolType> snapshot(Expr<BoolType> value) {
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        VarDecl<?> tmp = functionVisitor.createTempVar(signedInt, "shortcircuit");
+        Expr<?> asInt = Ite(value, signedInt.getUnitValue(), signedInt.getNullValue());
+        parseContext.getMetadata().create(asInt, "cType", signedInt);
+        preStatements.add(
+                new CAssignment(tmp.getRef(), new CExpr(asInt, parseContext), "=", parseContext));
+        return AbstractExprs.Neq(tmp.getRef(), signedInt.getNullValue());
+    }
+
+    /**
+     * Evaluates one operand of `&&` / `||` to its truth value. There is a sequence point after it,
+     * and it runs only if the short-circuit lets it, so a postfix `++`/`--` in it cannot wait in
+     * {@link #postStatements} for the end of the full expression: its update is emitted right after
+     * the operand (where {@link #guardShortCircuited} can guard it), behind a snapshot of the
+     * value.
+     */
+    private Expr<BoolType> shortCircuitOperand(ParseTree operand) {
+        List<CStatement> enclosing = new ArrayList<>(postStatements);
+        postStatements.clear();
+        Expr<?> expr = operand.accept(this);
+        Expr<BoolType> value =
+                AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr);
+        value = captureIfShared(value, expr);
+        if (!postStatements.isEmpty() && functionVisitor != null) {
+            value = snapshot(value);
+            preStatements.addAll(postStatements);
+            postStatements.clear();
+        }
+        postStatements.addAll(0, enclosing);
+        return value;
+    }
+
+    /**
      * A compound the XCFA builder can lower: its pre- and post-statement slots have to be filled
      * in, or the builder falls back to a path that insists the compound's last statement be a
      * compound too.
@@ -242,11 +377,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // `||` stops at the first operand that holds, so anything a later one needs runs
                 // only if every earlier one came out false.
                 int before = preStatements.size();
-                Expr<?> expr = operand.accept(this);
+                Expr<BoolType> value = shortCircuitOperand(operand);
                 guardShortCircuited(before, collect, true);
-                collect.add(
-                        AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                collect.add(value);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
@@ -265,11 +398,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // `&&` stops at the first operand that fails, so anything a later one needs runs
                 // only if every earlier one held.
                 int before = preStatements.size();
-                Expr<?> expr = operand.accept(this);
+                Expr<BoolType> value = shortCircuitOperand(operand);
                 guardShortCircuited(before, collect, false);
-                collect.add(
-                        AbstractExprs.Neq(
-                                CComplexType.getType(expr, parseContext).getNullValue(), expr));
+                collect.add(value);
             }
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             IteExpr<?> ite =
@@ -790,11 +921,44 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
+        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
         return expr;
+    }
+
+    /**
+     * Under the cell models a pointer steps over whole values, one cell each, so viewing a scalar
+     * object through a pointer to a scalar of another size (`(char *)int_ptr`, `(long *)int_arr`)
+     * reads and writes whole cells where the program addresses a part or a span of them: `c[1]`
+     * lands on the second int instead of the first one's second byte. That would give wrong
+     * verdicts, so it is refused; the bytes model addresses such views faithfully.
+     */
+    private void refuseResizingPointerCast(CComplexType from, CComplexType to) {
+        if (byteAddressed() || !(to instanceof CPointer toPtr) || toPtr.isFunctionPointer()) return;
+        // An array operand decays to a pointer to its first element.
+        final CComplexType fromPointee;
+        if (from instanceof CArray fromArray) fromPointee = fromArray.getEmbeddedType();
+        else if (from instanceof CPointer fromPtr && !fromPtr.isFunctionPointer())
+            fromPointee = fromPtr.getEmbeddedType();
+        else return;
+        final CComplexType toPointee = toPtr.getEmbeddedType();
+        if (!isScalarPointee(fromPointee) || !isScalarPointee(toPointee)) return;
+        if ((fromPointee.width() + 7) / 8 != (toPointee.width() + 7) / 8) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Viewing a %s through a %s pointer is not supported."
+                            .formatted(fromPointee.getTypeName(), toPointee.getTypeName()));
+        }
+    }
+
+    private static boolean isScalarPointee(CComplexType type) {
+        return type != null
+                && !(type instanceof CVoid)
+                && !(type instanceof CArray)
+                && !(type instanceof CStruct)
+                && !(type instanceof CPointer p && p.isFunctionPointer());
     }
 
     /**
@@ -983,52 +1147,29 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
         } else if (ctx.typeName() != null) {
-            final Optional<CComplexType> type =
-                    typedefVisitor
-                            .getType(ctx.typeName().getText())
-                            .or(
-                                    () ->
-                                            Optional.ofNullable(
-                                                    CComplexType.getType(
-                                                            ctx.typeName().getText(),
-                                                            parseContext)))
-                            .or(
-                                    () ->
-                                            parseContext
-                                                    .getMetadata()
-                                                    .getMetadataValue(
-                                                            ctx.typeName().getText(),
-                                                            "cTypedefName")
-                                                    .map(it -> (CComplexType) it))
-                            .or(
-                                    () ->
-                                            Optional.ofNullable(getVar(ctx.typeName().getText()))
-                                                    .map(
-                                                            v ->
-                                                                    CComplexType.getType(
-                                                                            v.getRef(),
-                                                                            parseContext)))
-                            // struct/union/enum tags (e.g. "sizeof(struct node)") aren't typedef
-                            // names, builtin keywords, or variables, so none of the lookups above
-                            // find them; resolve the tag through the type visitor instead.
-                            .or(
-                                    () -> {
-                                        try {
-                                            CSimpleType simpleType =
-                                                    ctx.typeName()
-                                                            .specifierQualifierList()
-                                                            .accept(typeVisitor);
-                                            return Optional.ofNullable(simpleType)
-                                                    .map(CSimpleType::getActualType);
-                                        } catch (RuntimeException e) {
-                                            return Optional.empty();
-                                        }
-                                    });
+            final TypeNameContext typeName = ctx.typeName();
+            // The lookups below only know the type before an array suffix, so `T[N][M]` is sized
+            // as T and then multiplied by the dimensions.
+            final List<Integer> dimensions = arrayDimensions(typeName.abstractDeclarator());
+            final Optional<CComplexType> type;
+            if (dimensions == null) {
+                type = typeNameType(typeName.getText(), typeName.specifierQualifierList());
+            } else if (typeName.abstractDeclarator().pointer() != null) {
+                // an array of pointers; every pointer is as wide as `unsigned long`
+                type = Optional.of(CComplexType.getUnsignedLong(parseContext));
+            } else {
+                type =
+                        typeNameType(
+                                typeName.specifierQualifierList().getText(),
+                                typeName.specifierQualifierList());
+            }
 
             if (type.isPresent()) {
-                LitExpr<?> value =
-                        CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type.get()));
-                return value;
+                long size = sizeOf(type.get());
+                for (int dimension : dimensions == null ? List.<Integer>of() : dimensions) {
+                    size *= dimension;
+                }
+                return sizeOfValue(size);
             } else {
                 uniqueWarningLogger.write(
                         Level.INFO,
@@ -1042,10 +1183,134 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // `sizeof *p` / `sizeof x`: the operand is an expression, with or without parentheses.
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
-            final var type = CComplexType.getType(expr, parseContext);
-            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + sizeOf(type));
-            return value;
+            return sizeOfValue(sizeOfOperand(operand, CComplexType.getType(expr, parseContext)));
         }
+    }
+
+    /**
+     * The size `sizeof` reports for an expression operand. An array keeps its array type only as a
+     * designator; a parameter declared as one really is a pointer, and any other form (`a + 1`, `c
+     * ? a : b`, `(0, a)`) carries the array's cType but has decayed to a pointer.
+     */
+    private long sizeOfOperand(ParseTree operand, CComplexType type) {
+        if (!(type instanceof CArray array)) {
+            return sizeOf(type);
+        }
+        final ParseTree designator = arrayDesignator(operand);
+        if (designator == null) {
+            return sizeOf(CComplexType.getUnsignedLong(parseContext));
+        }
+        if (designator instanceof PrimaryExpressionIdContext && functionVisitor != null) {
+            final VarDecl<?> variable = getVar(designator.getText());
+            if (functionVisitor.isArrayParameter(variable)) {
+                return sizeOf(CComplexType.getUnsignedLong(parseContext));
+            }
+            final Integer extent = functionVisitor.initializerExtent(variable);
+            if (array.getArrayDimension() == null && extent != null) {
+                return Math.multiplyExact(extent, sizeOf(array.getEmbeddedType()));
+            }
+        }
+        return sizeOf(type);
+    }
+
+    /**
+     * The node of [operand] that designates an array, looking through parentheses; null when the
+     * operand is any other form of expression. Decided on the syntax, as a subscript or member
+     * access can fold to the same `Add` that pointer arithmetic produces.
+     */
+    private static ParseTree arrayDesignator(ParseTree operand) {
+        ParseTree current = operand;
+        while (true) {
+            if (current instanceof PrimaryExpressionBraceExpressionContext parenthesized) {
+                current = parenthesized.expression();
+            } else if (current instanceof PrimaryExpressionIdContext
+                    || current instanceof PrimaryExpressionStringsContext
+                    || current instanceof PrimaryExpressionTypeInitializerContext
+                    || (current instanceof PostfixExpressionContext postfix
+                            && !postfix.pfExprs.isEmpty())) {
+                return current;
+            } else if (current instanceof UnaryExpressionCastContext unary) {
+                return unary.unaryOperator().getText().equals("*") ? unary : null;
+            } else if (current.getChildCount() == 1) {
+                current = current.getChild(0);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private Optional<CComplexType> typeNameType(
+            String text, SpecifierQualifierListContext specifierQualifierList) {
+        return typedefVisitor
+                .getType(text)
+                .or(() -> Optional.ofNullable(CComplexType.getType(text, parseContext)))
+                .or(
+                        () ->
+                                parseContext
+                                        .getMetadata()
+                                        .getMetadataValue(text, "cTypedefName")
+                                        .map(it -> (CComplexType) it))
+                .or(
+                        () ->
+                                Optional.ofNullable(getVar(text))
+                                        .map(v -> CComplexType.getType(v.getRef(), parseContext)))
+                // struct/union/enum tags (e.g. "sizeof(struct node)") aren't typedef
+                // names, builtin keywords, or variables, so none of the lookups above
+                // find them; resolve the tag through the type visitor instead.
+                .or(
+                        () -> {
+                            try {
+                                CSimpleType simpleType = specifierQualifierList.accept(typeVisitor);
+                                return Optional.ofNullable(simpleType)
+                                        .map(CSimpleType::getActualType);
+                            } catch (RuntimeException e) {
+                                return Optional.empty();
+                            }
+                        });
+    }
+
+    /**
+     * The dimensions of an abstract declarator that only appends constant array suffixes (`[2][3]`,
+     * `*[4]`), or null for any other shape: none at all, a parenthesized or function declarator, or
+     * a dimension that does not fold to a constant.
+     */
+    private List<Integer> arrayDimensions(AbstractDeclaratorContext ctx) {
+        if (ctx == null || ctx.directAbstractDeclarator() == null) {
+            return null;
+        }
+        final List<Integer> dimensions = new ArrayList<>();
+        for (DirectAbstractDeclaratorContext suffix = ctx.directAbstractDeclarator();
+                suffix != null;
+                suffix = suffix.directAbstractDeclarator()) {
+            if (suffix.assignmentExpression() == null || suffix.abstractDeclarator() != null) {
+                return null;
+            }
+            try {
+                final Expr<?> folded =
+                        ExprUtils.simplify(suffix.assignmentExpression().accept(this));
+                if (folded instanceof IntLitExpr intLit) {
+                    dimensions.add(intLit.getValue().intValueExact());
+                } else if (folded instanceof BvLitExpr bvLit) {
+                    dimensions.add(BvUtils.neutralBvLitExprToBigInteger(bvLit).intValueExact());
+                } else {
+                    return null;
+                }
+            } catch (RuntimeException e) {
+                return null;
+            }
+        }
+        return dimensions;
+    }
+
+    /**
+     * `sizeof` is a `size_t`, i.e. `unsigned long` on both LP64 and ILP32. As a signed int it made
+     * `sizeof(int) * 1073741824` wrap to 0 under bitvector arithmetic instead of being 2^32.
+     */
+    private LitExpr<?> sizeOfValue(long size) {
+        final CComplexType sizeType = CComplexType.getUnsignedLong(parseContext);
+        final LitExpr<?> value = sizeType.getValue("" + size);
+        parseContext.getMetadata().create(value, "cType", sizeType);
+        return value;
     }
 
     /**
@@ -1063,24 +1328,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
      * that is a little small would bring the bound check back down onto real accesses.
      */
-    private int sizeOf(CComplexType type) {
+    private long sizeOf(CComplexType type) {
+        // A whole array's size is observable (`sizeof(a) / sizeof(a[0])`), whichever cells hold it.
+        // A VLA's dimension may have changed since its declaration, so it cannot be re-evaluated.
+        if (type instanceof CArray array) {
+            final Integer count = ObjectLayout.constantDimension(array);
+            if (count == null) {
+                throw new UnsupportedFrontendElementException(
+                        "sizeof an array without a constant size");
+            }
+            return Math.multiplyExact(count, sizeOf(array.getEmbeddedType()));
+        }
         // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
         // declared (padded) byte size -- the same layout subscripts, members, and pointer
         // arithmetic use, and the size that then bounds them exactly in the memsafety check.
         if (byteAddressed()) {
             return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
         }
-        if (type instanceof CStruct cStruct) {
-            final List<Integer> fieldSizes =
-                    cStruct.getFields().stream().map(f -> sizeOf(f.get2())).toList();
-            if (fieldSizes.isEmpty()) {
-                return 1;
-            }
-            return cStruct.isUnion()
-                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
-                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
-        }
-        return Math.max(type.width() / 8, 1);
+        return ObjectLayout.cellModelSize(
+                type, parseContext.getMemoryModel() == MemoryModelType.flat);
     }
 
     @Override
@@ -1213,10 +1479,26 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // &a[0]`). Taking its address is then the identity -- re-typed to a pointer to the
                 // element -- not a `reference()` of a bare lvalue, which is why the libvsync
                 // per-thread node arrays (`&nodes[tid]`, MCS/CLH locks) tripped the check below.
+                // A nested member (`&s.inner`) is a cell holding the member's own base, so its
+                // address is that value too -- unless the cell is a packed struct's storage. Unions
+                // follow the same rule: under the cell models a union element or member is an
+                // object of its own whose base the cell holds, and under bytes it is a region. The
+                // exception is a sync handle (a union) under the cell models, see
+                // FunctionVisitor#isVisitingSyncHandleArguments.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
-                if ((ampType instanceof CStruct || ampType instanceof CArray)
+                final boolean syncHandle =
+                        ampType instanceof CStruct s
+                                && s.isUnion()
+                                && !byteAddressed()
+                                && functionVisitor != null
+                                && functionVisitor.isVisitingSyncHandleArguments();
+                if ((ampType instanceof CArray || ampType instanceof CStruct)
+                        && !syncHandle
                         && !(originalOperand instanceof RefExpr<?>)
-                        && !(originalOperand instanceof Dereference<?, ?, ?>)) {
+                        && parseContext
+                                .getMetadata()
+                                .getMetadataValue(originalOperand, BitfieldSlice.PACKED_CELL)
+                                .isEmpty()) {
                     final Expr<?> address = Pos(originalOperand);
                     parseContext
                             .getMetadata()
@@ -1490,9 +1772,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> rowOf(Expr<?> base, Expr<?> index, CComplexType elemType) {
         // Only an aggregate element is a *region* to be offset into; a scalar element is an
-        // ordinary cell read and is left to the caller's dereference.
+        // ordinary cell read and is left to the caller's dereference. Under the bytes model a union
+        // is a region too: it is laid out in place, not a cell holding a base.
         final boolean aggregate =
-                elemType instanceof CArray || (elemType instanceof CStruct s && !s.isUnion());
+                elemType instanceof CArray
+                        || (elemType instanceof CStruct s && (!s.isUnion() || byteAddressed()));
         if (!aggregate) {
             return null;
         }
@@ -1522,18 +1806,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      */
     private Expr<?> cellCountExpr(CComplexType type) {
         if (type instanceof CStruct structType) {
-            // A word-sliceable union is one cell: its members all share offset 0. A byte-laid-out
-            // one (AD7: unionCellWidth() == null, an array member or otherwise too wide/shaped for
-            // one word) needs its real ObjectLayout size in bytes instead, since that is the
-            // granularity its own members are addressed at -- see [byteLaidOutMemberAccess].
-            final int cells =
-                    structType.isUnion()
-                            ? (structType.unionCellWidth() == null
-                                    ? ObjectLayout.of(structType, parseContext.getArchitecture())
-                                                    .bitSize()
-                                            / 8
-                                    : 1)
-                            : structType.getUnitCount();
+            // A union is one cell, holding its base: an element of an array of unions is an object
+            // of its own, as a union member of a struct is
+            // (FrontendXcfaBuilder#allocateArrayElements).
+            final int cells = structType.isUnion() ? 1 : structType.getUnitCount();
             return CComplexType.getUnsignedLong(parseContext).getValue(String.valueOf(cells));
         }
         if (type instanceof CArray arrayType) {
@@ -1730,7 +2006,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // AtomicFunctionsPass can lower each into an atomic block. Only the return *type* is
         // decided
         // here (so the call's return variable is typed right); the semantics live in the pass.
-        Expr<?> atomic = atomicBuiltinCall(name, args);
+        // A C11 name the program declares itself is an ordinary function and is called as one.
+        Expr<?> atomic = getVar(name) == null ? atomicBuiltinCall(name, args) : null;
         if (atomic != null) {
             return atomic;
         }
@@ -1782,6 +2059,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 LitExpr<?> toNearest = signedInt.getNullValue();
                 parseContext.getMetadata().create(toNearest, "cType", signedInt);
                 return toNearest;
+            }
+            case "__atomic_always_lock_free", "__atomic_is_lock_free", "atomic_is_lock_free" -> {
+                return args.isEmpty() || getVar(name) != null ? null : lockFree(name, args);
             }
             case "__builtin_constant_p" -> {
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
@@ -2031,7 +2311,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private boolean isPointerArithmeticBase(CComplexType opType) {
         return opType instanceof CPointer
                 || opType instanceof CArray
-                || (byteAddressed() && opType instanceof CStruct);
+                || (opType instanceof CStruct s && (byteAddressed() || s.inlinesAggregates()));
     }
 
     /**
@@ -2096,14 +2376,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType declaredType,
             ObjectLayout.Field field,
             CComplexType offsetType) {
-        final int unitBits = declaredType.width();
+        final CComplexType unitType =
+                hu.bme.mit.theta.frontend.transformation.model.types.complex.compound
+                        .ByteInitializer.storageUnitType(declaredType, parseContext);
+        final int unitBits = unitType.width();
         final int unitBytes = unitBits / 8;
         final int unitByteOffset = (field.bitOffset() / unitBits) * unitBytes;
         final int bitInUnit = field.bitOffset() - unitByteOffset * 8;
         if (bitInUnit + field.bitfieldWidth() > unitBits) {
             throw new UnsupportedFrontendElementException(
-                    "Bitfield member [%s] straddles two storage units, which the bytes memory model"
-                            + " does not support.".formatted(memberName));
+                    ("Bitfield member [%s] straddles two storage units, which the bytes memory"
+                                    + " model does not support.")
+                            .formatted(memberName));
         }
         final Expr<?> unitOffset = offsetType.getValue(String.valueOf(unitByteOffset));
         final Expr<?> folded = foldPointerArithmetic(base, unitOffset);
@@ -2113,8 +2397,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
                         cast(accessOffset, accessBase.getType()),
-                        declaredType.getSmtType());
-        parseContext.getMetadata().create(cell, "cType", declaredType);
+                        unitType.getSmtType());
+        parseContext.getMetadata().create(cell, "cType", unitType);
         final boolean signed =
                 declaredType
                                 instanceof
@@ -2250,6 +2534,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> foldedOffset = foldPointerArithmetic(base, idxExpr);
         final Expr<?> accessBase = foldedOffset == null ? base : pointerBaseOf(base);
         final Expr<?> accessOffset = foldedOffset == null ? idxExpr : foldedOffset;
+        if (structType.inlinesAggregates() && CStruct.isInlineAggregate(embeddedType)) {
+            // An inline member is the sub-region at its cell offset, as under the bytes model: the
+            // following `.field` or `[i]` folds back onto the object's base.
+            final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
+            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            parseContext.getMetadata().create(region, "cType", embeddedType);
+            return region;
+        }
         final Expr<?> access =
                 Exprs.Dereference(
                         cast(accessBase, accessBase.getType()),
@@ -3025,8 +3317,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     /**
      * Emits the `alloca(size)` call that {@code AllocaFunctionPass} lowers into a stack allocation.
-     * The {@code __builtin_} form has no declaration, so the pointer return type is supplied here
-     * (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
+     * The {@code __builtin_} form has no declaration, so its {@code void *} return type is supplied
+     * here (it would otherwise default to int). {@code __builtin_alloca_with_align} only adds an
      * alignment argument, which does not affect the modelled size, so it is dropped.
      */
     private Expr<?> callAlloca(List<AssignmentExpressionContext> args) {
@@ -3035,8 +3327,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
         List<CStatement> arguments = new ArrayList<>();
         arguments.add(args.get(0).accept(functionVisitor));
-        CComplexType pointerType =
-                new CPointer(null, CComplexType.getSignedInt(parseContext), parseContext);
+        CComplexType pointerType = new CPointer(null, new CVoid(null, parseContext), parseContext);
         parseContext.getMetadata().create(ALLOCA, "cType", pointerType);
         CCall cCall = new CCall(ALLOCA, arguments, parseContext);
         preStatements.add(cCall);
@@ -3160,7 +3451,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     private static final java.util.Set<String> ATOMIC_RETURNS_POINTEE =
             java.util.Set.of(
                     "__atomic_load_n",
-                    "__atomic_load",
                     "atomic_load",
                     "atomic_load_explicit",
                     "__atomic_exchange_n",
@@ -3192,16 +3482,23 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             java.util.Set.of(
                     "__atomic_store_n",
                     "__atomic_store",
+                    "__atomic_load", // ret is by pointer, the call value is unused
                     "atomic_store",
                     "atomic_store_explicit",
                     "atomic_init",
                     "__atomic_exchange", // ret is by pointer, the call value is unused
                     "__atomic_thread_fence",
                     "__atomic_signal_fence",
+                    "__atomic_clear",
+                    "atomic_flag_clear",
+                    "atomic_flag_clear_explicit",
                     "atomic_thread_fence",
                     "atomic_signal_fence");
     private static final java.util.Set<String> ATOMIC_RETURNS_INT =
             java.util.Set.of(
+                    "__atomic_test_and_set",
+                    "atomic_flag_test_and_set",
+                    "atomic_flag_test_and_set_explicit",
                     "__atomic_compare_exchange_n",
                     "__atomic_compare_exchange",
                     "atomic_compare_exchange_strong",
@@ -3209,12 +3506,35 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "atomic_compare_exchange_strong_explicit",
                     "atomic_compare_exchange_weak_explicit");
 
+    // Clang's <stdatomic.h> expands each C11 operation to a `__c11_atomic_*` builtin that takes
+    // the arguments of the `atomic_*_explicit` function it implements, so it is emitted as that.
+    private static final java.util.Map<String, String> CLANG_C11_ATOMICS =
+            java.util.Map.ofEntries(
+                    java.util.Map.entry("__c11_atomic_init", "atomic_init"),
+                    java.util.Map.entry("__c11_atomic_load", "atomic_load_explicit"),
+                    java.util.Map.entry("__c11_atomic_store", "atomic_store_explicit"),
+                    java.util.Map.entry("__c11_atomic_exchange", "atomic_exchange_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_strong",
+                            "atomic_compare_exchange_strong_explicit"),
+                    java.util.Map.entry(
+                            "__c11_atomic_compare_exchange_weak",
+                            "atomic_compare_exchange_weak_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_add", "atomic_fetch_add_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_sub", "atomic_fetch_sub_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_or", "atomic_fetch_or_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_and", "atomic_fetch_and_explicit"),
+                    java.util.Map.entry("__c11_atomic_fetch_xor", "atomic_fetch_xor_explicit"),
+                    java.util.Map.entry("__c11_atomic_thread_fence", "atomic_thread_fence"),
+                    java.util.Map.entry("__c11_atomic_signal_fence", "atomic_signal_fence"));
+
     /**
      * If [name] is an atomic builtin, emit it as a call (so {@code AtomicFunctionsPass} can lower
      * it) with its return variable typed correctly, and return the call's value. Returns null
      * otherwise, so ordinary builtin handling proceeds.
      */
     private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
+        name = CLANG_C11_ATOMICS.getOrDefault(name, name);
         if (ATOMIC_RETURNS_POINTEE.contains(name)) {
             return atomicCall(name, args, AtomicReturn.POINTEE);
         }
@@ -3233,6 +3553,28 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         VOID,
     }
 
+    private static final java.util.Set<String> ATOMIC_FLAG_OPERATIONS =
+            java.util.Set.of(
+                    "__atomic_test_and_set",
+                    "atomic_flag_test_and_set",
+                    "atomic_flag_test_and_set_explicit",
+                    "__atomic_clear",
+                    "atomic_flag_clear",
+                    "atomic_flag_clear_explicit");
+    // GCC steps a pointer by bytes (as if it were a uintptr_t), C11 by elements.
+    private static final java.util.Set<String> ATOMIC_POINTER_STEP_IN_BYTES =
+            java.util.Set.of(
+                    "__atomic_fetch_add",
+                    "__atomic_fetch_sub",
+                    "__atomic_add_fetch",
+                    "__atomic_sub_fetch");
+    private static final java.util.Set<String> ATOMIC_POINTER_STEP_IN_ELEMENTS =
+            java.util.Set.of(
+                    "atomic_fetch_add",
+                    "atomic_fetch_sub",
+                    "atomic_fetch_add_explicit",
+                    "atomic_fetch_sub_explicit");
+
     private Expr<?> atomicCall(
             String name, List<AssignmentExpressionContext> args, AtomicReturn returnKind) {
         if (functionVisitor == null) {
@@ -3242,6 +3584,17 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         for (AssignmentExpressionContext arg : args) {
             arguments.add(arg.accept(functionVisitor));
         }
+        if (ATOMIC_FLAG_OPERATIONS.contains(name) && !arguments.isEmpty()) {
+            arguments.set(0, flagAddress(arguments.get(0)));
+        }
+        boolean stepInBytes = ATOMIC_POINTER_STEP_IN_BYTES.contains(name);
+        if ((stepInBytes || ATOMIC_POINTER_STEP_IN_ELEMENTS.contains(name))
+                && arguments.size() > 1
+                && pointeeOf(arguments.get(0).getExpression()) instanceof CPointer cell) {
+            Expr<?> step = arguments.get(1).getExpression();
+            Expr<?> offset = pointerStep(step, cell.getEmbeddedType(), stepInBytes);
+            arguments.set(1, new CExpr(offset, parseContext));
+        }
         CComplexType returnType;
         if (returnKind == AtomicReturn.POINTEE && !arguments.isEmpty()) {
             // load/exchange/fetch return the value at the object -- the pointee of the first
@@ -3249,13 +3602,109 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             CComplexType pointee = pointeeOf(arguments.get(0).getExpression());
             returnType = pointee != null ? pointee : CComplexType.getSignedInt(parseContext);
         } else {
-            // compare-exchange returns a bool (int); store and fence are void (value unused).
+            // compare-exchange and test-and-set return a bool (int); store, clear and fence are
+            // void (value unused).
             returnType = CComplexType.getSignedInt(parseContext);
         }
         parseContext.getMetadata().create(name, "cType", returnType);
         CCall cCall = new CCall(name, arguments, parseContext);
         preStatements.add(cCall);
         return cCall.getRet().getRef();
+    }
+
+    /**
+     * The lock-free queries, answered as GCC does on x86: an object of 1, 2, 4 or 8 bytes is
+     * lock-free, any other size is not always lock-free. Whether it is lock-free at run time
+     * depends on the processor, so {@code __atomic_is_lock_free} of such a size is refused.
+     *
+     * <p>The answer by size is the same under ILP32 and LP64 (as for GCC with -m32 and -m64); the
+     * data model only changes the size of a type, which is computed for the architecture.
+     */
+    private Expr<?> lockFree(String name, List<AssignmentExpressionContext> args) {
+        BigInteger size;
+        if (name.equals("atomic_is_lock_free")) {
+            CComplexType object = pointeeOf(args.get(0).accept(this));
+            size =
+                    object == null
+                            ? null
+                            : BigInteger.valueOf(
+                                    ObjectLayout.sizeBits(object, parseContext.getArchitecture())
+                                            / 8);
+        } else {
+            size = literalValue(ExprUtils.simplify(args.get(0).accept(this)));
+        }
+        if (size == null) {
+            throw new UnsupportedFrontendElementException(
+                    name + " is supported only for an object of constant size");
+        }
+        boolean lockFree = size.signum() > 0 && size.bitCount() == 1 && size.bitLength() <= 4;
+        if (!lockFree && !name.equals("__atomic_always_lock_free")) {
+            throw new UnsupportedFrontendElementException(
+                    name + " of a " + size + "-byte object depends on the processor");
+        }
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        LitExpr<?> answer = lockFree ? signedInt.getUnitValue() : signedInt.getNullValue();
+        parseContext.getMetadata().create(answer, "cType", signedInt);
+        return answer;
+    }
+
+    private static BigInteger literalValue(Expr<?> expr) {
+        Expr<?> stripped = stripPos(expr);
+        if (stripped instanceof IntLitExpr intLit) {
+            return intLit.getValue();
+        }
+        if (stripped instanceof BvLitExpr bvLit) {
+            return BvUtils.neutralBvLitExprToBigInteger(bvLit);
+        }
+        return null;
+    }
+
+    /**
+     * An {@code atomic_flag} is a struct around the flag byte; the flag operations use the byte.
+     */
+    private CStatement flagAddress(CStatement pointer) {
+        Expr<?> address = pointer.getExpression();
+        if (!(pointeeOf(address) instanceof CStruct flag) || flag.getFields().isEmpty()) {
+            return pointer;
+        }
+        Expr<?> flagByte = structMemberAccess(address, flag, flag.getFields().get(0).get1());
+        return new CExpr(reference(flagByte), parseContext);
+    }
+
+    /**
+     * The step of an atomic add/sub on a pointer, in the unit the memory model offsets a pointer
+     * by: bytes under the bytes model, cells otherwise. A byte step that is not a whole number of
+     * elements is truncated, as the cell models cannot point inside an element.
+     */
+    private Expr<?> pointerStep(Expr<?> step, CComplexType element, boolean inBytes) {
+        final CComplexType stepType = CComplexType.getSignedLong(parseContext);
+        // A `void *` steps by bytes (GNU).
+        final Expr<?> size =
+                element instanceof CVoid ? stepType.getUnitValue() : byteStrideExpr(element);
+        final Expr<?> unit = byteAddressed() ? size : cellCountExpr(element);
+        if (size == null || unit == null) {
+            throw new UnsupportedFrontendElementException(
+                    "Atomic arithmetic on a pointer to an element of unknown size");
+        }
+        Expr<?> offset = stepType.castTo(step);
+        if (byteAddressed() && inBytes) {
+            parseContext.getMetadata().create(offset, "cType", stepType);
+            return offset;
+        }
+        if (inBytes) {
+            final Expr<?> bytes = stepType.castTo(size);
+            offset =
+                    offset.getType() instanceof IntType
+                            ? createIntDiv(offset, bytes)
+                            : AbstractExprs.Div(offset, bytes);
+            parseContext.getMetadata().create(offset, "cType", stepType);
+            offset = stepType.castTo(offset);
+        }
+        if (!isLiteralOne(unit)) {
+            offset = stepType.castTo(Mul(List.of(offset, stepType.castTo(unit))));
+        }
+        parseContext.getMetadata().create(offset, "cType", stepType);
+        return offset;
     }
 
     /**
@@ -3476,8 +3925,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
         } else {
 
-            boolean negativeIsUnaryMinus = false;
-
             // Integer suffixes u and l come in any order (ul, lu, llu, ull, ...); one trailing 'l'
             // may already have been stripped for the shared long/float check above. Strip whatever
             // u/l remain, in any order -- otherwise a hex constant like `0xFFFLLU` reaches the
@@ -3497,8 +3944,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 }
                 text = text.substring(0, text.length() - 1);
             }
-            boolean isLongLong = longCount >= 2;
 
+            // C11 6.4.4.1p5: a hexadecimal, octal or binary constant may also take the unsigned
+            // type of each rank, a decimal one only with a u suffix.
+            boolean unsignedAllowed = isUnsigned;
             BigInteger bigInteger;
             if (isCharLiteral) {
                 // Every character constant -- plain, escaped, hex, octal, multi-character -- goes
@@ -3509,41 +3958,45 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 bigInteger = BigInteger.valueOf(charLiteralValue);
             } else if (text.startsWith("0x")) {
                 bigInteger = new BigInteger(text.substring(2), 16);
+                unsignedAllowed = true;
             } else if (text.startsWith("0b")) {
                 bigInteger = new BigInteger(text.substring(2), 2);
+                unsignedAllowed = true;
             } else if (text.startsWith("0") && text.length() > 1) {
                 bigInteger = new BigInteger(text.substring(1), 8);
+                unsignedAllowed = true;
             } else {
                 bigInteger = new BigInteger(text, 10);
-                negativeIsUnaryMinus = true; // -10 is -(10)
             }
 
-            final var size = bigInteger.bitLength();
+            // The candidate list of C11 6.4.4.1p5; the first one that can represent the value wins.
+            final List<CComplexType> candidates = new ArrayList<>();
+            if (longCount == 0) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedInt(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedInt(parseContext));
+            }
+            if (longCount <= 1) {
+                if (!isUnsigned) candidates.add(CComplexType.getSignedLong(parseContext));
+                if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLong(parseContext));
+            }
+            if (!isUnsigned) candidates.add(CComplexType.getSignedLongLong(parseContext));
+            if (unsignedAllowed) candidates.add(CComplexType.getUnsignedLongLong(parseContext));
 
-            CComplexType unsignedLongLong = CComplexType.getUnsignedLongLong(parseContext);
-            CComplexType signedLongLong = CComplexType.getSignedLongLong(parseContext);
-            CComplexType unsignedLong = CComplexType.getUnsignedLong(parseContext);
-            CComplexType signedLong = CComplexType.getSignedLong(parseContext);
-            CComplexType unsignedInt = CComplexType.getUnsignedInt(parseContext);
-            CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-
-            CComplexType type;
-            if ((isLongLong || size > unsignedLong.width()) && isUnsigned) type = unsignedLongLong;
-            else if (!isUnsigned
-                    && (isLongLong || (size >= signedLong.width()) && negativeIsUnaryMinus))
-                type = signedLongLong;
-            else if ((isLong || size > unsignedInt.width()) && isUnsigned) type = unsignedLong;
-            else if (!isUnsigned && (isLong || (size >= signedInt.width()) && negativeIsUnaryMinus))
-                type = signedLong;
-            else if (isUnsigned) type = unsignedInt;
-            else type = signedInt;
+            CComplexType type = candidates.get(candidates.size() - 1);
+            for (CComplexType candidate : candidates) {
+                if (canRepresent((CInteger) candidate, bigInteger)) {
+                    type = candidate;
+                    break;
+                }
+            }
+            final boolean signedType = ((CInteger) type).isSsigned();
 
             LitExpr<?> litExpr =
                     parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
-                            ? isUnsigned
-                                    ? BvUtils.bigIntegerToUnsignedBvLitExpr(
+                            ? signedType
+                                    ? BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
+                                    : BvUtils.bigIntegerToUnsignedBvLitExpr(
                                             bigInteger, type.width())
-                                    : BvUtils.bigIntegerToSignedBvLitExpr(bigInteger, type.width())
                             : Int(bigInteger);
 
             parseContext.getMetadata().create(litExpr, "cType", type);
@@ -3551,12 +4004,18 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         }
     }
 
+    private static boolean canRepresent(CInteger type, BigInteger value) {
+        return type.isSsigned()
+                ? value.bitLength() < type.width()
+                : value.signum() >= 0 && value.bitLength() <= type.width();
+    }
+
     @Override
     public Expr<?> visitPrimaryExpressionBraceExpression(
             CParser.PrimaryExpressionBraceExpressionContext ctx) {
         if (functionVisitor != null) {
             CStatement statement = ctx.expression().accept(functionVisitor);
-            preStatements.add(statement);
+            queueValueStatement(statement);
             return statement.getExpression();
         } else {
             return getConstExpr(ctx);
@@ -3572,10 +4031,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
     /**
      * A GNU statement expression `({ stmt; ...; last; })`: the statements run for their effects
      * (they are queued like any other side effect of the surrounding expression) and the last
-     * statement's value is the expression's value. This is what `container_of` expands to. When
-     * there is no value to yield -- no function visitor, or the block does not end in an expression
-     * -- fall back to the old null result: in statement position the value is discarded anyway, and
-     * a value position fails downstream exactly as it always did.
+     * statement's value is the expression's value. This is what `container_of` expands to. A block
+     * that does not end in an expression still has its statements queued, but yields null, as does
+     * any statement expression without a function visitor: in statement position the value is
+     * discarded anyway, and a value position fails downstream exactly as it always did.
      */
     private Expr<?> statementExpression(CParser.CompoundStatementContext ctx) {
         if (functionVisitor == null) {
@@ -3591,10 +4050,26 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (value == null) {
             uniqueWarningLogger.write(
                     Level.INFO, "WARNING: statement expression yields no value\n");
+            preStatements.add(statement);
             return null;
         }
-        preStatements.add(statement);
+        queueValueStatement(statement);
         return value;
+    }
+
+    /**
+     * Queues a parenthesised or statement expression to run first, except for the post-statements
+     * of its last item -- the one yielding the value: `(a++)` reads `a` before incrementing it,
+     * just like `a++`. The earlier items are sequenced before the value and run in full.
+     */
+    private void queueValueStatement(CStatement statement) {
+        if (statement instanceof CCompound compound && !compound.getcStatementList().isEmpty()) {
+            List<CStatement> items = compound.getcStatementList();
+            CStatement value = items.get(items.size() - 1);
+            postStatements.addAll(functionVisitor.collectPostStatements(value));
+            functionVisitor.resetPostStatements(value);
+        }
+        preStatements.add(statement);
     }
 
     @Override
@@ -3731,8 +4206,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
+                final boolean wasSyncHandles =
+                        functionVisitor != null && functionVisitor.isVisitingSyncHandleArguments();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
                     functionVisitor.setSuppressScopedRelease(true);
+                if (functionVisitor != null)
+                    functionVisitor.setSyncHandleArguments(
+                            calleeName.matches("pthread_(mutex|cond|rwlock|spin|barrier)_.*"));
                 try {
                     if (exprList == null) arguments = List.of();
                     else {
@@ -3748,8 +4228,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         arguments = list;
                     }
                 } finally {
-                    if (functionVisitor != null)
+                    if (functionVisitor != null) {
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);
+                        functionVisitor.setSyncHandleArguments(wasSyncHandles);
+                    }
                 }
                 markComparedObjects(calleeName, arguments);
                 CCall cCall =

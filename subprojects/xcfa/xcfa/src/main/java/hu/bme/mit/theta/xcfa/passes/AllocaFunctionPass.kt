@@ -20,19 +20,29 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import java.math.BigInteger
 
 /**
  * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
@@ -46,10 +56,15 @@ import hu.bme.mit.theta.xcfa.utils.mallocVar
  * the same for every activation of the procedure, so two recursive frames or two threads running it
  * would alias; a runtime base from the shared counter cannot.
  *
- * The block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`), which the memcleanup
- * scan does not enumerate: `alloca` memory is released when the enclosing function returns, so
- * reporting it as a leak would be wrong. It still records a real size in `__theta_ptr_size`, so
- * out-of-bounds accesses to it are caught exactly as they are for heap memory.
+ * Under the multi model the block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`),
+ * which the memcleanup scan does not enumerate: `alloca` memory is released when the enclosing
+ * function returns, so reporting it as a leak would be wrong. It still records a real size in
+ * `__theta_ptr_size`, so out-of-bounds accesses to it are caught exactly as they are for heap
+ * memory.
+ *
+ * A sub-object of a heap block ([HEAP_SUBOBJECT], see `MallocFunctionPass`) is allocated the same
+ * way but lives as long as its block, so it is not released at return. Like `alloca` memory it is
+ * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported.
  *
  * Known gaps (both are the pre-existing scope-lifetime limitation, not new to alloca): the block is
  * never invalidated at function return, so a dangling access to it afterwards is not caught, and
@@ -83,39 +98,33 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
             val ret = invokeLabel.params[0]
             val arg = invokeLabel.params[1]
             val retType = CComplexType.getType(ret, parseContext)
-            val bump =
-              AssignStmtLabel(
-                mallocVar,
-                Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
-                ret.type,
-                EmptyMetaData,
-              )
-            // 3k+1: the residue class the memcleanup scan does not enumerate.
-            val assignRet =
-              AssignStmtLabel(
-                ret,
-                cast(
-                  FlatMemoryPass.flatBaseExpr(
-                    Add(mallocVar.ref, retType.getValue("1")),
-                    retType,
-                    parseContext,
-                  ),
-                  ret.type,
-                ),
-              )
-            val labels =
-              if (MemsafetyPass.enabled) {
-                listOfNotNull(
-                  bump,
-                  assignRet,
-                  builder.parent.allocate(parseContext, ret, arg),
-                  probeFirstCell(builder, ret, arg, retType),
-                )
+            val addressLabels =
+              if (parseContext.memoryModel.flatAddressing()) {
+                builder.parent.bumpAllocate(parseContext, ret, arg, heap = false)
               } else {
-                listOf(bump, assignRet)
+                // 3k+1: the residue class the memcleanup scan does not enumerate.
+                listOf(
+                  AssignStmtLabel(
+                    mallocVar,
+                    Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
+                    ret.type,
+                    EmptyMetaData,
+                  ),
+                  AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type)),
+                )
+              }
+            val labels =
+              if (parseContext.isCheckMemsafety) {
+                addressLabels +
+                  listOfNotNull(
+                    builder.parent.allocate(parseContext, ret, arg),
+                    probeInvalidLength(builder, ret, arg, retType),
+                  )
+              } else {
+                addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-            allocated.add(ret)
+            if (invokeLabel.name == "alloca") allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
@@ -148,7 +157,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       val lowered =
         labels.mapNotNull { label ->
           if (label !is InvokeLabel || label.name != SCOPE_END) label
-          else if (!MemsafetyPass.enabled) null
+          else if (!parseContext.isCheckMemsafety) null
           else builder.parent.deallocate(parseContext, label.params[1])
         }
       builder.removeEdge(edge)
@@ -173,7 +182,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    * only leave a bug unfound, never invent one.
    */
   private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<Expr<*>>) {
-    if (!MemsafetyPass.enabled || allocated.isEmpty()) return
+    if (!parseContext.isCheckMemsafety || allocated.isEmpty()) return
     val finalLoc = builder.finalLoc.orElse(null) ?: return
     val releases = allocated.map { builder.parent.deallocate(parseContext, it) }
     LinkedHashSet(finalLoc.incomingEdges).forEach { edge ->
@@ -185,30 +194,18 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   /**
-   * Reads the first cell of a *runtime-sized* stack object, so that the existing valid-deref guard
-   * sees a zero-length one.
+   * Reads one past the end of a *runtime-sized* stack object whose length is invalid, so that the
+   * existing valid-deref guard reports it. SV-COMP programs are GNU C, where a zero-length array is
+   * allowed and only an access to it is not, so a zero length is accepted; a negative length, or
+   * one whose size exceeds `PTRDIFF_MAX` bytes (GCC's maximum object size), is undefined.
    *
-   * C11 6.7.6.2p5: a variably-modified type's size "shall evaluate to a value greater than zero",
-   * so `unsigned n = __VERIFIER_nondet_uint(); int a[n];` is undefined for `n == 0`, and
-   * sv-benchmarks files that under `valid-deref`. Nothing could see it: with `n == 0` the object is
-   * given size 0, every `for (i = 0; i < n; i++)` runs zero times, so **no dereference happens at
-   * all** and no access guard can fire. Seven `loops/` tasks -- `sum_array-1`/`-2`, `matrix-2`,
-   * `insertion_sort-1`/`-2`, `invert_string-2`, `bubble_sort-1` -- are exactly this shape and
-   * nothing else, and theta proved every one of them safe.
-   *
-   * Stated as a *read of cell 0* rather than as an error edge of its own, because
-   * [MemsafetyPass.annotateDeref] already draws precisely the right conclusion from one: its guard
-   * is `ptr_size[base] <= index`, which at index 0 is `size <= 0` -- true exactly when the
-   * declaration was undefined, and false for every `n >= 1`. Emitting the error edge here instead
-   * does not work: [MemsafetyPass.breakUpErrors] runs ten pass-groups later and begins by
-   * redirecting *every* incoming edge of the error location to the final location (that is how
-   * `reach_error()` is disabled under memsafety), so the check was silently neutralised.
-   *
-   * Only for a size that is not a literal, so a declared `int a[10]` and the constant-sized
-   * subobject allocations cost nothing; and only under memsafety, so no other property sees a read
-   * the program never performed.
+   * The read sits behind `bad &&`, which [MemsafetyPass.annotateDeref] treats as a short-circuit
+   * guard, so the access only exists when the length is invalid. An error edge emitted here would
+   * be redirected by [MemsafetyPass.breakUpErrors]. Only for a size that is not a literal, and only
+   * under memsafety, so no other property sees a read the program never performed. The size counts
+   * cells, so for struct elements the bound is stricter than the byte limit it stands for.
    */
-  private fun probeFirstCell(
+  private fun probeInvalidLength(
     builder: XcfaProcedureBuilder,
     ret: Expr<*>,
     size: Expr<*>,
@@ -216,20 +213,30 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   ): XcfaLabel? {
     if (ExprUtils.simplify(size) is LitExpr<*>) return null
     val element = (retType as? CPointer)?.embeddedType ?: return null
-    val probe = Var("__theta_vla_probe_${probeCnt++}", element.smtType)
+    // An explicit `alloca` returns `void *`: its byte count has no sign, and a size too large for
+    // the stack is an overflow, which SV-COMP assumes never happens.
+    if (element is CVoid) return null
+    val sizeType = CComplexType.getType(size, parseContext)
+    val ulong = CComplexType.getUnsignedLong(parseContext)
+    val elementBytes = maxOf(1, element.width() / 8)
+    val maxLength =
+      (BigInteger.ONE.shiftLeft(ulong.width() - 1) - BigInteger.ONE) / elementBytes.toBigInteger()
+    val bad =
+      Or(Lt(size, sizeType.nullValue), Gt(ulong.castTo(size), ulong.getValue(maxLength.toString())))
+    val probe = Var("__theta_vla_probe_${probeCnt++}", Bool())
     builder.addVar(probe)
-    parseContext.metadata.create(probe.ref, "cType", element)
-    val offset = CComplexType.getUnsignedLong(parseContext).nullValue
     @Suppress("UNCHECKED_CAST")
-    val cell = Dereference.of(ret as Expr<Type>, offset as Expr<Type>, element.smtType as Type)
+    val cell =
+      Dereference.of(ret as Expr<Type>, ulong.castTo(size) as Expr<Type>, element.smtType as Type)
     parseContext.metadata.create(cell, "cType", element)
-    return AssignStmtLabel(probe, cast(cell, probe.type), probe.type)
+    @Suppress("UNCHECKED_CAST") val read = Eq(cell as Expr<Type>, element.nullValue as Expr<Type>)
+    return AssignStmtLabel(probe, And(bad, read), probe.type)
   }
 
   private var probeCnt = 0
 
   private fun predicate(it: XcfaLabel): Boolean {
-    return it is InvokeLabel && it.name == "alloca"
+    return it is InvokeLabel && (it.name == "alloca" || it.name == HEAP_SUBOBJECT)
   }
 
   private companion object {

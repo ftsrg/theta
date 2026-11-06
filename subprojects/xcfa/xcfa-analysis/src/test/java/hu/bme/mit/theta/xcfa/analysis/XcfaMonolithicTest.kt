@@ -25,9 +25,13 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaMultiThreadToMonolithicAdapter
@@ -37,6 +41,7 @@ import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.math.BigInteger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -51,10 +56,18 @@ class XcfaMonolithicTest {
 
       operator fun Expr<*>.contains(other: Expr<*>): Boolean = { other == it } in this
 
+      // Control variables follow the arithmetic: bitvectors under the bytes model.
+      fun ctrlIs(ctrl: Expr<*>, v: Long): Expr<*> {
+        val type = ctrl.type
+        val value =
+          if (type is BvType) BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(v), type.size)
+          else Int(v.toInt())
+        return Eq(ctrl, value)
+      }
+
       monolithic.ctrlVars.forEach { ctrl ->
         assertTrue(
-          Eq(cast(ctrl.ref, Int()), Int(0)) in monolithic.initExpr ||
-            Eq(cast(ctrl.ref, Int()), Int(-1)) in monolithic.initExpr,
+          ctrlIs(ctrl.ref, 0) in monolithic.initExpr || ctrlIs(ctrl.ref, -1) in monolithic.initExpr,
           "Initial expression does not contain expected control variable assignment.",
         )
         assertTrue(ctrl in monolithic.vars)
@@ -62,9 +75,7 @@ class XcfaMonolithicTest {
 
       assertEquals(
         1,
-        monolithic.ctrlVars.count { ctrl ->
-          Eq(cast(ctrl.ref, Int()), Int(0)) in monolithic.initExpr
-        },
+        monolithic.ctrlVars.count { ctrl -> ctrlIs(ctrl.ref, 0) in monolithic.initExpr },
         "There should be exactly one control variable initialized to 0 (the location var of the init thread).",
       )
 
@@ -134,19 +145,54 @@ class XcfaMonolithicTest {
     }
   }
 
+  /**
+   * Builds under the default memory model and, like the CLI, rebuilds under `bytes` when the
+   * program needs byte-addressed memory (`10ptr.c` views an int through a char pointer).
+   */
+  private fun build(program: String, property: XcfaProperty): Pair<XCFA, ParseContext> {
+    val parseContext = ParseContext()
+    return try {
+      getXcfaFromC(
+          javaClass.getResourceAsStream(program)!!,
+          parseContext,
+          false,
+          property,
+          NullLogger.getInstance(),
+        )
+        .first to parseContext
+    } catch (e: RequiresByteAddressedMemoryException) {
+      val bytesContext = ParseContext()
+      bytesContext.arithmetic = ArithmeticType.bitvector
+      bytesContext.memoryModel = MemoryModelType.bytes
+      getXcfaFromC(
+          javaClass.getResourceAsStream(program)!!,
+          bytesContext,
+          false,
+          property,
+          NullLogger.getInstance(),
+        )
+        .first to bytesContext
+    }
+  }
+
   @ParameterizedTest
   @MethodSource("data")
   fun testMonolithicExprTransformation(program: String) {
     println("Testing $program for XCFA to monolithic expression transformation.")
-    val stream = javaClass.getResourceAsStream(program)
     val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, property, NullLogger.getInstance()).first
+    val (xcfa, buildContext) = build(program, property)
     val multithread =
       xcfa.procedures.any { p ->
         p.edges.any { e -> e.getFlatLabels().filterIsInstance<StartLabel>().isNotEmpty() }
       }
-    val parseContext = ParseContext().apply { this.multiThreading = multithread }
+    val parseContext =
+      ParseContext().apply {
+        this.multiThreading = multithread
+        if (buildContext.memoryModel == MemoryModelType.bytes) {
+          this.arithmetic = buildContext.arithmetic
+          this.memoryModel = buildContext.memoryModel
+        }
+      }
 
     val adapter =
       if (multithread) {
@@ -163,16 +209,20 @@ class XcfaMonolithicTest {
   @MethodSource("assertionData")
   fun testMonolithicExprTransformationAssertion(program: String) {
     println("Testing $program for XCFA to monolithic expression transformation (assertion).")
-    val stream = javaClass.getResourceAsStream(program)
     val assertionProperty = XcfaProperty(ErrorDetection.NO_ASSERTION_VIOLATION)
-    val xcfa =
-      getXcfaFromC(stream!!, ParseContext(), false, assertionProperty, NullLogger.getInstance())
-        .first
+    val (xcfa, buildContext) = build(program, assertionProperty)
     val multithread =
       xcfa.procedures.any { p ->
         p.edges.any { e -> e.getFlatLabels().filterIsInstance<StartLabel>().isNotEmpty() }
       }
-    val parseContext = ParseContext().apply { this.multiThreading = multithread }
+    val parseContext =
+      ParseContext().apply {
+        this.multiThreading = multithread
+        if (buildContext.memoryModel == MemoryModelType.bytes) {
+          this.arithmetic = buildContext.arithmetic
+          this.memoryModel = buildContext.memoryModel
+        }
+      }
 
     val adapter =
       if (multithread) {

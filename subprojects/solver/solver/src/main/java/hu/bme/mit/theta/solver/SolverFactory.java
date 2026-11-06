@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,6 +48,15 @@ public interface SolverFactory {
      * @return Solver instance
      */
     default HornSolver createHornSolver() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Create a solver that calls back into the given user propagators during search.
+     *
+     * @return Solver instance
+     */
+    default Solver createSolverWithPropagators(UserPropagator... propagators) {
         throw new UnsupportedOperationException();
     }
 }

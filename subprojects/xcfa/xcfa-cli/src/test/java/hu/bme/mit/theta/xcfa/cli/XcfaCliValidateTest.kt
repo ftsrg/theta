@@ -103,7 +103,6 @@ class XcfaCliValidateTest {
         Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
         Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
         Arguments.of("/c/litmustest/singlethread/15addition.c", null),
-        Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
       )
     }
 

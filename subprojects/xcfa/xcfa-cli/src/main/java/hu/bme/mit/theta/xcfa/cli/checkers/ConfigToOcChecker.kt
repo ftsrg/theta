@@ -20,6 +20,9 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.cli.params.OcConfig
@@ -41,7 +44,7 @@ fun getOcChecker(
 
   val (forceUnrollBoundStart, forceUnrollBoundEnd) =
     config.inputConfig.witness?.let { witnessFile ->
-      maxOf(ocConfig.forceUnrollBoundStart, witnessMaxLocationRevisits(witnessFile)) to -1
+      maxOf(ocConfig.forceUnrollBoundStart, witnessUnrollBound(witnessFile)) to -1
     } ?: (ocConfig.forceUnrollBoundStart to ocConfig.forceUnrollBoundEnd)
 
   val ocChecker =
@@ -50,7 +53,7 @@ fun getOcChecker(
       property = config.inputConfig.property,
       parseContext = parseContext,
       decisionProcedure = ocConfig.decisionProcedure,
-      smtSolver = ocConfig.smtSolver,
+      solverFactory = ocSolverFactory(ocConfig),
       logger = logger,
       outputConflictClauses = ocConfig.outputConflictClauses,
       autoConflictConfig = ocConfig.autoConflict,
@@ -65,23 +68,37 @@ fun getOcChecker(
   return SafetyChecker { ocChecker.check() }
 }
 
+private fun ocSolverFactory(ocConfig: OcConfig): SolverFactory {
+  val solverFactory = SolverManager.resolveSolverFactory(ocConfig.smtSolver)
+  if (!ocConfig.validateSolver && ocConfig.unsatReferenceSolver.isEmpty()) return solverFactory
+  val unsatReference =
+    ocConfig.unsatReferenceSolver
+      .takeIf { it.isNotEmpty() }
+      ?.let { SolverManager.resolveSolverFactory(it) }
+  return SolverValidatorWrapperFactory.create(solverFactory, unsatReference)
+}
+
 /**
- * The deepest loop trip count a violation witness requires to be followed: a waypoint sitting on a
- * loop body recurs once per witnessed iteration, so the maximum number of (non-`avoid`) waypoints
- * sharing a single source location is how many times that loop must be unrolled.
+ * The loop trip count to start validating a witness with: a waypoint recurs once per witnessed
+ * iteration, and each thread unrolls its own copy, so this is the maximum number of (non-`avoid`)
+ * waypoints of one thread at one source location, minus one as a loop head is also passed on exit.
+ * A too small bound is only a start: the cut loop's exit stays reachable, so OC deepens it.
  */
-private fun witnessMaxLocationRevisits(witnessFile: File): Int {
-  val witness =
+private fun witnessUnrollBound(witnessFile: File): Int =
+  witnessUnrollBound(
     WitnessYamlConfig.decodeFromString(
         ListSerializer(YamlWitness.serializer()),
         witnessFile.readText(),
       )[0]
-  return witness.content
+  )
+
+internal fun witnessUnrollBound(witness: YamlWitness): Int =
+  witness.content
     .mapNotNull { it.segment }
     .flatten()
     .filter { it.waypoint.action != Action.AVOID }
-    .groupingBy { it.waypoint.location }
+    .groupingBy { it.waypoint.location to it.waypoint.threadId }
     .eachCount()
     .values
-    .maxOrNull() ?: 0
-}
+    .maxOrNull()
+    ?.minus(1) ?: 0

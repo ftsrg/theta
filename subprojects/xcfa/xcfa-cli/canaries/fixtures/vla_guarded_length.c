@@ -1,4 +1,4 @@
-// The other side of vla_zero_length.c: once the length is known positive there is no
+// The other side of vla_oversize_length.c: once the length is known valid there is no
 // violation, and the check attached to the allocation must not invent one. Also pins that a
 // constant-sized array never pays for the check at all.
 extern unsigned int __VERIFIER_nondet_uint(void);

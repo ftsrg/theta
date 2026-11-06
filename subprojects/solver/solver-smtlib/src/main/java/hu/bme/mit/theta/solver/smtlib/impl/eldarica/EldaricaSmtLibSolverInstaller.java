@@ -90,7 +90,7 @@ public class EldaricaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-            installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
+            makeExecutable(installDir.resolve(getSolverBinaryName()));
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }

@@ -47,7 +47,6 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
-import kotlin.random.Random
 
 fun getCegarChecker(
   xcfa: XCFA,
@@ -73,7 +72,7 @@ fun getCegarChecker(
 
   val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
-  val random = Random.Default
+  val random = explorationRandom()
   val (coi, lts) =
     cegarConfig.coi.getLts(xcfa, parseContext, cegarConfig.por, ignoredVarRegistry, random)
   val waitlist =
@@ -118,11 +117,20 @@ fun getCegarChecker(
       cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
         as ExprTraceChecker<Refutation>
     )
+  val domain = cegarConfig.abstractorConfig.domain
   val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
-    cegarConfig.abstractorConfig.domain.itpPrecRefiner(
-      cegarConfig.refinerConfig.exprSplitter.exprSplitter,
-      xcfa,
-    ) as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+    if (cegarConfig.refinerConfig.refinement == Refinement.UNSAT_CORE) {
+      val varsPrecRefiner =
+        domain.varsPrecRefiner
+          ?: throw UnsupportedOperationException(
+            "UNSAT_CORE refinement is not supported with the $domain domain, use one of " +
+              Domain.entries.filter { it.varsPrecRefiner != null }
+          )
+      varsPrecRefiner()
+    } else {
+      domain.itpPrecRefiner(cegarConfig.refinerConfig.exprSplitter.exprSplitter, xcfa)
+    }
+      as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
   val atomicNodePruner: NodePruner<ExprState, ExprAction> =
     cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
   val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
@@ -191,43 +199,12 @@ fun getCegarChecker(
                 .filter {
                   (it.state as XcfaState<PtrState<*>>).processes.any { it.value.locs.peek() == loc }
                 }
-                .map {
-                  (it.state as XcfaState<PtrState<*>>).sGlobal.innerState.let { s ->
-                    val declMap =
-                      (it.state as XcfaState<PtrState<*>>)
-                        .processes
-                        .map {
-                          it.value.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
-                        }
-                        .reduce { a, b -> a + b }
-                    when (s) {
-                      is ExplState -> {
-                        if (s.isBottom) {
-                          ExplState.bottom()
-                        } else {
-                          ExplState.of(s.`val`.changeVars(declMap))
-                        }
-                      }
-                      is PredState -> {
-                        PredState.of(s.preds.map { ExprUtils.changeDecls(it, declMap) })
-                      }
-                      is Prod2State<*, *> -> {
-                        if (s.state1.isBottom) ExplState.bottom()
-                        else
-                          Prod2State.of(
-                            ExplState.of((s.state1 as ExplState).`val`.changeVars(declMap)),
-                            PredState.of(
-                              (s.state2 as PredState).preds.map {
-                                ExprUtils.changeDecls(it, declMap)
-                              }
-                            ),
-                          )
-                      }
-                      else -> {
-                        error("Unknown state: ${s}")
-                      }
-                    }
-                  }
+                .flatMap { node ->
+                  val state = node.state as XcfaState<PtrState<*>>
+                  state.processes.values
+                    .filter { it.locs.peek() == loc }
+                    .map { process -> generalizeProofState(state.sGlobal.innerState, process) }
+                    .stream()
                 }
                 .toList()
             }
@@ -247,5 +224,24 @@ fun getCegarChecker(
       SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
       return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
     }
+  }
+}
+
+// Generalize each process separately: two instances of one procedure can have different values
+// for the same source parameter, in particular their generated thread IDs.
+internal fun generalizeProofState(state: ExprState, process: XcfaProcessState): ExprState {
+  val declMap = process.varLookup.reversed().reduce { a, b -> a + b }.reverseMapping()
+  return when (state) {
+    is ExplState ->
+      if (state.isBottom) ExplState.bottom() else ExplState.of(state.`val`.changeVars(declMap))
+    is PredState -> PredState.of(state.preds.map { ExprUtils.changeDecls(it, declMap) })
+    is Prod2State<*, *> ->
+      if (state.state1.isBottom) ExplState.bottom()
+      else
+        Prod2State.of(
+          generalizeProofState(state.state1 as ExprState, process),
+          generalizeProofState(state.state2 as ExprState, process),
+        )
+    else -> error("Unknown state: $state")
   }
 }

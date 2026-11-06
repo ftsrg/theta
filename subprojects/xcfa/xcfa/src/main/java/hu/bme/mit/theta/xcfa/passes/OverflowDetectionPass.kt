@@ -49,6 +49,9 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -119,7 +122,7 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
                 it is BvShiftLeftExpr) &&
                 parseContext.metadata
                   .getMetadataValue(it, "cType")
-                  .map { cType -> (cType as? CInteger)?.isSsigned ?: false }
+                  .map(::isSignedArithmetic)
                   .orElse(false)
             }
             .flatMap { listOf(it) + evaluationPrefixesOf(it) }
@@ -248,6 +251,12 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
    * and would be silently dropped.
    */
   private fun evaluationPrefixesOf(expr: Expr<*>): List<Expr<*>> {
+    if (expr is IteExpr<*>) {
+      // a guarded chain (see `getExpressions`): its intermediates are guarded the same way
+      return evaluationPrefixesOf(expr.then).map {
+        IteExpr.of(expr.cond, it as Expr<IntType>, Int(0))
+      }
+    }
     if (expr !is AddExpr<*> && expr !is MulExpr<*>) return listOf()
     val ops = expr.ops
     if (ops.size <= 2) return listOf()
@@ -265,6 +274,18 @@ class OverflowDetectionPass(val property: XcfaProperty, val parseContext: ParseC
     return prefixes
   }
 }
+
+/**
+ * True for a signed integer type. Pointers, arrays and structs are [CInteger]s with `isSsigned()`
+ * too, but the property only covers signed integer arithmetic: a pointer sum has no signed
+ * overflow, and checking it reports one for any pointer whose value is unconstrained.
+ */
+private fun isSignedArithmetic(cType: Any?): Boolean =
+  cType is CInteger &&
+    cType.isSsigned &&
+    cType !is CPointer &&
+    cType !is CArray &&
+    cType !is CStruct
 
 private fun XcfaLabel.getExpressions(f: (Expr<*>) -> Boolean): Set<Expr<*>> {
   when (this) {
@@ -309,6 +330,15 @@ private fun Expr<*>.getExpressions(
 ): Set<Expr<*>> {
   var shortCircuitCondition: Expr<BoolType> = shortCircuitCondition
   val ret = mutableSetOf<Expr<*>>()
+  if (this is IteExpr<*>) {
+    // `c ? a : b` evaluates only the selected branch, so an overflow in a branch counts only when
+    // the condition selects it.
+    ret.addAll(cond.getExpressions(f, shortCircuitCondition))
+    ret.addAll(then.getExpressions(f, And(shortCircuitCondition, cond)))
+    ret.addAll(`else`.getExpressions(f, And(shortCircuitCondition, Not(cond))))
+    if (f(this)) ret.add(this)
+    return ret
+  }
   for (expr in ops) {
     ret.addAll(expr.getExpressions(f, shortCircuitCondition))
     shortCircuitCondition =

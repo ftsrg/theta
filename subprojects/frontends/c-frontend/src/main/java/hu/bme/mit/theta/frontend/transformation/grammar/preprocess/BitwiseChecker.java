@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
     private final ParseContext parseContext;
@@ -169,7 +170,26 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
         if (ctx.castExpression().size() > 1) {
             parseContext.addArithmeticTrait(ArithmeticTrait.NONLIN_INT);
         }
+        for (int i = 0; i < ctx.signs.size(); i++) {
+            final String sign = ctx.signs.get(i).getText();
+            if ((sign.equals("/") || sign.equals("%"))
+                    && !isIntegerLiteral(ctx.castExpression(i + 1).getText())) {
+                parseContext.addArithmeticTrait(ArithmeticTrait.NONCONST_DIV);
+            }
+        }
         return super.visitMultiplicativeExpression(ctx);
+    }
+
+    private static final Pattern INTEGER_LITERAL =
+            Pattern.compile("\\(*(0[xX][0-9a-fA-F]+|[0-9]+)[uUlL]*\\)*");
+
+    /**
+     * Whether {@code text} is an integer literal, possibly parenthesized. Anything else (a macro, a
+     * `const` variable, `sizeof`) counts as non-constant: at worst, that picks bitvectors
+     * needlessly.
+     */
+    private static boolean isIntegerLiteral(String text) {
+        return INTEGER_LITERAL.matcher(text).matches();
     }
 
     /**
@@ -195,6 +215,9 @@ public class BitwiseChecker extends IncludeHandlingCBaseVisitor<Void> {
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
         } else if (op.equals("*=") || op.equals("/=") || op.equals("%=")) {
             parseContext.addArithmeticTrait(ArithmeticTrait.NONLIN_INT);
+            if (!op.equals("*=") && !isIntegerLiteral(ctx.assignmentExpression().getText())) {
+                parseContext.addArithmeticTrait(ArithmeticTrait.NONCONST_DIV);
+            }
         }
         return super.visitAssignmentExpressionAssignmentExpression(ctx);
     }

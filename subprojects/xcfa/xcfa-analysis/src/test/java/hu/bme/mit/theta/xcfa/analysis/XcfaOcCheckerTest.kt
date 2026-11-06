@@ -20,6 +20,8 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -27,8 +29,6 @@ import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.RemoveDeadEnds
-import hu.bme.mit.theta.xcfa.passes.UnusedVarPass
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -39,20 +39,30 @@ class XcfaOcCheckerTest {
 
   companion object {
 
-    private val program = "/04multithread.c"
+    private val programs = listOf("/04multithread.c", "/16shortcircuit_call_or.c")
     private val verdict = SafetyResult<*, *>::isUnsafe
     private val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
 
     @JvmStatic
     fun data(): Collection<Array<Any?>> {
-      return listOf(
-        arrayOf(OcDecisionProcedureType.IDL, AutoConflictFinderConfig.NONE, null),
-        arrayOf(OcDecisionProcedureType.PROPAGATOR, AutoConflictFinderConfig.SIMPLE, null),
-        arrayOf(OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.GENERIC, 3),
-      )
+      return programs.flatMap { program ->
+        listOf(
+          arrayOf(program, OcDecisionProcedureType.IDL, AutoConflictFinderConfig.NONE, null),
+          arrayOf(
+            program,
+            OcDecisionProcedureType.PROPAGATOR,
+            AutoConflictFinderConfig.SIMPLE,
+            null,
+          ),
+          arrayOf(program, OcDecisionProcedureType.BASIC, AutoConflictFinderConfig.GENERIC, 3),
+        )
+      }
     }
 
-    /** Verdicts depending on the unroll exits and on cell-sensitive ordering constraints. */
+    /**
+     * Verdicts depending on the unroll exits, on cell-sensitive ordering constraints and on the
+     * program order within atomic units.
+     */
     @JvmStatic
     fun unrollData(): Collection<Array<Any>> =
       OcDecisionProcedureType.entries.flatMap { dp ->
@@ -62,8 +72,16 @@ class XcfaOcCheckerTest {
           arrayOf("/15sequential_loops_safe.c", dp, SafetyResult<*, *>::isSafe),
           arrayOf("/20mutex_counter_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/23atomic_loop_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/27overwrite_in_atomic_safe.c", dp, SafetyResult<*, *>::isSafe),
+          arrayOf("/28overwrite_in_atomic_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/29alloca_thread_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/31conditional_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
         )
-      }
+      } +
+        // the propagator fails to look up the rf terms of this program's memory accesses
+        OcDecisionProcedureType.entries
+          .filter { it != OcDecisionProcedureType.PROPAGATOR }
+          .map { arrayOf("/30atomic_memassign_safe.c", it, SafetyResult<*, *>::isSafe) }
 
     @JvmStatic
     fun dataRaceData(): Collection<Array<Any>> =
@@ -83,6 +101,8 @@ class XcfaOcCheckerTest {
         arrayOf("/21race_atomic_abort_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/22race_atomic_reach_error_loop.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/24race_atomic_abort_write.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/33struct_array_field_norace.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/34struct_array_field_race.c", SafetyResult<*, *>::isUnsafe),
       )
 
     @BeforeAll
@@ -95,6 +115,7 @@ class XcfaOcCheckerTest {
   @ParameterizedTest
   @MethodSource("data")
   fun testOcChecker(
+    program: String,
     decisionProcedure: OcDecisionProcedureType,
     autoConflictFinderConfig: AutoConflictFinderConfig,
     autoConflictBound: Int?,
@@ -112,7 +133,7 @@ class XcfaOcCheckerTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        smtSolver = "Z3:4.13",
+        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = autoConflictFinderConfig,
@@ -129,33 +150,27 @@ class XcfaOcCheckerTest {
     decisionProcedure: OcDecisionProcedureType,
     maxExitQueries: Int = -1,
     forceUnrollBoundEnd: Int = -1,
+    arithmetic: ArithmeticType = ArithmeticType.efficient,
   ): SafetyResult<*, *> {
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
+    parseContext.arithmetic = arithmetic
     // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
-    // detected between, and keeping every global access for a data race check.
+    // detected between.
     val lbeLevel = LbePass.defaultLevel
-    val keepGlobalAccesses = UnusedVarPass.keepGlobalVariableAccesses
-    val removeDeadEnds = RemoveDeadEnds.enabled
     LbePass.defaultLevel = LbePass.LbeLevel.NO_LBE
-    if (property.inputProperty == ErrorDetection.DATA_RACE) {
-      UnusedVarPass.keepGlobalVariableAccesses = true
-      RemoveDeadEnds.enabled = false
-    }
     val xcfa =
       try {
         getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
       } finally {
         LbePass.defaultLevel = lbeLevel
-        UnusedVarPass.keepGlobalVariableAccesses = keepGlobalAccesses
-        RemoveDeadEnds.enabled = removeDeadEnds
       }
     return XcfaOcChecker(
         xcfa = xcfa,
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        smtSolver = "Z3:4.13",
+        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,
@@ -183,6 +198,27 @@ class XcfaOcCheckerTest {
     println("Testing $program for data races with IDL...")
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     Assertions.assertTrue(verdict(check(program, property, OcDecisionProcedureType.IDL)))
+  }
+
+  @Test
+  fun testBitvectorStartArgumentWidth() {
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
+    val result =
+      check(
+        "/35start_arg_width_race.c",
+        property,
+        OcDecisionProcedureType.IDL,
+        arithmetic = ArithmeticType.bitvector,
+      )
+    Assertions.assertTrue(result.isUnsafe)
+  }
+
+  @Test
+  fun testThreadLocalUnsupported() {
+    // one object per thread, but built as a single shared global: refused instead
+    Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
+      check("/32thread_local_unsupported.c", property, OcDecisionProcedureType.IDL)
+    }
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ __uint64_identity (__uint64_t __x)
 {
   return __x;
 }
-typedef unsigned int size_t;
+typedef long unsigned int size_t;
 typedef __time_t time_t;
 struct timespec
 {

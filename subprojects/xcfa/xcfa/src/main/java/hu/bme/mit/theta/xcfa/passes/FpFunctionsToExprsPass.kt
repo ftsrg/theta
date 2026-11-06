@@ -16,18 +16,30 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.*
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr.Function
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.BiFunction
@@ -43,9 +55,12 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       for (stmt in (edge.label as SequenceLabel).labels) {
         if (stmt is InvokeLabel) {
           if (handlers.containsKey(stmt.name)) {
-            newStmts.add(checkNotNull(handlers[stmt.name]).apply(builder, stmt))
+            when (val label = checkNotNull(handlers[stmt.name]).apply(builder, stmt)) {
+              is SequenceLabel -> newStmts.addAll(label.labels)
+              else -> newStmts.add(label)
+            }
             found = true
-          }
+          } else newStmts.add(stmt)
         } else newStmts.add(stmt)
       }
       if (found) {
@@ -125,6 +140,43 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
       callStmt: InvokeLabel ->
       handleCeil(builder, callStmt)
     }
+    addHandler(arrayOf("nan", "nanf", "nanl")) { _, callStmt -> handleNan(callStmt) }
+    addHandler(arrayOf("fdim", "fdimf", "fdiml")) { builder, callStmt ->
+      handleFdim(builder, callStmt)
+    }
+    addHandler(arrayOf("remainder", "remainderf", "remainderl")) { builder, callStmt ->
+      handleRemainder(builder, callStmt)
+    }
+    addHandler(arrayOf("modf", "modff", "modfl")) { builder, callStmt ->
+      handleModf(builder, callStmt)
+    }
+    addHandler(arrayOf("copysign", "copysignf", "copysignl")) { builder, callStmt ->
+      handleCopysign(builder, callStmt)
+    }
+    addHandler(
+      arrayOf(
+        "signbit",
+        "__signbit",
+        "__signbitf",
+        "__signbitl",
+        "__builtin_signbit",
+        "__builtin_signbitf",
+        "__builtin_signbitl",
+      )
+    ) { builder, callStmt ->
+      handleSignbit(builder, callStmt)
+    }
+    addMathFunc(arrayOf("exp", "expf", "expl"), Function.EXP)
+    addMathFunc(arrayOf("expm1", "expm1f", "expm1l"), Function.EXPM1)
+    addMathFunc(arrayOf("log", "logf", "logl"), Function.LOG)
+    addMathFunc(arrayOf("log1p", "log1pf", "log1pl"), Function.LOG1P)
+    addMathFunc(arrayOf("sin", "sinf", "sinl"), Function.SIN)
+    addMathFunc(arrayOf("cos", "cosf", "cosl"), Function.COS)
+    addMathFunc(arrayOf("tanh", "tanhf", "tanhl"), Function.TANH)
+    addMathFunc(arrayOf("erf", "erff", "erfl"), Function.ERF)
+    addMathFunc(arrayOf("acos", "acosf", "acosl"), Function.ACOS)
+    addMathFunc(arrayOf("asin", "asinf", "asinl"), Function.ASIN)
+    addMathFunc(arrayOf("atanh", "atanhf", "atanhl"), Function.ATANH)
     addHandler(arrayOf("isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
       handleIsnormal(builder, callStmt)
     }
@@ -220,6 +272,210 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
+  private var tmpCounter = 0
+
+  /** The return slot of a floating-point call and its C type. */
+  private fun fpReturn(callStmt: InvokeLabel): Pair<VarDecl<FpType>, CComplexType> {
+    val ret = callStmt.params[0]
+    Preconditions.checkState(ret is RefExpr<*>)
+    val type = CComplexType.getType(ret, parseContext)
+    check(type.smtType is FpType) { "${callStmt.name} is presumed to return a floating type" }
+    @Suppress("UNCHECKED_CAST") return Pair((ret as RefExpr<*>).decl as VarDecl<FpType>, type)
+  }
+
+  /**
+   * Evaluates the C arguments [indices] (converted to [type]) into fresh variables, so that a
+   * multi-statement model reads them once, before it writes anything they may alias.
+   */
+  private fun freshArgs(
+    builder: XcfaProcedureBuilder,
+    callStmt: InvokeLabel,
+    type: CComplexType,
+    vararg indices: Int,
+  ): Pair<List<XcfaLabel>, List<Expr<FpType>>> {
+    val labels = ArrayList<XcfaLabel>()
+    val refs = ArrayList<Expr<FpType>>()
+    for (i in indices) {
+      val v = Var("__fp_${callStmt.name}_arg_${tmpCounter++}", type.smtType as FpType)
+      builder.addVar(v)
+      @Suppress("UNCHECKED_CAST")
+      val value = TypeUtils.cast(type.castTo(callStmt.params[i]), type.smtType) as Expr<FpType>
+      labels.add(StmtLabel(Stmts.Assign(v, value), metadata = callStmt.metadata))
+      parseContext.metadata.create(v.ref, "cType", type)
+      refs.add(v.ref)
+    }
+    return Pair(labels, refs)
+  }
+
+  private fun assignFp(
+    callStmt: InvokeLabel,
+    ret: VarDecl<FpType>,
+    type: CComplexType,
+    rhs: Expr<FpType>,
+  ): XcfaLabel {
+    val assign = Stmts.Assign(ret, rhs)
+    parseContext.metadata.create(assign.expr, "cType", type)
+    return StmtLabel(assign, metadata = callStmt.metadata)
+  }
+
+  /** The sign bit of a non-NaN value; false for NaN, whose sign the FP theory does not model. */
+  private fun isNegative(x: Expr<FpType>): Expr<BoolType> =
+    Or(
+      FpExprs.Lt(x, FpExprs.PositiveZero(x.type)),
+      FpExprs.FpAssign(x, FpExprs.NegativeZero(x.type)),
+    )
+
+  /** `copysign(mag, sign)` for a non-NaN [sign]. */
+  private fun withSignOf(mag: Expr<FpType>, sign: Expr<FpType>): Expr<FpType> =
+    IteExpr.of(isNegative(sign), FpExprs.Neg(FpExprs.Abs(mag)), FpExprs.Abs(mag))
+
+  private fun handleNan(callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val (ret, type) = fpReturn(callStmt)
+    return assignFp(callStmt, ret, type, FpExprs.NaN(ret.type))
+  }
+
+  /** `fdim(x, y)`: NaN if either is NaN, `x - y` if `x > y`, otherwise `+0`. */
+  private fun handleFdim(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
+    val (x, y) = args
+    val rhs =
+      IteExpr.of(
+        Or(FpExprs.IsNan(x), FpExprs.IsNan(y)),
+        FpExprs.NaN(ret.type),
+        IteExpr.of(
+          FpExprs.Gt(x, y),
+          FpExprs.Sub(FpRoundingMode.RNE, x, y),
+          FpExprs.PositiveZero(ret.type),
+        ),
+      )
+    return SequenceLabel(labels + assignFp(callStmt, ret, type, rhs))
+  }
+
+  /** C `remainder` is the IEEE-754 remainder (Annex F, F.10.7.2), i.e. `fp.rem`. */
+  private fun handleRemainder(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
+    return SequenceLabel(labels + assignFp(callStmt, ret, type, FpExprs.Rem(args[0], args[1])))
+  }
+
+  /**
+   * `modf(x, &ip)` (Annex F, F.10.3.12): `ip = trunc(x)` and the result is `x - ip`, which is
+   * exact. The fraction takes the sign of `x` (`modf(-3.0)` is `-0.0`, which the subtraction alone
+   * gets wrong), and it is `±0` for an infinite `x`.
+   */
+  private fun handleModf(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val ptr = callStmt.params[2]
+    val ptrType = CComplexType.getType(ptr, parseContext)
+    check(ptrType is CPointer && ptrType.embeddedType.smtType == type.smtType) {
+      "${callStmt.name}: unexpected integral-part pointer type $ptrType"
+    }
+    val (labels, args) = freshArgs(builder, callStmt, type, 1)
+    val x = args[0]
+    val ip = FpExprs.RoundToIntegral(FpRoundingMode.RTZ, x)
+    val index = CComplexType.getUnsignedLong(parseContext).getValue("0")
+    @Suppress("UNCHECKED_CAST")
+    val deref =
+      Dereference.of(ptr as Expr<Type>, TypeUtils.cast(index, ptr.type) as Expr<Type>, ret.type)
+    parseContext.metadata.create(deref, "cType", ptrType)
+    val store = StmtLabel(MemoryAssignStmt.create(deref, ip), metadata = callStmt.metadata)
+    val frac =
+      IteExpr.of(
+        FpExprs.IsInfinite(x),
+        withSignOf(FpExprs.PositiveZero(ret.type), x),
+        withSignOf(FpExprs.Sub(FpRoundingMode.RNE, x, ip), x),
+      )
+    return SequenceLabel(labels + store + assignFp(callStmt, ret, type, frac))
+  }
+
+  /**
+   * `copysign(x, y)`. Exact unless `y` is NaN: the FP theory has a single, signless NaN, while a C
+   * NaN does carry a sign (`0.0/0.0` is negative on x86). That sign is chosen nondeterministically,
+   * which over-approximates the call.
+   */
+  private fun handleCopysign(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
+    val (x, y) = args
+    val nanSign = Var("__fp_${callStmt.name}_nansign_${tmpCounter++}", Bool())
+    builder.addVar(nanSign)
+    builder.setOverApproximation()
+    val rhs =
+      IteExpr.of(
+        FpExprs.IsNan(y),
+        IteExpr.of(nanSign.ref, FpExprs.Neg(FpExprs.Abs(x)), FpExprs.Abs(x)),
+        withSignOf(x, y),
+      )
+    return SequenceLabel(
+      labels +
+        StmtLabel(HavocStmt.of(nanSign), metadata = callStmt.metadata) +
+        assignFp(callStmt, ret, type, rhs)
+    )
+  }
+
+  /**
+   * `signbit(x)` is only specified as nonzero when the sign bit is set (glibc has returned both 1
+   * and `0x80000000`), and the sign of a NaN is not modeled at all. The result is therefore a
+   * nondeterministic nonzero value for a negative `x`, zero for a positive one, and either for NaN.
+   */
+  private fun handleSignbit(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val ret = callStmt.params[0]
+    Preconditions.checkState(ret is RefExpr<*>)
+    val retType = CComplexType.getType(ret, parseContext)
+    val argType = CComplexType.getType(callStmt.params[1], parseContext)
+    check(argType.smtType is FpType) { "${callStmt.name} is presumed to take a floating type" }
+    val (labels, args) = freshArgs(builder, callStmt, argType, 1)
+    val x = args[0]
+    val retDecl = (ret as RefExpr<*>).decl as VarDecl<*>
+    val zero = TypeUtils.cast(retType.nullValue, retDecl.type)
+    val sign =
+      Or(
+        FpExprs.IsNan(x),
+        IteExpr.of(
+          isNegative(x),
+          Not(AbstractExprs.Eq(retDecl.ref, zero)),
+          AbstractExprs.Eq(retDecl.ref, zero),
+        ),
+      )
+    builder.setOverApproximation()
+    return SequenceLabel(
+      labels +
+        StmtLabel(HavocStmt.of(retDecl), metadata = callStmt.metadata) +
+        StmtLabel(retType.limit(retDecl.ref), metadata = callStmt.metadata) +
+        StmtLabel(Stmts.Assume(sign), metadata = callStmt.metadata)
+    )
+  }
+
+  /**
+   * A math function with no counterpart in the FP theory: it becomes an [FpMathFuncExpr], which
+   * solvers encode as an uninterpreted function, and its result is constrained by the function's
+   * [facts][Function.facts]. Being an over-approximation, it marks the procedure: an Unsafe verdict
+   * is then reported as Unknown.
+   */
+  private fun addMathFunc(names: Array<String>, function: Function) {
+    addHandler(names) { builder, callStmt ->
+      Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+      val (ret, type) = fpReturn(callStmt)
+      val (labels, args) = freshArgs(builder, callStmt, type, 1)
+      builder.setOverApproximation()
+      SequenceLabel(
+        labels +
+          assignFp(callStmt, ret, type, FpExprs.MathFunc(function, args[0])) +
+          StmtLabel(
+            Stmts.Assume(And(function.facts(args[0], ret.ref))),
+            metadata = callStmt.metadata,
+          )
+      )
+    }
+  }
+
   private fun handleTrunc(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
     val expr = callStmt.params[0]
@@ -308,11 +564,65 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun handleIsnormal(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException()
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val type = CSignedInt(null, parseContext)
+    val value = callStmt.params[1] as Expr<FpType>
+    return assignInt(
+      callStmt,
+      type,
+      AbstractExprs.Ite<Type>(isNormal(value), type.unitValue, type.nullValue),
+    )
   }
 
+  /** __fpclassify{,f,l}(x) yields glibc's FP_NAN, FP_INFINITE, FP_ZERO, FP_SUBNORMAL, FP_NORMAL. */
   private fun handleFpclassify(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException()
+    Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
+    val type = CSignedInt(null, parseContext)
+    val (nan, inf, zero, subnormal, normal) =
+      listOf("0", "1", "2", "3", "4").map { type.getValue(it) }
+    val value = callStmt.params[1] as Expr<FpType>
+    fun pick(e: Expr<*>) = TypeUtils.cast(e, type.smtType) as Expr<Type>
+    val result =
+      AbstractExprs.Ite<Type>(
+        FpExprs.IsNan(value),
+        pick(nan),
+        AbstractExprs.Ite<Type>(
+          FpExprs.IsInfinite(value),
+          pick(inf),
+          AbstractExprs.Ite<Type>(
+            FpExprs.Eq(value, FpExprs.PositiveZero(value.type)),
+            pick(zero),
+            AbstractExprs.Ite<Type>(isNormal(value), pick(normal), pick(subnormal)),
+          ),
+        ),
+      )
+    return assignInt(callStmt, type, result)
+  }
+
+  /** Finite, non-zero and at least the smallest normal number in magnitude. */
+  private fun isNormal(value: Expr<FpType>): Expr<BoolType> {
+    val fpType = value.type
+    val exponent = BooleanArray(fpType.exponent)
+    exponent[exponent.size - 1] = true
+    val minNormal =
+      FpExprs.Fp(false, BvLitExpr.of(exponent), BvLitExpr.of(BooleanArray(fpType.significand - 1)))
+    return And(
+      FpExprs.Geq(FpExprs.Abs(value), minNormal),
+      Not(FpExprs.IsInfinite(value)),
+      Not(FpExprs.IsNan(value)),
+    )
+  }
+
+  private fun assignInt(callStmt: InvokeLabel, type: CComplexType, rhs: Expr<*>): XcfaLabel {
+    val expr = callStmt.params[0]
+    Preconditions.checkState(expr is RefExpr<*>)
+    val assign: AssignStmt<*> =
+      Stmts.Assign(
+        TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+        TypeUtils.cast(rhs as Expr<Type>, type.smtType),
+      )
+    parseContext.metadata.create(assign.expr, "cType", type)
+    return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
   private fun handleIsnan(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -382,8 +692,29 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
     return StmtLabel(assign, metadata = callStmt.metadata)
   }
 
+  /**
+   * `fmod(x, y)` (Annex F, F.10.7.1) from the IEEE remainder `r`: they differ only when `r` is
+   * non-zero with the sign opposite to `x`, and then `fmod` is `r ± |y|`. The true `fmod` is
+   * representable, so that addition is exact; NaN, infinite and zero cases agree with `fp.rem`.
+   */
   private fun handleFmod(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
-    throw UnsupportedOperationException("Fmod not yet supported!")
+    Preconditions.checkState(callStmt.params.size == 3, "Function is presumed to be binary!")
+    val (ret, type) = fpReturn(callStmt)
+    val (labels, args) = freshArgs(builder, callStmt, type, 1, 2)
+    val (x, y) = args
+    val r = FpExprs.Rem(x, y)
+    val zero = FpExprs.PositiveZero(ret.type)
+    val rhs =
+      IteExpr.of(
+        And(FpExprs.Gt(x, zero), FpExprs.Lt(r, zero)),
+        FpExprs.Add(FpRoundingMode.RNE, listOf(r, FpExprs.Abs(y))),
+        IteExpr.of(
+          And(FpExprs.Lt(x, zero), FpExprs.Gt(r, zero)),
+          FpExprs.Sub(FpRoundingMode.RNE, r, FpExprs.Abs(y)),
+          r,
+        ),
+      )
+    return SequenceLabel(labels + assignFp(callStmt, ret, type, rhs))
   }
 
   private fun handleFmin(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {

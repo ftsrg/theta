@@ -44,18 +44,28 @@ object Deps {
         else -> error("Operating system not supported")
     }
 
-    val z3 = "org.sosy-lab:javasmt-solver-z3:4.14.0"
+    const val z3Version = "5.3.3"
+    val z3 = "com.microsoft:z3:$z3Version" // from the GitHub release, see mirrors.gradle.kts
+    val z3Natives = setOf("libz3.dll", "libz3.dylib", "libz3.so", "libz3java.dll", "libz3java.dylib", "libz3java.so")
+    // Release assets carrying the natives, per architecture. Platforms without a jar only have a zip.
+    val z3NativeAssets = mapOf(
+        "x64" to listOf("linux-x64.jar", "win-x64.jar", "x64-osx-13.3.zip"),
+        "arm64" to listOf("arm64-glibc-2.38.zip", "osx-arm64.jar", "arm64-win.zip"),
+    )
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
-    val javasmt = "org.sosy-lab:java-smt:5.0.1-523-g9001c0ea4" // hardcoded because deps also hardcoded
+    val javasmt = "org.sosy-lab:java-smt:6.0.0-499-gf35a21a8e" // hardcoded because deps also hardcoded
     val javasmtDeps = mapOf(
-        "org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1" to setOf("libmathsat5j.so", "mathsat5j.dll", "mathsat.dll", "mpir.dll"),
-        "org.sosy-lab:javasmt-solver-z3:4.14.0" to setOf("libz3.dll", "libz3.dylib", "libz3.so", "libz3java.dll", "libz3java.dylib", "libz3java.so"),
-        "org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c" to setOf("libopensmtj.so"),
+        "de.uni-freiburg.informatik.ultimate:smtinterpol:2.5-1242-g5c50fb6d" to setOf(), // no deps
+        "io.github.uuverifiers:princess_2.13:2025-11-17" to setOf(), // no deps
+        "io.github.uuverifiers:ostrich_2.13:2.0" to setOf(), // no deps
+        "org.sosy-lab:javasmt-solver-mathsat:5.6.15" to setOf("libmathsat5j.so", "mathsat5j.dll", "mathsat.dll", "gmp.dll"),
+        "org.sosy-lab:javasmt-solver-opensmt:2.9.2-ge4c80308" to setOf("libopensmtj.so"),
         "org.sosy-lab:javasmt-solver-cvc4:1.8-prerelease-2020-06-24-g7825d8f28:CVC4" to setOf("libcvc4.so", "libcvc4jni.so", "libcvc4parser.so"),
-        "org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc" to setOf("libcvc5jni.dll", "libcvc5jni.so"),
-        "org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae" to setOf("libbitwuzlaj.dll", "libbitwuzlaj.so"),
-        "org.sosy-lab:javasmt-yices2:4.1.1-734-g3732f7e08" to setOf() // no deps
+        "org.sosy-lab:javasmt-solver-cvc5:2026-02-26-d22638a" to setOf("libcvc5jni.dll", "libcvc5jni.dylib", "libcvc5jni.so"),
+        "org.sosy-lab:javasmt-solver-bitwuzla:0.9.0-gd13ef925" to setOf("libbitwuzlaj.dll", "libbitwuzlaj.so"),
+        "org.sosy-lab:javasmt-yices2:6.0.0-141-g04134287c" to setOf(), // no deps
+        "org.sosy-lab:javasmt-solver-yices2:2.7.0-gdc5687ca" to setOf("libyices2java.so", "yices2java.dll")
     )
     val eldarica = "io.github.uuverifiers:eldarica_2.13:${Versions.eldarica}"
 

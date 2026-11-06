@@ -228,9 +228,40 @@ jobs:
           git sparse-checkout set --stdin < /tmp/sparse-paths
           git checkout
       # The archive is already built above, so skip the task that would rebuild it; the suite
-      # unpacks the downloaded zip itself.
+      # unpacks the downloaded zip itself. Two invocations, so that failing fixtures do not skip the
+      # canaries (`canaryTest` depends on `fixtureTest`); the next step reports both.
       - name: Run the canary and fixture suites
-        run: ./gradlew :theta-xcfa-cli:canaryTest -x buildArchiveTheta-svcomp -Ptheta.canary.jobs=2
+        run: |
+          status=0
+          ./gradlew :theta-xcfa-cli:fixtureTest -x buildArchiveTheta-svcomp || status=1
+          ./gradlew :theta-xcfa-cli:canaryTest -x buildArchiveTheta-svcomp -x fixtureTest \
+            -Ptheta.canary.jobs=2 || status=1
+          exit $status
+      - name: Report failing fixtures and canaries
+        if: failure()
+        shell: python3 {0}
+        run: |
+          import glob
+          import re
+          import xml.etree.ElementTree as ET
+          failed = []
+          for suite in ("fixtureTest", "canaryTest"):
+              for path in sorted(glob.glob(f"subprojects/xcfa/xcfa-cli/build/test-results/{suite}/*.xml")):
+                  for case in ET.parse(path).getroot().iter("testcase"):
+                      problem = case.find("failure")
+                      if problem is None:
+                          problem = case.find("error")
+                      if problem is not None:
+                          # The summary line and the first diagnosis line, without the exception class.
+                          message = re.sub(r"^[\w.$]+: ", "", (problem.get("message") or "?").strip())
+                          reason = " / ".join(message.splitlines()[:2])
+                          failed.append(f"[{suite}] {case.get('name')}: {reason}")
+          if failed:
+              text = f"{len(failed)} failing fixtures/canaries\n" + "\n".join(failed)
+          else:
+              text = "the suites failed without a test failure; see the step log"
+          text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=Canary suite failures::{text}")
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2

@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.XcfaProperty
@@ -53,7 +54,7 @@ class XcfaOcChecker(
   private val property: XcfaProperty,
   private val parseContext: ParseContext,
   private val decisionProcedure: OcDecisionProcedureType,
-  private val smtSolver: String,
+  private val solverFactory: SolverFactory,
   private val logger: Logger,
   private val outputConflictClauses: Boolean,
   autoConflictConfig: AutoConflictFinderConfig,
@@ -164,7 +165,7 @@ class XcfaOcChecker(
     /** Ordering conflicts of this event graph, valid for every query of the round. */
     private val lemmas = linkedSetOf<Expr<BoolType>>()
 
-    private val checker = decisionProcedure.checker(smtSolver, memoryModel)
+    private val checker = decisionProcedure.checker(solverFactory, memoryModel)
 
     init {
       logger.mainStep("Creating event graph...")
@@ -329,6 +330,9 @@ class XcfaOcChecker(
     // Branching conditions
     eg.branchingConditions.forEach { solver.add(it) }
 
+    // Local data flow
+    eg.localFlows.forEach { solver.add(it) }
+
     // RF
     eg.rfs.forEach { (v, list) ->
       list
@@ -345,7 +349,13 @@ class XcfaOcChecker(
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }
-          solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
+          // A local may be unassigned on the path taken (e.g. the skipped call of `f() || g()`), so
+          // a read must take its value from a write only if one of its candidates executed.
+          // A candidate whose guard is a subset of the read's always executes with it.
+          val mustRead =
+            if (rels.any { event.guard.containsAll(it.from.guard) }) event.guardExpr
+            else And(event.guardExpr, Or(rels.map { it.from.guardExpr }))
+          solver.add(Imply(mustRead, Or(rels.map { it.declRef }))) // RF-Some
         }
     }
   }
