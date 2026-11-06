@@ -45,6 +45,7 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
@@ -377,11 +378,22 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       }
     }
 
+  /**
+   * The offset of [deref] at pointer width. A signed offset keeps its sign: under integer
+   * arithmetic the address sum does not wrap, so converting it to the unsigned pointer type would
+   * not either.
+   */
+  private fun offsetOf(deref: Dereference<*, *, *>): Expr<*> {
+    val signed = CComplexType.getType(deref.offset, parseContext) is Signed
+    val type = if (signed) CComplexType.getSignedLong(parseContext) else pointerType
+    return cast(type.castTo(deref.offset), pointerType.smtType)
+  }
+
   private fun isNull(deref: Dereference<*, *, *>): Expr<BoolType> {
     val base = pointerType.castTo(deref.array)
     if (!parseContext.memoryModel.flatAddressing()) return Eq(base, pointerType.nullValue)
     val ptr = pointerType.smtType
-    val addr = Add(cast(base, ptr), cast(pointerType.castTo(deref.offset), ptr))
+    val addr = Add(cast(base, ptr), offsetOf(deref))
     return And(
       Geq(addr, pointerType.nullValue),
       Lt(addr, pointerType.getValue(FlatAddressSpace.FIRST.toString())),
@@ -421,8 +433,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val ptr = pointerType.smtType
     val sizeVar = builder.parent.getPtrSizeVar()
     staticSizes(builder.parent)?.let { sizes ->
-      val address =
-        Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
+      val address = Add(cast(pointerType.castTo(deref.array), ptr), offsetOf(deref))
       val valid = sizes.map { (start, size) -> inObject(address, start, size) }
       return Pair(emptyList(), Not(Or(valid)))
     }
@@ -430,8 +441,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val counter = builder.parent.mallocVar(parseContext)
     val witness = Var("__theta_slot_${witnessCount++}", ptr)
     builder.addVar(witness)
-    val addr =
-      Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
+    val addr = Add(cast(pointerType.castTo(deref.array), ptr), offsetOf(deref))
     val inRange =
       And(
         Geq(addr, pointerType.getValue(FlatAddressSpace.FIRST.toString())),
@@ -445,7 +455,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     // Fast path: the base is a slot start and the offset lies in its slot, so the witness can only
     // be the base. Deciding that without the witness is what keeps the common access cheap.
     val base = cast(pointerType.castTo(deref.array), ptr)
-    val offset = cast(pointerType.castTo(deref.offset), ptr).toFitsall()
+    val offset = offsetOf(deref).toFitsall()
     val baseExtent = ArrayReadExpr.create<Type, Type>(extentVar.ref, base)
     val direct =
       And(

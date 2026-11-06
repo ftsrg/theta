@@ -616,3 +616,8 @@ fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n
 fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
 global_struct_copy.c	efficient	ILP32	SAFE	a struct copy initializes every member of the globals it reads, nested ones too
 global_struct_copy_memsafety.c	efficient	ILP32	SAFE:valid-memsafety	a struct copy and a by-value struct argument allocate the nested members of globals
+pointer_negative_index.c	efficient	ILP32	SAFE	a negative index from a mid-object pointer keeps its sign under integer arithmetic
+pointer_negative_index.c	efficient	ILP32	SAFE:valid-memsafety	a negative index from a mid-object pointer stays inside the object	multi
+pointer_negative_index.c	efficient	ILP32	SAFE:valid-memsafety	a negative index from a mid-object pointer stays inside the object	flat
+pointer_negative_index_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a negative index past the start of the object is an invalid dereference	multi
+pointer_negative_index_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a negative index past the start of the object is an invalid dereference	flat

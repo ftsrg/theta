@@ -80,6 +80,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
@@ -838,11 +839,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (i == pointerIdx) {
                 continue;
             }
-            Expr<?> term = indexType.castTo(exprs.get(i));
+            final CComplexType termType = indexTypeOf(exprs.get(i));
+            Expr<?> term = termType.castTo(exprs.get(i));
             if (cells != null) {
-                term =
-                        indexType.castTo(
-                                Mul(List.of(indexType.castTo(term), indexType.castTo(cells))));
+                term = termType.castTo(Mul(List.of(term, indexType.castTo(cells))));
             }
             if (i > 0 && ctx.signs.get(i - 1).getText().equals("-")) {
                 term = AbstractExprs.Neg(term);
@@ -908,9 +908,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> stride = pointerStride(pointer.getEmbeddedType());
         if (stride == null) return rhs;
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final CComplexType stepType = indexTypeOf(rhs);
         final Expr<?> scaled =
-                indexType.castTo(Mul(List.of(indexType.castTo(rhs), indexType.castTo(stride))));
-        parseContext.getMetadata().create(scaled, "cType", indexType);
+                stepType.castTo(Mul(List.of(stepType.castTo(rhs), indexType.castTo(stride))));
+        parseContext.getMetadata().create(scaled, "cType", stepType);
         return scaled;
     }
 
@@ -1908,14 +1909,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         // Indices reaching here have their own C types -- a row offset is pointer-wide while the
-        // subscript beside it is an `int` -- so they are all brought to the index type before being
-        // combined, the same one `dereference` casts its offset to.
-        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        // subscript beside it is an `int` -- so they are all brought to pointer width before being
+        // combined, as `dereference` brings its offset.
         final List<Expr<?>> casted = new ArrayList<>();
         for (Expr<?> indexOp : indexOps) {
-            casted.add(indexType.castTo(indexOp));
+            casted.add(toIndex(indexOp));
         }
-        casted.add(indexType.castTo(offset));
+        casted.add(toIndex(offset));
         return casted.size() == 1 ? casted.get(0) : Add(casted);
     }
 
@@ -1986,8 +1986,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
-        final Expr<?> scaled =
-                Mul(List.of(indexType.castTo(index), indexType.castTo(elementCells)));
+        final Expr<?> scaled = Mul(List.of(toIndex(index), indexType.castTo(elementCells)));
         final Expr<?> row = Add(List.of(base, scaled));
         parseContext.getMetadata().create(row, "cType", elemType);
         return row;
@@ -2044,6 +2043,21 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return ExprUtils.simplify(type.getArrayDimension().getExpression());
     }
 
+    /**
+     * Brings a pointer-arithmetic index to pointer width: a signed one to {@code ptrdiff_t}, any
+     * other to {@code size_t}. Under integer arithmetic a pointer sum is not reduced modulo 2^N, so
+     * converting a negative index to {@code size_t} would move it 2^N elements away.
+     */
+    private Expr<?> toIndex(Expr<?> index) {
+        return indexTypeOf(index).castTo(index);
+    }
+
+    private CComplexType indexTypeOf(Expr<?> index) {
+        return CComplexType.getType(index, parseContext) instanceof Signed
+                ? CComplexType.getSignedLong(parseContext)
+                : CComplexType.getUnsignedLong(parseContext);
+    }
+
     private <T extends Type> Expr<?> dereference(
             Expr<?> accept, Expr<?> offset, CComplexType type) {
         final Expr<?> folded = foldPointerArithmetic(accept, offset);
@@ -2051,15 +2065,13 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             accept = pointerBaseOf(accept);
             offset = folded;
         }
-        // An offset is an *index*, so it is cast to the index type -- the same unsigned long the
-        // zero offset above and the initializer-list dereferences use, and pointer-wide in every
-        // data model. It used to be cast to the *pointer's own* type, which is a `CInteger` of that
-        // same width: `castTo` then returned the index expression untouched (equal width, equal
-        // signedness) and stamped the pointer type onto it. That expression is the index
-        // *variable*,
-        // so `a[j]` quietly recorded `j` itself as an array, and every later `j++` was read as
-        // pointer arithmetic and refused. Nothing about `j` is a pointer.
-        Expr<?> index = CComplexType.getUnsignedLong(parseContext).castTo(offset);
+        // An offset is an *index*, so it is cast to an index type (see toIndex), pointer-wide in
+        // every data model. It used to be cast to the *pointer's own* type, which is a `CInteger`
+        // of that same width: `castTo` then returned the index expression untouched (equal width,
+        // equal signedness) and stamped the pointer type onto it. That expression is the index
+        // *variable*, so `a[j]` quietly recorded `j` itself as an array, and every later `j++` was
+        // read as pointer arithmetic and refused. Nothing about `j` is a pointer.
+        Expr<?> index = toIndex(offset);
         Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, index, type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
@@ -2738,8 +2750,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (structType.inlinesAggregates() && CStruct.isInlineAggregate(embeddedType)) {
             // An inline member is the sub-region at its cell offset, as under the bytes model: the
             // following `.field` or `[i]` folds back onto the object's base.
-            final CComplexType offsetType = CComplexType.getUnsignedLong(parseContext);
-            final Expr<?> region = Add(List.of(accessBase, offsetType.castTo(accessOffset)));
+            final Expr<?> region = Add(List.of(accessBase, toIndex(accessOffset)));
             parseContext.getMetadata().create(region, "cType", embeddedType);
             return region;
         }
