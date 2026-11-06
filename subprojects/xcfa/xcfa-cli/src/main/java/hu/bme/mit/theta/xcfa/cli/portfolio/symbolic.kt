@@ -86,7 +86,8 @@ fun symbolicPortfolio(
     }
 
     val start = mdd(300_000, "Z3")
-    start then mddCegar(0, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
+    // MathSAT gives wrong results with MDD-CEGAR for now.
+    start then mddCegar(0, "Z3")
 
     return STM(start, edges)
   }
