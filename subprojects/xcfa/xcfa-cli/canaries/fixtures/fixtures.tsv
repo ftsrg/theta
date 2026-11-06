@@ -583,3 +583,5 @@ pointer_difference.c	efficient	LP64	SAFE	pointer difference: ptrdiff_t width, el
 pointer_difference.c	bitvector	LP64	SAFE	pointer difference: byte distance divided by the element size under bytes	bytes
 pointer_difference_no_overflow.c	bitvector	LP64	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
 pointer_difference_no_overflow.c	bitvector	ILP32	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
+pointer_compare_wide.c	bitvector	LP64	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
+pointer_compare_wide.c	bitvector	ILP32	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
