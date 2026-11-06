@@ -17,10 +17,12 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
 import java.util.Objects;
 
@@ -187,6 +189,14 @@ public class ReverseNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public boolean isLocallyIdentity(StateSpaceInfo stateSpaceInfo) {
         return false;
+    }
+
+    @Override
+    public MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
+        // a step back: the source terminal is what the state space, the relation and the target
+        // terminal allow together
+        if (!transitions.isTerminal()) return terminal;
+        return MddValues.of(graph).pre(stateSpace.getNode(), transitions, terminal, graph);
     }
 
     @Override

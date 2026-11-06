@@ -163,6 +163,15 @@ public class ExprSimplifierTest {
         assertEquals(x, simplify(Or(x, Or(False(), x))));
     }
 
+    @Test
+    public void testEmptyOr() {
+        final var empty = Or(List.of());
+        assertEquals(False(), empty.eval(ImmutableValuation.empty()));
+        assertEquals(False(), simplify(empty));
+        assertEquals(x, simplify(Or(empty, x)));
+        assertEquals(True(), simplify(Not(empty)));
+    }
+
     // Rational
 
     @Test

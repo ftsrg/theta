@@ -17,6 +17,7 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
@@ -24,10 +25,13 @@ import hu.bme.mit.theta.frontend.transformation.grammar.parseTypeAware
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.MutexLockLabel
+import hu.bme.mit.theta.xcfa.model.MutexUnlockLabel
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -76,9 +80,9 @@ class UnusedMemoryWriteTest {
     }
 
   @Test
-  fun unusedMutexArrayIsNotInitialized() {
-    val writes =
-      memoryWrites(
+  fun mutexArrayInitializationIsRemovedAfterAddressFolding() {
+    val (xcfa, _, _) =
+      getXcfaFromC(
         """
         #include <pthread.h>
         pthread_mutex_t m[10];
@@ -87,10 +91,24 @@ class UnusedMemoryWriteTest {
           pthread_mutex_unlock(&m[0]);
           return 0;
         }
-        """,
-        MemoryModelType.flat,
+        """
+          .trimIndent()
+          .byteInputStream(),
+        ParseContext().also { it.memoryModel = MemoryModelType.flat },
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
       )
-    assertEquals(0, writes)
+    val labels = xcfa.procedures.flatMap { proc -> proc.edges.flatMap { it.getFlatLabels() } }
+    assertEquals(
+      0,
+      labels.sumOf(::writesIn),
+      "folded mutex addresses need no initialization writes",
+    )
+    val lock = labels.filterIsInstance<MutexLockLabel>().single().lock
+    val unlock = labels.filterIsInstance<MutexUnlockLabel>().single().lock
+    assertTrue(lock is LitExpr<*>, "the static mutex address is folded to a literal")
+    assertEquals(lock, unlock, "lock and unlock still refer to the same mutex")
   }
 
   @Test

@@ -16,39 +16,22 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr
-import hu.bme.mit.theta.core.type.anytype.IteExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr
-import hu.bme.mit.theta.core.type.inttype.IntModExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XcfaBuilder
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
-import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isWritten
 import java.math.BigInteger
 
 /**
@@ -64,12 +47,12 @@ import java.math.BigInteger
  */
 class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
 
-  private var analysis: Literals? = null
+  private var analysis: StringLiterals? = null
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val formats = builder.parent.formatArguments
     if (formats.isEmpty()) return builder
-    val literals = analysis ?: Literals(builder.parent).also { analysis = it }
+    val literals = analysis ?: StringLiterals(builder.parent).also { analysis = it }
     for (edge in ArrayList(builder.getEdges())) {
       val labels = edge.getFlatLabels()
       val bounded =
@@ -190,97 +173,4 @@ class PrintfReturnBoundPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private fun digitsOf(value: BigInteger, radix: Int) = value.toString(radix).length.toLong()
-
-  /**
-   * Which string literals a variable can hold, over all definitions in the model, and the text of
-   * each literal from its initialization.
-   */
-  private class Literals(xcfa: XcfaBuilder) {
-    /** The sources of each definition of a variable, or null for a definition of unknown value. */
-    private val definitions = mutableMapOf<VarDecl<*>, MutableList<List<VarDecl<*>>?>>()
-    private val cells = mutableMapOf<VarDecl<*>, MutableMap<Int, Int>>()
-
-    init {
-      xcfa.getProcedures().forEach { procedure ->
-        procedure.getEdges().forEach { edge -> edge.label.getAllLabels().forEach(::visit) }
-      }
-    }
-
-    private fun visit(label: XcfaLabel) {
-      when (val stmt = (label as? StmtLabel)?.stmt) {
-        is AssignStmt<*> -> define(stmt.varDecl, sourcesOf(stmt.expr))
-        is HavocStmt<*> -> define(stmt.varDecl, null)
-        is MemoryAssignStmt<*, *, *> -> {
-          val literal = (stmt.deref.array as? RefExpr<*>)?.decl as? VarDecl<*>
-          val index = stmt.deref.offset.asConstantBigInteger()
-          val value = stmt.expr.asConstantBigInteger()
-          if (literal != null && literal.isStringLiteral() && index != null && value != null) {
-            cells.getOrPut(literal) { mutableMapOf() }[index.toInt()] = value.toInt()
-          }
-        }
-        null ->
-          label
-            .collectVarsWithAccessType()
-            .filter { it.value.isWritten }
-            .keys
-            .forEach { define(it, null) }
-        else -> {}
-      }
-    }
-
-    private fun define(variable: VarDecl<*>, sources: List<VarDecl<*>>?) {
-      definitions.getOrPut(variable) { mutableListOf() }.add(sources)
-    }
-
-    /**
-     * The variables whose value [expr] is. Casts wrap the value: `(mod (+ x) 2^w)` under integer
-     * arithmetic, a low `extract` and an extension under bitvector arithmetic. They keep the small
-     * base id that a literal holds.
-     */
-    private fun sourcesOf(expr: Expr<*>): List<VarDecl<*>>? {
-      return when (expr) {
-        is RefExpr<*> -> listOf(expr.decl as? VarDecl<*> ?: return null)
-        is IteExpr<*> ->
-          (sourcesOf(expr.then) ?: return null) + (sourcesOf(expr.`else`) ?: return null)
-        is IntModExpr -> if (expr.rightOp is IntLitExpr) sourcesOf(expr.leftOp) else null
-        is AddExpr<*> -> if (expr.ops.size == 1) sourcesOf(expr.ops[0]) else null
-        is PosExpr<*> -> sourcesOf(expr.op)
-        is BvPosExpr -> sourcesOf(expr.op)
-        is BvSExtExpr -> sourcesOf(expr.op)
-        is BvZExtExpr -> sourcesOf(expr.op)
-        is BvExtractExpr -> if (expr.from.value.signum() == 0) sourcesOf(expr.bitvec) else null
-        else -> null
-      }
-    }
-
-    /** The texts that [variable] can hold, or null if one of its values is not a known literal. */
-    fun textsOf(variable: VarDecl<*>): List<String>? {
-      val literals = literalsOf(variable, mutableSetOf()) ?: return null
-      if (literals.isEmpty()) return null
-      return literals.map { textOf(it) ?: return null }
-    }
-
-    private fun literalsOf(variable: VarDecl<*>, seen: MutableSet<VarDecl<*>>): Set<VarDecl<*>>? {
-      if (variable.isStringLiteral()) return setOf(variable)
-      if (!seen.add(variable)) return emptySet()
-      val defs = definitions[variable] ?: return null
-      return defs.flatMapTo(mutableSetOf()) { sources ->
-        (sources ?: return null).flatMap { literalsOf(it, seen) ?: return null }
-      }
-    }
-
-    private fun textOf(literal: VarDecl<*>): String? {
-      val content = cells[literal] ?: return null
-      val text = StringBuilder()
-      var i = 0
-      while (true) {
-        val c = content[i++] ?: return null
-        if (c == 0) return text.toString()
-        text.append(c.toChar())
-      }
-    }
-  }
 }
-
-/** The frontend names each string literal's storage `__theta_str<n>`. */
-private fun VarDecl<*>.isStringLiteral() = Regex("""__theta_str\d+$""").containsMatchIn(name)

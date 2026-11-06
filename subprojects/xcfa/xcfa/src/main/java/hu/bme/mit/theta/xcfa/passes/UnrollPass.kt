@@ -483,7 +483,12 @@ class UnrollPass(
   private fun runUnroll(builder: XcfaProcedureBuilder) {
     // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
     // taken apart by the search below.
-    if (recursionUnrollLimit != -1) unrollRecursiveCalls(builder)
+    if (recursionUnrollLimit != -1) {
+      unrollRecursiveCalls(builder)
+      // a dropped call leaves dead predecessors in the enclosing loop, which [getLoop] cannot
+      // describe
+      unusedLocRemovalPass.runChecked(builder)
+    }
 
     // First, try to unroll without forcing (even if force unroll is allowed)
     if (forceUnrollLimit != -1) {

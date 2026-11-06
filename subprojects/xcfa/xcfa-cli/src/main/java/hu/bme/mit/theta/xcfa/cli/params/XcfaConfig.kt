@@ -133,6 +133,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
   var enableStaticCoi: Boolean = false,
   @Parameter(
+    names = ["--ptr-size-in-memory"],
+    description = "Store the memsafety sizes in memory instead of an SMT array (OC backend only)",
+  )
+  var ptrSizeInMemory: Boolean = false,
+  @Parameter(
     names = ["--unroll"],
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
@@ -743,6 +748,12 @@ data class MddConfig(
       "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
   )
   var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
+  @Parameter(
+    names = ["--symbolic-values"],
+    description =
+      "Keep values the program leaves free symbolic, with a formula over them in the terminals",
+  )
+  var symbolicValues: Boolean = false,
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

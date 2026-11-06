@@ -85,7 +85,13 @@ fun XcfaProcedure.optimizeFurther(
   val procedureBuilder = deepCopy(passManager, identifier = identifier)
   if (name != null) procedureBuilder.name = name
   val xcfaBuilder = XcfaBuilder(parent.name, parent.globalVars.toMutableSet())
-  procedureBuilder.parent = xcfaBuilder
+  // Passes may inspect siblings; keep their builders separate from the source model.
+  parent.procedures.forEach { procedure ->
+    xcfaBuilder.addProcedure(
+      if (procedure === this) procedureBuilder else procedure.deepCopy(ProcedurePassManager())
+    )
+  }
+  xcfaBuilder.addProcedure(procedureBuilder)
   procedureBuilder.optimize()
   return procedureBuilder.build(parent)
 }

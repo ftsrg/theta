@@ -53,6 +53,12 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
   /** For a stubbed `*printf` call: its return variable, and the variable that holds its format. */
   val formatArguments: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
 
+  /** How many calls [hu.bme.mit.theta.xcfa.passes.LibraryStubsPass] stubbed that write a buffer. */
+  var bufferStubCalls: Int = 0
+
+  /** The format variable of each marker id of [hu.bme.mit.theta.xcfa.passes.FormatAccessPass]. */
+  val formatMarkers: MutableMap<Int, VarDecl<*>> = LinkedHashMap()
+
   fun getVars(): Set<XcfaGlobalVar> = vars
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures

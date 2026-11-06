@@ -51,7 +51,6 @@ import hu.bme.mit.theta.xcfa.cli.utils.PrecSerializationMode
 import hu.bme.mit.theta.xcfa.cli.utils.determineProperty
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.cli.utils.getXcfa
-import hu.bme.mit.theta.xcfa.cli.utils.needsNanBits
 import hu.bme.mit.theta.xcfa.cli.utils.registerAllSolverManagers
 import hu.bme.mit.theta.xcfa.cli.utils.unsafeDependsOnOverApproximation
 import hu.bme.mit.theta.xcfa.cli.utils.xcfaTraits
@@ -91,9 +90,15 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     when (config.frontendConfig.memoryInit) {
       MemoryInit.ZERO -> true
       MemoryInit.UNCONSTRAINED -> false
-      MemoryInit.AUTO -> config.backendConfig.backend == Backend.MDD
+      MemoryInit.AUTO ->
+        config.backendConfig.backend == Backend.MDD &&
+          (config.backendConfig.specConfig as? MddConfig)?.symbolicValues != true
     }
   StaticCoiPass.enabled = config.frontendConfig.enableStaticCoi
+  check(!config.frontendConfig.ptrSizeInMemory || config.backendConfig.backend == Backend.OC) {
+    "--ptr-size-in-memory requires the OC backend"
+  }
+  PtrSizeToMemoryPass.enabled = config.frontendConfig.ptrSizeInMemory
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
   if (config.backendConfig.backend == Backend.CEGAR) {
@@ -513,18 +518,6 @@ private fun backend(
                       logger.result("%s", "Property couldn't be determined: ${e.message}")
                       return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
                     }
-                  val cex = result.asUnsafe().cex as? Trace<XcfaState<PtrState<*>>, XcfaAction>
-                  if (
-                    cex != null &&
-                      parseContext != null &&
-                      needsNanBits(cex) { concretizeTrace(it, config, parseContext) }
-                  ) {
-                    logger.result(
-                      "%s",
-                      "Counterexample needs the bits of a NaN, which are over-approximated",
-                    )
-                    return@ResultMapper SafetyResult.unknown<EmptyProof, EmptyCex>()
-                  }
                   if (!portfolioRun) {
                     property?.also { logger.result("(Property %s)", it.name) }
                   }
