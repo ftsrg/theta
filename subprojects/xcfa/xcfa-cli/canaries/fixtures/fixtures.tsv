@@ -296,6 +296,8 @@ heap_sub_element_free.c	efficient	ILP32	SAFE:valid-memsafety	a block smaller tha
 user_alloca_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	__builtin_alloca is sized in bytes and bounded in cells	multi
 user_alloca_direct_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a direct alloca call is sized in bytes and bounded in cells	multi
 user_alloca_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a byte-sized alloca block is in bounds	multi
+alloca_int_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element of a byte-sized alloca block is not addressable	multi
+alloca_int_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element of a byte-sized alloca block is not addressable	flat
 oc_branch_after_null_check.c	bitvector	ILP32	SAFE	a branch condition after a null check reads the same value on both edges
 spin_iteration_read_race.c	bitvector	ILP32	UNSAFE:no-data-race	a read inside an effect-free spinning iteration still races
 spin_iteration_write_race.c	bitvector	ILP32	UNSAFE:no-data-race	a value-preserving write inside a spinning iteration still races

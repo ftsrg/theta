@@ -34,8 +34,6 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   OcChecker<E>() {
   override val solver: Solver = solverFactory.createSolver()
 
-  override var assumption: Expr<BoolType>? = null
-
   private var clkGlobalCnt = 0
   private val clkGlobalVars: MutableMap<Int, ConstDecl<IntType>> = mutableMapOf()
   private val Int.clkGlobalVar: ConstDecl<IntType>

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 int main(void) {
-  int *p = malloc(2 * sizeof(int));
-  int *q = calloc(2, sizeof(int));
+  int* p = malloc(2 * sizeof(int));
+  int* q = calloc(2, sizeof(int));
   if (!p || !q) {
     free(p);
     free(q);
@@ -11,7 +11,7 @@ int main(void) {
   }
   memset(p, 0, 2 * sizeof(int));
   memcpy(q, p, 2 * sizeof(int));
-  int *r = realloc(p, 3 * sizeof(int));
+  int* r = realloc(p, 3 * sizeof(int));
   if (!r) {
     free(p);
     free(q);

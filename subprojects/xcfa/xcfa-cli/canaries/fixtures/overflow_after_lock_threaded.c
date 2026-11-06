@@ -2,7 +2,7 @@
 #include <pthread.h>
 int lock;
 int counter = 2147483647;
-void *worker(void *arg) {
+void* worker(void* arg) {
   int expected = 0;
   while (!__atomic_compare_exchange_n(&lock, &expected, 1, 0, 5, 5)) {
     expected = 0;

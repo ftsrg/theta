@@ -102,6 +102,8 @@ const val POINTER_BASE_CLASSES = 3
  */
 const val ALLOCATION_STATIC_BASE_LIMIT = "staticBaseLimit"
 
+const val MALLOC_VAR_NAME = "__malloc"
+
 private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
 
 /**
@@ -109,7 +111,7 @@ private val mallocVars: MutableMap<XcfaBuilder, VarDecl<*>> = mutableMapOf()
  * that a heap block and a stack block can never be given the same base.
  */
 fun XcfaBuilder.mallocVar(parseContext: ParseContext): VarDecl<*> =
-  mallocVars.getOrPut(this) { Var("__malloc", CPointer(null, null, parseContext).smtType) }
+  mallocVars.getOrPut(this) { Var(MALLOC_VAR_NAME, CPointer(null, null, parseContext).smtType) }
 
 /**
  * Where the allocation counter starts: past every static object. Under the multi model that is the

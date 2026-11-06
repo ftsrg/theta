@@ -103,7 +103,7 @@ private constructor(
       startEvent: XcfaEvent? = null,
       startHistory: List<String> = listOf(),
       lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
-      allocationSites: AllocationSites? = null,
+      allocationSites: AllocationSitesPass? = null,
     ): Thread {
       val passManager =
         ProcedurePassManager(

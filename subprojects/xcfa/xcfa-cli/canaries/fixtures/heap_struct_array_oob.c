@@ -6,8 +6,9 @@ struct item {
   char c;
 };
 int main(void) {
-  struct item *s = malloc(3 * sizeof(struct item));
-  if (!s) return 0;
+  struct item* s = malloc(3 * sizeof(struct item));
+  if (!s)
+    return 0;
   s[2].c = 2;
   s[3].a = 1;
   free(s);

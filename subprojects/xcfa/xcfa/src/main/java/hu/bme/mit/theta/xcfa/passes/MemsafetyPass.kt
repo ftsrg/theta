@@ -34,7 +34,6 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
@@ -414,8 +413,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
       val address =
         Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
       val valid = sizes.map { (start, size) -> inObject(address, start, size) }
-      // The simplifier takes an empty disjunction for true.
-      return Pair(emptyList(), if (valid.isEmpty()) True() else Not(Or(valid)))
+      return Pair(emptyList(), Not(Or(valid)))
     }
     val extentVar = builder.parent.getObjExtentVar()!!
     val counter = builder.parent.mallocVar(parseContext)

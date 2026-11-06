@@ -3,13 +3,13 @@
 #include <pthread.h>
 int flag;
 int shared;
-void *spinner(void *arg) {
+void* spinner(void* arg) {
   while (__atomic_load_n(&flag, 5) == 0) {
     shared = shared;
   }
   return 0;
 }
-void *writer(void *arg) {
+void* writer(void* arg) {
   shared = 1;
   __atomic_store_n(&flag, 1, 5);
   return 0;

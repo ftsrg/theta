@@ -2,10 +2,12 @@
 // although the initial value of the pointer says a.
 #include <pthread.h>
 extern void abort(void);
-void reach_error() { abort(); }
+void reach_error() {
+  abort();
+}
 int a, b;
-int *q = &a;
-void *writer(void *arg) {
+int* q = &a;
+void* writer(void* arg) {
   q = &b;
   return 0;
 }
@@ -14,6 +16,7 @@ int main(void) {
   pthread_create(&t, 0, writer, 0);
   *q = 1;
   pthread_join(t, 0);
-  if (b == 1) reach_error();
+  if (b == 1)
+    reach_error();
   return 0;
 }

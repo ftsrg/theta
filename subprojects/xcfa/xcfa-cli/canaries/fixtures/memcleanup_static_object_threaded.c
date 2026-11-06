@@ -2,8 +2,8 @@
 // computed by multiplying with the class count wraps onto the object's address.
 #include <pthread.h>
 int x;
-void *worker(void *arg) {
-  int *p = &x;
+void* worker(void* arg) {
+  int* p = &x;
   *p = 1;
   return 0;
 }

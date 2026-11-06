@@ -137,6 +137,14 @@ class HeapBoundCellsTest {
   }
 
   @Test
+  fun userAllocaDoesNotExposeAPartialElement() {
+    for (model in listOf(MemoryModelType.multi, MemoryModelType.flat)) {
+      val sizes = sizes("user-alloca-partial-element.c", memoryModel = model)
+      assertCells(sizes, 2, 10)
+    }
+  }
+
+  @Test
   fun blockWithoutElementTypeIsRefused() {
     assertThrows<RequiresByteAddressedMemoryException> { sizes("untyped-block.c") }
   }

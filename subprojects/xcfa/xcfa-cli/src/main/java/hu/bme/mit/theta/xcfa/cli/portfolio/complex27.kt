@@ -394,7 +394,6 @@ fun complex27(
   logger.benchmark("Using portfolio: $mainTrait\n")
 
   // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
-  // Also for surviving recursion: OC expands it, and the rest of the chain just falls through.
   if (mainTrait == MULTITHREAD)
     return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
   if (mainTrait == TERMINATION)

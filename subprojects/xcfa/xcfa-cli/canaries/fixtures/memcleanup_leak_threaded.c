@@ -1,8 +1,8 @@
 // A block that is never released must still be reported once only heap bases are considered.
 #include <pthread.h>
-extern void *malloc(unsigned long);
-int *g;
-void *worker(void *arg) {
+extern void* malloc(unsigned long);
+int* g;
+void* worker(void* arg) {
   g = malloc(sizeof(int));
   return 0;
 }

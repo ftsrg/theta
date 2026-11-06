@@ -339,7 +339,7 @@ internal class XcfaToEventGraph(
         }
       }
 
-  private val allocationSites = AllocationSites(xcfa, parseContext)
+  private val allocationSites = AllocationSitesPass(xcfa, parseContext)
 
   private inner class ThreadProcessor(
     private val thread: Thread,

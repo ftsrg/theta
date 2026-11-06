@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.utils.MALLOC_VAR_NAME
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
@@ -50,12 +51,13 @@ import java.math.BigInteger
  * [XcfaOcValueAnalysis]. Applies only if the program uses the counter for nothing else; memory
  * safety checks do, as they bound addresses by it.
  */
-internal class AllocationSites(xcfa: XCFA, private val parseContext: ParseContext) : ProcedurePass {
+internal class AllocationSitesPass(xcfa: XCFA, private val parseContext: ParseContext) :
+  ProcedurePass {
 
   private val pointerType = CPointer(null, null, parseContext)
 
   private val counter: VarDecl<*>? =
-    xcfa.globalVars.map { it.wrappedVar }.find { it.name == COUNTER_NAME }
+    xcfa.globalVars.map { it.wrappedVar }.find { it.name == MALLOC_VAR_NAME }
 
   private val enabled: Boolean
 
@@ -176,9 +178,5 @@ internal class AllocationSites(xcfa: XCFA, private val parseContext: ParseContex
         )
       else -> error("Not an allocation: $label")
     }
-  }
-
-  private companion object {
-    const val COUNTER_NAME = "__malloc"
   }
 }

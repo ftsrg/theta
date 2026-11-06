@@ -6,10 +6,11 @@ struct node {
   int cells[2];
 };
 struct node nodes[2];
-int *volatile slot;
-void *worker(void *arg) {
-  int *p = slot;
-  if (p && p[1]) nodes[0].key = 1;
+int* volatile slot;
+void* worker(void* arg) {
+  int* p = slot;
+  if (p && p[1])
+    nodes[0].key = 1;
   return 0;
 }
 int main(void) {
