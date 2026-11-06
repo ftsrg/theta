@@ -442,6 +442,11 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
    * `signbit(x)` is only specified as nonzero when the sign bit is set (glibc has returned both 1
    * and `0x80000000`), and the sign of a NaN is not modeled at all. The result is therefore a
    * nondeterministic nonzero value for a negative `x`, zero for a positive one, and either for NaN.
+   *
+   * `r = signbit(x)` becomes `a := x; havoc v; assume isNan(a) || (a < 0 ? v != 0 : v == 0); r :=
+   * v`, with `v` recorded. Only the havoc of `v` marks the over-approximation; the assume reads
+   * only scratch variables, so it is a fact rather than a use. `if (signbit(x)) reach_error();`
+   * thus depends on `v` (Unknown), while a trace that ignores `r` stays Unsafe.
    */
   private fun handleSignbit(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
     Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
@@ -486,11 +491,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
   /**
    * A math function with no counterpart in the FP theory: it becomes an [FpMathFuncExpr], which
    * solvers encode as an uninterpreted function, and its result is constrained by the function's
-   * [facts][Function.facts]. The value is an over-approximation: it goes through a recorded,
-   * havocked variable that is pinned to the uninterpreted term, so an Unsafe verdict that depends
-   * on it is reported as Unknown. The pin is an `FpAssign` (bitwise equality), as an IEEE `==`
-   * would rule out NaN. The pin and the facts do not count as uses of the value: a trace that only
-   * passes through the call, without using its result, stays Unsafe.
+   * [facts][Function.facts]. The value is an over-approximation, so an Unsafe verdict that depends
+   * on it is reported as Unknown. The pin to the term is an `FpAssign` (bitwise equality), as an
+   * IEEE `==` would rule out NaN.
+   *
+   * `y = sinf(x)` becomes `a := x; havoc v; assume v ≐ sin(a); assume facts(a, v); y := v`, with
+   * `v` recorded and `a`, `v` scratch. The two assumes read only scratch variables, so they are not
+   * uses of `v`: `if (sinf(x) > 0.5f) reach_error();` depends on `v` and gives Unknown, while
+   * `sinf(x); reach_error();` stays Unsafe (fixture `fp_mathfunc_independent_reach.c`).
    */
   private fun addMathFunc(names: Array<String>, function: Function) {
     addHandler(names) { builder, callStmt ->
