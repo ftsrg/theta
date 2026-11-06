@@ -54,7 +54,7 @@ import java.math.BigInteger
  * own.
  *
  * A cell nothing wrote reads 0, the arrays' default; the OC encoding is what provides that (see
- * [isGhostCell]), so this pass is for that backend only.
+ * [ParseContext.isGhostMemoryBase]), so this pass is for that backend only.
  *
  * Under flat, constant writes to static addresses on the entry path of the init procedure describe
  * static objects, which later code only overwrites on a path that has already failed the check.
@@ -65,11 +65,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
 
   companion object {
     var enabled = false
-    private var bases: Set<Expr<*>> = emptySet()
     private const val CENSUS_KEY = "ghostArrayCensus"
-
-    /** Whether a dereference of [array] accesses a ghost array, whose unwritten cells read 0. */
-    fun isGhostCell(array: Expr<*>?): Boolean = enabled && array != null && array in bases
   }
 
   private val pointerType = CPointer(null, null, parseContext)
@@ -161,7 +157,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
             .associate { (i, ghost) -> ghost to pointerType.getValue("${i + 1}") }
         else -> error("The memsafety ghosts cannot be stored in memory under this memory model")
       }
-    bases = ghosts.values.toSet()
+    ghosts.values.forEach(parseContext::registerGhostMemoryBase)
     census =
       builder.parent.metaData.getOrPut(CENSUS_KEY) { takeCensus(builder.parent, ghosts.keys) }
         as Census

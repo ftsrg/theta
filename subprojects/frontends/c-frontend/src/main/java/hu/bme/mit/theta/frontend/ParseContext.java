@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend;
 
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
@@ -108,6 +109,7 @@ public class ParseContext {
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
     private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
+    private final Set<Expr<?>> ghostMemoryBases = new LinkedHashSet<>();
 
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
@@ -259,6 +261,15 @@ public class ParseContext {
 
     public FlatAddressSpace getFlatAddressSpace() {
         return flatAddressSpace;
+    }
+
+    public void registerGhostMemoryBase(Expr<?> base) {
+        ghostMemoryBases.add(base);
+    }
+
+    /** Whether this base holds ghost cells whose unwritten values are zero. */
+    public boolean isGhostMemoryBase(Expr<?> base) {
+        return ghostMemoryBases.contains(base);
     }
 
     /** Records that every cell of the object at base id [base] is `_Atomic`. */

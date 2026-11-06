@@ -401,7 +401,7 @@ class XcfaOcChecker(
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }
-            } else if (PtrSizeToMemoryPass.isGhostCell(rel.to.array)) {
+            } else if (parseContext.isGhostMemoryBase(rel.to.array)) {
               conseq = And(conseq, Eq(rel.to.const.ref, rel.to.const.type.defaultValue))
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
