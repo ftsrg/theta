@@ -209,7 +209,7 @@ public class XcfaTraceConcretizer {
             final List<XcfaAction> cycle =
                     sbeTrace.getActions().subList(start, sbeTrace.getActions().size());
             try (var wpp = new WithPushPop(solver)) {
-                for (VarDecl<?> decl : writtenVars(cycle, sbeTrace.getState(0).getXcfa())) {
+                for (VarDecl<?> decl : writtenVars(cycle)) {
                     solver.add(
                             sameValue(
                                     PathUtils.unfold(decl.getRef(), indexings.get(start)),
@@ -242,11 +242,11 @@ public class XcfaTraceConcretizer {
                                                                 .getLocs()));
     }
 
-    private Set<VarDecl<?>> writtenVars(List<XcfaAction> actions, XCFA xcfa) {
+    private static Set<VarDecl<?>> writtenVars(List<XcfaAction> actions) {
         final Set<VarDecl<?>> vars = new LinkedHashSet<>();
         for (XcfaAction action : actions) {
             for (XcfaLabel label : getFlatLabels(action.getLabel())) {
-                collectVarsWithAccessType(label, xcfa)
+                collectVarsWithAccessType(label)
                         .forEach(
                                 (decl, access) -> {
                                     if (isWritten(access)) vars.add(decl);
@@ -397,8 +397,7 @@ public class XcfaTraceConcretizer {
             if (i < sbeTrace.getActions().size()) {
                 for (XcfaLabel flatLabel : getFlatLabels(sbeTrace.getAction(i).getLabel())) {
                     //                    if (flatLabel.getMetadata().isSubstantial()) {
-                    var accesses =
-                            collectVarsWithAccessType(flatLabel, sbeTrace.getState(i).getXcfa());
+                    var accesses = collectVarsWithAccessType(flatLabel);
                     final var written =
                             accesses.entrySet().stream()
                                     .filter(it -> isWritten(it.getValue()))

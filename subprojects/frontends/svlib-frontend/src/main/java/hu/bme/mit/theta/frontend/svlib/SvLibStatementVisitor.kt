@@ -172,7 +172,7 @@ class SvLibStatementVisitor(
           ?: throw ctx.illegal("mismatched arguments for procedure '$name'")
       }
 
-    current = current.extend(InvokeLabel(name, args, metadata = ctx.metadata))
+    current = current.extend(InvokeLabel(calledProcedure, args, metadata = ctx.metadata))
   }
 
   override fun visitReturnStatement(ctx: ReturnStatementContext) {

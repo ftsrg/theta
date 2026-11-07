@@ -86,7 +86,7 @@ class UnusedVarPass(
       )
       edges.forEach { edge ->
         edge.getFlatLabels().forEach { label ->
-          val reads = label.collectVarsWithAccessType(builder).filter { it.value.isRead }.keys
+          val reads = label.collectVarsWithAccessType().filter { it.value.isRead }.keys
           // a variable read only to compute its own new value is not used
           val stmt = (label as? StmtLabel)?.stmt
           usedVars.addAll(if (stmt is AssignStmt<*>) reads - stmt.varDecl else reads)

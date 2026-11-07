@@ -83,14 +83,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                   cast(it.key.map { it.replaceDerefs(lut) }, it.value.type),
                 )
               )
-            } +
-              InvokeLabel(
-                this.name,
-                this.params.map { it.replaceDerefs(lut) },
-                metadata,
-                tempLookup,
-                isLibraryFunction,
-              ),
+            } + this.withParams { it.replaceDerefs(lut) },
             metadata,
           )
         }

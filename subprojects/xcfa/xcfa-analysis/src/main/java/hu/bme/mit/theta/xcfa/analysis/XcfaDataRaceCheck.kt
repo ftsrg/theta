@@ -315,6 +315,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
   currentMutexes: Set<MutexLock>,
   state: State,
 ): List<GlobalVarAccessWithMutexes> {
+  val globalVars = xcfa.globalVars
   val acquiredMutexes = currentMutexes.toMutableSet()
   val blockingMutexes = mutableSetOf<MutexLock>()
   val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
@@ -324,7 +325,7 @@ private fun XcfaLabel.getGlobalVarsWithNeededMutexes(
       acquiredMutexes.addAll(label.acquiredMutexes(state))
       blockingMutexes.addAll(label.blockingMutexes(state))
     } else {
-      label.collectGlobalVars(xcfa).forEach { (v, access) ->
+      label.collectGlobalVars(globalVars).forEach { (v, access) ->
         if (accesses.none { it.globalVar == v && (it.access == access && it.access == WRITE) }) {
           accesses.add(
             GlobalVarAccessWithMutexes(

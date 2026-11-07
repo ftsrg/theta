@@ -64,14 +64,11 @@ internal fun XcfaProcedureBuilder.convertCallArguments(
       val params = calleeOf(label)?.getParams()
       if (params == null || params.size != label.params.size) label
       else
-        label.copy(
-          params =
-            label.params.mapIndexed { i, arg ->
-              val (param, direction) = params[i]
-              if (direction != ParamDirection.IN) arg
-              else CComplexType.getType(param.ref, parseContext)?.castTo(arg) ?: arg
-            }
-        )
+        label.withParamsIndexed { i, arg ->
+          val (param, direction) = params[i]
+          if (direction != ParamDirection.IN) arg
+          else CComplexType.getType(param.ref, parseContext)?.castTo(arg) ?: arg
+        }
     }
     else -> label
   }

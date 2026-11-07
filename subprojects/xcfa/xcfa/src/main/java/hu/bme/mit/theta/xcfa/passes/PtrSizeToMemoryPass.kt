@@ -111,9 +111,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
         .flatMap { it.getEdges() }
         .flatMap { it.getFlatLabels() }
         .filter { it !in entryLabels }
-        .flatMap { label ->
-          label.collectVarsWithAccessType(xcfa).filter { it.value.isWritten }.keys
-        }
+        .flatMap { label -> label.collectVarsWithAccessType().filter { it.value.isWritten }.keys }
         .filter { it in ghosts }
         .toSet()
     return Census(found, entryLabels, dynamicWrites)

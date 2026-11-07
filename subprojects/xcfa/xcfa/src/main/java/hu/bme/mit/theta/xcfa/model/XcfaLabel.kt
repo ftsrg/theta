@@ -43,11 +43,41 @@ data class InvokeLabel
 @JvmOverloads
 constructor(
   val name: String,
-  val params: List<Expr<*>>,
+  val paramDirs: List<Pair<Expr<*>, ParamDirection>>,
   override val metadata: MetaData,
   val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
   var isLibraryFunction: Boolean = false, // true means that passes/analyses should handle it
 ) : XcfaLabel(metadata) {
+
+  constructor(
+    calledProcedure: XcfaProcedureBuilder,
+    params: List<Expr<*>>,
+    metadata: MetaData,
+  ) : this(
+    calledProcedure.name,
+    params.zip(calledProcedure.getParams().map { it.second }),
+    metadata,
+    emptyMap(),
+    false,
+  )
+
+  val params
+    get() = paramDirs.map { it.first }
+
+  fun mapParams(transform: (Expr<*>) -> Expr<*>) =
+    paramDirs.map { (arg, dir) -> transform(arg) to dir }
+
+  fun withParams(transform: (Expr<*>) -> Expr<*>) =
+    InvokeLabel(name, mapParams { transform(it) }, metadata, tempLookup, isLibraryFunction)
+
+  fun withParamsIndexed(transform: (Int, Expr<*>) -> Expr<*>) =
+    InvokeLabel(
+      name,
+      paramDirs.mapIndexed { i, (arg, dir) -> transform(i, arg) to dir },
+      metadata,
+      tempLookup,
+      isLibraryFunction,
+    )
 
   override fun toString(): String {
     val sj = StringJoiner(", ", "(", ")")
@@ -56,13 +86,29 @@ constructor(
   }
 
   companion object {
+    fun retFirst(
+      name: String,
+      params: List<Expr<*>>,
+      metadata: MetaData,
+      tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap(),
+      isLibraryFunction: Boolean = false,
+    ) =
+      InvokeLabel(
+        name,
+        params.zip(listOf(ParamDirection.OUT) + List(params.size - 1) { ParamDirection.IN }),
+        metadata,
+        tempLookup,
+        isLibraryFunction,
+      )
 
     @Suppress("unused")
     fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
       val (name, params) = Regex("^([^(]*)\\((.*)\\)$").matchEntire(s)!!.destructured
       return InvokeLabel(
         name,
-        params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
+        params.split(",").map {
+          ExpressionWrapper(scope, it).instantiate(env) to ParamDirection.INOUT
+        },
         metadata = metadata,
       )
     }

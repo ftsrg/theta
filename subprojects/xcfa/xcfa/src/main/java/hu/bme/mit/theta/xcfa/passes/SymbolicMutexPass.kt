@@ -63,13 +63,7 @@ internal val XcfaLabel.mutexAddresses: List<Expr<*>>
 internal fun XcfaLabel.withMutexAddresses(addresses: List<Expr<*>>): XcfaLabel =
   when (this) {
     is FenceLabel -> withLock(addresses.single())
-    is InvokeLabel ->
-      copy(
-        params =
-          params.toMutableList().also { p ->
-            addresses.forEachIndexed { index, address -> p[index + 1] = address }
-          }
-      )
+    is InvokeLabel -> this.withParamsIndexed { i, arg -> if (i == 0) arg else addresses[i - 1] }
     else -> error("Not a mutex operation: $this")
   }
 
@@ -187,7 +181,9 @@ class SymbolicMutexPass : ProcedurePass {
               label.isLibraryFunction && label.name in mutexLibraryFunctions ->
                 library(label, arrays, recursive)
               !label.isLibraryFunction && label.name in byName ->
-                listOf(listOf(label.copy(params = label.params + tid)))
+                listOf(
+                  listOf(label.copy(paramDirs = label.paramDirs + listOf(tid to ParamDirection.IN)))
+                )
               else -> listOf(listOf(label))
             }
           is StartLabel -> {

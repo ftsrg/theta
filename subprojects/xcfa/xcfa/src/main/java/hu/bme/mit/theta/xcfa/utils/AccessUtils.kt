@@ -121,26 +121,13 @@ private fun List<DereferenceAccessMap>.mergeDerefs(): DereferenceAccessMap =
   }
 
 /** Returns the list of accessed variables by the edge associated with an AccessType object. */
-fun XcfaEdge.collectVarsWithAccessType(xcfa: XCFA) =
-  label.collectVarsWithAccessType(xcfa.procedureBuilders)
-
-fun XcfaEdge.collectVarsWithAccessType(procedure: XcfaProcedureBuilder) =
-  label.collectVarsWithAccessType(procedure.parent.getProcedures())
-
-fun XcfaLabel.collectVarsWithAccessType(xcfa: XCFA) =
-  collectVarsWithAccessType(xcfa.procedureBuilders)
-
-fun XcfaLabel.collectVarsWithAccessType(xcfa: XcfaBuilder) =
-  collectVarsWithAccessType(xcfa.getProcedures())
-
-fun XcfaLabel.collectVarsWithAccessType(procedure: XcfaProcedureBuilder) =
-  collectVarsWithAccessType(procedure.parent.getProcedures())
+fun XcfaEdge.collectVarsWithAccessType(): VarAccessMap = label.collectVarsWithAccessType()
 
 /**
  * Returns the list of accessed variables by the label. The variable is associated with an
  * AccessType object based on whether the variable is read/written by the label.
  */
-fun XcfaLabel.collectVarsWithAccessType(procedures: Set<XcfaProcedureBuilder>): VarAccessMap =
+fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
   when (this) {
     is StmtLabel -> {
       when (stmt) {
@@ -152,19 +139,15 @@ fun XcfaLabel.collectVarsWithAccessType(procedures: Set<XcfaProcedureBuilder>): 
       }
     }
 
-    is NondetLabel -> labels.map { it.collectVarsWithAccessType(procedures) }.mergeVarAccesses()
-    is SequenceLabel -> labels.map { it.collectVarsWithAccessType(procedures) }.mergeVarAccesses()
+    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
+    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is InvokeLabel -> {
       val allVars = params.flatMap { ExprUtils.getVars(it) }.toSet()
       val writtenVars =
-        procedures
-          .find { it.name == name }
-          ?.getParams()
-          ?.map { (_, dir) -> dir }
-          ?.zip(params)
-          ?.filter { (dir, _) -> dir != ParamDirection.IN }
-          ?.flatMap { (_, arg) -> ExprUtils.getVars(arg) }
-          ?.toSet() ?: emptySet()
+        paramDirs
+          .filter { (_, dir) -> dir != ParamDirection.IN }
+          .flatMap { (arg, _) -> ExprUtils.getVars(arg) }
+          .toSet()
       val readVars = allVars - writtenVars
 
       readVars.associateWith { READ } + writtenVars.associateWith { WRITE }
@@ -187,12 +170,10 @@ fun XcfaLabel.collectVarsWithAccessType(procedures: Set<XcfaProcedureBuilder>): 
 /**
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
-fun XcfaLabel.collectGlobalVars(xcfa: XCFA): GlobalVarAccessMap =
-  collectVarsWithAccessType(xcfa)
+fun XcfaLabel.collectGlobalVars(globalVars: Set<XcfaGlobalVar>): GlobalVarAccessMap =
+  collectVarsWithAccessType()
     .mapNotNull { labelVar ->
-      xcfa.globalVars
-        .firstOrNull { it.wrappedVar == labelVar.key }
-        ?.let { Pair(it, labelVar.value) }
+      globalVars.firstOrNull { it.wrappedVar == labelVar.key }?.let { Pair(it, labelVar.value) }
     }
     .toMap()
 
@@ -203,13 +184,14 @@ fun XcfaLabel.collectGlobalVars(xcfa: XCFA): GlobalVarAccessMap =
  * second is similar for write access.
  */
 fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): GlobalVarAccessMap {
+  val globalVars = xcfa.globalVars
   val flatLabels = getFlatLabels()
   val mutexes =
     flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
   return if (mutexes.isEmpty()) {
-    label.collectGlobalVars(xcfa)
+    label.collectGlobalVars(globalVars)
   } else {
-    collectGlobalVarsWithTraversal(xcfa) { it.mutexOperations(mutexes) }
+    collectGlobalVarsWithTraversal(globalVars) { it.mutexOperations(mutexes) }
   }
 }
 
@@ -220,7 +202,7 @@ fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): GlobalVarAccessMap {
  * @return the set of encountered shared objects
  */
 private fun XcfaEdge.collectGlobalVarsWithTraversal(
-  xcfa: XCFA,
+  globalVars: Set<XcfaGlobalVar>,
   goFurther: Predicate<XcfaEdge>,
 ): GlobalVarAccessMap {
   val vars = mutableMapOf<XcfaGlobalVar, AccessType>()
@@ -229,7 +211,7 @@ private fun XcfaEdge.collectGlobalVarsWithTraversal(
   edgesToExplore.add(this)
   while (edgesToExplore.isNotEmpty()) {
     val exploring = edgesToExplore.removeFirst()
-    exploring.label.collectGlobalVars(xcfa).forEach { (varDecl, access) ->
+    exploring.label.collectGlobalVars(globalVars).forEach { (varDecl, access) ->
       vars[varDecl] = vars[varDecl] merge access
     }
     if (goFurther.test(exploring)) {

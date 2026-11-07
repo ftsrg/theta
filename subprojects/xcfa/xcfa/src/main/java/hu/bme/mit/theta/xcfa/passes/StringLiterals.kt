@@ -43,7 +43,7 @@ import java.math.BigInteger
  * Which string literals a variable can hold, over all definitions in the model, and the text of
  * each literal from its initialization.
  */
-internal class StringLiterals(private val xcfa: XcfaBuilder) {
+internal class StringLiterals(xcfa: XcfaBuilder) {
   /** The sources of each definition of a variable, or null for a definition of unknown value. */
   private val definitions = mutableMapOf<VarDecl<*>, MutableList<List<VarDecl<*>>?>>()
   private val cells = mutableMapOf<VarDecl<*>, MutableMap<Int, Int>>()
@@ -83,7 +83,7 @@ internal class StringLiterals(private val xcfa: XcfaBuilder) {
       }
       null ->
         label
-          .collectVarsWithAccessType(xcfa)
+          .collectVarsWithAccessType()
           .filter { it.value.isWritten }
           .keys
           .forEach { define(it, null) }

@@ -29,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaGlobalVar
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
@@ -75,6 +76,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val pathValuations = LinkedHashMap<XcfaEdge, List<Valuation>>()
     val constValuation = MutableValuation()
+    val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
     val modifiedGlobals = mutableListOf<VarDecl<*>>()
     builder.parent
@@ -96,7 +98,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
             ?: toVisit.first()
         toVisit.remove(edge)
         visited.add(edge)
-        val incomingValuations = builder.mergeIncomingValuations(edge.source, valuations, initLoops)
+        val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
         val localValuation = MutableValuation.copyOf(incomingValuations)
         localValuation.putAll(constValuation)
         val localPaths =
@@ -116,7 +118,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
             }
             if (old is InvokeLabel) {
               old
-                .collectVarsWithAccessType(builder)
+                .collectVarsWithAccessType()
                 .filterValues { it.isWritten }
                 .forEach { (outArg, _) ->
                   localValuation.remove(outArg)
@@ -124,7 +126,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
                 }
             }
             if (old.isAssume) feasiblePaths.singleOrNull()?.let { localValuation.putAll(it) }
-            if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, builder)) {
+            if (preserveSharedAccesses && old.isAssume && dropsSharedAccess(old, new, globalVars)) {
               old
             } else {
               new
@@ -213,11 +215,11 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
   private fun dropsSharedAccess(
     old: XcfaLabel,
     new: XcfaLabel,
-    builder: XcfaProcedureBuilder,
+    globalVars: Set<XcfaGlobalVar>,
   ): Boolean {
     fun nonAtomicGlobals(label: XcfaLabel) =
-      label.collectVarsWithAccessType(builder).filterKeys {
-        builder.parent.getVars().any { v -> v.wrappedVar == it && !v.atomic }
+      label.collectVarsWithAccessType().filterKeys {
+        globalVars.any { v -> v.wrappedVar == it && !v.atomic }
       }
 
     fun derefCount(label: XcfaLabel) = label.dereferencesWithAccessType.size
@@ -251,7 +253,7 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         if (!visited.add(loc)) continue
         loc.outgoingEdges.forEach { edge ->
           edge.getFlatLabels().forEach { label ->
-            label.collectVarsWithAccessType(proc).forEach { (v, access) ->
+            label.collectVarsWithAccessType().forEach { (v, access) ->
               if (v in writeCounts) {
                 // explicit write or range assume for uninitialized local vars
                 if (

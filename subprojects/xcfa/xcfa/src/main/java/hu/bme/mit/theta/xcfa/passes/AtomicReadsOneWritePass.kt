@@ -115,7 +115,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
             e.getFlatLabels().firstOrNull().let { first ->
               first is StmtLabel &&
                 first.stmt is AssumeStmt &&
-                first.collectVarsWithAccessType(builder).any { (v, _) -> v in tr }
+                first.collectVarsWithAccessType().any { (v, _) -> v in tr }
             }
         }
       if (!blocked) return@forEach
@@ -136,8 +136,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
       outgoing.forEach { e ->
         // Write the local back only on the branches that actually modify it: an unconditional
         // write-back would add a spurious write event to the global on a read-only branch.
-        val written =
-          e.collectVarsWithAccessType(builder).any { (v, at) -> v in shared && at.isWritten }
+        val written = e.collectVarsWithAccessType().any { (v, at) -> v in shared && at.isWritten }
         val newLabels = e.getFlatLabels().map { it.replaceAccesses(localVersions) }
         val finalAssigns =
           if (!written) listOf()
@@ -197,7 +196,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
             .takeWhile { label ->
               label is StmtLabel &&
                 label.stmt is AssumeStmt &&
-                label.collectVarsWithAccessType(builder).none { (v, _) -> v in toReplace }
+                label.collectVarsWithAccessType().none { (v, _) -> v in toReplace }
             }
             .size
         builder.removeEdge(edge)
@@ -244,7 +243,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
   private fun XcfaLabel.isAssume() = this is StmtLabel && stmt is AssumeStmt
 
   private fun XcfaLabel.accesses(vars: Collection<VarDecl<*>>) =
-    collectVarsWithAccessType(builder).any { (v, _) -> v in vars }
+    collectVarsWithAccessType().any { (v, _) -> v in vars }
 
   private fun <T : Type> VarDecl<T>.localVersion(
     indexing: VarIndexing,
@@ -297,7 +296,7 @@ class AtomicReadsOneWritePass : ProcedurePass {
   }
 
   private fun XcfaLabel.countAccesses(accesses: MutableMap<VarDecl<*>, AccessOrder>) {
-    collectVarsWithAccessType(builder)
+    collectVarsWithAccessType()
       .filter { (v, _) -> v !in builder.getVars() }
       .forEach { (v, at) ->
         val t = accesses.getOrDefault(v, AccessOrder())

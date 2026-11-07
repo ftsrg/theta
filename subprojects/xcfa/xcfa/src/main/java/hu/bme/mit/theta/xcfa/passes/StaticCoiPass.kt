@@ -48,12 +48,7 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
         val flatLabels = edge.getFlatLabels()
         flatLabels.forEachIndexed { index, label ->
           if (label is StmtLabel) {
-            findDirectObservers(
-              edge,
-              label,
-              flatLabels.subList(index + 1, flatLabels.size),
-              builder,
-            )
+            findDirectObservers(edge, label, flatLabels.subList(index + 1, flatLabels.size))
             findIndirectObservers(label, builder)
           }
         }
@@ -84,14 +79,9 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
           this.stmt is HavocStmt<*>) &&
         dereferencesWithAccessType.none { it.value.isWritten }
 
-  private fun findDirectObservers(
-    edge: XcfaEdge,
-    label: XcfaLabel,
-    remaining: List<XcfaLabel>,
-    builder: XcfaProcedureBuilder,
-  ) {
+  private fun findDirectObservers(edge: XcfaEdge, label: XcfaLabel, remaining: List<XcfaLabel>) {
     val writtenVars =
-      label.collectVarsWithAccessType(builder).filter { it.value.isWritten }.map { it.key }.toSet()
+      label.collectVarsWithAccessType().filter { it.value.isWritten }.map { it.key }.toSet()
     if (writtenVars.isEmpty()) return
 
     val toVisit = mutableListOf(edge)
@@ -101,7 +91,7 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
       visited.add(visiting)
       val labels = if (visiting == edge) remaining else visiting.getFlatLabels()
       labels.forEach { target ->
-        val vars = target.collectVarsWithAccessType(builder)
+        val vars = target.collectVarsWithAccessType()
         if (vars.any { it.key in writtenVars && it.value.isRead }) {
           directObservers[label] = directObservers.getOrDefault(label, setOf()) + target
         }
@@ -113,7 +103,7 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
 
   private fun findIndirectObservers(label: XcfaLabel, builder: XcfaProcedureBuilder) {
     val writtenVars =
-      label.collectVarsWithAccessType(builder).filter { it.value.isWritten }.map { it.key }.toSet()
+      label.collectVarsWithAccessType().filter { it.value.isWritten }.map { it.key }.toSet()
     if (writtenVars.isEmpty()) return
 
     interProcessObservers[label] =
@@ -125,7 +115,7 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
               .flatMap { procedure ->
                 procedure.getEdges().flatMap { e ->
                   e.getFlatLabels().filter { l ->
-                    l.collectVarsWithAccessType(builder).any { it.key == v && it.value.isRead }
+                    l.collectVarsWithAccessType().any { it.key == v && it.value.isRead }
                   }
                 }
               }

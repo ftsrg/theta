@@ -368,9 +368,7 @@ class UnrollPass(
       // through a guard or because the exit path does not overwrite it.
       val writtenLocals =
         loopEdges
-          .flatMap {
-            it.label.collectVarsWithAccessType(builder).filter { a -> a.value.isWritten }.keys
-          }
+          .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
           .filter { it !in globalVars }
       // Locals live at [loopStart] in the whole procedure (back edge and loop exits included).
       val live = strongLiveVars(builder)[loopStart] ?: emptySet()
@@ -382,9 +380,7 @@ class UnrollPass(
         // heap memory is written -> not a busy wait
         return false
       }
-      if (
-        label.collectVarsWithAccessType(builder).any { it.value.isWritten && it.key in globalVars }
-      ) {
+      if (label.collectVarsWithAccessType().any { it.value.isWritten && it.key in globalVars }) {
         // a global variable is written -> not a busy wait
         return false
       }
@@ -711,7 +707,7 @@ class UnrollPass(
     val loopVar =
       loopCondStart.outgoingEdges
         .map {
-          val vars = it.label.collectVarsWithAccessType(builder)
+          val vars = it.label.collectVarsWithAccessType()
           if (vars.size != 1) {
             null // multiple variables in the loop condition not supported
           } else {
@@ -751,7 +747,7 @@ class UnrollPass(
         // find edges that modify the loop variable
         val loopVarModifiers =
           loopEdges.filter {
-            val vars = it.label.collectVarsWithAccessType(builder)
+            val vars = it.label.collectVarsWithAccessType()
             if (vars[loopVar].isWritten) {
               if (it !in necessaryLoopEdges || vars.size > 1)
                 return@run null // loop variable modification cannot be determined statically
@@ -768,7 +764,7 @@ class UnrollPass(
           val inEdges = loc.incomingEdges.filter { it.source !in loopLocations }
           if (inEdges.size != 1) return@run null
           val inEdge = inEdges.first()
-          val vars = inEdge.label.collectVarsWithAccessType(builder)
+          val vars = inEdge.label.collectVarsWithAccessType()
           if (vars[loopVar].isWritten) {
             // Other variables on the same edge are fine: [count] replays the whole edge from an
             // empty state, so they are assigned along the way, and a loop variable whose value
@@ -839,7 +835,7 @@ class UnrollPass(
           .filter { it.name != name }
           .flatMapTo(mutableSetOf<VarDecl<*>>()) { procedure ->
             procedure.getEdges().flatMap { edge ->
-              edge.label.collectVarsWithAccessType(this).filterValues { it.isWritten }.keys
+              edge.label.collectVarsWithAccessType().filterValues { it.isWritten }.keys
             }
           }
           .also { writtenElsewhere = it }

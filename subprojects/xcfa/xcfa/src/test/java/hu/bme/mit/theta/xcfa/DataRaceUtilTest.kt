@@ -186,7 +186,7 @@ class DataRaceUtilTest {
                       it.errorLoc.get().incomingEdges.isNotEmpty() &&
                         it.errorLoc.get().incomingEdges.all { e ->
                           "__theta_dr_write_counter_x" in
-                            e.collectVarsWithAccessType(transformed).map { a -> a.key.name }
+                            e.collectVarsWithAccessType().map { a -> a.key.name }
                         }
                   }
                 }

@@ -110,7 +110,7 @@ class FormatAccessPass(val parseContext: ParseContext) : ProcedurePass {
     invoke: InvokeLabel,
   ): List<XcfaLabel> =
     if (literals.isLiteralBase(string)) listOf()
-    else listOf(InvokeLabel(STRING_READ, listOf(string), metadata = invoke.metadata))
+    else listOf(InvokeLabel.retFirst(STRING_READ, listOf(string), metadata = invoke.metadata))
 
   /** The source is walked, so its cells must be exact: this has to be the only buffer stub. */
   private fun write(
@@ -126,7 +126,7 @@ class FormatAccessPass(val parseContext: ParseContext) : ProcedurePass {
     if (invoke.params.size != first + 1) return listOf()
     val length = CComplexType.getUnsignedLong(parseContext).getValue("$literalLength")
     return listOf(
-      InvokeLabel(
+      InvokeLabel.retFirst(
         BOUNDED_WRITE,
         listOfNotNull(invoke.params[1], length, invoke.params[first], size),
         metadata = invoke.metadata,

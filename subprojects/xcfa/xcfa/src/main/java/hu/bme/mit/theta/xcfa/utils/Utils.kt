@@ -189,22 +189,17 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
       // Fold known values into the arguments -- notably the array index of a thread/mutex handle
       // `&t[i]`, so an unrolled create/join loop yields the constant `&t[0]`, `&t[1]`, … that
       // CLibraryFunctionsPass keys each handle on.
-      InvokeLabel(
-        name,
+      this.withParams { param ->
         // `cType` is identity-keyed, so a rebuilt argument carries none and a later frontend pass
         // reading it (AtomicFunctionsPass wants the pointee of its pointer argument) sees a bare
         // SMT type instead -- carry it over, as the statement branches above do.
-        params.map { param ->
-          val simplified = ExprUtils.simplify(param, valuation)
-          // a literal is shared, so it cannot carry the pointer type the library-call lowering
-          // reads off the argument; the later simplification runs fold it anyway
-          if (simplified is LitExpr<*> && param.isPointerTyped(parseContext)) param
-          else simplified.withCTypeOf(parseContext, param)
-        },
-        metadata,
-        tempLookup,
-        isLibraryFunction,
-      )
+
+        val simplified = ExprUtils.simplify(param, valuation)
+        // a literal is shared, so it cannot carry the pointer type the library-call lowering
+        // reads off the argument; the later simplification runs fold it anyway
+        if (simplified is LitExpr<*> && param.isPointerTyped(parseContext)) param
+        else simplified.withCTypeOf(parseContext, param)
+      }
 
     is SequenceLabel -> SequenceLabel(labels.map { it.simplify(valuation, parseContext) }, metadata)
 
@@ -428,7 +423,7 @@ infix fun Valuation?.union(other: Valuation?): Valuation {
   return ImmutableValuation.from(map1 + map2)
 }
 
-fun XcfaProcedureBuilder.mergeIncomingValuations(
+fun mergeIncomingValuations(
   loc: XcfaLocation,
   valuations: Map<XcfaEdge, Valuation>,
   initLoops: Map<XcfaLocation, Set<XcfaEdge>>,
@@ -444,7 +439,7 @@ fun XcfaProcedureBuilder.mergeIncomingValuations(
         val previousNonLoopEdge = loc.incomingEdges.first { it !in loopEdges }
         ImmutableValuation.from(
           valuations[previousNonLoopEdge]?.toMap()?.filter { (v, _) ->
-            loopEdges.none { e -> e.collectVarsWithAccessType(this)[v]?.isWritten == true }
+            loopEdges.none { e -> e.collectVarsWithAccessType()[v]?.isWritten == true }
           }
         )
       } else {
