@@ -22,6 +22,7 @@ import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.UserPropagator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
@@ -34,11 +35,13 @@ import org.sosy_lab.java_smt.api.InterpolatingProverEnvironment;
 import org.sosy_lab.java_smt.api.ProverEnvironment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverContext.ProverOptions;
+import org.sosy_lab.java_smt.solvers.yices2.PushPopYices2Prover;
 
 public final class JavaSMTSolverFactory implements SolverFactory {
     private final Solvers solver;
 
     private final Configuration config;
+    private final Configuration itpConfig;
     private final LogManager logger;
     private final ShutdownManager shutdownManager;
 
@@ -82,7 +85,14 @@ public final class JavaSMTSolverFactory implements SolverFactory {
     private JavaSMTSolverFactory(Solvers solver, String[] args) {
         try {
             this.solver = solver;
-            config = Configuration.fromCmdLineArguments(args);
+            itpConfig = Configuration.fromCmdLineArguments(args);
+            // JavaSMT defaults Yices to MCSAT, the only backend that interpolates, but DPLL(T) is
+            // far faster on difference logic.
+            config =
+                    Configuration.builder()
+                            .copyFrom(itpConfig)
+                            .setOption("solver.yices2.solverType", "dpllt")
+                            .build();
             logger = BasicLogManager.create(config);
             shutdownManager = ShutdownManager.create();
         } catch (InvalidConfigurationException e) {
@@ -118,8 +128,7 @@ public final class JavaSMTSolverFactory implements SolverFactory {
             final JavaSMTTermTransformer termTransformer =
                     new JavaSMTTermTransformer(symbolTable, context);
 
-            final ProverEnvironment prover =
-                    context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
+            final ProverEnvironment prover = newProver(context, ProverOptions.GENERATE_MODELS);
 
             return new JavaSMTSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);
@@ -173,8 +182,10 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                     new JavaSMTTermTransformer(symbolTable, context);
 
             final ProverEnvironment prover =
-                    context.newProverEnvironment(
-                            ProverOptions.GENERATE_MODELS, ProverOptions.GENERATE_UNSAT_CORE);
+                    newProver(
+                            context,
+                            ProverOptions.GENERATE_MODELS,
+                            ProverOptions.GENERATE_UNSAT_CORE);
 
             return new JavaSMTSolver(
                     symbolTable, transformationManager, termTransformer, context, prover);
@@ -183,12 +194,17 @@ public final class JavaSMTSolverFactory implements SolverFactory {
         }
     }
 
+    private static ProverEnvironment newProver(SolverContext context, ProverOptions... options) {
+        final ProverEnvironment yices = PushPopYices2Prover.create(context, Set.of(options));
+        return yices != null ? yices : context.newProverEnvironment(options);
+    }
+
     @Override
     public ItpSolver createItpSolver() {
         try {
             final SolverContext context =
                     SolverContextFactory.createSolverContext(
-                            config, logger, shutdownManager.getNotifier(), solver);
+                            itpConfig, logger, shutdownManager.getNotifier(), solver);
             final JavaSMTSymbolTable symbolTable = new JavaSMTSymbolTable();
             final JavaSMTTransformationManager transformationManager =
                     new JavaSMTTransformationManager(symbolTable, context);

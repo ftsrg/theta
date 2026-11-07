@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.typeInterval
 import hu.bme.mit.theta.xcfa.utils.withinTypeRange
 import java.math.BigInteger
 
@@ -84,6 +85,29 @@ class UnresolvedInvokeToHavocPass(
 
     private fun isUnmodeledSync(name: String) =
       SYNC_FUNCTION.matches(name) && !STATELESS_SYNC_FUNCTION.matches(name)
+
+    /**
+     * Calls whose result comes from the environment, so any value is possible in C too. Every other
+     * havoc'd result is an over-approximation of a computed value (see
+     * [XcfaBuilder.overApproximatedVars]).
+     */
+    private val ENVIRONMENT_FUNCTIONS =
+      setOf(
+        "getchar",
+        "rand",
+        "random",
+        "time",
+        "clock",
+        "getpid",
+        "getppid",
+        "getuid",
+        "geteuid",
+        "getgid",
+        "getegid",
+      )
+
+    private fun readsEnvironment(name: String) =
+      name in ENVIRONMENT_FUNCTIONS || name.startsWith("__VERIFIER_nondet")
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -122,6 +146,10 @@ class UnresolvedInvokeToHavocPass(
             )
             val returnSlot = invokeLabel.params[0] as RefExpr<*>
             val havoc = HavocStmt.of(returnSlot.decl as VarDecl<*>)
+            if (!readsEnvironment(invokeLabel.name)) {
+              builder.overApproximatedVars[returnSlot.decl as VarDecl<*>] =
+                typeInterval(returnSlot, parseContext)
+            }
             builder.addEdge(
               XcfaEdge(
                 it.source,
@@ -177,16 +205,16 @@ class UnresolvedInvokeToHavocPass(
 
   private fun isPlainIntegerScalar(type: CComplexType): Boolean =
     type is CInteger && type !is CPointer && type !is CArray
-
-  /**
-   * A literal null pointer (integer or bitvector zero) cannot be written through. Constant-folds
-   * first: pointer casts wrap literals in modulo arithmetic, e.g. `(void*)0` arrives as `(mod (mod
-   * 0 2^64) 2^64)`.
-   */
-  private fun isNullLiteral(expr: Expr<*>): Boolean =
-    when (val folded = ExprUtils.simplify(expr)) {
-      is IntLitExpr -> folded.value == BigInteger.ZERO
-      is BvLitExpr -> folded.value.all { !it }
-      else -> false
-    }
 }
+
+/**
+ * A literal null pointer (integer or bitvector zero) cannot be written through. Constant-folds
+ * first: pointer casts wrap literals in modulo arithmetic, e.g. `(void*)0` arrives as `(mod (mod 0
+ * 2^64) 2^64)`.
+ */
+internal fun isNullLiteral(expr: Expr<*>): Boolean =
+  when (val folded = ExprUtils.simplify(expr)) {
+    is IntLitExpr -> folded.value == BigInteger.ZERO
+    is BvLitExpr -> folded.value.all { !it }
+    else -> false
+  }

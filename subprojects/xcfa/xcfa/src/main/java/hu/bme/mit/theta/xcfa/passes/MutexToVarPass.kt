@@ -53,9 +53,10 @@ class MutexToVarPass : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val flags = LinkedHashSet<VarDecl<IntType>>()
     builder.getEdges().toSet().forEach { edge ->
       builder.removeEdge(edge)
-      edge.label.replaceMutex().let { newLabels ->
+      edge.label.replaceMutex(flags).let { newLabels ->
         if (newLabels.isNotEmpty()) {
           newLabels.forEach { newLabel -> builder.addEdge(edge.withLabel(newLabel)) }
         } else {
@@ -64,14 +65,26 @@ class MutexToVarPass : ProcedurePass {
       }
     }
 
-    mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, Int(0), atomic = true)) }
-    builder.parent.getInitProcedures().forEach { (proc, _) ->
-      mutexVars.forEach { (_, v) ->
+    val initProcs = builder.parent.getInitProcedures().map { it.first }
+    if (builder in initProcs) {
+      // The init procedure may be optimized before the other procedures, and is locked then:
+      // initialize the flags of their mutexes now, while their labels are not yet replaced.
+      builder.parent.getProcedures().forEach { proc ->
+        if (proc != builder) proc.getEdges().forEach { it.label.replaceMutex(flags) }
+      }
+    }
+
+    flags.forEach { v -> builder.parent.addVar(XcfaGlobalVar(v, Int(0), atomic = true)) }
+    initProcs.forEach { proc ->
+      flags.forEach { v ->
         val initEdge = proc.initLoc.outgoingEdges.first()
         val initLabels = initEdge.getFlatLabels()
         if (
           initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }
         ) {
+          check(!proc.isOptimized) {
+            "Mutex flag $v is not initialized in the already optimized init procedure ${proc.name}."
+          }
           val assign = StmtLabel(AssignStmt.of(v, Int(0)))
           val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
           proc.removeEdge(initEdge)
@@ -82,10 +95,13 @@ class MutexToVarPass : ProcedurePass {
     return builder
   }
 
-  private fun XcfaLabel.replaceMutex(): Set<XcfaLabel> {
+  private fun MutexLock.flagIn(flags: MutableSet<VarDecl<IntType>>): VarDecl<IntType> =
+    mutexFlag.also { flags.add(it) }
+
+  private fun XcfaLabel.replaceMutex(flags: MutableSet<VarDecl<IntType>>): Set<XcfaLabel> {
     return when (this) {
       is SequenceLabel ->
-        descartes(labels.map { it.replaceMutex() }).map { SequenceLabel(it, metadata) }.toSet()
+        descartes(labels.map { it.replaceMutex(flags) }).map { SequenceLabel(it, metadata) }.toSet()
 
       is InvokeLabel ->
         when {
@@ -114,19 +130,22 @@ class MutexToVarPass : ProcedurePass {
 
           // Acquires a free mutex and reports success, or reports failure on a held one.
           is MutexTryLockLabel -> {
-            val flags = blockingMutexes.map { it.mutexFlag }
+            val blocking = blockingMutexes.map { it.flagIn(flags) }
             val acquire =
-              acquiredMutexes.map { StmtLabel(AssignStmt.of(it.mutexFlag, Inc(it.mutexFlag.ref))) }
+              acquiredMutexes.map {
+                val m = it.flagIn(flags)
+                StmtLabel(AssignStmt.of(m, Inc(m.ref)))
+              }
             return setOf(
               SequenceLabel(
-                listOf(StmtLabel(AssumeStmt.of(And(flags.map { Eq(it.ref, Int(0)) })))) +
+                listOf(StmtLabel(AssumeStmt.of(And(blocking.map { Eq(it.ref, Int(0)) })))) +
                   acquire +
                   StmtLabel(copy(successful = true).toStmt()),
                 metadata,
               ),
               SequenceLabel(
                 listOf(
-                  StmtLabel(AssumeStmt.of(Or(flags.map { Neq(it.ref, Int(0)) }))),
+                  StmtLabel(AssumeStmt.of(Or(blocking.map { Neq(it.ref, Int(0)) }))),
                   StmtLabel(copy(successful = false).toStmt()),
                 ),
                 metadata,
@@ -137,8 +156,8 @@ class MutexToVarPass : ProcedurePass {
           is RWLockUnlockLabel -> {
             // this is a hack because RWLockUnlock unlocks both read and write locks
             // if write lock is held, it unlocks that, otherwise a read lock
-            val writeFlag = ReadWriteMutexLock(lock, WRITE).mutexFlag
-            val readFlag = ReadWriteMutexLock(lock, READ).mutexFlag
+            val writeFlag = ReadWriteMutexLock(lock, WRITE).flagIn(flags)
+            val readFlag = ReadWriteMutexLock(lock, READ).flagIn(flags)
             return setOf(
               SequenceLabel(
                 listOf(
@@ -157,14 +176,14 @@ class MutexToVarPass : ProcedurePass {
 
           else -> {
             blockingMutexes.forEach {
-              actions.add(StmtLabel(AssumeStmt.of(Eq(it.mutexFlag.ref, Int(0)))))
+              actions.add(StmtLabel(AssumeStmt.of(Eq(it.flagIn(flags).ref, Int(0)))))
             }
             acquiredMutexes.forEach {
-              val m = it.mutexFlag
+              val m = it.flagIn(flags)
               actions.add(StmtLabel(AssignStmt.of(m, Inc(m.ref))))
             }
             releasedMutexes.forEach {
-              val m = it.mutexFlag
+              val m = it.flagIn(flags)
               actions.add(StmtLabel(AssignStmt.of(m, Dec(m.ref))))
             }
           }

@@ -134,5 +134,5 @@ Only draft on yes. Never do it silently. This project has multiple contributors 
 **Module already documented?** Then upkeep is part of your edit, not a separate favor:
 - If your change makes a statement in the module's `AGENTS.md`/`USING.md` wrong (renamed class, changed signature/invariant, extra step in a recipe), update that doc **in the same change** — no need to ask. State what you updated in your summary.
 - If you *learned* something the docs lack (a non-obvious invariant, a gotcha that cost you time), propose a one-liner addition at the end of the task — ask, don't add silently.
-- Never add suspected bugs/smells to these docs — those go to `possible-issues.md` at the repo root (and when you fix one, delete its entry there).
+- Never add suspected bugs/smells to these docs — offer to create issues for those in the Theta repo with user approval.
 - Same applies to the root file you're reading: if the subproject map or a pointer here went stale, fix it.

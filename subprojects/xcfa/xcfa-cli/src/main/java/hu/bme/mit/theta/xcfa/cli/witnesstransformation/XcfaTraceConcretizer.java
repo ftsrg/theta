@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xcfa.cli.witnesstransformation;
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.c2xcfa.CMetaDataKt.getCMetaData;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.collectVarsWithAccessType;
+import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.getDereferences;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.isWritten;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabels;
 
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
@@ -37,11 +37,20 @@ import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.*;
@@ -139,17 +148,135 @@ public class XcfaTraceConcretizer {
             ParseContext parseContext,
             Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
                     exprTraceCheckerWrapper) {
-        trace =
-                Trace.of(
-                        trace.getStates().stream()
-                                .map(state -> keepNamedVars(state, parseContext))
-                                .toList(),
-                        trace.getActions());
+        final Trace<XcfaState<?>, XcfaAction> sbeTrace =
+                splitLabels(keepNamedVars(trace, parseContext)).trace();
+        final ExprTraceChecker<ItpRefutation> checker =
+                exprTraceCheckerWrapper.apply(
+                        ExprTraceFwBinItpChecker.create(
+                                BoolExprs.True(),
+                                BoolExprs.True(),
+                                solverFactory.createItpSolver()));
+        final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
+        checkArgument(status.isFeasible(), "Infeasible trace.");
+        return toConcreteTrace(
+                sbeTrace, status.asFeasible().getValuations().getStates(), parseContext);
+    }
 
+    /** A concrete lasso: the state at `cycleStart` equals the last state of the trace. */
+    public record ConcreteLasso(Trace<XcfaState<ExplState>, XcfaAction> trace, int cycleStart) {}
+
+    /**
+     * Concretizes a termination counterexample so that its cycle can repeat forever. Each earlier
+     * visit of the last state's locations is tried as the start of the cycle, the latest first.
+     * Returns null if none of them repeats the state, or if the trace uses pointer dereferences, as
+     * the variables then do not hold the whole state.
+     */
+    public static ConcreteLasso concretizeLasso(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            SolverFactory solverFactory,
+            ParseContext parseContext) {
+        final SplitTrace split = splitLabels(keepNamedVars(trace, parseContext));
+        final Trace<XcfaState<?>, XcfaAction> sbeTrace = split.trace();
+        if (sbeTrace.getActions().stream()
+                .anyMatch(action -> !getDereferences(action.getLabel()).isEmpty())) {
+            return null;
+        }
+        final Solver solver = solverFactory.createSolver();
+        final List<VarIndexing> indexings = new ArrayList<>();
+        indexings.add(VarIndexingFactory.indexing(0));
+        solver.add(PathUtils.unfold(sbeTrace.getState(0).toExpr(), indexings.get(0)));
+        for (int i = 1; i < sbeTrace.getStates().size(); ++i) {
+            final XcfaAction action = sbeTrace.getAction(i - 1);
+            indexings.add(indexings.get(i - 1).add(action.nextIndexing()));
+            solver.add(PathUtils.unfold(sbeTrace.getState(i).toExpr(), indexings.get(i)));
+            solver.add(PathUtils.unfold(action.toExpr(), indexings.get(i - 1)));
+        }
+        final VarIndexing end = indexings.get(indexings.size() - 1);
+        final int last = trace.getStates().size() - 1;
+        for (int k = last - 1; k >= 0; --k) {
+            if (!sameLocations(trace.getState(k), trace.getState(last))) {
+                continue;
+            }
+            final int start = split.positions().get(k);
+            final List<XcfaAction> cycle =
+                    sbeTrace.getActions().subList(start, sbeTrace.getActions().size());
+            try (var wpp = new WithPushPop(solver)) {
+                for (VarDecl<?> decl : writtenVars(cycle)) {
+                    solver.add(
+                            sameValue(
+                                    PathUtils.unfold(decl.getRef(), indexings.get(start)),
+                                    PathUtils.unfold(decl.getRef(), end)));
+                }
+                if (solver.check().isSat()) {
+                    final Valuation model = solver.getModel();
+                    final List<Valuation> valuations =
+                            indexings.stream()
+                                    .map(indexing -> PathUtils.extractValuation(model, indexing))
+                                    .toList();
+                    return new ConcreteLasso(
+                            toConcreteTrace(sbeTrace, valuations, parseContext), start);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean sameLocations(XcfaState<?> a, XcfaState<?> b) {
+        return a.getProcesses().keySet().equals(b.getProcesses().keySet())
+                && a.getProcesses().entrySet().stream()
+                        .allMatch(
+                                e ->
+                                        e.getValue()
+                                                .getLocs()
+                                                .equals(
+                                                        b.getProcesses()
+                                                                .get(e.getKey())
+                                                                .getLocs()));
+    }
+
+    private static Set<VarDecl<?>> writtenVars(List<XcfaAction> actions) {
+        final Set<VarDecl<?>> vars = new LinkedHashSet<>();
+        for (XcfaAction action : actions) {
+            for (XcfaLabel label : getFlatLabels(action.getLabel())) {
+                collectVarsWithAccessType(label)
+                        .forEach(
+                                (decl, access) -> {
+                                    if (isWritten(access)) vars.add(decl);
+                                });
+            }
+        }
+        return vars;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Expr<BoolType> sameValue(Expr<?> a, Expr<?> b) {
+        return a.getType() instanceof FpType
+                ? FpExprs.FpAssign((Expr<FpType>) a, (Expr<FpType>) b)
+                : AbstractExprs.Eq(a, b);
+    }
+
+    private static Trace<XcfaState<PtrState<?>>, XcfaAction> keepNamedVars(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace, ParseContext parseContext) {
+        return Trace.of(
+                trace.getStates().stream()
+                        .map(state -> keepNamedVars(state, parseContext))
+                        .toList(),
+                trace.getActions());
+    }
+
+    /**
+     * The trace with one action per C statement. `positions` holds the index of each state of
+     * `trace` in the result.
+     */
+    private record SplitTrace(Trace<XcfaState<?>, XcfaAction> trace, List<Integer> positions) {}
+
+    private static SplitTrace splitLabels(Trace<XcfaState<PtrState<?>>, XcfaAction> trace) {
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
+        List<Integer> positions = new ArrayList<>();
 
         sbeStates.add(trace.getState(0));
+        positions.add(0);
 
         Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         final XcfaLocation placeholder =
@@ -236,19 +363,16 @@ public class XcfaTraceConcretizer {
                                 .max(Comparator.naturalOrder())
                                 .orElse(nextCount);
             }
+            positions.add(sbeStates.size() - 1);
         }
-        Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
-        final ExprTraceChecker<ItpRefutation> checker =
-                exprTraceCheckerWrapper.apply(
-                        ExprTraceFwBinItpChecker.create(
-                                BoolExprs.True(),
-                                BoolExprs.True(),
-                                solverFactory.createItpSolver()));
-        final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
-        checkArgument(status.isFeasible(), "Infeasible trace.");
-        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        return new SplitTrace(Trace.of(sbeStates, sbeActions), positions);
+    }
 
-        assert valuations.getStates().size() == sbeTrace.getStates().size();
+    private static Trace<XcfaState<ExplState>, XcfaAction> toConcreteTrace(
+            Trace<XcfaState<?>, XcfaAction> sbeTrace,
+            List<? extends Valuation> valuations,
+            ParseContext parseContext) {
+        assert valuations.size() == sbeTrace.getStates().size();
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         final Set<VarDecl<?>> varSoFar = new LinkedHashSet<>();
@@ -263,7 +387,7 @@ public class XcfaTraceConcretizer {
                             sbeTrace.getState(i).getProcesses(),
                             concreteState(
                                     sbeTrace.getState(i),
-                                    valuations.getState(i),
+                                    valuations.get(i),
                                     varSoFar,
                                     nondetVars,
                                     parseContext)));
@@ -295,6 +419,6 @@ public class XcfaTraceConcretizer {
             }
         }
 
-        return Trace.of(cfaStates, sbeActions);
+        return Trace.of(cfaStates, sbeTrace.getActions());
     }
 }

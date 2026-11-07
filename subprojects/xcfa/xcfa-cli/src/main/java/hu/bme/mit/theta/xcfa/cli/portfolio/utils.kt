@@ -356,6 +356,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
   reversed: Boolean = false,
   cegar: Boolean = false,
   initprec: InitPrec = EMPTY,
+  blockEncoding: Boolean = this.backendConfig.specConfig!!.blockEncoding,
 ): XcfaConfig<*, BoundedConfig> =
   copy(
     backendConfig =
@@ -367,6 +368,7 @@ fun XcfaConfig<*, BoundedConfig>.adaptConfig(
             reversed = reversed,
             cegar = cegar,
             initPrec = initprec,
+            blockEncoding = blockEncoding,
             bmcConfig =
               backendConfig.specConfig!!
                 .bmcConfig

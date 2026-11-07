@@ -218,27 +218,22 @@ class PointerArithmeticTest {
   }
 
   @Test
-  fun `passing a split pointer as a function argument is still refused`() {
-    // Out of scope on purpose: a mid-object pointer *value* cannot escape as an argument (or a
-    // return value) because the split model has nowhere to carry a non-zero offset across a call
-    // boundary -- `seedSplitParams` only ever seeds a callee's split parameter at offset 0, which
-    // presumes the caller passed a plain (offset-0) pointer. Guards that widening bare uses into
-    // scalar contexts did not also, by accident, legalize a split pointer escaping by value.
-    assertThrows(IllegalStateException::class.java) {
-      buildBoth(
-        """
-        extern void reach_error();
-        int use(int *x) { return *x; }
-        int main() {
-          int a[10];
-          int *p = &a[3];
-          int y = use(p);
-          if (y != 0) reach_error();
-          return 0;
-        }
-        """
-          .trimIndent()
-      )
-    }
+  fun `a split pointer passed as a function argument keeps its offset`() {
+    // Spelled as a computed address, so inlining turns it into an assignment the next run of the
+    // pass splits; the fixtures check the verdict.
+    buildBoth(
+      """
+      extern void reach_error();
+      int use(int *x) { return *x; }
+      int main() {
+        int a[10];
+        int *p = &a[3];
+        int y = use(p);
+        if (y != 0) reach_error();
+        return 0;
+      }
+      """
+        .trimIndent()
+    )
   }
 }

@@ -57,7 +57,6 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
 import hu.bme.mit.theta.frontend.transformation.grammar.CLiterals;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -81,6 +80,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -653,10 +653,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     ctx.multiplicativeExpression().stream()
                             .map(multiplicativeExpression -> multiplicativeExpression.accept(this))
                             .collect(Collectors.toList());
+            Set<Expr<?>> addresses = parseContext.getAddressIntegers();
+            if (exprs.size() == 2
+                    && ctx.signs.get(0).getText().equals("-")
+                    && addresses.contains(exprs.get(0))
+                    && addresses.contains(exprs.get(1))) {
+                addresses.remove(exprs.get(0));
+                addresses.remove(exprs.get(1));
+            }
             List<CComplexType> types =
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
+            final Expr<?> pointerDifference = pointerDifference(ctx, exprs, types);
+            if (pointerDifference != null) {
+                return pointerDifference;
+            }
             final Expr<?> pointerArithmetic = pointerArithmetic(ctx, exprs, types);
             if (pointerArithmetic != null) {
                 return pointerArithmetic;
@@ -683,6 +695,85 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return add;
         }
         return ctx.multiplicativeExpression(0).accept(this);
+    }
+
+    /**
+     * A pointer difference {@code p - q} (also {@code p + i - q - j}): a {@code ptrdiff_t}, the
+     * address distance divided by the element stride. Under bitvectors the distance is taken
+     * unsigned and then reinterpreted, as a signed subtraction of two addresses on either side of
+     * the sign boundary would report an overflow no same-object difference can have. Returns null
+     * unless the operands are one pointer minus a later one.
+     */
+    private Expr<?> pointerDifference(
+            CParser.AdditiveExpressionContext ctx, List<Expr<?>> exprs, List<CComplexType> types) {
+        final List<Integer> pointers = new ArrayList<>();
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i) instanceof CArray
+                    || (types.get(i) instanceof CPointer p && !p.isFunctionPointer())) {
+                pointers.add(i);
+            }
+        }
+        if (pointers.size() != 2) return null;
+        final int minuend = pointers.get(0);
+        final int subtrahend = pointers.get(1);
+        if (isSubtracted(ctx, minuend) || !isSubtracted(ctx, subtrahend)) return null;
+        final CComplexType pointee = pointeeOf(types.get(minuend));
+        refuseReinterpretedStep(exprs.get(minuend), pointee);
+        refuseReinterpretedStep(exprs.get(subtrahend), pointeeOf(types.get(subtrahend)));
+        final Expr<?> stride = pointerStride(pointee);
+
+        final CComplexType diffType = CComplexType.getSignedLong(parseContext);
+        final CComplexType addressType =
+                parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
+                        ? CComplexType.getUnsignedLong(parseContext)
+                        : diffType;
+        final List<Expr<?>> terms = new ArrayList<>();
+        for (int i = 0; i <= subtrahend; i++) {
+            Expr<?> term = addressType.castTo(exprs.get(i));
+            if (i != minuend && i != subtrahend && stride != null) {
+                term = addressType.castTo(Mul(List.of(term, addressType.castTo(stride))));
+            }
+            terms.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        final Expr<?> distance = Add(terms);
+        parseContext.getMetadata().create(distance, "cType", addressType);
+        Expr<?> diff = diffType.castTo(addressType.castTo(distance));
+        if (stride != null) {
+            final Expr<?> divisor = diffType.castTo(stride);
+            diff =
+                    diff.getType() instanceof IntType
+                            ? createIntDiv(diff, divisor)
+                            : Div(diff, divisor);
+            parseContext.getMetadata().create(innerDiv(diff), "cType", diffType);
+            diff = diffType.castTo(diff);
+        }
+        parseContext.getMetadata().create(diff, "cType", diffType);
+
+        // The integer terms after `q` are added to the difference by the usual conversions.
+        final List<CComplexType> restTypes = new ArrayList<>(List.of(diffType));
+        restTypes.addAll(types.subList(subtrahend + 1, types.size()));
+        final CComplexType resultType = getSmallestCommonType(restTypes, parseContext);
+        final List<Expr<?>> rest = new ArrayList<>(List.of(resultType.castTo(diff)));
+        for (int i = subtrahend + 1; i < exprs.size(); i++) {
+            final Expr<?> term = resultType.castTo(exprs.get(i));
+            rest.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        if (rest.size() == 1) return rest.get(0);
+        final Expr<?> sum = Add(rest);
+        parseContext.getMetadata().create(sum, "cType", resultType);
+        final Expr<?> result = resultType.castTo(sum);
+        parseContext.getMetadata().create(result, "cType", resultType);
+        return result;
+    }
+
+    private static boolean isSubtracted(CParser.AdditiveExpressionContext ctx, int operand) {
+        return operand > 0 && ctx.signs.get(operand - 1).getText().equals("-");
+    }
+
+    private static CComplexType pointeeOf(CComplexType pointerOrArray) {
+        return pointerOrArray instanceof CPointer p
+                ? p.getEmbeddedType()
+                : ((CArray) pointerOrArray).getEmbeddedType();
     }
 
     /**
@@ -739,18 +830,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         // inside the resulting dereference's offset makes the assignment path misread the *load* as
         // pointer arithmetic). An aggregate element spans `cellCount(pointee)` cells and is scaled,
         // matching the subscript path's `rowOf`; a null scale (an unsized element) means no factor.
-        final boolean aggregatePointee =
-                pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
-        // Under the bytes model a step of `p` is the pointee's whole byte size, whatever its shape;
-        // under multi/flat only an aggregate element spans more than one cell and is scaled. A unit
-        // stride stays null so no `* 1` is injected (see the note below).
-        final Expr<?> cells;
-        if (byteAddressed()) {
-            final Expr<?> stride = byteStrideExpr(pointee);
-            cells = (stride == null || isLiteralOne(stride)) ? null : stride;
-        } else {
-            cells = aggregatePointee ? cellCountExpr(pointee) : null;
-        }
+        refuseReinterpretedStep(base, pointee);
+        final Expr<?> cells = pointerStride(pointee);
         final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
         final List<Expr<?>> indexTerms = new ArrayList<>();
         for (int i = 0; i < exprs.size(); i++) {
@@ -775,6 +856,90 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         final Expr<?> ptrArith = Add(addOps);
         parseContext.getMetadata().create(ptrArith, "cType", pointerType);
         return ptrArith;
+    }
+
+    /**
+     * What one step of a pointer to {@code pointee} adds to it, null for a unit step. Under the
+     * bytes model that is the pointee's byte size; under multi/flat an aggregate element spans
+     * several cells, and a {@code void *} steps over bytes, which those models cannot address.
+     */
+    private Expr<?> pointerStride(CComplexType pointee) {
+        if (byteAddressed()) {
+            if (pointee instanceof CVoid) return null;
+            final Expr<?> stride = byteStrideExpr(pointee);
+            return (stride == null || isLiteralOne(stride)) ? null : stride;
+        }
+        if (pointee instanceof CVoid) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Arithmetic on a void pointer is not supported.");
+        }
+        refuseUnionStep(pointee);
+        final boolean aggregate =
+                pointee instanceof CArray || (pointee instanceof CStruct s && !s.isUnion());
+        return aggregate ? cellCountExpr(pointee) : null;
+    }
+
+    /**
+     * Under multi/flat a union is one cell holding its base, and only a declared array has an
+     * object for each element, so a step through a pointer cannot find the element's cells.
+     */
+    private void refuseUnionStep(CComplexType pointee) {
+        if (!byteAddressed() && pointee instanceof CStruct s && s.isUnion()) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Stepping a pointer to a union is not supported.");
+        }
+    }
+
+    /** The value of {@code ++}/{@code --} on an operand of the given type. */
+    private Expr<?> incrementStep(CComplexType type) {
+        if (type instanceof CPointer pointer && !pointer.isFunctionPointer()) {
+            final Expr<?> stride = pointerStride(pointer.getEmbeddedType());
+            if (stride != null) return type.castTo(stride);
+        }
+        return type.getUnitValue();
+    }
+
+    /** The right-hand side of {@code lhs += rhs} or {@code lhs -= rhs}, in {@code lhs}'s unit. */
+    public Expr<?> compoundStep(Expr<?> lhs, Expr<?> rhs) {
+        if (!(CComplexType.getType(lhs, parseContext) instanceof CPointer pointer)
+                || pointer.isFunctionPointer()) {
+            return rhs;
+        }
+        final Expr<?> stride = pointerStride(pointer.getEmbeddedType());
+        if (stride == null) return rhs;
+        final CComplexType indexType = CComplexType.getUnsignedLong(parseContext);
+        final Expr<?> scaled =
+                indexType.castTo(Mul(List.of(indexType.castTo(rhs), indexType.castTo(stride))));
+        parseContext.getMetadata().create(scaled, "cType", indexType);
+        return scaled;
+    }
+
+    /**
+     * Under multi/flat a step counts cells of the pointee, so stepping a pointer cast from or to an
+     * aggregate pointer counts them in the wrong unit: {@code (char *)p + k} on a {@code struct *}.
+     */
+    private void refuseReinterpretedStep(Expr<?> base, CComplexType pointee) {
+        if (byteAddressed()) return;
+        Expr<?> operand = base;
+        while (operand instanceof PosExpr<?> pos) operand = pos.getOp();
+        if (operand == base) return;
+        final CComplexType original = CComplexType.getType(operand, parseContext);
+        final CComplexType originalPointee;
+        if (original instanceof CPointer p && !p.isFunctionPointer()) {
+            originalPointee = p.getEmbeddedType();
+        } else if (original instanceof CArray a) {
+            originalPointee = a.getEmbeddedType();
+        } else return;
+        final boolean aggregate =
+                pointee instanceof CStruct
+                        || pointee instanceof CArray
+                        || originalPointee instanceof CStruct
+                        || originalPointee instanceof CArray;
+        if (aggregate && !(originalPointee instanceof CVoid) && !pointee.equals(originalPointee)) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Stepping a %s through a %s pointer is not supported."
+                            .formatted(originalPointee.getTypeName(), pointee.getTypeName()));
+        }
     }
 
     @Override
@@ -921,12 +1086,74 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
-        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
+        final CComplexType operandType = CComplexType.getType(operand, parseContext);
+        if (actualType instanceof CStruct struct && !struct.equals(operandType)) {
+            return castToUnion(struct, operand, operandType);
+        }
+        refuseResizingPointerCast(operandType, actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
+        // A pointer that reads no variable, as `&((T *)0)->f` in `container_of`, is no object's.
+        if ((operandType instanceof CPointer || operandType instanceof CArray)
+                && actualType instanceof CInteger
+                && !(actualType instanceof CPointer)
+                && !(actualType instanceof CArray)
+                && !(actualType instanceof CStruct)
+                && !(actualType instanceof CBool)
+                && !ExprUtils.getVars(operand).isEmpty()) {
+            parseContext.getAddressIntegers().add(expr);
+        }
         return expr;
+    }
+
+    /**
+     * GNU C's cast to a union, {@code (union U)x}: a fresh union whose member of x's type holds x.
+     * Any other cast to a struct or union type is refused.
+     */
+    private Expr<?> castToUnion(CStruct union, Expr<?> operand, CComplexType operandType) {
+        if (!union.isUnion()
+                || functionVisitor == null
+                || parseContext.getMetadata().getMetadataValue(operand, "cType").isEmpty()) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to the struct or union type "
+                            + union.getTypeName()
+                            + " is not supported.");
+        }
+        final List<String> members =
+                union.getFields().stream()
+                        .filter(field -> sameMemberType(field.get2(), operandType))
+                        .map(Tuple2::get1)
+                        .toList();
+        if (members.size() != 1) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to a union without exactly one member of the operand's type.");
+        }
+        final CComplexType memberType = union.getFieldsAsMap().get(members.get(0));
+        final VarDecl<?> tmp = functionVisitor.createTempVar(union, "union_cast");
+        final Expr<?> member = structMemberAccess(tmp.getRef(), union, members.get(0));
+        preStatements.add(
+                new CAssignment(
+                        member,
+                        new CExpr(typed(memberType.castTo(operand), memberType), parseContext),
+                        "=",
+                        parseContext));
+        return tmp.getRef();
+    }
+
+    private static boolean sameMemberType(CComplexType member, CComplexType operand) {
+        if (member == null || operand == null || member.getClass() != operand.getClass()) {
+            return false;
+        }
+        if (member instanceof CPointer memberPointer
+                && operand instanceof CPointer operandPointer) {
+            return memberPointer.getEmbeddedType() != null
+                    && operandPointer.getEmbeddedType() != null
+                    && memberPointer.getEmbeddedType().getClass()
+                            == operandPointer.getEmbeddedType().getClass();
+        }
+        return !(member instanceof CStruct) || member.equals(operand);
     }
 
     /**
@@ -1183,8 +1410,59 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // `sizeof *p` / `sizeof x`: the operand is an expression, with or without parentheses.
             final var operand = ctx.expression() != null ? ctx.expression() : ctx.unaryExpression();
             final var expr = operand.accept(this);
-            final var type = CComplexType.getType(expr, parseContext);
-            return sizeOfValue(sizeOf(type));
+            return sizeOfValue(sizeOfOperand(operand, CComplexType.getType(expr, parseContext)));
+        }
+    }
+
+    /**
+     * The size `sizeof` reports for an expression operand. An array keeps its array type only as a
+     * designator; a parameter declared as one really is a pointer, and any other form (`a + 1`, `c
+     * ? a : b`, `(0, a)`) carries the array's cType but has decayed to a pointer.
+     */
+    private long sizeOfOperand(ParseTree operand, CComplexType type) {
+        if (!(type instanceof CArray array)) {
+            return sizeOf(type);
+        }
+        final ParseTree designator = arrayDesignator(operand);
+        if (designator == null) {
+            return sizeOf(CComplexType.getUnsignedLong(parseContext));
+        }
+        if (designator instanceof PrimaryExpressionIdContext && functionVisitor != null) {
+            final VarDecl<?> variable = getVar(designator.getText());
+            if (functionVisitor.isArrayParameter(variable)) {
+                return sizeOf(CComplexType.getUnsignedLong(parseContext));
+            }
+            final Integer extent = functionVisitor.initializerExtent(variable);
+            if (array.getArrayDimension() == null && extent != null) {
+                return Math.multiplyExact(extent, sizeOf(array.getEmbeddedType()));
+            }
+        }
+        return sizeOf(type);
+    }
+
+    /**
+     * The node of [operand] that designates an array, looking through parentheses; null when the
+     * operand is any other form of expression. Decided on the syntax, as a subscript or member
+     * access can fold to the same `Add` that pointer arithmetic produces.
+     */
+    private static ParseTree arrayDesignator(ParseTree operand) {
+        ParseTree current = operand;
+        while (true) {
+            if (current instanceof PrimaryExpressionBraceExpressionContext parenthesized) {
+                current = parenthesized.expression();
+            } else if (current instanceof PrimaryExpressionIdContext
+                    || current instanceof PrimaryExpressionStringsContext
+                    || current instanceof PrimaryExpressionTypeInitializerContext
+                    || (current instanceof PostfixExpressionContext postfix
+                            && !postfix.pfExprs.isEmpty())) {
+                return current;
+            } else if (current instanceof UnaryExpressionCastContext unary) {
+                return unary.unaryOperator().getText().equals("*") ? unary : null;
+            } else if (current.getChildCount() == 1) {
+                current = current.getChild(0);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -1262,30 +1540,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return value;
     }
 
-    /**
-     * How many bytes a value of this type occupies.
-     *
-     * <p>A struct's {@code width()} is not its size -- it is pointer-wide, like the handle a struct
-     * is passed around by -- so `sizeof(struct node)` came out **4**, whatever the struct held.
-     * Memory sizes are recorded from `malloc(sizeof(struct node))`, and a struct's members are
-     * addressed by their *index*, so the fifth member of a five-member struct sat at offset 4 and
-     * the bound check `offset < size` read `4 < 4` and called a perfectly good access an invalid
-     * dereference. A struct of four members or fewer never tripped it, which is why it survived so
-     * long.
-     *
-     * <p>The size of a struct is the size of what is in it (a union's, the largest member's).
-     * Padding is not modelled -- nothing here reasons about a struct's bit-level layout, and a size
-     * that is a little small would bring the bound check back down onto real accesses.
-     */
-    private int sizeOf(CComplexType type) {
-        // Under the bytes model everything is addressed in real bytes, so `sizeof` must be the
-        // declared (padded) byte size -- the same layout subscripts, members, and pointer
-        // arithmetic use, and the size that then bounds them exactly in the memsafety check.
-        if (byteAddressed()) {
-            return Math.max(ObjectLayout.sizeBits(type, parseContext.getArchitecture()) / 8, 1);
+    /** How many bytes `sizeof` reports for a value of this type. */
+    private long sizeOf(CComplexType type) {
+        // A whole array's size is observable (`sizeof(a) / sizeof(a[0])`), whichever cells hold it.
+        // A VLA's dimension may have changed since its declaration, so it cannot be re-evaluated.
+        if (type instanceof CArray array) {
+            final Integer count = ObjectLayout.constantDimension(array);
+            if (count == null) {
+                throw new UnsupportedFrontendElementException(
+                        "sizeof an array without a constant size");
+            }
+            return Math.multiplyExact(count, sizeOf(array.getEmbeddedType()));
         }
-        return ObjectLayout.cellModelSize(
-                type, parseContext.getMemoryModel() == MemoryModelType.flat);
+        return ObjectLayout.sizeofBytes(type, parseContext.getArchitecture());
     }
 
     @Override
@@ -1304,9 +1571,10 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         if (increment != 0) {
             Expr<?> expr = ret;
             CComplexType type = CComplexType.getType(ret, parseContext);
+            final Expr<?> step = incrementStep(type);
             for (int i = 0; i < Math.abs(increment); i++) {
-                if (increment < 0) expr = AbstractExprs.Sub(expr, type.getUnitValue());
-                else expr = AbstractExprs.Add(expr, type.getUnitValue());
+                if (increment < 0) expr = AbstractExprs.Sub(expr, step);
+                else expr = AbstractExprs.Add(expr, step);
             }
             parseContext.getMetadata().create(expr, "cType", type);
             expr = type.castTo(expr);
@@ -1421,18 +1689,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // A nested member (`&s.inner`) is a cell holding the member's own base, so its
                 // address is that value too -- unless the cell is a packed struct's storage. Unions
                 // follow the same rule: under the cell models a union element or member is an
-                // object of its own whose base the cell holds, and under bytes it is a region. The
-                // exception is a sync handle (a union) under the cell models, see
-                // FunctionVisitor#isVisitingSyncHandleArguments.
+                // object of its own whose base the cell holds, and under bytes it is a region.
                 final CComplexType ampType = CComplexType.getType(originalOperand, parseContext);
-                final boolean syncHandle =
-                        ampType instanceof CStruct s
-                                && s.isUnion()
-                                && !byteAddressed()
-                                && functionVisitor != null
-                                && functionVisitor.isVisitingSyncHandleArguments();
                 if ((ampType instanceof CArray || ampType instanceof CStruct)
-                        && !syncHandle
                         && !(originalOperand instanceof RefExpr<?>)
                         && parseContext
                                 .getMetadata()
@@ -1445,9 +1704,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     return address;
                 }
                 // Taking a *scalar* local's address is what makes its storage observable after the
-                // block ends, and such a scalar is not an alloca -- ReferenceElimination gives it a
-                // compile-time base -- so nothing else would ever release it. Tell the function
-                // visitor, which releases it at the end of the block that DECLARED it.
+                // block ends, and such a scalar is not an alloca, so nothing else would ever
+                // release
+                // it. Tell the function visitor, which ties it to the block that DECLARED it.
                 if (functionVisitor != null && originalOperand instanceof RefExpr<?> ref) {
                     final Expr<?> address = reference(originalOperand);
                     functionVisitor.registerScopedAddress((VarDecl<?>) ref.getDecl(), address);
@@ -1936,6 +2195,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         String name = idCtx.Identifier().getText();
+        if (name.equals("free") || name.equals("realloc")) {
+            parseContext.setDeallocation(true);
+        }
         List<AssignmentExpressionContext> args =
                 call.argumentExpressionList() == null
                         ? List.of()
@@ -2064,7 +2326,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(unused, "cType", signedInt);
                 return unused;
             }
-            case "__builtin_alloca", "__builtin_alloca_with_align" -> {
+            case "alloca", "__builtin_alloca", "__builtin_alloca_with_align" -> {
                 return callAlloca(args);
             }
             case "__builtin_va_start", "__builtin_va_end", "__builtin_va_copy" -> {
@@ -2499,20 +2761,16 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                         hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal
                 && embeddedType.width() == structType.unionCellWidth()) {
             // A floating-point member: the cell holds its raw IEEE-754 encoding, so its value is
-            // the
-            // reinterpretation of those bits, not a slice. Only the full-width case is modelled --
-            // the whole cell is the float's pattern -- which is the newlib idiom
-            // `union { double value; struct { uint32_t lsw, msw; } parts; }`. The cell is stamped
-            // so
-            // an assignment splices FpToIeeeBv of the value back (see FrontendXcfaBuilder).
+            // the reinterpretation of those bits, not a slice. Only the full-width case is
+            // modelled, the newlib idiom `union { double value; struct { uint32_t lsw, msw; }
+            // parts; }`. An assignment splices the value's bits back (see FrontendXcfaBuilder).
             final FpType fpType = (FpType) embeddedType.getSmtType();
             final Expr<?> value =
                     hu.bme.mit.theta.core.type.fptype.FpExprs.FromIeeeBv(
                             cast(access, (BvType) cellType.getSmtType()), fpType);
             parseContext.getMetadata().create(value, "cType", embeddedType);
-            // The whole cell is the float's pattern: an assignment read-modify-writes bits [0,
-            // width) -- i.e. all of them -- with FpToIeeeBv of the value (see the IEEE_FLOAT path
-            // in FrontendXcfaBuilder).
+            // The whole cell is the float's pattern: an assignment writes bits [0, width), i.e.
+            // all of them (see the IEEE_FLOAT path in FrontendXcfaBuilder).
             parseContext
                     .getMetadata()
                     .create(
@@ -3273,7 +3531,11 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
         return cCall.getRet().getRef();
     }
 
-    private static final String ALLOCA = "alloca";
+    /**
+     * A program's own `alloca`, sized in bytes; the frontend's `alloca` of a stack object is sized
+     * in cells. Must match `AllocaFunctionPass.USER_ALLOCA`.
+     */
+    private static final String ALLOCA = "__builtin_alloca";
 
     /**
      * Models {@code __builtin_uadd*_overflow(a, b, res)} and {@code __builtin_umul*_overflow}: the
@@ -3759,15 +4021,19 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             if (ret != null) {
                 return ret;
             }
-            // ..then enumeration constants (modeled as plain int values)
-            final Long enumValue =
-                    hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum
-                            .getConstantValue(name);
-            if (enumValue != null) {
-                CComplexType signedInt = CComplexType.getSignedInt(parseContext);
-                LitExpr<?> litExpr = signedInt.getValue(Long.toString(enumValue));
-                parseContext.getMetadata().create(litExpr, "cType", signedInt);
-                return litExpr;
+            // ..then enumeration constants
+            final hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum.Constant
+                    constant =
+                            hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum
+                                    .getConstant(name);
+            if (constant != null) {
+                if (constant.value() == null) {
+                    throw new UnsupportedFrontendElementException(
+                            "enumeration constant " + name + " of an unknown value");
+                }
+                return constant.type()
+                        .complexType(parseContext)
+                        .getValue(constant.value().toString());
             }
             // Reaching here means `name` was used as a VALUE and resolved to nothing -- not a
             // variable, not a modelled macro, not an enum constant. In practice it is a library
@@ -4077,6 +4343,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     if (row != null) {
                         return row;
                     }
+                    if (!isLiteralZero(index)) refuseUnionStep(elemType);
                     if (elemType instanceof CStruct && isLiteralZero(index)) {
                         // p[0] on a pointer-to-struct IS the pointee object, and a struct's value
                         // is its base id -- so the element's value is the pointer itself. A cell
@@ -4145,13 +4412,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
-                final boolean wasSyncHandles =
-                        functionVisitor != null && functionVisitor.isVisitingSyncHandleArguments();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)
                     functionVisitor.setSuppressScopedRelease(true);
-                if (functionVisitor != null)
-                    functionVisitor.setSyncHandleArguments(
-                            calleeName.matches("pthread_(mutex|cond|rwlock|spin|barrier)_.*"));
                 try {
                     if (exprList == null) arguments = List.of();
                     else {
@@ -4169,7 +4431,6 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 } finally {
                     if (functionVisitor != null) {
                         functionVisitor.setSuppressScopedRelease(wasSuppressing);
-                        functionVisitor.setSyncHandleArguments(wasSyncHandles);
                     }
                 }
                 markComparedObjects(calleeName, arguments);
@@ -4230,7 +4491,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return (primary) -> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
-                expr = AbstractExprs.Add(expr, type.getUnitValue());
+                expr = AbstractExprs.Add(expr, incrementStep(type));
                 parseContext.getMetadata().create(expr, "cType", type);
                 expr = type.castTo(expr);
                 parseContext.getMetadata().create(expr, "cType", type);
@@ -4257,7 +4518,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return (primary) -> {
                 CComplexType type = CComplexType.getType(primary, parseContext);
                 Expr<?> expr = primary;
-                expr = AbstractExprs.Sub(expr, type.getUnitValue());
+                expr = AbstractExprs.Sub(expr, incrementStep(type));
                 parseContext.getMetadata().create(expr, "cType", type);
                 expr = type.castTo(expr);
                 parseContext.getMetadata().create(expr, "cType", type);
