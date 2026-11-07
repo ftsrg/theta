@@ -579,6 +579,14 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
+struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
+void_pointer_byte_write.c	efficient	LP64	UNSAFE	a byte written through a void * parameter changes the long it overlaps, found under bytes
+void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
+stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
+integer_address_byte_view.c	efficient	LP64	UNSAFE	a byte view through an address kept in an integer is found under bytes
+busy_wait_dead_store_overflow.c	efficient	ILP32	UNSAFE:no-overflow	a busy wait keeps a dead local whose update can overflow in a later iteration
+busy_wait_dead_store_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a busy wait keeps a dead local that indexes an array in a later iteration
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	flat
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	bytes
@@ -606,3 +614,8 @@ pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the differ
 container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
 fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
 fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
+bool_array_oob_bytes.c	efficient	ILP32	UNSAFE:valid-memsafety	a _Bool array element is a byte: an out-of-bounds index is caught under bytes	bytes
+bool_array_oob_fallback.c	efficient	ILP32	UNSAFE:valid-memsafety	the bytes retry of a two-type malloc wrapper bounds its _Bool block
+bool_array_elements.c	efficient	ILP32	SAFE	the elements of a _Bool array are distinct under bytes	bytes
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each: sizeof, offsets and stores
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each under bytes	bytes
