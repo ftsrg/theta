@@ -2451,7 +2451,7 @@ class FrontendXcfaBuilder(
         params.add(argExpr)
       }
     }
-    val call = InvokeLabel(statement.functionId, params, metadata = getMetadata(statement))
+    val call = InvokeLabel.retFirst(statement.functionId, params, metadata = getMetadata(statement))
     val label =
       if (prepLabels.isEmpty()) call
       else SequenceLabel(prepLabels + call, metadata = getMetadata(statement))

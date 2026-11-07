@@ -596,12 +596,12 @@ class CLibraryFunctionsPass(
                 // slots are addressed by it, like by the key argument of pthread_{get,set}specific
                 val key = pointee(invokeLabel.params[1])
                 val id = key.type.integerOf(++uniqueCounter)
-                val params = invokeLabel.params.toMutableList()
-                params[1] = id
+                val paramDirs = invokeLabel.paramDirs.toMutableList()
+                paramDirs[1] = id to paramDirs[1].second
                 addSeq(
                   listOf(
                     AssignStmtLabel(key, id, metadata),
-                    invokeLabel.copy(params = params, isLibraryFunction = true),
+                    invokeLabel.copy(paramDirs = paramDirs, isLibraryFunction = true),
                   )
                 )
               }

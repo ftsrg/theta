@@ -1,0 +1,26 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc loopHeadExample
+  ()
+  ((x Int))
+  ()
+  (sequence
+    (assign (x 0))
+    (!
+      (while (< x 3)
+        (assign (x (+ x 1))))
+      :tag loop-head)
+    (!
+      (while (> x 0)
+        (assign (x (- x 1))))
+      :check-true (> (* x 2) 0))))
+
+(annotate-tag loop-head
+  :check-true (< (- x 3) 0))
+
+(declare-const input Int)
+
+(verify-call loopHeadExample (input))
+(get-witness)

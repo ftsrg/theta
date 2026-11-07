@@ -42,7 +42,7 @@ class MutexStateTest {
 
   private fun MutexState.call(name: String, vararg params: Expr<*>) =
     apply(
-      InvokeLabel(name, listOf(ret.ref) + params, EmptyMetaData, isLibraryFunction = true),
+      InvokeLabel.retFirst(name, listOf(ret.ref) + params, EmptyMetaData, isLibraryFunction = true),
       global,
     )
 
@@ -167,7 +167,7 @@ class MutexStateTest {
     val pointer = Var("pointer", Int())
     val explicit = ExplState.of(ImmutableValuation.builder().put(pointer, attr).build())
     val label =
-      InvokeLabel(
+      InvokeLabel.retFirst(
         "pthread_mutexattr_init",
         listOf(ret.ref, pointer.ref),
         EmptyMetaData,
@@ -214,7 +214,7 @@ class MutexStateTest {
     val initial = state(MutexState())
     val loc = initial.processes.getValue(0).locs.peek()
     val init =
-      InvokeLabel(
+      InvokeLabel.retFirst(
         "pthread_mutex_init",
         listOf(ret.ref, address, Int(0)),
         EmptyMetaData,

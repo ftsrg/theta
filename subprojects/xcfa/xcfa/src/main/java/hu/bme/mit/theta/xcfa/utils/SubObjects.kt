@@ -163,7 +163,7 @@ class SubObjects(private val parseContext: ParseContext) {
    * variable or a memory cell.
    */
   private fun alloca(target: Expr<*>, size: Int, marker: String): XcfaLabel =
-    InvokeLabel(
+    InvokeLabel.retFirst(
       marker,
       listOf(target, Fitsall(null, parseContext).getValue("$size")),
       metadata = EmptyMetaData,

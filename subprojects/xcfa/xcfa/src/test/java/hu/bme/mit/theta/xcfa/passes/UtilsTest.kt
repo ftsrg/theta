@@ -52,7 +52,7 @@ class UtilsTest {
     // what used to make the carried-over type wrap the result instead of just labelling it.
     val argument = Add(listOf(p.ref, Int(0)))
     parseContext.metadata.create(argument, "cType", CPointer(null, signed, parseContext))
-    val label = InvokeLabel("memset", listOf(argument), EmptyMetaData, mapOf())
+    val label = InvokeLabel.retFirst("memset", listOf(argument), EmptyMetaData, mapOf())
 
     val simplified = label.simplify(MutableValuation(), parseContext) as InvokeLabel
 
@@ -69,7 +69,7 @@ class UtilsTest {
     parseContext.metadata.create(argument, "cType", signed)
     val valuation = MutableValuation()
     valuation.put(n, Int(5))
-    val label = InvokeLabel("f", listOf(argument), EmptyMetaData, mapOf())
+    val label = InvokeLabel.retFirst("f", listOf(argument), EmptyMetaData, mapOf())
 
     val simplified = (label.simplify(valuation, parseContext) as InvokeLabel).params[0]
 
@@ -107,8 +107,8 @@ class UtilsTest {
     fun getLabels(): List<Arguments> =
       listOf(
         Arguments.of(
-          InvokeLabel("", listOf(x.ref, y.ref), EmptyMetaData),
-          InvokeLabel("", listOf(xPrime.ref, y.ref), EmptyMetaData),
+          InvokeLabel.retFirst("", listOf(x.ref, y.ref), EmptyMetaData),
+          InvokeLabel.retFirst("", listOf(xPrime.ref, y.ref), EmptyMetaData),
         ),
         Arguments.of(JoinLabel(x, EmptyMetaData), JoinLabel(xPrime, EmptyMetaData)),
         Arguments.of(

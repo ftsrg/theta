@@ -63,6 +63,8 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.math.BigInteger;
@@ -247,6 +249,9 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.FP_IS_INF,
                 exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        addEnvFunc(
+                FunctionDeclarationKind.FP_IS_ZERO,
+                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr::create));
         //        addEnvFunc("fp.isInfinite",
         // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
         addEnvFunc(
@@ -519,6 +524,16 @@ final class JavaSMTTermTransformer {
                                             .getFormulaType((BitvectorFormula) term);
                     final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
                     return BvSExtExpr.of(op, BvType.of(type.getSize()));
+                });
+        environment.put(
+                Tuple2.of(FunctionDeclarationKind.INT_TO_BV, 1),
+                (term, args, model, vars) -> {
+                    BitvectorType type =
+                            (BitvectorType)
+                                    context.getFormulaManager()
+                                            .getFormulaType((BitvectorFormula) term);
+                    final Expr<IntType> op = (Expr<IntType>) transform(args.get(0), model, vars);
+                    return IntToBvExpr.of(op, type.getSize());
                 });
         environment.put(
                 Tuple2.of(FunctionDeclarationKind.EQ_ZERO, 1),

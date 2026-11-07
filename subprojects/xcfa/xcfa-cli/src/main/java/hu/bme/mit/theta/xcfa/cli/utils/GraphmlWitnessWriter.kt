@@ -218,12 +218,13 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
     if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
       try {
         val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-          XcfaTraceConcretizer.concretize(
-            safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-            cexSolverFactory,
-            parseContext,
-            wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-          )
+          XcfaTraceConcretizer()
+            .concretize(
+              safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+              cexSolverFactory,
+              parseContext,
+              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+            )
 
         val witnessTrace =
           traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)

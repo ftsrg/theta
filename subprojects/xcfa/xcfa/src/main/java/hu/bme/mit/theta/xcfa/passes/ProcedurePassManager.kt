@@ -251,6 +251,47 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     ),
   )
 
+class SvLibPasses(parseContext: ParseContext, logger: Logger) :
+  ProcedurePassManager(
+    listOf(
+      // formatting
+      NormalizePass(),
+      DeterministicPass(),
+      // removing redundant elements
+      EmptyEdgeRemovalPass(),
+      UnusedLocRemovalPass(),
+    ),
+    listOf(
+      // optimizing
+      SimplifyExprsPass(parseContext),
+      UnrollPass(),
+      EmptyEdgeRemovalPass(),
+    ),
+    listOf(
+      // trying to inline procedures
+      InlineProceduresPass(parseContext)
+    ),
+    listOf(
+      // Clean up procedures after inlining
+      //    InlinedProcedureRemovalPass()
+    ),
+    listOf(
+      EmptyEdgeRemovalPass(),
+      SimplifyExprsPass(parseContext),
+      UnusedLocRemovalPass(),
+      RemoveDeadEnds(parseContext),
+      EliminateSelfLoops(),
+    ),
+    listOf(StaticCoiPass()),
+    listOf(LbePass(parseContext), NormalizePass(), DeterministicPass(), EliminateSelfLoops()),
+    listOf(
+      // Final cleanup
+      UnusedVarPass(logger),
+      EmptyEdgeRemovalPass(),
+      UnusedLocRemovalPass(),
+    ),
+  )
+
 class LitmusPasses : ProcedurePassManager()
 
 class Btor2Passes(parseContext: ParseContext, uniqueWarningLogger: Logger) :

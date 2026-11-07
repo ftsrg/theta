@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntModExpr
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr
@@ -474,6 +475,7 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
     }
     is FpNegExpr -> "(- ${this.op})"
     is FpToFpExpr -> "(${this.op})"
+    is IntToBvExpr,
     is BvNegExpr,
     is BvNotExpr,
     is BvPosExpr,
@@ -481,6 +483,7 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
     is FpFromBvExpr,
     is FpToBvExpr,
     is FpIsInfiniteExpr,
+    is FpIsZeroExpr,
     is FpPosExpr,
     is FpSqrtExpr,
     is FpIsNanExpr,

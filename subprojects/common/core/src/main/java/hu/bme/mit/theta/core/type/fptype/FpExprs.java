@@ -161,6 +161,10 @@ public final class FpExprs {
         return FpIsInfiniteExpr.of(op);
     }
 
+    public static FpIsZeroExpr IsZero(final Expr<FpType> op) {
+        return FpIsZeroExpr.of(op);
+    }
+
     public static FpRoundToIntegralExpr RoundToIntegral(
             final FpRoundingMode roundingMode, final Expr<FpType> op) {
         return FpRoundToIntegralExpr.of(roundingMode, op);

@@ -130,7 +130,7 @@ class FunctionPointerCallsPass(
           SequenceLabel(
             listOf(
               StmtLabel(AssumeStmt.of(guard), metadata = invokeLabel.metadata),
-              InvokeLabel(
+              InvokeLabel.retFirst(
                 name,
                 listOf(returnValue) + arguments,
                 metadata = invokeLabel.metadata,

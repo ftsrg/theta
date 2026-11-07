@@ -24,6 +24,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
@@ -93,6 +94,14 @@ class XcfaCli(private val args: Array<String>) {
         if (!config.update() && remainingFlags.isNotEmpty()) {
           throw ParameterException("Extraneous parameters: $remainingFlags")
         }
+      }
+      // An .svlib input is always parsed as SV-LIB, regardless of --input-type.
+      if (
+        config.inputConfig.input?.extension == "svlib" &&
+          config.frontendConfig.inputType != InputType.SVLIB
+      ) {
+        config.frontendConfig.inputType = InputType.SVLIB
+        config.frontendConfig.createSpecConfig()
       }
     } catch (ex: ParameterException) {
       println("Invalid parameters, details:")

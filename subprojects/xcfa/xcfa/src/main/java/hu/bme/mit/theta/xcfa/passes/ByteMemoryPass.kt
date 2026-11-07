@@ -133,8 +133,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
           else -> this
         }
 
-      is InvokeLabel ->
-        InvokeLabel(name, params.map { it.expandReads() }, metadata, tempLookup, isLibraryFunction)
+      is InvokeLabel -> this.withParams { it.expandReads() }
 
       is StartLabel ->
         StartLabel(name, params.map { it.expandReads() }, pidVar, metadata, tempLookup)

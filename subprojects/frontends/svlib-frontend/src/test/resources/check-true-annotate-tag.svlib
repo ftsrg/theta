@@ -1,0 +1,21 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc tagCheckExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (!
+      (assign (x 0))
+      :tag xto0)
+    (assign (x (+ x 1)))))
+
+(annotate-tag xto0
+  :check-true (<= 0 x0))
+
+(declare-const input Int)
+
+(verify-call tagCheckExample (input))
+(get-witness)

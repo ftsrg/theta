@@ -77,7 +77,8 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           val count = count(label.params[1], label.params[2])
           val zero = CComplexType.getType(label.params[2], parseContext).getValue("0")
           changed = true
-          val malloc = InvokeLabel("malloc", listOf(ret, count), label.metadata, label.tempLookup)
+          val malloc =
+            InvokeLabel.retFirst("malloc", listOf(ret, count), label.metadata, label.tempLookup)
           if (parseContext.memoryModel.byteAddressed()) mallocs[malloc] = Triple(ret, zero, count)
           else pending.add(Triple(ret, zero, count))
           malloc
@@ -149,7 +150,7 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val after = loc()
     val nullValue = CComplexType.getType(target, parseContext).nullValue
     val memset =
-      InvokeLabel("memset", listOf(target, target, zero, count), EmptyMetaData, emptyMap())
+      InvokeLabel.retFirst("memset", listOf(target, target, zero, count), EmptyMetaData, emptyMap())
     val add = { s: XcfaLocation, t: XcfaLocation, l: List<XcfaLabel> ->
       builder.addEdge(XcfaEdge(s, t, SequenceLabel(l, edge.label.metadata), edge.metadata))
     }

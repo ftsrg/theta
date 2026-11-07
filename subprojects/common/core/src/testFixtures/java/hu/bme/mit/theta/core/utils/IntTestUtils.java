@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Pos;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToBv;
+import static hu.bme.mit.theta.core.utils.BvTestUtils.SBv16;
+import static hu.bme.mit.theta.core.utils.BvTestUtils.UBv16;
 
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -48,6 +51,7 @@ import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -90,6 +94,9 @@ public class IntTestUtils {
                     {IntLtExpr.class, True(), Lt(Int(1), Int(3))},
                     {IntLtExpr.class, False(), Lt(Int(3), Int(3))},
                     {IntPosExpr.class, c1.getRef(), Pos(c1.getRef())},
+                    {IntToBvExpr.class, SBv16(-4), ToBv(Int(-4), 16)},
+                    {IntToBvExpr.class, SBv16(3), ToBv(Int(3), 16)},
+                    {IntToBvExpr.class, UBv16(3), ToBv(Int(3), 16)},
                 });
     }
 }

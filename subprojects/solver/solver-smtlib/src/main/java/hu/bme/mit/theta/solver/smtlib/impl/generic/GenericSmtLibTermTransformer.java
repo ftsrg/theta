@@ -30,6 +30,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
+import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.BinaryContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.DecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Exists_termContext;
@@ -90,6 +91,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
@@ -103,6 +105,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvToIntExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
@@ -117,6 +120,7 @@ import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
@@ -169,7 +173,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("ite", exprIteOperator());
 
                         // Abstract
-                        put("=", exprRelationalOperator(EqExpr::create2));
+                        put("=", exprCoreEq());
                         put("<=", exprRelationalOperator(LeqExpr::create2));
                         put("<", exprRelationalOperator(LtExpr::create2));
                         put(">=", exprRelationalOperator(GeqExpr::create2));
@@ -192,6 +196,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
                         // Integer
                         put("to_real", exprUnaryOperator(IntToRatExpr::create));
+                        put("int_to_bv", exprIntToBv());
 
                         // Rational
                         put("to_int", exprUnaryOperator(RatToIntExpr::create));
@@ -204,12 +209,12 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("bvadd", exprMultiaryOperator(BvAddExpr::create));
                         put("bvsub", exprBinaryOperator(BvSubExpr::create));
                         put("bvneg", exprUnaryOperator(BvNegExpr::create));
-                        put("bvmul", exprMultiaryOperator(BvAddExpr::create));
+                        put("bvmul", exprMultiaryOperator(BvMulExpr::create));
                         put("bvudiv", exprBinaryOperator(BvUDivExpr::create));
                         put("bvsdiv", exprBinaryOperator(BvSDivExpr::create));
                         put("bvsmod", exprBinaryOperator(BvSModExpr::create));
-                        put("bvsrem", exprBinaryOperator(BvURemExpr::create));
-                        put("bvurem", exprBinaryOperator(BvSRemExpr::create));
+                        put("bvsrem", exprBinaryOperator(BvSRemExpr::create));
+                        put("bvurem", exprBinaryOperator(BvURemExpr::create));
                         put("bvand", exprMultiaryOperator(BvAndExpr::create));
                         put("bvor", exprMultiaryOperator(BvOrExpr::create));
                         put("bvxor", exprMultiaryOperator(BvXorExpr::create));
@@ -225,10 +230,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("bvsgt", exprBinaryOperator(BvSGtExpr::create));
                         put("bvuge", exprBinaryOperator(BvUGeqExpr::create));
                         put("bvsge", exprBinaryOperator(BvSGeqExpr::create));
+                        put("sbv_to_int", exprBvToInt(true));
+                        put("ubv_to_int", exprBvToInt(false));
 
                         // Floating point
 
                         put("fp", exprFpLit());
+                        put("to_fp", exprToFp());
+                        put("to_fp_unsigned", exprToFpUnsigned());
                         put("fp.add", exprFpMultiaryOperator(FpAddExpr::create));
                         put("fp.sub", exprFpBinaryOperator(FpSubExpr::create));
                         put("fp.neg", exprUnaryOperator(FpNegExpr::create));
@@ -248,6 +257,10 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                         put("fp.sqrt", exprFpUnaryOperator(FpSqrtExpr::create));
                         put("fp.rem", exprBinaryOperator(FpRemExpr::create));
                         put("fp.isNaN", exprUnaryOperator(FpIsNanExpr::create));
+                        put("fp.isInfinite", exprUnaryOperator(FpIsInfiniteExpr::create));
+                        put("fp.isZero", exprUnaryOperator(FpIsZeroExpr::create));
+                        put("fp.to_sbv", exprFpToBv(true));
+                        put("fp.to_ubv", exprFpToBv(false));
 
                         // Array
                         put("select", exprArrayReadOperator());
@@ -848,6 +861,27 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         };
     }
 
+    private OperatorCreatorFunction exprBvToInt(boolean signed) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var expr = transformTerm(ops.get(0), model, vars);
+            return BvToIntExpr.of(castBv(expr), signed);
+        };
+    }
+
+    private OperatorCreatorFunction exprIntToBv() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameters expected");
+            checkArgument(ops.size() == 1, "Unary operator expected");
+
+            final var size = Integer.parseInt(params.get(0).numeral().getText());
+            final var expr = transformTerm(ops.get(0), model, vars);
+            return IntExprs.ToBv(cast(expr, Int()), size);
+        };
+    }
+
     private OperatorCreatorFunction exprBinaryOperator(final BinaryOperator<Expr<?>> function) {
         return (params, ops, model, vars) -> {
             checkArgument(params.size() == 0, "No parameters expected");
@@ -867,6 +901,20 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final var op1 = transformTerm(ops.get(0), model, vars);
             final var op2 = transformTerm(ops.get(1), model, vars);
             return function.apply(op1, op2);
+        };
+    }
+
+    private OperatorCreatorFunction exprCoreEq() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 0, "No parameters expected");
+            checkArgument(ops.size() == 2, "Binary operator expected");
+
+            final var op1 = transformTerm(ops.get(0), model, vars);
+            final var op2 = transformTerm(ops.get(1), model, vars);
+            if (op1.getType() instanceof FpType type1 && op2.getType() instanceof FpType type2)
+                return FpExprs.FpAssign(cast(op1, type1), cast(op2, type2));
+
+            return EqExpr.create2(op1, op2);
         };
     }
 
@@ -994,17 +1042,89 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         };
     }
 
+    private OperatorCreatorFunction exprToFp() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 2, "Two parameters expected");
+            checkArgument(ops.size() == 1 || ops.size() == 2, "One or two operators expected");
+
+            final var exponent = Integer.parseInt(params.get(0).numeral().getText());
+            final var significand = Integer.parseInt(params.get(1).numeral().getText());
+
+            if (ops.size() == 1) {
+                final var expr = transformTerm(ops.get(0), model, vars);
+
+                if (expr.getType() instanceof BvType type) {
+                    return FpExprs.FromIeeeBv(
+                            cast(expr, type), FpExprs.FpType(exponent, significand));
+                }
+
+                throw new SmtLibSolverException(
+                        "to_fp for type " + expr.getType() + " is not supported");
+            } else {
+                final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+                final var expr = transformTerm(ops.get(1), model, vars);
+
+                if (expr.getType() instanceof FpType type) {
+                    return FpExprs.ToFp(roundingMode, cast(expr, type), exponent, significand);
+                } else if (expr.getType() instanceof BvType type) {
+                    return FpExprs.FromBv(
+                            roundingMode,
+                            cast(expr, type),
+                            FpExprs.FpType(exponent, significand),
+                            type.getSigned());
+                }
+
+                throw new SmtLibSolverException(
+                        "to_fp for type " + expr.getType() + " is not supported");
+            }
+        };
+    }
+
+    private OperatorCreatorFunction exprToFpUnsigned() {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 2, "Two parameters expected");
+            checkArgument(ops.size() == 2, "Two operators expected");
+
+            final var exponent = Integer.parseInt(params.get(0).numeral().getText());
+            final var significand = Integer.parseInt(params.get(1).numeral().getText());
+
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var expr = transformTerm(ops.get(1), model, vars);
+
+            return FpExprs.FromBv(
+                    roundingMode, castBv(expr), FpExprs.FpType(exponent, significand), false);
+        };
+    }
+
+    private OperatorCreatorFunction exprFpToBv(boolean signed) {
+        return (params, ops, model, vars) -> {
+            checkArgument(params.size() == 1, "One parameter expected");
+            checkArgument(ops.size() == 2, "Unary operator expected");
+
+            final var size = Integer.parseInt(params.get(0).numeral().getText());
+            final var roundingMode = fpOperatorRoundingMode(ops.get(0));
+            final var expr = transformTerm(ops.get(1), model, vars);
+
+            return FpToBvExpr.of(roundingMode, castFp(expr), size, signed);
+        };
+    }
+
     private FpRoundingMode fpOperatorRoundingMode(final TermContext term) {
         switch (term.getText()) {
             case "RNE":
+            case "roundNearestTiesToEven":
                 return FpRoundingMode.RNE;
             case "RNA":
+            case "roundNearestTiesToAway":
                 return FpRoundingMode.RNA;
             case "RTP":
+            case "roundTowardPositive":
                 return FpRoundingMode.RTP;
             case "RTN":
+            case "roundTowardNegative":
                 return FpRoundingMode.RTN;
             case "RTZ":
+            case "roundTowardZero":
                 return FpRoundingMode.RTZ;
             default:
                 throw new SmtLibSolverException("");

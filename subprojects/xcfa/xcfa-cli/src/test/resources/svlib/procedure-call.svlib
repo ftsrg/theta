@@ -1,0 +1,29 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc add
+  ((a Int) (b Int))
+  ((sum Int))
+  ()
+  (assign (sum (+ a b))))
+
+(define-proc callExample
+  ((x0 Int))
+  ((x Int))
+  ((y Int))
+  (sequence
+    (assign (y 1))
+    (if (<= 0 x0)
+      (assign (x 1))
+      (assign (x 2)))
+    (call add (x y) (x))
+    (!
+      (sequence)
+      :tag check-after-increment
+      :check-true (or (= x 2) (= x 3)))))
+
+(declare-const input Int)
+
+(verify-call callExample (input))
+(get-witness)

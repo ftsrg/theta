@@ -100,8 +100,7 @@ class FlatMemoryPass(val parseContext: ParseContext) : ProcedurePass {
           metadata,
         )
 
-      is InvokeLabel ->
-        InvokeLabel(name, params.map { it.foldFlat() }, metadata, tempLookup, isLibraryFunction)
+      is InvokeLabel -> this.withParams { it.foldFlat() }
 
       is StartLabel -> StartLabel(name, params.map { it.foldFlat() }, pidVar, metadata, tempLookup)
 

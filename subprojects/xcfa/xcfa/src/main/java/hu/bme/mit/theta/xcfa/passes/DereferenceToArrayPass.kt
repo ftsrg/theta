@@ -175,14 +175,7 @@ class DereferenceToArrayPass : ProcedurePass {
         )
       }
 
-      is InvokeLabel ->
-        InvokeLabel(
-          name,
-          params.map { it.getArrayReads(xcfa) },
-          metadata,
-          tempLookup,
-          isLibraryFunction,
-        )
+      is InvokeLabel -> this.withParams { it.getArrayReads(xcfa) }
 
       is StartLabel ->
         StartLabel(name, params.map { it.getArrayReads(xcfa) }, pidVar, metadata, tempLookup)

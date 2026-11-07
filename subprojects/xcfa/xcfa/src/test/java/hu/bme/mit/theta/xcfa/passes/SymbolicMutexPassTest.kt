@@ -53,7 +53,7 @@ class SymbolicMutexPassTest {
   private val attr = Int(20)
 
   private fun call(name: String, vararg args: Expr<*>) =
-    InvokeLabel(name, listOf(ret.ref) + args, EmptyMetaData, isLibraryFunction = true)
+    InvokeLabel.retFirst(name, listOf(ret.ref) + args, EmptyMetaData, isLibraryFunction = true)
 
   private class Program(operations: List<XcfaLabel>, vars: List<VarDecl<*>>) {
     val model = XcfaBuilder("mutex")
