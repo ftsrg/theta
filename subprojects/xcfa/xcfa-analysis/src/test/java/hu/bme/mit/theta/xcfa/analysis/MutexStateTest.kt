@@ -178,7 +178,7 @@ class MutexStateTest {
   }
 
   @Test
-  fun unrelatedLibraryCallsLeaveMutexStateUnchanged() {
+  fun unrelatedLibraryCallsAreRejected() {
     val mutexState = recursive()
     val label =
       InvokeLabel("unknown_library_function", emptyList(), EmptyMetaData, isLibraryFunction = true)
@@ -186,10 +186,13 @@ class MutexStateTest {
     val initial = state(mutexState)
     val loc = initial.processes.getValue(0).locs.peek()
     loc.outgoingEdges.add(XcfaEdge(loc, loc, label, EmptyMetaData))
-    val action = getXcfaLts(Random(0)).getEnabledActionsFor(initial).single()
-    val result = initial.apply(action)
-    assertEquals(initial.processes, result.processes)
-    assertEquals(mutexState, result.mutexState)
+    val exception =
+      assertThrows(IllegalStateException::class.java) {
+        getXcfaLts(Random(0)).getEnabledActionsFor(initial)
+      }
+    assertTrue(
+      exception.message!!.contains("Unsupported library function: unknown_library_function")
+    )
   }
 
   private fun state(mutexState: MutexState): XcfaState<PtrState<ExplState>> {
