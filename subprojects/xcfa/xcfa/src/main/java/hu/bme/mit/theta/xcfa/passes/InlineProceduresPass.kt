@@ -22,7 +22,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * Inlines all procedure invocations in the current procedure. Requires the ProcedureBuilder to be
  * `deterministic`. Sets the `inlined` flag on the ProcedureBuilder if successful.
  */
-class InlineProceduresPass(val parseContext: ParseContext? = null) : ProcedurePass {
+class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!builder.canInline()) {

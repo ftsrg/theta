@@ -38,6 +38,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
@@ -129,7 +130,12 @@ fun getXcfa(
       }
 
       InputType.SVLIB -> {
-        parseSvLib(config.inputConfig.input!!, config.outputConfig.svLibOutputConfig, logger)
+        parseSvLib(
+          config.inputConfig.input!!,
+          config.outputConfig.svLibOutputConfig,
+          parseContext,
+          logger,
+        )
       }
     }
   } catch (e: Exception) {
@@ -355,9 +361,20 @@ private fun parseChc(
   return xcfaBuilder.build()
 }
 
-private fun parseSvLib(input: File, svLibOutputConfig: SvLibOutputConfig, logger: Logger): XCFA {
-  val frontend = SvLibFrontend(logger)
-  val xcfa = frontend.buildXcfa(FileInputStream(input))
+private fun parseSvLib(
+  input: File,
+  svLibOutputConfig: SvLibOutputConfig,
+  parseContext: ParseContext,
+  logger: Logger,
+): XCFA {
+  val frontend = SvLibFrontend()
+  val xcfa =
+    frontend.buildXcfa(
+      FileInputStream(input),
+      parseContext.metadata::create,
+      logger,
+      SvLibPasses(parseContext, logger),
+    )
   svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
   return xcfa
 }

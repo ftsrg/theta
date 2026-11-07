@@ -20,21 +20,22 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import java.io.FileInputStream
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-class SvLibFrontend(
-  private val logger: Logger,
-  private val procedurePassManager: ProcedurePassManager = SvLibPasses(logger),
-) {
+class SvLibFrontend {
 
   var generateWitness: Boolean = false
     private set
 
-  fun buildXcfa(input: FileInputStream): XCFA {
+  fun buildXcfa(
+    input: FileInputStream,
+    recordMetadata: (Any, String, Any) -> Unit,
+    logger: Logger,
+    procedurePassManager: ProcedurePassManager,
+  ): XCFA {
     val charStream = CharStreams.fromStream(input)
 
     val parser =
@@ -42,7 +43,7 @@ class SvLibFrontend(
         errorHandler = BailErrorStrategy()
       }
 
-    val builder = SvLibXcfaBuilder(procedurePassManager, charStream, logger)
+    val builder = SvLibXcfaBuilder(procedurePassManager, charStream, recordMetadata, logger)
     val xcfa = builder.buildXcfa(parser)
     generateWitness = builder.generateWitness
 

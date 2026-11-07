@@ -251,7 +251,7 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) :
     ),
   )
 
-class SvLibPasses(logger: Logger) :
+class SvLibPasses(parseContext: ParseContext, logger: Logger) :
   ProcedurePassManager(
     listOf(
       // formatting
@@ -263,13 +263,13 @@ class SvLibPasses(logger: Logger) :
     ),
     listOf(
       // optimizing
-      SimplifyExprsPass(),
+      SimplifyExprsPass(parseContext),
       UnrollPass(),
       EmptyEdgeRemovalPass(),
     ),
     listOf(
       // trying to inline procedures
-      InlineProceduresPass()
+      InlineProceduresPass(parseContext)
     ),
     listOf(
       // Clean up procedures after inlining
@@ -277,13 +277,13 @@ class SvLibPasses(logger: Logger) :
     ),
     listOf(
       EmptyEdgeRemovalPass(),
-      SimplifyExprsPass(),
+      SimplifyExprsPass(parseContext),
       UnusedLocRemovalPass(),
-      RemoveDeadEnds(),
+      RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
-    listOf(LbePass(), NormalizePass(), DeterministicPass(), EliminateSelfLoops()),
+    listOf(LbePass(parseContext), NormalizePass(), DeterministicPass(), EliminateSelfLoops()),
     listOf(
       // Final cleanup
       UnusedVarPass(logger),

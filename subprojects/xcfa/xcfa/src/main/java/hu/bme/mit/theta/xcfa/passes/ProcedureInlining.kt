@@ -53,7 +53,7 @@ internal fun XcfaProcedureBuilder.calleeOf(label: InvokeLabel): XcfaProcedureBui
  */
 internal fun XcfaProcedureBuilder.convertCallArguments(
   label: XcfaLabel,
-  parseContext: ParseContext?,
+  parseContext: ParseContext,
 ): XcfaLabel =
   when (label) {
     is SequenceLabel ->
@@ -69,9 +69,7 @@ internal fun XcfaProcedureBuilder.convertCallArguments(
             label.params.mapIndexed { i, arg ->
               val (param, direction) = params[i]
               if (direction != ParamDirection.IN) arg
-              else
-                parseContext?.let { CComplexType.getType(param.ref, parseContext).castTo(arg) }
-                  ?: arg
+              else CComplexType.getType(param.ref, parseContext)?.castTo(arg) ?: arg
             }
         )
     }
@@ -156,7 +154,7 @@ internal fun inlineCallSite(
   target: XcfaLocation,
   invokeLabel: InvokeLabel,
   callee: ProcedureBody,
-  parseContext: ParseContext?,
+  parseContext: ParseContext,
   metadata: MetaData,
   freshFrame: Boolean = false,
   onCopy: (copy: XcfaLocation, of: XcfaLocation) -> Unit = { _, _ -> },
@@ -280,9 +278,8 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(param.first, param.first.type),
           cast(
-            parseContext?.let {
-              CComplexType.getType(param.first.ref, it).castTo(invokeLabel.params[i])
-            } ?: invokeLabel.params[i],
+            CComplexType.getType(param.first.ref, parseContext)?.castTo(invokeLabel.params[i])
+              ?: invokeLabel.params[i],
             param.first.type,
           ),
         )
@@ -301,7 +298,7 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(varDecl, varDecl.type),
           cast(
-            parseContext?.let { CComplexType.getType(varDecl.ref, it).castTo(param.first.ref) }
+            CComplexType.getType(varDecl.ref, parseContext)?.castTo(param.first.ref)
               ?: param.first.ref,
             varDecl.type,
           ),

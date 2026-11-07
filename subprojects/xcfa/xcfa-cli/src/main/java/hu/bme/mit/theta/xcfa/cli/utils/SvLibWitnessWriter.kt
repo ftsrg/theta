@@ -88,7 +88,7 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
                 parseContext,
                 wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
               )
-          witnessfile.writeText(concreteTrace.toSvLibViolationWitness())
+          witnessfile.writeText(concreteTrace.toSvLibViolationWitness(parseContext))
         }
         else -> generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
       }
@@ -176,7 +176,9 @@ private fun Map<String, Expr<BoolType>>.toSvLibCorrectnessWitness(): String {
   return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"
 }
 
-private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): String {
+private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
+  parseContext: ParseContext
+): String {
   val initState = this.states.firstOrNull() ?: throw IllegalStateException("empty trace")
   val xcfa = initState.xcfa ?: throw IllegalStateException("no XCFA associated with trace")
 
@@ -226,7 +228,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
                   steps.add(
                     InitProcVarsStep(
                       currentProcedure,
-                      newExplState.sGlobal.getVal().filterLocal(currentProcedure, xcfa),
+                      newExplState.sGlobal.getVal().filterLocal(currentProcedure, parseContext),
                     )
                   )
                 }
@@ -248,7 +250,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
         steps.addFirst(
           InitProcVarsStep(
             currentProcedure,
-            newExplState.sGlobal.getVal().filterLocal(currentProcedure, xcfa),
+            newExplState.sGlobal.getVal().filterLocal(currentProcedure, parseContext),
           )
         )
       }
@@ -257,7 +259,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(): S
     }
   val entryInit =
     if (states.none { it.processes.values.first().paramsInitialized })
-      listOf(InitProcVarsStep(entryProcedure, initVal.filterLocal(entryProcedure, xcfa)))
+      listOf(InitProcVarsStep(entryProcedure, initVal.filterLocal(entryProcedure, parseContext)))
     else emptyList()
 
   val witness =
@@ -346,22 +348,13 @@ private fun Valuation.toSvLib(): String {
   }
 }
 
-/**
- * Inlining copies callee locals into the caller, so a var belongs to the smallest procedure that
- * declares it.
- */
-private fun Valuation.filterLocal(procedure: XcfaProcedure, xcfa: XCFA): Valuation {
-  val ownVars =
-    procedure.vars.filter { varDecl ->
-      xcfa.procedures.filter { varDecl in it.vars }.minBy { it.vars.size } == procedure
-    }
-  return this.toMap()
+private fun Valuation.filterLocal(procedure: XcfaProcedure, parseContext: ParseContext) =
+  this.toMap()
     .filterKeys { varDecl ->
-      (varDecl in ownVars) &&
+      procedure.name == parseContext.metadata.getMetadataValue(varDecl, "declaredIn")?.get() &&
         procedure.params.all { (param, dir) -> param != varDecl || dir != ParamDirection.IN }
     }
     .let(ImmutableValuation::from)
-}
 
 private fun String.indent(spaces: Int = 4) =
   this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }

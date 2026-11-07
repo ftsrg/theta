@@ -24,14 +24,14 @@ import java.util.stream.Collectors
  * Removes edges that reach neither the error nor the final location. Enable it only for
  * reachability: other properties can be violated on such edges.
  */
-class RemoveDeadEnds(val parseContext: ParseContext? = null, private val enabled: Boolean = true) :
+class RemoveDeadEnds(val parseContext: ParseContext, private val enabled: Boolean = true) :
   ProcedurePass {
 
   // TODO: thread start and procedure call should not be dead-end! Use-case: while(1)
   // pthread_create(..);
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (!enabled) return builder
-    if (parseContext?.multiThreading == true) return builder
+    if (parseContext.multiThreading) return builder
     val nonDeadEndEdges: MutableSet<XcfaEdge> = LinkedHashSet()
     val reachableEdges: MutableSet<XcfaEdge> = LinkedHashSet()
     val errorLoc = builder.errorLoc

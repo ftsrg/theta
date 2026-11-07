@@ -259,8 +259,13 @@ internal class SvLibFrontendTest {
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
       val file = Path.of(resource!!.toURI()).toFile()
-      SvLibFrontend(ConsoleLogger(Logger.Level.INFO), ProcedurePassManager())
-        .buildXcfa(FileInputStream(file))
+      SvLibFrontend()
+        .buildXcfa(
+          FileInputStream(file),
+          { _, _, _ -> },
+          ConsoleLogger(Logger.Level.INFO),
+          ProcedurePassManager(),
+        )
     } catch (e: Exception) {
       throw RuntimeException("Failed to parse test resource: $name", e)
     }

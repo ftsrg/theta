@@ -34,6 +34,7 @@ import org.antlr.v4.runtime.CharStream
 class SvLibXcfaBuilder(
   private val procedurePassManager: ProcedurePassManager,
   charStream: CharStream,
+  private val recordMetadata: (Any, String, Any) -> Unit,
   logger: Logger,
 ) : SvLibVisitor<Unit>(charStream, logger) {
   private val xcfaBuilder = XcfaBuilder("SvLibMain")
@@ -169,6 +170,8 @@ class SvLibXcfaBuilder(
     procedure.createInitLoc()
     procedure.createFinalLoc()
     procedure.createErrorLoc()
+
+    procedure.getVars().forEach { recordMetadata(it, "declaredIn", procedure.name) }
 
     return procedure
   }

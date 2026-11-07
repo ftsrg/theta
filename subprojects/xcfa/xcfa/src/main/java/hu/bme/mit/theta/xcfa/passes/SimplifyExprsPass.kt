@@ -49,10 +49,8 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  */
 private const val MAX_PATHS = 4
 
-class SimplifyExprsPass(
-  val parseContext: ParseContext? = null,
-  val property: XcfaProperty? = null,
-) : ProcedurePass {
+class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) :
+  ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
