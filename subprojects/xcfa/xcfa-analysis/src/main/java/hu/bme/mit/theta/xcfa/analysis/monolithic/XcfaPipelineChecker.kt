@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.witnesses.hasInvariantChecks
 
 class XcfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
@@ -54,6 +55,7 @@ constructor(
   private val logger: Logger = NullLogger.getInstance(),
   private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
+  blockEncoding: Boolean = false,
 ) :
   FormalismPipelineChecker<
     XCFA,
@@ -63,6 +65,9 @@ constructor(
     LocationInvariants,
   >(
     if (parseContext.multiThreading) {
+      check(!xcfa.hasInvariantChecks) {
+        "Witness invariants are checked only in sequential programs"
+      }
       try {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
       } catch (e: IllegalStateException) {
@@ -77,7 +82,7 @@ constructor(
         } else throw e
       }
     } else {
-      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, blockEncoding)
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   ) {

@@ -129,22 +129,25 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
       if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr)
     }
 
+    // Derived reasons name the interference of the read with the write (see DerivedReason), and Z3
+    // rejects a conflict over an expression that is not registered.
     val interferenceToEvents = mutableMapOf<Expr<BoolType>, MutableList<Pair<E, E>>>()
-    flatWrites.forEach { w1 ->
-      flatWrites.forEach { w2 ->
-        if (w1 != w2) {
-          w1.interferenceCond(w2)?.let {
+    flatRfs
+      .map { it.to }
+      .distinct()
+      .forEach { r ->
+        writes[r.const.varDecl]?.forEach { w ->
+          r.interferenceCond(w)?.let {
             userPropagator.registerExpression(it)
-            interferenceToEvents.getOrPut(it) { mutableListOf() }.add(w1 to w2)
+            interferenceToEvents.getOrPut(it) { mutableListOf() }.add(r to w)
           }
         }
       }
-    }
     interferenceCondToEvents = interferenceToEvents
   }
 
-  private fun interferenceKnown(w1: E, w2: E) =
-    w1.interferenceCond(w2) == null || partialAssignment.any { it.interference == w1 to w2 }
+  private fun interferenceKnown(r: E, w: E) =
+    r.interferenceCond(w) == null || partialAssignment.any { it.interference == r to w }
 
   private fun propagate(expr: Expr<BoolType>): Boolean {
     flatRfs
@@ -158,7 +161,7 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
         return propagate(ws)
       }
     flatWrites.filter { it.guardExpr == expr }.forEach { w -> if (propagate(w)) return true }
-    interferenceCondToEvents[expr]?.forEach { (w1, w2) -> if (propagate(w1, w2)) return true }
+    interferenceCondToEvents[expr]?.forEach { (r, w) -> if (propagate(r, w)) return true }
     return false
   }
 
@@ -172,7 +175,7 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
         writes[rel.from.const.varDecl]!!
           .filter { w ->
             (w.guard.isEmpty() || partialAssignment.any { it.event == w }) &&
-              interferenceKnown(rel.from, w)
+              interferenceKnown(rel.to, w)
           }
           .forEach { w ->
             val reason = derive(assignment.rels, rel, w)
@@ -182,7 +185,11 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
 
       RelationType.WS -> {
         rfs[rel.from.const.varDecl]
-          ?.filter { rf -> rf.from == rel.from && partialAssignment.any { it.relation == rf } }
+          ?.filter { rf ->
+            rf.from == rel.from &&
+              partialAssignment.any { it.relation == rf } &&
+              interferenceKnown(rf.to, rel.to)
+          }
           ?.forEach { rf ->
             val reason = derive(assignment.rels, rf, rel.to)
             if (propagate(reason)) return true
@@ -200,9 +207,7 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
     val assignment = PropagatorOcAssignment(partialAssignment, w, solverLevel)
 
     rfs[w.const.varDecl]
-      ?.filter { rf ->
-        partialAssignment.any { it.relation == rf } && interferenceKnown(rf.from, w)
-      }
+      ?.filter { rf -> partialAssignment.any { it.relation == rf } && interferenceKnown(rf.to, w) }
       ?.forEach { rf ->
         val reason = derive(assignment.rels, rf, w)
         if (propagate(reason)) return true
@@ -211,16 +216,15 @@ class UserPropagatorOcChecker<E : Event>(solverFactory: SolverFactory) : OcCheck
     return false
   }
 
-  private fun propagate(w1: E, w2: E): Boolean {
-    check(w1.type == EventType.WRITE && w2.type == EventType.WRITE)
-    val assignment = PropagatorOcAssignment(partialAssignment, w1 to w2, solverLevel)
-    if (partialAssignment.none { it.event == w1 } || partialAssignment.none { it.event == w2 })
-      return false
+  private fun propagate(r: E, w: E): Boolean {
+    check(r.type == EventType.READ && w.type == EventType.WRITE)
+    val assignment = PropagatorOcAssignment(partialAssignment, r to w, solverLevel)
+    if (w.guard.isNotEmpty() && partialAssignment.none { it.event == w }) return false
 
-    rfs[w1.const.varDecl]
-      ?.filter { rf -> rf.from == w1 && partialAssignment.any { it.relation == rf } }
+    rfs[r.const.varDecl]
+      ?.filter { rf -> rf.to == r && partialAssignment.any { it.relation == rf } }
       ?.forEach { rf ->
-        val reason = derive(assignment.rels, rf, w2)
+        val reason = derive(assignment.rels, rf, w)
         if (propagate(reason)) return true
       }
 

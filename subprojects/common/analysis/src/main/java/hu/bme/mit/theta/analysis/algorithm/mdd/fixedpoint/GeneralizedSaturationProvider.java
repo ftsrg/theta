@@ -35,6 +35,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     private RelationalProductProvider relProdProvider;
     private final CacheManager<SaturationCache> cacheManager =
             new CacheManager<>(v -> new SaturationCache());
+    private final TerminalSaturation terminals;
     private MddNode terminalZeroNode;
 
     public GeneralizedSaturationProvider(final MddVariableOrder variableOrder) {
@@ -47,6 +48,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         this.relProdProvider = relProdProvider;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
         this.terminalZeroNode = variableOrder.getMddGraph().getTerminalZeroNode();
+        this.terminals = new TerminalSaturation(variableOrder.getMddGraph());
     }
 
     @Override
@@ -116,7 +118,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                 || d == AbstractNextStateDescriptor.terminalIdentity()
                 || d == AbstractNextStateDescriptor.terminalEmpty()) {
             // TODO this does not handle level skips
-            return n;
+            return n.isTerminal() ? terminals.saturate(n, d) : n;
         }
 
         MddNode ret = cache.getCache().getSaturateCache().getOrNull(n, d);
@@ -322,7 +324,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         if (n.isTerminal() && dfire.evaluate()) {
-            return n;
+            return terminals.saturate(
+                    dfire.transformTerminal(n, variableOrder.getMddGraph()), dsat);
         }
 
         boolean lhsSkipped = !n.isOn(variable);
@@ -479,6 +482,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
     @Override
     public void clear() {
         cacheManager.clearAll();
+        terminals.clear();
     }
 
     @Override
@@ -496,6 +500,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
                                             source.getReferenceCount() == 0
                                                     || result.getReferenceCount() == 0);
                 });
+        terminals.cleanup();
     }
 
     private class Aggregator implements Consumer<SaturationCache> {

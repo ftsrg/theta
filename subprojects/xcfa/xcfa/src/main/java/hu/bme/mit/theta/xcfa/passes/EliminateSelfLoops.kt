@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ class EliminateSelfLoops : ProcedurePass {
         val target =
           XcfaLocation(
             source.name + "_selfloop_" + XcfaLocation.uniqueCounter(),
-            metadata = source.metadata,
+            // every visit still passes through the source
+            metadata = source.metadata.withoutLocationMarks(),
           )
         builder.addLoc(target)
         builder.addEdge(XcfaEdge(source, target, selfLoop.label, selfLoop.metadata))

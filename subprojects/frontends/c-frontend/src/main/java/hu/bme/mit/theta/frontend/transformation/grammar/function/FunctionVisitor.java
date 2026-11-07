@@ -39,6 +39,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.SourcePosition;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
@@ -92,15 +93,22 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     public void clear() {
         variables.clear();
-        scopedAllocas.clear();
-        scopedRegistered.clear();
+        lifetimes.clear();
         atomicVariables.clear();
         flatVariables.clear();
         functions.clear();
         staticLocals.clear();
         initializedGlobals.clear();
         currentStatementContext.clear();
+        fileScopeNames.clear();
+        functionNameCounts.clear();
     }
+
+    /** The C names declared at file scope, see {@link #variablesInScope}. */
+    private final Set<String> fileScopeNames = new HashSet<>();
+
+    /** How many times each C name was declared so far in the current function. */
+    private final Map<String, Integer> functionNameCounts = new HashMap<>();
 
     private final Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables;
     private int loopDepth = 0;
@@ -112,6 +120,24 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     /** The globals already declared with an initializer, see {@link #visitGlobalDeclaration}. */
     private final Set<VarDecl<?>> initializedGlobals = new HashSet<>();
+
+    /** Parameters declared with array syntax: C adjusts their type to a pointer. */
+    private final Set<VarDecl<?>> arrayParameters = new HashSet<>();
+
+    /** The declaration of each array variable, for an extent only its initializer gives. */
+    private final Map<VarDecl<?>, CDeclaration> arrayDeclarations = new HashMap<>();
+
+    public boolean isArrayParameter(VarDecl<?> variable) {
+        return arrayParameters.contains(variable);
+    }
+
+    /** The element count [variable]'s initializer gives it, or null when it has none. */
+    public Integer initializerExtent(VarDecl<?> variable) {
+        final CDeclaration declaration = arrayDeclarations.get(variable);
+        return declaration == null || declaration.getInitExpr() == null
+                ? null
+                : Integer.valueOf(initializerElements(declaration.getInitExpr()));
+    }
 
     private void createVars(CDeclaration declaration) {
         // Idempotent: the declaration may already have been registered before its own initializer
@@ -212,31 +238,63 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     }
 
     /**
-     * The stack objects declared in each open scope, innermost last -- kept in lockstep with {@link
-     * #variables} by {@link #pushScope}/{@link #popScope}.
-     *
-     * <p>Only populated when a memory-safety property is being verified; see {@link
-     * #registerScoped}.
+     * The stack objects of one open scope. Each is registered once, so taking an address twice
+     * still gives one lifetime. Only populated when a memory-safety property is being verified.
      */
-    private final Deque<List<Expr<?>>> scopedAllocas = new ArrayDeque<>();
+    private static final class LifetimeScope {
+        private final List<Expr<?>> ends = new ArrayList<>();
+        private final List<Expr<?>> starts = new ArrayList<>();
+        private final Set<VarDecl<?>> registered = new LinkedHashSet<>();
+        private boolean loopBody = false;
+        private boolean switchBody = false;
+    }
 
-    /**
-     * The declarations already registered in each scope, so that an object taken by address more
-     * than once (`&a` twice, or `&a` in two nested blocks) is released exactly once. Releasing the
-     * same base twice would look like a double free.
-     */
-    private final Deque<Set<VarDecl<?>>> scopedRegistered = new ArrayDeque<>();
+    /** The open scopes, innermost first, in lockstep with {@link #variables}. */
+    private final Deque<LifetimeScope> lifetimes = new ArrayDeque<>();
+
+    /** A jump's lifetime-end markers, known only once every scope it leaves has been visited. */
+    private record PendingExit(CCompound markers, List<LifetimeScope> left) {}
+
+    private record PendingGoto(CCompound markers, String label, List<LifetimeScope> from) {}
+
+    private final List<PendingExit> pendingExits = new ArrayList<>();
+    private final List<PendingGoto> pendingGotos = new ArrayList<>();
+    private final List<List<LifetimeScope>> pendingCaseEntries = new ArrayList<>();
+    private final Map<String, List<LifetimeScope>> labelScopes = new LinkedHashMap<>();
+
+    /** Every stack object registered in the current function, for its epilogue. */
+    private final List<Expr<?>> functionScoped = new ArrayList<>();
 
     private void pushScope(Tuple2<String, Map<String, VarDecl<?>>> scope) {
         variables.push(scope);
-        scopedAllocas.push(new ArrayList<>());
-        scopedRegistered.push(new LinkedHashSet<>());
+        lifetimes.push(new LifetimeScope());
     }
 
     private void popScope() {
         variables.pop();
-        scopedAllocas.pop();
-        scopedRegistered.pop();
+        lifetimes.pop();
+    }
+
+    /**
+     * The variable each C name refers to here: the innermost declaration, if not a function. Names
+     * declared more than once at file scope and in this function are left out. This is a
+     * workaround: C resolves them correctly here, but some witness validators bind them to another
+     * declaration (see the xcfa-cli AGENTS.md).
+     */
+    private Map<String, VarDecl<?>> variablesInScope() {
+        final Map<String, VarDecl<?>> innermost = new LinkedHashMap<>();
+        for (Tuple2<String, Map<String, VarDecl<?>>> scope : variables) {
+            scope.get2().forEach(innermost::putIfAbsent);
+        }
+        innermost.values().removeIf(functions::containsKey);
+        innermost
+                .keySet()
+                .removeIf(
+                        name ->
+                                functionNameCounts.getOrDefault(name, 0)
+                                                + (fileScopeNames.contains(name) ? 1 : 0)
+                                        > 1);
+        return innermost;
     }
 
     /**
@@ -262,46 +320,22 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return suppressScopedRelease;
     }
 
-    /**
-     * Set while the arguments of a mutex/condition/rwlock call (`pthread_mutex_lock(&m[1])`) are
-     * visited. The sync objects are unions, and under the cell models the address of a union
-     * element is the base its cell holds -- a memory read, while mutex elimination needs a constant
-     * handle. There the cell address stays the handle; a handle held in a pointer is refused
-     * further down either way. Lives here for the same reason as {@link #suppressScopedRelease}.
-     */
-    private boolean syncHandleArguments = false;
-
-    public void setSyncHandleArguments(boolean value) {
-        this.syncHandleArguments = value;
-    }
-
-    public boolean isVisitingSyncHandleArguments() {
-        return syncHandleArguments;
-    }
-
     private void registerScoped(VarDecl<?> varDecl) {
-        if (parseContext.isCheckMemsafety() && !scopedAllocas.isEmpty()) {
-            if (scopedRegistered.peek().add(varDecl)) {
+        if (parseContext.isCheckMemsafety() && !lifetimes.isEmpty()) {
+            if (lifetimes.peek().registered.add(varDecl)) {
                 // An alloca'd object's variable *holds* its base, so the variable is what to
                 // release.
-                scopedAllocas.peek().add(varDecl.getRef());
+                lifetimes.peek().ends.add(varDecl.getRef());
+                functionScoped.add(varDecl.getRef());
             }
         }
     }
 
     /**
-     * Registers an address-taken *scalar* for release at the end of the block that declared it.
-     *
-     * <p>{@code { int a = 7; p = &a; } ... *p} is a use-after-scope, but such a scalar never went
-     * through {@link #registerScoped}: it is not an alloca -- ReferenceElimination gives it a
-     * compile-time `3k+2` base at procedure entry -- so no lifetime-end marker was emitted, its
-     * `__theta_ptr_size` entry was never cleared, and the dereference after the block was accepted
-     * (`memsafety-ext3/scopes1`, answered `true` against an expected `false`).
-     *
-     * <p>The object is released where it was **declared**, not where the {@code &} appears: {@code
-     * &a} inside a nested block must not end `a`'s lifetime at that inner block's end, which would
-     * release it early and report a violation in a correct program. Globals and static locals are
-     * skipped outright -- they outlive every block.
+     * Gives an address-taken *scalar* the lifetime of the block that declared it, not of the block
+     * the {@code &} appears in. Unlike an alloca it has no allocation at its declaration, so each
+     * entry to the block also starts its lifetime with a fresh base. Globals and static locals
+     * outlive every block.
      *
      * @param address the reference expression, which ReferenceElimination later folds to the base
      */
@@ -315,9 +349,8 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             }
         }
         final List<Tuple2<String, Map<String, VarDecl<?>>>> scopes = new ArrayList<>(variables);
-        final List<List<Expr<?>>> releases = new ArrayList<>(scopedAllocas);
-        final List<Set<VarDecl<?>>> registered = new ArrayList<>(scopedRegistered);
-        final int count = Math.min(scopes.size(), Math.min(releases.size(), registered.size()));
+        final List<LifetimeScope> open = new ArrayList<>(lifetimes);
+        final int count = Math.min(scopes.size(), open.size());
         for (int i = 0; i < count; i++) {
             if (!scopes.get(i).get2().containsValue(varDecl)) {
                 continue;
@@ -325,54 +358,131 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             if (i == scopes.size() - 1) {
                 return; // the outermost scope is the globals; they are never released
             }
-            if (registered.get(i).add(varDecl)) {
-                releases.get(i).add(address);
+            if (open.get(i).registered.add(varDecl)) {
+                open.get(i).ends.add(address);
+                functionScoped.add(address);
+                // The function's own scope is entered once per activation, where
+                // ReferenceElimination already allocates.
+                if (i < scopes.size() - 2) {
+                    open.get(i).starts.add(address);
+                }
             }
             return;
         }
     }
 
     /**
-     * Appends a lifetime-end marker for every stack object the current scope declared at or after
-     * {@code mark}, so that the memory-safety checks see the object die where C says it does.
+     * Wraps a scope's statement in the markers of the current scope: a scalar's lifetime starts on
+     * entry and every object's ends on the fall-through exit. A jump out gets its own markers (see
+     * {@link #exitMarkers}), and `return` is covered at procedure exit by ReferenceElimination and
+     * AllocaFunctionPass, as it must come after the returned expression.
      *
-     * <p>An object's storage is released when its *block* is left, and nothing ever said so:
-     * `__theta_ptr_size[base]` was written once and cleared only by an explicit `free`, so `{ int
-     * a[10]; p = a; }` followed by `p[0] = 1` was accepted, as was the next iteration of `for (...)
-     * { int a[10]; ... }` writing through the previous one's array (`memsafety-ext3/scopes3`,
-     * `scopes5`, `derefInLoop1`). The marker becomes a `deallocate` in {@link
-     * hu.bme.mit.theta.xcfa.passes.AllocaFunctionPass}, after which the existing `ptr_size[base] <=
-     * index` guard catches the stale access unchanged.
-     *
-     * <p>Emitted only under a memory-safety property, so the model every other property sees is
-     * exactly what it was. Emitted at the end of the block, so a `break`, `goto` or `return` that
-     * leaves early simply skips it -- releasing fewer objects can leave a bug unfound, never invent
-     * one (and `return` is covered one level up, by the release at procedure exit).
+     * <p>The markers are emitted only under a memory-safety property, so the model every other
+     * property sees is exactly what it was.
      */
-    private CStatement withScopeReleases(CStatement body, int mark) {
-        final List<Expr<?>> scoped = scopedAllocas.peek();
-        if (!parseContext.isCheckMemsafety() || scoped == null || scoped.size() <= mark) {
+    private CStatement withScopeReleases(CStatement body) {
+        final LifetimeScope scope = lifetimes.peek();
+        if (!parseContext.isCheckMemsafety()
+                || scope == null
+                || (scope.ends.isEmpty() && scope.starts.isEmpty())) {
             return body;
         }
         final CCompound wrapper = new CCompound(parseContext);
+        scope.starts.forEach(address -> wrapper.addCStatement(marker(SCOPE_START, address)));
         wrapper.addCStatement(body);
-        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
-            wrapper.addCStatement(
-                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
-        }
+        scope.ends.forEach(address -> wrapper.addCStatement(marker(SCOPE_END, address)));
         return wrapper;
     }
 
-    /** Appends the current scope's lifetime-end markers directly to an existing compound. */
-    private void releaseScopedInto(CCompound compound, int mark) {
-        final List<Expr<?>> scoped = scopedAllocas.peek();
-        if (!parseContext.isCheckMemsafety() || scoped == null) {
+    private CCall marker(String name, Expr<?> address) {
+        return new CCall(name, List.of(new CExpr(address, parseContext)), parseContext);
+    }
+
+    /** A block's own compound holds its markers directly. */
+    private void releaseScopedInto(CCompound compound) {
+        final LifetimeScope scope = lifetimes.peek();
+        if (!parseContext.isCheckMemsafety() || scope == null) {
             return;
         }
-        for (Expr<?> release : scoped.subList(mark, scoped.size())) {
-            compound.addCStatement(
-                    new CCall(SCOPE_END, List.of(new CExpr(release, parseContext)), parseContext));
+        compound.insertCStatementsToFront(
+                scope.starts.stream()
+                        .map(address -> (CStatement) marker(SCOPE_START, address))
+                        .toList());
+        scope.ends.forEach(address -> compound.addCStatement(marker(SCOPE_END, address)));
+    }
+
+    /**
+     * The lifetime-end markers of a `break` or `continue`, placed before the jump. A `switch` ends
+     * its own objects after the statement, which `break` still reaches; a loop ends them inside its
+     * body, which the jump skips.
+     */
+    private CStatement exitMarkers(CStatement jump, boolean isBreak) {
+        if (!parseContext.isCheckMemsafety()) {
+            return jump;
         }
+        final List<LifetimeScope> left = new ArrayList<>();
+        for (LifetimeScope scope : lifetimes) {
+            if (isBreak && scope.switchBody) {
+                break;
+            }
+            left.add(scope);
+            if (scope.loopBody) {
+                break;
+            }
+        }
+        final CCompound markers = new CCompound(parseContext);
+        pendingExits.add(new PendingExit(markers, left));
+        return beforeJump(markers, jump);
+    }
+
+    private CStatement beforeJump(CCompound markers, CStatement jump) {
+        final CCompound wrapper = new CCompound(parseContext);
+        wrapper.addCStatement(markers);
+        wrapper.addCStatement(jump);
+        return wrapper;
+    }
+
+    /**
+     * Fills in the markers of this function's jumps, now that every scope's objects are known. A
+     * jump past the entry of a block skips the start of its scalars' lifetime, so their address
+     * would be the previous entry's, possibly released: that cannot be modelled, so it is refused.
+     */
+    private void resolveJumps() {
+        for (PendingGoto jump : pendingGotos) {
+            final List<LifetimeScope> target = labelScopes.get(jump.label());
+            if (target == null) {
+                continue;
+            }
+            final List<LifetimeScope> left = new ArrayList<>(jump.from());
+            left.removeAll(target);
+            pendingExits.add(new PendingExit(jump.markers(), left));
+            final List<LifetimeScope> entered = new ArrayList<>(target);
+            entered.removeAll(jump.from());
+            pendingCaseEntries.add(entered);
+        }
+        for (List<LifetimeScope> entered : pendingCaseEntries) {
+            if (entered.stream().anyMatch(scope -> !scope.starts.isEmpty())) {
+                throw new UnsupportedFrontendElementException(
+                        "Jump into the block of an address-taken local under memory safety");
+            }
+        }
+        for (PendingExit exit : pendingExits) {
+            for (LifetimeScope scope : exit.left()) {
+                scope.ends.forEach(a -> exit.markers().addCStatement(marker(SCOPE_END, a)));
+            }
+        }
+        pendingExits.clear();
+        pendingGotos.clear();
+        pendingCaseEntries.clear();
+        labelScopes.clear();
+    }
+
+    /** Whether a compound statement is a block of its own, rather than the body of a construct. */
+    private static boolean opensOwnScope(CParser.BlockItemListContext ctx) {
+        final var owner = ctx.getParent().getParent().getParent();
+        return owner instanceof CParser.BodyStatementContext
+                || owner instanceof CParser.CaseStatementContext
+                || owner instanceof CParser.DefaultStatementContext;
     }
 
     /**
@@ -393,14 +503,11 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return Math.max(elements, 1);
     }
 
-    /** How many stack objects the current scope has declared so far. */
-    private int scopeMark() {
-        final List<Expr<?>> scoped = scopedAllocas.peek();
-        return scoped == null ? 0 : scoped.size();
-    }
-
     /** Marks the end of a stack object's lifetime; lowered by AllocaFunctionPass. */
     public static final String SCOPE_END = "__theta_scope_end";
+
+    /** Starts an address-taken scalar's lifetime; lowered by ReferenceElimination. */
+    public static final String SCOPE_START = "__theta_scope_start";
 
     private String getName(final String name) {
         final StringJoiner sj = new StringJoiner("::");
@@ -454,8 +561,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                         Level.INFO, "WARNING: Variable already exists: " + name + "\n");
             }
             varDecl = peek.get2().get(name);
+        } else if (variables.size() == 1) {
+            fileScopeNames.add(name);
+        } else {
+            functionNameCounts.merge(name, 1, Integer::sum);
         }
         peek.get2().put(name, varDecl);
+        if (type instanceof CArray) {
+            arrayDeclarations.put(varDecl, declaration);
+        }
         // A static local is registered in the scope so uses resolve to it, but it is not one of the
         // procedure's variables -- it is declared among the globals instead.
         if (procedureLocal) {
@@ -552,8 +666,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
-        scopedAllocas.clear();
-        scopedRegistered.clear();
+        lifetimes.clear();
         atomicVariables.clear();
         initializedGlobals.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
@@ -770,8 +883,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
      */
     public CProgram visitTranslationUnits(List<CParser.CompilationUnitContext> units) {
         variables.clear();
-        scopedAllocas.clear();
-        scopedRegistered.clear();
+        lifetimes.clear();
         atomicVariables.clear();
         initializedGlobals.clear();
         pushScope(Tuple2.of("", new LinkedHashMap<>()));
@@ -1123,14 +1235,22 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             functions.put(varDecl, funcDecl);
         }
         pushScope(Tuple2.of(funcDecl.getName(), new LinkedHashMap<>()));
+        functionScoped.clear();
         currentFunction = funcDecl.getName();
         flatVariables.clear();
+        functionNameCounts.clear();
         for (CDeclaration functionParam : funcDecl.getFunctionParams()) {
-            if (functionParam.getName() != null) createVars(functionParam);
+            if (functionParam.getName() != null) {
+                createVars(functionParam);
+                if (functionParam.getActualType() instanceof CArray) {
+                    arrayParameters.addAll(functionParam.getVarDecls());
+                }
+            }
         }
         CParser.BlockItemListContext blockItemListContext = ctx.compoundStatement().blockItemList();
         if (blockItemListContext != null) {
             CStatement accept = blockItemListContext.accept(this);
+            resolveJumps();
             popScope();
             CFunction cFunction =
                     new CFunction(
@@ -1139,6 +1259,19 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
                             new ArrayList<>(flatVariables),
                             parseContext,
                             atomicVariables);
+            // A return skips the scope-end markers of the blocks it leaves. Not for main: the model
+            // lets other threads go on using its locals after it returns.
+            if (parseContext.isCheckMemsafety() && !funcDecl.getName().equals("main")) {
+                final CCompound epilogue = new CCompound(parseContext);
+                for (Expr<?> release : new LinkedHashSet<>(functionScoped)) {
+                    epilogue.addCStatement(
+                            new CCall(
+                                    SCOPE_END,
+                                    List.of(new CExpr(release, parseContext)),
+                                    parseContext));
+                }
+                cFunction.setEpilogue(epilogue);
+            }
             recordMetadata(ctx, cFunction);
             return cFunction;
         }
@@ -1159,15 +1292,15 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitBlockItemList(CParser.BlockItemListContext ctx) {
         CCompound compound = new CCompound(parseContext);
-        if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext)
-            pushScope(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
+        final boolean ownScope = opensOwnScope(ctx);
+        if (ownScope) pushScope(Tuple2.of("anonymous" + anonCnt++, new LinkedHashMap<>()));
         for (CParser.BlockItemContext blockItemContext : ctx.blockItem()) {
             currentStatementContext.push(Tuple2.of(blockItemContext, Optional.of(compound)));
             compound.addCStatement(inFullExpression(null, () -> blockItemContext.accept(this)));
             currentStatementContext.pop();
         }
-        if (ctx.parent.parent.parent.parent instanceof CParser.BlockItemListContext) {
-            releaseScopedInto(compound, 0);
+        if (ownScope) {
+            releaseScopedInto(compound);
             popScope();
         }
         recordMetadata(ctx, compound);
@@ -1176,6 +1309,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitIdentifierStatement(CParser.IdentifierStatementContext ctx) {
+        labelScopes.put(ctx.Identifier().getText(), new ArrayList<>(lifetimes));
         CStatement statement = ctx.blockItem().accept(this);
         CCompound compound = new CCompound(parseContext);
         compound.addCStatement(statement);
@@ -1184,8 +1318,21 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         return compound;
     }
 
+    /** The blocks between a case label and its `switch` are entered past their start. */
+    private void recordCaseEntry() {
+        final List<LifetimeScope> entered = new ArrayList<>();
+        for (LifetimeScope scope : lifetimes) {
+            if (scope.switchBody) {
+                break;
+            }
+            entered.add(scope);
+        }
+        pendingCaseEntries.add(entered);
+    }
+
     @Override
     public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
+        recordCaseEntry();
         parseContext.getCStmtCounter().incrementBranches();
         CExpr cexpr =
                 new CExpr(
@@ -1209,6 +1356,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitDefaultStatement(CParser.DefaultStatementContext ctx) {
+        recordCaseEntry();
         CDefault cDefault = new CDefault(ctx.statement().accept(this), parseContext);
         recordMetadata(ctx, cDefault);
         return cDefault;
@@ -1265,7 +1413,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private CStatement inOwnScope(String kind, CParser.StatementContext statement) {
         pushScope(Tuple2.of(kind + anonCnt++, new LinkedHashMap<>()));
         try {
-            return withScopeReleases(statement.accept(this), 0);
+            return withScopeReleases(statement.accept(this));
         } finally {
             popScope();
         }
@@ -1274,12 +1422,14 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     @Override
     public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
         pushScope(Tuple2.of("switch" + anonCnt++, new LinkedHashMap<>()));
+        lifetimes.peek().switchBody = true;
         CStatement testValue =
                 inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CSwitch cSwitch = new CSwitch(testValue, ctx.statement().accept(this), parseContext);
         recordMetadata(ctx, cSwitch);
+        final CStatement released = withScopeReleases(cSwitch);
         popScope();
-        return cSwitch;
+        return released;
     }
 
     @Override
@@ -1295,10 +1445,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
     private CStatement visitLoopWhileStatement(CParser.WhileStatementContext ctx) {
         parseContext.getCStmtCounter().incrementWhileLoops();
         pushScope(Tuple2.of("while" + anonCnt++, new LinkedHashMap<>()));
-        final int whileMark = scopeMark();
-        CStatement body = withScopeReleases(ctx.statement().accept(this), whileMark);
+        lifetimes.peek().loopBody = true;
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
+        CStatement body = ctx.statement().accept(this);
+        body = withScopeReleases(body);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CWhile cWhile = new CWhile(body, guard, parseContext);
+        cWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cWhile);
         popScope();
         return cWhile;
@@ -1316,10 +1469,13 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
 
     private CStatement visitLoopDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         pushScope(Tuple2.of("dowhile" + anonCnt++, new LinkedHashMap<>()));
-        final int doWhileMark = scopeMark();
-        CStatement body = withScopeReleases(ctx.statement().accept(this), doWhileMark);
+        lifetimes.peek().loopBody = true;
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
+        CStatement body = ctx.statement().accept(this);
+        body = withScopeReleases(body);
         CStatement guard = inFullExpression(ctx.expression(), () -> ctx.expression().accept(this));
         CDoWhile cDoWhile = new CDoWhile(body, guard, parseContext);
+        cDoWhile.setVariablesAtGuard(variablesAtGuard);
         recordMetadata(ctx, cDoWhile);
         popScope();
         return cDoWhile;
@@ -1341,6 +1497,7 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         final var forCondition = ctx.forCondition();
         CStatement init =
                 inFullExpression(forCondition.forInit(), () -> forCondition.forInit().accept(this));
+        final Map<String, VarDecl<?>> variablesAtGuard = variablesInScope();
         CStatement test =
                 inFullExpression(forCondition.forTest(), () -> forCondition.forTest().accept(this));
         if (test == null) {
@@ -1361,38 +1518,44 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
         }
         CStatement incr =
                 inFullExpression(forCondition.forIncr(), () -> forCondition.forIncr().accept(this));
-        final int forMark = scopeMark();
-        CFor cFor =
-                new CFor(
-                        withScopeReleases(ctx.statement().accept(this), forMark),
-                        init,
-                        test,
-                        incr,
-                        parseContext);
-        recordMetadata(ctx, cFor);
+        // The body has its own scope: a variable of the init clause lives across the iterations.
+        pushScope(Tuple2.of("forbody" + anonCnt++, new LinkedHashMap<>()));
+        lifetimes.peek().loopBody = true;
+        CStatement body = ctx.statement().accept(this);
+        body = withScopeReleases(body);
         popScope();
-        return cFor;
+        CFor cFor = new CFor(body, init, test, incr, parseContext);
+        cFor.setVariablesAtGuard(variablesAtGuard);
+        recordMetadata(ctx, cFor);
+        final CStatement released = withScopeReleases(cFor);
+        popScope();
+        return released;
     }
 
     @Override
     public CStatement visitGotoStatement(CParser.GotoStatementContext ctx) {
         CGoto cGoto = new CGoto(ctx.Identifier().getText(), parseContext);
         recordMetadata(ctx, cGoto);
-        return cGoto;
+        if (!parseContext.isCheckMemsafety()) {
+            return cGoto;
+        }
+        final CCompound markers = new CCompound(parseContext);
+        pendingGotos.add(new PendingGoto(markers, cGoto.getLabel(), new ArrayList<>(lifetimes)));
+        return beforeJump(markers, cGoto);
     }
 
     @Override
     public CStatement visitContinueStatement(CParser.ContinueStatementContext ctx) {
         CContinue cContinue = new CContinue(parseContext);
         recordMetadata(ctx, cContinue);
-        return cContinue;
+        return exitMarkers(cContinue, false);
     }
 
     @Override
     public CStatement visitBreakStatement(CParser.BreakStatementContext ctx) {
         CBreak cBreak = new CBreak(parseContext);
         recordMetadata(ctx, cBreak);
-        return cBreak;
+        return exitMarkers(cBreak, true);
     }
 
     @Override
@@ -2342,8 +2505,12 @@ public class FunctionVisitor extends IncludeHandlingCBaseVisitor<CStatement> {
             resetPreStatements(compoundInitExpr);
             resetPostStatements(compoundInitExpr);
         }
-        CAssignment cAssignment =
-                new CAssignment(ret, rhs, ctx.assignmentOperator().getText(), parseContext);
+        final String operator = ctx.assignmentOperator().getText();
+        if (operator.equals("+=") || operator.equals("-=")) {
+            final Expr<?> step = expressionVisitor.compoundStep(ret, rhs.getExpression());
+            if (step != rhs.getExpression()) rhs = new CExpr(step, parseContext);
+        }
+        CAssignment cAssignment = new CAssignment(ret, rhs, operator, parseContext);
         recordMetadata(ctx, cAssignment);
         expressionVisitor.getPreStatements().forEach(preStatements::addCStatement);
         compound.addCStatement(cAssignment);

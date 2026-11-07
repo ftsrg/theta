@@ -210,8 +210,10 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
     public BoolLitExpr assign(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
-        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        // SMT-LIB `=`: the sort has a single NaN, whatever bits a literal spells it with.
+        if (isNaN() && that.isNaN()) {
+            return BoolExprs.True();
+        }
         return BoolExprs.Bool(
                 this.hidden == that.hidden
                         && this.exponent.equals(that.exponent)

@@ -1,0 +1,26 @@
+- entry_type: 'invariant_set'
+  metadata:
+    format_version: '2.1'
+    uuid: '30683a52-631b-5baa-9670-f87b01385d76'
+    creation_time: '2026-11-06T12:00:00Z'
+    producer:
+      name: 'hand-written'
+      version: '1'
+    task:
+      input_files:
+      - 'array-count-down.c'
+      input_file_hashes:
+        'array-count-down.c': '2d1ac4264da353d3075c301af06651a823977e68c61fefdba6a41c4144462d4c'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - invariant:
+      type: 'location_invariant'
+      location:
+        file_name: 'array-count-down.c'
+        line: 7
+        column: 5
+        function: 'main'
+      value: 'a[0] > 0'
+      format: 'c_expression'

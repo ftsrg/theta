@@ -63,7 +63,7 @@ public final class BitfieldSlice {
     /**
      * Metadata marking a union member whose cell holds a floating-point value as its raw IEEE-754
      * bit pattern. The read is a reinterpretation ({@code FpFromIeeeBv}); an assignment through it
-     * must splice {@code FpToIeeeBv} of the right-hand side, not a plain integer cast.
+     * splices the bits of the right-hand side, not a plain integer cast of it.
      */
     public static final String IEEE_FLOAT = "ieeeFloatCell";
 

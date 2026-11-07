@@ -17,16 +17,11 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -98,14 +93,6 @@ public final class MutableValuation extends Valuation {
         @SuppressWarnings("unchecked")
         final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
         return val == null && fallback != null ? fallback.eval(decl) : Optional.ofNullable(val);
-    }
-
-    @Override
-    public Expr<BoolType> toExpr() {
-        return SmartBoolExprs.And(
-                declToExpr.entrySet().stream()
-                        .map(e -> Eq(e.getKey().getRef(), e.getValue()))
-                        .collect(toImmutableList()));
     }
 
     @Override
