@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -109,7 +110,9 @@ class PthreadBarrierPass(val parseContext: ParseContext) : ProcedurePass {
                 metadata = e.source.metadata,
               )
             builder.addEdge(XcfaEdge(e.source, mid, SequenceLabel(barrier.arrive()), e.metadata))
-            val departureLabel = SequenceLabel(barrier.departures(assignRet, retType))
+            val serial = Var("__theta_barrier_serial_${XcfaLocation.uniqueCounter()}", Bool())
+            builder.addVar(serial)
+            val departureLabel = SequenceLabel(barrier.departures(assignRet, retType, serial))
             builder.addEdge(XcfaEdge(mid, e.target, departureLabel, e.metadata))
           }
 
@@ -149,11 +152,13 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
   val count = global(xcfa, "__theta_barrier_count_$name", uint.smtType, uint.nullValue)
   val arrived = global(xcfa, "__theta_barrier_arrived_$name", uint.smtType, uint.nullValue)
   val draining = global(xcfa, "__theta_barrier_draining_$name", Bool(), False())
+  val claimed = global(xcfa, "__theta_barrier_claimed_$name", Bool(), False())
 
   private val zero = uint.nullValue
   private val one = uint.getValue("1")
 
-  fun reset(): List<XcfaLabel> = listOf(assign(arrived, zero), assign(draining, False()))
+  fun reset(): List<XcfaLabel> =
+    listOf(assign(arrived, zero), assign(draining, False()), assign(claimed, False()))
 
   /** Joins the current round, tripping the barrier as its last arrival. */
   fun arrive(): List<XcfaLabel> =
@@ -167,24 +172,34 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
    * Leaving a tripped barrier: as the serial thread, or as any other, which the last waiter to
    * leave may only be when the serial value is already taken.
    */
-  fun departures(assignRet: (Expr<*>) -> StmtLabel, retType: CComplexType): List<XcfaLabel> {
-    val leave = listOf(assign(arrived, Sub(arrived.ref, one)))
+  fun departures(
+    assignRet: (Expr<*>) -> StmtLabel,
+    retType: CComplexType,
+    serial: VarDecl<BoolType>,
+  ): List<XcfaLabel> {
     val othersRemain = Neq(arrived.ref, zero)
-
     val serialValue = retType.getValue("-1")
     val otherValue = retType.nullValue
-
-    return listOf(assume(draining.ref)) +
-      leave +
-      listOf(
-        assignRet(
-          Exprs.Ite(
-            othersRemain,
-            cast(otherValue, serialValue.type),
-            cast(serialValue, serialValue.type),
-          )
+    return listOf(
+      assume(draining.ref),
+      StmtLabel(Havoc(serial)),
+      assume(
+        Or(
+          And(serial.ref, Not(claimed.ref)),
+          And(Not(serial.ref), Or(claimed.ref, Neq(arrived.ref, one))),
         )
-      )
+      ),
+      assignRet(
+        Exprs.Ite(
+          serial.ref,
+          cast(serialValue, serialValue.type),
+          cast(otherValue, serialValue.type),
+        )
+      ),
+      assign(arrived, Sub(arrived.ref, one)),
+      assign(claimed, And(Or(claimed.ref, serial.ref), othersRemain)),
+      assign(draining, othersRemain),
+    )
   }
 }
 

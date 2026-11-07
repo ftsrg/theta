@@ -372,16 +372,6 @@ private fun buildFrontend(
       cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
       parseContext.arithmetic = cConfig.arithmetic
     }
-    // The liveness-to-safety reduction validating a termination witness needs finitely many states
-    if (
-      config.inputConfig.property.isTerminationWitnessValidation &&
-        cConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient
-    ) {
-      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
-      parseContext.arithmetic = cConfig.arithmetic
-    }
-    // Anything the frontend and the passes emit solely for the memory-safety checks is gated on
-    // this, so the XCFA for every other property is byte-for-byte what it was.
     parseContext.isCheckMemsafety =
       config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP

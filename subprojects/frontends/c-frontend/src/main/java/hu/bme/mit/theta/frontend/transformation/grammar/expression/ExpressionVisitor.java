@@ -1077,12 +1077,66 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
+        if (actualType instanceof CStruct struct) {
+            final CComplexType operandType = CComplexType.getType(operand, parseContext);
+            if (!struct.equals(operandType)) {
+                return castToUnion(struct, operand, operandType);
+            }
+        }
         refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
         return expr;
+    }
+
+    /**
+     * GNU C's cast to a union, {@code (union U)x}: a fresh union whose member of x's type holds x.
+     * Any other cast to a struct or union type is refused.
+     */
+    private Expr<?> castToUnion(CStruct union, Expr<?> operand, CComplexType operandType) {
+        if (!union.isUnion()
+                || functionVisitor == null
+                || parseContext.getMetadata().getMetadataValue(operand, "cType").isEmpty()) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to the struct or union type "
+                            + union.getTypeName()
+                            + " is not supported.");
+        }
+        final List<String> members =
+                union.getFields().stream()
+                        .filter(field -> sameMemberType(field.get2(), operandType))
+                        .map(Tuple2::get1)
+                        .toList();
+        if (members.size() != 1) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to a union without exactly one member of the operand's type.");
+        }
+        final CComplexType memberType = union.getFieldsAsMap().get(members.get(0));
+        final VarDecl<?> tmp = functionVisitor.createTempVar(union, "union_cast");
+        final Expr<?> member = structMemberAccess(tmp.getRef(), union, members.get(0));
+        preStatements.add(
+                new CAssignment(
+                        member,
+                        new CExpr(typed(memberType.castTo(operand), memberType), parseContext),
+                        "=",
+                        parseContext));
+        return tmp.getRef();
+    }
+
+    private static boolean sameMemberType(CComplexType member, CComplexType operand) {
+        if (member == null || operand == null || member.getClass() != operand.getClass()) {
+            return false;
+        }
+        if (member instanceof CPointer memberPointer
+                && operand instanceof CPointer operandPointer) {
+            return memberPointer.getEmbeddedType() != null
+                    && operandPointer.getEmbeddedType() != null
+                    && memberPointer.getEmbeddedType().getClass()
+                            == operandPointer.getEmbeddedType().getClass();
+        }
+        return !(member instanceof CStruct) || member.equals(operand);
     }
 
     /**
