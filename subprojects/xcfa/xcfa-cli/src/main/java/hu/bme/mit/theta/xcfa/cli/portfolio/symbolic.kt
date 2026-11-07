@@ -22,6 +22,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
 
 fun symbolicPortfolio(
   xcfa: XCFA,
@@ -34,7 +35,10 @@ fun symbolicPortfolio(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseMddConfig =
+    (baseMddConfig(portfolioConfig) as XcfaConfig<SpecFrontendConfig, MddConfig>).let {
+      it.copy(frontendConfig = it.frontendConfig.copy(lbeLevel = LBE_LOCAL))
+    }
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -51,6 +55,7 @@ fun symbolicPortfolio(
                 baseMddConfig.backendConfig.specConfig!!.copy(
                   solver = solver,
                   iterationStrategy = GSAT,
+                  symbolicValues = true,
                 ),
             )
         ),

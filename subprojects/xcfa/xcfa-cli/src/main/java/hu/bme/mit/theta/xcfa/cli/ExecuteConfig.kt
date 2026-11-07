@@ -374,16 +374,6 @@ private fun buildFrontend(
       cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
       parseContext.arithmetic = cConfig.arithmetic
     }
-    // The liveness-to-safety reduction validating a termination witness needs finitely many states
-    if (
-      config.inputConfig.property.isTerminationWitnessValidation &&
-        cConfig.arithmetic == ArchitectureConfig.ArithmeticType.efficient
-    ) {
-      cConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
-      parseContext.arithmetic = cConfig.arithmetic
-    }
-    // Anything the frontend and the passes emit solely for the memory-safety checks is gated on
-    // this, so the XCFA for every other property is byte-for-byte what it was.
     parseContext.isCheckMemsafety =
       config.inputConfig.property.inputProperty == ErrorDetection.MEMSAFETY ||
         config.inputConfig.property.inputProperty == ErrorDetection.MEMCLEANUP
@@ -556,6 +546,16 @@ private fun backend(
           } else {
             SafetyResult.unknown<EmptyProof, EmptyCex>()
           }
+        } else if (
+          result.isSafe &&
+            parseContext?.isAddressReuseObservable == true &&
+            config.inputConfig.property.inputProperty in
+              setOf(ErrorDetection.MEMSAFETY, ErrorDetection.MEMCLEANUP) &&
+            !config.outputConfig.acceptUnreliableSafe
+        ) {
+          // Restricted to memory safety, where a freed address and its reuse matter most.
+          logger.benchmark("Freed addresses are compared as integers: safe result is unreliable.")
+          SafetyResult.unknown<EmptyProof, EmptyCex>()
         } else {
           result
         }

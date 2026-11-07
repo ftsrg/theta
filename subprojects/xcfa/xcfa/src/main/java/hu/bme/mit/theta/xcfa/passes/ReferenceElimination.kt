@@ -1345,11 +1345,11 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
    *   into different objects compare unequal), and `!=` is its negation;
    * - `p < q` (and `<=`, `>`, `>=`) is defined by C only within one object, so it is `off_p <
    *   off_q` -- a different-object comparison is undefined and any answer is sound;
-   * - `p - q` is `off_p - off_q`, in element units, exactly what the offset already counts (each
-   *   `p++` advances the offset by one element). The frontend spells a difference as an `Add` whose
-   *   split bases cancel (`Add(p, Neg(q))`, or `Add(p, Neg(1), Neg(s1))` for `p - 1 - s1`); a net
-   *   non-zero base means a mid-object pointer *value* is escaping into a scalar context, which the
-   *   split model cannot carry, so that falls through to the bare-use error.
+   * - `p - q` is `off_p - off_q`, in cells; the frontend divides it by the element's cells. The
+   *   frontend spells a difference as an `Add` whose split bases cancel (`Add(p, Neg(q))`, or
+   *   `Add(p, Neg(1), Neg(s1))` for `p - 1 - s1`); a net non-zero base means a mid-object pointer
+   *   *value* is escaping into a scalar context, which the split model cannot carry, so that falls
+   *   through to the bare-use error.
    *
    * Returns the decomposed expression, or `null` when the shape is not one of these (so the caller
    * proceeds with its ordinary rewriting, including the loud refusal of an unsupported bare use).
