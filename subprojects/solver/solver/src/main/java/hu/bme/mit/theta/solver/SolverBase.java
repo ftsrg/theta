@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,6 +83,11 @@ public interface SolverBase extends AutoCloseable {
     }
 
     default Expr<BoolType> simplify(Expr<BoolType> expr) {
+        return expr;
+    }
+
+    /** {@code expr} after the quantifier elimination {@code tactic}, or itself if it fails. */
+    default Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, String tactic) {
         return expr;
     }
 }

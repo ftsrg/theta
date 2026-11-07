@@ -148,11 +148,35 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
             onInput(buffer);
         }
 
+        private final StringBuilder stderrLine = new StringBuilder();
+
         @Override
         public synchronized void onStderr(final ByteBuffer buffer, final boolean closed) {
-            if (!isPrincess) {
-                onInput(buffer);
+            if (isPrincess) {
+                return;
             }
+            // Read by whole lines, so that a diagnostic (Bitwuzla's "[bzla] warning: ...") is not
+            // taken for the response to the pending command.
+            final var buf = new byte[buffer.remaining()];
+            buffer.get(buf);
+            for (var c : new String(buf, StandardCharsets.US_ASCII).toCharArray()) {
+                stderrLine.append(c);
+                if (c == '\n') {
+                    final var line = stderrLine.toString();
+                    stderrLine.setLength(0);
+                    if (!isDiagnostic(line)) {
+                        onInput(ByteBuffer.wrap(line.getBytes(StandardCharsets.US_ASCII)));
+                    }
+                }
+            }
+            if (closed && !stderrLine.isEmpty()) {
+                onInput(ByteBuffer.wrap(stderrLine.toString().getBytes(StandardCharsets.US_ASCII)));
+                stderrLine.setLength(0);
+            }
+        }
+
+        private static boolean isDiagnostic(final String line) {
+            return line.matches("(?s)\\[\\w+\\] (warning|info): .*");
         }
 
         private int isFp = 0;

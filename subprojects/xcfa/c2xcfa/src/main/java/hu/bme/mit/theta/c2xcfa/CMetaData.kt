@@ -33,6 +33,8 @@ data class CMetaData(
   val notStatementStart: Boolean = false,
   // start of the innermost C full expression of the label, null if unknown; see [targetPosition]
   val fullExpression: SourcePosition? = null,
+  // set on the locations where a loop's controlling expression is evaluated, not combined
+  val loopHead: LoopHead? = null,
 ) : MetaData() {
 
   private data class Position(val line: Int, val col: Int, val offset: Int?)
@@ -84,6 +86,15 @@ data class CMetaData(
         ?: lineNumberStart
           ?.takeIf { it > 0 }
           ?.let { line -> colNumberStart?.let { SourcePosition(line, it) } }
+
+  override fun onLocationLost() {
+    loopHead?.markIncomplete()
+  }
+
+  override fun keepsLocation(): Boolean = loopHead != null
+
+  override fun withoutLocationMarks(): MetaData =
+    if (loopHead == null) this else copy(loopHead = null)
 
   override fun isSubstantial(): Boolean {
     if (astNodes.isEmpty()) {

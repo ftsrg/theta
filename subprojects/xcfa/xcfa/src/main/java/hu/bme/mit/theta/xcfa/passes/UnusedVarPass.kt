@@ -65,6 +65,26 @@ class UnusedVarPass(
     val isOverflow = property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false
     checkNotNull(builder.metaData["deterministic"])
 
+    // The fixpoint below is over the whole program, so one run per phase covers every procedure.
+    val phase = builder.currentPhase
+    @Suppress("UNCHECKED_CAST")
+    val cached = builder.parent.metaData[USED_VARS] as? Pair<Int, Set<VarDecl<*>>>
+    val usedVars =
+      if (cached != null && cached.first == phase) cached.second
+      else
+        usedVarsOfProgram(builder, isOverflow).also {
+          builder.parent.metaData[USED_VARS] = phase to it
+        }
+
+    builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
+
+    return builder
+  }
+
+  private fun usedVarsOfProgram(
+    builder: XcfaProcedureBuilder,
+    isOverflow: Boolean,
+  ): Set<VarDecl<*>> {
     val usedVars = LinkedHashSet<VarDecl<*>>()
     val globalVars = builder.parent.getVars().map { it.wrappedVar }.toSet()
 
@@ -115,7 +135,6 @@ class UnusedVarPass(
 
       edges = LinkedHashSet(builder.parent.getProcedures().flatMap { it.getEdges() })
     } while (lastEdges != edges)
-
     val allVars =
       Sets.union(
         builder.parent.getProcedures().flatMap { it.getVars() }.toSet(),
@@ -130,9 +149,7 @@ class UnusedVarPass(
       )
     }
 
-    builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
-
-    return builder
+    return usedVars
   }
 
   private fun XcfaLabel.removeUnusedWrites(
@@ -436,3 +453,5 @@ private class UnusedMemoryWriteRemoval(private val parseContext: ParseContext) {
   private fun List<*>.sameAs(other: List<*>): Boolean =
     size == other.size && indices.all { this[it] === other[it] }
 }
+
+private const val USED_VARS = "unusedVarPassUsedVars"

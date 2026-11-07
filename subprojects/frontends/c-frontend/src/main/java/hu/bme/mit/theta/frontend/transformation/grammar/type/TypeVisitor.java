@@ -26,12 +26,9 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.utils.BvUtils;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.grammar.IncludeHandlingCBaseVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
@@ -55,6 +52,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.RuleContext;
@@ -200,12 +198,10 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 cSimpleTypes.stream()
                         .filter(cType -> cType instanceof Enum)
                         .collect(Collectors.toList());
-        if (enums.size() > 0) {
-            uniqueWarningLogger.write(
-                    Level.INFO, "WARNING: enums are not yet supported! Using int instead.\n");
-            cSimpleTypes.add(NamedType("int", parseContext, uniqueWarningLogger));
-            cSimpleTypes.removeAll(enums);
+        for (CSimpleType anEnum : enums) {
+            cSimpleTypes.add(((Enum) anEnum).underlyingType(parseContext, uniqueWarningLogger));
         }
+        cSimpleTypes.removeAll(enums);
 
         List<CSimpleType> namers =
                 cSimpleTypes.stream()
@@ -438,10 +434,7 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
                 // keyword.
                 return null;
             case "_Thread_local":
-                // Genuinely different: thread-local storage gives every thread its own copy, which
-                // the model does not represent. Refused rather than silently shared.
-                throw new UnsupportedFrontendElementException(
-                        "Not yet implemented (" + ctx.getText() + ")");
+                return ThreadLocal();
         }
         throw new UnsupportedFrontendElementException(
                 "Storage class specifier not expected: " + ctx.getText());
@@ -615,70 +608,77 @@ public class TypeVisitor extends IncludeHandlingCBaseVisitor<CSimpleType> {
         return ctx.enumSpecifier().accept(this);
     }
 
+    /**
+     * Computes the enumerators' values (the previous one + 1, starting at 0, unless given) and the
+     * types GCC gives the enumeration and its constants. Each constant is registered as soon as its
+     * value is known, typed by that value alone, because a later value may use it.
+     *
+     * <p>The types depend on every value, so one that cannot be folded leaves all of them unknown:
+     * the constants are then refused where used, and so is the enumeration as a type.
+     */
     @Override
     public CSimpleType visitEnumDefinition(CParser.EnumDefinitionContext ctx) {
         String id = ctx.Identifier() == null ? null : ctx.Identifier().getText();
-        Map<String, Optional<Expr<?>>> fields = new LinkedHashMap<>();
-        // C enumerators take the previous value + 1 (starting at 0) unless given an explicit
-        // constant expression. Register each name -> value so enumerator references resolve later.
-        // If an explicit expression cannot be constant-folded (e.g. it uses shifts, which need
-        // bitvector arithmetic that is unavailable here), the running value becomes unknown and we
-        // stop registering names until the next resolvable explicit value: registering a guessed
-        // value would be unsound (a wrong verdict is worse than an unresolved-name error).
-        long nextValue = 0;
-        boolean valueKnown = true;
+        final ArchitectureType architecture = parseContext.getArchitecture();
+        final Map<String, BigInteger> values = new LinkedHashMap<>();
+        BigInteger next = BigInteger.ZERO;
+        boolean known = true;
         for (CParser.EnumeratorContext enumeratorContext : ctx.enumeratorList().enumerator()) {
             String name = enumeratorContext.enumerationConstant().getText();
             CParser.ConstantExpressionContext expressionContext =
                     enumeratorContext.constantExpression();
-            if (expressionContext != null) {
-                Long explicit = evaluateEnumConstant(expressionContext);
-                valueKnown = explicit != null;
-                if (valueKnown) {
-                    nextValue = explicit;
-                }
+            if (known && expressionContext != null) {
+                next = declarationVisitor.foldIntegerConstant(expressionContext);
+                known = next != null;
             }
-            if (valueKnown) {
-                Enum.defineConstant(name, nextValue);
-                nextValue++;
+            if (known) {
+                values.put(name, next);
+                Enum.defineConstant(name, new Enum.Constant(next, valueType(next, architecture)));
+                next = next.add(BigInteger.ONE);
+            } else {
+                values.put(name, null);
             }
-            fields.put(name, Optional.empty());
         }
-        return Enum(id, fields);
+        final List<String> names = List.copyOf(values.keySet());
+        Enum.IntegerType type = null;
+        if (known) {
+            type = Enum.gccType(values.values(), architecture);
+            if (type == null) {
+                throw new UnsupportedFrontendElementException(
+                        "enumeration values that no integer type holds");
+            }
+            final Enum.IntegerType constantType =
+                    Enum.constantType(values.values(), type, architecture);
+            values.forEach(
+                    (name, value) ->
+                            Enum.defineConstant(name, new Enum.Constant(value, constantType)));
+        } else {
+            names.forEach(name -> Enum.defineConstant(name, new Enum.Constant(null, null)));
+        }
+        final Enum anEnum = Enum(id, names, type);
+        anEnum.defineTag();
+        return anEnum;
     }
 
-    /**
-     * Best-effort constant folding of an enumerator's value expression. Returns {@code null} if the
-     * expression cannot be evaluated to an integer constant, in which case the caller falls back to
-     * the implicit "previous + 1" numbering.
-     */
-    private Long evaluateEnumConstant(CParser.ConstantExpressionContext ctx) {
-        try {
-            ExpressionVisitor expressionVisitor =
-                    new ExpressionVisitor(
-                            Set.of(),
-                            parseContext,
-                            null,
-                            new ArrayDeque<>(List.of(Tuple2.of("", Map.of()))),
-                            Map.of(),
-                            typedefVisitor,
-                            this,
-                            uniqueWarningLogger);
-            Expr<?> folded = ExprUtils.simplify(ctx.accept(expressionVisitor));
-            if (folded instanceof IntLitExpr intLit) {
-                return intLit.getValue().longValue();
-            }
-            if (folded instanceof BvLitExpr bvLit) {
-                return BvUtils.neutralBvLitExprToBigInteger(bvLit).longValue();
-            }
-        } catch (Exception e) {
-            // best effort: fall back to implicit numbering
+    /** The type of a constant while its enumeration is being defined: GCC's type for it alone. */
+    private static Enum.IntegerType valueType(BigInteger value, ArchitectureType architecture) {
+        if (Enum.IntegerType.INT.holds(value, architecture)) {
+            return Enum.IntegerType.INT;
         }
-        return null;
+        final Enum.IntegerType type = Enum.gccType(List.of(value), architecture);
+        if (type == null) {
+            throw new UnsupportedFrontendElementException(
+                    "an enumeration value that no integer type holds");
+        }
+        return type;
     }
 
     @Override
     public CSimpleType visitEnumUsage(CParser.EnumUsageContext ctx) {
+        final Enum definition = Enum.getDefinition(ctx.Identifier().getText());
+        if (definition != null) {
+            return definition.copyOf();
+        }
         return NamedType("enum " + ctx.Identifier().getText(), parseContext, uniqueWarningLogger);
     }
 

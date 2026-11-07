@@ -21,25 +21,19 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
-import java.util.WeakHashMap
+import java.util.*
 
 /**
  * Models POSIX barriers, so that `pthread_barrier_wait` blocks until `count` threads have reached
@@ -76,7 +70,7 @@ class PthreadBarrierPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val defined = builder.parent.getProcedures().mapNotNull { it.name }.toSet()
+    val defined = builder.parent.getProcedures().map { it.name }.toSet()
     val predicate = { label: XcfaLabel ->
       label is InvokeLabel && label.name in FUNCTIONS && label.name !in defined
     }
@@ -115,11 +109,8 @@ class PthreadBarrierPass(val parseContext: ParseContext) : ProcedurePass {
                 metadata = e.source.metadata,
               )
             builder.addEdge(XcfaEdge(e.source, mid, SequenceLabel(barrier.arrive()), e.metadata))
-            val serial = assignRet(retType.getValue("-1"))
-            val other = assignRet(retType.nullValue)
-            barrier.departures(serial, other).forEach {
-              builder.addEdge(XcfaEdge(mid, e.target, SequenceLabel(it), e.metadata))
-            }
+            val departureLabel = SequenceLabel(barrier.departures(assignRet, retType))
+            builder.addEdge(XcfaEdge(mid, e.target, departureLabel, e.metadata))
           }
 
           // Process sharing only matters across `fork`, which is never modeled (see
@@ -158,13 +149,11 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
   val count = global(xcfa, "__theta_barrier_count_$name", uint.smtType, uint.nullValue)
   val arrived = global(xcfa, "__theta_barrier_arrived_$name", uint.smtType, uint.nullValue)
   val draining = global(xcfa, "__theta_barrier_draining_$name", Bool(), False())
-  val claimed = global(xcfa, "__theta_barrier_claimed_$name", Bool(), False())
 
   private val zero = uint.nullValue
   private val one = uint.getValue("1")
 
-  fun reset(): List<XcfaLabel> =
-    listOf(assign(arrived, zero), assign(draining, False()), assign(claimed, False()))
+  fun reset(): List<XcfaLabel> = listOf(assign(arrived, zero), assign(draining, False()))
 
   /** Joins the current round, tripping the barrier as its last arrival. */
   fun arrive(): List<XcfaLabel> =
@@ -178,17 +167,24 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
    * Leaving a tripped barrier: as the serial thread, or as any other, which the last waiter to
    * leave may only be when the serial value is already taken.
    */
-  fun departures(serial: XcfaLabel, other: XcfaLabel): List<List<XcfaLabel>> {
+  fun departures(assignRet: (Expr<*>) -> StmtLabel, retType: CComplexType): List<XcfaLabel> {
     val leave = listOf(assign(arrived, Sub(arrived.ref, one)))
-    val othersLeft = Neq(arrived.ref, zero)
-    return listOf(
-      listOf(assume(And(draining.ref, Not(claimed.ref))), serial) +
-        leave +
-        listOf(assign(claimed, othersLeft), assign(draining, othersLeft)),
-      listOf(assume(And(draining.ref, Or(claimed.ref, Neq(arrived.ref, one)))), other) +
-        leave +
-        listOf(assign(claimed, And(claimed.ref, othersLeft)), assign(draining, othersLeft)),
-    )
+    val othersRemain = Neq(arrived.ref, zero)
+
+    val serialValue = retType.getValue("-1")
+    val otherValue = retType.nullValue
+
+    return listOf(assume(draining.ref)) +
+      leave +
+      listOf(
+        assignRet(
+          Exprs.Ite(
+            othersRemain,
+            cast(otherValue, serialValue.type),
+            cast(serialValue, serialValue.type),
+          )
+        )
+      )
   }
 }
 

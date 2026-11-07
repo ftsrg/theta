@@ -49,8 +49,8 @@ import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import hu.bme.mit.theta.xcfa.utils.memsafetyBound
 
 private const val REALLOCATES = "reallocates"
 
@@ -65,7 +65,8 @@ private const val MAX_HEAP_ELEMENTS = 64
  * residue class (see `POINTER_BASE_CLASSES`).
  *
  * Under flat addressing a block is instead the next slot of the address line, sized by the request
- * (see `bumpAllocate`).
+ * (see `bumpAllocate`). Memsafety records the size in the unit accesses index in: bytes under the
+ * bytes model, else whole elements in cells (see `memsafetyBound`).
  *
  * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
  * and the object's size becomes the new one. A program must use realloc's return value whether or
@@ -144,7 +145,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val arg = invokeLabel.params[1]
     val sizeLabels =
       (if (parseContext.isCheckMemsafety)
-        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
+        listOf(
+          builder.parent.allocate(parseContext, ret, builder.memsafetyBound(parseContext, ret, arg))
+        )
       else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
       val reserved =
@@ -178,7 +181,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
     }
     return if (parseContext.isCheckMemsafety) {
-      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
+      listOf(
+        keepBase,
+        builder.parent.allocate(
+          parseContext,
+          ret,
+          builder.memsafetyBound(parseContext, ret, newSize),
+        ),
+      )
     } else {
       listOf(keepBase)
     }
@@ -195,12 +205,6 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invokeLabel.params[0] as RefExpr<*>
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
-
-  /** The size recorded for memsafety: cells under flat addressing where known, else bytes. */
-  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
-    if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
-      builder.mallocCells(parseContext, ret, bytes) ?: bytes
-    else bytes
 
   /**
    * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a
@@ -256,8 +260,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(size)
         else -> return null
       }
-    val flat = parseContext.memoryModel.flatAddressing()
-    val count = value.toLong() / ObjectLayout.cellModelSize(struct, flat)
+    val count = value.toLong() / ObjectLayout.sizeofBytes(struct, parseContext.architecture)
     return count.takeIf { it <= MAX_HEAP_ELEMENTS }?.toInt()
   }
 

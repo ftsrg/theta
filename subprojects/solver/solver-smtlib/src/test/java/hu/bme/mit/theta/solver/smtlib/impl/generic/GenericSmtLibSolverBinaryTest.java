@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -45,5 +46,31 @@ public class GenericSmtLibSolverBinaryTest {
 
         Files.setPosixFilePermissions(solver, PosixFilePermissions.fromString("rwxr-xr-x"));
         new GenericSmtLibSolverBinary(solver, new String[] {}).close();
+    }
+
+    @Test
+    public void stderrWarningIsNotAResponse(@TempDir final Path dir) throws Exception {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"));
+        final Path solver = dir.resolve("solver");
+        Files.writeString(
+                solver,
+                "#!/bin/sh\n"
+                        + "while read -r line; do\n"
+                        + "  echo '[bzla] warning: Equality over constant arrays not fully"
+                        + " supported yet' >&2\n"
+                        + "  sleep 0.2\n"
+                        + "  echo success\n"
+                        + "done\n");
+        Files.setPosixFilePermissions(solver, PosixFilePermissions.fromString("rwxr-xr-x"));
+
+        final var binary = new GenericSmtLibSolverBinary(solver, new String[] {});
+        try {
+            binary.issueCommand("(set-option :print-success true)");
+            assertEquals("success", binary.readResponse());
+            binary.issueCommand("(check-sat)");
+            assertEquals("success", binary.readResponse());
+        } finally {
+            binary.close();
+        }
     }
 }

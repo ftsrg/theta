@@ -28,21 +28,22 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.intValue
 import hu.bme.mit.theta.xcfa.utils.integerOf
 import java.math.BigInteger
-import java.util.Collections
-import java.util.IdentityHashMap
 
-class AmbiguousMutexPass : ProcedurePass {
+class AmbiguousMutexPass(private val parseContext: ParseContext = ParseContext()) : ProcedurePass {
 
   companion object {
 
@@ -51,11 +52,12 @@ class AmbiguousMutexPass : ProcedurePass {
   }
 
   private lateinit var possibleLiteralValues: Map<VarDecl<*>, Set<LitExpr<*>?>>
-  private val processed = Collections.newSetFromMap(IdentityHashMap<XcfaBuilder, Boolean>())
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!processed.add(builder.parent)) return builder
+    // Every procedure has its own instance of this pass, but it resolves the whole model at once.
+    if (builder.parent.metaData.put(PROCESSED, Unit) != null) return builder
     val procedures = builder.parent.getProcedures().toList()
+    procedures.forEach { it.foldMutexAddresses() }
     val unresolved =
       procedures
         .flatMap { it.getEdges() }
@@ -86,7 +88,7 @@ class AmbiguousMutexPass : ProcedurePass {
           .ifEmpty { setOf(ImmutableValuation.empty()) }
       val alternatives = mutableListOf<List<XcfaLabel>>()
       for (valuation in valuations) {
-        val simplified = addresses.map { ExprUtils.simplify(it, valuation) }
+        val simplified = addresses.map { it.resolved(valuation) }
         if (simplified.any { it !is LitExpr<*> }) {
           return SymbolicMutexPass().runChecked(builder)
         }
@@ -117,6 +119,36 @@ class AmbiguousMutexPass : ProcedurePass {
     }
 
     return builder
+  }
+
+  private fun XcfaProcedureBuilder.foldMutexAddresses() {
+    for (edge in getEdges().toList()) {
+      if (edge.getFlatLabels().none { it.mutexAddresses.isNotEmpty() }) continue
+      removeEdge(edge)
+      val labels =
+        edge.getFlatLabels().map { label ->
+          val addresses = label.mutexAddresses
+          if (addresses.isEmpty()) label
+          else label.withMutexAddresses(addresses.map { it.resolved() })
+        }
+      addEdge(edge.withLabel(SequenceLabel(labels, edge.label.metadata)))
+    }
+  }
+
+  private fun Expr<*>.resolved(valuation: Valuation = ImmutableValuation.empty()): Expr<*> =
+    ExprUtils.simplify(ExprUtils.simplify(this, valuation).foldSubObjectAddresses())
+
+  /**
+   * A handle like `&s.m` or `&m[1]` reads the cell holding the subobject's base, whose value is the
+   * subobject's constant address. Cells holding program pointers are not recorded.
+   */
+  private fun Expr<*>.foldSubObjectAddresses(): Expr<*> {
+    val folded = if (ops.isEmpty()) this else map { it.foldSubObjectAddresses() }
+    val deref = folded as? Dereference<*, *, *> ?: return folded
+    val parent = deref.array.asConstantBigInteger() ?: return folded
+    val unit = deref.offset.asConstantBigInteger() ?: return folded
+    val address = parseContext.staticSubObjectAddressAt(parent, unit) ?: return folded
+    return deref.type.integerOf(address) ?: folded
   }
 
   private fun collectPossibleLiteralValues(
@@ -215,7 +247,7 @@ class AmbiguousMutexPass : ProcedurePass {
         val dependencies = mutableSetOf<DependencyEdge>()
         result[v] = if (v in havocedVars) mutableSetOf(null) else mutableSetOf()
         assignments[v]?.forEach { expr ->
-          val simplified = ExprUtils.simplify(expr)
+          val simplified = expr.resolved()
           if (simplified is LitExpr<*>) {
             result[v]!!.add(simplified)
           } else {
@@ -239,7 +271,7 @@ class AmbiguousMutexPass : ProcedurePass {
     val addPossibleValues = { expr: Expr<*>, node: DependencyNode ->
       var changed = false
       expr.getPossibleValuations(result).forEach { valuation ->
-        val simplified = ExprUtils.simplify(expr, valuation) as? LitExpr<*>
+        val simplified = expr.resolved(valuation) as? LitExpr<*>
         if (addPossibleValue(node.variable, simplified)) {
           changed = true
         }
@@ -500,3 +532,5 @@ class AmbiguousMutexPass : ProcedurePass {
   private fun <A, B> pairIfBothNotNull(first: A?, second: B?): Pair<A, B>? =
     if (first != null && second != null) Pair(first, second) else null
 }
+
+private const val PROCESSED = "ambiguousMutexProcessed"

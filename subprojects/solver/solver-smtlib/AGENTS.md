@@ -25,7 +25,7 @@ Gradle module: `:theta-solver-smtlib`. Drives **external SMT-LIB v2 solver proce
 ## Invariants / gotchas
 
 1. **Declarations mirror push/pop**: `SmtLibSolver` re-declares only consts not in its `declarationStack` — any change to add/track/push/pop must keep that stack exactly synchronized with solver scopes, or symbols vanish/duplicate after `pop`.
-2. **Response parsing is ANTLR on full solver output** — vendor quirks are handled by flags on the binary layer (`Solver.CVC4` token stitching, `Solver.PRINCESS` stderr suppression), not by grammar forks. New quirk → new flag there, not a grammar copy.
+2. **Response parsing is ANTLR on full solver output** — vendor quirks are handled by flags on the binary layer (`Solver.CVC4` token stitching, `Solver.PRINCESS` stderr suppression), not by grammar forks. New quirk → new flag there, not a grammar copy. Stderr is read by whole lines and joins the response stream, except diagnostics of the form `[name] warning|info: ...` (Bitwuzla's), which are dropped.
 3. **Interpolation is a per-vendor protocol**, subclassing `SmtLibItpSolver`; capability is *version-gated* (see matrix) and declared by the factory — a wrong gate silently produces `UnsupportedOperationException` at refinement time.
 4. `getModel()`/`getUnsatCore()` are memoized and invalidated on any `add`/`pop`/`reset`; calling them off a SAT/UNSAT state throws.
 5. Enum types: the chosen `SmtLibEnumStrategy` changes what assertions look like on the wire (SORTS wraps every enum-mentioning assertion) — interpolants/models must be interpreted under the same strategy.

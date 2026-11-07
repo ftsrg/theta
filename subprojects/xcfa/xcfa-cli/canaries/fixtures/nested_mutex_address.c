@@ -1,5 +1,4 @@
-// A mutex inside a struct or an array is locked through its cell's address: the lock analysis
-// resolves that handle, so a union-typed member keeps it instead of its own base (#602).
+// Direct mutex addresses in structs and arrays retain the identity of each nested object.
 #include <pthread.h>
 extern void abort(void);
 void reach_error() { abort(); }

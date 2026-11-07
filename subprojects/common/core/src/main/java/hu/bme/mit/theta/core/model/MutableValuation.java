@@ -17,16 +17,11 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -36,9 +31,24 @@ import java.util.Optional;
 public final class MutableValuation extends Valuation {
 
     private final Map<Decl<?>, LitExpr<?>> declToExpr;
+    private final Valuation fallback;
 
     public MutableValuation() {
+        this(null);
+    }
+
+    private MutableValuation(final Valuation fallback) {
         this.declToExpr = CollectionUtil.createMap();
+        this.fallback = fallback;
+    }
+
+    /**
+     * An empty valuation that also evaluates what {@code fallback} binds, without copying it. Only
+     * its own bindings are listed by {@link #getDecls()} and {@link #toMap()}, so that a large
+     * shared set of bindings costs nothing per copy.
+     */
+    public static MutableValuation withFallback(final Valuation fallback) {
+        return new MutableValuation(checkNotNull(fallback));
     }
 
     public static MutableValuation copyOf(final Valuation val) {
@@ -82,15 +92,7 @@ public final class MutableValuation extends Valuation {
         checkNotNull(decl);
         @SuppressWarnings("unchecked")
         final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
-        return Optional.ofNullable(val);
-    }
-
-    @Override
-    public Expr<BoolType> toExpr() {
-        return SmartBoolExprs.And(
-                declToExpr.entrySet().stream()
-                        .map(e -> Eq(e.getKey().getRef(), e.getValue()))
-                        .collect(toImmutableList()));
+        return val == null && fallback != null ? fallback.eval(decl) : Optional.ofNullable(val);
     }
 
     @Override

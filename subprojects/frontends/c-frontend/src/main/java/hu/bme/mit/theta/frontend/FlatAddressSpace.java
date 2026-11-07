@@ -26,8 +26,9 @@ import java.util.TreeMap;
 
 /**
  * The compile-time half of the flat address line: every static object gets the slot `[start, start
- * + size + GAP)` right after the previous one, starting at {@link #FIRST} so that null (0) is no
- * object's address. Runtime objects continue from {@link #end()} (see `AllocationUtils` in xcfa).
+ * + size + GAP)` right after the previous one, starting at {@link #FIRST} so that no object's
+ * address is null, a member of null, or an integer sentinel like {@code (void *)1}. Runtime objects
+ * continue from {@link #end()} (see `AllocationUtils` in xcfa).
  *
  * <p>The gap keeps one-past-the-end of an object out of its neighbour, and keeps zero-sized objects
  * at distinct addresses. Once {@link #end()} has been read the runtime counter is seeded from it,
@@ -35,7 +36,7 @@ import java.util.TreeMap;
  */
 public final class FlatAddressSpace {
 
-    public static final BigInteger FIRST = BigInteger.ONE;
+    public static final BigInteger FIRST = BigInteger.ONE.shiftLeft(12);
     public static final BigInteger GAP = BigInteger.ONE;
 
     /** The slot reserved for an object whose extent the translation unit cannot know. */

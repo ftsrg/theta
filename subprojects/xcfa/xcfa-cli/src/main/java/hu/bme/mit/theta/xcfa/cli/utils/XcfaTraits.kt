@@ -145,6 +145,7 @@ fun xcfaTraits(
     "branchingLocations" to branching,
     "inlined" to xcfa.isInlined,
     "unsafeUnrollUsed" to xcfa.unsafeUnrollUsed,
+    "overApproximatedVars" to xcfa.overApproximatedVars.size,
     "errorLocations" to procs.count { it.errorLoc.isPresent },
     "initProcedures" to xcfa.initProcedures.size,
     // memory

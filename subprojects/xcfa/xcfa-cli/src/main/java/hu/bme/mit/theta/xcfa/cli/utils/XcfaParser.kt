@@ -44,7 +44,6 @@ import java.io.FileReader
 import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import kotlin.io.path.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.jvm.optionals.getOrNull
 import org.antlr.v4.runtime.BailErrorStrategy
@@ -210,53 +209,20 @@ private fun CFA.toXcfa(): XCFA {
   return xcfaBuilder.build()
 }
 
-private fun parseC(
-  frontendConfig: CFrontendConfig,
-  input: File,
-  property: XcfaProperty,
-  parseContext: ParseContext,
-  logger: Logger,
-  uniqueWarningLogger: Logger,
-): XCFA {
-  var input =
-    if (input.name.endsWith(".yml")) {
-      try {
-        val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
-        if (parsedYaml is YamlMap) {
-          when (val files = parsedYaml.get<YamlNode>("input_files")) {
-            is YamlList -> {
-              val inputFile = Path(input.parent).resolve(files[0].toString()).toFile()
-              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
-              inputFile
-            }
-            is YamlScalar -> {
-              val inputFile = Path(input.parent).resolve(files.content).toFile()
-              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
-              inputFile
-            }
-            else -> {
-              logger.info("%s", "Unexpected yml content: $files")
-              input
-            }
-          }
-        } else {
-          logger.info("%s", "Unexpected yml content: $parsedYaml")
-          input
-        }
-      } catch (ex: Exception) {
-        logger.info("%s", "Could not parse YAML data: ${ex.message}")
-        input
-      }
-    } else {
-      input
-    }
-
-  input =
-    if (frontendConfig.useCir2c) {
-      val temp = createTempDirectory()
-      val copied = temp.resolve("input.${input.extension}").toFile()
+/**
+ * Lowers the inputs to C with Cir2C: a single file, one file per translation unit for the multi-TU
+ * frontend to link, or with `--cir2c-merge` one file made by cir-merge for the regular frontend.
+ */
+private fun runCir2c(inputs: List<File>, config: CFrontendConfig, logger: Logger): List<File> {
+  val temp = createTempDirectory().toFile()
+  // The input is copied, so what it includes relative to itself has to be found another way.
+  fun includes(file: File) = listOf("--cflag", "-I${file.absoluteFile.parent}")
+  val userArgs = config.cir2cArgs.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+  val copies =
+    inputs.mapIndexed { i, inputFile ->
+      val copied = temp.resolve("tu$i").also { it.mkdirs() }.resolve(inputFile.name)
       var curlyBraceCount = 0
-      input.readLines().forEach { line ->
+      inputFile.readLines().forEach { line ->
         line.forEach { c -> if (c == '{') curlyBraceCount++ else if (c == '}') curlyBraceCount-- }
         val newLine =
           if (curlyBraceCount == 0 && '{' !in line) {
@@ -267,22 +233,103 @@ private fun parseC(
         copied.appendText(newLine)
         copied.appendText(System.lineSeparator())
       }
-      val transformed = temp.resolve("input-transformed.c").toFile()
-
-      // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess ->
-      // cir2c) and finds its own toolchain relative to the script, so we only pass the
-      // source and the desired C output path.
-      "./run-cir2c.sh ${copied.absolutePath} ${transformed.absolutePath}"
-        .runCommand(frontendConfig.cir2cDir, logger)
+      copied
+    }
+  // run-cir2c.sh drives the whole Cir2C pipeline (clang -emit-cir -> preprocess -> cir2c) and finds
+  // its own toolchain relative to the script.
+  val script = "./run-cir2c.sh"
+  if (inputs.size == 1 || config.cir2cMerge) {
+    val transformed = temp.resolve("input-transformed.c")
+    val merge = if (inputs.size > 1) listOf("--merge", "cir") else emptyList()
+    val args =
+      listOf(script) +
+        merge +
+        inputs.distinctBy { it.absoluteFile.parent }.flatMap(::includes) +
+        userArgs +
+        copies.map { it.absolutePath } +
+        transformed.absolutePath
+    args.runCommand(config.cir2cDir, logger)
+    return listOf(transformed)
+  }
+  return copies.indices
+    .toList()
+    .parallelStream()
+    .map { i ->
+      val transformed = temp.resolve("tu$i-transformed.c")
+      val args =
+        listOf(script, "--tu-part") +
+          includes(inputs[i]) +
+          userArgs +
+          copies[i].absolutePath +
+          transformed.absolutePath
+      args.runCommand(config.cir2cDir, logger)
       transformed
+    }
+    .toList()
+}
+
+private fun parseC(
+  frontendConfig: CFrontendConfig,
+  input: File,
+  property: XcfaProperty,
+  parseContext: ParseContext,
+  logger: Logger,
+  uniqueWarningLogger: Logger,
+): XCFA {
+  // Resolve input file(s) from .yml manifest or direct file
+  val inputs: List<File> =
+    if (input.name.endsWith(".yml")) {
+      try {
+        val parsedYaml = Yaml.default.parseToYamlNode(input.readText())
+        if (parsedYaml is YamlMap) {
+          when (val files = parsedYaml.get<YamlNode>("input_files")) {
+            is YamlList -> {
+              val resolved =
+                files.items.map {
+                  input.absoluteFile.parentFile.resolve((it as YamlScalar).content)
+                }
+              logger.result(
+                "%s",
+                "Parsing ${resolved.size} input file(s) from ${input.name}: " +
+                  resolved.joinToString(" ") { it.name },
+              )
+              resolved
+            }
+            is YamlScalar -> {
+              val inputFile = input.absoluteFile.parentFile.resolve(files.content)
+              logger.result("%s", "Parsing ${inputFile.name} instead of ${input.name}")
+              listOf(inputFile)
+            }
+            else -> {
+              logger.info("%s", "Unexpected yml content: $files")
+              listOf(input)
+            }
+          }
+        } else {
+          logger.info("%s", "Unexpected yml content: $parsedYaml")
+          listOf(input)
+        }
+      } catch (ex: Exception) {
+        logger.info("%s", "Could not parse YAML data: ${ex.message}")
+        listOf(input)
+      }
     } else {
-      input
+      listOf(input)
     }
 
+  val transformedInputs =
+    if (frontendConfig.useCir2c) runCir2c(inputs, frontendConfig, logger) else inputs
+
+  // Parse single or multiple translation units
   val xcfaFromC =
     try {
-      val stream = FileInputStream(input)
-      getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+      if (transformedInputs.size == 1) {
+        val stream = FileInputStream(transformedInputs[0])
+        getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+      } else {
+        getXcfaFromC(transformedInputs, parseContext, false, property, uniqueWarningLogger, logger)
+          .first
+      }
     } catch (e: Throwable) {
       // The retry used to require `efficient`, which it never saw: FunctionVisitor resolves
       // `efficient` into integer or bitvector before the parse gets far enough to fail, so by the
@@ -298,9 +345,21 @@ private fun parseC(
       if (revisable) {
         parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
         logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
-        val stream = FileInputStream(input)
         val xcfa =
-          getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+          if (transformedInputs.size == 1) {
+            val stream = FileInputStream(transformedInputs[0])
+            getXcfaFromC(stream, parseContext, false, property, uniqueWarningLogger, logger).first
+          } else {
+            getXcfaFromC(
+                transformedInputs,
+                parseContext,
+                false,
+                property,
+                uniqueWarningLogger,
+                logger,
+              )
+              .first
+          }
         parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
         xcfa
       } else {
@@ -374,11 +433,15 @@ private fun parseBTOR2(
   return xcfa
 }
 
-private fun String.runCommand(wd: File, logger: Logger, level: Logger.Level = Logger.Level.INFO) {
-  val process =
-    ProcessBuilder(*split(" ").toTypedArray()).directory(wd).redirectErrorStream(true).start()
+private fun List<String>.runCommand(
+  wd: File,
+  logger: Logger,
+  level: Logger.Level = Logger.Level.INFO,
+) {
+  val process = ProcessBuilder(this).directory(wd).redirectErrorStream(true).start()
   process.inputStream.bufferedReader().useLines { lines ->
     lines.forEach { logger.write(level, "%s%n", it) }
   }
-  process.waitFor(15, TimeUnit.MINUTES)
+  check(process.waitFor(15, TimeUnit.MINUTES)) { "Timed out: ${joinToString(" ")}" }
+  check(process.exitValue() == 0) { "Exit code ${process.exitValue()}: ${joinToString(" ")}" }
 }

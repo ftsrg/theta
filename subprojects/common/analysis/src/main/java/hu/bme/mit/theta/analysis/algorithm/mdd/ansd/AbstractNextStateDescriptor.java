@@ -17,6 +17,8 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.ansd;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.EmptyNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.IdentityNextStateDescriptor;
 import java.io.Closeable;
@@ -123,6 +125,15 @@ public interface AbstractNextStateDescriptor {
     // Must throw an exception if undecidable.
     default boolean evaluate() {
         throw new IllegalStateException("Evaluated before reaching a terminal descriptor.");
+    }
+
+    /**
+     * The terminal this descriptor yields from {@code terminal} when it fires: what the graph's
+     * {@link hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues} make of a step on
+     * the terminals, the terminal itself unless they act on terminals.
+     */
+    default MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
+        return terminal;
     }
 
     default boolean isLocallyIdentity(final StateSpaceInfo stateSpaceInfo) {

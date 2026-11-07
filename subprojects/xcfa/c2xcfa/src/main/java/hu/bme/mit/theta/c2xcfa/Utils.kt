@@ -36,12 +36,16 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.XCFA
+import java.io.File
 import java.io.InputStream
 import java.util.ArrayDeque
 import kotlin.jvm.optionals.getOrDefault
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+
+/** Name prefix of the IEEE bits written through a floating-point union member. */
+const val FP_BITS_PREFIX = "__theta_fpbits"
 
 fun getXcfaFromC(
   stream: InputStream,
@@ -147,4 +151,49 @@ fun getBoolExpressionFromC(
   } else {
     Neq(expr, signedType.nullValue)
   }
+}
+
+/**
+ * Builds an XCFA from several C translation units, linked the way a linker would link them: see
+ * [FunctionVisitor.visitTranslationUnits].
+ */
+fun getXcfaFromC(
+  files: List<File>,
+  parseContext: ParseContext,
+  collectStatistics: Boolean,
+  property: XcfaProperty,
+  warningLogger: Logger,
+  logger: Logger = warningLogger,
+): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
+  val units = files.map { parseTypeAware(CharStreams.fromFileName(it.path)) }
+  val program = FunctionVisitor(parseContext, warningLogger).visitTranslationUnits(units)
+  logger.benchmark("ParsingResult Success")
+
+  val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
+  val builder = frontendXcfaBuilder.buildXcfa(program)
+  val xcfa = builder.build()
+
+  if (collectStatistics) {
+    val programStatistics =
+      try {
+        program.getStatistics()
+      } catch (_: Exception) {
+        CStatistics(0, emptyList())
+      }
+    val unoptimizedXcfaStatistics =
+      try {
+        builder.getStatistics()
+      } catch (_: Exception) {
+        XcfaStatistics(0, emptyList())
+      }
+    val optimizedXcfaStatistics =
+      try {
+        xcfa.getStatistics()
+      } catch (_: Exception) {
+        XcfaStatistics(0, emptyList())
+      }
+    return Triple(xcfa, programStatistics, Pair(unoptimizedXcfaStatistics, optimizedXcfaStatistics))
+  }
+
+  return Triple(xcfa, null, null)
 }
