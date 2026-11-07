@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.io.File
+import kotlin.jvm.optionals.getOrNull
 
 class SvLibWitnessWriter : XcfaWitnessWriter {
   override val extension = "svlib"
@@ -351,7 +352,8 @@ private fun Valuation.toSvLib(): String {
 private fun Valuation.filterLocal(procedure: XcfaProcedure, parseContext: ParseContext) =
   this.toMap()
     .filterKeys { varDecl ->
-      procedure.name == parseContext.metadata.getMetadataValue(varDecl, "declaredIn")?.get() &&
+      procedure.name ==
+        parseContext.metadata.getMetadataValue(varDecl, "declaredIn")?.getOrNull() &&
         procedure.params.all { (param, dir) -> param != varDecl || dir != ParamDirection.IN }
     }
     .let(ImmutableValuation::from)

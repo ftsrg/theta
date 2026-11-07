@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.rattype.RatExprs
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
@@ -51,12 +52,12 @@ class SvLibXcfaBuilder(
   }
 
   override fun visitDeclareVar(ctx: DeclareVarContext) {
-    createGlobalVar(ctx.symbol().original, sortOf(ctx.sort()))
+    createGlobalVar(ctx.symbol(), sortOf(ctx.sort()))
   }
 
   override fun visitDeclareConstCommand(ctx: DeclareConstCommandContext) {
     val cmd = ctx.cmd_declareConst()
-    createGlobalVar(cmd.symbol().original, sortOf(cmd.sort()))
+    createGlobalVar(cmd.symbol(), sortOf(cmd.sort()))
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
@@ -223,8 +224,8 @@ class SvLibXcfaBuilder(
       else -> throw sort.unsupported("sort '${sort.original}'")
     }
 
-  private fun createGlobalVar(name: String, type: Type) =
-    Decls.Var(name, type).also {
+  private fun createGlobalVar(symbol: SymbolContext, type: Type) =
+    Decls.Var(encodeSymbol(getSymbol(symbol)), type).also {
       xcfaBuilder.addVar(XcfaGlobalVar(it))
       globalSymbolTable.registerVar(it)
     }
@@ -235,7 +236,18 @@ class SvLibXcfaBuilder(
     }
 
   private fun ProcDeclarationArgumentsContext.getVars() =
-    symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.original, sortOf(sort)) }
+    symbol().zip(sort()).map { (symbol, sort) ->
+      Decls.Var(encodeSymbol(getSymbol(symbol)), sortOf(sort))
+    }
+
+  private fun getSymbol(symbol: SymbolContext): String {
+    val name = symbol.original
+    if (symbol.quotedSymbol() != null) {
+      assert(name.startsWith('|') && name.endsWith('|')) { "Quoted symbol not quoted." }
+      return name.drop(1).dropLast(1)
+    }
+    return name
+  }
 
   private val XcfaLocation.context
     get() =
