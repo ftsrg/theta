@@ -51,6 +51,7 @@ fun symbolicPortfolio(
                 baseMddConfig.backendConfig.specConfig!!.copy(
                   solver = solver,
                   iterationStrategy = GSAT,
+                  symbolicValues = true,
                 ),
             )
         ),
