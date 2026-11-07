@@ -675,6 +675,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
    * `scanf`-family call may write, guarded by [assigned] of the target's index: the stub writes
    * only the first cell, so the guards would miss an overflow. A string's length is an [input],
    * else over-approximated, as is every char target of a format whose text is not known.
+   *
+   * This is Agent generated and was never checked!!!!
    */
   private fun extentProbes(
     invoke: InvokeLabel,
@@ -794,6 +796,8 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
    * Under memory safety, a read of the last of the `n` (argument [size]) characters of [buffer]
    * that `fgets`, `read` or `recv` may fill where [line] or [receive] does not apply: the stub
    * writes only the first one, and the input may fill all of them.
+   *
+   * This is Agent generated and was never checked!!!!
    */
   private fun lastCellProbe(
     invoke: InvokeLabel,
@@ -909,6 +913,8 @@ internal data class ScanWrite(val string: Boolean, val cells: Long?)
 /**
  * What the `scanf` format [format] writes to each argument it assigns, in order, or null if it
  * cannot be parsed.
+ *
+ * This is Agent generated and was never checked!!!!
  */
 internal fun scanWrites(format: String): List<ScanWrite>? {
   val writes = mutableListOf<ScanWrite>()
