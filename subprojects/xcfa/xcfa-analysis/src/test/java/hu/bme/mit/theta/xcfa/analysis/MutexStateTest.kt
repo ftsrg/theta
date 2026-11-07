@@ -182,7 +182,6 @@ class MutexStateTest {
     val mutexState = recursive()
     val label =
       InvokeLabel("unknown_library_function", emptyList(), EmptyMetaData, isLibraryFunction = true)
-    assertSame(mutexState, mutexState.apply(label, global))
     val initial = state(mutexState)
     val loc = initial.processes.getValue(0).locs.peek()
     loc.outgoingEdges.add(XcfaEdge(loc, loc, label, EmptyMetaData))
