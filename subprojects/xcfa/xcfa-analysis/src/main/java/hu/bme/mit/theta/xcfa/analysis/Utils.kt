@@ -33,11 +33,16 @@ import kotlin.reflect.KProperty
 
 fun <K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }
 
-fun Valuation.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Valuation {
+fun Valuation.changeVars(
+  varLut: Map<out Decl<*>, VarDecl<*>>,
+  keepAll: Boolean = false,
+): Valuation {
   val builder = ImmutableValuation.builder()
   for (decl in this.decls) {
     if (decl in varLut) {
       builder.put(decl.changeVars(varLut), this.eval(decl).get())
+    } else if (keepAll) {
+      builder.put(decl, this.eval(decl).get())
     }
   }
   return builder.build()

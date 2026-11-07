@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
@@ -286,18 +285,8 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
     parseContext: ParseContext,
   ): ExplState {
     val currentState = state.processes.values.first()
-    val globalVars =
-      (state.xcfa ?: throw IllegalStateException("no XCFA associated with trace"))
-        .globalVars
-        .map(XcfaGlobalVar::wrappedVar)
-
-    // Traces not built by the abstract analysis (e.g. CHC) have no lookup: vars are not renamed.
-    val lookup = currentState.varLookup.firstOrNull()
-    val genericValuationMap: Map<Decl<*>, LitExpr<*>> =
-      if (lookup == null) valuation.toMap()
-      else valuation.changeVars(globalVars.associateWith { it } + lookup.reverseMapping()).toMap()
-
-    return ExplState.of(ImmutableValuation.from(genericValuationMap))
+    val varLookup = currentState.varLookup.firstOrNull()?.reverseMapping() ?: emptyMap()
+    return ExplState.of(valuation.changeVars(varLookup, keepAll = true))
   }
 }
 
