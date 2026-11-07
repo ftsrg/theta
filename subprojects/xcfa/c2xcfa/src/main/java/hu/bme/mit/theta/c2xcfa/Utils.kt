@@ -63,6 +63,7 @@ fun getXcfaFromC(
 
   val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
   val builder = frontendXcfaBuilder.buildXcfa(program)
+  VoidPointerViews(parseContext, builder).check()
   val xcfa = builder.build()
 
   if (collectStatistics) {
