@@ -25,7 +25,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol;
-import static hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer.getSymbol;
 
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.core.type.Expr;
@@ -38,6 +37,7 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ProofNode;
 import hu.bme.mit.theta.solver.ProofNode.Builder;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
@@ -71,7 +71,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
                 "HORN");
     }
 
-    public static Type transformSort(final SortContext ctx) {
+    public Type transformSort(final SortContext ctx) {
         final String name = getSymbol(ctx.identifier().symbol());
         return switch (name) {
             case "Int" -> Int();
@@ -174,5 +174,15 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
         final var lastArg = args.get(args.size() - 1);
         checkState(lastArg instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
         return (Expr<BoolType>) lastArg;
+    }
+
+    private String getSymbol(SMTLIBv2Parser.SymbolContext symbol) {
+        final var str = symbol.getText();
+        if (symbol.quotedSymbol() != null) {
+            assert str.charAt(0) == '|' && str.charAt(str.length() - 1) == '|'
+                    : "Quoted symbol not quoted.";
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 }

@@ -1131,7 +1131,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
     }
 
-    static String getSymbol(SymbolContext symbol) {
+    public String getSymbol(SymbolContext symbol) {
         final var str = symbol.getText();
         if (symbol.quotedSymbol() != null) {
             assert str.charAt(0) == '|' && str.charAt(str.length() - 1) == '|'

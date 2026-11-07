@@ -19,24 +19,52 @@ import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.solver.Stack
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
-import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
-class SvLibTermTransformer(private val symbolTable: SvLibSymbolTable = SvLibSymbolTable()) {
-  private var termTransformer: SmtLibTermTransformer = GenericSmtLibTermTransformer(symbolTable)
+class SvLibTermTransformer(private val svLibSymbolTable: SvLibSymbolTable = SvLibSymbolTable()) :
+  GenericSmtLibTermTransformer(svLibSymbolTable) {
+  override fun transformSymbol(
+    ctx: SMTLIBv2Parser.SymbolContext,
+    model: SmtLibModel,
+    vars: Stack<ParamDecl<*>>,
+  ): Expr<*> {
+    when (val value = ctx.text) {
+      "true" -> return BoolExprs.True()
+      "false" -> return BoolExprs.False()
+      else -> {
+        val filtered = vars.filter { it.name == value }
+        return if (!filtered.isEmpty()) {
+          filtered.last().getRef()
+        } else if (svLibSymbolTable.definesSymbol(value)) {
+          svLibSymbolTable.getConst(value).getRef()
+        } else if (svLibSymbolTable.definesEnumLiteral(value)) {
+          svLibSymbolTable.getEnumLiteral(value)
+        } else {
+          throw SmtLibSolverException("Transformation of symbol not supported: " + value)
+        }
+      }
+    }
+  }
+
+  override fun getSymbol(symbol: SMTLIBv2Parser.SymbolContext): String = symbol.text
 
   fun <T : Type> toExpr(term: String, type: T): Expr<T> =
-    termTransformer.toExpr(term, type, SmtLibModel(emptyMap())).changeVars(symbolTable.constToVar)
+    super.toExpr(term, type, SmtLibModel(emptyMap())).changeVars(svLibSymbolTable.constToVar)
 }
 
 class SvLibExprTransformer {
