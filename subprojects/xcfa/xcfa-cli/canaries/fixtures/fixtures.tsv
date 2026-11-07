@@ -614,3 +614,8 @@ pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the differ
 container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
 fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
 fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
+bool_array_oob_bytes.c	efficient	ILP32	UNSAFE:valid-memsafety	a _Bool array element is a byte: an out-of-bounds index is caught under bytes	bytes
+bool_array_oob_fallback.c	efficient	ILP32	UNSAFE:valid-memsafety	the bytes retry of a two-type malloc wrapper bounds its _Bool block
+bool_array_elements.c	efficient	ILP32	SAFE	the elements of a _Bool array are distinct under bytes	bytes
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each: sizeof, offsets and stores
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each under bytes	bytes
