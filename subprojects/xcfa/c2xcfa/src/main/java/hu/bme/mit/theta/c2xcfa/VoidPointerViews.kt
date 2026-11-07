@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor
@@ -36,6 +37,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.NondetLabel
@@ -56,7 +59,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * `void *` places that may hold the same object are merged flow-insensitively, and a group that is
  * converted from or to both a character pointer and another object pointer, or a direct conversion
  * between the two, throws [RequiresByteAddressedMemoryException], so the program is rebuilt under
- * `bytes`. Pointers laundered through integers or punned through unions are not followed.
+ * `bytes`. An integer variable that is assigned an address is a `void *` place too. Pointers punned
+ * through unions are not followed.
  */
 internal class VoidPointerViews(
   private val parseContext: ParseContext,
@@ -81,6 +85,7 @@ internal class VoidPointerViews(
   private val memory = fresh()
   private val stored = fresh()
   private val procedures = builder.getProcedures().associateBy { it.name }
+  private val addressHolders = HashSet<VarDecl<*>>()
 
   /** Possible callees through a pointer: address-taken functions and those never called by name. */
   private val callbacks: List<XcfaProcedureBuilder> by lazy {
@@ -99,6 +104,7 @@ internal class VoidPointerViews(
 
   fun check() {
     if (parseContext.memoryModel.byteAddressed()) return
+    findAddressHolders()
     builder.getProcedures().forEach { proc ->
       proc.getEdges().forEach { edge -> allLabels(edge.label).forEach(::visit) }
     }
@@ -187,9 +193,58 @@ internal class VoidPointerViews(
     }
   }
 
+  /**
+   * The integer variables that are assigned an address, directly or through a parameter, so that
+   * `(void *)a` after `a = (unsigned long)&x` still reaches `x`.
+   */
+  private fun findAddressHolders() {
+    val labels =
+      builder.getProcedures().flatMap { proc -> proc.getEdges().flatMap { allLabels(it.label) } }
+    val writes =
+      labels.flatMap { label ->
+        when (label) {
+          is StmtLabel ->
+            listOfNotNull((label.stmt as? AssignStmt<*>)?.let { it.varDecl to it.expr })
+          is InvokeLabel ->
+            procedures[label.name]?.getParams()?.map { it.first }?.zip(label.params).orEmpty()
+          else -> emptyList()
+        }
+      }
+    do {
+      val found = addressHolders.size
+      writes
+        .filter { (variable, value) ->
+          variable !in addressHolders && isInteger(variable) && addressesIn(value).isNotEmpty()
+        }
+        .forEach { (variable, _) -> addressHolders += variable }
+    } while (addressHolders.size != found)
+  }
+
+  private fun isInteger(variable: VarDecl<*>): Boolean {
+    val type = parseContext.metadata.getMetadataValue(variable.ref, "cType").orElse(null)
+    return type is CInteger &&
+      type !is CBool &&
+      type !is CPointer &&
+      type !is CArray &&
+      type !is CStruct
+  }
+
+  /** The pointer-valued operands of an integer expression, such as `(unsigned long)&x + 8`. */
+  private fun addressesIn(expr: Expr<*>): List<Expr<*>> =
+    when {
+      expr.type is BoolType || expr is Dereference<*, *, *> -> emptyList()
+      target(expr) != null -> listOf(expr)
+      else -> expr.ops.flatMap(::addressesIn)
+    }
+
   private fun assign(variable: VarDecl<*>, value: Expr<*>, exact: Boolean = true) {
     when (val to = target(variable.ref)) {
-      Target.Void -> flowInto(varGroup(variable), value)
+      Target.Void ->
+        if (variable in addressHolders) {
+          addressesIn(value).forEach { flowInto(varGroup(variable), it) }
+        } else {
+          flowInto(varGroup(variable), value)
+        }
       is Target.Typed -> convert(to, value, exact)
       null -> {}
     }
@@ -244,10 +299,13 @@ internal class VoidPointerViews(
       is AddExpr<*>,
       is SubExpr<*> ->
         fresh().also { group -> value.ops.forEach { if (target(it) != null) flowInto(group, it) } }
-      else -> fresh()
+      // Any other expression, such as a `?:` the frontend computed as an integer: its addresses.
+      else ->
+        fresh().also { group -> value.ops.flatMap(::addressesIn).forEach { flowInto(group, it) } }
     }
 
   private fun target(expr: Expr<*>): Target? {
+    if (expr is RefExpr<*> && expr.decl in addressHolders) return Target.Void
     val type =
       parseContext.metadata.getMetadataValue(expr, "cType").orElse(null) as? CComplexType
         ?: return null

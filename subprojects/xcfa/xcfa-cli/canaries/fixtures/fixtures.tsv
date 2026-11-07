@@ -581,3 +581,7 @@ socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_sock
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
 void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
 struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
+void_pointer_byte_write.c	efficient	LP64	UNSAFE	a byte written through a void * parameter changes the long it overlaps, found under bytes
+void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
+stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
+integer_address_byte_view.c	efficient	LP64	UNSAFE	a byte view through an address kept in an integer is found under bytes
