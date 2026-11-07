@@ -19,9 +19,11 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Pos;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.type.Expr;
@@ -35,6 +37,7 @@ import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -143,28 +146,48 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     }
 
     private Expr<?> signedCast(String widthName, Expr<?> param) {
-        if (!parseContext.getSignedWraparound()) {
-            // signed overflow is undefined behavior before C23; without
-            // --enable-signed-wraparound the value is kept as-is.
-            return Pos(param);
-        }
         int width = parseContext.getArchitecture().getBitWidth(widthName);
         BigInteger halfMod = BigInteger.TWO.pow(width - 1);
         BigInteger upperLimit = BigInteger.TWO.pow(width);
-        // Already in the target's range: wrapped below 2^(w-1), or a variable or literal of a type
-        // that fits. Not any other non-arithmetic operand: a division's Ite is cast unwrapped.
         Expr<?> operand = withoutPos(param);
         CComplexType source = CComplexType.getType(param, parseContext);
         boolean fits =
                 source instanceof Signed
                         ? source.width() <= width
                         : source instanceof Unsigned && source.width() < width;
-        if (isWrappedBelow(operand, halfMod)
+        if (!parseContext.getSignedWraparound()) {
+            // Without --enable-signed-wraparound, a value of a type that fits is kept as it is:
+            // it can leave the range only by a signed overflow, which is undefined. Converting a
+            // wider integer is implementation-defined instead, and GCC wraps it.
+            boolean integerSource =
+                    source instanceof Signed
+                            || (source instanceof Unsigned && !(source instanceof Fitsall));
+            if (fits || !integerSource || isWrappedBelow(operand, halfMod)) {
+                return Pos(param);
+            }
+            if (operand instanceof IntLitExpr literal) {
+                BigInteger wrapped = literal.getValue().add(halfMod).mod(upperLimit);
+                return Pos(Int(wrapped.subtract(halfMod)));
+            }
+        } else if (isWrappedBelow(operand, halfMod)
                 || (fits && (operand instanceof RefExpr || operand instanceof LitExpr))) {
+            // Already in the target's range: wrapped below 2^(w-1), or a variable or literal of a
+            // type that fits. Not any other non-arithmetic operand: a division's Ite is cast
+            // unwrapped.
             return Pos(param);
         }
         // two's complement wraparound: ((param + 2^(w-1)) mod 2^w) - 2^(w-1)
-        return Sub(Mod(Add(param, Int(halfMod)), Int(upperLimit)), Int(halfMod));
+        Expr<?> wrapped = Sub(Mod(Add(param, Int(halfMod)), Int(upperLimit)), Int(halfMod));
+        if (!parseContext.getSignedWraparound()) {
+            // A value in range is kept, so the modulo stays out of the common case.
+            Expr<BoolType> below = Lt(param, Int(halfMod));
+            Expr<BoolType> inRange =
+                    source instanceof Unsigned
+                            ? below
+                            : And(Geq(param, Int(halfMod.negate())), below);
+            return Ite(inRange, param, wrapped);
+        }
+        return wrapped;
     }
 
     @Override
