@@ -154,7 +154,7 @@ fun termination27(
     val (startingConfig: ConfigNode, endConfig: ConfigNode) =
       if (xcfa.isInlined && xcfa.hasInvariantChecks) {
         // Only the bounded engines check the invariants of a witness
-        val kind = kind(300_000, "Z3:4.13")
+        val kind = kind(300_000, "Z3:new")
         val imcCVC5 = imc(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
         val imcMathSAT =
           imc(300_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
@@ -171,8 +171,8 @@ fun termination27(
             predcart(100_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
           val predbool =
             predbool(100_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
-          val bmc = bmc(100_000, "Z3:4.13")
-          val kind = kind(300_000, "Z3:4.13")
+          val bmc = bmc(100_000, "Z3:new")
+          val kind = kind(300_000, "Z3:new")
           val imcCVC5 = imc(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
           val imcMathSAT =
             imc(300_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
@@ -215,12 +215,12 @@ fun termination27(
 
           Pair(expl, kindMathSAT)
         } else if (types.any { it is ArrayType<*, *> }) {
-          val expl = expl(100_000, "Z3:4.13")
-          val predcart = predcart(100_000, "Z3:4.13")
-          val predbool = predbool(100_000, "Z3:4.13")
-          val bmc = bmc(100_000, "Z3:4.13")
+          val expl = expl(100_000, "Z3:new")
+          val predcart = predcart(100_000, "Z3:new")
+          val predbool = predbool(100_000, "Z3:new")
+          val bmc = bmc(100_000, "Z3:new")
           val bmcLegacy = bmc(100_000, "Z3")
-          val kind = kind(300_000, "Z3:4.13")
+          val kind = kind(300_000, "Z3:new")
           val kindLegacy = kind(300_000, "Z3")
           val imcCVC5 = imc(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
           val imcMathSAT =
@@ -239,11 +239,11 @@ fun termination27(
 
           Pair(bmc, kindMathSAT)
         } else {
-          val expl = expl(100_000, "Z3:4.13")
-          val predcart = predcart(100_000, "Z3:4.13")
-          val predbool = predbool(100_000, "Z3:4.13")
-          val bmc = bmc(100_000, "Z3:4.13")
-          val kind = kind(300_000, "Z3:4.13")
+          val expl = expl(100_000, "Z3:new")
+          val predcart = predcart(100_000, "Z3:new")
+          val predbool = predbool(100_000, "Z3:new")
+          val bmc = bmc(100_000, "Z3:new")
+          val kind = kind(300_000, "Z3:new")
           val imcCVC5 = imc(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
           val imcMathSAT =
             imc(300_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
@@ -256,8 +256,8 @@ fun termination27(
       } else {
         // The bounded engines need a single procedure; the ASG abstraction keeps the call stack
         // in its state, so it can still decide recursion whose depth stays bounded.
-        val expl = expl(300_000, "Z3:4.13")
-        val predcart = predcart(300_000, "Z3:4.13")
+        val expl = expl(300_000, "Z3:new")
+        val predcart = predcart(300_000, "Z3:new")
         expl then predcart
         Pair(expl, predcart)
       }
