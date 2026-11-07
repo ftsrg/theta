@@ -107,13 +107,6 @@ archivePackaging {
 // this Gradle judges the test up to date after the list changes, which is exactly when it matters.
 tasks.test { inputs.file("build.gradle.kts") }
 
-tasks.processTestResources {
-    from("canaries/fixtures") {
-        include("pthread_tls_*.c", "pthread_barrier_*.c")
-        into("c/pthread-models")
-    }
-}
-
 // The canary suite (see `canaries/README.md`) as a registered Gradle test task.
 //
 // Not part of `test`: a sweep takes ~20 minutes and needs a built Theta-svcomp distribution plus a
