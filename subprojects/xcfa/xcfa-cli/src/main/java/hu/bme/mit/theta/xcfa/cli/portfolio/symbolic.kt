@@ -90,7 +90,7 @@ fun symbolicPortfolio(
       return node
     }
 
-    val start = mdd(300_000, "Z3")
+    val start = mdd(300_000, "Z3:new")
     start then mddCegar(0, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
 
     return STM(start, edges)
