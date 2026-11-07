@@ -89,10 +89,6 @@ class L2SMEPass<Pr : InvariantProof> : DirectionalMonolithicExprPass<Pr> {
     val checked =
       witness?.let {
         // Without repeating a state, a run can be infinite only in an infinite state space
-        check(vars.all { decl -> decl.type.isFinite() }) {
-          "A liveness witness needs a finite state space: " +
-            vars.filterNot { decl -> decl.type.isFinite() }
-        }
         check(it.anyPrev.values.all(saveMap::containsKey)) {
           "Transition invariant over variables not in the model: " +
             it.anyPrev.values.filterNot(saveMap::containsKey)

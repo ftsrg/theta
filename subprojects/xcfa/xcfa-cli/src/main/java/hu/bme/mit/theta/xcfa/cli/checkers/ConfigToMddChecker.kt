@@ -68,6 +68,7 @@ fun getMddChecker(
       traceSearch = mddConfig.traceSearch,
       approximation = MddApproximation.of(mddConfig.edgeCapStrategy, mddConfig.edgeLimit),
       symbolicValues = mddConfig.symbolicValues,
+      qeSolverPool = SolverPool(getSolver(mddConfig.qeSolver, false)),
     )
   }
   val passes = mutableListOf<MonolithicExprPass<MddProof>>()

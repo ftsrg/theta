@@ -160,11 +160,26 @@ public abstract class CComplexType {
         return parseContext.getArchitecture().getBitWidth(getTypeName());
     }
 
+    /**
+     * The common type of the usual arithmetic conversions. Under flat addressing a pointer or an
+     * array operand counts as an address, an unsigned long: the rank logic it inherits would make
+     * it an {@code int} and truncate it under bitvectors. Under multi a pointer value is a small
+     * base id, and ReferenceElimination splits the pointers it has to compare by offset.
+     * 
+     * We don't care about multi here because it will fall back to flat addressing in a pass,
+     * from an exception that it cannot compare the two pointer values. 
+     */
     public static CComplexType getSmallestCommonType(
             List<CComplexType> types, ParseContext parseContext) {
+        final boolean addresses = parseContext.getMemoryModel().flatAddressing();
         CComplexType ret = getSignedInt(parseContext);
         for (int i = 0; i < types.size(); i++) {
-            ret = ret.getSmallestCommonType(types.get(i));
+            final CComplexType type = types.get(i);
+            ret =
+                    ret.getSmallestCommonType(
+                            addresses && (type instanceof CPointer || type instanceof CArray)
+                                    ? getUnsignedLong(parseContext)
+                                    : type);
         }
         return ret;
     }

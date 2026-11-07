@@ -94,6 +94,13 @@ class UnrollPass(
     var COLLAPSE_BUSY_WAITS = false
 
     /**
+     * Whether a busy wait may write a local that only feeds its own next value (`y = y - 1` on a
+     * dead `y`). True only when the checks already exist: the overflow, memory-safety and data-race
+     * checks come after this pass and may read such a local in a later iteration.
+     */
+    var BUSY_WAITS_IGNORE_DEAD_STORES = true
+
+    /**
      * Seed for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
@@ -114,6 +121,8 @@ class UnrollPass(
   private val recursionUnrollLimit = specificRecursionUnrollLimit ?: UNROLL_RECURSION_LIMIT
 
   private val collapseBusyWaits = COLLAPSE_BUSY_WAITS
+
+  private val ignoreDeadStores = BUSY_WAITS_IGNORE_DEAD_STORES
 
   /** The program's global variables, i.e. the ones another thread can observe. */
   private var globalVars: Set<VarDecl<*>> = emptySet()
@@ -194,6 +203,7 @@ class UnrollPass(
     val exitKey: String,
     private val tracker: CutTracker,
     val collapseBusyWaits: Boolean = false,
+    val ignoreDeadStores: Boolean = true,
     val globalVars: Set<VarDecl<*>> = emptySet(),
   ) {
 
@@ -371,7 +381,7 @@ class UnrollPass(
           .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
           .filter { it !in globalVars }
       // Locals live at [loopStart] in the whole procedure (back edge and loop exits included).
-      val live = strongLiveVars(builder)[loopStart] ?: emptySet()
+      val live = strongLiveVars(builder, strong = ignoreDeadStores)[loopStart] ?: emptySet()
       writtenLocals.none { it in live }
     }
 
@@ -810,6 +820,7 @@ class UnrollPass(
         exitKey = exitKey,
         tracker = tracker,
         collapseBusyWaits = collapseBusyWaits,
+        ignoreDeadStores = ignoreDeadStores,
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }
