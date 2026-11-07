@@ -80,6 +80,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -652,6 +653,14 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     ctx.multiplicativeExpression().stream()
                             .map(multiplicativeExpression -> multiplicativeExpression.accept(this))
                             .collect(Collectors.toList());
+            Set<Expr<?>> addresses = parseContext.getAddressIntegers();
+            if (exprs.size() == 2
+                    && ctx.signs.get(0).getText().equals("-")
+                    && addresses.contains(exprs.get(0))
+                    && addresses.contains(exprs.get(1))) {
+                addresses.remove(exprs.get(0));
+                addresses.remove(exprs.get(1));
+            }
             List<CComplexType> types =
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
@@ -1077,17 +1086,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
-        if (actualType instanceof CStruct struct) {
-            final CComplexType operandType = CComplexType.getType(operand, parseContext);
-            if (!struct.equals(operandType)) {
-                return castToUnion(struct, operand, operandType);
-            }
+        final CComplexType operandType = CComplexType.getType(operand, parseContext);
+        if (actualType instanceof CStruct struct && !struct.equals(operandType)) {
+            return castToUnion(struct, operand, operandType);
         }
-        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
+        refuseResizingPointerCast(operandType, actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
+        // A pointer that reads no variable, as `&((T *)0)->f` in `container_of`, is no object's.
+        if ((operandType instanceof CPointer || operandType instanceof CArray)
+                && actualType instanceof CInteger
+                && !(actualType instanceof CPointer)
+                && !(actualType instanceof CArray)
+                && !(actualType instanceof CStruct)
+                && !(actualType instanceof CBool)
+                && !ExprUtils.getVars(operand).isEmpty()) {
+            parseContext.getAddressIntegers().add(expr);
+        }
         return expr;
     }
 
@@ -2178,6 +2195,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         String name = idCtx.Identifier().getText();
+        if (name.equals("free") || name.equals("realloc")) {
+            parseContext.setDeallocation(true);
+        }
         List<AssignmentExpressionContext> args =
                 call.argumentExpressionList() == null
                         ? List.of()

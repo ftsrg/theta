@@ -544,6 +544,16 @@ private fun backend(
           } else {
             SafetyResult.unknown<EmptyProof, EmptyCex>()
           }
+        } else if (
+          result.isSafe &&
+            parseContext?.isAddressReuseObservable == true &&
+            config.inputConfig.property.inputProperty in
+              setOf(ErrorDetection.MEMSAFETY, ErrorDetection.MEMCLEANUP) &&
+            !config.outputConfig.acceptUnreliableSafe
+        ) {
+          // Restricted to memory safety, where a freed address and its reuse matter most.
+          logger.benchmark("Freed addresses are compared as integers: safe result is unreliable.")
+          SafetyResult.unknown<EmptyProof, EmptyCex>()
         } else {
           result
         }

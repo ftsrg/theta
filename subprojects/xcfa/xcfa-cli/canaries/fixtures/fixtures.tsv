@@ -587,3 +587,13 @@ pointer_compare_wide.c	bitvector	LP64	SAFE	pointers compare and select as unsign
 pointer_compare_wide.c	bitvector	ILP32	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
 gnu_cast_to_union.c	efficient	LP64	SAFE	GNU cast to union sets the member of the operand type
 gnu_cast_to_union.bug.c	efficient	LP64	UNSAFE	GNU cast to union: the member holds the operand, not a fixed value
+alloca_release_skipped_branch_leak.c	efficient	LP64	UNSAFE:valid-memcleanup	the release at return of an alloca skipped on this path does not free a heap block at its address	bytes
+alloca_release_skipped_branch_heap.c	efficient	LP64	SAFE:valid-memsafety	the release at return of an alloca skipped on this path keeps a live heap block at its address	bytes
+scanf_string_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	scanf %s may store more characters than the buffer holds
+scanf_string_width.c	efficient	LP64	SAFE:valid-memsafety	scanf %9s into a pointer to a ten-character buffer stays in bounds
+sscanf_string_overflow.c	efficient	LP64	UNKNOWN:valid-memsafety	sscanf %s may overflow its target; the word length is over-approximated
+pointer_integer_reused_address.c	efficient	ILP32	UNKNOWN:valid-memsafety	a pointer converted to an integer makes Safe unreliable: a freed address may be reused
+pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the difference of two pointers converted to integers is no address
+container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
+fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
+fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
