@@ -24,6 +24,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.collection.CollectionUtil;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -220,9 +221,10 @@ public final class ArgNode<S extends State, A extends Action> {
     ////
 
     public Stream<ArgNode<S, A>> properAncestors() {
-        return getParent()
-                .map(p -> Stream.concat(Stream.of(p), p.properAncestors()))
-                .orElse(Stream.empty());
+        // Lazily along the parents: a concatenation per level costs time in the depth for every
+        // element, and the depth of an ARG can be thousands
+        return Stream.iterate(
+                getParent().orElse(null), Objects::nonNull, n -> n.getParent().orElse(null));
     }
 
     public Stream<ArgNode<S, A>> ancestors() {
