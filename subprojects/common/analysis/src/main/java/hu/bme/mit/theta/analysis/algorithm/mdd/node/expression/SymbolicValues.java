@@ -91,6 +91,7 @@ public final class SymbolicValues implements MddValues {
 
     // the solvers that check terminals and eliminate what the substitutions leave over
     private final SolverPool solverPool;
+    private final SolverPool qeSolverPool;
 
     // a conjunct of a relation below a written next-state level, so its terminal knows the write
     private final Map<Decl<?>, ConstDecl<BoolType>> markers = new HashMap<>();
@@ -104,9 +105,10 @@ public final class SymbolicValues implements MddValues {
     private final UnaryOperationCache<Expr<BoolType>, Expr<BoolType>> images =
             new UnaryOperationCache<>();
 
-    public SymbolicValues(Set<Decl<?>> levels, SolverPool solverPool) {
+    public SymbolicValues(Set<Decl<?>> levels, SolverPool solverPool, SolverPool qeSolverPool) {
         this.levels = levels;
         this.solverPool = solverPool;
+        this.qeSolverPool = qeSolverPool;
     }
 
     public SolverPool getSolverPool() {
@@ -480,14 +482,14 @@ public final class SymbolicValues implements MddValues {
             toParams.put(c, p.getRef());
         }
         if (params.isEmpty()) return kept;
-        final var solver = solverPool.requestSolver();
+        final var solver = qeSolverPool.requestSolver();
         try {
             final Expr<BoolType> result =
                     solver.eliminateQuantifiers(
                             Exists(params, toParams.build().apply(kept)), "qe2");
             return hasQuantifier(result) ? kept : ExprUtils.simplify(result);
         } finally {
-            solverPool.returnSolver(solver);
+            qeSolverPool.returnSolver(solver);
         }
     }
 

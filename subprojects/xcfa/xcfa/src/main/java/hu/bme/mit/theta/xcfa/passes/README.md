@@ -69,7 +69,9 @@ Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
   the interval of its C type. Values from the environment (input, `rand`) are not recorded. xcfa-cli
   turns an Unsafe result into Unknown if its counterexample depends on a recorded value. An exact
   environment model records nothing: `fgets`, `read`/`recv` and the `scanf` family write every
-  cell C may write, and the socket calls return only the values POSIX allows.
+  cell C may write (a `scanf` string, and a character buffer of a size that is not a small
+  constant, only its first, but the memory-safety guards check the last one it may reach), and the
+  socket calls return only the values POSIX allows.
 - **Refuse loudly rather than model approximately.** A tool error scores nothing under SV-COMP; a
   wrong answer scores much worse. A pass that cannot state a construct exactly declines it, and logs
   why -- the call is then left in place and surfaces later as "No such method ...". When the bytes

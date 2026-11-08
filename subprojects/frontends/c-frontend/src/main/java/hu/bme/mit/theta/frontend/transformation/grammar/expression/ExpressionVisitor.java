@@ -80,6 +80,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.ObjectLayout;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.math.BigInteger;
 import java.util.*;
@@ -652,10 +653,22 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     ctx.multiplicativeExpression().stream()
                             .map(multiplicativeExpression -> multiplicativeExpression.accept(this))
                             .collect(Collectors.toList());
+            Set<Expr<?>> addresses = parseContext.getAddressIntegers();
+            if (exprs.size() == 2
+                    && ctx.signs.get(0).getText().equals("-")
+                    && addresses.contains(exprs.get(0))
+                    && addresses.contains(exprs.get(1))) {
+                addresses.remove(exprs.get(0));
+                addresses.remove(exprs.get(1));
+            }
             List<CComplexType> types =
                     exprs.stream()
                             .map((Expr<?> expr1) -> CComplexType.getType(expr1, parseContext))
                             .collect(Collectors.toList());
+            final Expr<?> pointerDifference = pointerDifference(ctx, exprs, types);
+            if (pointerDifference != null) {
+                return pointerDifference;
+            }
             final Expr<?> pointerArithmetic = pointerArithmetic(ctx, exprs, types);
             if (pointerArithmetic != null) {
                 return pointerArithmetic;
@@ -682,6 +695,85 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return add;
         }
         return ctx.multiplicativeExpression(0).accept(this);
+    }
+
+    /**
+     * A pointer difference {@code p - q} (also {@code p + i - q - j}): a {@code ptrdiff_t}, the
+     * address distance divided by the element stride. Under bitvectors the distance is taken
+     * unsigned and then reinterpreted, as a signed subtraction of two addresses on either side of
+     * the sign boundary would report an overflow no same-object difference can have. Returns null
+     * unless the operands are one pointer minus a later one.
+     */
+    private Expr<?> pointerDifference(
+            CParser.AdditiveExpressionContext ctx, List<Expr<?>> exprs, List<CComplexType> types) {
+        final List<Integer> pointers = new ArrayList<>();
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i) instanceof CArray
+                    || (types.get(i) instanceof CPointer p && !p.isFunctionPointer())) {
+                pointers.add(i);
+            }
+        }
+        if (pointers.size() != 2) return null;
+        final int minuend = pointers.get(0);
+        final int subtrahend = pointers.get(1);
+        if (isSubtracted(ctx, minuend) || !isSubtracted(ctx, subtrahend)) return null;
+        final CComplexType pointee = pointeeOf(types.get(minuend));
+        refuseReinterpretedStep(exprs.get(minuend), pointee);
+        refuseReinterpretedStep(exprs.get(subtrahend), pointeeOf(types.get(subtrahend)));
+        final Expr<?> stride = pointerStride(pointee);
+
+        final CComplexType diffType = CComplexType.getSignedLong(parseContext);
+        final CComplexType addressType =
+                parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.bitvector
+                        ? CComplexType.getUnsignedLong(parseContext)
+                        : diffType;
+        final List<Expr<?>> terms = new ArrayList<>();
+        for (int i = 0; i <= subtrahend; i++) {
+            Expr<?> term = addressType.castTo(exprs.get(i));
+            if (i != minuend && i != subtrahend && stride != null) {
+                term = addressType.castTo(Mul(List.of(term, addressType.castTo(stride))));
+            }
+            terms.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        final Expr<?> distance = Add(terms);
+        parseContext.getMetadata().create(distance, "cType", addressType);
+        Expr<?> diff = diffType.castTo(addressType.castTo(distance));
+        if (stride != null) {
+            final Expr<?> divisor = diffType.castTo(stride);
+            diff =
+                    diff.getType() instanceof IntType
+                            ? createIntDiv(diff, divisor)
+                            : Div(diff, divisor);
+            parseContext.getMetadata().create(innerDiv(diff), "cType", diffType);
+            diff = diffType.castTo(diff);
+        }
+        parseContext.getMetadata().create(diff, "cType", diffType);
+
+        // The integer terms after `q` are added to the difference by the usual conversions.
+        final List<CComplexType> restTypes = new ArrayList<>(List.of(diffType));
+        restTypes.addAll(types.subList(subtrahend + 1, types.size()));
+        final CComplexType resultType = getSmallestCommonType(restTypes, parseContext);
+        final List<Expr<?>> rest = new ArrayList<>(List.of(resultType.castTo(diff)));
+        for (int i = subtrahend + 1; i < exprs.size(); i++) {
+            final Expr<?> term = resultType.castTo(exprs.get(i));
+            rest.add(isSubtracted(ctx, i) ? AbstractExprs.Neg(term) : term);
+        }
+        if (rest.size() == 1) return rest.get(0);
+        final Expr<?> sum = Add(rest);
+        parseContext.getMetadata().create(sum, "cType", resultType);
+        final Expr<?> result = resultType.castTo(sum);
+        parseContext.getMetadata().create(result, "cType", resultType);
+        return result;
+    }
+
+    private static boolean isSubtracted(CParser.AdditiveExpressionContext ctx, int operand) {
+        return operand > 0 && ctx.signs.get(operand - 1).getText().equals("-");
+    }
+
+    private static CComplexType pointeeOf(CComplexType pointerOrArray) {
+        return pointerOrArray instanceof CPointer p
+                ? p.getEmbeddedType()
+                : ((CArray) pointerOrArray).getEmbeddedType();
     }
 
     /**
@@ -994,12 +1086,74 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             // everywhere it is used, breaking every later conversion of it.
             return operand;
         }
-        refuseResizingPointerCast(CComplexType.getType(operand, parseContext), actualType);
+        final CComplexType operandType = CComplexType.getType(operand, parseContext);
+        if (actualType instanceof CStruct struct && !struct.equals(operandType)) {
+            return castToUnion(struct, operand, operandType);
+        }
+        refuseResizingPointerCast(operandType, actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
         parseContext.getMetadata().create(expr, "cType", actualType);
+        // A pointer that reads no variable, as `&((T *)0)->f` in `container_of`, is no object's.
+        if ((operandType instanceof CPointer || operandType instanceof CArray)
+                && actualType instanceof CInteger
+                && !(actualType instanceof CPointer)
+                && !(actualType instanceof CArray)
+                && !(actualType instanceof CStruct)
+                && !(actualType instanceof CBool)
+                && !ExprUtils.getVars(operand).isEmpty()) {
+            parseContext.getAddressIntegers().add(expr);
+        }
         return expr;
+    }
+
+    /**
+     * GNU C's cast to a union, {@code (union U)x}: a fresh union whose member of x's type holds x.
+     * Any other cast to a struct or union type is refused.
+     */
+    private Expr<?> castToUnion(CStruct union, Expr<?> operand, CComplexType operandType) {
+        if (!union.isUnion()
+                || functionVisitor == null
+                || parseContext.getMetadata().getMetadataValue(operand, "cType").isEmpty()) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to the struct or union type "
+                            + union.getTypeName()
+                            + " is not supported.");
+        }
+        final List<String> members =
+                union.getFields().stream()
+                        .filter(field -> sameMemberType(field.get2(), operandType))
+                        .map(Tuple2::get1)
+                        .toList();
+        if (members.size() != 1) {
+            throw new UnsupportedFrontendElementException(
+                    "Cast to a union without exactly one member of the operand's type.");
+        }
+        final CComplexType memberType = union.getFieldsAsMap().get(members.get(0));
+        final VarDecl<?> tmp = functionVisitor.createTempVar(union, "union_cast");
+        final Expr<?> member = structMemberAccess(tmp.getRef(), union, members.get(0));
+        preStatements.add(
+                new CAssignment(
+                        member,
+                        new CExpr(typed(memberType.castTo(operand), memberType), parseContext),
+                        "=",
+                        parseContext));
+        return tmp.getRef();
+    }
+
+    private static boolean sameMemberType(CComplexType member, CComplexType operand) {
+        if (member == null || operand == null || member.getClass() != operand.getClass()) {
+            return false;
+        }
+        if (member instanceof CPointer memberPointer
+                && operand instanceof CPointer operandPointer) {
+            return memberPointer.getEmbeddedType() != null
+                    && operandPointer.getEmbeddedType() != null
+                    && memberPointer.getEmbeddedType().getClass()
+                            == operandPointer.getEmbeddedType().getClass();
+        }
+        return !(member instanceof CStruct) || member.equals(operand);
     }
 
     /**
@@ -2041,6 +2195,9 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return null;
         }
         String name = idCtx.Identifier().getText();
+        if (name.equals("free") || name.equals("realloc")) {
+            parseContext.setDeallocation(true);
+        }
         List<AssignmentExpressionContext> args =
                 call.argumentExpressionList() == null
                         ? List.of()

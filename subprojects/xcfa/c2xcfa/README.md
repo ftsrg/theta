@@ -37,6 +37,8 @@ Selected with `--memory-model`; see `ArchitectureConfig.MemoryModelType`.
 
 Only `bytes` can express two differently typed views of the same storage (an `int` and the `char`s
 overlapping it, a union member and its byte array), because there they are literally the same cells.
+`VoidPointerViews` refuses a program whose `void *` values (or casts, or integers that hold an
+address) may view one object both as characters and as another type, so it is rebuilt under `bytes`.
 
 **Fallback chain.** The frontend builds under `multi`; a pointer-splitting failure rebuilds under
 `flat`, and so does a heap block whose sub-objects (nested aggregate members, which `multi` keeps
