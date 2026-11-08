@@ -403,6 +403,12 @@ data class CegarConfig(
     description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor",
   )
   var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
+  @Parameter(
+    names = ["--deref-to-array"],
+    description =
+      "Turn dereferences into reads and writes of one memory array per type, so that the explicit domain can track memory (see --memory-init)",
+  )
+  var derefToArray: Boolean = false,
   val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
   val refinerConfig: CegarRefinerConfig = CegarRefinerConfig(),
 ) : SpecBackendConfig {

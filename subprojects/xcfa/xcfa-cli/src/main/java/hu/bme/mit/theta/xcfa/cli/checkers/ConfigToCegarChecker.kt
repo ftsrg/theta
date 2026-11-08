@@ -48,9 +48,12 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
 fun getCegarChecker(
-  xcfa: XCFA,
+  inputXcfa: XCFA,
   mcm: MCM,
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
@@ -60,6 +63,10 @@ fun getCegarChecker(
     error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
 
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
+  val xcfa =
+    if (cegarConfig.derefToArray)
+      inputXcfa.optimizeFurther(ProcedurePassManager(listOf(DereferenceToArrayPass())))
+    else inputXcfa
   val abstractionSolverFactory: SolverFactory =
     getSolver(
       cegarConfig.abstractorConfig.abstractionSolver,
