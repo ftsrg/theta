@@ -467,8 +467,13 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         Or(Not(inRange), Leq(size, Add(index, last))),
       )
         as Expr<BoolType>
+    // The witness only matters off the fast path, so it is left free there: an explicit analysis
+    // then decides the assumption from the values alone, without searching the slots
     return Pair(
-      listOf(StmtLabel(HavocStmt.of(witness)), StmtLabel(Assume(Or(Not(inRange), inSlot)))),
+      listOf(
+        StmtLabel(HavocStmt.of(witness)),
+        StmtLabel(Assume(Or(listOf(direct, Not(inRange), inSlot)))),
+      ),
       bad,
     )
   }
