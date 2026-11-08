@@ -522,8 +522,6 @@ inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
 void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
-struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
-void_pointer_byte_write.c	efficient	LP64	UNSAFE	a byte written through a void * parameter changes the long it overlaps, found under bytes
 void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
 stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
 integer_address_byte_view.c	efficient	LP64	UNSAFE	a byte view through an address kept in an integer is found under bytes
@@ -532,11 +530,8 @@ busy_wait_dead_store_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a busy wait 
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	flat
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	bytes
-calloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	calloc(0, n) may return a pointer that free accepts
 malloc_zero_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a non-null block of size 0 has no accessible byte
-malloc_zero_double_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a block of size 0 twice is a double free
 malloc_first_member_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is an array
-malloc_first_union_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is a union
 malloc_inner_member_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a member that does not start the block is invalid
 pointer_difference.c	efficient	LP64	SAFE	pointer difference: ptrdiff_t width, element units for struct and int pointers
 pointer_difference.c	bitvector	LP64	SAFE	pointer difference: byte distance divided by the element size under bytes	bytes
