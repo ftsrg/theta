@@ -19,9 +19,12 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy.GSAT
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection.MEMCLEANUP
+import hu.bme.mit.theta.xcfa.ErrorDetection.MEMSAFETY
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
 
 fun symbolicPortfolio(
   xcfa: XCFA,
@@ -34,7 +37,10 @@ fun symbolicPortfolio(
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
-  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseMddConfig =
+    (baseMddConfig(portfolioConfig) as XcfaConfig<SpecFrontendConfig, MddConfig>).let {
+      it.copy(frontendConfig = it.frontendConfig.copy(lbeLevel = LBE_LOCAL))
+    }
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
@@ -51,6 +57,7 @@ fun symbolicPortfolio(
                 baseMddConfig.backendConfig.specConfig!!.copy(
                   solver = solver,
                   iterationStrategy = GSAT,
+                  symbolicValues = true,
                 ),
             )
         ),
@@ -81,12 +88,17 @@ fun symbolicPortfolio(
     }
 
     infix fun Node.then(node: Node): Node {
-      edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
+      edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
     }
 
-    val start = mdd(300_000, "Z3")
-    start then mddCegar(0, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
+    val mddStep = mdd(0, "Z3:new")
+    if (portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)) {
+      return STM(mddStep, edges)
+    }
+    val start =
+      mddCegar(120_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
+    start then mddStep
 
     return STM(start, edges)
   }

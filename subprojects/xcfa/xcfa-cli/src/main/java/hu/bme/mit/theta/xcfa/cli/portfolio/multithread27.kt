@@ -184,8 +184,8 @@ fun multithreadPortfolio27(
         multithreadCegarBaseConfig.adaptConfig(
           inProcess = inProcess,
           domain = PRED_CART,
-          abstractionSolver = "Z3:4.13",
-          refinementSolver = "Z3:4.13",
+          abstractionSolver = "Z3:new",
+          refinementSolver = "Z3:new",
           refinement = SEQ_ITP,
           timeoutMs = 0,
         ),
@@ -246,8 +246,8 @@ fun multithreadPortfolio27(
               multithreadCegarBaseConfig.adaptConfig(
                 inProcess = inProcess,
                 domain = PRED_CART,
-                abstractionSolver = "Z3:4.13",
-                refinementSolver = "Z3:4.13",
+                abstractionSolver = "Z3:new",
+                refinementSolver = "Z3:new",
                 refinement = SEQ_ITP,
                 coi = COI,
                 timeoutMs = 0,

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
@@ -96,7 +97,7 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val mallocVar = builder.parent.mallocVar(parseContext)
-    val allocated = mutableListOf<Expr<*>>()
+    val allocated = mutableListOf<VarDecl<*>>()
     checkNotNull(builder.metaData["deterministic"])
     // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
     // snapshot's init-procedure edges (see ensureMallocVar).
@@ -133,19 +134,30 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                   AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type)),
                 )
               }
+            val released =
+              if (
+                parseContext.isCheckMemsafety &&
+                  invokeLabel.name != HEAP_SUBOBJECT &&
+                  invokeLabel.name != STATIC_OBJECT
+              )
+                Var("__theta_alloca_base_${baseCnt++}", ret.type).also {
+                  builder.addVar(it)
+                  parseContext.metadata.create(it.ref, "cType", retType)
+                  allocated.add(it)
+                }
+              else null
             val labels =
               if (parseContext.isCheckMemsafety) {
                 addressLabels +
                   listOfNotNull(
                     builder.parent.allocate(parseContext, ret, size(builder, invokeLabel)),
                     probeInvalidLength(builder, ret, arg, retType),
+                    released?.let { AssignStmtLabel(it, ret) },
                   )
               } else {
                 addressLabels
               }
             builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
-            if (invokeLabel.name != HEAP_SUBOBJECT && invokeLabel.name != STATIC_OBJECT)
-              allocated.add(ret)
           } else {
             builder.addEdge(e)
           }
@@ -206,16 +218,30 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
    * index`, so once the size is zeroed the existing guard catches the stale access unchanged.
    *
    * Only the *last* base a repeated allocation produced is released -- a variable holds one value,
-   * and an `alloca` in a loop overwrites it. That direction is safe: releasing too few objects can
-   * only leave a bug unfound, never invent one.
+   * and an `alloca` in a loop overwrites it.
+   *
+   * Each base is released through [allocated], a copy set at the allocation and null from the
+   * procedure entry on, so a return that bypassed the allocation releases nothing. The target
+   * itself would hold a stale or constant-folded address there, under flat addressing possibly that
+   * of a live heap block.
    */
-  private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<Expr<*>>) {
-    if (!parseContext.isCheckMemsafety || allocated.isEmpty()) return
-    val releases = allocated.map { builder.parent.deallocate(parseContext, it) }
-    builder.lifetimeEndEdges().forEach { edge ->
+  private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<VarDecl<*>>) {
+    val ends = builder.lifetimeEndEdges()
+    if (!parseContext.isCheckMemsafety || allocated.isEmpty() || ends.isEmpty()) return
+    val releases = allocated.map { builder.parent.deallocate(parseContext, it.ref) }
+    ends.forEach { edge ->
       builder.removeEdge(edge)
       builder.addEdge(
         edge.withLabel(SequenceLabel(edge.label.getFlatLabels() + releases, edge.label.metadata))
+      )
+    }
+    check(builder.initLoc.incomingEdges.isEmpty()) { "The entry of ${builder.name} is in a loop" }
+    val resets =
+      allocated.map { AssignStmtLabel(it, CComplexType.getType(it.ref, parseContext).nullValue) }
+    builder.initLoc.outgoingEdges.toList().forEach { edge ->
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(resets + edge.label.getFlatLabels(), edge.label.metadata))
       )
     }
   }
@@ -261,6 +287,8 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   private var probeCnt = 0
+
+  private var baseCnt = 0
 
   /**
    * The size memsafety records: the frontend's own blocks come in cells, the program's in bytes.
