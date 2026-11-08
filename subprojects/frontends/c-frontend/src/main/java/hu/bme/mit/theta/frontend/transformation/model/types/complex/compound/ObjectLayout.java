@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,7 +132,12 @@ public final class ObjectLayout {
         }
         // Pointers report the width of `unsigned long`, which is the pointer width in both ILP32
         // and LP64 -- the two models this frontend supports.
-        return type.width();
+        return storageBits(type);
+    }
+
+    /** A `_Bool` holds one value bit but occupies a byte, as in both supported ABIs. */
+    private static int storageBits(CComplexType type) {
+        return type instanceof CBool ? 8 : type.width();
     }
 
     /**
@@ -157,7 +163,7 @@ public final class ObjectLayout {
             // An array is as aligned as one element.
             return alignBits(array.getEmbeddedType(), arch, Attributes.NONE);
         }
-        final int size = type.width();
+        final int size = storageBits(type);
         if (type.isAtomic()) {
             // An _Atomic scalar must be read/written by a single instruction, so it aligns to its
             // own size even where the architecture would otherwise cap a plain scalar lower.

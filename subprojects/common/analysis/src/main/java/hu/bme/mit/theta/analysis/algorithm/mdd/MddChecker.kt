@@ -80,6 +80,7 @@ constructor(
   private val approximation: MddApproximation = MddApproximation.exact(),
   // keys may be terms over symbolic values, and state terminals hold their path condition
   private val symbolicValues: Boolean = false,
+  private val qeSolverPool: SolverPool = solverPool,
 ) : SafetyChecker<MddProof, Trace<ExplState, ExprAction>, UnitPrec> {
 
   override fun check(prec: UnitPrec?): SafetyResult<MddProof, Trace<ExplState, ExprAction>> {
@@ -105,6 +106,7 @@ constructor(
             }
             .toSet(),
           solverPool,
+          qeSolverPool,
         )
       else null
     val mddGraph =

@@ -151,11 +151,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                 Neq(argument, pointerType.nullValue),
                 Or(
                   Lt(argument, pointerType.nullValue), // uninit ptr
-                  // Already freed, or never allocated: both leave size 0 (see deallocate). The
-                  // bound
-                  // is Fitsall-typed like the sizes the array holds -- a pointer-typed zero would
-                  // be
-                  // a different, narrower type under bitvector arithmetic.
+                  // Already freed, or never allocated: both leave 0, while a live block, even an
+                  // empty one, holds its size + 1 (see allocate). The bound is Fitsall-typed like
+                  // the array -- a pointer-typed zero is narrower under bitvector arithmetic.
                   Leq(ArrayReadExpr.create<Type, Type>(sizeVar.ref, argument), fitsall.nullValue),
                   // Only the heap may be freed; the size check above cannot catch the rest, since
                   // an alloca'd block records a real size too.
@@ -232,7 +230,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                   }
                   val sizeKey = deref.array
                   val indexInObject = deref.offset.toFitsall()
-                  val lastIndex = Add(indexInObject, fitsall.getValue("${lastByte(deref)}"))
+                  // Past the last unit accessed, as the array holds size + 1 (see allocate).
+                  val end = Add(indexInObject, fitsall.getValue("${lastByte(deref) + 1}"))
                   And(
                     And(shortCircuitConds),
                     Or(
@@ -242,7 +241,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
                       // integer arithmetic, but different bitvector widths otherwise).
                       Leq(
                         ArrayReadExpr.create<Type, Type>(sizeVar.ref, sizeKey),
-                        lastIndex,
+                        end,
                       ), // freed/not big enough ptr
                       Lt(indexInObject, fitsall.nullValue), // negative index
                     ),
@@ -457,14 +456,15 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         )
       )
     val baseSize = ArrayReadExpr.create<Type, Type>(sizeVar.ref, base)
-    // Under bytes the access spans its value's bytes, all of which must be in the object.
-    val last = fitsall.getValue("${lastByte(deref)}")
+    // Under bytes the access spans its value's bytes, all of which must be in the object. Past the
+    // last of them, as the array holds size + 1 (see allocate).
+    val end = fitsall.getValue("${lastByte(deref) + 1}")
     @Suppress("UNCHECKED_CAST")
     val bad =
       Ite<BoolType>(
         direct,
-        Leq(baseSize, Add(offset, last)),
-        Or(Not(inRange), Leq(size, Add(index, last))),
+        Leq(baseSize, Add(offset, end)),
+        Or(Not(inRange), Leq(size, Add(index, end))),
       )
         as Expr<BoolType>
     // The witness only matters off the fast path, so it is left free there: an explicit analysis
@@ -527,9 +527,10 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private fun XcfaLabel.writesAny(ghosts: List<VarDecl<*>>): Boolean =
     collectVarsWithAccessType().any { (variable, access) -> variable in ghosts && access.isWritten }
 
+  /** [size] as the array holds it, size + 1 (see allocate). */
   private fun inObject(address: Expr<*>, start: LitExpr<*>, size: LitExpr<*>): Expr<BoolType> {
     val index = Sub(address, cast(start, address.type)).toFitsall()
-    return And(Geq(address, cast(start, address.type)), Lt(index, size))
+    return And(Geq(address, cast(start, address.type)), Lt(Add(index, fitsall.unitValue), size))
   }
 
   private var witnessCount = 0
@@ -566,7 +567,8 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     // Multiplying
     // by 3 would not stay in the class: on bitvectors it wraps onto every address.
     val mallocBase = anyBase.ref
-    val liveSize = Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.nullValue)
+    // A live block holds size + 1 (see allocate); a lost empty block is not reported.
+    val liveSize = Gt(ArrayReadExpr.create<Type, Type>(sizeVar.ref, mallocBase), fitsall.unitValue)
     val stillAllocated = And(liveSize, Not(notHeap(builder, mallocBase)))
 
     // valid-memtrack is "pointed to OR deallocated" -- Valgrind's *definitely* lost -- so a block a

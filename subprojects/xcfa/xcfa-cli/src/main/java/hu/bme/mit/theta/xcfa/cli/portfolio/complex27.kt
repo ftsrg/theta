@@ -402,7 +402,7 @@ fun complex27(
   if (mainTrait == MULTITHREAD)
     return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
   if (mainTrait == TERMINATION)
-    return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+    return termination27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
   val loopFree = xcfa.boundedIsComplete
   logger.benchmark("Bounded engines complete: $loopFree\n")

@@ -25,7 +25,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -76,6 +78,16 @@ public class ParseContext {
      */
     private boolean checkDataRace = false;
 
+    /**
+     * The integers the program converts pointers to, and whether it frees memory. An allocation
+     * never reuses the address of a freed block, so with both a verdict may depend on an address
+     * comparison that the model decides one way only. The difference of two such integers, an
+     * offset, is no address.
+     */
+    private final Set<Expr<?>> addressIntegers = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    private boolean deallocation = false;
+
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
     // --
@@ -122,6 +134,18 @@ public class ParseContext {
 
     public void setSourceTraits(Map<String, Integer> sourceTraits) {
         this.sourceTraits = sourceTraits;
+    }
+
+    public boolean isAddressReuseObservable() {
+        return deallocation && !addressIntegers.isEmpty();
+    }
+
+    public Set<Expr<?>> getAddressIntegers() {
+        return addressIntegers;
+    }
+
+    public void setDeallocation(boolean deallocation) {
+        this.deallocation = deallocation;
     }
 
     public boolean isCheckMemsafety() {

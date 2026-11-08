@@ -583,3 +583,43 @@ struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned b
 struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned by value, flat model	flat
 struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return
 struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return, flat model	flat
+void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
+struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
+void_pointer_byte_write.c	efficient	LP64	UNSAFE	a byte written through a void * parameter changes the long it overlaps, found under bytes
+void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
+stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
+integer_address_byte_view.c	efficient	LP64	UNSAFE	a byte view through an address kept in an integer is found under bytes
+busy_wait_dead_store_overflow.c	efficient	ILP32	UNSAFE:no-overflow	a busy wait keeps a dead local whose update can overflow in a later iteration
+busy_wait_dead_store_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a busy wait keeps a dead local that indexes an array in a later iteration
+malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed
+malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	flat
+malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	bytes
+calloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	calloc(0, n) may return a pointer that free accepts
+malloc_zero_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a non-null block of size 0 has no accessible byte
+malloc_zero_double_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a block of size 0 twice is a double free
+malloc_first_member_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is an array
+malloc_first_union_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is a union
+malloc_inner_member_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a member that does not start the block is invalid
+pointer_difference.c	efficient	LP64	SAFE	pointer difference: ptrdiff_t width, element units for struct and int pointers
+pointer_difference.c	bitvector	LP64	SAFE	pointer difference: byte distance divided by the element size under bytes	bytes
+pointer_difference_no_overflow.c	bitvector	LP64	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
+pointer_difference_no_overflow.c	bitvector	ILP32	SAFE:no-overflow	pointer difference: no false overflow when an object straddles the sign boundary of the address	flat
+pointer_compare_wide.c	bitvector	LP64	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
+pointer_compare_wide.c	bitvector	ILP32	SAFE	pointers compare and select as unsigned full-width addresses, not as int	flat
+gnu_cast_to_union.c	efficient	LP64	SAFE	GNU cast to union sets the member of the operand type
+gnu_cast_to_union.bug.c	efficient	LP64	UNSAFE	GNU cast to union: the member holds the operand, not a fixed value
+alloca_release_skipped_branch_leak.c	efficient	LP64	UNSAFE:valid-memcleanup	the release at return of an alloca skipped on this path does not free a heap block at its address	bytes
+alloca_release_skipped_branch_heap.c	efficient	LP64	SAFE:valid-memsafety	the release at return of an alloca skipped on this path keeps a live heap block at its address	bytes
+scanf_string_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	scanf %s may store more characters than the buffer holds
+scanf_string_width.c	efficient	LP64	SAFE:valid-memsafety	scanf %9s into a pointer to a ten-character buffer stays in bounds
+sscanf_string_overflow.c	efficient	LP64	UNKNOWN:valid-memsafety	sscanf %s may overflow its target; the word length is over-approximated
+pointer_integer_reused_address.c	efficient	ILP32	UNKNOWN:valid-memsafety	a pointer converted to an integer makes Safe unreliable: a freed address may be reused
+pointer_integer_difference_safe.c	efficient	LP64	SAFE:valid-memsafety	the difference of two pointers converted to integers is no address
+container_of_offset_safe.c	efficient	LP64	SAFE:valid-memsafety	the container_of offset idiom is not a pointer converted to an integer
+fgets_size_overflow.c	efficient	LP64	UNSAFE:valid-memsafety	fgets may fill all n characters, also where the exact model does not apply
+fgets_symbolic_size_ok.c	efficient	LP64	SAFE:valid-memsafety	fgets with a symbolic size that fits its block stays in bounds
+bool_array_oob_bytes.c	efficient	ILP32	UNSAFE:valid-memsafety	a _Bool array element is a byte: an out-of-bounds index is caught under bytes	bytes
+bool_array_oob_fallback.c	efficient	ILP32	UNSAFE:valid-memsafety	the bytes retry of a two-type malloc wrapper bounds its _Bool block
+bool_array_elements.c	efficient	ILP32	SAFE	the elements of a _Bool array are distinct under bytes	bytes
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each: sizeof, offsets and stores
+bool_struct_layout.c	efficient	ILP32	SAFE	_Bool struct members occupy a byte each under bytes	bytes
