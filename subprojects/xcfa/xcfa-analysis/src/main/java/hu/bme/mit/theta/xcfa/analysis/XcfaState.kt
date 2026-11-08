@@ -291,9 +291,9 @@ constructor(
 
 data class XcfaProcessState(
   val locs: LinkedList<XcfaLocation>,
-  val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
-  val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
-  val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> =
+  var varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
+  var returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
+  var paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> =
     LinkedList(listOf(Pair(NopLabel, NopLabel))),
   val paramsInitialized: Boolean = false,
   val prefix: String = "",
@@ -302,6 +302,19 @@ data class XcfaProcessState(
 
   internal var popped: XcfaLocation? =
     null // stores if the stack was popped due to abstract stack covering
+
+  /**
+   * Pops the innermost call for abstract stack covering. The caller's frame is left on top of every
+   * stack, not only of [locs]: with the callee's variable lookup still on top, the caller's labels
+   * were renamed to the callee's instances, and the caller's own variables lost their values. The
+   * other stacks are replaced, not popped in place, as a successor shares them with its parent.
+   */
+  internal fun popCovered() {
+    popped = locs.pop()
+    varLookup = LinkedList(varLookup).also { it.pop() }
+    returnStmts = LinkedList(returnStmts).also { it.pop() }
+    paramStmts = LinkedList(paramStmts).also { it.pop() }
+  }
 
   fun withNewLoc(l: XcfaLocation): XcfaProcessState {
     val deque: LinkedList<XcfaLocation> = LinkedList(locs)

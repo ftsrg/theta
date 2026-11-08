@@ -72,7 +72,7 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
         if ((node.state as XcfaState<*>).xcfa!!.isInlined) {
           close(node, reachedSet[node])
         } else {
-          val expandProcedureCall = (node.state as XcfaState<*>) in (prec as XcfaPrec<P>).noPop
+          val expandProcedureCall = (prec as XcfaPrec<P>).noPop(node.state as XcfaState<*>)
           closePop(node, reachedSet[node], !expandProcedureCall)
         }
         if (!node.isSubsumed && !node.isTarget) {
@@ -112,7 +112,7 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
         var onlyStackCovers = false
         (node.state as XcfaState<*>).processes.forEach { (pid: Int, proc: XcfaProcessState) ->
           if (proc != (candidate.state as XcfaState<*>).processes[pid]) {
-            if (popCovered) proc.popped = proc.locs.pop()
+            if (popCovered) proc.popCovered()
             onlyStackCovers = true
           }
         }
