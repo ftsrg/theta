@@ -228,6 +228,9 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
         "strpbrk" to Stub(),
         // glibc and musl messages in the C locale are shorter than this
         "strerror" to Stub(freshString = 128),
+        // C++ registers the destructor of a static object with this; the registration succeeds,
+        // but the destructors do not run: what they would do after main returns is not modelled
+        "__cxa_atexit" to Stub(returns = 0),
       )
 
     /** The argument position of the format, for the calls that read their `%s` arguments. */
