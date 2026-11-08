@@ -88,7 +88,7 @@ fun symbolicPortfolio(
     }
 
     infix fun Node.then(node: Node): Node {
-      edges.add(Edge(this, node, if (inProcess) timeoutOrNotSolvableError else anyError))
+      edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
       return node
     }
 
