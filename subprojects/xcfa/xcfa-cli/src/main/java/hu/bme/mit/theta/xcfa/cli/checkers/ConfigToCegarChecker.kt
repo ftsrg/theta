@@ -196,6 +196,9 @@ fun getCegarChecker(
     xcfa.procedures.flatMap { it.locs }.forEach { locmap[it] = mutableListOf() }
     for (state in nodes) {
       for (process in state.processes.values) {
+        // a call stops at the callee's entry before it assigns the arguments: that state is not
+        // one of the C function's, its parameters are still unset
+        if (!process.paramsInitialized) continue
         val loc = process.locs.peek() ?: continue
         locmap.getOrPut(loc) { mutableListOf() } +=
           generalizeProofState(state.sGlobal.innerState, process)

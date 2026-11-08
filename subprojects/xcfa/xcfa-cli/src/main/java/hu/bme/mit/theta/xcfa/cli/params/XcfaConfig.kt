@@ -886,6 +886,13 @@ data class OutputConfig(
     description = "Accept safe results even with unsafe loop unroll",
   )
   var acceptUnreliableSafe: Boolean = false,
+  @Parameter(
+    names = ["--function-entry-invariants"],
+    description =
+      "On a safe CEGAR result, write the invariant of each function's entry, over its parameters " +
+        "and the globals, to function-entry-invariants.yml",
+  )
+  var functionEntryInvariants: Boolean = false,
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),

@@ -97,6 +97,21 @@ internal fun postVerificationLogging(
         writeArgAsLocInvs(resultFolder, safetyResult.proof as LocationInvariants, logger)
       }
 
+      if (
+        (forceEnabledOutput || config.outputConfig.functionEntryInvariants) &&
+          safetyResult.isSafe &&
+          safetyResult.proof is LocationInvariants &&
+          xcfa != null
+      ) {
+        writeFunctionEntryInvariants(
+          resultFolder,
+          xcfa,
+          safetyResult.proof as LocationInvariants,
+          parseContext,
+          logger,
+        )
+      }
+
       when {
         config.outputConfig.witnessConfig.enabled == WitnessLevel.SVCOMP -> {
           writeSvcompWitness(
@@ -249,6 +264,23 @@ private fun writeArgAsLocInvs(
     }
   } catch (e: Exception) {
     logger.info("Could not emit invariants file: ${e.stackTraceToString()}")
+  }
+}
+
+private fun writeFunctionEntryInvariants(
+  resultFolder: File,
+  xcfa: XCFA,
+  locationInvariants: LocationInvariants,
+  parseContext: ParseContext,
+  logger: Logger,
+) {
+  try {
+    val invariants = locationInvariants.functionEntryInvariants(xcfa, parseContext)
+    if (invariants.isEmpty()) return
+    File(resultFolder, "function-entry-invariants.yml")
+      .writeText(functionEntryInvariantsYaml(invariants))
+  } catch (e: Exception) {
+    logger.info("Could not emit function entry invariants: ${e.stackTraceToString()}")
   }
 }
 
