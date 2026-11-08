@@ -578,3 +578,7 @@ memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a stru
 pointer_param_end_bound.c	efficient	LP64	SAFE	a pointer parameter compared with a walked pointer keeps the offset its caller binds (one past the end)
 pointer_param_end_bound_bug.c	efficient	LP64	UNSAFE	a walk up to a one-past-the-end parameter still sees every element
 memtrack_split_global_safe.c	efficient	LP64	SAFE:valid-memsafety	a global pointer split under multi still keeps its block from being lost	multi
+struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned by value is read by the caller after the callee returns
+struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned by value, flat model	flat
+struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return
+struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return, flat model	flat
