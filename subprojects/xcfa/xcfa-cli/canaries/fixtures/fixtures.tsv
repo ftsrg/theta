@@ -579,3 +579,7 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned by value is read by the caller after the callee returns
+struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned by value, flat model	flat
+struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return
+struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return, flat model	flat

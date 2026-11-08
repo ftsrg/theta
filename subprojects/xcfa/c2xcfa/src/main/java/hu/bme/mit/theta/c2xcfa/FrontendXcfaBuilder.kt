@@ -90,6 +90,7 @@ import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel
+import hu.bme.mit.theta.xcfa.utils.STATIC_OBJECT
 import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.asConstantBigInteger
 import hu.bme.mit.theta.xcfa.utils.dereferences
@@ -125,7 +126,7 @@ class FrontendXcfaBuilder(
   private class StaticObject(val type: CComplexType, val mode: InitMode)
 
   private var structArgCnt =
-    0 // names the per-call temporaries a by-value struct argument copies into
+    0 // names the per-call temporaries a by-value struct argument or result copies into
 
   private var fpBitsCnt = 0 // names the bits of float union member writes
 
@@ -1102,6 +1103,28 @@ class FrontendXcfaBuilder(
     val labels: MutableList<XcfaLabel> = ArrayList()
     allocateStackStruct(tmp.ref, type, labels)
     labels.addAll(structCopy(tmp.ref, argExpr, type, metadata))
+    return tmp.ref to labels
+  }
+
+  /**
+   * Returns a struct *by value*, the mirror of [copyStructArgument]: the result is copied into a
+   * fresh object, and the caller is handed that object's base. Handing it the returned variable's
+   * base gave the caller a callee local, whose lifetime ends at the return, so under memsafety
+   * every read of a struct result was a use-after-return. Nothing ends the copy's lifetime
+   * ([STATIC_OBJECT]): only the caller reaches it, and the caller copies it out in turn.
+   */
+  private fun copyStructResult(
+    builder: XcfaProcedureBuilder,
+    resultExpr: Expr<*>,
+    type: CStruct,
+    metadata: MetaData,
+  ): Pair<Expr<*>, List<XcfaLabel>> {
+    val tmp = Var("__theta_structret" + structArgCnt++, type.smtType)
+    parseContext.metadata.create(tmp.ref, "cType", type)
+    builder.addVar(tmp)
+    val labels: MutableList<XcfaLabel> = ArrayList()
+    subObjects.allocateStruct(tmp.ref, type, labels, STATIC_OBJECT)
+    labels.addAll(structCopy(tmp.ref, resultExpr, type, metadata))
     return tmp.ref to labels
   }
 
@@ -2850,15 +2873,21 @@ class FrontendXcfaBuilder(
     val key: VarDecl<*> = builder.getParams()[0].first
     check(returnLoc != null)
     val type = CComplexType.getType(key.ref, parseContext)
-    val value = (expr?.expression ?: type.nullValue).asPointerValue(type, parseContext)
+    val (returned, copy) =
+      if (expr != null && type is CStruct && !type.isUnion)
+        copyStructResult(builder, expr.expression, type, getMetadata(statement))
+      else (expr?.expression ?: type.nullValue) to listOf()
+    val value = returned.asPointerValue(type, parseContext)
+    val assign =
+      StmtLabel(
+        Stmts.Assign(cast(key, key.type), cast(type.castTo(value), key.type)),
+        metadata = getMetadata(statement, fullExprSource = expr ?: statement),
+      )
     val edge =
       XcfaEdge(
         endExpr,
         returnLoc,
-        StmtLabel(
-          Stmts.Assign(cast(key, key.type), cast(type.castTo(value), key.type)),
-          metadata = getMetadata(statement, fullExprSource = expr ?: statement),
-        ),
+        if (copy.isEmpty()) assign else SequenceLabel(copy + assign),
         metadata = getMetadata(statement),
       )
     builder.addEdge(edge)
