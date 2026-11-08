@@ -24,7 +24,10 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -35,6 +38,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
@@ -76,14 +80,28 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
                 final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
                 final StmtUnfoldResult toExprResult =
                         StmtUtils.toExpr(remainingStmts, VarIndexingFactory.indexing(0));
-                final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
+                // The solver only gets the values of the variables the remaining statements
+                // mention: the others are independent of them and keep their values, which are
+                // added back to each successor. A large valuation (memory arrays, say) would
+                // otherwise go into every query.
+                final Set<VarDecl<?>> mentioned = StmtUtils.getVars(remainingStmts);
+                final MutableValuation relevant = new MutableValuation();
+                final MutableValuation untouched = new MutableValuation();
+                for (final Decl<?> decl : val.getDecls()) {
+                    (mentioned.contains(decl) ? relevant : untouched)
+                            .put(decl, val.eval(decl).orElseThrow());
+                }
+                final Expr<BoolType> expr = And(relevant.toExpr(), And(toExprResult.getExprs()));
                 final VarIndexing nextIdx = toExprResult.getIndexing();
                 // We query (max + 1) states from the solver to see if there
                 // would be more than max
                 final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
                 final Collection<ExplState> succStates =
                         ExprStates.createStatesForExpr(
-                                solver, expr, 0, prec::createState, nextIdx, maxToQuery);
+                                        solver, expr, 0, prec::createState, nextIdx, maxToQuery)
+                                .stream()
+                                .map(succ -> withValues(succ, untouched, prec))
+                                .toList();
 
                 if (succStates.isEmpty()) {
                     return singleton(ExplState.bottom());
@@ -98,5 +116,15 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 
         final ExplState abstracted = prec.createState(val);
         return singleton(abstracted);
+    }
+
+    private static ExplState withValues(
+            final ExplState state, final Valuation values, final ExplPrec prec) {
+        if (state.isBottom() || values.getDecls().isEmpty()) {
+            return state;
+        }
+        final MutableValuation merged = MutableValuation.copyOf(values);
+        state.getDecls().forEach(decl -> merged.put(decl, state.eval(decl).orElseThrow()));
+        return prec.createState(merged);
     }
 }
