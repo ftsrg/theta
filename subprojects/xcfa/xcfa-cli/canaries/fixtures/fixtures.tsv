@@ -430,8 +430,8 @@ lifetime_switch_loop.c	efficient	ILP32	SAFE:valid-memsafety	leaving a case block
 lifetime_goto_back.c	efficient	ILP32	SAFE:valid-memsafety	re-entering a block through a backward goto gives a live local
 lifetime_thread_joined.c	efficient	ILP32	SAFE:valid-memsafety	a local is valid for a thread joined before it dies
 lifetime_main_return.c	efficient	ILP32	SAFE:valid-memsafety	returning from main does not release its locals for running threads
-lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL	a jump past a block's entry is refused
-lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL	a case label past a block's entry is refused
+lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	a jump past a block's entry is refused
+lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	a case label past a block's entry is refused
 lifetime_thread_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies when the thread returns
 pointer_return_mid_object.c	efficient	ILP32	SAFE	a returned mid-object pointer keeps its offset
 pointer_return_mid_object_unsafe.c	efficient	ILP32	UNSAFE	a returned mid-object pointer still reads the right cell
