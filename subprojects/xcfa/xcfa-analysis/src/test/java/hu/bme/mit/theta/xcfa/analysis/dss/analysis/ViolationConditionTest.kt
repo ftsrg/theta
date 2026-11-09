@@ -218,4 +218,29 @@ class ViolationConditionTest {
     assertEquals(null, withoutAuxVars(And(Gt(a, y), Eq(x, Int(1)))) { true })
     assertEquals(Eq(x, y), withoutAuxVars(Eq(x, y)) { error("no auxiliary conjuncts to check") })
   }
+
+  /** The old values of a reversed `y := y + 1`, run twice from `y == 0`. */
+  @Test
+  fun `auxiliary variables defined by an equality are replaced by their value`() {
+    val y = Var("y", Int()).ref
+    @Suppress("UNCHECKED_CAST") val a = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    @Suppress("UNCHECKED_CAST") val b = (DssAuxVars.of(1, Int()) as VarDecl<IntType>).ref
+    val twice =
+      And(
+        listOf(
+          Geq(y, Int(2)),
+          Eq(y, Add(a, Int(1))),
+          Lt(a, Int(2)),
+          Eq(a, Add(b, Int(1))),
+          Eq(b, Int(0)),
+        )
+      )
+    val one = Add(Int(0), Int(1))
+    assertEquals(
+      And(listOf(Geq(y, Int(2)), Eq(y, Add(one, Int(1))), Lt(one, Int(2)))),
+      withoutAuxVars(twice) { error("no auxiliary conjuncts to check") },
+    )
+    // `y == a + 1` alone does not define `a`, so `a` stays tied to `y`
+    assertEquals(null, withoutAuxVars(And(Eq(y, Add(a, Int(1))), Lt(a, Int(2)))) { true })
+  }
 }

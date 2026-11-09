@@ -22,12 +22,19 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.WpState
@@ -280,8 +287,10 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
 
 /**
  * A condition without auxiliary variables equivalent to [condition], or null if there is none this
- * way. Conjuncts linked by shared auxiliary variables but no program variable constrain only the
- * havocked values: they are dropped if satisfiable ([isSatisfiable]), else the condition is false.
+ * way. An auxiliary variable a conjunct defines as `a == t` is first replaced by `t` (see
+ * [substituteAuxDefinitions]). Conjuncts linked by shared auxiliary variables but no program
+ * variable constrain only the havocked values: they are dropped if satisfiable ([isSatisfiable]),
+ * else the condition is false.
  */
 fun withoutAuxVars(
   condition: Expr<BoolType>,
@@ -290,7 +299,7 @@ fun withoutAuxVars(
   fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
     if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
   val components = mutableListOf<Pair<MutableSet<VarDecl<*>>, MutableList<Expr<BoolType>>>>()
-  for (conjunct in conjuncts(condition)) {
+  for (conjunct in substituteAuxDefinitions(conjuncts(condition))) {
     val vars = ExprUtils.getVars(conjunct).toMutableSet()
     val linked =
       components.filter { (other, _) -> vars.any { it in other && DssAuxVars.isAux(it) } }
@@ -308,4 +317,39 @@ fun withoutAuxVars(
     }
   }
   return And(kept)
+}
+
+/**
+ * [conjuncts] without the definitions `a == t` of auxiliary variables `a` not in `t`, with `t` put
+ * for `a`: `exists a. a == t && P(a)` is `P(t)`. A reversed `x := f(x)` havocs the old value of `x`
+ * and then defines it so. Only exact equalities count: an IEEE `fp.eq` is none.
+ */
+private fun substituteAuxDefinitions(conjuncts: List<Expr<BoolType>>): List<Expr<BoolType>> {
+  var current = conjuncts
+  while (true) {
+    val (definition, aux, value) =
+      current.firstNotNullOfOrNull { conjunct ->
+        auxDefinition(conjunct)?.let { (aux, value) -> Triple(conjunct, aux, value) }
+      } ?: return current
+    val substitution = BasicSubstitution.builder().put(aux, value).build()
+    current = current.filter { it !== definition }.map { substitution.apply(it) }
+  }
+}
+
+private fun auxDefinition(conjunct: Expr<BoolType>): Pair<VarDecl<*>, Expr<*>>? {
+  val equality =
+    when (conjunct) {
+      is IntEqExpr,
+      is RatEqExpr,
+      is BvEqExpr,
+      is IffExpr,
+      is ArrayEqExpr<*, *> -> conjunct as EqExpr<*>
+      else -> return null
+    }
+  for ((side, other) in
+    listOf(equality.leftOp to equality.rightOp, equality.rightOp to equality.leftOp)) {
+    val decl = (side as? RefExpr<*>)?.decl as? VarDecl<*> ?: continue
+    if (DssAuxVars.isAux(decl) && decl !in ExprUtils.getVars(other)) return decl to other
+  }
+  return null
 }
