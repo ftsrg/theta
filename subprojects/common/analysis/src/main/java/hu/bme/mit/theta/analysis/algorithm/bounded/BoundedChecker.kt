@@ -163,6 +163,15 @@ constructor(
 
     bmcSolver.add(exprs.last())
 
+    // Every shorter path was checked, so if no path is this long, none violates the property. This
+    // is the loop-free check without its pairwise state disequalities, which are costly over
+    // arrays (a heap, for instance).
+    if (bmcSolver.check().isUnsat) {
+      logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step: no path of this length\n")
+      val proof = extractProof()
+      return SafetyResult.safe(PredState.of(proof), BoundedStatistics(iteration))
+    }
+
     if (lfPathOnly()) { // indices contains currIndex as last()
       val loopfree = LinkedList<Expr<BoolType>>()
       for (indexing in indices) {

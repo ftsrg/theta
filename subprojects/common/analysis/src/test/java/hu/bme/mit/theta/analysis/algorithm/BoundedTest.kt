@@ -20,7 +20,9 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.stmt.SequenceStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.inttype.IntExprs
@@ -37,6 +39,7 @@ class BoundedTest {
 
     private var unsafeMonolithicExpr: MonolithicExpr? = null
     private var safeMonolithicExpr: MonolithicExpr? = null
+    private var terminatingMonolithicExpr: MonolithicExpr? = null
 
     init {
       val x = Decls.Var("x", Int())
@@ -55,6 +58,20 @@ class BoundedTest {
           And(unfoldResult.exprs),
           AbstractExprs.Neq(x.ref, Int(-5)),
           unfoldResult.indexing,
+        )
+      val terminating =
+        StmtUtils.toExpr(
+          SequenceStmt.of(
+            listOf(Assume(IntExprs.Lt(x.ref, Int(3))), Assign(x, IntExprs.Inc(x.ref)))
+          ),
+          VarIndexingFactory.indexing(0),
+        )
+      terminatingMonolithicExpr =
+        MonolithicExpr(
+          AbstractExprs.Eq(x.ref, Int(0)),
+          And(terminating.exprs),
+          AbstractExprs.Neq(x.ref, Int(5)),
+          terminating.indexing,
         )
     }
   }
@@ -91,5 +108,18 @@ class BoundedTest {
       )
     val safetyResult: SafetyResult<*, *> = checker.check()
     Assertions.assertTrue(safetyResult.isSafe())
+  }
+
+  @Test
+  fun testBoundedSafeWithoutLongerPaths() {
+    val checker: BoundedChecker =
+      BoundedChecker(
+        monolithicExpr = terminatingMonolithicExpr!!,
+        shouldGiveUp = { it > 10 },
+        bmcSolver = Z3LegacySolverFactory.getInstance().createSolver(),
+        lfPathOnly = { false },
+        logger = ConsoleLogger(Logger.Level.VERBOSE),
+      )
+    Assertions.assertTrue(checker.check().isSafe())
   }
 }
