@@ -377,7 +377,7 @@ class CLibraryFunctionsPass(
                   XcfaEdge(
                     run,
                     ran,
-                    SequenceLabel(listOf(InvokeLabel(routineName, routineRet, metadata))),
+                    SequenceLabel(listOf(InvokeLabel(routine, routineRet, metadata))),
                     metadata,
                   )
                 )
