@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.solver.AssumingSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
@@ -124,7 +123,7 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
     if (!prepared) encode(events, pos, ppos, rfs, wss)
-    return assumption?.let { (solver as AssumingSolver).checkAssuming(it) } ?: solver.check()
+    return solver.check()
   }
 
   override fun prepare(
