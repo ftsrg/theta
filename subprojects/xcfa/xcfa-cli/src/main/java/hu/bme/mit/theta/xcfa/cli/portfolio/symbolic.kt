@@ -63,7 +63,7 @@ fun symbolicPortfolio(
                   iterationStrategy = GSAT,
                   symbolicValues = true,
                 ),
-            )
+            ),
         ),
         checker,
       )
