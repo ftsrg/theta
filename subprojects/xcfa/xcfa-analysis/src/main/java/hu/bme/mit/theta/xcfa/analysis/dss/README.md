@@ -37,6 +37,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one. `BIDIRECTIONAL` accepts `CEGAR` only, except for the finisher of `FINISHER` |
 | `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs, first, only on blocks whose postconditions no block builds on: forward the last blocks, backward the program's first ones; the others go by priority) |
 | `--dss-cegar-domain` | `PRED_CART` | Domain of the `CEGAR` checkers: `PRED_CART`, or `EXPL` tracking the variables of the predicates DSS passes as precision (reported back as `v = v` atoms) |
+| `--dss-interpolate-bounded-proofs` | `true` | Turn the proofs of the bounded checkers (`BMC`, `KIND`, `IMC`, ...) into invariants over the program variables, by interpolating them against the states one step from an error; otherwise (and where interpolation fails) they are path formulas over fresh, implicitly existential variables |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
 | `--dss-max-parallel-blocks` | `0` | `CONCURRENT`: at most this many block analyses at a time (`0`: no limit) |
 | `--dss-global-predicate-pool` | `true` | Seed every block's precision with all assume conditions of the program |
@@ -131,7 +132,9 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
 * **A violation condition reached from top is always reported**, also when it was sent before: the
   predecessor replaces its stored condition with each new one, so suppressing it would lose it.
 * **Witnesses**: correctness witnesses from the block invariants, violation witnesses stitched along
-  the violation conditions. CPAchecker's DSS reports none.
+  the violation conditions. CPAchecker's DSS reports none. A block's states at its entry are left
+  out unless it is the root or re-enters its entry: they are its preconditions, which the
+  predecessors' exits cover, and a bounded checker's interpolant may leave them unconstrained.
 
 ## Soundness and termination
 

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.Expr
@@ -24,6 +25,7 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
@@ -37,12 +39,19 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaMultiThreadToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaSingleThreadToMonolithicAdapter
 import hu.bme.mit.theta.xcfa.analysis.oc.vars
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData
+import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
+import java.util.Optional
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -233,5 +242,41 @@ class XcfaMonolithicTest {
     val monolithic = adapter.monolithicExpr
 
     genericTest(xcfa, parseContext, monolithic)
+  }
+
+  /** DSS block programs start at a synthetic location that is not flagged as initial. */
+  @Test
+  fun `a proof over the edge variable keeps the initial states of an unflagged init location`() {
+    val start = XcfaLocation("start", metadata = EmptyMetaData)
+    val error = XcfaLocation("error", error = true, metadata = EmptyMetaData)
+    val loop = XcfaEdge(start, start, NopLabel, EmptyMetaData)
+    start.outgoingEdges.add(loop)
+    start.incomingEdges.add(loop)
+    val procedure =
+      XcfaProcedure(
+        name = "main",
+        params = emptyList(),
+        vars = emptySet(),
+        locs = setOf(start, error),
+        edges = setOf(loop),
+        initLoc = start,
+        finalLoc = Optional.empty(),
+        errorLoc = Optional.of(error),
+      )
+    val xcfa = XCFA("x", emptySet()).recreate(setOf(procedure), listOf(procedure to emptyList()))
+    val adapter =
+      XcfaSingleThreadToMonolithicAdapter(
+        xcfa,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        ParseContext(),
+      )
+    val edgeVar = adapter.monolithicExpr.ctrlVars.single { it.name == "__edge_" }
+    val minusOne =
+      (edgeVar.type as? BvType)?.let {
+        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(-1), it.size)
+      } ?: Int(-1)
+    val initialStates = PredState.of(Eq(edgeVar.ref, minusOne))
+    val atStart = adapter.proofToModelProof(initialStates).getPartitions().getValue(start)
+    assertEquals(listOf(PredState.of(True())), atStart.toList())
   }
 }

@@ -71,6 +71,7 @@ fun getBoundedChecker(
       kindEnabled = { !boundedConfig.indConfig.disable },
       logger = logger,
       needProof = true,
+      interpolateProof = boundedConfig.interpolateProof,
     )
   }
 

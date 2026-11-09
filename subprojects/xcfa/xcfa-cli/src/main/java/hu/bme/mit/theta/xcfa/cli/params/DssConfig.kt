@@ -125,6 +125,14 @@ data class DssConfig(
         "the predicates DSS passes as precision",
   )
   var cegarDomain: DssCegarDomain = DssCegarDomain.PRED_CART,
+  @Parameter(
+    names = ["--dss-interpolate-bounded-proofs"],
+    description =
+      "Turn the proofs of the BMC/KIND/IMC block checkers into invariants over the program " +
+        "variables by interpolation (otherwise path formulas over fresh variables)",
+    arity = 1,
+  )
+  var interpolateBoundedProofs: Boolean = true,
   @Parameter(names = ["--dss-executor"], description = "How the block analyses are run")
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
   @Parameter(

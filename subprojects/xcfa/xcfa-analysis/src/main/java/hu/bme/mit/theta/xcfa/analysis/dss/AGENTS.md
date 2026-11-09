@@ -37,6 +37,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   variables and `DssAuxVars`; locations travel by index. New fields need matching changes in
   `DssProcessExecutor.kt`. Each block has the codec of its own program; the reversed program has
   its own variables (temporaries) and locations.
+- A bounded checker's proof is over program variables only when interpolated
+  (`--dss-interpolate-bounded-proofs`); otherwise it has fresh, implicitly existential variables,
+  unique to each proof, so solver checks over several such states stay sound but are incomplete.
 - A postcondition's `inputs` must name exactly the stored versions its analysis started from, it
   must cover every exit state of those (a start state whose run yields no summary fails the
   analysis), and an analysis without exit states must still report `false` (`observerOnly`):

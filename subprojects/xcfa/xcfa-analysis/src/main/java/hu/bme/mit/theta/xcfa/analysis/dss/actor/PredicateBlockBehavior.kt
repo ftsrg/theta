@@ -434,10 +434,15 @@ class PredicateBlockBehavior(
     val proof = result.asSafe().proof
     // Witness invariants need a start state that covers the block's entries
     if (recordInvariants && restriction == True()) {
+      // The entry's states are the preconditions, which the predecessors' exits already cover;
+      // a bounded checker's proof may say nothing about them, which would hide the others
+      val entry = extraction.entryLocation
+      val keepEntry = block.isRoot || entry.incomingEdges.any { it != extraction.preconditionEdge }
       invariantsByStart[start.state] =
         proof
           .getPartitions()
           .entries
+          .filter { (clone, _) -> keepEntry || clone != entry }
           .mapNotNull { (clone, states) ->
             extraction.originalLocations[clone]?.let { it to states }
           }

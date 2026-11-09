@@ -104,6 +104,9 @@ class XcfaCliDssTest {
             "--dss-direction",
             "BIDIRECTIONAL",
           ),
+          listOf("--dss-checker-backends", "KIND"),
+          listOf("--dss-checker-backends", "KIND", "--dss-interpolate-bounded-proofs", "false"),
+          listOf("--dss-checker-backends", "BMC"),
           listOf("--dss-direction", "BACKWARD"),
           listOf("--dss-direction", "BACKWARD", "--dss-executor", "PROCESS"),
           listOf("--dss-direction", "BIDIRECTIONAL"),
@@ -220,6 +223,14 @@ class XcfaCliDssTest {
     assertTrue(verdictWithWitness("loop", witness).contains("SafetyResult Safe"))
   }
 
+  /** Interpolation turns k-induction proofs into invariants over the program variables. */
+  @Test
+  fun `a SAFE run of k-induction blocks writes location invariants that Theta validates`() {
+    val witness = dssWitness("loop", "SEQUENTIAL", checkers = "KIND")
+    assertTrue(witness.contains("location_invariant")) { witness }
+    assertTrue(verdictWithWitness("loop", witness).contains("SafetyResult Safe"))
+  }
+
   /** Each worker process only knows its own blocks, so the trace is stitched from all of them. */
   @Test
   fun `an UNSAFE run of the process executor writes a stitched violation witness`() {
@@ -306,9 +317,14 @@ class XcfaCliDssTest {
   }
 
   /** The SV-COMP witness of a DSS run on [program] with emergent27's settings and [options]. */
-  private fun dssWitness(program: String, executor: String, vararg options: String): String {
+  private fun dssWitness(
+    program: String,
+    executor: String,
+    vararg options: String,
+    checkers: String? = null,
+  ): String {
     // BIDIRECTIONAL accepts a bounded checker only as the finisher
-    val backends = if ("BIDIRECTIONAL" in options) "CEGAR" else "CEGAR,KIND"
+    val backends = checkers ?: if ("BIDIRECTIONAL" in options) "CEGAR" else "CEGAR,KIND"
     val temp = createTempDirectory()
     try {
       main(

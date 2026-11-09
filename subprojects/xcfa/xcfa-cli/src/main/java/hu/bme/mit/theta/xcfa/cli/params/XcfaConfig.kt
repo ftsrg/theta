@@ -549,6 +549,14 @@ data class BoundedConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--interpolate-proof"],
+    description =
+      "Express a BMC/k-induction safety proof over the program variables by interpolation, " +
+        "as an invariant that need not be inductive (otherwise it is an inductive path " +
+        "formula over fresh, implicitly existential variables)",
+  )
+  var interpolateProof: Boolean = false,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),
