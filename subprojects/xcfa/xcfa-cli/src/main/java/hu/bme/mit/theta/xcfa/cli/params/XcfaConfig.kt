@@ -193,6 +193,7 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         InputType.CFA -> null
         InputType.CHC -> CHCFrontendConfig() as T
         InputType.BTOR2 -> BTOR2FrontendConfig() as T
+        InputType.SVLIB -> null
       }
   }
 }
@@ -865,6 +866,7 @@ data class OutputConfig(
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
+  val svLibOutputConfig: SvLibOutputConfig = SvLibOutputConfig(),
   val precOutputConfig: PrecOutputConfig = PrecOutputConfig(),
   val witnessConfig: WitnessConfig = WitnessConfig(),
   val argConfig: ArgConfig = ArgConfig(),
@@ -901,6 +903,16 @@ data class XcfaOutputConfig(
 @Serializable
 data class ChcOutputConfig(
   @Parameter(names = ["--enable-chc-serialization"]) var enabled: Boolean = false
+) : Config
+
+@Serializable
+data class SvLibOutputConfig(
+  @Parameter(
+    names = ["--enable-svlib-witness"],
+    description =
+      "Activates witness generation regardless of the presence of (get-witness) in the input.",
+  )
+  var generateWitness: Boolean = false
 ) : Config
 
 @Serializable

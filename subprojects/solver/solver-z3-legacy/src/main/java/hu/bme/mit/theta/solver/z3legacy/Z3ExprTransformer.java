@@ -125,6 +125,7 @@ final class Z3ExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                         // Bitvectors
 
@@ -190,6 +191,7 @@ final class Z3ExprTransformer {
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                        .addCase(FpIsZeroExpr.class, this::transformFpIsZero)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
                         .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
@@ -567,6 +569,12 @@ final class Z3ExprTransformer {
         return context.mkInt2Real(opTerm);
     }
 
+    private com.microsoft.z3legacy.Expr transformIntToBv(final IntToBvExpr expr) {
+        final com.microsoft.z3legacy.IntExpr opTerm =
+                (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
+        return context.mkInt2BV(expr.getSize(), opTerm);
+    }
+
     private com.microsoft.z3legacy.Expr transformBvLit(final BvLitExpr expr) {
         return context.mkBV(
                 BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
@@ -858,6 +866,11 @@ final class Z3ExprTransformer {
     private com.microsoft.z3legacy.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPIsInfinite(opTerm);
+    }
+
+    private com.microsoft.z3legacy.Expr transformFpIsZero(final FpIsZeroExpr expr) {
+        final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+        return context.mkFPIsZero(opTerm);
     }
 
     private com.microsoft.z3legacy.Expr transformFpSqrt(final FpSqrtExpr expr) {

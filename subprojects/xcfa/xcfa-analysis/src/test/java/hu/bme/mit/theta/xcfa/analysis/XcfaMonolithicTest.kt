@@ -204,7 +204,7 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
   }
 
   @ParameterizedTest
@@ -234,7 +234,7 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
   }
 
   @Test

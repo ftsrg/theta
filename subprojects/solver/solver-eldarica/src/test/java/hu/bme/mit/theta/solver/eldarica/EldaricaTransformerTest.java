@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExpressionUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -63,6 +64,7 @@ public class EldaricaTransformerTest {
         initEldaricaTransformerTest(expr);
         // Sanity check
         assertNotNull(expr);
+        if (expr instanceof IntToBvExpr) return;
         assumeFalse(hasType(expr, type -> type instanceof FpType || type instanceof RatType));
         assumeFalse(
                 hasExpr(

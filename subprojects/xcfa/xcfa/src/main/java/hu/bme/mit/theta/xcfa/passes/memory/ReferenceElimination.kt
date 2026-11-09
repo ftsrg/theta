@@ -665,14 +665,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       is SequenceLabel -> SequenceLabel(labels.map { it.flattenReferences() }, metadata)
       is NondetLabel -> NondetLabel(labels.map { it.flattenReferences() }.toSet(), metadata)
       is StmtLabel -> StmtLabel(stmt.flattenReferences(), choiceType, metadata)
-      is InvokeLabel ->
-        InvokeLabel(
-          name,
-          params.map { it.flattenReferences() },
-          metadata,
-          tempLookup,
-          isLibraryFunction,
-        )
+      is InvokeLabel -> this.withParams { it.flattenReferences() }
       is StartLabel ->
         StartLabel(name, params.map { it.flattenReferences() }, pidVar, metadata, tempLookup)
       is ReturnLabel -> ReturnLabel(enclosedLabel.flattenReferences())
@@ -1052,14 +1045,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     splitVars: Map<VarDecl<*>, SplitVarPair>
   ): XcfaLabel =
     when (this) {
-      is InvokeLabel ->
-        InvokeLabel(
-          name = name,
-          params = params.map { it.asCallArgument(name, splitVars) },
-          metadata = metadata,
-          tempLookup = tempLookup,
-          isLibraryFunction = isLibraryFunction,
-        )
+      is InvokeLabel -> this.withParams { it.asCallArgument(name, splitVars) }
       is NondetLabel ->
         NondetLabel(labels.map { it.changeComplexReferredVars(splitVars) }.toSet(), metadata)
       is SequenceLabel ->
@@ -1552,12 +1538,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     if (varLut.isNotEmpty())
       when (this) {
         is InvokeLabel ->
-          InvokeLabel(
-            name,
-            params.map { it.changeReferredVars(varLut, parseContext) },
-            metadata = metadata,
-            isLibraryFunction = isLibraryFunction,
-          )
+          this.withParams { it.changeReferredVars(varLut, parseContext) }
+            .copy(tempLookup = emptyMap())
 
         is NondetLabel ->
           NondetLabel(

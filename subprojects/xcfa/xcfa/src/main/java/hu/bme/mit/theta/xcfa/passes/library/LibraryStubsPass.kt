@@ -505,7 +505,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     builder: XcfaProcedureBuilder,
   ): List<XcfaLabel> {
     fun marker(name: String, params: List<Expr<*>>) =
-      InvokeLabel(name, params, metadata = invoke.metadata)
+      InvokeLabel.retFirst(name, params, metadata = invoke.metadata)
     if (invoke.name in STRING_ARGUMENT && arguments.size > 1) {
       return listOf(marker(FormatAccessPass.PLAIN_STRING_READ, listOf(arguments[1])))
     }
@@ -544,7 +544,7 @@ class LibraryStubsPass(val parseContext: ParseContext, val uniqueWarningLogger: 
     val cell = pointeeCellType(ret.ref) ?: return null
     val out = mutableListOf<XcfaLabel>()
     val size = CComplexType.getUnsignedLong(parseContext).getValue("$cells")
-    out.add(InvokeLabel(STATIC_OBJECT, listOf(ret.ref, size), invoke.metadata))
+    out.add(InvokeLabel.retFirst(STATIC_OBJECT, listOf(ret.ref, size), invoke.metadata))
     for (n in 0 until cells) {
       val index = CComplexType.getUnsignedLong(parseContext).getValue("$n")
       val deref =

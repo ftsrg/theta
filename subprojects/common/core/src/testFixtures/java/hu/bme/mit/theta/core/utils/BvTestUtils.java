@@ -195,11 +195,11 @@ public class BvTestUtils {
                 });
     }
 
-    private static BvLitExpr UBv16(int integer) {
+    static BvLitExpr UBv16(int integer) {
         return bigIntegerToUnsignedBvLitExpr(BigInteger.valueOf(integer), 16);
     }
 
-    private static BvLitExpr SBv16(int integer) {
+    static BvLitExpr SBv16(int integer) {
         return bigIntegerToSignedBvLitExpr(BigInteger.valueOf(integer), 16);
     }
 }

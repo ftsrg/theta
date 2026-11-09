@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes.procedures
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -64,14 +65,12 @@ internal fun XcfaProcedureBuilder.convertCallArguments(
       val params = calleeOf(label)?.getParams()
       if (params == null || params.size != label.params.size) label
       else
-        label.copy(
-          params =
-            label.params.mapIndexed { i, arg ->
-              val (param, direction) = params[i]
-              if (direction != ParamDirection.IN) arg
-              else CComplexType.getType(param.ref, parseContext).castTo(arg)
-            }
-        )
+        label.withParamsIndexed { i, arg ->
+          val (param, direction) = params[i]
+          if (direction != ParamDirection.IN) arg
+          else if (parseContext.isC) CComplexType.getType(param.ref, parseContext).castTo(arg)
+          else arg
+        }
     }
     else -> label
   }
@@ -278,7 +277,9 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(param.first, param.first.type),
           cast(
-            CComplexType.getType(param.first.ref, parseContext).castTo(invokeLabel.params[i]),
+            if (parseContext.isC)
+              CComplexType.getType(param.first.ref, parseContext).castTo(invokeLabel.params[i])
+            else invokeLabel.params[i],
             param.first.type,
           ),
         )
@@ -297,7 +298,9 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(varDecl, varDecl.type),
           cast(
-            CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
+            if (parseContext.isC)
+              CComplexType.getType(varDecl.ref, parseContext)?.castTo(param.first.ref)
+            else param.first.ref,
             varDecl.type,
           ),
         )
@@ -309,8 +312,15 @@ internal fun inlineCallSite(
   val finalLoc = callee.finalLoc
   val errorLoc = callee.errorLoc
 
+  if (inStmts.isEmpty()) inStmts.add(StmtLabel(Stmts.Skip(), metadata = metadata))
+
   builder.addEdge(
-    XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts), metadata)
+    XcfaEdge(
+      source,
+      checkNotNull(newLocs[initLoc]),
+      SequenceLabel(inStmts, metadata = metadata),
+      metadata,
+    )
   )
   if (finalLoc.isPresent)
     builder.addEdge(

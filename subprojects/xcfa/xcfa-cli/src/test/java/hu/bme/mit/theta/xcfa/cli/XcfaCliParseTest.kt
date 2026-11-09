@@ -130,6 +130,28 @@ class XcfaCliParseTest {
     }
 
     @JvmStatic
+    fun svLibFiles(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/svlib/annotated-loop-head.svlib"),
+        Arguments.of("/svlib/check-true-annotate-tag.svlib"),
+        Arguments.of("/svlib/check-true-middle.svlib"),
+        Arguments.of("/svlib/choice.svlib"),
+        Arguments.of("/svlib/goto.svlib"),
+        Arguments.of("/svlib/havoc.svlib"),
+        Arguments.of("/svlib/if-assign.svlib"),
+        Arguments.of("/svlib/if-simple-safe.svlib"),
+        Arguments.of("/svlib/if-simple-unsafe.svlib"),
+        Arguments.of("/svlib/loop-check-true-annotate-tag.svlib"),
+        Arguments.of("/svlib/loop-simple-safe.svlib"),
+        Arguments.of("/svlib/multi-assign.svlib"),
+        Arguments.of("/svlib/procedure-call.svlib"),
+        Arguments.of("/svlib/return.svlib"),
+        Arguments.of("/svlib/return-if.svlib"),
+        Arguments.of("/svlib/return-while.svlib"),
+      )
+    }
+
+    @JvmStatic
     fun dslFiles(): Stream<Arguments> {
       return Stream.of(Arguments.of("/dsl/async.xcfa.kts"), Arguments.of("/dsl/sync.xcfa.kts"))
     }
@@ -173,6 +195,23 @@ class XcfaCliParseTest {
         "CHC",
         "--chc-transformation",
         chcTransformation.toString(),
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--backend",
+        "NONE",
+        "--stacktrace",
+        "--debug",
+      )
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("svLibFiles")
+  fun testSvLibParse(filePath: String) {
+    main(
+      arrayOf(
+        "--input-type",
+        "SVLIB",
         "--input",
         javaClass.getResource(filePath)!!.path,
         "--backend",

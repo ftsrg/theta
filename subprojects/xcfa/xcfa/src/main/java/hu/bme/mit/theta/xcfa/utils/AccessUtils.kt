@@ -141,7 +141,17 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap =
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeVarAccesses()
-    is InvokeLabel -> params.flatMap { ExprUtils.getVars(it) }.associateWith { READ }
+    is InvokeLabel -> {
+      val allVars = params.flatMap { ExprUtils.getVars(it) }.toSet()
+      val writtenVars =
+        paramDirs
+          .filter { (_, dir) -> dir != ParamDirection.IN }
+          .flatMap { (arg, _) -> ExprUtils.getVars(arg) }
+          .toSet()
+      val readVars = allVars - writtenVars
+
+      readVars.associateWith { READ } + writtenVars.associateWith { WRITE }
+    }
     is StartLabel ->
       params.flatMap { ExprUtils.getVars(it) }.associateWith { READ } merge mapOf(pidVar to WRITE)
 

@@ -27,6 +27,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
+import hu.bme.mit.theta.frontend.svlib.SvLibFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.frontend.visitors.Btor2Visitor
@@ -37,6 +38,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
@@ -124,6 +126,16 @@ fun getXcfa(
           parseContext,
           logger,
           uniqueWarningLogger,
+        )
+      }
+
+      InputType.SVLIB -> {
+        parseContext.isC = false
+        parseSvLib(
+          config.inputConfig.input!!,
+          config.outputConfig.svLibOutputConfig,
+          parseContext,
+          logger,
         )
       }
     }
@@ -348,6 +360,24 @@ private fun parseChc(
       )
     }
   return xcfaBuilder.build()
+}
+
+private fun parseSvLib(
+  input: File,
+  svLibOutputConfig: SvLibOutputConfig,
+  parseContext: ParseContext,
+  logger: Logger,
+): XCFA {
+  val frontend = SvLibFrontend()
+  val xcfa =
+    frontend.buildXcfa(
+      FileInputStream(input),
+      parseContext.metadata::create,
+      logger,
+      SvLibPasses(parseContext, logger),
+    )
+  svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
+  return xcfa
 }
 
 private fun parseBTOR2(
