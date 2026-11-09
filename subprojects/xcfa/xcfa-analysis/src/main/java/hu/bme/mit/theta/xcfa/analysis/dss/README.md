@@ -34,7 +34,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
 | `--dss-direction` | `FORWARD` | `FORWARD`, `BACKWARD` (DSS on the reversed program), `BIDIRECTIONAL` (both at once, see [Directions](#directions)) |
 | `--dss-share-invariants` | `true` | `BIDIRECTIONAL`: conjoin each direction's converged summaries to the other direction's preconditions |
-| `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one. `BIDIRECTIONAL` accepts `CEGAR` only |
+| `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one. `BIDIRECTIONAL` accepts `CEGAR` only, except for the finisher of `FINISHER` |
 | `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs, first, only on blocks whose postconditions no block builds on: forward the last blocks, backward the program's first ones; the others go by priority) |
 | `--dss-cegar-domain` | `PRED_CART` | Domain of the `CEGAR` checkers: `PRED_CART`, or `EXPL` tracking the variables of the predicates DSS passes as precision (reported back as `v = v` atoms) |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
@@ -92,7 +92,9 @@ are the forward ones reversed (`reverseBlockGraph`), so the two share every bloc
 
 A SAFE verdict from a cut comes without invariants. The bounded block checkers are rejected here:
 their summaries keep free path variables whose names recur across runs, which the intersections
-above would conflate.
+above would conflate. The one exception is a bounded finisher (`FINISHER`): the meeting actor
+ignores the finishing blocks' postconditions (`DssMeetingSide.uncertified`), so it certifies no
+summary where they end.
 
 ## Packages
 
@@ -160,4 +162,5 @@ violation conditions while refinement finds new predicates.
   the loop's postcondition, first computed from top, need not be the least fixpoint, so it admits
   every unrolling of the backward violation conditions. The tests see it with `LINEAR` and `MERGE`;
   `BIDIRECTIONAL` may still finish by a cut.
-* `BIDIRECTIONAL` takes `CEGAR` block checkers only (see [Directions](#directions)).
+* `BIDIRECTIONAL` takes `CEGAR` block checkers only, except for a `FINISHER`'s finisher (see
+  [Directions](#directions)).

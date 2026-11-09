@@ -82,7 +82,7 @@ class FinisherCheckerSelectionStrategy :
 /**
  * The blocks whose postconditions no other block builds on, as they have no successors: forward the
  * last blocks, backward the program's first ones, as the original entry is the reversed error. The
- * meeting actor of `BIDIRECTIONAL` still reads their postconditions.
+ * meeting actor of `BIDIRECTIONAL` reads their postconditions only from a CEGAR finisher.
  */
 fun BlockGraph.finishingBlocks(): Set<String> =
   blocks.filter { it.successorIds.isEmpty() }.mapTo(linkedSetOf()) { it.id }

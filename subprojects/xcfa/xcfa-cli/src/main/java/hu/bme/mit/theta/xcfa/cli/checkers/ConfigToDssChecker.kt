@@ -185,13 +185,18 @@ fun getDssChecker(
     .firstOrNull { it !in DSS_CHECKER_BACKENDS }
     ?.let { throw IllegalArgumentException("--dss-checker-backends: $it cannot check DSS blocks") }
   // Bounded proofs keep path variables whose names recur across runs, so the solver would conflate
-  // them when the meeting actor intersects two summaries
+  // them when the meeting actor intersects two summaries; a finisher's are kept from it
+  val finisherSelection = dssConfig.checkerSelection == DssCheckerSelectionMethod.FINISHER
+  val certifiedBackends =
+    if (finisherSelection) dssConfig.checkerBackends.dropLast(1) else dssConfig.checkerBackends
   require(
-    direction != DssDirection.BIDIRECTIONAL || dssConfig.checkerBackends.all { it == Backend.CEGAR }
+    direction != DssDirection.BIDIRECTIONAL || certifiedBackends.all { it == Backend.CEGAR }
   ) {
-    "--dss-direction BIDIRECTIONAL needs --dss-checker-backends CEGAR: the summaries of " +
-      "${dssConfig.checkerBackends.filter { it != Backend.CEGAR }} cannot be certified"
+    "--dss-direction BIDIRECTIONAL needs CEGAR --dss-checker-backends, except for the finisher " +
+      "of FINISHER: the summaries of ${certifiedBackends.filter { it != Backend.CEGAR }} " +
+      "cannot be certified"
   }
+  val uncertifiedFinisher = finisherSelection && dssConfig.checkerBackends.last() != Backend.CEGAR
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
@@ -286,8 +291,16 @@ fun getDssChecker(
         DssMeetingActor(
             connection,
             procedure,
-            DssMeetingSide(forwardGraph!!, procedure.locs.associateWith { it }),
-            DssMeetingSide(backwardGraph!!, reversal!!.originalOf),
+            DssMeetingSide(
+              forwardGraph!!,
+              procedure.locs.associateWith { it },
+              if (uncertifiedFinisher) forwardGraph.finishingBlocks() else emptySet(),
+            ),
+            DssMeetingSide(
+              backwardGraph!!,
+              reversal!!.originalOf,
+              if (uncertifiedFinisher) backwardGraph.finishingBlocks() else emptySet(),
+            ),
             dssSolverFactory,
             sharedVars = procedure.vars + xcfa.globalVars.map { it.wrappedVar },
             shareInvariants = dssConfig.shareInvariants,

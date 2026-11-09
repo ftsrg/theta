@@ -78,10 +78,26 @@ class XcfaCliDssTest {
             "--dss-direction",
             "BACKWARD",
           ),
-          // BIDIRECTIONAL accepts CEGAR block checkers only, the finisher included
+          // BIDIRECTIONAL accepts a bounded checker only as the finisher
           listOf(
             "--dss-checker-backends",
             "CEGAR,CEGAR",
+            "--dss-checker-selection",
+            "FINISHER",
+            "--dss-direction",
+            "BIDIRECTIONAL",
+          ),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR,KIND",
+            "--dss-checker-selection",
+            "FINISHER",
+            "--dss-direction",
+            "BIDIRECTIONAL",
+          ),
+          listOf(
+            "--dss-checker-backends",
+            "CEGAR,IMC",
             "--dss-checker-selection",
             "FINISHER",
             "--dss-direction",
@@ -137,6 +153,21 @@ class XcfaCliDssTest {
   fun `a bidirectional run with a bounded block checker is rejected`() {
     val (output, thrown) =
       runDss("safe", "--dss-direction", "BIDIRECTIONAL", "--dss-checker-backends", "CEGAR,KIND")
+    assertTrue(thrown != null && "cannot be certified" in output) { output }
+  }
+
+  @Test
+  fun `a bidirectional run with a bounded checker other than the finisher is rejected`() {
+    val (output, thrown) =
+      runDss(
+        "safe",
+        "--dss-direction",
+        "BIDIRECTIONAL",
+        "--dss-checker-selection",
+        "FINISHER",
+        "--dss-checker-backends",
+        "KIND,CEGAR",
+      )
     assertTrue(thrown != null && "cannot be certified" in output) { output }
   }
 
@@ -275,7 +306,7 @@ class XcfaCliDssTest {
 
   /** The SV-COMP witness of a DSS run on [program] with emergent27's settings and [options]. */
   private fun dssWitness(program: String, executor: String, vararg options: String): String {
-    // BIDIRECTIONAL accepts CEGAR block checkers only
+    // BIDIRECTIONAL accepts a bounded checker only as the finisher
     val backends = if ("BIDIRECTIONAL" in options) "CEGAR" else "CEGAR,KIND"
     val temp = createTempDirectory()
     try {

@@ -48,8 +48,14 @@ import java.math.BigInteger
 
 /**
  * One direction's network; [originalOf] maps its locations to the program's (not synthetic ones).
+ * The postconditions of [uncertified] blocks are ignored, e.g. a bounded checker's, whose path
+ * variables would be conflated across runs; no location they end at is ever certified.
  */
-class DssMeetingSide(val blockGraph: BlockGraph, val originalOf: Map<XcfaLocation, XcfaLocation>)
+class DssMeetingSide(
+  val blockGraph: BlockGraph,
+  val originalOf: Map<XcfaLocation, XcfaLocation>,
+  val uncertified: Set<String> = emptySet(),
+)
 
 /** Exact conditions of both directions met in [state] at the entry of their blocks. */
 data class DssMeet(
@@ -197,6 +203,7 @@ class DssMeetingActor(
 
   private fun onPostCondition(message: DssPostConditionMessage): List<DssMessage> {
     val side = sideOf(message.senderId) ?: return emptyList()
+    if (message.senderId in side.spec.uncertified) return emptyList()
     side.latest[message.senderId] = message
     side.history.getOrPut(message.senderId) { HashMap() }[message.version] = formulaOf(message)
     val forwardInvariants = certified(forwardSide)

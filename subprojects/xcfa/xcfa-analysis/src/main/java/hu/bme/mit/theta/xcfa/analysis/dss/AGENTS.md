@@ -40,7 +40,8 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   analysis), and an analysis without exit states must still report `false` (`observerOnly`):
   `DssMeetingActor`'s SAFE relies on all three (`trackSummaries`).
 - `DssMeetingActor` intersects summaries of different runs, so they may only contain program
-  variables, temporaries and `DssAuxVars`; this is why `BIDIRECTIONAL` takes CEGAR checkers only.
+  variables, temporaries and `DssAuxVars`; this is why `BIDIRECTIONAL` takes CEGAR checkers only,
+  except for a bounded finisher, whose blocks are `DssMeetingSide.uncertified`.
 - A restriction only ever strengthens a block's start states and never enters a violation
   condition; a block under one, or fed by one, reports no witness invariants.
 - Networks of one run need unique block ids (the backward network uses `R.`). A failure reaches

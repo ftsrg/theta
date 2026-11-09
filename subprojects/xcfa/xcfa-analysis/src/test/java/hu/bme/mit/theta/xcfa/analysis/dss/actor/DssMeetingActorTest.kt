@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
@@ -90,11 +91,11 @@ class DssMeetingActorTest {
   private val reversal = reverseProgram(xcfa)
   private val backward = reverseBlockGraph(forward, reversal).withIdPrefix("R.")
 
-  private fun actor(shareInvariants: Boolean = true) =
+  private fun actor(shareInvariants: Boolean = true, forwardUncertified: Set<String> = emptySet()) =
     DssMeetingActor(
       DssConnection(createDssMessageQueue(), DssMessageBroadcaster(emptyMap()), mutableSetOf()),
       procedure,
-      DssMeetingSide(forward, procedure.locs.associateWith { it }),
+      DssMeetingSide(forward, procedure.locs.associateWith { it }, forwardUncertified),
       DssMeetingSide(backward, reversal.originalOf),
       SolverManager.resolveSolverFactory("Z3"),
       sharedVars = setOf(intVar("x")),
@@ -172,6 +173,20 @@ class DssMeetingActorTest {
         )
       )
     assertEquals(listOf(DssResult.SAFE), answer.verdicts())
+  }
+
+  /** The finishing block `C` reports no state at the error, which alone proves SAFE. */
+  @Test
+  fun `the postconditions of an uncertified block are ignored`() {
+    val forwardChain =
+      listOf(
+        post("A", Eq(x, Int(0)), 1),
+        post("B", Eq(x, Int(1)), 1, "A" to 1),
+        post("C", False(), 1, "B" to 1),
+      )
+    assertEquals(listOf(DssResult.SAFE), actor().feed(forwardChain).verdicts())
+    val answer = actor(forwardUncertified = setOf("C")).feed(forwardChain)
+    assertTrue(answer.verdicts().isEmpty()) { "$answer" }
   }
 
   @Test

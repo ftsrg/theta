@@ -23,5 +23,5 @@ Paths are relative to [src/main/java/hu/bme/mit/theta/xcfa/cli/](src/main/java/h
 2. **New backend:** add it to `Backend`. The exhaustive `when`s in `BackendConfig.createSpecConfig` and `getSafetyChecker` then need a spec config and a `ConfigTo<X>Checker` for it.
 3. Invalid domain/refinement combinations are rejected while the checker is built: `UNSAT_CORE` needs a `Domain` with a `varsPrecRefiner` (currently only EXPL).
 4. `ConfigToAsgCegarChecker` passes `traceEnricher = ::threadWriteTriples` so that lassos see pointer writes. Any new consumer of paths needs the same enrichment ([xcfa-analysis AGENTS.md](../xcfa-analysis/AGENTS.md)).
-5. `--backend DSS` validates its options in `ConfigToDssChecker.kt` before any block runs; `BIDIRECTIONAL` rejects non-CEGAR `--dss-checker-backends` (see the dss package's `AGENTS.md`).
+5. `--backend DSS` validates its options in `ConfigToDssChecker.kt` before any block runs; `BIDIRECTIONAL` rejects non-CEGAR `--dss-checker-backends`, except for the last one under `FINISHER` (see the dss package's `AGENTS.md`).
 6. Frontend failures normally log and exit. Re-throw only the specific typed limitations that the caller can recover from; do not turn unrelated frontend failures into fallback attempts.
