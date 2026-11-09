@@ -233,7 +233,9 @@ jobs:
       - name: Run the canary and fixture suites
         run: |
           status=0
-          ./gradlew :theta-xcfa-cli:fixtureTest -x buildArchiveTheta-svcomp || status=1
+          # The runner has 4 cores and a verdict fixture's portfolio uses more than one.
+          ./gradlew :theta-xcfa-cli:fixtureTest -x buildArchiveTheta-svcomp \
+            -Ptheta.fixture.jobs=2 || status=1
           ./gradlew :theta-xcfa-cli:canaryTest -x buildArchiveTheta-svcomp -x fixtureTest \
             -Ptheta.canary.jobs=2 || status=1
           exit $status
