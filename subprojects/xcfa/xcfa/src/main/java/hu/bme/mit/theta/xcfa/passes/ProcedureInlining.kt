@@ -67,7 +67,8 @@ internal fun XcfaProcedureBuilder.convertCallArguments(
         label.withParamsIndexed { i, arg ->
           val (param, direction) = params[i]
           if (direction != ParamDirection.IN) arg
-          else CComplexType.getType(param.ref, parseContext)?.castTo(arg) ?: arg
+          else if (parseContext.isC) CComplexType.getType(param.ref, parseContext).castTo(arg)
+          else arg
         }
     }
     else -> label
@@ -275,8 +276,9 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(param.first, param.first.type),
           cast(
-            CComplexType.getType(param.first.ref, parseContext)?.castTo(invokeLabel.params[i])
-              ?: invokeLabel.params[i],
+            if (parseContext.isC)
+              CComplexType.getType(param.first.ref, parseContext).castTo(invokeLabel.params[i])
+            else invokeLabel.params[i],
             param.first.type,
           ),
         )
@@ -295,8 +297,9 @@ internal fun inlineCallSite(
         AssignStmt.of(
           cast(varDecl, varDecl.type),
           cast(
-            CComplexType.getType(varDecl.ref, parseContext)?.castTo(param.first.ref)
-              ?: param.first.ref,
+            if (parseContext.isC)
+              CComplexType.getType(varDecl.ref, parseContext)?.castTo(param.first.ref)
+            else param.first.ref,
             varDecl.type,
           ),
         )

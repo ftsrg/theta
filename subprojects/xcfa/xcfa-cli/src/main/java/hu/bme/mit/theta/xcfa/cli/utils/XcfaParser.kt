@@ -130,6 +130,7 @@ fun getXcfa(
       }
 
       InputType.SVLIB -> {
+        parseContext.isC = false
         parseSvLib(
           config.inputConfig.input!!,
           config.outputConfig.svLibOutputConfig,

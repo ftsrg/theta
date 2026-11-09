@@ -64,11 +64,23 @@ constructor(
   val params
     get() = paramDirs.map { it.first }
 
-  fun mapParams(transform: (Expr<*>) -> Expr<*>) =
-    paramDirs.map { (arg, dir) -> transform(arg) to dir }
+  fun withParams(transform: (Expr<*>, ParamDirection) -> Expr<*>) =
+    InvokeLabel(
+      name,
+      paramDirs.map { (arg, dir) -> transform(arg, dir) to dir },
+      metadata,
+      tempLookup,
+      isLibraryFunction,
+    )
 
   fun withParams(transform: (Expr<*>) -> Expr<*>) =
-    InvokeLabel(name, mapParams { transform(it) }, metadata, tempLookup, isLibraryFunction)
+    InvokeLabel(
+      name,
+      paramDirs.map { (arg, dir) -> transform(arg) to dir },
+      metadata,
+      tempLookup,
+      isLibraryFunction,
+    )
 
   fun withParamsIndexed(transform: (Int, Expr<*>) -> Expr<*>) =
     InvokeLabel(
