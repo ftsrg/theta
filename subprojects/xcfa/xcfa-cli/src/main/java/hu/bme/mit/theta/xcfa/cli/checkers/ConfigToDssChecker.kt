@@ -72,6 +72,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
@@ -240,6 +241,16 @@ fun getDssChecker(
     "--dss-cut-on-timeout cuts blocks that the checkers run out of their budget on, so it needs " +
       "--dss-checker-budget"
   }
+  require(!dssConfig.conjectureInvariants || dssConfig.conjectureGeneralizers.isNotEmpty()) {
+    "--dss-conjecture-invariants needs at least one --dss-conjecture-generalizers entry"
+  }
+  val probeGeneralizers =
+    (dssConfig.generalizers +
+        listOfNotNull(DssGeneralizerKind.GSPACER.takeIf { dssConfig.generalizeViolations }))
+      .distinct()
+  require(probeGeneralizers.isEmpty() || dssConfig.generalizationGas > 0) {
+    "--dss-generalization-gas must be positive"
+  }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     dssConfig.solver
@@ -318,8 +329,9 @@ fun getDssChecker(
             solverFactory = dssSolverFactory,
             trackSummaries = bidirectional,
             finishing = block.id in finishing,
-            generalizationGas =
-              if (dssConfig.generalizeViolations) dssConfig.generalizationGas else 0,
+            generalizationGas = if (probeGeneralizers.isEmpty()) 0 else dssConfig.generalizationGas,
+            generalizers = probeGeneralizers,
+            generalizerCombination = dssConfig.generalizerCombination,
             cutOnTimeout = dssConfig.cutOnTimeout,
             hasCut = {
               cutTargetOf(block.id, forward)?.let { target ->
@@ -366,6 +378,8 @@ fun getDssChecker(
                 networks.single().blockGraph,
                 dssSolverFactory,
                 dssConfig.conjectureGas,
+                generalizers = dssConfig.conjectureGeneralizers,
+                combination = dssConfig.generalizerCombination,
               )
               .also { conjectures = it }
           }

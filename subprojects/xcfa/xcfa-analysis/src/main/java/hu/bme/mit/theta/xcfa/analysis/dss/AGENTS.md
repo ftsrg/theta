@@ -12,6 +12,8 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   `xcfa-cli`, as Sonar only counts a module's own tests towards its coverage.
 - End-to-end verdicts are one table in `DssVerdictTest`, run with `runDssActorsSequentially` (legacy
   Z3 is not thread-safe). Keep its loop bounds small: DSS unrolls a loop up to the violation.
+- Run `DssVerdictTest`'s methods in separate Gradle invocations: its JVM's native memory grows by
+  about 1 GB per 10 s and the whole class needs over 16 GB.
 
 ## Invariants
 - Checkers are injected factories (`(XCFA) -> XcfaChecker`); this package never builds one itself.
@@ -30,8 +32,8 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   block it reverses, `cutTargetOf`), and the backward graph is rebuilt from the cut forward one,
   so the two directions keep sharing their block boundaries.
 - Sent violation conditions are exact; a per-path condition may under-approximate, never
-  over-approximate. A `ViolationGeneralizer` generalization over-approximates, so it is only a
-  probe target: a probe's UNSAFE result is discarded, and a generalization never reaches a
+  over-approximate. A generalization (`Generalizers`) over-approximates, so it is only a probe
+  target or a conjecture: a probe's UNSAFE result is discarded, and a generalization never reaches a
   message, a witness record or a path condition. A conjecture's condition and its may violations
   (`DssMayViolationMessage`) never become a violation condition, a record or a verdict either; a
   root that reaches one sends `CONJECTURE_FAILED`.
@@ -81,3 +83,6 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   `ProgramReversal.kt` (otherwise it must throw), with a case in `ProgramReversalTest`.
 - New `--dss-*` option: `DssConfig.kt` in `xcfa-cli`, wired in `ConfigToDssChecker.kt`; add it to
   `README.md` here and `XcfaCliDssTest`.
+- New generalization method: a `DssGeneralizerKind` entry and its cases in `Generalizers`
+  (`generalize`, `failed`); it can only use what `GeneralizationContext` offers. Add a
+  `DssVerdictTest` matrix for it, and run it alone first: a case it fails to help can diverge.

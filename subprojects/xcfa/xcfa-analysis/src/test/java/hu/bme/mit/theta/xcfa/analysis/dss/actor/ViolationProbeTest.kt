@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
@@ -80,7 +81,13 @@ class ViolationProbeTest {
   }
 
   /** The root's answers to `x == first`, `x == first + 1`, ... from the error block. */
-  private fun answers(value: Int, first: Int, count: Int, gas: Int): List<Answer> {
+  private fun answers(
+    value: Int,
+    first: Int,
+    count: Int,
+    gas: Int,
+    generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+  ): List<Answer> {
     val program = program(value)
     val procedure = program.procedures.single()
     val graph = LinearBlockDecomposition().decompose(procedure)
@@ -88,7 +95,14 @@ class ViolationProbeTest {
     val x = (procedure.vars.single { it.name == "x" } as VarDecl<IntType>).ref
     val sender = graph.blocks.single { b -> b.locations.any { it.error } }.id
     val root =
-      PredicateBlockBehavior(program, procedure, graph.root, roster, generalizationGas = gas)
+      PredicateBlockBehavior(
+        program,
+        procedure,
+        graph.root,
+        roster,
+        generalizationGas = gas,
+        generalizers = generalizers,
+      )
     root.runInitialAnalysis()
     return (first until first + count).map { k ->
       val messages =
@@ -104,6 +118,21 @@ class ViolationProbeTest {
     assertEquals("0", last.statistics["probesFailed"])
     assertTrue(last.violations.isEmpty(), "${last.messages}")
     val post = last.postconditions.single().postcondition!!
+    val x = ExprUtils.getVars(post).single { it.name == "x" }
+    @Suppress("UNCHECKED_CAST")
+    assertTrue(
+      operators.isUnsat(And(post, Geq((x as VarDecl<IntType>).ref, Int(12)))),
+      "the postcondition excludes the generalization x >= 12: $post",
+    )
+  }
+
+  @Test
+  fun `a semantic generalization is refuted from the first condition on`() {
+    val semantic = listOf(DssGeneralizerKind.SEMANTIC)
+    val first = answers(value = 5, first = 12, count = 1, gas = 2, generalizers = semantic).single()
+    assertEquals("1", first.statistics["probesRefuted"], "${first.statistics}")
+    assertTrue(first.violations.isEmpty(), "${first.messages}")
+    val post = first.postconditions.single().postcondition!!
     val x = ExprUtils.getVars(post).single { it.name == "x" }
     @Suppress("UNCHECKED_CAST")
     assertTrue(

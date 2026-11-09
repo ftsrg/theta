@@ -43,8 +43,10 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-global-predicate-pool` | `false` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
-| `--dss-generalize-violations` | off | Before each analysis, try to refute a generalization of the received violation conditions (see [Generalized violation conditions](#generalized-violation-conditions)) |
-| `--dss-generalization-gas` | `2` | Failed probes per sender and condition shape before that shape is no longer generalized |
+| `--dss-generalizers` | none | Comma-separated generalizers of the received violation conditions, `GSPACER` and `SEMANTIC`; before each analysis their generalization is tried as a probe (see [Generalized violation conditions](#generalized-violation-conditions)) |
+| `--dss-generalize-violations` | off | The same as adding `GSPACER` to `--dss-generalizers` |
+| `--dss-generalizer-combination` | `FIRST` | How several generalizers of one list give one generalization: `FIRST` with a candidate, the `UNION` of all, or a `CHAIN` where each weakens the previous result |
+| `--dss-generalization-gas` | `2` | Failed probes per sender (`GSPACER`: per sender and condition shape) before it is no longer generalized |
 | `--dss-conjecture-invariants` | off | Conjecture invariants where violation conditions keep drifting at a block boundary; the blocks check them, and a broken one is retracted (see [Conjectured invariants](#conjectured-invariants)). `FORWARD` or `BACKWARD`, not with `PROCESS` |
 | `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
 | `--dss-block-local-pool` | off | Seed a block only with the pool conditions over at least one of its variables |
@@ -53,6 +55,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
 | `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
 | `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
+| `--dss-conjecture-generalizers` | `GSPACER` | The generalizers that propose conjectures, combined by `--dss-generalizer-combination` |
 
 A checker over its budget is stopped (`DssBudget.kt`): a watchdog interrupts its running solver
 call, and it is retried in the next round, so a block never counts as safe unless some checker
@@ -175,29 +178,42 @@ violation conditions while refinement finds new predicates.
 
 ## Generalized violation conditions
 
-With `--dss-generalize-violations`, a block refutes the conditions a sender keeps sending one
-loop iteration longer in one go, following GSpacer's global guidance (Krishnan et al., *Global
-guidance for local generalization in model checking*, FMSD 2024). `ViolationGeneralizer` keeps
-every sender's conditions as cubes in linear normal form, clustered by shape. When the bounds of
-a shape drift, it conjectures their convex hull, widened in the direction of the drift (with the
-hull's parameters eliminated by Fourier-Motzkin), or else the cube without its drifting literals.
-For example, `x == -2 - k && n >= -1` for `k = 0, 1, 2` becomes `x <= -2 && n >= -1`.
+With `--dss-generalizers`, a block refutes the conditions a sender keeps sending one loop
+iteration longer in one go. There are two methods, in `Generalizers.kt`:
+
+* `GSPACER` follows GSpacer's global guidance (Krishnan et al., *Global guidance for local
+  generalization in model checking*, FMSD 2024). `ViolationGeneralizer` keeps every sender's
+  conditions as cubes in linear normal form, clustered by shape. When the bounds of a shape
+  drift, it conjectures their convex hull, widened in the direction of the drift (with the hull's
+  parameters eliminated by Fourier-Motzkin), or else the cube without its drifting literals. For
+  example, `x == -2 - k && n >= -1` for `k = 0, 1, 2` becomes `x <= -2 && n >= -1`.
+* `SEMANTIC` needs no history. `SemanticGeneralizer` splits each cube's equalities into two
+  bounds and drops literals one at a time while the rest stays unreachable from the block's start
+  states (exactly, by the block's weakest precondition; a block with an internal cycle is not
+  generalized). From `x == -2 && n >= -1` and start states with `x >= 0`, it gets `x <= -2`
+  already from the first condition.
+
+With several, `--dss-generalizer-combination` decides: `FIRST` takes the first method in list
+order that has a candidate, `UNION` probes their disjunction, and `CHAIN` lets each weaken the
+previous result (`GSPACER` adds its candidate, as it works from the history, not from a formula).
 
 A generalization may contain states that reach no error, so it is only a probe. A start state is
 first analyzed against the received conditions or the generalization. If that run is SAFE, the
 received conditions are refuted from that start state, and its postcondition is used. If it is
 UNSAFE, the result is discarded and the exact analysis runs. A generalization is never sent,
 never enters a path condition or witness, and never causes an UNSAFE verdict. Each failed probe
-costs its shape gas.
+costs gas, in each method it came from.
 
 This helps where the refuting block is not on the cycle that produces the conditions. Blocks on
 the cycle start from their own summaries, which can be too weak to refute any generalization.
 
 ## Conjectured invariants
 
-With `--dss-conjecture-invariants`, `DssConjectureActor` handles the cycle case. It clusters the
-violation conditions arriving at each block boundary L, as `ViolationGeneralizer` does, and for a
-generalization G it conjectures the invariant `!G` at L:
+With `--dss-conjecture-invariants`, `DssConjectureActor` handles the cycle case. It generalizes
+the violation conditions arriving at each block boundary L with `--dss-conjecture-generalizers`,
+and for a generalization G it conjectures the invariant `!G` at L. For `SEMANTIC`, "unreachable"
+means from the blocks entering L from outside its cycles: by weakest preconditions back through
+acyclic blocks to the root, else by the latest summaries. Then:
 
 * The blocks starting at L conjoin `!G` to their start states, so their postconditions get
   stronger, and so do those of the blocks around the cycle.

@@ -24,6 +24,8 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.END_TO_END_TIMEOUT
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseBlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseProgram
@@ -124,6 +126,18 @@ class DssVerdictTest {
         }
         .filterNot {
           it.get()[0] == "error inside a loop" && it.get()[2] == true && it.get()[1] in cyclic
+        }
+        .stream()
+
+    /** The generalization cases, with both generalizers under each combination but FIRST. */
+    @JvmStatic
+    fun combinationCases(): Stream<Arguments> =
+      generalizationCases()
+        .toList()
+        .flatMap { case ->
+          listOf(DssGeneralizerCombination.UNION, DssGeneralizerCombination.CHAIN).map {
+            Arguments.of(*case.get(), it)
+          }
         }
         .stream()
 
@@ -404,6 +418,8 @@ class DssVerdictTest {
     blockGraph: BlockGraph,
     useGlobalPredicatePool: Boolean = true,
     generalizationGas: Int = 0,
+    generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+    combination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
   ): DssResult {
     blockGraph.checkConsistency()
     val procedure = wholeProgram.procedures.single()
@@ -419,10 +435,51 @@ class DssVerdictTest {
             roster,
             useGlobalPredicatePool,
             generalizationGas = generalizationGas,
+            generalizers = generalizers,
+            generalizerCombination = combination,
           )
         },
       )
     }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("generalizationCases")
+  fun `semantic generalization keeps the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val semantic = listOf(DssGeneralizerKind.SEMANTIC)
+    assertEquals(
+      expected(safe),
+      checkDecomposed(xcfa, blockGraph, generalizationGas = 2, generalizers = semantic),
+    )
+  }
+
+  @ParameterizedTest(name = "{3}: {0}, {1}, safe={2}")
+  @MethodSource("combinationCases")
+  fun `combined generalizers keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+    combination: DssGeneralizerCombination,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val both = listOf(DssGeneralizerKind.GSPACER, DssGeneralizerKind.SEMANTIC)
+    assertEquals(
+      expected(safe),
+      checkDecomposed(
+        xcfa,
+        blockGraph,
+        generalizationGas = 2,
+        generalizers = both,
+        combination = combination,
+      ),
+    )
   }
 
   @ParameterizedTest(name = "{0}, {1}, safe={2}")
@@ -445,6 +502,7 @@ class DssVerdictTest {
     blockGraph: BlockGraph,
     gas: Int = 2,
     initial: List<Pair<XcfaLocation, Expr<BoolType>>> = emptyList(),
+    generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   ): DssResult {
     blockGraph.checkConsistency()
     val procedure = wholeProgram.procedures.single()
@@ -463,11 +521,25 @@ class DssVerdictTest {
               SolverManager.resolveSolverFactory("Z3"),
               gas,
               initialConjectures = initial,
+              generalizers = generalizers,
             )
           },
         )
         .result
     }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("conjectureCases")
+  fun `semantic conjectures keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val semantic = listOf(DssGeneralizerKind.SEMANTIC)
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph, generalizers = semantic))
   }
 
   @ParameterizedTest(name = "{0}, {1}, safe={2}")

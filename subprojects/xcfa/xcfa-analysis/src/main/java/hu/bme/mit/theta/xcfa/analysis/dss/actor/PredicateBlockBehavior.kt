@@ -38,9 +38,13 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster.Companion.BUDGET_GROWTH
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
-import hu.bme.mit.theta.xcfa.analysis.dss.analysis.ViolationGeneralizer
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalizers
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectAssumePreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.combinePredPrecs
@@ -79,8 +83,8 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * network's `finishingBlocks`, which a finisher checker may analyze.
  *
  * With a positive [generalizationGas], a start state is first analyzed against a generalization of
- * the received conditions ([ViolationGeneralizer]). Only its SAFE result is used: refuting the
- * weaker target refutes the received conditions too. Its UNSAFE result is discarded.
+ * the received conditions by [generalizers] ([Generalizers]). Only its SAFE result is used:
+ * refuting the weaker target refutes the received conditions too. Its UNSAFE result is discarded.
  *
  * A conjecture (`DssConjectureMessage`) is assumed at the start like a restriction, but can be
  * retracted. Its condition at the exit, and the may violations received for it, are searched for in
@@ -104,11 +108,15 @@ class PredicateBlockBehavior(
   generalizationGas: Int = 0,
   private val cutOnTimeout: Boolean = false,
   private val hasCut: () -> Boolean = { cutBlock(block) != null },
+  generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+  generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
 
-  private val generalizer = generalizationGas.takeIf { it > 0 }?.let(::ViolationGeneralizer)
+  private val generalizer =
+    if (generalizationGas <= 0 || generalizers.isEmpty()) null
+    else Generalizers(generalizers, generalizerCombination, generalizationGas)
 
   private val statistics = DssBlockStatistics()
 
@@ -360,6 +368,7 @@ class PredicateBlockBehavior(
           } catch (e: InterruptedException) {
             throw e
           } catch (e: Exception) {
+            if (e is DssBlockCutRequest || e.isDssBudgetExceeded()) throw e
             // The exact run below decides; a probe must not fail an analysis that would succeed
             RunResult.Unsafe(null)
           }
@@ -508,6 +517,7 @@ class PredicateBlockBehavior(
       } catch (e: InterruptedException) {
         throw e
       } catch (e: Exception) {
+        if (e is DssBlockCutRequest || e.isDssBudgetExceeded()) throw e
         return conjectureFailed(id)
       }
     statistics.mayViolationsSent++
@@ -802,14 +812,36 @@ class PredicateBlockBehavior(
   }
 
   /** A query the solver cannot decide skips the generalization, never the analysis. */
-  private fun generalizationOf(
-    received: List<Pair<String, Expr<BoolType>>>
-  ): ViolationGeneralizer.Generalization? {
+  private fun generalizationOf(received: List<Pair<String, Expr<BoolType>>>): Generalization? {
     if (received.isEmpty()) return null
+    val generalizer = generalizer ?: return null
     return try {
-      generalizer?.generalize(received, operators::isUnsat)
+      generalizer.generalize(
+        received,
+        GeneralizationContext(operators::isUnsat, unreachableFromStartStates()),
+      )
     } catch (e: DssUndecidedQueryException) {
       null
+    }
+  }
+
+  /**
+   * Whether no start state reaches a condition at the exit, by the block's exact weakest
+   * precondition; null for a block with an internal cycle, which has none. Not deciding is "no".
+   */
+  private fun unreachableFromStartStates(): ((Expr<BoolType>) -> Boolean)? {
+    if (usesPathViolations) return null
+    val start = And(Or(startStates().map { it.first.state }), startRestriction())
+    return { condition ->
+      try {
+        operators.isUnsat(
+          And(start, computeViolationCondition(block, mapOf(block.finalLocation to condition)))
+        )
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        false
+      }
     }
   }
 

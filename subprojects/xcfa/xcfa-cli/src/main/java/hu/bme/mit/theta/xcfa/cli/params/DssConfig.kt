@@ -20,6 +20,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
@@ -162,17 +164,31 @@ data class DssConfig(
   )
   var reuseBlockPrecision: Boolean = false,
   @Parameter(
-    names = ["--dss-generalize-violations"],
+    names = ["--dss-generalizers"],
     description =
-      "Before each block analysis, try to refute a generalization of the received violation " +
-        "conditions (GSpacer-style); it is only a probe, never sent or reported",
+      "Comma-separated generalizers of the received violation conditions (GSPACER, SEMANTIC); " +
+        "before each block analysis, their generalization is tried as a probe, never sent or " +
+        "reported. None by default",
+  )
+  var generalizers: List<DssGeneralizerKind> = emptyList(),
+  @Parameter(
+    names = ["--dss-generalize-violations"],
+    description = "The same as adding GSPACER to --dss-generalizers",
   )
   var generalizeViolations: Boolean = false,
   @Parameter(
+    names = ["--dss-generalizer-combination"],
+    description =
+      "How several --dss-generalizers (and --dss-conjecture-generalizers) give one " +
+        "generalization: FIRST with a candidate, the UNION of all, or a CHAIN where each weakens " +
+        "the previous result",
+  )
+  var generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
+  @Parameter(
     names = ["--dss-generalization-gas"],
     description =
-      "--dss-generalize-violations: failed probes per sender and condition shape before that " +
-        "shape is no longer generalized",
+      "Failed probes per sender (GSPACER: per sender and condition shape) before it is no " +
+        "longer generalized",
   )
   var generalizationGas: Int = 2,
   @Parameter(
@@ -227,6 +243,13 @@ data class DssConfig(
     description = "Add an EXPL CEGAR block checker after --dss-checker-backends",
   )
   var explChecker: Boolean = false,
+  @Parameter(
+    names = ["--dss-conjecture-generalizers"],
+    description =
+      "--dss-conjecture-invariants: comma-separated generalizers that propose the conjectures " +
+        "(GSPACER, SEMANTIC), combined by --dss-generalizer-combination",
+  )
+  var conjectureGeneralizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   @Parameter(names = ["--dss-worker-port"], hidden = true) var workerPort: Int = 0,
   @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
   @Parameter(names = ["--dss-worker-blocks"], hidden = true)
