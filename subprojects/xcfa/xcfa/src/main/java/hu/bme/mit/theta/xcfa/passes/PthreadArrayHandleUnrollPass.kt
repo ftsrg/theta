@@ -69,10 +69,20 @@ class PthreadArrayHandleUnrollPass(private val parseContext: ParseContext) : Pro
       "pthread_cond_destroy",
     )
 
-  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder =
-    if (usesArrayElementHandle(builder))
-      UnrollPass(substituteLoopVar = true, parseContext = parseContext).runChecked(builder)
-    else builder
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    if (!usesArrayElementHandle(builder)) return builder
+    val unrolled = UnrollPass(substituteLoopVar = true, parseContext = parseContext).runChecked(builder)
+    if (!usesArrayElementHandle(unrolled)) return unrolled
+    // A loop too long to unroll exactly (or of unknown length) keeps only its first iterations: a
+    // violation found then is real, a Safe verdict is not trusted (unsafe unroll).
+    return UnrollPass(PREFIX_ITERATIONS, substituteLoopVar = true, parseContext = parseContext)
+      .runChecked(unrolled)
+  }
+
+  companion object {
+    /** How many iterations of an unbounded handle loop are kept. */
+    const val PREFIX_ITERATIONS = 3
+  }
 
   private fun usesArrayElementHandle(builder: XcfaProcedureBuilder): Boolean =
     builder.getEdges().any { edge ->
