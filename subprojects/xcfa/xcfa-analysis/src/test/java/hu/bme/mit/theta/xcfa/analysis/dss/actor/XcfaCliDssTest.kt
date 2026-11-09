@@ -132,11 +132,12 @@ class XcfaCliDssTest {
   }
 
   /**
-   * With a 1 ms budget, every checker runs out of it: blocks are cut until none has a cut. Only on
-   * loop-free programs, as DSS need not terminate once a loop is cut into a cycle of blocks.
+   * With a 1 ms budget, every checker runs out of it, so the single block is cut until no piece has
+   * a cut. Loop-free programs only: DSS need not terminate once a loop is cut into a cycle of
+   * blocks.
    */
   private val cutting =
-    arrayOf("--dss-checker-backends", "KIND,CEGAR", "--dss-checker-budget", "1", CUT)
+    arrayOf("--dss-decomposition", "NONE", "--dss-expl-checker", "--dss-checker-budget", "1", CUT)
 
   private fun expected(program: String) =
     if (program.endsWith("unsafe")) "SafetyResult Unsafe" else "SafetyResult Safe"
@@ -246,17 +247,23 @@ class XcfaCliDssTest {
     assertTrue(thrown != null && "--dss-cut-on-timeout" in output) { output }
   }
 
+  /**
+   * Not with `PROCESS`: every restart starts new worker processes, which takes minutes.
+   * `BIDIRECTIONAL` may finish from blocks that need no solver call before any budget runs out.
+   */
   @ParameterizedTest
-  @ValueSource(strings = ["SEQUENTIAL", "PROCESS"])
-  fun `a block that every checker runs out of is cut, and the run starts over`(executor: String) {
-    for (program in listOf("safe", "unsafe")) {
-      val (output, thrown) =
-        runDss(program, *cutting, "--dss-executor", executor, "--loglevel", "INFO")
-      if (thrown != null) throw AssertionError(output, thrown)
-      assertTrue("starting over with it cut" in output) { output }
-      val verdict = output.lines().last { it.contains("SafetyResult") }
-      assertTrue(verdict.contains(expected(program))) { output }
-    }
+  @ValueSource(strings = ["FORWARD", "BACKWARD", "BIDIRECTIONAL"])
+  fun `a block that every checker runs out of is cut, and the run starts over`(direction: String) {
+    val cut =
+      listOf("branches", "branches_unsafe").map { program ->
+        val (output, thrown) =
+          runDss(program, *cutting, "--dss-direction", direction, "--loglevel", "INFO")
+        if (thrown != null) throw AssertionError(output, thrown)
+        val verdict = output.lines().last { it.contains("SafetyResult") }
+        assertTrue(verdict.contains(expected(program))) { output }
+        "starting over with it cut" in output
+      }
+    assertTrue(if (direction == "BIDIRECTIONAL") cut.any { it } else cut.all { it }) { "$cut" }
   }
 
   @Test
