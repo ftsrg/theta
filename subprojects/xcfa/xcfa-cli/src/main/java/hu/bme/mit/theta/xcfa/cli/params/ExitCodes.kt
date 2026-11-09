@@ -35,6 +35,7 @@ enum class ExitCodes(val code: Int) {
   INVALID_PARAM(211),
   VERIFICATION_STUCK(220),
   SOLVER_ERROR(221),
+  UNRELIABLE_UNSAFE(222),
 }
 
 data class ErrorCodeException(val code: Int) : Exception()

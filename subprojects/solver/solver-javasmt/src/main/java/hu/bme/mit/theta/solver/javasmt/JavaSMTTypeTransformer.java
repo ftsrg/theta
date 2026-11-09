@@ -66,8 +66,9 @@ final class JavaSMTTypeTransformer {
         } else if (type instanceof BvType bvType) {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {
+            // FpType's significand counts the hidden bit; this factory takes the fraction only.
             return FormulaType.getFloatingPointTypeFromSizesWithoutHiddenBit(
-                    fpType.getExponent(), fpType.getSignificand());
+                    fpType.getExponent(), fpType.getSignificand() - 1);
         } else if (type instanceof ArrayType<?, ?> arrayType) {
             final FormulaType<?> indexSort = toSort(arrayType.getIndexType());
             final FormulaType<?> elemSort = toSort(arrayType.getElemType());

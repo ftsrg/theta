@@ -45,7 +45,7 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * total (a pointer that matches no candidate -- e.g. NULL -- would be undefined behavior in C).
  *
  * The candidate set is the set of functions whose address is taken anywhere in the program (see
- * [FunctionIds]), restricted to those actually defined in this XCFA with a matching arity. This
+ * [FunctionIds]), restricted to those actually defined in this XCFA with a matching signature. This
  * must run before [InlineProceduresPass] so that the direct calls it emits are inlined normally.
  *
  * Programs that never call through a function pointer contain no marker call and are left
@@ -108,7 +108,9 @@ class FunctionPointerCallsPass(
       FunctionIds.getAll()
         .filter { (name, _) ->
           builder.parent.getProcedures().any { proc ->
-            proc.name == name && proc.getParams().size == arguments.size + 1
+            proc.name == name &&
+              proc.getParams().size == arguments.size + 1 &&
+              proc.hasTypesOf(returnValue, arguments)
           }
         }
         .map { (name, id) ->
@@ -155,6 +157,20 @@ class FunctionPointerCallsPass(
       )
     )
     return branches
+  }
+
+  /**
+   * Whether the call's result and arguments have the types of this procedure's parameters. A
+   * function of another type is no target of a well-typed call (calling it is undefined behavior),
+   * and binding its parameters to the call's values would not even be well-typed.
+   */
+  private fun XcfaProcedureBuilder.hasTypesOf(
+    returnValue: Expr<*>,
+    arguments: List<Expr<*>>,
+  ): Boolean {
+    val params = getParams().map { it.first.type }
+    return params.first() == returnValue.type &&
+      params.drop(1).zip(arguments).all { (param, argument) -> param == argument.type }
   }
 
   private fun havocReturnValue(returnValue: Expr<*>, invokeLabel: InvokeLabel): XcfaLabel =

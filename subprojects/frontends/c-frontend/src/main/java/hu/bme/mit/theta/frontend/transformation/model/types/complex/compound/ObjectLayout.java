@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,7 +132,12 @@ public final class ObjectLayout {
         }
         // Pointers report the width of `unsigned long`, which is the pointer width in both ILP32
         // and LP64 -- the two models this frontend supports.
-        return type.width();
+        return storageBits(type);
+    }
+
+    /** A `_Bool` holds one value bit but occupies a byte, as in both supported ABIs. */
+    private static int storageBits(CComplexType type) {
+        return type instanceof CBool ? 8 : type.width();
     }
 
     /**
@@ -157,7 +163,7 @@ public final class ObjectLayout {
             // An array is as aligned as one element.
             return alignBits(array.getEmbeddedType(), arch, Attributes.NONE);
         }
-        final int size = type.width();
+        final int size = storageBits(type);
         if (type.isAtomic()) {
             // An _Atomic scalar must be read/written by a single instruction, so it aligns to its
             // own size even where the architecture would otherwise cap a plain scalar lower.
@@ -271,37 +277,12 @@ public final class ObjectLayout {
     }
 
     /**
-     * The byte size `sizeof` reports outside the bytes model: what is in the type, unpadded (a
-     * union's, its largest member's). Under [flat] a fixed-size array counts every element, as it
-     * is laid out inline, and a flexible array member nothing; otherwise it is the one cell holding
-     * its base.
+     * The byte size `sizeof` reports for [type], in every memory model: its padded C layout, at
+     * least one byte. Byte counts derived from `sizeof` (a `malloc` size) are divided back into
+     * elements by this same size.
      */
-    public static int cellModelSize(CComplexType type, boolean flat) {
-        if (flat && type instanceof CArray array) {
-            final Integer count = constantDimension(array);
-            if (count != null) {
-                return Math.max(count * cellModelSize(array.getEmbeddedType(), true), 1);
-            }
-        }
-        if (type instanceof CStruct struct) {
-            final List<Integer> fieldSizes =
-                    struct.getFields().stream()
-                            .map(
-                                    f ->
-                                            flat
-                                                            && f.get2() instanceof CArray a
-                                                            && constantDimension(a) == null
-                                                    ? 0
-                                                    : cellModelSize(f.get2(), flat))
-                            .toList();
-            if (fieldSizes.isEmpty()) {
-                return 1;
-            }
-            return struct.isUnion()
-                    ? fieldSizes.stream().max(Integer::compare).orElse(1)
-                    : fieldSizes.stream().mapToInt(Integer::intValue).sum();
-        }
-        return Math.max(type.width() / 8, 1);
+    public static int sizeofBytes(CComplexType type, ArchitectureType arch) {
+        return Math.max(sizeBits(type, arch) / 8, 1);
     }
 
     /** The element count of a fixed-size array, or null when it has none (flexible member, VLA). */

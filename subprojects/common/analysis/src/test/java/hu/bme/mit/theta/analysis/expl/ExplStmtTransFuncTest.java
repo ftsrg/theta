@@ -19,6 +19,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.NaN;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 
 import com.google.common.collect.ImmutableSet;
@@ -28,6 +29,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
@@ -118,6 +120,67 @@ public class ExplStmtTransFuncTest {
         final ExplState expectedState =
                 ExplState.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
         Assertions.assertEquals(expectedState, Utils.singleElementOf(succStates));
+    }
+
+    @Test
+    public void testFpNan() {
+        final VarDecl<FpType> f = Var("f", FpType.of(8, 24));
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
+        final ExplState sourceState =
+                ExplState.of(ImmutableValuation.builder().put(f, NaN(f.getType())).build());
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(f, y));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Havoc(y));
+        stmts.add(Assume(BoolExprs.And(Gt(y.getRef(), Int(5)), Lt(y.getRef(), Int(7)))));
+
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
+
+        final ExplState expectedState =
+                ExplState.of(
+                        ImmutableValuation.builder()
+                                .put(f, NaN(f.getType()))
+                                .put(y, Int(6))
+                                .build());
+        Assertions.assertEquals(List.of(expectedState), List.copyOf(succStates));
+    }
+
+    @Test
+    public void testEnumerationAfterTooManySuccessors() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 2);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Assign(x, Inc(x.getRef())));
+        stmts.add(Havoc(y));
+        stmts.add(Assume(BoolExprs.And(Gt(y.getRef(), Int(4)), Lt(y.getRef(), Int(6)))));
+
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
+
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(y, Int(5)).build());
+        Assertions.assertEquals(List.of(expectedState), List.copyOf(succStates));
+    }
+
+    @Test
+    public void testEnumerationOfOneStatement() {
+        final VarDecl<IntType> z = Var("z", Int());
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 2);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y, z));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Havoc(y));
+        stmts.add(Assume(BoolExprs.And(Gt(y.getRef(), Int(4)), Lt(y.getRef(), Int(6)))));
+        stmts.add(Havoc(z));
+        stmts.add(Assume(Gt(z.getRef(), x.getRef())));
+
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
+
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(y, Int(5)).build());
+        Assertions.assertEquals(List.of(expectedState), List.copyOf(succStates));
     }
 
     @Test

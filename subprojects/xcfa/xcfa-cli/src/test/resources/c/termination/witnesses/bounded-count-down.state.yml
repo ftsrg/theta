@@ -1,0 +1,26 @@
+- entry_type: 'invariant_set'
+  metadata:
+    format_version: '2.1'
+    uuid: '3b1cbaca-ea2f-5f7d-be9e-d95012385dd0'
+    creation_time: '2026-11-06T12:00:00Z'
+    producer:
+      name: 'hand-written'
+      version: '1'
+    task:
+      input_files:
+      - 'bounded-count-down.c'
+      input_file_hashes:
+        'bounded-count-down.c': '7e49098ec98edf11f03bb690d059e775a08eabbe5856da8d7368713f1acaa4c5'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - invariant:
+      type: 'location_invariant'
+      location:
+        file_name: 'bounded-count-down.c'
+        line: 7
+        column: 5
+        function: 'main'
+      value: 'i >= 1 && i <= 3'
+      format: 'c_expression'

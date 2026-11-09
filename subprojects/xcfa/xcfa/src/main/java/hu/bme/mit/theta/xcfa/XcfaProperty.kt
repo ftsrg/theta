@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa
 
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.witnesses.EntryType
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 
 data class WitnessInfo(val witness: YamlWitness, val witnessPass: (ParseContext) -> ProcedurePass)
@@ -39,6 +40,12 @@ class XcfaProperty(val inputProperty: ErrorDetection, val witness: WitnessInfo? 
   fun transformSpecification(newProperty: ErrorDetection) {
     verifiedProperty = newProperty
   }
+
+  /** Whether a correctness witness of termination is validated. */
+  val isTerminationWitnessValidation: Boolean
+    get() =
+      inputProperty == ErrorDetection.TERMINATION &&
+        witness?.witness?.entryType == EntryType.INVARIANTS
 
   fun copy(): XcfaProperty =
     XcfaProperty(inputProperty, witness).also { it.verifiedProperty = this.verifiedProperty }

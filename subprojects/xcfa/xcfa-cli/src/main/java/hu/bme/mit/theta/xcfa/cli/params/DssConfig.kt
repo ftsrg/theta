@@ -81,6 +81,12 @@ data class DssConfig(
     description = "Which of --dss-checker-backends a block analysis starts with",
   )
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.PRIORITY,
+  @Parameter(
+    names = ["--dss-solver"],
+    description =
+      "Solver of the block checkers and of DSS's own queries (default: legacy Z3, or Z3:new with the concurrent executor)",
+  )
+  var solver: String? = null,
   @Parameter(names = ["--dss-executor"], description = "How the block analyses are run")
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
   @Parameter(

@@ -133,7 +133,7 @@ class XcfaOcCheckerTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
+        solverFactory = SolverManager.resolveSolverFactory("Z3:new"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = autoConflictFinderConfig,
@@ -170,7 +170,7 @@ class XcfaOcCheckerTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = decisionProcedure,
-        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
+        solverFactory = SolverManager.resolveSolverFactory("Z3:new"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,
@@ -214,10 +214,9 @@ class XcfaOcCheckerTest {
   }
 
   @Test
-  fun testThreadLocalUnsupported() {
-    // one object per thread, but built as a single shared global: refused instead
+  fun testThreadLocalAggregateUnsupported() {
     Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
-      check("/32thread_local_unsupported.c", property, OcDecisionProcedureType.IDL)
+      check("/32thread_local_aggregate.c", property, OcDecisionProcedureType.IDL)
     }
   }
 

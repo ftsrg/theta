@@ -19,6 +19,8 @@ import hu.bme.mit.theta.analysis.algorithm.Result
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
+import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
+import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 abstract class Node(val name: String) {
@@ -84,7 +86,12 @@ class ConfigNode(
   override fun execute(logger: Logger): Pair<Any, Any> {
     logger.result("%s", "Current configuration: $name")
     logger.benchmark("%s", "Current configuration: $config")
-    return Pair(Pair(name, config), check(config))
+    @Suppress("UNCHECKED_CAST")
+    val step =
+      (config as XcfaConfig<SpecFrontendConfig, SpecBackendConfig>).let {
+        it.copy(backendConfig = it.backendConfig.copy(portfolioStep = true))
+      }
+    return Pair(Pair(name, config), check(step))
   }
 
   override fun visualize(): String =

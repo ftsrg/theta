@@ -87,6 +87,8 @@ fun getHornChecker(
           HavocToUninitVar(),
           NoParallelEdgesPass(),
           EliminateSelfLoops(),
+          // The monolithic encoding has no dereference terms, only the per-type memory arrays.
+          DereferenceToArrayPass(),
         )
       )
     )

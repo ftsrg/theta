@@ -84,11 +84,11 @@ class XcfaMultiThreadToMonolithicAdapter(
 
   // use model of super class in init expressions since it is optimized further
   private val threads = super.model.staticThreadProcedureMap
-  private lateinit var locVars: Map<StartLabel?, VarDecl<Type>>
+  private lateinit var locVars: Map<ThreadInstance?, VarDecl<Type>>
   private val edgeVar = Decls.Var("__edge_", intType)
-  private lateinit var locs: Map<StartLabel?, Map<XcfaLocation, Int>>
-  private lateinit var edges: Map<StartLabel?, Map<XcfaEdge, Int>>
-  private lateinit var threadIds: Map<StartLabel?, Int>
+  private lateinit var locs: Map<ThreadInstance?, Map<XcfaLocation, Int>>
+  private lateinit var edges: Map<ThreadInstance?, Map<XcfaEdge, Int>>
+  private lateinit var threadIds: Map<ThreadInstance?, Int>
   private val atomicMutex = Decls.Var("__atomic_mutex", intType)
 
   override val monolithicExpr: MonolithicExpr
@@ -112,9 +112,9 @@ class XcfaMultiThreadToMonolithicAdapter(
 
       // Initialize location vars, location and edge mappings
       locVars = threads.keys.associateWith { Decls.Var("__loc_t${threadIds[it]}", intType) }
-      val locs = mutableMapOf<StartLabel?, MutableMap<XcfaLocation, Int>>()
+      val locs = mutableMapOf<ThreadInstance?, MutableMap<XcfaLocation, Int>>()
       var locCounter = 0
-      val edges = mutableMapOf<StartLabel?, MutableMap<XcfaEdge, Int>>()
+      val edges = mutableMapOf<ThreadInstance?, MutableMap<XcfaEdge, Int>>()
       var edgeCounter = 0
       for ((s, proc) in threads) {
         val lm = locs.getOrPut(s) { mutableMapOf() }
@@ -154,31 +154,32 @@ class XcfaMultiThreadToMonolithicAdapter(
                   AssignStmt.of(locVar, cast(smtInt(locMap[target]!!), locVar.type)),
                   AssignStmt.of(edgeVar, cast(smtInt(edges[thread]!![edge]!!), edgeVar.type)),
                 ) +
-                  label.getFlatLabels().flatMap { l ->
+                  label.getFlatLabels().flatMapIndexed { i, l ->
                     when (l) {
                       is StartLabel -> {
+                        val started = ThreadInstance(thread, edge, i)
                         val pidVar = l.pidVar.changeVars(varLookUp)
-                        val startedLocVar = locVars[l]!!
-                        val startedLocMap = locs[l]!!
-                        val startedInitLoc = threads[l]!!.initLoc
+                        val startedLocVar = locVars[started]!!
+                        val startedLocMap = locs[started]!!
+                        val startedInitLoc = threads[started]!!.initLoc
                         listOf(
                           AssumeStmt.of(Eq(startedLocVar.ref, smtInt(-1))),
                           AssignStmt.of(
                             cast(pidVar, pidVar.type),
-                            cast(smtInt(threadIds[l]!!), pidVar.type),
+                            cast(smtInt(threadIds[started]!!), pidVar.type),
                           ),
                           AssignStmt.of(
                             startedLocVar,
                             cast(smtInt(startedLocMap[startedInitLoc]!!), startedLocVar.type),
                           ),
                         ) +
-                          threads[l]!!
+                          threads[started]!!
                             .params
                             .filter { it.second != ParamDirection.OUT }
-                            .mapIndexed { i, p ->
+                            .mapIndexed { j, p ->
                               AssignStmt.of(
-                                cast(p.first.changeVars(varLookUps[l]!!), p.first.type),
-                                cast(l.params[i + 1].changeVars(varLookUp), p.first.type),
+                                cast(p.first.changeVars(varLookUps[started]!!), p.first.type),
+                                cast(l.params[j + 1].changeVars(varLookUp), p.first.type),
                               )
                             }
                       }
@@ -187,7 +188,7 @@ class XcfaMultiThreadToMonolithicAdapter(
                         val pidVar = l.pidVar.changeVars(varLookUp)
                         val potentialJoinedThreads =
                           threadIds.entries.filter { (start, _) ->
-                            start != null && start.pidVar == l.pidVar
+                            start != null && start.startLabel.pidVar == l.pidVar
                           }
                         val joinCondition =
                           if (potentialJoinedThreads.isEmpty())
@@ -381,15 +382,16 @@ class XcfaMultiThreadToMonolithicAdapter(
     error("No edge found for edge id $edgeVarValue")
   }
 
-  private val XCFA.staticThreadProcedureMap: Map<StartLabel?, XcfaProcedure>
+  private val XCFA.staticThreadProcedureMap: Map<ThreadInstance?, XcfaProcedure>
     get() {
       val initProc = this.initProcedures.first().first
-      return mapOf(null to initProc) + staticThreadProcedureMap(setOf(initProc))
+      return mapOf(null to initProc) + staticThreadProcedureMap(null, setOf(initProc))
     }
 
   private fun XCFA.staticThreadProcedureMap(
-    startedProcedures: Set<XcfaProcedure>
-  ): Map<StartLabel, XcfaProcedure> {
+    parent: ThreadInstance?,
+    startedProcedures: Set<XcfaProcedure>,
+  ): Map<ThreadInstance, XcfaProcedure> {
     val procedure = startedProcedures.last()
     val loopEdges = procedure.loopEdges
     check(loopEdges.all { edge -> edge.label.transformable(true) }) {
@@ -401,7 +403,6 @@ class XcfaMultiThreadToMonolithicAdapter(
       }"
     }
     val nonLoopEdges = procedure.edges - loopEdges
-    val nonLoopLabels = nonLoopEdges.flatMap { it.getFlatLabels() }
     check(nonLoopEdges.all { it.label.transformable(false) }) {
       "XcfaMultiThreadToMonolithicAdapter does not support these labels: ${
         nonLoopEdges
@@ -410,16 +411,18 @@ class XcfaMultiThreadToMonolithicAdapter(
           .toSet()
       }"
     }
-    val startLabels = nonLoopLabels.filterIsInstance<StartLabel>()
-
-    val threads = mutableMapOf<StartLabel, XcfaProcedure>()
-    startLabels.forEach { startLabel ->
-      val startedProcedure = procedures.find { it.name == startLabel.name }!!
-      check(startedProcedure !in startedProcedures) {
-        "Recursion is not allowed in static thread-procedure mapping!"
+    val threads = mutableMapOf<ThreadInstance, XcfaProcedure>()
+    nonLoopEdges.forEach { edge ->
+      edge.getFlatLabels().forEachIndexed { i, startLabel ->
+        if (startLabel !is StartLabel) return@forEachIndexed
+        val startedProcedure = procedures.find { it.name == startLabel.name }!!
+        check(startedProcedure !in startedProcedures) {
+          "Recursion is not allowed in static thread-procedure mapping!"
+        }
+        val instance = ThreadInstance(parent, edge, i)
+        threads[instance] = startedProcedure
+        threads.putAll(staticThreadProcedureMap(instance, startedProcedures + startedProcedure))
       }
-      threads[startLabel] = startedProcedure
-      threads.putAll(staticThreadProcedureMap(startedProcedures + startedProcedure))
     }
     return threads
   }
@@ -435,4 +438,18 @@ class XcfaMultiThreadToMonolithicAdapter(
       is JoinLabel -> !inLoop
       else -> false
     }
+}
+
+/**
+ * One started thread: the start label at [labelIndex] among the flat labels of [startEdge], run by
+ * the [parent] thread (null for the init procedure). Start labels alone cannot be the key: copies
+ * from an unrolled loop are equal, and a procedure started twice repeats its own start labels.
+ */
+private data class ThreadInstance(
+  val parent: ThreadInstance?,
+  val startEdge: XcfaEdge,
+  val labelIndex: Int,
+) {
+  val startLabel: StartLabel
+    get() = startEdge.getFlatLabels()[labelIndex] as StartLabel
 }

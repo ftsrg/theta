@@ -21,12 +21,15 @@ import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
+import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.node.expression.MddValues;
 import hu.bme.mit.theta.analysis.algorithm.mdd.node.identity.IdentityRepresentation;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,7 +56,11 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return AbstractNextStateDescriptor.terminalEmpty();
         if (node.isTerminal() && !variableHandle.isTerminal()) {
             // a non-zero terminal above the bottom accepts everything below it
-            return AbstractNextStateDescriptor.terminalIdentity();
+            if (!actsOnTerminals(node, variableHandle.getMddGraph()))
+                return AbstractNextStateDescriptor.terminalIdentity();
+            // a step on the terminals has to reach the state terminals, so keep descending
+            return IdentityNextStateDescriptor.withChild(
+                    of(node, variableHandle.getLower().orElseThrow().getLower().orElseThrow()));
         }
         if (node.getRepresentation()
                 instanceof IdentityRepresentation identityExpressionRepresentation) {
@@ -69,6 +76,18 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     @Override
     public boolean evaluate() {
         return true;
+    }
+
+    private static boolean actsOnTerminals(MddNode node, MddGraph<?> graph) {
+        final MddValues values = MddValues.of(graph);
+        return values.actsOnTerminals() && !(values.formulaOf(node) instanceof TrueExpr);
+    }
+
+    @Override
+    public MddNode transformTerminal(MddNode terminal, MddGraph<?> graph) {
+        final MddNode node = handle.getNode();
+        if (!node.isTerminal()) return terminal;
+        return MddValues.of(graph).post(terminal, node, graph);
     }
 
     @Override

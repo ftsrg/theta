@@ -190,7 +190,7 @@ grammar C;
                     "struct", "union", "enum", "const", "volatile", "restrict", "_Atomic",
                     "__const", "__restrict", "__restrict__", "__volatile__", "__thread",
                     "typeof", "__typeof", "__typeof__", "__auto_type", "static", "extern", "register", "auto", "inline",
-                    "_Alignas", "__inline__", "__attribute__"));
+                    "_Alignas", "__inline__", "__attribute__", "__builtin_va_list"));
 
     public boolean isTypeStart(org.antlr.v4.runtime.Token token) {
         if (permissiveTypeNames) {

@@ -133,6 +133,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
   @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
   var enableStaticCoi: Boolean = false,
   @Parameter(
+    names = ["--ptr-size-in-memory"],
+    description = "Store the memsafety sizes in memory instead of an SMT array (OC backend only)",
+  )
+  var ptrSizeInMemory: Boolean = false,
+  @Parameter(
     names = ["--unroll"],
     description =
       "Max number of loop iterations to unroll (use -1 to unroll completely when possible)",
@@ -223,6 +228,29 @@ data class CFrontendConfig(
   )
   var cir2cDir: File = File("./cir2c"),
   @Parameter(
+    names = ["--cir2c-args"],
+    description = "Further arguments of run-cir2c.sh, separated by whitespace",
+  )
+  var cir2cArgs: String = "",
+  @Parameter(
+    names = ["--cir2c-merge"],
+    description =
+      "With several inputs, merge them with cir-merge and parse one C file, instead of lowering each on its own and linking them in the frontend",
+  )
+  var cir2cMerge: Boolean = false,
+  @Parameter(
+    names = ["--no-inlining"],
+    description =
+      "Keep procedures separate in the XCFA, instead of inlining the calls of known ones",
+  )
+  var noInlining: Boolean = false,
+  @Parameter(
+    names = ["--separate-float-cells"],
+    description =
+      "Under the bytes memory model, keep floats in cells of their own instead of refusing them. A float then does not alias the bytes overlapping it.",
+  )
+  var separateFloatCells: Boolean = false,
+  @Parameter(
     names = ["--enable-signed-wraparound"],
     description =
       "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
@@ -230,6 +258,14 @@ data class CFrontendConfig(
         " overflow detection (no-overflow).",
   )
   var enableSignedWraparound: Boolean = false,
+  @Parameter(
+    names = ["--library"],
+    description =
+      "Verify the input as a library against any client: an API description (YAML) lists the" +
+        " classes and functions a client may call, and a most general client calling them in any" +
+        " order with any arguments replaces main",
+  )
+  var library: File? = null,
 ) : SpecFrontendConfig {
 
   /**
@@ -316,6 +352,8 @@ data class BackendConfig<T : SpecBackendConfig>(
   var timeoutMs: Long = 0,
   @Parameter(names = ["--in-process"], description = "Run analysis in process")
   var inProcess: Boolean = false,
+  /** Set by the portfolio for the configs it runs, so a config without a verdict can hand over. */
+  var portfolioStep: Boolean = false,
   @Parameter(
     names = ["--memlimit"],
     description = "Maximum memory to use when --in-process (in bytes, 0 for default)",
@@ -373,6 +411,12 @@ data class CegarConfig(
     description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor",
   )
   var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
+  @Parameter(
+    names = ["--deref-to-array"],
+    description =
+      "Turn dereferences into reads and writes of one memory array per type, so that the explicit domain can track memory (see --memory-init)",
+  )
+  var derefToArray: Boolean = false,
   val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
   val refinerConfig: CegarRefinerConfig = CegarRefinerConfig(),
 ) : SpecBackendConfig {
@@ -549,6 +593,11 @@ data class BoundedConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--block-encoding"],
+    description = "One step per loop-free block instead of per edge (single-threaded reachability)",
+  )
+  var blockEncoding: Boolean = false,
   val bmcConfig: BMCConfig = BMCConfig(),
   val indConfig: InductionConfig = InductionConfig(),
   val itpConfig: InterpolationConfig = InterpolationConfig(),
@@ -736,6 +785,17 @@ data class MddConfig(
       "Explicit edges allowed on a single decision diagram node before --edge-cap-strategy applies",
   )
   var edgeLimit: Int = MddApproximation.DEFAULT_EDGE_LIMIT,
+  @Parameter(
+    names = ["--symbolic-values"],
+    description =
+      "Keep values the program leaves free symbolic, with a formula over them in the terminals",
+  )
+  var symbolicValues: Boolean = false,
+  @Parameter(
+    names = ["--qe-solver"],
+    description = "Solver for the quantifier elimination of --symbolic-values",
+  )
+  var qeSolver: String = "Z3:new",
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")
@@ -839,6 +899,13 @@ data class OutputConfig(
     description = "Accept safe results even with unsafe loop unroll",
   )
   var acceptUnreliableSafe: Boolean = false,
+  @Parameter(
+    names = ["--function-entry-invariants"],
+    description =
+      "On a safe CEGAR result, write the invariant of each function's entry, over its parameters " +
+        "and the globals, to function-entry-invariants.yml",
+  )
+  var functionEntryInvariants: Boolean = false,
   val cOutputConfig: COutputConfig = COutputConfig(),
   val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
   val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),

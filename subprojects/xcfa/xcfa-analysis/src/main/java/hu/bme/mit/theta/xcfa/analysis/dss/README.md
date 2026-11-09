@@ -38,6 +38,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-global-predicate-pool` | `true` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
+| `--dss-solver` | legacy Z3 (`Z3:new` with `CONCURRENT`) | Solver of the block checkers and of DSS's own queries |
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.

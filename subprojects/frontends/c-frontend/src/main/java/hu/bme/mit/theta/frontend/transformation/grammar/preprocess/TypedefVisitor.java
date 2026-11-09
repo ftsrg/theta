@@ -40,6 +40,10 @@ public class TypedefVisitor extends IncludeHandlingCBaseVisitor<Set<CDeclaration
 
     private final Set<CDeclaration> declarations = new LinkedHashSet<>();
 
+    public Set<CDeclaration> getDeclarations() {
+        return declarations;
+    }
+
     public Optional<CComplexType> getType(String id) {
         return declarations.stream()
                 .filter(cDeclaration -> cDeclaration.getName().equals(id))

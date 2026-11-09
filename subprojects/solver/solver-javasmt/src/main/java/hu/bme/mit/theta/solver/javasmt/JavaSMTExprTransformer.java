@@ -69,6 +69,7 @@ import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
@@ -292,6 +293,7 @@ final class JavaSMTExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
@@ -1204,7 +1206,10 @@ final class JavaSMTExprTransformer {
                                                 .map(context.getFormulaManager()::getFormulaType)
                                                 .collect(Collectors.toList()));
 
-                symbolTable.put(decl, funcDecl);
+                // Another constant of the same name and signature already names this function.
+                if (!symbolTable.definesSymbol(funcDecl)) {
+                    symbolTable.put(decl, funcDecl);
+                }
             }
 
             return context.getFormulaManager().getUFManager().callUF(funcDecl, argTerms);
@@ -1212,6 +1217,28 @@ final class JavaSMTExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    /**
+     * An uninterpreted function per function and sort: one name may not carry two signatures, so
+     * the sort is part of the name ({@code fpmath.exp-8-24}).
+     */
+    private Formula transformFpMathFunc(final FpMathFuncExpr expr) {
+        final var type = expr.getType();
+        final Formula opTerm = toTerm(expr.getOp());
+        final var sort = transformer.toSort(type);
+        final var funcDecl =
+                context.getFormulaManager()
+                        .getUFManager()
+                        .declareUF(
+                                "%s-%d-%d"
+                                        .formatted(
+                                                expr.getOperatorLabel(),
+                                                type.getExponent(),
+                                                type.getSignificand()),
+                                sort,
+                                List.of(sort));
+        return context.getFormulaManager().getUFManager().callUF(funcDecl, opTerm);
     }
 
     private Formula transformDereference(final Dereference<?, ?, ?> expr) {

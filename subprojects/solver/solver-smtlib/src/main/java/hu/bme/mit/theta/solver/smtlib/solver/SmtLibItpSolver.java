@@ -29,6 +29,7 @@ import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibMathFuncDecls;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpMarker;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
@@ -116,6 +117,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         // Declare the `deref` uninterpreted function (per signature) alongside the ordinary
         // constants; it has no ConstDecl in the assertion of its own (see SmtLibDereferenceDecls).
         consts.addAll(SmtLibDereferenceDecls.collect(assertion));
+        consts.addAll(SmtLibMathFuncDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
         enumStrategy.declareDatatypes(
@@ -284,5 +286,26 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         } catch (Exception e) {
             throw new SmtLibSolverException("Could not parse solver output: " + response, e);
         }
+    }
+
+    /**
+     * Throws if {@code response} is a solver error. A driver that reads an interpolant as a term
+     * has to call this first, as {@code (error "...")} is a well-formed term as well.
+     */
+    protected final void throwIfSolverError(final String response) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        final String reason;
+        try {
+            reason = parser.general_response_error().reason.getText();
+        } catch (SmtLibSolverException e) {
+            return; // not an error response
+        }
+        throw new SmtLibSolverException(reason);
     }
 }

@@ -124,7 +124,7 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
         Map<CDeclaration, GlobalDeclarationLevel> ret = new LinkedHashMap<>();
         for (int i = 0; i < declarations.size(); i++) {
             CDeclaration declaration = declarations.get(i);
-            if (i >= first && initDeclarators.get(i).initializer() != null) {
+            if (i >= first && initDeclarators.get(i - first).initializer() != null) {
                 ret.put(declaration, GlobalDeclarationLevel.DEFINED);
             } else if (!declaration.getType().isExtern()) {
                 ret.put(declaration, GlobalDeclarationLevel.DECLARED);
@@ -166,6 +166,25 @@ public class GlobalDeclUsageVisitor extends IncludeHandlingCBaseVisitor<List<CDe
             }
         }
         return null;
+    }
+
+    /** Reads one unit without pruning it: over several, what is used is only known at the end. */
+    public void collect(CParser.CompilationUnitContext ctx) {
+        clear();
+        if (ctx.translationUnit() != null) ctx.translationUnit().accept(this);
+    }
+
+    public Map<String, Set<String>> getUsages() {
+        return globalUsages;
+    }
+
+    /** The declarations of the given names, in the order {@link #collect} met them. */
+    public List<CParser.ExternalDeclarationContext> getContexts(Set<String> names) {
+        return usedContexts.stream()
+                .filter(objects -> names.contains(objects.get1()))
+                .map(Tuple2::get2)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     public List<CParser.ExternalDeclarationContext> getGlobalUsages(

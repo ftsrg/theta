@@ -89,6 +89,9 @@ import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.cli.params.toJson
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -109,7 +112,7 @@ fun checkDssSupports(property: XcfaProperty) =
 
 /** `--backend DSS`: distributed summary synthesis (`xcfa-analysis's dss/README.md`). */
 fun getDssChecker(
-  xcfa: XCFA,
+  inputXcfa: XCFA,
   mcm: MCM,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
@@ -117,6 +120,9 @@ fun getDssChecker(
 ): SafetyChecker<Proof, Cex, XcfaPrec<*>> = SafetyChecker { _ ->
   val dssConfig = config.backendConfig.specConfig as DssConfig
   checkDssSupports(config.inputConfig.property)
+  // Blocks are cut out of the procedure and re-analyzed: dereferences are lowered to array reads
+  // and writes first, which block extraction and weakest preconditions handle as plain statements.
+  val xcfa = inputXcfa.optimizeFurther(ProcedurePassManager(listOf(DereferenceToArrayPass())))
   val procedure =
     xcfa.procedures.singleOrNull()
       ?: error(
@@ -148,7 +154,9 @@ fun getDssChecker(
     ?.let { throw IllegalArgumentException("--dss-checker-backends: $it cannot check DSS blocks") }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
-    if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
+    dssConfig.solver
+      ?: if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER
+      else DEFAULT_DSS_SOLVER
   // The counterexample monitor's registry is global: only concurrent block checkers go without it
   val cexMonitor =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE

@@ -51,7 +51,7 @@ Substitution sub = BasicSubstitution.builder().put(x, Int(1)).build();
 Expr<BoolType> phi2 = sub.apply(phi);
 ```
 
-Valuations: `MutableValuation().put(x, Int(1))`, `ImmutableValuation.builder()...build()`, `ImmutableValuation.empty()`. `Valuation.toExpr()` gives the `x = 1 ∧ ...` conjunction; a `Valuation` *is* a `Substitution`.
+Valuations: `MutableValuation().put(x, Int(1))`, `ImmutableValuation.builder()...build()`, `ImmutableValuation.empty()`. `Valuation.toExpr()` gives the `x = 1 ∧ ...` conjunction (FP values via `FpAssign`, so NaN and -0 hold); a `Valuation` *is* a `Substitution`.
 
 ## Parsing from text
 

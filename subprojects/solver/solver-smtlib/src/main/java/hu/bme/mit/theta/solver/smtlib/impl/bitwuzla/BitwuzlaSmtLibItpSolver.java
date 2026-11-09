@@ -193,6 +193,7 @@ public final class BitwuzlaSmtLibItpSolver extends SmtLibItpSolver<BitwuzlaSmtLi
         if (response.startsWith("[error]")) { // bitwuzla reports on stderr, then exits
             throw new SmtLibSolverException(response);
         }
+        throwIfSolverError(response);
 
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
         final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
@@ -203,12 +204,7 @@ public final class BitwuzlaSmtLibItpSolver extends SmtLibItpSolver<BitwuzlaSmtLi
             parser.addErrorListener(new ThrowExceptionErrorListener());
             return extractString(parser.term());
         } catch (Exception e) {
-            try {
-                throw new SmtLibSolverException(
-                        parser.response().general_response_error().reason.getText());
-            } catch (Exception ex) {
-                throw new SmtLibSolverException("Could not parse solver output: " + response, e);
-            }
+            throw new SmtLibSolverException("Could not parse solver output: " + response, e);
         }
     }
 

@@ -39,6 +39,8 @@ constructor(
   val events: List<Event<VarDecl<*>>> =
     splitTransExpr(transExpr).map { MonolithicExprEvent(it, transOffsetIndex) },
   val explicitSplit: List<Expr<BoolType>>? = null,
+  /** Checked by [hu.bme.mit.theta.analysis.algorithm.bounded.pipeline.passes.L2SMEPass]. */
+  val livenessWitness: LivenessWitness? = null,
 ) {
   val split: List<Expr<BoolType>> by lazy { explicitSplit ?: splitTransExpr(transExpr) }
 }

@@ -123,6 +123,18 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     val traceToConcretize = threadWriteTriples(cexToConcretize.toTrace())
 
     logger.write(Logger.Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
+    // where a long trace ends, without printing its states
+    for (action in traceToConcretize.actions.takeLast(3)) {
+      (action as? XcfaAction)?.let {
+        logger.write(
+          Logger.Level.INFO,
+          "|  |  Trace ends with %s -> %s: %s%n",
+          it.edge.source.name,
+          it.edge.target.name,
+          it.edge.label.toString().take(1500),
+        )
+      }
+    }
     logger.write(Logger.Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize)
     logger.write(Logger.Level.SUBSTEP, "|  |  Checking trace...")
     val cexStatus = exprTraceChecker.check(traceToConcretize)
