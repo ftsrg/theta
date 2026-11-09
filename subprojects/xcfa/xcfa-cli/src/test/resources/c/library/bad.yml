@@ -1,0 +1,5 @@
+classes:
+  - struct: Buf
+    constructors: [Buf__Buf]
+    destructor: Buf___Buf
+    methods: [Buf__get, Buf__head]

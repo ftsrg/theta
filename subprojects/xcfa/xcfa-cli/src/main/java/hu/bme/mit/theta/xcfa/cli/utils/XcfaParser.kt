@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
+import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
 import java.io.File
@@ -93,7 +94,12 @@ fun getXcfa(
           parseContext,
           logger,
           uniqueWarningLogger,
-        )
+          config.outputConfig.resultFolder,
+        ) { client ->
+          // The witness describes the generated client program, not the library input.
+          val witness = config.outputConfig.witnessConfig
+          if (witness.inputFileForWitness == null) witness.inputFileForWitness = client
+        }
       }
 
       InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
@@ -268,6 +274,27 @@ private fun runCir2c(inputs: List<File>, config: CFrontendConfig, logger: Logger
     .toList()
 }
 
+/**
+ * The single C input with the most general client of [api] as its `main` (see [LibraryClient]),
+ * written to [dir] (the result folder) so that a counterexample can be read as client code.
+ */
+private fun withLibraryClient(inputs: List<File>, api: File, dir: File, logger: Logger): File {
+  check(inputs.size == 1) { "--library needs a single C input (merge the units first)" }
+  val input = inputs.single()
+  val source =
+    LibraryClient(
+        input.readText(),
+        LibraryApi.parse(api.readText()),
+        DereferenceToArrayPass.zeroInitialized,
+      )
+      .source()
+  dir.mkdirs()
+  val out = File(dir, input.nameWithoutExtension + ".library.c").absoluteFile
+  out.writeText(source)
+  logger.result("%s", "Verifying ${input.name} as a library against any client: ${out.path}\n")
+  return out
+}
+
 private fun parseC(
   frontendConfig: CFrontendConfig,
   input: File,
@@ -275,6 +302,8 @@ private fun parseC(
   parseContext: ParseContext,
   logger: Logger,
   uniqueWarningLogger: Logger,
+  libraryClientDir: File = File("."),
+  onLibraryClient: (File) -> Unit = {},
 ): XCFA {
   // Resolve input file(s) from .yml manifest or direct file
   val inputs: List<File> =
@@ -317,8 +346,14 @@ private fun parseC(
       listOf(input)
     }
 
-  val transformedInputs =
+  val translatedInputs =
     if (frontendConfig.useCir2c) runCir2c(inputs, frontendConfig, logger) else inputs
+  val transformedInputs =
+    frontendConfig.library?.let { api ->
+      listOf(
+        withLibraryClient(translatedInputs, api, libraryClientDir, logger).also(onLibraryClient)
+      )
+    } ?: translatedInputs
 
   // Parse single or multiple translation units
   val xcfaFromC =

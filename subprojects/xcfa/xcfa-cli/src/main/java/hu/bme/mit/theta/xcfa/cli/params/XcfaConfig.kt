@@ -258,6 +258,14 @@ data class CFrontendConfig(
         " overflow detection (no-overflow).",
   )
   var enableSignedWraparound: Boolean = false,
+  @Parameter(
+    names = ["--library"],
+    description =
+      "Verify the input as a library against any client: an API description (YAML) lists the" +
+        " classes and functions a client may call, and a most general client calling them in any" +
+        " order with any arguments replaces main",
+  )
+  var library: File? = null,
 ) : SpecFrontendConfig {
 
   /**
