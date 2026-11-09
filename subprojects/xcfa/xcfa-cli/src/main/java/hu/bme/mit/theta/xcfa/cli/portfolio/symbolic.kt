@@ -87,18 +87,13 @@ fun symbolicPortfolio(
       )
     }
 
-    infix fun Node.then(node: Node): Node {
-      edges.add(Edge(this, node, if (inProcess) anythingButServerError else anyError))
-      return node
-    }
-
-    val mddStep = mdd(0, "Z3:new")
     if (portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)) {
-      return STM(mddStep, edges)
+      return STM(mdd(0, "Z3:new"), edges)
     }
-    val start =
-      mddCegar(120_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
-    start then mddStep
+    val start = mdd(300_000, "Z3:new")
+    val (cegar, cegarTwin) = step(mddCegar, 0, "mathsat:latest", "Z3")
+    edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
+    edges.add(Edge(cegar, cegarTwin, solverError))
 
     return STM(start, edges)
   }
