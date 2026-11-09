@@ -62,6 +62,9 @@ fun complex27(
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
   var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  // A witness instruments the program with a segment counter; follow the witness along it.
+  if (portfolioConfig.inputConfig.witness != null)
+    baseCegarConfig = baseCegarConfig.adaptConfig(search = Search.SEGMENT_ORDER)
   val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
   // Single-threaded only: multithreaded programs that are not inlined also reach this chain.
   val blockEncoding = !parseContext.multiThreading
