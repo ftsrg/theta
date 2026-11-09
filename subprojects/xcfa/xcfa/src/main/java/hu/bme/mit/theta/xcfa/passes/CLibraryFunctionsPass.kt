@@ -354,7 +354,9 @@ class CLibraryFunctionsPass(
                 }
                 val routineRet =
                   routine.getParams().map { (p, _) ->
-                    Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type).also(builder::addVar).ref
+                    Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type)
+                      .also(builder::addVar)
+                      .ref
                   }
                 val run =
                   XcfaLocation(
