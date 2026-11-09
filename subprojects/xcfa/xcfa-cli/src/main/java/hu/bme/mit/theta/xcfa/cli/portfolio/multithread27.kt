@@ -42,8 +42,8 @@ import hu.bme.mit.theta.xcfa.cli.params.Search.*
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.LBE_LOCAL
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.NO_LBE
 
 private const val YICES = "JavaSMT:YICES2"
 

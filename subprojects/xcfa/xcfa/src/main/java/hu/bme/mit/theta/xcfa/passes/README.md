@@ -48,9 +48,29 @@ Each phase below is one group in `CPasses`, in order.
 | | `PtrSizeToMemoryPass` | with `--ptr-size-in-memory` (OC only), move the memory-safety ghost arrays into memory, and their constant static entries into tables in the reads | last: anything before it may still rewrite dereferences |
 
 Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
-`AssumeFalseRemovalPass`, `AtomicReadsOneWritePass` and `WitnessOptimizer` by the OC checker,
-`SsaPass`/`NoUninitVar`/`HavocToUninitVar` by the monolithic and Horn adapters, and
-`DereferenceToArrayPass` by the backends that want memory as arrays rather than as dereferences.
+`AssumeFalseRemovalPass`, `AtomicReadsOneWritePass`, `AllocationSitesPass` and `WitnessOptimizer` by
+the OC checker, `NoUninitVar`/`HavocToUninitVar` by the Horn checker, and `DereferenceToArrayPass`
+by the backends that want memory as arrays rather than as dereferences.
+
+## Packages
+
+The passes are grouped by what they are about, not by pipeline phase. The pass infrastructure
+(`ProcedurePass`, `ProcedurePassManager` with `CPasses` and the other managers) and the shared
+helpers in `Utils.kt` stay in this package.
+
+| package | contents |
+|---|---|
+| `structure` | the shape of the CFA: normal form, determinism, removal of dead edges, locations and variables, large-block encoding, expression simplification, cone of influence, havoc/uninit conversions |
+| `procedures` | calls: inlining, function pointers, the call graph, and calls left unresolved or ignored |
+| `loops` | unrolling and its cut points, spin-loop detection |
+| `library` | the C library and the verifier intrinsics: `CLibraryFunctionsPass` (pthread and string calls), stubs, math functions, `__VERIFIER_*`, string literals and formatted I/O, `mem*` |
+| `memory` | references, allocation, the memory models (`flat`, `bytes`, arrays) and memory-related bounds |
+| `concurrency` | threads, mutexes, barriers, atomics and thread-local storage |
+| `property` | error and final locations and the reductions of memory safety, overflow and data races |
+| `witness` | applying an input witness |
+
+Witness application and termination-witness passes need `:theta-c2xcfa` and therefore live in
+`:theta-xcfa-cli`; `BlockEncoding`'s passes are part of that encoding in `:theta-xcfa-analysis`.
 
 ## Rules the passes follow
 

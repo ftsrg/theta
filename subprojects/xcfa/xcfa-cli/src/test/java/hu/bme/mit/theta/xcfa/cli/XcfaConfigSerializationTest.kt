@@ -22,7 +22,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.WitnessInfo
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.NO_LBE
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
 import hu.bme.mit.theta.xcfa.witnesses.YamlWitness
 import java.io.File

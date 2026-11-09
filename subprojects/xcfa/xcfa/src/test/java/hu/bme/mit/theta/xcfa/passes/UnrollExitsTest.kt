@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollCut
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

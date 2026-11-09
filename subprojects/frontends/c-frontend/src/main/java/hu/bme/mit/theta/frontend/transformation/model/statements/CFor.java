@@ -15,11 +15,9 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
-import java.util.Map;
 
-public class CFor extends CStatement {
+public class CFor extends CLoop {
 
     private final CStatement body;
     private final CStatement init;
@@ -47,6 +45,7 @@ public class CFor extends CStatement {
         return increment;
     }
 
+    @Override
     public CStatement getGuard() {
         return guard;
     }
@@ -55,19 +54,9 @@ public class CFor extends CStatement {
         return init;
     }
 
+    @Override
     public CStatement getBody() {
         return body;
-    }
-
-    // the variables in scope where the controlling expression is evaluated, by C name
-    private Map<String, VarDecl<?>> variablesAtGuard = Map.of();
-
-    public Map<String, VarDecl<?>> getVariablesAtGuard() {
-        return variablesAtGuard;
-    }
-
-    public void setVariablesAtGuard(Map<String, VarDecl<?>> variablesAtGuard) {
-        this.variablesAtGuard = variablesAtGuard;
     }
 
     @Override

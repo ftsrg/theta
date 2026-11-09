@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.xcfa.passes.library.ScanWrite
+import hu.bme.mit.theta.xcfa.passes.library.parseIpv4
+import hu.bme.mit.theta.xcfa.passes.library.scanConversions
+import hu.bme.mit.theta.xcfa.passes.library.scanWrites
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

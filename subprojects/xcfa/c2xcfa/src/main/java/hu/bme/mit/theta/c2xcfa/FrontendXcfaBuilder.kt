@@ -85,8 +85,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFa
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
-import hu.bme.mit.theta.xcfa.passes.FlatMemoryPass
-import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.passes.memory.FlatMemoryPass
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.utils.ALLOCATION_STATIC_BASE_LIMIT
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.HavocStmtLabel

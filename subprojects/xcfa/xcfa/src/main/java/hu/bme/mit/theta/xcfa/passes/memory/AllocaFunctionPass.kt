@@ -1,0 +1,318 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.passes.memory
+
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.splitIf
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
+import hu.bme.mit.theta.xcfa.utils.HEAP_SUBOBJECT
+import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.STATIC_OBJECT
+import hu.bme.mit.theta.xcfa.utils.bumpAllocate
+import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
+import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.mallocVar
+import hu.bme.mit.theta.xcfa.utils.memsafetyBound
+import java.math.BigInteger
+
+/** Marks a `pthread_exit` of the initial thread, whose locals die while other threads run on. */
+const val MAIN_THREAD_EXIT = "__theta_main_thread_exit"
+
+/**
+ * The edges where this procedure's stack objects die. Returning from the initial thread ends the
+ * process, so the threads it leaves running never see its objects released.
+ */
+fun XcfaProcedureBuilder.lifetimeEndEdges(): List<XcfaEdge> {
+  val edges = finalLoc.orElse(null)?.incomingEdges?.toList() ?: return listOf()
+  if (parent.getInitProcedures().none { it.first == this }) return edges
+  return edges.filter { edge ->
+    edge.getFlatLabels().any { it is InvokeLabel && it.name == MAIN_THREAD_EXIT }
+  }
+}
+
+/**
+ * Turns `alloca(size)` into an address assignment, like [MallocFunctionPass] does for `malloc`, but
+ * places the block in a different residue class of the pointer base space.
+ *
+ * The target `alloca(target, size)` writes the fresh base into may be a variable (a plain `alloca`,
+ * or a stack-allocated struct/array whose value is its base) or a memory cell (a struct's
+ * struct/array-typed *field*, whose base lives at `arrays[parent][i]`). The assignment dispatches
+ * on which -- an ordinary assign for the variable, a memory-write for the cell -- so that every
+ * stack object gets a *fresh runtime* base per allocation. A compile-time constant base would be
+ * the same for every activation of the procedure, so two recursive frames or two threads running it
+ * would alias; a runtime base from the shared counter cannot.
+ *
+ * The frontend's own `alloca` of a stack object is sized in cells. A program's `alloca(n)` arrives
+ * as `__builtin_alloca`, sized in bytes, so memsafety records its whole elements, as for `malloc`.
+ *
+ * Under the multi model the block goes in the `3k+1` residue class (see `POINTER_BASE_CLASSES`),
+ * which the memcleanup scan does not enumerate: `alloca` memory is released when the enclosing
+ * function returns, so reporting it as a leak would be wrong. It still records a real size in
+ * `__theta_ptr_size`, so out-of-bounds accesses to it are caught exactly as they are for heap
+ * memory.
+ *
+ * A sub-object of a heap block ([HEAP_SUBOBJECT], see `MallocFunctionPass`) is allocated the same
+ * way but lives as long as its block, so it is not released at return. Like `alloca` memory it is
+ * not enumerated by the memcleanup scan: it is part of the block, whose own leak is reported. A
+ * library call's static object ([STATIC_OBJECT], see `LibraryStubsPass`) is never released.
+ *
+ * Known gap: `free()`ing the block is accepted rather than reported as an invalid free.
+ *
+ * Requires the ProcedureBuilder be `deterministic`.
+ */
+class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
+
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val mallocVar = builder.parent.mallocVar(parseContext)
+    val allocated = mutableListOf<VarDecl<*>>()
+    checkNotNull(builder.metaData["deterministic"])
+    // Seed the counter before the snapshot below is taken: doing it mid-loop invalidates the
+    // snapshot's init-procedure edges (see ensureMallocVar).
+    builder.firstAllocationRetType(parseContext, this::predicate)?.let {
+      builder.parent.ensureMallocVar(parseContext, it)
+    }
+    for (edge in ArrayList(builder.getEdges())) {
+      val edges = edge.splitIf(this::predicate)
+      if (
+        edges.size > 1 ||
+          (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))
+      ) {
+        builder.removeEdge(edge)
+        edges.forEach { e ->
+          if (predicate((e.label as SequenceLabel).labels[0])) {
+            val invokeLabel = e.label.labels[0] as InvokeLabel
+            // The target may be a variable (a bare `alloca`, or a stack struct/array) or a memory
+            // cell (a struct/array-typed field). AssignStmtLabel below dispatches on which.
+            val ret = invokeLabel.params[0]
+            val arg = invokeLabel.params[1]
+            val retType = CComplexType.getType(ret, parseContext)
+            val addressLabels =
+              if (parseContext.memoryModel.flatAddressing()) {
+                builder.parent.bumpAllocate(parseContext, ret, arg, heap = false)
+              } else {
+                // 3k+1: the residue class the memcleanup scan does not enumerate.
+                listOf(
+                  AssignStmtLabel(
+                    mallocVar,
+                    Add(mallocVar.ref, retType.getValue("$POINTER_BASE_CLASSES")),
+                    ret.type,
+                    EmptyMetaData,
+                  ),
+                  AssignStmtLabel(ret, cast(Add(mallocVar.ref, retType.getValue("1")), ret.type)),
+                )
+              }
+            val released =
+              if (
+                parseContext.isCheckMemsafety &&
+                  invokeLabel.name != HEAP_SUBOBJECT &&
+                  invokeLabel.name != STATIC_OBJECT
+              )
+                Var("__theta_alloca_base_${baseCnt++}", ret.type).also {
+                  builder.addVar(it)
+                  parseContext.metadata.create(it.ref, "cType", retType)
+                  allocated.add(it)
+                }
+              else null
+            val labels =
+              if (parseContext.isCheckMemsafety) {
+                addressLabels +
+                  listOfNotNull(
+                    builder.parent.allocate(parseContext, ret, size(builder, invokeLabel)),
+                    probeInvalidLength(builder, ret, arg, retType),
+                    released?.let { AssignStmtLabel(it, ret) },
+                  )
+              } else {
+                addressLabels
+              }
+            builder.addEdge(XcfaEdge(e.source, e.target, SequenceLabel(labels), e.metadata))
+          } else {
+            builder.addEdge(e)
+          }
+        }
+      }
+    }
+    releaseAtReturn(builder, allocated)
+    lowerScopeEnds(builder)
+    return builder
+  }
+
+  /**
+   * Turns the frontend's scope-end markers into the release they stand for.
+   *
+   * An object's storage dies when its *block* is left. Nothing said so: `__theta_ptr_size[base]`
+   * was written once at the allocation and cleared only by an explicit `free`, so `{ int a[10]; p =
+   * a; }` followed by `p[0] = 1` was accepted, and so was the next iteration of `for (...) { int
+   * a[10]; ... }` writing through the previous iteration's array (`memsafety-ext3/scopes3`,
+   * `scopes5`, `derefInLoop1` -- and `derefInLoop1` is the proof the *check* was always fine: the
+   * model already gives each unrolled iteration its own base, it just never retired the old one).
+   *
+   * The marker is only ever emitted under a memory-safety property (see
+   * `FunctionVisitor#withScopeReleases`), so no other property's model is touched. It is dropped
+   * rather than left as an unresolved call, which would bring the analysis down.
+   */
+  private fun lowerScopeEnds(builder: XcfaProcedureBuilder) {
+    for (edge in ArrayList(builder.getEdges())) {
+      val labels = edge.getFlatLabels()
+      labels
+        .firstOrNull { it is InvokeLabel && it.name == FunctionVisitor.SCOPE_START }
+        ?.let { error("The lifetime of a stack object was not lowered: $it") }
+      if (
+        labels.none { it is InvokeLabel && (it.name == SCOPE_END || it.name == MAIN_THREAD_EXIT) }
+      )
+        continue
+      val lowered =
+        labels.mapNotNull { label ->
+          if (label is InvokeLabel && label.name == MAIN_THREAD_EXIT) null
+          else if (label !is InvokeLabel || label.name != SCOPE_END) label
+          else if (!parseContext.isCheckMemsafety) null
+          else builder.parent.deallocate(parseContext, label.params[1])
+        }
+      builder.removeEdge(edge)
+      builder.addEdge(edge.withLabel(SequenceLabel(lowered, edge.label.metadata)))
+    }
+  }
+
+  /**
+   * Ends the lifetime of this procedure's stack objects where the procedure returns.
+   *
+   * `alloca` memory is released when the enclosing function returns -- this file has always said
+   * so, and nothing ever emitted the release. `__theta_ptr_size[base]` was written once at the
+   * allocation and only ever cleared by an explicit `free`, so a block stayed live for the rest of
+   * the program and a **use-after-return was accepted**: `int *a = alloca(n); ... return a;` and
+   * the caller then reads through it (`memsafety-ext3/getNumbers1-1`, a missed bug).
+   *
+   * Nothing else is needed: `MemsafetyPass.annotateDeref` already reports `ptr_size[base] <=
+   * index`, so once the size is zeroed the existing guard catches the stale access unchanged.
+   *
+   * Only the *last* base a repeated allocation produced is released -- a variable holds one value,
+   * and an `alloca` in a loop overwrites it.
+   *
+   * Each base is released through [allocated], a copy set at the allocation and null from the
+   * procedure entry on, so a return that bypassed the allocation releases nothing. The target
+   * itself would hold a stale or constant-folded address there, under flat addressing possibly that
+   * of a live heap block.
+   */
+  private fun releaseAtReturn(builder: XcfaProcedureBuilder, allocated: List<VarDecl<*>>) {
+    val ends = builder.lifetimeEndEdges()
+    if (!parseContext.isCheckMemsafety || allocated.isEmpty() || ends.isEmpty()) return
+    val releases = allocated.map { builder.parent.deallocate(parseContext, it.ref) }
+    ends.forEach { edge ->
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(edge.label.getFlatLabels() + releases, edge.label.metadata))
+      )
+    }
+    check(builder.initLoc.incomingEdges.isEmpty()) { "The entry of ${builder.name} is in a loop" }
+    val resets =
+      allocated.map { AssignStmtLabel(it, CComplexType.getType(it.ref, parseContext).nullValue) }
+    builder.initLoc.outgoingEdges.toList().forEach { edge ->
+      builder.removeEdge(edge)
+      builder.addEdge(
+        edge.withLabel(SequenceLabel(resets + edge.label.getFlatLabels(), edge.label.metadata))
+      )
+    }
+  }
+
+  /**
+   * Reads one past the end of a *runtime-sized* stack object whose length is invalid, so that the
+   * existing valid-deref guard reports it. SV-COMP programs are GNU C, where a zero-length array is
+   * allowed and only an access to it is not, so a zero length is accepted; a negative length, or
+   * one whose size exceeds `PTRDIFF_MAX` bytes (GCC's maximum object size), is undefined.
+   *
+   * The read sits behind `bad &&`, which [MemsafetyPass.annotateDeref] treats as a short-circuit
+   * guard, so the access only exists when the length is invalid. An error edge emitted here would
+   * be redirected by [MemsafetyPass.breakUpErrors]. Only for a size that is not a literal, and only
+   * under memsafety, so no other property sees a read the program never performed. The size counts
+   * cells, so for struct elements the bound is stricter than the byte limit it stands for.
+   */
+  private fun probeInvalidLength(
+    builder: XcfaProcedureBuilder,
+    ret: Expr<*>,
+    size: Expr<*>,
+    retType: CComplexType,
+  ): XcfaLabel? {
+    if (ExprUtils.simplify(size) is LitExpr<*>) return null
+    val element = (retType as? CPointer)?.embeddedType ?: return null
+    // An explicit `alloca` returns `void *`: its byte count has no sign, and a size too large for
+    // the stack is an overflow, which SV-COMP assumes never happens.
+    if (element is CVoid) return null
+    val sizeType = CComplexType.getType(size, parseContext)
+    val ulong = CComplexType.getUnsignedLong(parseContext)
+    val elementBytes = maxOf(1, element.width() / 8)
+    val maxLength =
+      (BigInteger.ONE.shiftLeft(ulong.width() - 1) - BigInteger.ONE) / elementBytes.toBigInteger()
+    val bad =
+      Or(Lt(size, sizeType.nullValue), Gt(ulong.castTo(size), ulong.getValue(maxLength.toString())))
+    val probe = Var("__theta_vla_probe_${probeCnt++}", Bool())
+    builder.addVar(probe)
+    @Suppress("UNCHECKED_CAST")
+    val cell =
+      Dereference.of(ret as Expr<Type>, ulong.castTo(size) as Expr<Type>, element.smtType as Type)
+    parseContext.metadata.create(cell, "cType", element)
+    @Suppress("UNCHECKED_CAST") val read = Eq(cell as Expr<Type>, element.nullValue as Expr<Type>)
+    return AssignStmtLabel(probe, And(bad, read), probe.type)
+  }
+
+  private var probeCnt = 0
+
+  private var baseCnt = 0
+
+  /**
+   * The size memsafety records: the frontend's own blocks come in cells, the program's in bytes.
+   */
+  private fun size(builder: XcfaProcedureBuilder, invokeLabel: InvokeLabel): Expr<*> =
+    if (invokeLabel.name == USER_ALLOCA)
+      builder.memsafetyBound(parseContext, invokeLabel.params[0], invokeLabel.params[1])
+    else invokeLabel.params[1]
+
+  private fun predicate(it: XcfaLabel): Boolean {
+    return it is InvokeLabel &&
+      (it.name == "alloca" ||
+        it.name == USER_ALLOCA ||
+        it.name == HEAP_SUBOBJECT ||
+        it.name == STATIC_OBJECT)
+  }
+
+  private companion object {
+    /** Must match `ExpressionVisitor.ALLOCA`. */
+    const val USER_ALLOCA = "__builtin_alloca"
+
+    /** Must match `FunctionVisitor.SCOPE_END`. */
+    const val SCOPE_END = "__theta_scope_end"
+  }
+}

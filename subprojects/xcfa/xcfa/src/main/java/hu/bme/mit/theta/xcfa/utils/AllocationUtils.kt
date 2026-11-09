@@ -68,7 +68,7 @@ import hu.bme.mit.theta.xcfa.model.getObjExtentVar
 import hu.bme.mit.theta.xcfa.model.getObjHeapVar
 import hu.bme.mit.theta.xcfa.model.isGhostArrayInit
 import hu.bme.mit.theta.xcfa.model.writeGhost
-import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import java.math.BigInteger
 
 /**

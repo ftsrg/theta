@@ -37,7 +37,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader

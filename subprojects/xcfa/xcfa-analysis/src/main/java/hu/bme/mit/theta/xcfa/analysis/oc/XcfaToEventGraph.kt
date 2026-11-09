@@ -44,7 +44,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.UnrollCut
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollCut
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import hu.bme.mit.theta.xcfa.utils.dereferences

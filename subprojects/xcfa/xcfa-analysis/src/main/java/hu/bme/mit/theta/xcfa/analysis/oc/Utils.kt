@@ -28,9 +28,10 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.WitnessOptimizer
+import hu.bme.mit.theta.xcfa.passes.concurrency.AtomicReadsOneWritePass
+import hu.bme.mit.theta.xcfa.passes.memory.AllocationSitesPass
+import hu.bme.mit.theta.xcfa.passes.witness.WitnessOptimizer
 
 internal typealias E = XcfaEvent
 
