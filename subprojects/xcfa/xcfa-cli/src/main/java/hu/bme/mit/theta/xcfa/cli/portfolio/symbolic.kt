@@ -95,7 +95,7 @@ fun symbolicPortfolio(
     // A safe verdict on cut loops is not trusted (the MDD gets stuck), but a violation within more
     // iterations is real. Added before the other edges of `from`, so a stuck MDD takes it first.
     fun unrolledAfterStuck(from: Node): Node {
-      val steps = (3..5).map { mdd(UNROLLED_TIMEOUT_MS, "Z3:new", it) }
+      val steps = listOf(3, 10).map { mdd(UNROLLED_TIMEOUT_MS, "Z3:new", it) }
       edges.add(Edge(from, steps.first(), verificationStuck))
       steps.zipWithNext { a, b -> edges.add(Edge(a, b, next)) }
       return steps.last()
