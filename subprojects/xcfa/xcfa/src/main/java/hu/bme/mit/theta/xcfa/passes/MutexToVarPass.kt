@@ -103,6 +103,9 @@ class MutexToVarPass : ProcedurePass {
       is SequenceLabel ->
         descartes(labels.map { it.replaceMutex(flags) }).map { SequenceLabel(it, metadata) }.toSet()
 
+      is NondetLabel ->
+        setOf(NondetLabel(labels.flatMap { it.replaceMutex(flags) }.toSet(), metadata))
+
       is InvokeLabel ->
         when {
           !isLibraryFunction -> setOf(this)
