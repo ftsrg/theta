@@ -72,26 +72,33 @@ constructor(
         "Witness invariants are checked only in sequential programs"
       }
       if (forceUnrollBound > 0) {
-        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, forceUnrollBound)
-      } else try {
-        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
-      } catch (e: IllegalStateException) {
-        if (
-          "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop" in
-            (e.message ?: "")
-        ) {
-          logger.info(
-            "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
-          )
-          XcfaMultiThreadToMonolithicAdapter(
-            xcfa,
-            property,
-            parseContext,
-            initValues,
-            FIRST_FORCE_UNROLL_BOUND,
-          )
-        } else throw e
-      }
+        XcfaMultiThreadToMonolithicAdapter(
+          xcfa,
+          property,
+          parseContext,
+          initValues,
+          forceUnrollBound,
+        )
+      } else
+        try {
+          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
+        } catch (e: IllegalStateException) {
+          if (
+            "XcfaMultiThreadToMonolithicAdapter does not support these labels in a loop" in
+              (e.message ?: "")
+          ) {
+            logger.info(
+              "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
+            )
+            XcfaMultiThreadToMonolithicAdapter(
+              xcfa,
+              property,
+              parseContext,
+              initValues,
+              FIRST_FORCE_UNROLL_BOUND,
+            )
+          } else throw e
+        }
     } else {
       XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, blockEncoding)
     },
