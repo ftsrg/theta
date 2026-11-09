@@ -102,7 +102,6 @@ fun symbolicPortfolio(
 
     val (cegar, cegarTwin) = step(mddCegar, 0, "mathsat:latest", "Z3")
     edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
-    edges.add(Edge(unroll10, cegar, next))
     edges.add(Edge(cegar, cegarTwin, solverError))
 
     return STM(start, edges)
