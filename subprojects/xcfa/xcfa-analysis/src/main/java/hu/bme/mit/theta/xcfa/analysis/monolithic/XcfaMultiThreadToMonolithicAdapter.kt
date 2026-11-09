@@ -59,14 +59,15 @@ class XcfaMultiThreadToMonolithicAdapter(
   property: XcfaProperty,
   parseContext: ParseContext,
   initValues: Boolean = false,
-  forceUnroll: Boolean = false,
+  /** How many times each loop is unrolled before it is cut, or 0 to leave the loops alone. */
+  val forceUnrollBound: Int = 0,
 ) :
   XcfaToMonolithicAdapter(
     model,
     property,
     ProcedurePassManager(
       listOfNotNull(
-        if (forceUnroll) UnrollPass(2) else null,
+        if (forceUnrollBound > 0) UnrollPass(forceUnrollBound) else null,
         EliminateSelfLoops(),
         RemoveAbortBranchesPass(),
         if (property.verifiedProperty == ErrorDetection.DATA_RACE)

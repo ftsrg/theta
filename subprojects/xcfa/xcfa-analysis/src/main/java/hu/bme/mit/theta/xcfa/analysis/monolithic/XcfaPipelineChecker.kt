@@ -47,15 +47,18 @@ import hu.bme.mit.theta.xcfa.witnesses.hasInvariantChecks
 class XcfaPipelineChecker<Pr : InvariantProof>
 @JvmOverloads
 constructor(
-  xcfa: XCFA,
-  property: XcfaProperty,
-  parseContext: ParseContext,
-  checkerFactory: (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
-  passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
+  private val xcfa: XCFA,
+  private val property: XcfaProperty,
+  private val parseContext: ParseContext,
+  private val checkerFactory:
+    (MonolithicExpr) -> SafetyChecker<out Pr, Trace<ExplState, ExprAction>, UnitPrec>,
+  private val passes: MutableList<MonolithicExprPass<Pr>> = mutableListOf(),
   private val logger: Logger = NullLogger.getInstance(),
   private val acceptUnreliableSafe: Boolean,
-  initValues: Boolean = false,
-  blockEncoding: Boolean = false,
+  private val initValues: Boolean = false,
+  private val blockEncoding: Boolean = false,
+  /** The loop unroll bound to start from; 0 tries without unrolling first. */
+  forceUnrollBound: Int = 0,
 ) :
   FormalismPipelineChecker<
     XCFA,
@@ -68,7 +71,9 @@ constructor(
       check(!xcfa.hasInvariantChecks) {
         "Witness invariants are checked only in sequential programs"
       }
-      try {
+      if (forceUnrollBound > 0) {
+        XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, forceUnrollBound)
+      } else try {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
       } catch (e: IllegalStateException) {
         if (
@@ -78,7 +83,13 @@ constructor(
           logger.info(
             "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
           )
-          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
+          XcfaMultiThreadToMonolithicAdapter(
+            xcfa,
+            property,
+            parseContext,
+            initValues,
+            FIRST_FORCE_UNROLL_BOUND,
+          )
         } else throw e
       }
     } else {
@@ -89,15 +100,39 @@ constructor(
 
   override fun check(
     input: UnitPrec?
-  ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>> =
-    super.check(input).also {
-      logger.mainStep("XcfaPipelineChecker result: $it")
-      if (it.isSafe && modelAdapter.model.unsafeUnrollUsed && !acceptUnreliableSafe) {
-        logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
-        logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
-        throw NotSolvableException()
+  ): SafetyResult<LocationInvariants, Trace<XcfaState<PtrState<ExplState>>, XcfaAction>> {
+    val result = super.check(input)
+    logger.mainStep("XcfaPipelineChecker result: $result")
+    if (result.isSafe && modelAdapter.model.unsafeUnrollUsed && !acceptUnreliableSafe) {
+      logger.mainStep("Incomplete loop unroll used: safe result is unreliable.")
+      // A violation within more iterations is still a real one, so a deeper unroll is worth a try.
+      val bound = (modelAdapter as? XcfaMultiThreadToMonolithicAdapter)?.forceUnrollBound ?: 0
+      if (bound in 1 until MAX_FORCE_UNROLL_BOUND) {
+        logger.mainStep("Retrying with loops unrolled ${bound + 1} times.")
+        return XcfaPipelineChecker(
+            xcfa,
+            property,
+            parseContext,
+            checkerFactory,
+            passes,
+            logger,
+            acceptUnreliableSafe,
+            initValues,
+            blockEncoding,
+            bound + 1,
+          )
+          .check(input)
       }
+      logger.mainStep(SafetyResult.unknown<EmptyProof, Cex>().toString())
+      throw NotSolvableException()
     }
+    return result
+  }
+
+  companion object {
+    private const val FIRST_FORCE_UNROLL_BOUND = 2
+    private const val MAX_FORCE_UNROLL_BOUND = 5
+  }
 }
 
 internal val LitExpr<*>.value: Int
