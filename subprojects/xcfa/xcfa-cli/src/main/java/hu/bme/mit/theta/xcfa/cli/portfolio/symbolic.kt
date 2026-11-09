@@ -26,6 +26,9 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.LBE_LOCAL
 
+/** Time for each MDD step that retries with the loops unrolled further. */
+private const val UNROLLED_TIMEOUT_MS = 150_000L
+
 fun symbolicPortfolio(
   xcfa: XCFA,
   mcm: MCM,
@@ -45,10 +48,11 @@ fun symbolicPortfolio(
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
 
-    val mdd = { timeout: Long, solver: String ->
+    fun mdd(timeout: Long, solver: String, unroll: Int = -1) =
       ConfigNode(
-        "MDD-${solver}-$inProcess",
+        "MDD-${solver}${if (unroll > 0) "-unroll$unroll" else ""}-$inProcess",
         baseMddConfig.copy(
+          frontendConfig = baseMddConfig.frontendConfig.copy(forceUnroll = unroll),
           backendConfig =
             baseMddConfig.backendConfig.copy(
               timeoutMs = timeout,
@@ -63,7 +67,6 @@ fun symbolicPortfolio(
         ),
         checker,
       )
-    }
 
     val mddCegar = { timeout: Long, solver: String ->
       ConfigNode(
@@ -87,12 +90,27 @@ fun symbolicPortfolio(
       )
     }
 
+    val next = if (inProcess) anythingButServerError else anyError
+
+    // A safe verdict on cut loops is not trusted (the MDD gets stuck), but a violation within more
+    // iterations is real. Added before the other edges of `from`, so a stuck MDD takes it first.
+    fun unrolledAfterStuck(from: Node): Node {
+      val steps = (3..5).map { mdd(UNROLLED_TIMEOUT_MS, "Z3:new", it) }
+      edges.add(Edge(from, steps.first(), verificationStuck))
+      steps.zipWithNext { a, b -> edges.add(Edge(a, b, next)) }
+      return steps.last()
+    }
+
     if (portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)) {
-      return STM(mdd(0, "Z3:new"), edges)
+      val start = mdd(0, "Z3:new")
+      unrolledAfterStuck(start)
+      return STM(start, edges)
     }
     val start = mdd(300_000, "Z3:new")
+    val unrolled = unrolledAfterStuck(start)
     val (cegar, cegarTwin) = step(mddCegar, 0, "mathsat:latest", "Z3")
     edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
+    edges.add(Edge(unrolled, cegar, next))
     edges.add(Edge(cegar, cegarTwin, solverError))
 
     return STM(start, edges)
