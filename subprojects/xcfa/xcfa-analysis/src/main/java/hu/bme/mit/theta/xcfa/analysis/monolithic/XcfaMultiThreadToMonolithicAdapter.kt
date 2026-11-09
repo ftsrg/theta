@@ -51,6 +51,14 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.concurrency.MutexToVarPass
+import hu.bme.mit.theta.xcfa.passes.concurrency.RemoveUnnecessaryAtomicBlocksPass
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
+import hu.bme.mit.theta.xcfa.passes.memory.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.EliminateSelfLoops
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
+import hu.bme.mit.theta.xcfa.passes.structure.RemoveAbortBranchesPass
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.*
 

@@ -33,13 +33,12 @@ import org.sosy_lab.java_smt.api.SolverException;
 
 /**
  * A Yices prover whose context runs in {@code push-pop} mode, as JavaSMT 5 opened it. JavaSMT 6
- * opens every Yices context in {@code interactive} mode, which made the OC checks on libvsync and
- * pthread-complex time out where they used to finish in a few minutes. It lives in JavaSMT's
- * package because the context factory method it overrides is package-private.
+ * opens every Yices context in {@code interactive} mode, which is much slower on the incremental
+ * queries of the OC checker. It lives in JavaSMT's package because the context factory method it
+ * overrides is package-private.
  *
  * <p>Checks also use the search parameters Yices tunes for the context, as JavaSMT 5 did by passing
- * none. JavaSMT 6 passes a fresh parameter record, which holds the generic defaults: that alone
- * made the OC checks on workstealqueue_mutex-2 about 1.6 times slower.
+ * none; JavaSMT 6 passes a fresh parameter record holding the generic defaults.
  */
 public final class PushPopYices2Prover extends Yices2Prover {
 

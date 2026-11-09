@@ -65,9 +65,9 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
-import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
