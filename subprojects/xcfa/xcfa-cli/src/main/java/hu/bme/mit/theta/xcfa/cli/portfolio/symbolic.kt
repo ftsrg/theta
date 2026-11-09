@@ -65,12 +65,12 @@ fun symbolicPortfolio(
         checker,
       )
 
-    val mddCegar = { timeout: Long, solver: String ->
+    fun mddCegar(timeout: Long, solver: String, unroll: Int = -1) =
       ConfigNode(
-        "MDD-cegar-${solver}-$inProcess",
+        "MDD-cegar-${solver}${if (unroll > 0) "-unroll$unroll" else ""}-$inProcess",
         XcfaConfig(
           inputConfig = baseMddConfig.inputConfig,
-          frontendConfig = baseMddConfig.frontendConfig,
+          frontendConfig = baseMddConfig.frontendConfig.copy(forceUnroll = unroll),
           backendConfig =
             BackendConfig(
               backend = Backend.MDD_CEGAR,
@@ -85,24 +85,28 @@ fun symbolicPortfolio(
         ),
         checker,
       )
-    }
 
     val memsafety =
       portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
     val next = if (inProcess) anythingButServerError else anyError
 
     val start = mdd(if (memsafety) 0 else 300_000, "Z3:new")
-    // A stuck MDD (safe on cut loops) retries with the loops unrolled further; added first, so it
-    // takes precedence over the other edges of `start`.
+    // A stuck MDD (safe on cut loops) retries with the loops unrolled further, and the later steps
+    // keep that bound; added first, so it takes precedence over the other edges of `start`.
     val unroll3 = mdd(150_000, "Z3:new", 3)
     val unroll10 = mdd(150_000, "Z3:new", 10)
     edges.add(Edge(start, unroll3, verificationStuck))
     edges.add(Edge(unroll3, unroll10, next))
     if (memsafety) return STM(start, edges)
 
-    val (cegar, cegarTwin) = step(mddCegar, 0, "mathsat:latest", "Z3")
+    val (cegar, cegarTwin) = step({ t, s -> mddCegar(t, s) }, 0, "mathsat:latest", "Z3")
     edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
     edges.add(Edge(cegar, cegarTwin, solverError))
+
+    val (cegar10, cegar10Twin) =
+      step({ t, s -> mddCegar(t, s, 10) }, 0, "mathsat:latest", "Z3")
+    edges.add(Edge(unroll10, cegar10, next))
+    edges.add(Edge(cegar10, cegar10Twin, solverError))
 
     return STM(start, edges)
   }
