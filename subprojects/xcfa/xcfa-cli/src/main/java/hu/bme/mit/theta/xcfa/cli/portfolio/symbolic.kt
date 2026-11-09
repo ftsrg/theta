@@ -95,7 +95,7 @@ fun symbolicPortfolio(
     if (portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)) {
       return STM(mdd(0, "Z3:new"), edges)
     }
-    val start = mdd(600_000, "Z3:new")
+    val start = mdd(300_000, "Z3:new")
     start then mddCegar(0, "mathsat:latest")
 
     return STM(start, edges)
