@@ -118,7 +118,6 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       ),
       EliminateSelfLoops(),
     ),
-    listOf(StaticCoiPass(property)),
     // ahead of the memsafety and overflow guards, so the accesses it spells out are checked, and
     // after the passes that rebuild expressions, which would lose its one-guard-per-region marks
     listOf(MemoryFunctionsPass(parseContext, uniqueWarningLogger)),
@@ -149,6 +148,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
     listOf(OverflowDetectionPass(property, parseContext)),
     // last of the passes consuming specific calls: everything left is havoced here
     listOf(UnresolvedInvokeToHavocPass(parseContext, uniqueWarningLogger)),
+    // after every pass that adds checks (memsafety, overflow): before them, the ghost writes and
+    // accesses only those checks read look unobserved, and removing them changes the verdict
+    listOf(StaticCoiPass(property)),
     listOf(AmbiguousMutexPass(parseContext)),
     // the memory-model passes, downstream of everything that creates or rewrites a dereference
     listOf(FlatMemoryPass(parseContext)),

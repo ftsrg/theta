@@ -21,13 +21,22 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.utils.collectAssumesVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 
+/**
+ * Removes assignments and havocs whose value nothing relevant reads. A variable is relevant when a
+ * label that is always kept (assumes, calls, memory writes, returns) reads it, or a kept assignment
+ * reads it to compute a relevant variable. The analysis is flow-insensitive and covers all
+ * procedures, so it keeps more than needed but never drops a value a check or a call may see.
+ *
+ * Passes run phase by phase over all procedures, so the relevant variables are computed once, when
+ * the first procedure reaches this pass: every procedure is in the same phase then, and removing
+ * labels that write only irrelevant variables does not change which variables are relevant.
+ */
 class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass {
 
   companion object {
@@ -35,34 +44,21 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
     var enabled = false
   }
 
-  private val directObservers: MutableMap<XcfaLabel, Set<XcfaLabel>> = mutableMapOf()
-  private val interProcessObservers: MutableMap<XcfaLabel, Set<XcfaLabel>> = mutableMapOf()
-  private val interProcessVarObservers: MutableMap<VarDecl<*>, Set<XcfaLabel>> = mutableMapOf()
+  private var relevantFor: XcfaBuilder? = null
+  private var relevant: Set<VarDecl<*>> = emptySet()
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     // a race may involve accesses that no error location depends on
     if (!enabled || property?.inputProperty == ErrorDetection.DATA_RACE) return builder
 
-    builder.parent.getProcedures().forEach { procedure ->
-      procedure.getEdges().forEach { edge ->
-        val flatLabels = edge.getFlatLabels()
-        flatLabels.forEachIndexed { index, label ->
-          if (label is StmtLabel) {
-            findDirectObservers(edge, label, flatLabels.subList(index + 1, flatLabels.size))
-            findIndirectObservers(label, builder)
-          }
-        }
-      }
+    if (relevantFor !== builder.parent) {
+      relevant = relevantVars(builder.parent)
+      relevantFor = builder.parent
     }
 
     builder.getEdges().toSet().forEach { edge ->
       val labels = edge.getFlatLabels()
-      val kept = mutableListOf<XcfaLabel>()
-      labels.forEach { label ->
-        if (!label.canBeSimplified || isObserved(label)) {
-          kept.add(label)
-        }
-      }
+      val kept = labels.filter { !it.canBeSimplified || it.writtenVars().any { v -> v in relevant } }
       if (kept.size != labels.size) {
         builder.removeEdge(edge)
         builder.addEdge(edge.withLabel(SequenceLabel(kept, edge.label.metadata)))
@@ -79,66 +75,32 @@ class StaticCoiPass(private val property: XcfaProperty? = null) : ProcedurePass 
           this.stmt is HavocStmt<*>) &&
         dereferencesWithAccessType.none { it.value.isWritten }
 
-  private fun findDirectObservers(edge: XcfaEdge, label: XcfaLabel, remaining: List<XcfaLabel>) {
-    val writtenVars =
-      label.collectVarsWithAccessType().filter { it.value.isWritten }.map { it.key }.toSet()
-    if (writtenVars.isEmpty()) return
+  private fun XcfaLabel.writtenVars() =
+    collectVarsWithAccessType().filter { it.value.isWritten }.keys
 
-    val toVisit = mutableListOf(edge)
-    val visited = mutableSetOf<XcfaEdge>()
-    while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeAt(0)
-      visited.add(visiting)
-      val labels = if (visiting == edge) remaining else visiting.getFlatLabels()
-      labels.forEach { target ->
-        val vars = target.collectVarsWithAccessType()
-        if (vars.any { it.key in writtenVars && it.value.isRead }) {
-          directObservers[label] = directObservers.getOrDefault(label, setOf()) + target
-        }
-      }
+  private fun XcfaLabel.readVars() = collectVarsWithAccessType().filter { it.value.isRead }.keys
 
-      toVisit.addAll(visiting.target.outgoingEdges.filter { it !in visited })
-    }
-  }
-
-  private fun findIndirectObservers(label: XcfaLabel, builder: XcfaProcedureBuilder) {
-    val writtenVars =
-      label.collectVarsWithAccessType().filter { it.value.isWritten }.map { it.key }.toSet()
-    if (writtenVars.isEmpty()) return
-
-    interProcessObservers[label] =
-      writtenVars
-        .flatMap { v ->
-          interProcessVarObservers.getOrPut(v) {
-            builder.parent
-              .getProcedures()
-              .flatMap { procedure ->
-                procedure.getEdges().flatMap { e ->
-                  e.getFlatLabels().filter { l ->
-                    l.collectVarsWithAccessType().any { it.key == v && it.value.isRead }
-                  }
-                }
-              }
-              .toSet()
+  private fun relevantVars(xcfa: XcfaBuilder): Set<VarDecl<*>> {
+    val procedures = xcfa.getProcedures() + xcfa.getInitProcedures().map { it.first }
+    val writers = mutableMapOf<VarDecl<*>, MutableList<XcfaLabel>>()
+    val relevant = mutableSetOf<VarDecl<*>>()
+    val toVisit = ArrayDeque<VarDecl<*>>()
+    fun mark(vars: Collection<VarDecl<*>>) =
+      vars.forEach { if (relevant.add(it)) toVisit.add(it) }
+    procedures.forEach { procedure ->
+      procedure.getEdges().forEach { edge ->
+        edge.getFlatLabels().forEach { label ->
+          if (label.canBeSimplified) {
+            label.writtenVars().forEach { writers.getOrPut(it) { mutableListOf() }.add(label) }
+          } else {
+            mark(label.readVars())
           }
         }
-        .toSet()
-  }
-
-  private fun isObserved(label: XcfaLabel): Boolean {
-    val toVisit = mutableListOf(label)
-    val visited = mutableSetOf<XcfaLabel>()
-    while (toVisit.isNotEmpty()) {
-      val visiting = toVisit.removeAt(0)
-      if (visiting.collectAssumesVars().isNotEmpty()) return true
-      if (visiting.dereferencesWithAccessType.any { it.value.isWritten }) return true
-
-      visited.add(visiting)
-      val toAdd =
-        (directObservers[visiting] ?: emptySet()) union
-          (interProcessObservers[visiting] ?: emptySet())
-      toVisit.addAll(toAdd.filter { it !in visited })
+      }
     }
-    return false
+    while (toVisit.isNotEmpty()) {
+      writers[toVisit.removeFirst()]?.forEach { mark(it.readVars()) }
+    }
+    return relevant
   }
 }
