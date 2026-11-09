@@ -755,6 +755,11 @@ data class MddConfig(
       "Keep values the program leaves free symbolic, with a formula over them in the terminals",
   )
   var symbolicValues: Boolean = false,
+  @Parameter(
+    names = ["--qe-solver"],
+    description = "Solver for the quantifier elimination of --symbolic-values",
+  )
+  var qeSolver: String = "Z3:new",
   @Parameter(names = ["--reversed"], description = "Create a reversed monolithic expression")
   var reversed: Boolean = false,
   @Parameter(names = ["--cegar"], description = "Wrap the check in a predicate-based CEGAR loop")

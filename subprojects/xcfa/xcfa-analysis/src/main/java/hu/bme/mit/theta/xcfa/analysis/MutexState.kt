@@ -84,7 +84,7 @@ data class MutexState(
   }
 
   internal fun apply(label: InvokeLabel, state: State): MutexState {
-    if (label.name !in libraryFunctions) return this
+    check(label.name in libraryFunctions) { "Unsupported library function: ${label.name}" }
 
     fun Expr<*>.address(kind: String): LitExpr<*> =
       checkNotNull(simplify(state)) { "Unknown $kind address: $this" }

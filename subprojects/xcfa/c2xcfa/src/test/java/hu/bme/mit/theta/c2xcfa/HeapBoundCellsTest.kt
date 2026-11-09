@@ -19,10 +19,12 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.LeqExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
@@ -76,8 +78,16 @@ class HeapBoundCellsTest {
         .flatMap { sizesIn(it.expr) }
     // A size the simplifier propagated is left in the bound check `size <= offset`.
     val checked = stmts.filterIsInstance<AssumeStmt>().flatMap { boundsIn(it.cond) }
-    return writes + checked
+    return (writes + checked).map(::decode)
   }
+
+  /** The size an entry of the array stands for: it holds size + 1 (see `allocate`). */
+  private fun decode(expr: Expr<*>): Expr<*> =
+    when {
+      expr is IntLitExpr -> Int(expr.value - BigInteger.ONE)
+      expr is AddExpr<*> && expr.ops.size == 2 && expr.ops[1] == Int(1) -> expr.ops[0]
+      else -> expr
+    }
 
   private fun boundsIn(expr: Expr<*>): List<Expr<*>> =
     (if (expr is LeqExpr<*>) listOf(expr.leftOp) else listOf()) + expr.ops.flatMap(::boundsIn)
