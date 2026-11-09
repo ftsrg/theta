@@ -26,9 +26,6 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.LBE_LOCAL
 
-/** Time for each MDD step that retries with the loops unrolled further. */
-private const val UNROLLED_TIMEOUT_MS = 150_000L
-
 fun symbolicPortfolio(
   xcfa: XCFA,
   mcm: MCM,
@@ -90,27 +87,22 @@ fun symbolicPortfolio(
       )
     }
 
+    val memsafety =
+      portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
     val next = if (inProcess) anythingButServerError else anyError
 
-    // A safe verdict on cut loops is not trusted (the MDD gets stuck), but a violation within more
-    // iterations is real. Added before the other edges of `from`, so a stuck MDD takes it first.
-    fun unrolledAfterStuck(from: Node): Node {
-      val steps = listOf(3, 10).map { mdd(UNROLLED_TIMEOUT_MS, "Z3:new", it) }
-      edges.add(Edge(from, steps.first(), verificationStuck))
-      steps.zipWithNext { a, b -> edges.add(Edge(a, b, next)) }
-      return steps.last()
-    }
+    val start = mdd(if (memsafety) 0 else 300_000, "Z3:new")
+    // A stuck MDD (safe on cut loops) retries with the loops unrolled further; added first, so it
+    // takes precedence over the other edges of `start`.
+    val unroll3 = mdd(150_000, "Z3:new", 3)
+    val unroll10 = mdd(150_000, "Z3:new", 10)
+    edges.add(Edge(start, unroll3, verificationStuck))
+    edges.add(Edge(unroll3, unroll10, next))
+    if (memsafety) return STM(start, edges)
 
-    if (portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)) {
-      val start = mdd(0, "Z3:new")
-      unrolledAfterStuck(start)
-      return STM(start, edges)
-    }
-    val start = mdd(300_000, "Z3:new")
-    val unrolled = unrolledAfterStuck(start)
     val (cegar, cegarTwin) = step(mddCegar, 0, "mathsat:latest", "Z3")
     edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
-    edges.add(Edge(unrolled, cegar, next))
+    edges.add(Edge(unroll10, cegar, next))
     edges.add(Edge(cegar, cegarTwin, solverError))
 
     return STM(start, edges)
