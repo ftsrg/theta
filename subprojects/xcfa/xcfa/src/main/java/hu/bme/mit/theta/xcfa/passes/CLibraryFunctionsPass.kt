@@ -1062,11 +1062,26 @@ class CLibraryFunctionsPass(
 
   private val onceStates = mutableMapOf<VarDecl<*>, VarDecl<IntType>>()
 
-  /** The state of a `pthread_once_t`, kept in an atomic global so it is never raced on. */
+  /**
+   * The state of a `pthread_once_t`, kept in an atomic global so it is never raced on. The initial
+   * value of a global is not part of every encoding, so the entry procedure assigns it.
+   */
   private fun onceState(control: VarDecl<*>, builder: XcfaProcedureBuilder): VarDecl<IntType> =
     onceStates.getOrPut(control) {
-      Decls.Var("__theta_once_${control.name}", Int()).also {
-        builder.parent.addVar(XcfaGlobalVar(it, Int(0), atomic = true))
+      Decls.Var("__theta_once_${control.name}", Int()).also { state ->
+        builder.parent.addVar(XcfaGlobalVar(state, Int(0), atomic = true))
+        builder.parent.getInitProcedures().forEach { (proc, _) ->
+          val initEdge = proc.initLoc.outgoingEdges.single()
+          proc.removeEdge(initEdge)
+          proc.addEdge(
+            initEdge.withLabel(
+              SequenceLabel(
+                initEdge.getFlatLabels() + AssignStmtLabel(state, Int(0)),
+                initEdge.label.metadata,
+              )
+            )
+          )
+        }
       }
     }
 }
