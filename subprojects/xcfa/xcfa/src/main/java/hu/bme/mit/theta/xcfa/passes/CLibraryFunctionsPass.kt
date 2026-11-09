@@ -1068,9 +1068,12 @@ class CLibraryFunctionsPass(
   private fun onceState(control: VarDecl<*>, builder: XcfaProcedureBuilder): VarDecl<IntType> {
     val name = "__theta_once_${control.name}"
     // Every procedure has its own instance of this pass, so the state is found in the model.
-    builder.parent.getVars().find { it.wrappedVar.name == name }?.let {
-      return it.wrappedVar as VarDecl<IntType>
-    }
+    builder.parent
+      .getVars()
+      .find { it.wrappedVar.name == name }
+      ?.let {
+        return it.wrappedVar as VarDecl<IntType>
+      }
     return Decls.Var(name, Int()).also { state ->
       builder.parent.addVar(XcfaGlobalVar(state, Int(0), atomic = true))
       builder.parent.getInitProcedures().forEach { (proc, _) ->
