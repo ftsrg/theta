@@ -68,7 +68,6 @@ fun emergent27(
                   explChecker = true,
                   solver = EMERGENT_SOLVER,
                   fallbackSolver = EMERGENT_FALLBACK_SOLVER,
-                  blockLocalPool = true,
                 ),
             )
         ),
