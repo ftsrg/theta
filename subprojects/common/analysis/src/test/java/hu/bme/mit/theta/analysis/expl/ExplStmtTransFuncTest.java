@@ -146,6 +146,44 @@ public class ExplStmtTransFuncTest {
     }
 
     @Test
+    public void testEnumerationAfterTooManySuccessors() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 2);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Assign(x, Inc(x.getRef())));
+        stmts.add(Havoc(y));
+        stmts.add(Assume(BoolExprs.And(Gt(y.getRef(), Int(4)), Lt(y.getRef(), Int(6)))));
+
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
+
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(y, Int(5)).build());
+        Assertions.assertEquals(List.of(expectedState), List.copyOf(succStates));
+    }
+
+    @Test
+    public void testEnumerationOfOneStatement() {
+        final VarDecl<IntType> z = Var("z", Int());
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 2);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y, z));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Havoc(y));
+        stmts.add(Assume(BoolExprs.And(Gt(y.getRef(), Int(4)), Lt(y.getRef(), Int(6)))));
+        stmts.add(Havoc(z));
+        stmts.add(Assume(Gt(z.getRef(), x.getRef())));
+
+        final Collection<? extends ExplState> succStates =
+                transFunc.getSuccStates(sourceState, stmts, prec);
+
+        final ExplState expectedState =
+                ExplState.of(ImmutableValuation.builder().put(y, Int(5)).build());
+        Assertions.assertEquals(List.of(expectedState), List.copyOf(succStates));
+    }
+
+    @Test
     public void testComplex3() {
         final ExplState sourceState = ExplState.top();
         final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
