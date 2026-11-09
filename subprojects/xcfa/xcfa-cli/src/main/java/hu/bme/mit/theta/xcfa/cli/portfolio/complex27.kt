@@ -63,6 +63,8 @@ fun complex27(
 
   var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
   val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  // Single-threaded only: multithreaded programs that are not inlined also reach this chain.
+  val blockEncoding = !parseContext.multiThreading
   val baseMddConfig = baseMddConfig(portfolioConfig)
   val baseIc3Config = baseIc3Config(portfolioConfig)
 
@@ -98,6 +100,7 @@ fun complex27(
           itpEnabled = false,
           timeoutMs = timeout,
           bmcSolver = solver,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
@@ -114,6 +117,7 @@ fun complex27(
           timeoutMs = timeout,
           bmcSolver = solver,
           indSolver = solver,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
@@ -129,6 +133,7 @@ fun complex27(
           itpEnabled = true,
           timeoutMs = timeout,
           itpSolver = solver,
+          blockEncoding = blockEncoding,
         ),
         checker,
       )
@@ -394,10 +399,10 @@ fun complex27(
   logger.benchmark("Using portfolio: $mainTrait\n")
 
   // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
-  if (xcfa.isInlined && mainTrait == MULTITHREAD)
+  if (mainTrait == MULTITHREAD)
     return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
   if (mainTrait == TERMINATION)
-    return termination(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+    return termination27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
 
   val loopFree = xcfa.boundedIsComplete
   logger.benchmark("Bounded engines complete: $loopFree\n")

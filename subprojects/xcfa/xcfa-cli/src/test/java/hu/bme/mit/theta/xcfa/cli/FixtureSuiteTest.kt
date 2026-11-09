@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import java.io.File
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
@@ -28,9 +30,10 @@ import org.junit.jupiter.api.fail
  * - `PARSE-OK` / `FRONTEND-FAIL` -- run the frontend only (`--backend NONE`) and check whether it
  *   built the XCFA. A fixture builds only if its change is present, so reverting the change flips
  *   the outcome.
- * - `SAFE` / `UNSAFE`, optionally `:<property>` -- run the real verifier and check the verdict. Use
- *   these for changes that alter values rather than what parses: a miswritten memory cell parses
- *   perfectly and only shows up as a wrong answer.
+ * - `SAFE` / `UNSAFE` / `UNKNOWN`, optionally `:<property>` -- run the real verifier and check the
+ *   verdict. Use these for changes that alter values rather than what parses: a miswritten memory
+ *   cell parses perfectly and only shows up as a wrong answer. `UNKNOWN` is for a verdict that the
+ *   tool must withhold.
  *
  * An optional sixth column pins `--memory-model`; left empty, the tool's default applies.
  *
@@ -42,10 +45,13 @@ class FixtureSuiteTest {
 
   private companion object {
     /** Frontend-only fixtures are parsing, not verification. */
-    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 90L)
+    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 60L)
 
-    /** Verdict fixtures run the portfolio; keep them small enough to stay under this. */
-    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 180L)
+    /** Verdict fixtures run the portfolio; a fixture that needs longer is too large to keep. */
+    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 60L)
+
+    /** Each row is a separate Theta process; the fixtures are small enough to run a few at once. */
+    val PARALLELISM = System.getProperty("theta.fixture.jobs")?.toIntOrNull() ?: 4
 
     private fun seconds(property: String, fallback: Long) =
       System.getProperty(property)?.toLongOrNull() ?: fallback
@@ -104,19 +110,32 @@ class FixtureSuiteTest {
     if (rows.isEmpty())
       return listOf(DynamicTest.dynamicTest("fixtures") { fail("no fixture rows in $tsv") })
 
-    return rows.map { row ->
-      val (fixture, arithmetic, architecture, expect) = row
-      val feature = row.getOrElse(4) { "" }
-      val memoryModel = row.getOrElse(5) { "" }
-      val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
-      DynamicTest.dynamicTest("fixture $name") {
-        val input = File(home, "fixtures/$fixture")
-        check(input.isFile) { "fixture file not found: $input" }
-        val (actual, diagnosis) =
-          run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
-        if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
+    // All rows start now; each test waits for its own row, so the report stays one test per row.
+    val pool = Executors.newFixedThreadPool(PARALLELISM)
+    val tests =
+      rows.map { row ->
+        val (fixture, arithmetic, architecture, expect) = row
+        val feature = row.getOrElse(4) { "" }
+        val memoryModel = row.getOrElse(5) { "" }
+        val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
+        val outcome =
+          pool.submit<Pair<String, String>> {
+            val input = File(home, "fixtures/$fixture")
+            check(input.isFile) { "fixture file not found: $input" }
+            run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
+          }
+        DynamicTest.dynamicTest("fixture $name") {
+          val (actual, diagnosis) =
+            try {
+              outcome.get()
+            } catch (e: ExecutionException) {
+              throw e.cause ?: e
+            }
+          if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
+        }
       }
-    }
+    pool.shutdown()
+    return tests
   }
 
   /**
@@ -133,7 +152,7 @@ class FixtureSuiteTest {
     properties: File,
   ): Pair<String, String> {
     val verdict = expect.substringBefore(':')
-    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE"
+    val isVerdictFixture = verdict == "SAFE" || verdict == "UNSAFE" || verdict == "UNKNOWN"
     val property =
       File(
         properties,
@@ -164,12 +183,13 @@ class FixtureSuiteTest {
           output.contains("ParsingResult Success") -> "PARSE-OK"
           else -> "OTHER"
         }
-      return actual to diagnosis
+      return (if (actual == verdict) expect else actual) to diagnosis
     }
     val actual =
       when {
         output.contains("(SafetyResult Safe)") -> "SAFE"
         output.contains("(SafetyResult Unsafe") -> "UNSAFE"
+        output.contains("(SafetyResult Unknown") -> "UNKNOWN"
         else -> "OTHER"
       }
     // The expectation may name a property after the verdict; echo it back on a match so the

@@ -1,0 +1,26 @@
+- entry_type: 'invariant_set'
+  metadata:
+    format_version: '2.1'
+    uuid: '24c6e20b-b5d0-56bc-b910-b019aa59e610'
+    creation_time: '2026-11-06T12:00:00Z'
+    producer:
+      name: 'hand-written'
+      version: '1'
+    task:
+      input_files:
+      - 'count-up.c'
+      input_file_hashes:
+        'count-up.c': 'bf4e445fbbc0ee96f398a6aa448c2bf640f334f3130467b7243fe61dda774ca1'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'LP64'
+      language: 'C'
+  content:
+  - invariant:
+      type: 'loop_transition_invariant'
+      location:
+        file_name: 'count-up.c'
+        line: 5
+        column: 3
+        function: 'main'
+      value: 'i > \at(i, AnyPrev)'
+      format: 'ext_c_expression'

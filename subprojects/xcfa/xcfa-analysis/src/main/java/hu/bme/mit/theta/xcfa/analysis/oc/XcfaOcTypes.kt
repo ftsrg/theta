@@ -67,6 +67,21 @@ internal class XcfaEvent(
   private var arrayLit: LitExpr<*>? = null
   private var offsetLit: LitExpr<*>? = null
 
+  /**
+   * Over-approximated address values from [XcfaOcValueAnalysis]; null when anything is possible.
+   */
+  var arrayValues: Set<LitExpr<*>>? = null
+    set(value) {
+      field = value
+      if (value?.size == 1) arrayStatic = value.first()
+    }
+
+  var offsetValues: Set<LitExpr<*>>? = null
+    set(value) {
+      field = value
+      if (value?.size == 1) offsetStatic = value.first()
+    }
+
   var inAtomicBlock: Boolean = false
 
   var raceCandidate: Boolean = false
@@ -135,13 +150,20 @@ internal class XcfaEvent(
       return false
     if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic)
       return false
-    return true
+    return valuesMeet(other)
   }
+
+  private fun valuesMeet(other: XcfaEvent): Boolean =
+    arrayValues.meets(other.arrayValues) && offsetValues.meets(other.offsetValues)
+
+  private fun Set<LitExpr<*>>?.meets(other: Set<LitExpr<*>>?): Boolean =
+    this == null || other == null || any { it in other }
 
   override fun interferenceCond(other: Event): Expr<BoolType>? {
     other as XcfaEvent
     array ?: return null
     other.array ?: return null
+    if (!valuesMeet(other)) return null
 
     var arrayEq: Expr<BoolType>? = Eq(array, other.array)
     if (arrayStatic != null && other.arrayStatic != null) {

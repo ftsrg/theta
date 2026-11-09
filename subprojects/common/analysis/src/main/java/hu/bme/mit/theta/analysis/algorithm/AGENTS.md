@@ -30,7 +30,7 @@ Büchi automata for liveness come from `common/ltl` (which also owns the jhoafpa
 
 ## The MonolithicExpr subsystem (bounded/, shared by ic3/ and mdd/)
 
-`MonolithicExpr` = `initExpr`/`transExpr`/`propExpr` + `transOffsetIndex: VarIndexing` (+ `vars`, `ctrlVars` for MDD ordering). Formalisms bind via `ModelToMonolithicAdapter` implementations living in **their own** `*-analysis` modules (sts/xsts/cfa/xcfa) — not here. `bounded/pipeline/` lowers models before checking (`L2SMEPass` liveness→safety, `PredicateAbstractionMEPass`, `ReverseMEPass`, bound/stall passes); ⚠ passes keep `lateinit` state between forward/backward calls — **not reentrant**, strict alternation assumed.
+`MonolithicExpr` = `initExpr`/`transExpr`/`propExpr` + `transOffsetIndex: VarIndexing` (+ `vars`, `ctrlVars` for MDD ordering, `livenessWitness` for the invariants `L2SMEPass` checks; passes that build a new `MonolithicExpr` drop it, so `L2SMEPass` must come first). Formalisms bind via `ModelToMonolithicAdapter` implementations living in **their own** `*-analysis` modules (sts/xsts/cfa/xcfa) — not here. `bounded/pipeline/` lowers models before checking (`L2SMEPass` liveness→safety, `PredicateAbstractionMEPass`, `ReverseMEPass`, bound/stall passes); ⚠ passes keep `lateinit` state between forward/backward calls — **not reentrant**, strict alternation assumed.
 
 `BoundedChecker` requires distinct solver instances per engine (asserted) and k-induction requires BMC enabled.
 

@@ -94,6 +94,13 @@ class UnrollPass(
     var COLLAPSE_BUSY_WAITS = false
 
     /**
+     * Whether a busy wait may write a local that only feeds its own next value (`y = y - 1` on a
+     * dead `y`). True only when the checks already exist: the overflow, memory-safety and data-race
+     * checks come after this pass and may read such a local in a later iteration.
+     */
+    var BUSY_WAITS_IGNORE_DEAD_STORES = true
+
+    /**
      * Seed for the order [findLoop] explores edges in.
      *
      * Which loop the search happens to reach first decides which loops get taken apart and which
@@ -114,6 +121,8 @@ class UnrollPass(
   private val recursionUnrollLimit = specificRecursionUnrollLimit ?: UNROLL_RECURSION_LIMIT
 
   private val collapseBusyWaits = COLLAPSE_BUSY_WAITS
+
+  private val ignoreDeadStores = BUSY_WAITS_IGNORE_DEAD_STORES
 
   /** The program's global variables, i.e. the ones another thread can observe. */
   private var globalVars: Set<VarDecl<*>> = emptySet()
@@ -194,6 +203,7 @@ class UnrollPass(
     val exitKey: String,
     private val tracker: CutTracker,
     val collapseBusyWaits: Boolean = false,
+    val ignoreDeadStores: Boolean = true,
     val globalVars: Set<VarDecl<*>> = emptySet(),
   ) {
 
@@ -252,7 +262,12 @@ class UnrollPass(
       exitEdges[loopCondStart]?.let { loopExitEdges ->
         metadataEdges.forEach { metadataEdge ->
           val oldTarget = metadataEdge.target
-          val newLoc = XcfaLocation("${oldTarget.name}_loop_exit", metadata = oldTarget.metadata)
+          oldTarget.metadata.onLocationLost()
+          val newLoc =
+            XcfaLocation(
+              "${oldTarget.name}_loop_exit",
+              metadata = oldTarget.metadata.withoutLocationMarks(),
+            )
           tracker.copied(newLoc, oldTarget)
           val newEdge = XcfaEdge(startLocation, newLoc, metadataEdge.label, metadataEdge.metadata)
           builder.addEdge(newEdge)
@@ -366,7 +381,7 @@ class UnrollPass(
           .flatMap { it.label.collectVarsWithAccessType().filter { a -> a.value.isWritten }.keys }
           .filter { it !in globalVars }
       // Locals live at [loopStart] in the whole procedure (back edge and loop exits included).
-      val live = strongLiveVars(builder)[loopStart] ?: emptySet()
+      val live = strongLiveVars(builder, strong = ignoreDeadStores)[loopStart] ?: emptySet()
       writtenLocals.none { it in live }
     }
 
@@ -426,7 +441,10 @@ class UnrollPass(
           var name = "${it.name}_loop${index}"
           while (!takenNames.add(name)) name =
             "${it.name}_loop${index}_${XcfaLocation.uniqueCounter()}"
-          val loc = XcfaLocation(name, metadata = it.metadata)
+          // a marked location would stay through LBE in every unrolled copy, so the copies do not
+          // keep its marks
+          it.metadata.onLocationLost()
+          val loc = XcfaLocation(name, metadata = it.metadata.withoutLocationMarks())
           builder.addLoc(loc)
           tracker.copied(loc, it)
           loc
@@ -475,7 +493,12 @@ class UnrollPass(
   private fun runUnroll(builder: XcfaProcedureBuilder) {
     // Before the loops: a spliced-in body brings its own loops with it, and those still have to be
     // taken apart by the search below.
-    if (recursionUnrollLimit != -1) unrollRecursiveCalls(builder)
+    if (recursionUnrollLimit != -1) {
+      unrollRecursiveCalls(builder)
+      // a dropped call leaves dead predecessors in the enclosing loop, which [getLoop] cannot
+      // describe
+      unusedLocRemovalPass.runChecked(builder)
+    }
 
     // First, try to unroll without forcing (even if force unroll is allowed)
     if (forceUnrollLimit != -1) {
@@ -797,6 +820,7 @@ class UnrollPass(
         exitKey = exitKey,
         tracker = tracker,
         collapseBusyWaits = collapseBusyWaits,
+        ignoreDeadStores = ignoreDeadStores,
         globalVars = globalVars,
       )
       .also { if (it in testedLoops) return null }

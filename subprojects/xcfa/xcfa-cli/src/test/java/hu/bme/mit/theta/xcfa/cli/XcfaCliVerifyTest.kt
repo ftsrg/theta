@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations
@@ -225,6 +226,24 @@ class XcfaCliVerifyTest {
         throw e
       }
     }
+  }
+
+  @Test
+  fun testBlockEncodingIsRejectedWhenMultithreaded() {
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--backend",
+        "BOUNDED",
+        "--block-encoding",
+        "--input",
+        javaClass.getResource("/c/dekker.i")!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    val e = assertThrows<ParameterException> { main(params) }
+    Assertions.assertTrue("NoBlockEncodingWhenMultithreaded" in e.message!!)
   }
 
   //  @ParameterizedTest

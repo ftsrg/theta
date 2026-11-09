@@ -287,6 +287,22 @@ class XcfaDataRaceTest {
     Assertions.assertTrue(verdict(checkWithPredCegar(program)), program)
   }
 
+  @ParameterizedTest
+  @ValueSource(
+    strings =
+      [
+        "/38join_result_buffer_race.c",
+        "/39join_result_buffer_norace.c",
+        "/40join_enables_race.c",
+        "/41join_chain_buffer_race.c",
+      ]
+  )
+  fun testJoinedBufferWithSpor(program: String) {
+    val result = checkWithPredCegar(program, useSpor = true)
+    if (program.contains("norace")) Assertions.assertTrue(result.isSafe, program)
+    else Assertions.assertTrue(result.isUnsafe, program)
+  }
+
   /**
    * An address read after a memory write of its own label cannot be compared in the state before
    * the label. The atomic block sets `idx = 1` before writing `a[*pidx]`, so it races with main's
@@ -381,7 +397,7 @@ class XcfaDataRaceTest {
    * need a few refinements; more than ten unsafe abstractions fail the check with
    * [NotSolvableException], so a regression fails fast instead of refining on and on.
    */
-  private fun checkWithPredCegar(program: String): SafetyResult<*, *> {
+  private fun checkWithPredCegar(program: String, useSpor: Boolean = false): SafetyResult<*, *> {
     val property = XcfaProperty(ErrorDetection.DATA_RACE)
     val parseContext = ParseContext()
     val xcfa = parseDataRaceProgram(program, parseContext, LbePass.LbeLevel.NO_LBE)
@@ -405,7 +421,7 @@ class XcfaDataRaceTest {
         ),
         StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
         NullLogger.getInstance(),
-        getXcfaLts(Random(-1)),
+        if (useSpor) XcfaSporLts(xcfa, Random(-1)) else getXcfaLts(Random(-1)),
         errorDetector,
       )
         as ArgAbstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
@@ -472,7 +488,7 @@ class XcfaDataRaceTest {
         property = property,
         parseContext = parseContext,
         decisionProcedure = OcDecisionProcedureType.BASIC,
-        solverFactory = SolverManager.resolveSolverFactory("Z3:4.13"),
+        solverFactory = SolverManager.resolveSolverFactory("Z3:new"),
         logger = NullLogger.getInstance(),
         outputConflictClauses = false,
         autoConflictConfig = AutoConflictFinderConfig.NONE,

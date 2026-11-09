@@ -21,8 +21,11 @@ import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -36,15 +39,22 @@ class UnionPunningTest {
   private fun build(src: String) = build(src, ArithmeticType.efficient)
 
   private fun build(src: String, arithmetic: ArithmeticType) {
+    buildXcfa(src, arithmetic)
+  }
+
+  private fun resource(name: String) = javaClass.getResource("/union/$name")!!.readText()
+
+  private fun buildXcfa(src: String, arithmetic: ArithmeticType = ArithmeticType.efficient): XCFA {
     val parseContext = ParseContext()
     parseContext.arithmetic = arithmetic
-    getXcfaFromC(
-      src.byteInputStream(),
-      parseContext,
-      false,
-      XcfaProperty(ErrorDetection.ERROR_LOCATION),
-      NullLogger.getInstance(),
-    )
+    return getXcfaFromC(
+        src.byteInputStream(),
+        parseContext,
+        false,
+        XcfaProperty(ErrorDetection.ERROR_LOCATION),
+        NullLogger.getInstance(),
+      )
+      .first
   }
 
   @Test
@@ -425,21 +435,19 @@ class UnionPunningTest {
   }
 
   @Test
-  fun aFloatingPointMemberIsRefusedWhileTheNanRoundTripIsUnsound() {
-    // The FpToIeeeBv / FpFromIeeeBv machinery for float union punning exists and is correct on
-    // finite values, but is GATED OFF: fpToIEEEBV is unspecified for NaN, and a NaN routed through
-    // the integer view and back (`value = NaN; word = ...; value = word`, the newlib idiom) still
-    // yields a spurious non-NaN in the solver, which produced wrong verdicts. Until the round trip
-    // is sound the float union is refused: an error scores nothing, a wrong answer scores worse.
+  fun aFullWidthFloatingPointMemberSharesTheWordAsItsBits() {
+    // The write stores fresh bits b with to_fp(b) = value, so no fp.to_ieee_bv is needed.
+    val xcfa = buildXcfa(resource("float_full_width.c"))
+    val labels = xcfa.procedures.flatMap { p -> p.edges.flatMap { it.getFlatLabels() } }
+    assertTrue(labels.any { "fpfromieeebv" in it.toString() && FP_BITS_PREFIX in it.toString() })
+    assertTrue(labels.none { "fptoieeebv" in it.toString() })
+    assertTrue(xcfa.overApproximatedVars.keys.any { FP_BITS_PREFIX in it.name })
+  }
+
+  @Test
+  fun aFloatingPointMemberNarrowerThanTheWordIsRefused() {
     assertThrows(UnsupportedFrontendElementException::class.java) {
-      build(
-        """
-        typedef unsigned int u32;
-        typedef union { float value; u32 word; } shape;
-        int main() { shape u; u.value = 1.0f; return u.word; }
-        """
-          .trimIndent()
-      )
+      build(resource("float_narrow.c"))
     }
   }
 }

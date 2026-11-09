@@ -37,12 +37,16 @@ Selected with `--memory-model`; see `ArchitectureConfig.MemoryModelType`.
 
 Only `bytes` can express two differently typed views of the same storage (an `int` and the `char`s
 overlapping it, a union member and its byte array), because there they are literally the same cells.
+`VoidPointerViews` refuses a program whose `void *` values (or casts, or integers that hold an
+address) may view one object both as characters and as another type, so it is rebuilt under `bytes`.
 
 **Fallback chain.** The frontend builds under `multi`; a pointer-splitting failure rebuilds under
 `flat`, and so does a heap block whose sub-objects (nested aggregate members, which `multi` keeps
 as objects of their own) cannot be allocated because the block is untyped, of unknown length or
 reallocated, when the program reaches sub-objects at all. A construct needing byte granularity
-rebuilds under `bytes`. This applies only to the
+rebuilds under `bytes`. Under memsafety the size of a heap or `alloca` block is recorded in cells,
+the unit accesses index in, so a block whose element type is not known, or that is smaller than
+one element, also rebuilds under `bytes`. This applies only to the
 *default* model — an explicit `--memory-model` is the caller's decision and is never overridden.
 
 `bytes` **refuses floating-point objects**: SMT-LIB's FP sort has a single NaN, so an IEEE round trip

@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -49,10 +50,12 @@ import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.firstAllocationRetType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.mallocCells
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import hu.bme.mit.theta.xcfa.utils.memsafetyBound
 
 private const val REALLOCATES = "reallocates"
+
+private const val FREES = "frees"
 
 /** The local flag choosing whether an allocation fails. */
 private const val FAILS = "__theta_alloc_fails"
@@ -65,7 +68,8 @@ private const val MAX_HEAP_ELEMENTS = 64
  * residue class (see `POINTER_BASE_CLASSES`).
  *
  * Under flat addressing a block is instead the next slot of the address line, sized by the request
- * (see `bumpAllocate`).
+ * (see `bumpAllocate`). Memsafety records the size in the unit accesses index in: bytes under the
+ * bytes model, else whole elements in cells (see `memsafetyBound`).
  *
  * `realloc` is handled here too, as an **in-place resize**: the returned pointer keeps the old base
  * and the object's size becomes the new one. A program must use realloc's return value whether or
@@ -81,8 +85,9 @@ private const val MAX_HEAP_ELEMENTS = 64
  * object does, for each element when its size is a constant. When that is impossible -- the block
  * is untyped, its element count is not constant, it ends in a flexible array member, or it is
  * reallocated -- and the program reaches sub-objects at all, the multi model refuses and the
- * program is rebuilt under flat, which lays them out inline. The type is the one the result is
- * first bound to; a block later used as an unrelated struct type is not covered.
+ * program is rebuilt under flat, which lays them out inline. The same holds for a block whose first
+ * member is a sub-object when the program frees memory. The type is the one the result is first
+ * bound to; a block later used as an unrelated struct type is not covered.
  *
  * Either call may also fail and return NULL (C11 7.22.3), leaving a reallocated block intact.
  *
@@ -144,7 +149,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val arg = invokeLabel.params[1]
     val sizeLabels =
       (if (parseContext.isCheckMemsafety)
-        listOf(builder.parent.allocate(parseContext, ret, bound(builder, ret, arg)))
+        listOf(
+          builder.parent.allocate(parseContext, ret, builder.memsafetyBound(parseContext, ret, arg))
+        )
       else listOf()) + subObjects(builder, ret, arg)
     if (parseContext.memoryModel.flatAddressing()) {
       val reserved =
@@ -178,7 +185,14 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       if (it == null || hasSubObjects(it)) refuseUnlessFlat("a reallocated block")
     }
     return if (parseContext.isCheckMemsafety) {
-      listOf(keepBase, builder.parent.allocate(parseContext, ret, bound(builder, ret, newSize)))
+      listOf(
+        keepBase,
+        builder.parent.allocate(
+          parseContext,
+          ret,
+          builder.memsafetyBound(parseContext, ret, newSize),
+        ),
+      )
     } else {
       listOf(keepBase)
     }
@@ -195,12 +209,6 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     val ret = invokeLabel.params[0] as RefExpr<*>
     return listOf(AssignStmtLabel(ret, CComplexType.getType(ret, parseContext).nullValue))
   }
-
-  /** The size recorded for memsafety: cells under flat addressing where known, else bytes. */
-  private fun bound(builder: XcfaProcedureBuilder, ret: Expr<*>, bytes: Expr<*>): Expr<*> =
-    if (parseContext.memoryModel.flatAddressing() && !parseContext.memoryModel.byteAddressed())
-      builder.mallocCells(parseContext, ret, bytes) ?: bytes
-    else bytes
 
   /**
    * Allocates the sub-objects of each element of the fresh block [ret] of [bytes], when it holds a
@@ -233,11 +241,25 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
       refuseUnlessFlat("a flexible array member")
       return listOf()
     }
+    if (layout.subObjectCells(struct).any { it.first == 0 }) refuseFirstMemberIfFreed(builder)
     val labels = mutableListOf<XcfaLabel>()
     for (index in 0 until count) {
       layout.allocateMembers(ret, struct, struct, index * struct.unitCount, labels, HEAP_SUBOBJECT)
     }
     return labels
+  }
+
+  /**
+   * A sub-object at cell 0 has a base of its own, but in C its address is the block's: freeing it
+   * frees the block, which the free check would report as invalid. Flat lays the member out inline,
+   * and bytes also a union, which flat keeps as a sub-object.
+   */
+  private fun refuseFirstMemberIfFreed(builder: XcfaProcedureBuilder) {
+    if (!parseContext.isCheckMemsafety || !parseContext.isAggregateMemberUsed) return
+    if (!frees(builder.parent)) return
+    val what = "a freed block whose first member is a separate object"
+    if (parseContext.memoryModel.flatAddressing()) throw RequiresByteAddressedMemoryException(what)
+    throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
   }
 
   private fun hasSubObjects(type: CComplexType): Boolean =
@@ -256,8 +278,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(size)
         else -> return null
       }
-    val flat = parseContext.memoryModel.flatAddressing()
-    val count = value.toLong() / ObjectLayout.cellModelSize(struct, flat)
+    val count = value.toLong() / ObjectLayout.sizeofBytes(struct, parseContext.architecture)
     return count.takeIf { it <= MAX_HEAP_ELEMENTS }?.toInt()
   }
 
@@ -270,6 +291,16 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     if (parseContext.memoryModel.flatAddressing() || !parseContext.isAggregateMemberUsed) return
     throw UnsupportedPointerSplitException("Unsupported heap sub-objects: $what")
   }
+
+  /** Whether any procedure calls `free`. */
+  private fun frees(xcfa: XcfaBuilder): Boolean =
+    xcfa.metaData.getOrPut(FREES) {
+      xcfa.getProcedures().any { proc ->
+        proc.getEdges().any { edge ->
+          edge.getFlatLabels().any { it is InvokeLabel && it.name == "free" }
+        }
+      }
+    } as Boolean
 
   /** Whether any procedure calls `realloc`, decided before the first one is rewritten. */
   private fun reallocates(xcfa: XcfaBuilder): Boolean =

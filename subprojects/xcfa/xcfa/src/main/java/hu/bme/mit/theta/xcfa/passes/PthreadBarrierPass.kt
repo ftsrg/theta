@@ -18,28 +18,23 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
-import java.util.WeakHashMap
+import java.util.*
 
 /**
  * Models POSIX barriers, so that `pthread_barrier_wait` blocks until `count` threads have reached
@@ -76,7 +71,7 @@ class PthreadBarrierPass(val parseContext: ParseContext) : ProcedurePass {
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val defined = builder.parent.getProcedures().mapNotNull { it.name }.toSet()
+    val defined = builder.parent.getProcedures().map { it.name }.toSet()
     val predicate = { label: XcfaLabel ->
       label is InvokeLabel && label.name in FUNCTIONS && label.name !in defined
     }
@@ -115,11 +110,10 @@ class PthreadBarrierPass(val parseContext: ParseContext) : ProcedurePass {
                 metadata = e.source.metadata,
               )
             builder.addEdge(XcfaEdge(e.source, mid, SequenceLabel(barrier.arrive()), e.metadata))
-            val serial = assignRet(retType.getValue("-1"))
-            val other = assignRet(retType.nullValue)
-            barrier.departures(serial, other).forEach {
-              builder.addEdge(XcfaEdge(mid, e.target, SequenceLabel(it), e.metadata))
-            }
+            val serial = Var("__theta_barrier_serial_${XcfaLocation.uniqueCounter()}", Bool())
+            builder.addVar(serial)
+            val departureLabel = SequenceLabel(barrier.departures(assignRet, retType, serial))
+            builder.addEdge(XcfaEdge(mid, e.target, departureLabel, e.metadata))
           }
 
           // Process sharing only matters across `fork`, which is never modeled (see
@@ -178,16 +172,33 @@ private class Barrier(xcfa: XcfaBuilder, name: String, parseContext: ParseContex
    * Leaving a tripped barrier: as the serial thread, or as any other, which the last waiter to
    * leave may only be when the serial value is already taken.
    */
-  fun departures(serial: XcfaLabel, other: XcfaLabel): List<List<XcfaLabel>> {
-    val leave = listOf(assign(arrived, Sub(arrived.ref, one)))
-    val othersLeft = Neq(arrived.ref, zero)
+  fun departures(
+    assignRet: (Expr<*>) -> StmtLabel,
+    retType: CComplexType,
+    serial: VarDecl<BoolType>,
+  ): List<XcfaLabel> {
+    val othersRemain = Neq(arrived.ref, zero)
+    val serialValue = retType.getValue("-1")
+    val otherValue = retType.nullValue
     return listOf(
-      listOf(assume(And(draining.ref, Not(claimed.ref))), serial) +
-        leave +
-        listOf(assign(claimed, othersLeft), assign(draining, othersLeft)),
-      listOf(assume(And(draining.ref, Or(claimed.ref, Neq(arrived.ref, one)))), other) +
-        leave +
-        listOf(assign(claimed, And(claimed.ref, othersLeft)), assign(draining, othersLeft)),
+      assume(draining.ref),
+      StmtLabel(Havoc(serial)),
+      assume(
+        Or(
+          And(serial.ref, Not(claimed.ref)),
+          And(Not(serial.ref), Or(claimed.ref, Neq(arrived.ref, one))),
+        )
+      ),
+      assignRet(
+        Exprs.Ite(
+          serial.ref,
+          cast(serialValue, serialValue.type),
+          cast(otherValue, serialValue.type),
+        )
+      ),
+      assign(arrived, Sub(arrived.ref, one)),
+      assign(claimed, And(Or(claimed.ref, serial.ref), othersRemain)),
+      assign(draining, othersRemain),
     )
   }
 }

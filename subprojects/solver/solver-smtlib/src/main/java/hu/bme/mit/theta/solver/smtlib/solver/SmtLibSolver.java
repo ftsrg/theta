@@ -33,6 +33,7 @@ import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibDereferenceDecls;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.SmtLibMathFuncDecls;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
@@ -147,6 +148,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         // the term transformation registered one per signature, so declare it like any other
         // constant.
         consts.addAll(SmtLibDereferenceDecls.collect(assertion));
+        consts.addAll(SmtLibMathFuncDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
@@ -174,6 +176,7 @@ public class SmtLibSolver implements UCSolver, Solver {
     public void track(Expr<BoolType> assertion) {
         final var consts = ExprUtils.getConstants(assertion);
         consts.addAll(SmtLibDereferenceDecls.collect(assertion));
+        consts.addAll(SmtLibMathFuncDecls.collect(assertion));
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 

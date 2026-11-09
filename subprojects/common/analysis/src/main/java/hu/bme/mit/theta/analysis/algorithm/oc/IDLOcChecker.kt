@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.solver.AssumingSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
@@ -36,12 +37,22 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   private var clkGlobalCnt = 0
   private val clkGlobalVars: MutableMap<Int, ConstDecl<IntType>> = mutableMapOf()
   private val Int.clkGlobalVar: ConstDecl<IntType>
-    get() = clkGlobalVars.getOrPut(this) { Decls.Const("__clk_global__${clkGlobalCnt++}", Int()) }
+    get() =
+      clkGlobalVars.getOrPut(this) {
+        check(!prepared) { "A clock declared after the encoding misses its disequalities" }
+        Decls.Const("__clk_global__${clkGlobalCnt++}", Int())
+      }
 
   private var clkAtomicCnt = 0
   private val clkAtomicVars: MutableMap<E, ConstDecl<IntType>> = mutableMapOf()
   private val E.clkAtomicVar: ConstDecl<IntType>
-    get() = clkAtomicVars.getOrPut(this) { Decls.Const("__clk_atomic__${clkAtomicCnt++}", Int()) }
+    get() =
+      clkAtomicVars.getOrPut(this) {
+        check(!prepared) { "A clock declared after the encoding misses its disequalities" }
+        Decls.Const("__clk_atomic__${clkAtomicCnt++}", Int())
+      }
+
+  private var prepared = false
 
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
 
@@ -112,6 +123,29 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     wss: Map<VarDecl<*>, Set<Relation<E>>>,
   ): SolverStatus? {
+    if (!prepared) encode(events, pos, ppos, rfs, wss)
+    return assumption?.let { (solver as AssumingSolver).checkAssuming(it) } ?: solver.check()
+  }
+
+  override fun prepare(
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
+    rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+    wss: Map<VarDecl<*>, Set<Relation<E>>>,
+  ): Boolean {
+    encode(events, pos, ppos, rfs, wss)
+    prepared = true
+    return true
+  }
+
+  private fun encode(
+    events: Map<VarDecl<*>, Map<Int, List<E>>>,
+    pos: List<Relation<E>>,
+    ppos: BooleanGlobalRelation,
+    rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+    wss: Map<VarDecl<*>, Set<Relation<E>>>,
+  ) {
     this.events = events.values.flatMap { it.values }.flatten()
     hbVars = Array(Event.clkSize) { arrayOfNulls(Event.clkSize) }
 
@@ -188,8 +222,6 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
 
     addNeq(clkGlobalVars.values)
     addNeq(clkAtomicVars.values)
-
-    return solver.check()
   }
 
   override fun getHappensBefore(): GlobalRelation {

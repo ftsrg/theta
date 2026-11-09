@@ -144,6 +144,7 @@ class XcfaMonolithicTest {
         "/03nondetfunction.c",
         "/04multithread.c",
         "/07mutex.c",
+        "/39mutex_after_main.c",
         "/10ptr.c",
       )
     }
@@ -278,5 +279,18 @@ class XcfaMonolithicTest {
     val initialStates = PredState.of(Eq(edgeVar.ref, minusOne))
     val atStart = adapter.proofToModelProof(initialStates).getPartitions().getValue(start)
     assertEquals(listOf(PredState.of(True())), atStart.toList())
+  }
+
+  @Test
+  fun testThreadsStartedFromUnrolledLoop() {
+    val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+    val (xcfa, _) = build("/38thread_start_in_loop.c", property)
+    val parseContext = ParseContext().apply { multiThreading = true }
+    val monolithic =
+      XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, true).monolithicExpr
+
+    // main and one thread per copy of the start label, each copy with its own error location
+    assertEquals(3, monolithic.ctrlVars.count { "__loc_" in it.name })
+    assertEquals(2, monolithic.propExpr.ops.count { it !is TrueExpr })
   }
 }

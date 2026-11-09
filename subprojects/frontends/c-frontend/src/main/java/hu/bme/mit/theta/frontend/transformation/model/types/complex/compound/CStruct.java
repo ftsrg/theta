@@ -299,16 +299,17 @@ public class CStruct extends CInteger {
      * is an integer of pointer width in this model. So does a nested struct that is itself one
      * packed word ({@link #overlayWidth}), which is the register-overlay idiom.
      *
-     * <p>Null for the cases a single word genuinely cannot represent: an <b>array</b> member is
-     * many cells rather than one word, and a <b>floating-point</b> member has its own SMT sort, so
-     * reading it as bits needs a reinterpretation this model does not have. Those still need the
-     * byte-addressed object layout.
+     * <p>A <b>floating-point</b> member shares the cell as its IEEE-754 bit pattern, and only as
+     * the whole cell. Null for the cases a single word cannot represent: an <b>array</b> member is
+     * many cells rather than one word, and a float narrower than the cell would need a partial
+     * reinterpretation. Those still need the byte-addressed object layout.
      */
     public Integer unionCellWidth() {
         if (!union || fields.isEmpty()) {
             return null;
         }
         int widest = 0;
+        int floatWidth = 0;
         for (int i = 0; i < fields.size(); i++) {
             final CComplexType fieldType = fields.get(i).get2();
             final int width;
@@ -323,17 +324,11 @@ public class CStruct extends CInteger {
             } else if (fieldType
                     instanceof
                     hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal) {
-                // A floating-point member would share the cell as its raw IEEE-754 bit pattern, and
-                // the machinery for it exists (FpToIeeeBv / FpFromIeeeBv, and the union access path
-                // below). It is GATED OFF, though, and a float union is refused rather than
-                // answered:
-                // fpToIEEEBV is unspecified for NaN, and while a canonical-NaN guard on the write
-                // fixes the direct cases, a NaN routed through the integer view and back
-                // (`value = NaN; word = ...; value = word`, the pervasive newlib idiom) still
-                // yields a spurious non-NaN in the solver, which produced wrong verdicts on
-                // float-heavy tasks. Failing loudly beats a wrong answer until the round trip is
-                // made sound.
-                return null;
+                if (floatWidth != 0 && floatWidth != fieldType.width()) {
+                    return null;
+                }
+                floatWidth = fieldType.width();
+                width = floatWidth;
             } else if (fieldType instanceof CInteger) {
                 // CPointer is a CInteger here: a pointer value is a pointer-wide integer.
                 final int declared = declaredBitfieldWidth(i);
@@ -346,7 +341,7 @@ public class CStruct extends CInteger {
             }
             widest = Math.max(widest, width);
         }
-        return widest;
+        return floatWidth == 0 || floatWidth == widest ? widest : null;
     }
 
     /** The bits [0, width) that [memberName] occupies in a union's shared cell, or null. */
