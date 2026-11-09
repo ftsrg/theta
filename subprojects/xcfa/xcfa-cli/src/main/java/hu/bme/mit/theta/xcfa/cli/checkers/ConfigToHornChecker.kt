@@ -68,10 +68,8 @@ import hu.bme.mit.theta.xcfa.passes.concurrency.RemoveUnnecessaryAtomicBlocksPas
 import hu.bme.mit.theta.xcfa.passes.memory.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.passes.structure.DeterministicPass
 import hu.bme.mit.theta.xcfa.passes.structure.EliminateSelfLoops
-import hu.bme.mit.theta.xcfa.passes.structure.HavocToUninitVar
 import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import hu.bme.mit.theta.xcfa.passes.structure.NoParallelEdgesPass
-import hu.bme.mit.theta.xcfa.passes.structure.NoUninitVar
 import hu.bme.mit.theta.xcfa.passes.structure.NormalizePass
 import hu.bme.mit.theta.xcfa.passes.structure.RemoveAbortBranchesPass
 import hu.bme.mit.theta.xcfa2chc.toCHC
