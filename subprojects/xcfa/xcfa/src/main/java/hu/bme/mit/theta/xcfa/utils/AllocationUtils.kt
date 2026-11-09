@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
@@ -38,6 +39,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -186,6 +188,11 @@ fun XcfaBuilder.bumpAllocate(
     )
   if (mallocVar.type !is IntType) {
     labels.add(StmtLabel(Assume(Gt(mallocVar.ref, cast(target, mallocVar.type)))))
+  } else {
+    // Unbounded integers do not wrap, but addresses are still reduced to the pointer width when
+    // cast: a block past the end of the address space could not exist, as under bitvectors.
+    val maxAddress = BigInteger.TWO.pow(CPointer(null, null, parseContext).width()) - BigInteger.ONE
+    labels.add(StmtLabel(Assume(Leq(mallocVar.ref, Int(maxAddress)))))
   }
   labels.addAll(registerSlot(parseContext, target, extent, heap))
   return labels
