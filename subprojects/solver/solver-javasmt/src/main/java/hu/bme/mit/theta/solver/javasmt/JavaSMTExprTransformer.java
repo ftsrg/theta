@@ -1206,7 +1206,10 @@ final class JavaSMTExprTransformer {
                                                 .map(context.getFormulaManager()::getFormulaType)
                                                 .collect(Collectors.toList()));
 
-                symbolTable.put(decl, funcDecl);
+                // Another constant of the same name and signature already names this function.
+                if (!symbolTable.definesSymbol(funcDecl)) {
+                    symbolTable.put(decl, funcDecl);
+                }
             }
 
             return context.getFormulaManager().getUFManager().callUF(funcDecl, argTerms);

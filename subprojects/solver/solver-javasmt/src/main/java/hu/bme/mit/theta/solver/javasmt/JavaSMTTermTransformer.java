@@ -181,6 +181,13 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.MUL,
                 exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Mul));
+        // Some solvers (e.g. SMTInterpol) return flattened sums and products of 3+ operands.
+        addEnvFunc(
+                FunctionDeclarationKind.ADD,
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Add));
+        addEnvFunc(
+                FunctionDeclarationKind.MUL,
+                exprMultiaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Mul));
         addEnvFunc(
                 FunctionDeclarationKind.DIV,
                 exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Div));
@@ -754,20 +761,20 @@ final class JavaSMTTermTransformer {
                         (Expr<FuncType<Type, Type>>)
                                 checkNotNull(symbolTable.getConst(funcDecl).getRef());
             } else {
-                funcExpr =
+                // Registered so that every occurrence (e.g. SMTInterpol's @diff in array
+                // interpolants) maps to the same constant, which maps back to this declaration.
+                final var funcConst =
                         Const(
-                                        funcDecl.getName(),
-                                        getFuncType(
-                                                transformType(
-                                                        context.getFormulaManager()
-                                                                .getFormulaType(f)),
-                                                args.stream()
-                                                        .map(
-                                                                context.getFormulaManager()
-                                                                        ::getFormulaType)
-                                                        .map(this::transformType)
-                                                        .toList()))
-                                .getRef();
+                                funcDecl.getName(),
+                                getFuncType(
+                                        transformType(
+                                                context.getFormulaManager().getFormulaType(f)),
+                                        args.stream()
+                                                .map(context.getFormulaManager()::getFormulaType)
+                                                .map(this::transformType)
+                                                .toList()));
+                symbolTable.put(funcConst, funcDecl);
+                funcExpr = (Expr<FuncType<Type, Type>>) (Expr<?>) funcConst.getRef();
             }
 
             return FuncExprs.App(funcExpr, paramExprs);
