@@ -90,24 +90,18 @@ fun symbolicPortfolio(
       portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
     val next = if (inProcess) anythingButServerError else anyError
 
-    val start = mdd(if (memsafety) 0 else 300_000, "Z3:new")
-    // A stuck MDD (safe on cut loops) retries with the loops unrolled further, and the later steps
-    // keep that bound; added first, so it takes precedence over the other edges of `start`.
-    val unroll3 = mdd(150_000, "Z3:new", 3)
-    val unroll10 = mdd(150_000, "Z3:new", 10)
-    edges.add(Edge(start, unroll3, verificationStuck))
-    edges.add(Edge(unroll3, unroll10, next))
-    if (memsafety) return STM(start, edges)
+    // A 2 x n matrix over the loop unroll bound: a stuck step (safe on cut loops) moves on to the
+    // next bound, any other failure of MDD to MDD_CEGAR with the same bound.
+    val bounds = listOf(-1, 3, 10)
+    val mdds =
+      bounds.map { mdd(if (memsafety) 0 else if (it < 0) 300_000 else 150_000, "Z3:new", it) }
+    val cegars = bounds.map { mddCegar(0, "mathsat:latest", it) }
+    mdds.zipWithNext { a, b -> edges.add(Edge(a, b, verificationStuck)) }
+    if (memsafety) return STM(mdds.first(), edges)
+    cegars.zipWithNext { a, b -> edges.add(Edge(a, b, verificationStuck)) }
+    mdds.zip(cegars) { a, b -> edges.add(Edge(a, b, next)) }
 
-    val (cegar, cegarTwin) = step({ t, s -> mddCegar(t, s) }, 0, "mathsat:latest", "Z3")
-    edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
-    edges.add(Edge(cegar, cegarTwin, solverError))
-
-    val (cegar10, cegar10Twin) = step({ t, s -> mddCegar(t, s, 10) }, 0, "mathsat:latest", "Z3")
-    edges.add(Edge(unroll10, cegar10, next))
-    edges.add(Edge(cegar10, cegar10Twin, solverError))
-
-    return STM(start, edges)
+    return STM(mdds.first(), edges)
   }
 
   logger.benchmark("Using portfolio: SYMBOLIC\n")
