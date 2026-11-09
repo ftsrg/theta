@@ -113,8 +113,11 @@ fun runDssNetworksSequentially(
   fun workerOf(queueId: String) =
     if (queueId == COORDINATOR_ID) coordinatorActor!! else workers.getValue(queueId)
 
-  // A failed start ends the run (a cut restarts it), so the other blocks need not start
-  for (actor in blockActors.values) if (!actor.start()) break
+  // A failed start ends its network (a cut restarts the run), so its other blocks need not start.
+  // Every other network must start, or its unstarted blocks would look quiet, that is SAFE.
+  for (network in networks) {
+    for (id in network.blockIds) if (!blockActors.getValue(id).start()) break
+  }
 
   // Round-robin, so a self-feeding loop block can't starve the others
   fun hasWorkLeft() =
