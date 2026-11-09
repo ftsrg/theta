@@ -356,8 +356,16 @@ class CLibraryFunctionsPass(
                   routine.getParams().map { (p, _) ->
                     Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type).also(builder::addVar).ref
                   }
-                val run = XcfaLocation("${it.source.name}_once_run_${uniqueCounter++}")
-                val ran = XcfaLocation("${it.source.name}_once_ran_${uniqueCounter++}")
+                val run =
+                  XcfaLocation(
+                    "${it.source.name}_once_run_${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                val ran =
+                  XcfaLocation(
+                    "${it.source.name}_once_ran_${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
                 val stateIs = { v: Int -> StmtLabel(AssumeStmt.of(Eq(state.ref, Int(v)))) }
                 val stateTo = { v: Int -> AssignStmtLabel(state, Int(v), metadata) }
                 builder.addEdge(
