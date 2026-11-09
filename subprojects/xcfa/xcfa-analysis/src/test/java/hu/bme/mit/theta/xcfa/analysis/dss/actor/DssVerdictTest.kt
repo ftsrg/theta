@@ -16,6 +16,9 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -120,6 +123,28 @@ class DssVerdictTest {
         }
         .filterNot {
           it.get()[0] == "error inside a loop" && it.get()[2] == true && it.get()[1] in cyclic
+        }
+        .stream()
+
+    /** Every loop program, with the cyclic block graphs too, where plain DSS can diverge. */
+    @JvmStatic
+    fun conjectureCases(): Stream<Arguments> =
+      loops.keys
+        .flatMap { program ->
+          (cyclic + Decomposition.ACYCLIC).flatMap { d ->
+            listOf(true, false).map { safe -> Arguments.of(program, d, safe) }
+          }
+        }
+        .stream()
+
+    /** Every program on the decompositions that keep loops as cycles of blocks. */
+    @JvmStatic
+    fun wrongConjectureCases(): Stream<Arguments> =
+      programs.keys
+        .flatMap { program ->
+          listOf(Decomposition.LINEAR, Decomposition.MERGE).flatMap { d ->
+            listOf(true, false).map { safe -> Arguments.of(program, d, safe) }
+          }
         }
         .stream()
 
@@ -392,6 +417,67 @@ class DssVerdictTest {
   }
 
   private fun expected(safe: Boolean) = if (safe) DssResult.SAFE else DssResult.UNSAFE
+
+  /** [checkDecomposed] with a conjecture coordinator, which first proposes [initial]. */
+  private fun checkWithConjectures(
+    wholeProgram: XCFA,
+    blockGraph: BlockGraph,
+    gas: Int = 2,
+    initial: List<Pair<XcfaLocation, Expr<BoolType>>> = emptyList(),
+  ): DssResult {
+    blockGraph.checkConsistency()
+    val procedure = wholeProgram.procedures.single()
+    val roster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
+      runDssNetworksSequentially(
+          listOf(
+            DssNetwork(blockGraph) { block ->
+              PredicateBlockBehavior(wholeProgram, procedure, block, roster)
+            }
+          ),
+          coordinator = { connection ->
+            DssConjectureActor(
+              connection,
+              blockGraph,
+              SolverManager.resolveSolverFactory("Z3"),
+              gas,
+              initialConjectures = initial,
+            )
+          },
+        )
+        .result
+    }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("conjectureCases")
+  fun `conjectured invariants keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph))
+  }
+
+  /**
+   * Claims every block boundary unreachable: each reached one must be retracted, which leaves gas
+   * for the generalized conjectures that a cyclic block graph still needs.
+   */
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("wrongConjectureCases")
+  fun `a conjecture broken by a real path is retracted`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val boundaries = blockGraph.blocks.map { it.initialLocation }.distinct()
+    val initial = boundaries.map { it to True() }
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph, initial = initial))
+  }
 
   @ParameterizedTest(name = "{0}, {1}, safe={2}")
   @MethodSource("cases")

@@ -29,6 +29,9 @@ enum class DssMessageType {
   RESULT,
   STATISTIC,
   RESTRICTION,
+  CONJECTURE,
+  MAY_VIOLATION,
+  CONJECTURE_FAILED,
 }
 
 enum class DssResult {
@@ -53,6 +56,9 @@ sealed class DssMessage {
         is DssResultMessage -> DssMessageType.RESULT
         is DssStatisticsMessage -> DssMessageType.STATISTIC
         is DssRestrictionMessage -> DssMessageType.RESTRICTION
+        is DssConjectureMessage -> DssMessageType.CONJECTURE
+        is DssMayViolationMessage -> DssMessageType.MAY_VIOLATION
+        is DssConjectureFailedMessage -> DssMessageType.CONJECTURE_FAILED
       }
 }
 
@@ -96,6 +102,36 @@ data class DssRestrictionMessage(
   val restriction: Expr<BoolType>,
   val targetIds: Set<String> = emptySet(),
 ) : DssMessage()
+
+/**
+ * The conjectured invariant `!condition` at one location (`DssConjectureActor`), or, if
+ * [retracted], its withdrawal. [restrictedIds] start there and conjoin the invariant to their start
+ * states; [obligedIds] end there and must not reach [condition] at their exit.
+ */
+data class DssConjectureMessage(
+  override val senderId: String,
+  val conjecture: Int,
+  val condition: Expr<BoolType>,
+  val restrictedIds: Set<String> = emptySet(),
+  val obligedIds: Set<String> = emptySet(),
+  val maxHops: Int = 0,
+  val retracted: Boolean = false,
+) : DssMessage()
+
+/**
+ * The weakest precondition of reaching [conjecture]'s condition, routed like a violation condition
+ * but never a verdict: a root that reaches it refutes the conjecture. [hopsLeft] bounds the chain.
+ */
+data class DssMayViolationMessage(
+  override val senderId: String,
+  val conjecture: Int,
+  val condition: Expr<BoolType>,
+  val hopsLeft: Int,
+) : DssMessage()
+
+/** [conjecture]'s condition is reachable from the entry, or a block could not check it. */
+data class DssConjectureFailedMessage(override val senderId: String, val conjecture: Int) :
+  DssMessage()
 
 data class DssExceptionMessage(override val senderId: String, val error: Throwable) : DssMessage()
 

@@ -75,6 +75,12 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * With a positive [generalizationGas], a start state is first analyzed against a generalization of
  * the received conditions ([ViolationGeneralizer]). Only its SAFE result is used: refuting the
  * weaker target refutes the received conditions too. Its UNSAFE result is discarded.
+ *
+ * A conjecture (`DssConjectureMessage`) is assumed at the start like a restriction, but can be
+ * retracted. Its condition at the exit, and the may violations received for it, are searched for in
+ * a separate pass from the same start states; a reached one is sent on as the weakest precondition
+ * over all paths (`DssMayViolationMessage`), and from the root it refutes the conjecture. That pass
+ * never touches the violation conditions, records or invariants.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
@@ -158,9 +164,25 @@ class PredicateBlockBehavior(
   private val inputVersions = LinkedHashMap<String, Int>()
   private val restrictedInputs = HashSet<String>()
 
+  /** The invariants of the live conjectures this block's start states assume, by id. */
+  private val assumed = LinkedHashMap<Int, Expr<BoolType>>()
+
+  private class Obligation(val condition: Expr<BoolType>, val maxHops: Int)
+
+  /** The conditions of the live conjectures this block must not reach at its exit. */
+  private val obligations = LinkedHashMap<Int, Obligation>()
+
+  /** The latest may violation of each sender, with its hops left, per conjecture. */
+  private val mayViolations = LinkedHashMap<Int, LinkedHashMap<String, Pair<Expr<BoolType>, Int>>>()
+  private val retractedConjectures = HashSet<Int>()
+
   /** Exit states under a restriction cover the error paths only: no program invariant. */
   private val restricted: Boolean
-    get() = restriction != True() || restrictedInputs.isNotEmpty()
+    get() = restriction != True() || assumed.isNotEmpty() || restrictedInputs.isNotEmpty()
+
+  private fun startRestriction(): Expr<BoolType> = And(listOf(restriction) + assumed.values)
+
+  private fun canAnalyze() = block.isRoot || preconditions.isNotEmpty()
 
   override fun initialMessages(): Collection<DssMessage> = runInitialAnalysis()
 
@@ -175,9 +197,42 @@ class PredicateBlockBehavior(
   override fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> {
     if (operators.isLeq(restriction, message.restriction)) return emptyList()
     restriction = And(restriction, message.restriction)
-    val canAnalyze = block.isRoot || preconditions.isNotEmpty()
-    return if (violationConditions.isNotEmpty() && canAnalyze) analyzePrecondition()
+    return if (violationConditions.isNotEmpty() && canAnalyze()) analyzePrecondition()
     else emptyList()
+  }
+
+  /**
+   * An assumed conjecture changes the postconditions too: the blocks ending at its location check
+   * it against them. A retraction drops everything kept for the conjecture.
+   */
+  override fun onConjecture(message: DssConjectureMessage): Collection<DssMessage> {
+    val id = message.conjecture
+    if (message.retracted) {
+      if (!retractedConjectures.add(id)) return emptyList()
+      obligations.remove(id)
+      mayViolations.remove(id)
+      val wasAssumed = assumed.remove(id) != null
+      return if (wasAssumed && canAnalyze()) analyzePrecondition() else emptyList()
+    }
+    if (id in retractedConjectures) return emptyList()
+    statistics.conjectures++
+    val assumes = block.id in message.restrictedIds
+    if (assumes) assumed[id] = Not(message.condition)
+    if (block.id in message.obligedIds) {
+      obligations[id] = Obligation(message.condition, message.maxHops)
+    }
+    return if (assumes && canAnalyze()) analyzePrecondition() else analyzeMayViolations(listOf(id))
+  }
+
+  /** Like [storeViolationCondition]: the message replaces its sender's earlier one. */
+  override fun onMayViolation(message: DssMayViolationMessage): Collection<DssMessage> {
+    val id = message.conjecture
+    if (id in retractedConjectures) return emptyList()
+    val stored = mayViolations.getOrPut(id) { LinkedHashMap() }
+    val old = stored.remove(message.senderId)?.first
+    if (operators.isUnsat(message.condition)) return emptyList()
+    stored[message.senderId] = message.condition to message.hopsLeft
+    return if (message.condition == old) emptyList() else analyzeMayViolations(listOf(id))
   }
 
   private fun top() = Summary(True(), startPrecision)
@@ -248,7 +303,8 @@ class PredicateBlockBehavior(
       violationConditions.flatMap { (sender, conditions) -> conditions.map { sender to it } }
     val result = analyzeViolationCondition(received)
     return reportViolationCondition(result.violationCondition) +
-      reportPostconditions(result.summaries)
+      reportPostconditions(result.summaries) +
+      analyzeMayViolations(obligations.keys + mayViolations.keys)
   }
 
   fun analyzeViolationCondition(sender: String): Collection<DssMessage> {
@@ -269,32 +325,14 @@ class PredicateBlockBehavior(
     received: List<Pair<String, Expr<BoolType>>>
   ): AnalysisResult {
     val violations = received.map { it.second }
-    val startStates = linkedSetOf<Summary>()
-    startStates.addAll(preconditions.values.flatten())
-    if (block.isRoot) startStates.add(top())
-    // Non-top first: a top summary would otherwise deduplicate the others away
-    val orderedStartStates = startStates.sortedBy { it.isTop }.map { it to false }.toMutableList()
-    val speculative =
-      !block.isRoot &&
-        !preconditions.keys.containsAll(block.predecessorIds) &&
-        startStates.none { it.isTop }
-    if (speculative) orderedStartStates += top() to true
     val violationCondition = if (violations.isEmpty()) null else Or(violations)
     var generalization = generalizationOf(received)
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
     val pathViolations = mutableListOf<Expr<BoolType>>()
-    var analyzedTrivial = false
-    for ((start, discardSummary) in orderedStartStates) {
-      if (start.isTop && analyzedTrivial) continue
-      analyzedTrivial = analyzedTrivial || start.isTop
-      val precision =
-        if (resetPrecisionForEveryRun || start.isTop) startPrecision
-        else combinePrecisionIfPossible() ?: start.precision
-      // Without the start state's atoms, the block-end abstraction can forget the precondition
-      val startAtoms = listOf(start.state, restriction).collectPreds()
-      val startState = start.copy(precision = precision + startAtoms)
+    for ((start, discardSummary) in startStates()) {
+      val startState = prepared(start)
 
       // A speculative run looks for violations only, which a probe cannot find
       val probe = generalization?.takeUnless { discardSummary }
@@ -387,6 +425,86 @@ class PredicateBlockBehavior(
     return AnalysisResult(summaries, newViolationCondition)
   }
 
+  /**
+   * Every stored precondition (top for the root), paired with whether its summary is dropped: the
+   * speculative run from top while a predecessor has not sent anything. Top comes at most once.
+   */
+  private fun startStates(): List<Pair<Summary, Boolean>> {
+    val startStates = linkedSetOf<Summary>()
+    startStates.addAll(preconditions.values.flatten())
+    if (block.isRoot) startStates.add(top())
+    // Non-top first: a top summary would otherwise deduplicate the others away
+    val ordered = startStates.sortedBy { it.isTop }.map { it to false }.toMutableList()
+    val speculative =
+      !block.isRoot &&
+        !preconditions.keys.containsAll(block.predecessorIds) &&
+        startStates.none { it.isTop }
+    if (speculative) ordered += top() to true
+    val firstTop = ordered.indexOfFirst { it.first.isTop }
+    return ordered.filterIndexed { index, (start, _) -> !start.isTop || index == firstTop }
+  }
+
+  private fun prepared(start: Summary): Summary {
+    val precision =
+      if (resetPrecisionForEveryRun || start.isTop) startPrecision
+      else combinePrecisionIfPossible() ?: start.precision
+    // Without the start state's atoms, the block-end abstraction can forget the precondition
+    val startAtoms = listOf(start.state, startRestriction()).collectPreds()
+    return start.copy(precision = precision + startAtoms)
+  }
+
+  /**
+   * The may pass of the conjectures [ids]: their conditions and may violations as the only target.
+   * The sent condition does not depend on the start state, so one reaching start state is enough.
+   * Whatever keeps this block from checking a conjecture refutes it, as an unchecked one is
+   * unsound.
+   */
+  private fun analyzeMayViolations(ids: Collection<Int>): List<DssMessage> =
+    ids.distinct().mapNotNull { id ->
+      val parts =
+        listOfNotNull(obligations[id]?.let { it.condition to it.maxHops }) +
+          mayViolations[id]?.values.orEmpty()
+      if (parts.isEmpty()) null
+      else analyzeMayViolation(id, Or(parts.map { it.first }), parts.minOf { it.second })
+    }
+
+  private fun analyzeMayViolation(id: Int, target: Expr<BoolType>, hopsLeft: Int): DssMessage? {
+    statistics.mayAnalyses++
+    // Per-path conditions would have to search the other paths too, as violation conditions do
+    if (usesPathViolations) return conjectureFailed(id)
+    val condition =
+      try {
+        val reached =
+          startStates().any { (start, _) ->
+            val startState = prepared(start)
+            val withTarget =
+              startState.copy(precision = startState.precision + listOf(target).collectPreds())
+            run(
+              withTarget,
+              target,
+              keepSpecificationTargets = false,
+              recordInvariants = false,
+              probe = true,
+            ) is
+              RunResult.Unsafe
+          }
+        if (!reached) return null
+        if (block.isRoot || hopsLeft <= 0) return conjectureFailed(id)
+        computeViolationCondition(block, mapOf(block.finalLocation to target))
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        return conjectureFailed(id)
+      }
+    statistics.mayViolationsSent++
+    return DssMayViolationMessage(block.id, id, condition, hopsLeft - 1)
+  }
+
+  private fun conjectureFailed(id: Int): DssMessage {
+    statistics.conjectureFailures++
+    return DssConjectureFailedMessage(block.id, id)
+  }
+
   private fun targetsOfOwnViolations(): Map<XcfaLocation, Expr<BoolType>> =
     ownTargets.associateWith { True() }
 
@@ -407,10 +525,7 @@ class PredicateBlockBehavior(
       extractBlockXcfa(
         sourceProcedure,
         block,
-        precondition =
-          (if (restriction == True()) start.state else And(start.state, restriction)).takeUnless {
-            it == True()
-          },
+        precondition = And(start.state, startRestriction()).takeUnless { it == True() },
         violationCondition = violationCondition,
         keepSpecificationTargets = keepSpecificationTargets,
       )
@@ -432,8 +547,9 @@ class PredicateBlockBehavior(
       )
     }
     val proof = result.asSafe().proof
-    // Witness invariants need a start state that covers the block's entries
-    if (recordInvariants && restriction == True()) {
+    // Witness invariants need a start state that covers the block's entries; a retracted
+    // conjecture's would outlive it here
+    if (recordInvariants && startRestriction() == True()) {
       // The entry's states are the preconditions, which the predecessors' exits already cover;
       // a bounded checker's proof may say nothing about them, which would hide the others
       val entry = extraction.entryLocation

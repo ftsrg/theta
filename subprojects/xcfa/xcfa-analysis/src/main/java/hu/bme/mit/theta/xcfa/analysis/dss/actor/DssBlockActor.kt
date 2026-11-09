@@ -34,6 +34,9 @@ class DssBlockActor(
       DssMessageType.VIOLATION_CONDITION ->
         behavior.onViolationCondition(message as DssViolationConditionMessage)
       DssMessageType.RESTRICTION -> behavior.onRestriction(message as DssRestrictionMessage)
+      DssMessageType.CONJECTURE -> behavior.onConjecture(message as DssConjectureMessage)
+      DssMessageType.MAY_VIOLATION -> behavior.onMayViolation(message as DssMayViolationMessage)
+      DssMessageType.CONJECTURE_FAILED -> emptyList()
       DssMessageType.EXCEPTION,
       DssMessageType.RESULT -> {
         shutdown = true
@@ -68,7 +71,16 @@ class DssBlockActor(
           broadcaster.broadcastToAll(message)
           shutdown = true
         }
-        DssMessageType.RESTRICTION -> error("Block ${block.id} cannot send restrictions: $message")
+        DssMessageType.MAY_VIOLATION -> {
+          // Never a verdict: a root reaching a conjecture's condition reports CONJECTURE_FAILED
+          check(!block.isRoot) { "Root ${block.id} cannot send may violations: $message" }
+          broadcaster.broadcastToObserver(message)
+          broadcaster.broadcastToIds(message, block.predecessorIds)
+        }
+        DssMessageType.CONJECTURE_FAILED -> broadcaster.broadcastToObserver(message)
+        DssMessageType.RESTRICTION,
+        DssMessageType.CONJECTURE ->
+          error("Block ${block.id} cannot send ${message.type} messages: $message")
       }
     }
   }

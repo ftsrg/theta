@@ -175,6 +175,19 @@ data class DssConfig(
         "shape is no longer generalized",
   )
   var generalizationGas: Int = 2,
+  @Parameter(
+    names = ["--dss-conjecture-invariants"],
+    description =
+      "Conjecture invariants from violation conditions that keep drifting at a block boundary; " +
+        "the blocks check them, and a broken one is retracted (FORWARD or BACKWARD, not PROCESS)",
+  )
+  var conjectureInvariants: Boolean = false,
+  @Parameter(
+    names = ["--dss-conjecture-gas"],
+    description =
+      "--dss-conjecture-invariants: retracted conjectures per location before it gets no more",
+  )
+  var conjectureGas: Int = 2,
   @Parameter(names = ["--dss-worker-port"], hidden = true) var workerPort: Int = 0,
   @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
   @Parameter(names = ["--dss-worker-blocks"], hidden = true)

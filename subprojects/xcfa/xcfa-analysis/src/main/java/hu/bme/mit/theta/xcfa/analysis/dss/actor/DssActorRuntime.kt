@@ -124,10 +124,15 @@ fun runDssNetworks(
   val blockThreads = blockActors.map { actors -> actors.map { daemon(it, it.id) } }
   val visualizerThread = visualizer?.let { daemon(it, it.id) }
   val coordinatorThread = coordinatorActor?.let { daemon(it, it.id) }
+  // A single network's coordinator takes part in its quiescence (DssConjectureActor)
+  require(!separate || coordinatorActor !is DssConjectureActor) {
+    "Conjectures need a single network: each network's quiescence leaves the coordinator out"
+  }
+  val quiescenceCoordinator = listOfNotNull(coordinatorThread.takeIf { !separate })
   val monitors =
     networks.indices.map { index ->
       DssThreadMonitor(
-          blockThreads[index],
+          blockThreads[index] + quiescenceCoordinator,
           broadcaster,
           active,
           monitorId(networks, index),
@@ -186,5 +191,13 @@ private class CappedBlockBehavior(
 
   override fun onRestriction(message: DssRestrictionMessage) = withPermit {
     behavior.onRestriction(message)
+  }
+
+  override fun onConjecture(message: DssConjectureMessage) = withPermit {
+    behavior.onConjecture(message)
+  }
+
+  override fun onMayViolation(message: DssMayViolationMessage) = withPermit {
+    behavior.onMayViolation(message)
   }
 }

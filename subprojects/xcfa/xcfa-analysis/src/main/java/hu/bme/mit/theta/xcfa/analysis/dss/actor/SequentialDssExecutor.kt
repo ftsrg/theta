@@ -102,6 +102,9 @@ fun runDssNetworksSequentially(
     }
   val coordinatorActor =
     coordinator?.invoke(DssConnection(inboxes.getValue(COORDINATOR_ID), broadcaster, active))
+  require(!separate || coordinatorActor !is DssConjectureActor) {
+    "Conjectures need a single network: each network's quiescence leaves the coordinator out"
+  }
   val workers: Map<String, DssWorker> =
     blockActors +
       (SEQUENTIAL_OBSERVER_ID to observer) +

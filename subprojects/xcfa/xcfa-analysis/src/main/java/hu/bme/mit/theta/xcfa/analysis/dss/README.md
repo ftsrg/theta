@@ -45,6 +45,8 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
 | `--dss-generalize-violations` | off | Before each analysis, try to refute a generalization of the received violation conditions (see [Generalized violation conditions](#generalized-violation-conditions)) |
 | `--dss-generalization-gas` | `2` | Failed probes per sender and condition shape before that shape is no longer generalized |
+| `--dss-conjecture-invariants` | off | Conjecture invariants where violation conditions keep drifting at a block boundary; the blocks check them, and a broken one is retracted (see [Conjectured invariants](#conjectured-invariants)). `FORWARD` or `BACKWARD`, not with `PROCESS` |
+| `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.
@@ -170,6 +172,30 @@ costs its shape gas.
 This helps where the refuting block is not on the cycle that produces the conditions. Blocks on
 the cycle start from their own summaries, which can be too weak to refute any generalization.
 
+## Conjectured invariants
+
+With `--dss-conjecture-invariants`, `DssConjectureActor` handles the cycle case. It clusters the
+violation conditions arriving at each block boundary L, as `ViolationGeneralizer` does, and for a
+generalization G it conjectures the invariant `!G` at L:
+
+* The blocks starting at L conjoin `!G` to their start states, so their postconditions get
+  stronger, and so do those of the blocks around the cycle.
+* The blocks ending at L must not reach G at their exit. A block that does sends the weakest
+  precondition of reaching it, over all its paths, to its predecessors (`DssMayViolationMessage`).
+  They search for it in a separate pass from the same start states and pass it on in the same way.
+* When the root reaches such a condition, a real path breaks `!G`, and the conjecture is retracted:
+  every block drops it, and the blocks that assumed it analyze again. A chain longer than twice
+  the number of blocks retracts it too, as does a block that cannot check it.
+
+Nothing of this becomes a violation condition, a witness record or a verdict, so UNSAFE stays
+sound. SAFE is still quiescence, now with conjectures live. Suppose a path from the entry breaks one,
+and take the first block boundary where it leaves a conjectured invariant. Up to there it is a path
+of the restricted program, so the stored preconditions cover it: the block ending there reaches G,
+and every block before it on the path reaches the condition sent back, up to the root, which
+retracts the conjecture. This needs the coordinator in the quiescence check, which only a single
+network gives it (not `BIDIRECTIONAL`), and in-process blocks (not `PROCESS`). A location is
+never conjectured where a block needs per-path conditions, which the may violations lack.
+
 ## Known limitations
 
 * Error-location reachability only: other properties are supported when a pass rewrites them to it
@@ -181,11 +207,11 @@ the cycle start from their own summaries, which can be too weak to refute any ge
   records, an UNSAFE verdict has an empty trace.
 * `BACKWARD` and `BIDIRECTIONAL` reject a program whose labels have no exact reversal, also where
   `FORWARD` would not compute a violation condition over them.
-* A SAFE verdict proven by a bidirectional cut, or by a network under restrictions, carries few or
-  no witness invariants.
+* A SAFE verdict proven by a bidirectional cut, or by a network under restrictions or live
+  conjectures, carries few or no witness invariants.
 * `BACKWARD` can diverge on a safe program whose reversed loop stays a cycle of the block graph:
   the loop's postcondition, first computed from top, need not be the least fixpoint, so it admits
-  every unrolling of the backward violation conditions. The tests see it with `LINEAR` and `MERGE`;
-  `BIDIRECTIONAL` may still finish by a cut.
+  every unrolling of the backward violation conditions. The tests see it with `LINEAR` and `MERGE`,
+  also with `--dss-conjecture-invariants`; `BIDIRECTIONAL` may still finish by a cut.
 * `BIDIRECTIONAL` takes `CEGAR` block checkers only, except for a `FINISHER`'s finisher (see
   [Directions](#directions)).

@@ -20,7 +20,13 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - Sent violation conditions are exact; a per-path condition may under-approximate, never
   over-approximate. A `ViolationGeneralizer` generalization over-approximates, so it is only a
   probe target: a probe's UNSAFE result is discarded, and a generalization never reaches a
-  message, a witness record or a path condition.
+  message, a witness record or a path condition. A conjecture's condition and its may violations
+  (`DssMayViolationMessage`) never become a violation condition, a record or a verdict either; a
+  root that reaches one sends `CONJECTURE_FAILED`.
+- A behavior must not ignore `CONJECTURE` or `MAY_VIOLATION` (the defaults throw): an assumed
+  conjecture is sound only because every block ending at its location checks it, and every block
+  before those passes the may violations on. A block that cannot (per-path conditions, a failed
+  run) refutes the conjecture instead.
 - Every violation condition goes through `DssAuxVars.canonicalize`: repeated conditions are
   recognized by structural equality.
 - An undecided query of `DssPredicateOperators` throws `DssUndecidedQueryException`, never a
@@ -28,7 +34,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - Checker-selection strategies index factories by position and must be thread-safe.
 - Routing belongs to `DssBlockActor`, analysis to `DssBlockBehavior`; behaviors return messages,
   they never send them.
-- SAFE is quiescence: every message must be processed inside `DssWorker`'s `active` marker.
+- SAFE is quiescence: every message must be processed inside `DssWorker`'s `active` marker. With
+  conjectures the coordinator is part of it, so they need a single network (the concurrent
+  monitor then waits for the coordinator's thread too).
 - Every block answers `RESULT`/`EXCEPTION` with exactly one `STATISTIC`.
 - A postcondition message replaces everything stored from its sender, and every analysis starts
   from all stored preconditions (plus top while a predecessor has not sent): analyzing only the new
@@ -47,8 +55,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - `DssMeetingActor` intersects summaries of different runs, so they may only contain program
   variables, temporaries and `DssAuxVars`; this is why `BIDIRECTIONAL` takes CEGAR checkers only,
   except for a bounded finisher, whose blocks are `DssMeetingSide.uncertified`.
-- A restriction only ever strengthens a block's start states and never enters a violation
-  condition; a block under one, or fed by one, reports no witness invariants.
+- A `DssRestrictionMessage` only ever strengthens a block's start states, while a conjecture's
+  invariant is dropped again when it is retracted; neither enters a violation condition. A block
+  under either, or fed by one, reports no witness invariants, and records them only without both.
 - Networks of one run need unique block ids (the backward network uses `R.`). A failure reaches
   only its own network (`DssConnection.failureScope`), and a network with a shut-down block is
   never SAFE.

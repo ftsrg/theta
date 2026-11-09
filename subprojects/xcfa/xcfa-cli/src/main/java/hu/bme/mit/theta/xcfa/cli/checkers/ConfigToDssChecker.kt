@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssConjectureActor
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssCoordinatorFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssExprCodec
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
@@ -198,6 +199,15 @@ fun getDssChecker(
       "cannot be certified"
   }
   val uncertifiedFinisher = finisherSelection && dssConfig.checkerBackends.last() != Backend.CEGAR
+  // SAFE under a conjecture needs its coordinator in the quiescence check, and in-process blocks
+  require(
+    !dssConfig.conjectureInvariants ||
+      (direction != DssDirection.BIDIRECTIONAL && dssConfig.executor != DssExecutor.PROCESS)
+  ) {
+    "--dss-conjecture-invariants needs --dss-direction FORWARD or BACKWARD and a SEQUENTIAL or " +
+      "CONCURRENT --dss-executor"
+  }
+  require(dssConfig.conjectureGas > 0) { "--dss-conjecture-gas must be positive" }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
@@ -291,9 +301,21 @@ fun getDssChecker(
   }
 
   var meeting: DssMeetingActor? = null
+  var conjectures: DssConjectureActor? = null
   val coordinator: DssCoordinatorFactory? =
-    if (!bidirectional) null
-    else
+    if (!bidirectional) {
+      if (!dssConfig.conjectureInvariants) null
+      else
+        { connection ->
+          DssConjectureActor(
+              connection,
+              networks.single().blockGraph,
+              dssSolverFactory,
+              dssConfig.conjectureGas,
+            )
+            .also { conjectures = it }
+        }
+    } else
       { connection ->
         DssMeetingActor(
             connection,
@@ -341,6 +363,14 @@ fun getDssChecker(
       // Block checkers register counterexample monitors globally; later CEGAR runs would see them
       MonitorCheckpoint.reset()
       logBlockStatistics(behaviors.values, logger)
+      conjectures?.let {
+        logger.write(
+          Logger.Level.INFO,
+          "DSS conjectures: proposed=%d retracted=%d\n",
+          it.proposed,
+          it.retracted,
+        )
+      }
     }
 
   val witnesses =

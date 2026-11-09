@@ -64,6 +64,11 @@ class XcfaCliDssTest {
           listOf("--dss-reset-precision"),
           listOf("--dss-reuse-block-precision"),
           listOf("--dss-generalize-violations", "--dss-generalization-gas", "1"),
+          listOf("--dss-conjecture-invariants"),
+          listOf("--dss-conjecture-invariants", "--dss-conjecture-gas", "1"),
+          listOf("--dss-conjecture-invariants", "--dss-decomposition", "LINEAR"),
+          listOf("--dss-conjecture-invariants", "--dss-executor", "CONCURRENT"),
+          listOf("--dss-conjecture-invariants", "--dss-direction", "BACKWARD"),
           listOf("--dss-global-predicate-pool", "false"),
           listOf("--dss-cegar-domain", "EXPL"),
           listOf("--dss-cegar-domain", "EXPL", "--dss-reuse-block-precision"),
@@ -173,6 +178,14 @@ class XcfaCliDssTest {
         "KIND,CEGAR",
       )
     assertTrue(thrown != null && "cannot be certified" in output) { output }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["--dss-direction=BIDIRECTIONAL", "--dss-executor=PROCESS"])
+  fun `conjectures outside an in-process single network are rejected`(option: String) {
+    val (name, value) = option.split("=")
+    val (output, thrown) = runDss("safe", "--dss-conjecture-invariants", name, value)
+    assertTrue(thrown != null && "--dss-conjecture-invariants needs" in output) { output }
   }
 
   @Test
