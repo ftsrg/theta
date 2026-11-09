@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.IterationStrategy.GSAT
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -36,6 +37,16 @@ fun symbolicPortfolio(
 ): STM {
 
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+
+  val memsafety = portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
+
+  // An unknown MDD verdict moves on to MDD_CEGAR instead of ending the portfolio.
+  val mddChecker = { config: XcfaConfig<*, *> ->
+    checker(config).also {
+      if (!memsafety && it is SafetyResult<*, *> && !it.isSafe && !it.isUnsafe)
+        throw ErrorCodeException(ExitCodes.GENERIC_ERROR.code)
+    }
+  }
 
   val baseMddConfig =
     (baseMddConfig(portfolioConfig) as XcfaConfig<SpecFrontendConfig, MddConfig>).let {
@@ -62,7 +73,7 @@ fun symbolicPortfolio(
                 ),
             ),
         ),
-        checker,
+        mddChecker,
       )
 
     fun mddCegar(timeout: Long, solver: String, unroll: Int = -1) =
@@ -86,8 +97,6 @@ fun symbolicPortfolio(
         checker,
       )
 
-    val memsafety =
-      portfolioConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
     val next = if (inProcess) anythingButServerError else anyError
 
     // A 2 x n matrix over the loop unroll bound: a stuck step (safe on cut loops) moves on to the
