@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import java.io.File
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
@@ -43,10 +45,13 @@ class FixtureSuiteTest {
 
   private companion object {
     /** Frontend-only fixtures are parsing, not verification. */
-    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 90L)
+    val PARSE_TIMEOUT_SECONDS = seconds("theta.fixture.parseTimeout", 60L)
 
-    /** Verdict fixtures run the portfolio; keep them small enough to stay under this. */
-    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 180L)
+    /** Verdict fixtures run the portfolio; a fixture that needs longer is too large to keep. */
+    val VERDICT_TIMEOUT_SECONDS = seconds("theta.fixture.verdictTimeout", 60L)
+
+    /** Each row is a separate Theta process; the fixtures are small enough to run a few at once. */
+    val PARALLELISM = System.getProperty("theta.fixture.jobs")?.toIntOrNull() ?: 4
 
     private fun seconds(property: String, fallback: Long) =
       System.getProperty(property)?.toLongOrNull() ?: fallback
@@ -105,19 +110,32 @@ class FixtureSuiteTest {
     if (rows.isEmpty())
       return listOf(DynamicTest.dynamicTest("fixtures") { fail("no fixture rows in $tsv") })
 
-    return rows.map { row ->
-      val (fixture, arithmetic, architecture, expect) = row
-      val feature = row.getOrElse(4) { "" }
-      val memoryModel = row.getOrElse(5) { "" }
-      val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
-      DynamicTest.dynamicTest("fixture $name") {
-        val input = File(home, "fixtures/$fixture")
-        check(input.isFile) { "fixture file not found: $input" }
-        val (actual, diagnosis) =
-          run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
-        if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
+    // All rows start now; each test waits for its own row, so the report stays one test per row.
+    val pool = Executors.newFixedThreadPool(PARALLELISM)
+    val tests =
+      rows.map { row ->
+        val (fixture, arithmetic, architecture, expect) = row
+        val feature = row.getOrElse(4) { "" }
+        val memoryModel = row.getOrElse(5) { "" }
+        val name = if (memoryModel.isEmpty()) fixture else "$fixture ($memoryModel)"
+        val outcome =
+          pool.submit<Pair<String, String>> {
+            val input = File(home, "fixtures/$fixture")
+            check(input.isFile) { "fixture file not found: $input" }
+            run(theta, input, arithmetic, architecture, memoryModel, expect, properties)
+          }
+        DynamicTest.dynamicTest("fixture $name") {
+          val (actual, diagnosis) =
+            try {
+              outcome.get()
+            } catch (e: ExecutionException) {
+              throw e.cause ?: e
+            }
+          if (actual != expect) fail("expected=$expect actual=$actual -- $feature\n$diagnosis")
+        }
       }
-    }
+    pool.shutdown()
+    return tests
   }
 
   /**
@@ -165,7 +183,7 @@ class FixtureSuiteTest {
           output.contains("ParsingResult Success") -> "PARSE-OK"
           else -> "OTHER"
         }
-      return actual to diagnosis
+      return (if (actual == verdict) expect else actual) to diagnosis
     }
     val actual =
       when {

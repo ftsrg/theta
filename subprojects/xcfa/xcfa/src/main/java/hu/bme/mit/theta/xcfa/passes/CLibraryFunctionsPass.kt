@@ -113,6 +113,7 @@ class CLibraryFunctionsPass(
       "pthread_join",
       "pthread_detach",
       "pthread_create",
+      "pthread_once",
       "pthread_mutex_lock",
       "pthread_mutex_unlock",
       "pthread_mutex_trylock",
@@ -333,6 +334,55 @@ class CLibraryFunctionsPass(
                     AssignStmtLabel(ret, cast(index.ref, ret.type)),
                   )
                 builder.addEdge(XcfaEdge(loc, target, SequenceLabel(exit), metadata))
+              }
+
+              // 0: not run, 1: running, 2: done. The first caller runs the routine; the others wait
+              // until it has returned.
+              "pthread_once" -> {
+                val control = invokeLabel.params[1]
+                check(control is Reference<*, *> && control.expr is RefExpr<*>) {
+                  "Unsupported pthread_once control: $control"
+                }
+                val state = onceState((control.expr as RefExpr<*>).decl as VarDecl<*>, builder)
+                val routineName = invokeLabel.getParam(2).name
+                val routine =
+                  checkNotNull(builder.parent.getProcedures().find { it.name == routineName }) {
+                    "Unsupported pthread_once init routine `$routineName`"
+                  }
+                check(routine.getParams().all { it.second == ParamDirection.OUT }) {
+                  "pthread_once init routine `$routineName` takes parameters"
+                }
+                val routineRet =
+                  routine.getParams().map { (p, _) ->
+                    Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type)
+                      .also(builder::addVar)
+                      .ref
+                  }
+                val run =
+                  XcfaLocation(
+                    "${it.source.name}_once_run_${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                val ran =
+                  XcfaLocation(
+                    "${it.source.name}_once_ran_${uniqueCounter++}",
+                    metadata = it.source.metadata,
+                  )
+                val stateIs = { v: Int -> StmtLabel(AssumeStmt.of(Eq(state.ref, Int(v)))) }
+                val stateTo = { v: Int -> AssignStmtLabel(state, Int(v), metadata) }
+                builder.addEdge(
+                  XcfaEdge(it.source, run, SequenceLabel(listOf(stateIs(0), stateTo(1))), metadata)
+                )
+                builder.addEdge(
+                  XcfaEdge(
+                    run,
+                    ran,
+                    SequenceLabel(listOf(InvokeLabel(routineName, routineRet, metadata))),
+                    metadata,
+                  )
+                )
+                addSeqFrom(ran, listOf(stateTo(2), assignRet(0)))
+                addSeq(listOf(stateIs(2), assignRet(0)))
               }
 
               "pthread_join" -> {
@@ -1009,4 +1059,35 @@ class CLibraryFunctionsPass(
       arrayElementHandles.getOrPut(base to offset) { Decls.Var("${base.name}_$offset", base.type) }
 
   private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
+
+  /**
+   * The state of a `pthread_once_t`, kept in an atomic global so it is never raced on. The initial
+   * value of a global is not part of every encoding, so the entry procedure assigns it.
+   */
+  @Suppress("UNCHECKED_CAST")
+  private fun onceState(control: VarDecl<*>, builder: XcfaProcedureBuilder): VarDecl<IntType> {
+    val name = "__theta_once_${control.name}"
+    // Every procedure has its own instance of this pass, so the state is found in the model.
+    builder.parent
+      .getVars()
+      .find { it.wrappedVar.name == name }
+      ?.let {
+        return it.wrappedVar as VarDecl<IntType>
+      }
+    return Decls.Var(name, Int()).also { state ->
+      builder.parent.addVar(XcfaGlobalVar(state, Int(0), atomic = true))
+      builder.parent.getInitProcedures().forEach { (proc, _) ->
+        val initEdge = proc.initLoc.outgoingEdges.single()
+        proc.removeEdge(initEdge)
+        proc.addEdge(
+          initEdge.withLabel(
+            SequenceLabel(
+              initEdge.getFlatLabels() + AssignStmtLabel(state, Int(0)),
+              initEdge.label.metadata,
+            )
+          )
+        )
+      }
+    }
+  }
 }

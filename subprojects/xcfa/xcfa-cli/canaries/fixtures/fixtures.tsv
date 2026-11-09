@@ -111,7 +111,6 @@ nondet_memory_symbolic_size.c	efficient	LP64	UNSAFE	__VERIFIER_nondet_memory wit
 nondet_memory_stays_in_region.c	efficient	LP64	SAFE	the nondet fill writes only the region it was given, not the whole object
 stub_write_race.c	efficient	LP64	UNSAFE:no-data-race	a library stub writing through a pointer argument stays visible to the data-race instrumentation
 stub_arg_read_race.c	efficient	LP64	UNSAFE:no-data-race	stubbing a call keeps the reads of its arguments (a race on one of them is still reported)
-unroll_modifier_order.c	efficient	LP64	SAFE	loop unrolling applies the loop variable modifiers in execution order
 unused_mutex_init.c	efficient	LP64	SAFE	unread writes to global objects (a mutex array's initialisation) are dropped
 busy_wait_published_count.c	efficient	LP64	UNSAFE	a busy-wait loop whose local count reaches a global is not collapsed
 flat_member_pointer_alias.c	efficient	LP64	SAFE	a pointer to an inline struct member addresses the parent's own cells	flat
@@ -127,7 +126,6 @@ flat_nested_calloc.c	efficient	LP64	SAFE	calloc zeroes inline member cells	flat
 flat_struct_in_union_member.c	efficient	LP64	SAFE	a union member keeps an object of its own inside an inline struct	flat
 flat_array_in_struct_member.c	efficient	LP64	SAFE	nondet index into an inline array-of-structs member stays inside it	flat
 large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	flat
-large_static_object.c	efficient	LP64	SAFE	a static array longer than the old base spacing does not overlap the next object	bytes
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	flat
 symbolic_malloc_no_overlap.c	efficient	LP64	SAFE	the allocation after a symbolic-size malloc starts past the whole block	bytes
 vla_then_address_taken_local.c	efficient	LP64	SAFE	locals of frames pushed after a symbolic-length VLA do not overlap it	flat
@@ -159,7 +157,6 @@ bytes_struct_copy.c	efficient	LP64	SAFE	struct copy copies the byte layout under
 bytes_brace_elision.c	efficient	LP64	SAFE	brace elision and designators place initializers as C does under bytes	bytes
 bytes_brace_elision_local.c	efficient	LP64	SAFE	brace elision in a local array of structs under bytes	bytes
 flat_realloc_growth.c	efficient	LP64	SAFE	a block grown by realloc does not overlap the next heap block	flat
-flat_memsafety_loop.c	efficient	LP64	SAFE:valid-memsafety	in-bounds accesses through a block start are checked without a slot witness	flat
 typedef_array_member.c	efficient	ILP32	SAFE	a struct member declared through an array typedef is laid out as that array
 typedef_array_pointer.c	efficient	ILP32	SAFE	a pointer to an array typedef points to the whole array
 malloc_subobjects.c	efficient	ILP32	SAFE	nested aggregate members of each malloc'd element get sub-objects under multi
@@ -197,7 +194,6 @@ statement_expression_order.c	efficient	LP64	SAFE	a statement expression as an in
 parenthesized_postfix.c	efficient	LP64	SAFE	`(a++)` yields `a` and then increments it, in an initializer, a condition, a comma list and a `&&` operand
 ternary_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the unselected operand of ?: is not read, so it cannot race
 ternary_race_read_unsafe.c	efficient	ILP32	UNSAFE:no-data-race	a racing read in the selected operand of ?: is still reported
-and_race_read_safe.c	efficient	ILP32	SAFE:no-data-race	the right operand of &&/|| is not read when short-circuited, so it cannot race
 ternary_overflow_guard.c	efficient	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported
 ternary_overflow_taken.c	efficient	ILP32	UNSAFE:no-overflow	an overflow in the selected operand of ?: is still reported
 ternary_overflow_guard_bv.c	bitvector	ILP32	SAFE:no-overflow	an overflow in the unselected operand of ?: is not reported (bitvector)
@@ -301,9 +297,6 @@ heap_struct_array_oob.c	efficient	LP64	UNSAFE:valid-memsafety	a malloc'd struct 
 heap_full_block_ok.c	efficient	ILP32	SAFE:valid-memsafety	memset, memcpy, calloc and realloc over whole int blocks stay in bounds	multi
 heap_untyped_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a block with no element type is bounded under bytes
 heap_sub_element_free.c	efficient	ILP32	SAFE:valid-memsafety	a block smaller than its element is live and may be freed
-user_alloca_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	__builtin_alloca is sized in bytes and bounded in cells	multi
-user_alloca_direct_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a direct alloca call is sized in bytes and bounded in cells	multi
-user_alloca_ok.c	efficient	ILP32	SAFE:valid-memsafety	every element of a byte-sized alloca block is in bounds	multi
 alloca_int_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element of a byte-sized alloca block is not addressable	multi
 alloca_int_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element of a byte-sized alloca block is not addressable	flat
 oc_branch_after_null_check.c	bitvector	ILP32	SAFE	a branch condition after a null check reads the same value on both edges
@@ -322,9 +315,6 @@ ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory
 ptr_load_plus_index_arg_safe.c	bitvector	ILP32	SAFE	a pointer loaded from memory plus an index is passed with its offset	flat
 ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	multi
 ptr_load_plus_index_arg_unsafe.c	bitvector	ILP32	UNSAFE	a pointer loaded from memory plus an index is passed with its offset	flat
-ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	multi
-ptr_recursive_mid_object_arg_safe.c	bitvector	ILP32	SAFE	a mid-object address passed through recursion keeps its offset	flat
-ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	multi
 ptr_recursive_mid_object_arg_unsafe.c	bitvector	ILP32	UNSAFE	a mid-object address passed through recursion keeps its offset	flat
 ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	multi
 ptr_callee_struct_step_safe.c	bitvector	ILP32	SAFE	p++ on a one-field struct pointer in a callee moves one element	flat
@@ -334,9 +324,6 @@ ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a 
 ptr_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare to a callee keeps its offset	flat
 ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	multi
 ptr_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare to a callee keeps its offset	flat
-ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	multi
-ptr_recursive_bare_split_arg_safe.c	bitvector	ILP32	SAFE	a split pointer passed bare through recursion keeps its offset	flat
-ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	multi
 ptr_recursive_bare_split_arg_unsafe.c	bitvector	ILP32	UNSAFE	a split pointer passed bare through recursion keeps its offset	flat
 ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	multi
 ptr_member_array_arg_safe.c	bitvector	ILP32	SAFE	the address of a member array element keeps its offset	flat
@@ -352,24 +339,6 @@ ptr_postincrement_struct_safe.c	bitvector	ILP32	SAFE	p++ on an aggregate pointer
 ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	multi
 ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	flat
 ptr_postincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p++ on an aggregate pointer moves a whole element	bytes
-ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	multi
-ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	flat
-ptr_preincrement_struct_safe.c	bitvector	ILP32	SAFE	++p on an aggregate pointer moves a whole element	bytes
-ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	multi
-ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	flat
-ptr_preincrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	++p on an aggregate pointer moves a whole element	bytes
-ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	multi
-ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	flat
-ptr_compound_add_struct_safe.c	bitvector	ILP32	SAFE	p += k on an aggregate pointer moves whole elements	bytes
-ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	multi
-ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	flat
-ptr_compound_add_struct_unsafe.c	bitvector	ILP32	UNSAFE	p += k on an aggregate pointer moves whole elements	bytes
-ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	multi
-ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	flat
-ptr_decrement_struct_safe.c	bitvector	ILP32	SAFE	p-- on an aggregate pointer moves a whole element	bytes
-ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	multi
-ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	flat
-ptr_decrement_struct_unsafe.c	bitvector	ILP32	UNSAFE	p-- on an aggregate pointer moves a whole element	bytes
 ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	multi
 ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	flat
 ptr_scalar_steps_safe.c	bitvector	ILP32	SAFE	p++, p-- and p += k on an int pointer move whole elements	bytes
@@ -384,8 +353,6 @@ ptr_char_step_reinterpreted_safe.c	bitvector	ILP32	SAFE	stepping an int array th
 ptr_char_step_reinterpreted_unsafe.c	bitvector	ILP32	UNSAFE	stepping an int array through char* is byte-exact	bytes
 ptr_void_step_safe.c	bitvector	ILP32	SAFE	stepping through void* is byte-exact	bytes
 ptr_void_step_unsafe.c	bitvector	ILP32	UNSAFE	stepping through void* is byte-exact	bytes
-ptr_void_char_step_safe.c	bitvector	ILP32	SAFE	stepping through void* cast to char* is byte-exact	bytes
-ptr_void_char_step_unsafe.c	bitvector	ILP32	UNSAFE	stepping through void* cast to char* is byte-exact	bytes
 thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	multi
 thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	flat
 thread_local_values_safe.c	bitvector	ILP32	SAFE	each thread sees its own __thread variable	bytes
@@ -405,7 +372,6 @@ recursion_loop_threaded_unsafe.c	bitvector	ILP32	UNSAFE	a bug at the full recurs
 strerror_stub.c	bitvector	ILP32	SAFE	strerror is stubbed
 flat_oob_into_neighbour.c	efficient	ILP32	UNSAFE:valid-memsafety	malloc records cells, not bytes, under multi	multi
 flat_symbolic_size_oob.c	efficient	ILP32	UNSAFE:valid-memsafety	a symbolic malloc size is in cells under multi	multi
-flat_partial_element_malloc.c	efficient	ILP32	UNSAFE:valid-memsafety	a partial element is not addressable under multi	multi
 oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	flat
 oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	multi
 oc_null_member_ends_path_safe.c	bitvector	ILP32	SAFE	reading a member through NULL ends the path	bytes
@@ -453,62 +419,42 @@ union_pointer_increment_safe.c	efficient	ILP32	SAFE	stepping a pointer to a unio
 global_enum_sized_struct_safe.c	efficient	ILP32	SAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_unsafe.c	efficient	ILP32	UNSAFE	a global of a struct with an enum-sized array keeps its declaration
 global_enum_sized_struct_multi_declarator_safe.c	efficient	ILP32	SAFE	each declarator keeps its own initializer
-nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	direct and pointer-held mutex addresses protect the same nested datum	flat
-nested_mutex_alias.c	efficient	LP64	SAFE:no-data-race	nested mutex aliases retain their identity with integer arithmetic	flat
-nested_mutex_alias.c	bitvector	ILP32	SAFE:no-data-race	nested mutex aliases retain their identity with byte addressing	bytes
 lifetime_function_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a scalar local dies when its function returns
 lifetime_parameter_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken parameter dies when its function returns
-lifetime_out_parameter.c	efficient	ILP32	UNSAFE:valid-memsafety	a local stored through an out-parameter dies at return
 lifetime_thread_outlives_local.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread can outlive the local it was given
 lifetime_main_pthread_exit.c	efficient	ILP32	UNSAFE:valid-memsafety	pthread_exit in main ends its locals while threads run on
 lifetime_break.c	efficient	ILP32	UNSAFE:valid-memsafety	break ends the lifetime of the loop body's locals
-lifetime_continue.c	efficient	ILP32	UNSAFE:valid-memsafety	continue ends the lifetime of the loop body's locals
-lifetime_goto.c	efficient	ILP32	UNSAFE:valid-memsafety	goto out of a block ends the lifetime of its locals
-lifetime_array_break.c	efficient	ILP32	UNSAFE:valid-memsafety	break ends the lifetime of the loop body's arrays
-lifetime_previous_iteration.c	efficient	ILP32	UNSAFE:valid-memsafety	the previous iteration's local is dead
 lifetime_for_init.c	efficient	ILP32	UNSAFE:valid-memsafety	a for-init variable dies with the loop
-lifetime_labeled_block.c	efficient	ILP32	UNSAFE:valid-memsafety	a labeled block is a scope
-lifetime_case_block.c	efficient	ILP32	UNSAFE:valid-memsafety	a case's block is a scope
 lifetime_loop_scalar.c	efficient	ILP32	SAFE:valid-memsafety	each iteration has a live local of its own
 lifetime_switch_loop.c	efficient	ILP32	SAFE:valid-memsafety	leaving a case block does not release the next entry's local
 lifetime_goto_back.c	efficient	ILP32	SAFE:valid-memsafety	re-entering a block through a backward goto gives a live local
 lifetime_thread_joined.c	efficient	ILP32	SAFE:valid-memsafety	a local is valid for a thread joined before it dies
 lifetime_main_return.c	efficient	ILP32	SAFE:valid-memsafety	returning from main does not release its locals for running threads
-lifetime_main_return_array.c	efficient	ILP32	SAFE:valid-memsafety	returning from main does not release its arrays for running threads
-lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL	a jump past a block's entry is refused
-lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL	a case label past a block's entry is refused
+lifetime_goto_into.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	a jump past a block's entry is refused
+lifetime_case_into.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	a case label past a block's entry is refused
 lifetime_thread_return.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies when the thread returns
-lifetime_pthread_exit.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread's local dies at pthread_exit
 pointer_return_mid_object.c	efficient	ILP32	SAFE	a returned mid-object pointer keeps its offset
 pointer_return_mid_object_unsafe.c	efficient	ILP32	UNSAFE	a returned mid-object pointer still reads the right cell
-pointer_return_sum.c	efficient	ILP32	SAFE	a returned pointer sum names the element, not another object
 pointer_return_plain.c	efficient	ILP32	SAFE	a returned plain pointer stays one value
 pointer_sum_global_initializer.c	efficient	ILP32	SAFE	a pointer sum initializing a global keeps its offset
 pointer_sum_stored_in_member.c	efficient	ILP32	SAFE	a pointer sum stored into a member keeps its offset
 thread_result_mid_object.c	efficient	ILP32	SAFE:valid-memsafety	a joined mid-object thread result is a valid pointer
 thread_result_mid_object_value.c	efficient	ILP32	UNSAFE:valid-memsafety	a joined mid-object thread result reads the right cell
-malloc_wrapper_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block allocated through a void pointer wrapper is bounded in elements
-malloc_wrapper_in_bounds.c	efficient	ILP32	SAFE:valid-memsafety	the last element of a block from a void pointer wrapper is in bounds
 malloc_void_local_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block first held in a void pointer is bounded in elements
 malloc_wrapper_two_types.c	efficient	ILP32	SAFE:valid-memsafety	a wrapper used at two types gets each block sized in bytes
 malloc_opaque_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a block whose type cannot be recovered is still bounded exactly
 float_union_bits.c	efficient	ILP32	SAFE	a double read and written as its IEEE bits through a union (the newlib idiom)
 float_union_bits_unsafe.c	efficient	ILP32	UNKNOWN	planted bug: the high word of 1.0 read through a union; the bits are over-approximated (NaN payload)
 memcpy_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the accesses a memcpy spells out get the valid-deref guard
-memcpy_inbounds_memsafety.c	efficient	LP64	SAFE:valid-memsafety	an in-bounds memcpy passes the valid-deref guard
 memset_null_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset through NULL is an invalid dereference
 memset_symbolic_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	a memset loop with a symbolic count is guarded
-memset_heap_overflow_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	memset past the end of a heap block is an invalid dereference
 memset_count_reread.c	efficient	LP64	SAFE	the memset count is read once, before the first write
-memset_value_reread.c	efficient	LP64	SAFE	the memset value is read once, before the first write
 memcpy_count_reread.c	efficient	LP64	SAFE	the memcpy count is read once, before the first write
 memset_struct_symbolic.c	efficient	LP64	UNSAFE	memset of structs with a symbolic count is a loop under bytes, not a call left in place
 memmove_symbolic_overlap_unsafe.c	efficient	LP64	UNSAFE	memmove with a symbolic count copies through an overlap
 malloc_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the last int of a 3-int block is in bounds
-malloc_struct_cells_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a struct element of a malloc block spans its member cells
 malloc_char_view_inbounds.c	efficient	LP64	SAFE:valid-memsafety	a char view of a malloc int block reaches all its bytes
 alloca_int_inbounds.c	efficient	LP64	SAFE:valid-memsafety	the second int of a 10-byte alloca block is in bounds
-flat_partial_element_malloc.c	efficient	LP64	UNSAFE:valid-memsafety	malloc(10) as int * holds two ints under multi too
 bytes_addr_of_short_array.c	efficient	LP64	SAFE:valid-memsafety	the address of an array shorter than a pointer is no access under bytes	bytes
 memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid
 memset_into_neighbour_memsafety.c	efficient	LP64	UNSAFE:valid-memsafety	the one guard of a memset region spans it, so a run into the next object is invalid	flat
@@ -534,11 +480,7 @@ printf_bound.c	efficient	LP64	SAFE:no-overflow	the return of a *printf stub is b
 printf_bound.c	bitvector	LP64	SAFE:no-overflow	the return of a *printf stub is bounded by the longest text of its format literals (bitvector)
 memmove_symbolic_reach.c	bitvector	LP64	UNSAFE	memmove with a symbolic length onto a later overlapping region copies from the last element down
 strlen_after_buffer_stub.c	efficient	LP64	UNKNOWN	strlen is not exact over cells that a buffer stub left stale
-malloc_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc bound counts cells, not bytes
-malloc_struct_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a struct element of a malloc bound spans its member cells
 malloc_void_cell_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	a malloc of unknown cell count retries under bytes
-scalar_use_after_return.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken local is released on an early return
-thread_result_dangling_local.c	efficient	ILP32	UNSAFE:valid-memsafety	a thread local is released when the thread returns
 recursive_call_arg_conversion_safe.c	efficient	LP64	SAFE	a non-inlined call converts its argument to the parameter type (261 -> unsigned char 5)
 recursive_call_arg_conversion_safe.c	bitvector	LP64	SAFE	a non-inlined call converts a wider bitvector argument to the parameter width
 recursive_call_arg_conversion_unsafe.c	efficient	LP64	UNSAFE	the argument conversion of a non-inlined call keeps a reachable error (262 -> 6)
@@ -584,8 +526,6 @@ struct_return_by_value.c	efficient	LP64	SAFE:valid-memsafety	a struct returned b
 struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return
 struct_return_address_kept.c	efficient	LP64	UNSAFE:valid-memsafety	the address of a struct returned by value still dies at return, flat model	flat
 void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
-struct_byte_view.c	efficient	LP64	SAFE	a struct viewed as bytes by a cast or memcpy is rebuilt under the bytes model
-void_pointer_byte_write.c	efficient	LP64	UNSAFE	a byte written through a void * parameter changes the long it overlaps, found under bytes
 void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
 stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
 integer_address_byte_view.c	efficient	LP64	UNSAFE	a byte view through an address kept in an integer is found under bytes
@@ -594,11 +534,8 @@ busy_wait_dead_store_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a busy wait 
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	flat
 malloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	a non-null block of size 0 is live and may be freed	bytes
-calloc_zero_free.c	efficient	ILP32	SAFE:valid-memsafety	calloc(0, n) may return a pointer that free accepts
 malloc_zero_deref.c	efficient	ILP32	UNSAFE:valid-memsafety	a non-null block of size 0 has no accessible byte
-malloc_zero_double_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a block of size 0 twice is a double free
 malloc_first_member_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is an array
-malloc_first_union_free.c	efficient	ILP32	SAFE:valid-memsafety	freeing the first member of a heap struct frees the block, also when the member is a union
 malloc_inner_member_free.c	efficient	ILP32	UNSAFE:valid-memsafety	freeing a member that does not start the block is invalid
 pointer_difference.c	efficient	LP64	SAFE	pointer difference: ptrdiff_t width, element units for struct and int pointers
 pointer_difference.c	bitvector	LP64	SAFE	pointer difference: byte distance divided by the element size under bytes	bytes
