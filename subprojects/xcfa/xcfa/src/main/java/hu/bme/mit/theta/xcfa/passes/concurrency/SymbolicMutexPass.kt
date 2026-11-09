@@ -66,7 +66,10 @@ internal val XcfaLabel.mutexAddresses: List<Expr<*>>
 internal fun XcfaLabel.withMutexAddresses(addresses: List<Expr<*>>): XcfaLabel =
   when (this) {
     is FenceLabel -> withLock(addresses.single())
-    is InvokeLabel -> this.withParamsIndexed { i, arg -> if (i == 0) arg else addresses[i - 1] }
+    is InvokeLabel ->
+      this.withParamsIndexed { i, arg ->
+        if (i == 0 || i > addresses.size) arg else addresses[i - 1]
+      }
     else -> error("Not a mutex operation: $this")
   }
 

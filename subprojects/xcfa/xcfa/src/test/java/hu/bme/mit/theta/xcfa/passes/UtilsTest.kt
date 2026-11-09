@@ -27,6 +27,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.utils.simplify
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -52,7 +53,7 @@ class UtilsTest {
     // what used to make the carried-over type wrap the result instead of just labelling it.
     val argument = Add(listOf(p.ref, Int(0)))
     parseContext.metadata.create(argument, "cType", CPointer(null, signed, parseContext))
-    val label = InvokeLabel.retFirst("memset", listOf(argument), EmptyMetaData, mapOf())
+    val label = InvokeLabel("memset", listOf(argument to IN), EmptyMetaData, mapOf())
 
     val simplified = label.simplify(MutableValuation(), parseContext) as InvokeLabel
 
@@ -69,7 +70,7 @@ class UtilsTest {
     parseContext.metadata.create(argument, "cType", signed)
     val valuation = MutableValuation()
     valuation.put(n, Int(5))
-    val label = InvokeLabel.retFirst("f", listOf(argument), EmptyMetaData, mapOf())
+    val label = InvokeLabel("f", listOf(argument to IN), EmptyMetaData, mapOf())
 
     val simplified = (label.simplify(valuation, parseContext) as InvokeLabel).params[0]
 
