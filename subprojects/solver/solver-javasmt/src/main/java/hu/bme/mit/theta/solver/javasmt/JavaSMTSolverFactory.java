@@ -194,9 +194,15 @@ public final class JavaSMTSolverFactory implements SolverFactory {
         }
     }
 
-    private static ProverEnvironment newProver(SolverContext context, ProverOptions... options) {
-        final ProverEnvironment yices = PushPopYices2Prover.create(context, Set.of(options));
-        return yices != null ? yices : context.newProverEnvironment(options);
+    private ProverEnvironment newProver(SolverContext context, ProverOptions... options) {
+        // Loading the Yices prover class loads the Yices native library, which some platforms lack.
+        if (solver == Solvers.YICES2) {
+            final ProverEnvironment yices = PushPopYices2Prover.create(context, Set.of(options));
+            if (yices != null) {
+                return yices;
+            }
+        }
+        return context.newProverEnvironment(options);
     }
 
     @Override

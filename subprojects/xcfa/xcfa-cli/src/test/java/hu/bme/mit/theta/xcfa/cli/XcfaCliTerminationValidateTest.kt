@@ -89,8 +89,6 @@ class XcfaCliTerminationValidateTest {
         Arguments.of("count-down.c", "count-down.last-prev.yml", listOf<String>()),
         Arguments.of("count-down.c", "count-down.no-statement.yml", listOf<String>()),
         Arguments.of("array-count-down.c", "array-count-down.memory.yml", listOf<String>()),
-        // infinitely many states: a state need not repeat in an infinite run
-        Arguments.of("count-up.c", "count-up.yml", listOf("--arithmetic", "integer")),
         Arguments.of("count-down.c", "count-down.loop.yml", listOf("--backend", "MDD")),
       )
   }
@@ -123,6 +121,12 @@ class XcfaCliTerminationValidateTest {
     // a backend that cannot check the witness throws while it is built
     val verdict = runCatching { validate(program, witness, extraArgs) }.getOrDefault(UNSOLVED)
     assertEquals(UNSOLVED, verdict)
+  }
+
+  /** With infinitely many states a state need not repeat in an infinite run: no verdict. */
+  @Test
+  fun testInfiniteStateWitness() {
+    assertEquals(UNKNOWN, validate("count-up.c", "count-up.yml", listOf("--arithmetic", "integer")))
   }
 
   @Test
