@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
@@ -36,6 +37,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.AssumingSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
@@ -217,6 +219,8 @@ class XcfaOcChecker(
     }
 
     private fun <T> query(block: (OcChecker<E>) -> T): T {
+      // learned clauses outlive an assumption, but not a solver scope
+      if (encoded && checker.solver is AssumingSolver) return block(checker)
       checker.solver.push()
       try {
         return block(checker)
@@ -335,11 +339,20 @@ class XcfaOcChecker(
       return reached
     }
 
+    private var queryCount = 0
+
     private fun solve(checker: OcChecker<E>, target: Expr<BoolType>): SolverStatus? {
       logger.info("Adding constraints...")
       if (!encoded) addToSolver(eg, checker.solver)
       lemmas.forEach { checker.solver.add(it) }
-      checker.solver.add(target)
+      if (encoded && checker.solver is AssumingSolver) {
+        lemmas.clear()
+        val query = Decls.Const("__theta_oc_query_${queryCount++}", Bool())
+        checker.solver.add(Imply(query.ref, target))
+        checker.assumption = query.ref
+      } else {
+        checker.solver.add(target)
+      }
       return checker.check(eg.events, eg.pos, ppos, eg.rfs, wss)
     }
   }
