@@ -15,11 +15,9 @@
  */
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
-import java.util.Map;
 
-public class CWhile extends CStatement {
+public class CWhile extends CLoop {
 
     // TODO: guard should not be multiple compounds inside!
     private final CStatement body;
@@ -33,23 +31,14 @@ public class CWhile extends CStatement {
         if (guard != null) guard.setParent(this);
     }
 
+    @Override
     public CStatement getBody() {
         return body;
     }
 
+    @Override
     public CStatement getGuard() {
         return guard;
-    }
-
-    // the variables in scope where the controlling expression is evaluated, by C name
-    private Map<String, VarDecl<?>> variablesAtGuard = Map.of();
-
-    public Map<String, VarDecl<?>> getVariablesAtGuard() {
-        return variablesAtGuard;
-    }
-
-    public void setVariablesAtGuard(Map<String, VarDecl<?>> variablesAtGuard) {
-        this.variablesAtGuard = variablesAtGuard;
     }
 
     @Override
