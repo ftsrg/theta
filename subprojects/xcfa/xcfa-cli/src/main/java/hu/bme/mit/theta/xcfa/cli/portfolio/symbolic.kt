@@ -103,8 +103,7 @@ fun symbolicPortfolio(
     edges.addAll(chainEdges(listOf(start to start), cegar, inProcess))
     edges.add(Edge(cegar, cegarTwin, solverError))
 
-    val (cegar10, cegar10Twin) =
-      step({ t, s -> mddCegar(t, s, 10) }, 0, "mathsat:latest", "Z3")
+    val (cegar10, cegar10Twin) = step({ t, s -> mddCegar(t, s, 10) }, 0, "mathsat:latest", "Z3")
     edges.add(Edge(unroll10, cegar10, next))
     edges.add(Edge(cegar10, cegar10Twin, solverError))
 
