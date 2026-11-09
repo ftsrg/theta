@@ -92,7 +92,7 @@ fun symbolicPortfolio(
 
     // A 2 x n matrix over the loop unroll bound: a stuck step (safe on cut loops) moves on to the
     // next bound, any other failure of MDD to MDD_CEGAR with the same bound.
-    val bounds = listOf(-1, 3, 10)
+    val bounds = listOf(-1, 5, 10)
     val mdds =
       bounds.map { mdd(if (memsafety) 0 else if (it < 0) 300_000 else 150_000, "Z3:new", it) }
     val cegars = bounds.map { mddCegar(0, "mathsat:latest", it) }
