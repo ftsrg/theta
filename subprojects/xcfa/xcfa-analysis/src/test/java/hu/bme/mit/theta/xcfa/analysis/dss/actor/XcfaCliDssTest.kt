@@ -69,7 +69,7 @@ class XcfaCliDssTest {
           listOf("--dss-conjecture-invariants", "--dss-decomposition", "LINEAR"),
           listOf("--dss-conjecture-invariants", "--dss-executor", "CONCURRENT"),
           listOf("--dss-conjecture-invariants", "--dss-direction", "BACKWARD"),
-          listOf("--dss-global-predicate-pool", "false"),
+          listOf("--dss-global-predicate-pool", "true"),
           listOf("--dss-cegar-domain", "EXPL"),
           listOf("--dss-cegar-domain", "EXPL", "--dss-reuse-block-precision"),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "PRIORITY"),

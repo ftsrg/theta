@@ -40,7 +40,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-interpolate-bounded-proofs` | `true` | Turn the proofs of the bounded checkers (`BMC`, `KIND`, `IMC`, ...) into invariants over the program variables, by interpolating them against the states one step from an error; otherwise (and where interpolation fails) they are path formulas over fresh, implicitly existential variables |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
 | `--dss-max-parallel-blocks` | `0` | `CONCURRENT`: at most this many block analyses at a time (`0`: no limit) |
-| `--dss-global-predicate-pool` | `true` | Seed every block's precision with all assume conditions of the program |
+| `--dss-global-predicate-pool` | `false` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
 | `--dss-generalize-violations` | off | Before each analysis, try to refute a generalization of the received violation conditions (see [Generalized violation conditions](#generalized-violation-conditions)) |

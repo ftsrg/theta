@@ -145,10 +145,10 @@ data class DssConfig(
   @Parameter(
     names = ["--dss-global-predicate-pool"],
     description = "Seed every block's initial precision with every assume condition of the program",
-    // A Boolean flag that defaults to true needs arity 1 to be turned off
+    // Takes a value, so runs that pass `--dss-global-predicate-pool false` keep working
     arity = 1,
   )
-  var globalPredicatePool: Boolean = true,
+  var globalPredicatePool: Boolean = false,
   @Parameter(
     names = ["--dss-reset-precision"],
     description =
