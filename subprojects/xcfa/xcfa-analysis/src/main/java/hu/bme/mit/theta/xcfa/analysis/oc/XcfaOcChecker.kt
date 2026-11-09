@@ -46,6 +46,12 @@ import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.concurrency.MutexToVarPass
+import hu.bme.mit.theta.xcfa.passes.loops.SpinLoopEffectPass
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollCut
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
+import hu.bme.mit.theta.xcfa.passes.memory.ReferenceElimination
+import hu.bme.mit.theta.xcfa.passes.structure.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.utils.defaultValue
 import java.util.IdentityHashMap
 import kotlin.time.measureTime

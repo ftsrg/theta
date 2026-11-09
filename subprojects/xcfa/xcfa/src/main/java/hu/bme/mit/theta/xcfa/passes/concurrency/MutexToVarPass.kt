@@ -1,0 +1,212 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.passes.concurrency
+
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.READ
+import hu.bme.mit.theta.xcfa.model.ReadWriteMutexLock.ReadWriteMutexLockType.WRITE
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import hu.bme.mit.theta.xcfa.utils.integerOf
+
+/**
+ * Replaces mutexes (except the atomic block mutexes) with counting variables.
+ *
+ * mutex_lock(mutex_var) -> assume(mutex_var = 0); mutex_var := mutex_var + 1; (atomically)
+ *
+ * mutex_unlock(mutex_var) -> mutex_var := mutex_var - 1;
+ */
+class MutexToVarPass : ProcedurePass {
+
+  companion object {
+    private val mutexVars = mutableMapOf<MutexLock, VarDecl<IntType>>()
+
+    private val MutexLock.mutexFlag: VarDecl<IntType>
+      get() {
+        check(lock is LitExpr<*>) { "Unknown mutex not supported by mutex elimination." }
+        return mutexVars.getOrPut(this) { Decls.Var("__theta_mutex_flag_${this.uniqueId}", Int()) }
+      }
+  }
+
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    val flags = LinkedHashSet<VarDecl<IntType>>()
+    builder.getEdges().toSet().forEach { edge ->
+      builder.removeEdge(edge)
+      edge.label.replaceMutex(flags).let { newLabels ->
+        if (newLabels.isNotEmpty()) {
+          newLabels.forEach { newLabel -> builder.addEdge(edge.withLabel(newLabel)) }
+        } else {
+          builder.addEdge(edge.withLabel(SequenceLabel(listOf())))
+        }
+      }
+    }
+
+    val initProcs = builder.parent.getInitProcedures().map { it.first }
+    if (builder in initProcs) {
+      // The init procedure may be optimized before the other procedures, and is locked then:
+      // initialize the flags of their mutexes now, while their labels are not yet replaced.
+      builder.parent.getProcedures().forEach { proc ->
+        if (proc != builder) proc.getEdges().forEach { it.label.replaceMutex(flags) }
+      }
+    }
+
+    flags.forEach { v -> builder.parent.addVar(XcfaGlobalVar(v, Int(0), atomic = true)) }
+    initProcs.forEach { proc ->
+      flags.forEach { v ->
+        val initEdge = proc.initLoc.outgoingEdges.first()
+        val initLabels = initEdge.getFlatLabels()
+        if (
+          initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }
+        ) {
+          check(!proc.isOptimized) {
+            "Mutex flag $v is not initialized in the already optimized init procedure ${proc.name}."
+          }
+          val assign = StmtLabel(AssignStmt.of(v, Int(0)))
+          val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
+          proc.removeEdge(initEdge)
+          proc.addEdge(initEdge.withLabel(label))
+        }
+      }
+    }
+    return builder
+  }
+
+  private fun MutexLock.flagIn(flags: MutableSet<VarDecl<IntType>>): VarDecl<IntType> =
+    mutexFlag.also { flags.add(it) }
+
+  private fun XcfaLabel.replaceMutex(flags: MutableSet<VarDecl<IntType>>): Set<XcfaLabel> {
+    return when (this) {
+      is SequenceLabel ->
+        descartes(labels.map { it.replaceMutex(flags) }).map { SequenceLabel(it, metadata) }.toSet()
+
+      is NondetLabel ->
+        setOf(NondetLabel(labels.flatMap { it.replaceMutex(flags) }.toSet(), metadata))
+
+      is InvokeLabel ->
+        when {
+          !isLibraryFunction -> setOf(this)
+          name in
+            setOf("pthread_mutex_init", "pthread_mutexattr_init", "pthread_mutexattr_destroy") ->
+            setOf(NopLabel)
+          name == "pthread_mutexattr_settype" -> {
+            check(
+              ExprUtils.simplify(
+                Eq(params[2], params[2].type.integerOf(MutexType.NORMAL.constant))
+              ) == True()
+            ) {
+              "Only NORMAL mutexes are supported by mutex elimination."
+            }
+            setOf(NopLabel)
+          }
+          else -> setOf(this)
+        }
+
+      is FenceLabel -> {
+        val actions = mutableListOf<XcfaLabel>()
+
+        when (this) {
+          is AtomicFenceLabel -> actions.add(this)
+
+          // Acquires a free mutex and reports success, or reports failure on a held one.
+          is MutexTryLockLabel -> {
+            val blocking = blockingMutexes.map { it.flagIn(flags) }
+            val acquire =
+              acquiredMutexes.map {
+                val m = it.flagIn(flags)
+                StmtLabel(AssignStmt.of(m, Inc(m.ref)))
+              }
+            return setOf(
+              SequenceLabel(
+                listOf(StmtLabel(AssumeStmt.of(And(blocking.map { Eq(it.ref, Int(0)) })))) +
+                  acquire +
+                  StmtLabel(copy(successful = true).toStmt()),
+                metadata,
+              ),
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Or(blocking.map { Neq(it.ref, Int(0)) }))),
+                  StmtLabel(copy(successful = false).toStmt()),
+                ),
+                metadata,
+              ),
+            )
+          }
+
+          is RWLockUnlockLabel -> {
+            // this is a hack because RWLockUnlock unlocks both read and write locks
+            // if write lock is held, it unlocks that, otherwise a read lock
+            val writeFlag = ReadWriteMutexLock(lock, WRITE).flagIn(flags)
+            val readFlag = ReadWriteMutexLock(lock, READ).flagIn(flags)
+            return setOf(
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Eq(writeFlag.ref, Int(0)))),
+                  StmtLabel(AssignStmt.of(readFlag, Dec(readFlag.ref))),
+                )
+              ),
+              SequenceLabel(
+                listOf(
+                  StmtLabel(AssumeStmt.of(Neq(writeFlag.ref, Int(0)))),
+                  StmtLabel(AssignStmt.of(writeFlag, Dec(writeFlag.ref))),
+                )
+              ),
+            )
+          }
+
+          else -> {
+            blockingMutexes.forEach {
+              actions.add(StmtLabel(AssumeStmt.of(Eq(it.flagIn(flags).ref, Int(0)))))
+            }
+            acquiredMutexes.forEach {
+              val m = it.flagIn(flags)
+              actions.add(StmtLabel(AssignStmt.of(m, Inc(m.ref))))
+            }
+            releasedMutexes.forEach {
+              val m = it.flagIn(flags)
+              actions.add(StmtLabel(AssignStmt.of(m, Dec(m.ref))))
+            }
+          }
+        }
+
+        // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
+        setOf(SequenceLabel(actions, metadata))
+      }
+
+      else -> setOf(this)
+    }
+  }
+
+  private inline fun <reified T> descartes(sets: List<Set<T>>): Set<List<T>> =
+    if (sets.isEmpty()) setOf()
+    else
+      sets
+        .fold(setOf(listOf<T>())) { acc, set ->
+          acc.flatMap { prefix -> set.map { element -> prefix + element } }.toSet()
+        }
+        .toSet()
+}

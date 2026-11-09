@@ -58,6 +58,15 @@ import hu.bme.mit.theta.xcfa.cli.witnesstransformation.Btor2XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.loops.SpinLoopEffectPass
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
+import hu.bme.mit.theta.xcfa.passes.memory.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.passes.memory.FetchExecuteWriteback
+import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
+import hu.bme.mit.theta.xcfa.passes.structure.StaticCoiPass
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 

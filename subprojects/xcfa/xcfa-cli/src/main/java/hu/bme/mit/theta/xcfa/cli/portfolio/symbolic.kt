@@ -24,7 +24,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection.MEMSAFETY
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.LBE_LOCAL
 
 fun symbolicPortfolio(
   xcfa: XCFA,
