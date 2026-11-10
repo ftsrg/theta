@@ -15,9 +15,15 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
-import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
+import hu.bme.mit.theta.xcfa.passes.loops.SpinLoopEffectPass
+import hu.bme.mit.theta.xcfa.passes.memory.FetchExecuteWriteback
+import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
+import hu.bme.mit.theta.xcfa.passes.structure.StaticCoiPass
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
@@ -275,6 +281,19 @@ class XcfaCliDssTest {
     assertTrue(thrown != null && "--dss-semantic-unrollings" in output) { output }
   }
 
+  /** Later tests in this JVM build their XCFAs with the global pass switches the CLI sets. */
+  @Test
+  fun `a CLI run leaves the global pass switches as it found them`() {
+    val before = LbePass.defaultLevel
+    LbePass.defaultLevel = LbePass.LbeLevel.NO_LBE
+    try {
+      runDss("safe")
+      assertEquals(LbePass.LbeLevel.NO_LBE, LbePass.defaultLevel)
+    } finally {
+      LbePass.defaultLevel = before
+    }
+  }
+
   @Test
   fun `cutting on timeout without a checker budget is rejected`() {
     val (output, thrown) = runDss("safe", CUT)
@@ -428,7 +447,7 @@ class XcfaCliDssTest {
         System.setOut(ps)
         System.setErr(ps)
         try {
-          main(
+          runCli(
             arrayOf(
               "--backend",
               "DSS",
@@ -467,7 +486,7 @@ class XcfaCliDssTest {
     val backends = checkers ?: if ("BIDIRECTIONAL" in options) "CEGAR" else "CEGAR,KIND"
     val temp = createTempDirectory()
     try {
-      main(
+      runCli(
         arrayOf(
           "--svcomp",
           "--backend",
@@ -506,7 +525,7 @@ class XcfaCliDssTest {
         val savedOut = System.out
         System.setOut(ps)
         try {
-          main(
+          runCli(
             arrayOf(
               "--svcomp",
               "--portfolio",
@@ -529,5 +548,28 @@ class XcfaCliDssTest {
     } finally {
       temp.toFile().deleteRecursively()
     }
+  }
+}
+
+/**
+ * `XcfaCli.main` in this JVM. The CLI sets global pass switches from its config and, as a process
+ * would exit, never resets them; later tests here would build their XCFAs with them.
+ */
+private fun runCli(args: Array<String>) {
+  val lbe = LbePass.defaultLevel
+  val coi = StaticCoiPass.enabled
+  val ptrSize = PtrSizeToMemoryPass.enabled
+  val dataRace = DataRaceToReachabilityPass.enabled
+  val spinLoops = SpinLoopEffectPass.ENABLED
+  val few = FetchExecuteWriteback.enabled
+  try {
+    XcfaCli.main(args)
+  } finally {
+    LbePass.defaultLevel = lbe
+    StaticCoiPass.enabled = coi
+    PtrSizeToMemoryPass.enabled = ptrSize
+    DataRaceToReachabilityPass.enabled = dataRace
+    SpinLoopEffectPass.ENABLED = spinLoops
+    FetchExecuteWriteback.enabled = few
   }
 }
