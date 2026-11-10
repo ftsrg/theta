@@ -29,6 +29,9 @@ enum class DssGeneralizerKind {
   SEMANTIC,
 }
 
+/** The default bound on the back edges a path takes in `SEMANTIC`'s check in a cyclic block. */
+const val DEFAULT_SEMANTIC_UNROLLINGS = 3
+
 /** How the generalizers of one list make a single generalization. */
 enum class DssGeneralizerCombination {
   /** The first generalizer with a candidate, in list order. */
@@ -42,7 +45,8 @@ enum class DssGeneralizerCombination {
 /**
  * What a generalizer may ask besides the received conditions: [isUnsat] decides the usefulness
  * checks (an undecided query must throw), and [unreachable] says whether no state that matters
- * reaches a condition; it is null where that cannot be checked.
+ * reaches a condition; it is null where that cannot be checked. It may miss long paths: that only
+ * costs a failed probe or conjecture.
  */
 class GeneralizationContext(
   val isUnsat: (Expr<BoolType>) -> Boolean,

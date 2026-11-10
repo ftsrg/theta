@@ -253,6 +253,7 @@ fun getDssChecker(
   require(probeGeneralizers.isEmpty() || dssConfig.generalizationGas > 0) {
     "--dss-generalization-gas must be positive"
   }
+  require(dssConfig.semanticUnrollings >= 0) { "--dss-semantic-unrollings must not be negative" }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     dssConfig.solver
@@ -334,6 +335,7 @@ fun getDssChecker(
             generalizationGas = if (probeGeneralizers.isEmpty()) 0 else dssConfig.generalizationGas,
             generalizers = probeGeneralizers,
             generalizerCombination = dssConfig.generalizerCombination,
+            semanticUnrollings = dssConfig.semanticUnrollings,
             cutOnTimeout = dssConfig.cutOnTimeout,
             hasCut = {
               cutTargetOf(block.id, forward)?.let { target ->

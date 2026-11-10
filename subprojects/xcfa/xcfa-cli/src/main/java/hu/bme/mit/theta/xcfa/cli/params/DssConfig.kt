@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -191,6 +192,13 @@ data class DssConfig(
         "longer generalized",
   )
   var generalizationGas: Int = 2,
+  @Parameter(
+    names = ["--dss-semantic-unrollings"],
+    description =
+      "SEMANTIC probes in a block with an internal cycle: a candidate is checked along the paths " +
+        "through at most this many of its back edges (0: no SEMANTIC probes there)",
+  )
+  var semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
   @Parameter(
     names = ["--dss-conjecture-invariants"],
     description =

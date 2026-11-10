@@ -143,6 +143,72 @@ private class BackwardConditions(
   }
 }
 
+/**
+ * [computeViolationCondition] over the paths of [block] that take at most [unrollings] back edges
+ * of a depth-first search from its entry, so for blocks with internal cycles too. It
+ * under-approximates the weakest precondition: a start state outside it reaches [targets] along no
+ * such path, maybe along a longer one.
+ */
+fun computeBoundedViolationCondition(
+  block: Block,
+  targets: Map<XcfaLocation, Expr<BoolType>>,
+  unrollings: Int,
+): Expr<BoolType> {
+  require(unrollings >= 0) { "Negative unrolling bound: $unrollings" }
+  val conditions = BoundedBackwardConditions(block, targets, unrollings)
+  return toViolationCondition(
+    orStates(conditions.entryEdges.mapNotNull { conditions.through(it, taken = 0) })
+  )
+}
+
+private class BoundedBackwardConditions(
+  private val block: Block,
+  private val targets: Map<XcfaLocation, Expr<BoolType>>,
+  private val unrollings: Int,
+) {
+
+  val entryEdges: List<XcfaEdge> = block.initialLocation.outgoingEdges.filter { it in block.edges }
+
+  private fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
+    location.outgoingEdges.filter { it in block.edges && location != block.finalLocation }
+
+  /** Without these the block is acyclic, and each one taken moves a path to the next copy. */
+  private val backEdges: Set<XcfaEdge> =
+    HashSet<XcfaEdge>().also { back ->
+      val done = HashSet<XcfaLocation>()
+      val onStack = HashSet<XcfaLocation>()
+      fun visit(location: XcfaLocation) {
+        onStack += location
+        for (edge in edgesFrom(location)) {
+          if (edge.target in onStack) back += edge else if (edge.target !in done) visit(edge.target)
+        }
+        onStack -= location
+        done += location
+      }
+      // A split loop head ends the block where it starts: an edge into it closes no cycle
+      if (block.initialLocation != block.finalLocation) visit(block.initialLocation)
+      else entryEdges.forEach { if (it.target !in done) visit(it.target) }
+    }
+
+  private val memo = HashMap<Pair<XcfaLocation, Int>, WpState>()
+
+  /** The condition of taking [edge] after [taken] back edges, or null past the bound. */
+  fun through(edge: XcfaEdge, taken: Int): WpState? {
+    val next = if (edge in backEdges) taken + 1 else taken
+    return if (next > unrollings) null else wep(edge.label, at(edge.target, next))
+  }
+
+  private fun at(location: XcfaLocation, taken: Int): WpState {
+    memo[location to taken]?.let {
+      return it
+    }
+    val disjuncts = mutableListOf<WpState>()
+    targets[location]?.let { disjuncts += WpState.of(it) }
+    for (edge in edgesFrom(location)) through(edge, taken)?.let { disjuncts += it }
+    return orStates(disjuncts).also { memo[location to taken] = it }
+  }
+}
+
 class BlockRun(val edges: List<XcfaEdge>, val end: XcfaLocation, val state: Valuation)
 
 /** A concrete run of acyclic [block] from [entry] to one of [targets], for violation witnesses. */

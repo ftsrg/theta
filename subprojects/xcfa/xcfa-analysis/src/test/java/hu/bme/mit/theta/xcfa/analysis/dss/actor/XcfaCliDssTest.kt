@@ -69,6 +69,13 @@ class XcfaCliDssTest {
           listOf("--dss-generalizers", "SEMANTIC"),
           listOf(
             "--dss-generalizers",
+            "SEMANTIC",
+            "--dss-decomposition",
+            "MIN_CUT_ABSORB_SELF_LOOPS",
+          ),
+          listOf("--dss-generalizers", "SEMANTIC", "--dss-semantic-unrollings", "0"),
+          listOf(
+            "--dss-generalizers",
             "GSPACER,SEMANTIC",
             "--dss-generalizer-combination",
             "UNION",
@@ -260,6 +267,12 @@ class XcfaCliDssTest {
         "--dss-expl-checker",
       )
     assertTrue(thrown != null && "--dss-expl-checker" in output) { output }
+  }
+
+  @Test
+  fun `a negative semantic unrolling bound is rejected`() {
+    val (output, thrown) = runDss("safe", "--dss-semantic-unrollings", "-1")
+    assertTrue(thrown != null && "--dss-semantic-unrollings" in output) { output }
   }
 
   @Test

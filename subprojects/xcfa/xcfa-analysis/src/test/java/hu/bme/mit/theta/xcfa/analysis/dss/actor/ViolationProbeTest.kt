@@ -23,9 +23,12 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
@@ -139,6 +142,88 @@ class ViolationProbeTest {
       operators.isUnsat(And(post, Geq((x as VarDecl<IntType>).ref, Int(12)))),
       "the postcondition excludes the generalization x >= 12: $post",
     )
+  }
+
+  /** init -(x := 0)-> head, `while (x < bound) x++`, head -(x >= bound)-> branch, as [program]. */
+  private fun loopProgram(bound: Int): XCFA =
+    xcfa("probe-loop") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          (init to "head") { "x" assign "0" }
+          ("head" to "head") {
+            assume("(< x $bound)")
+            "x" assign "(+ x 1)"
+          }
+          ("head" to "branch") { assume("(>= x $bound)") }
+          ("branch" to final) { assume("(< x 10)") }
+          ("branch" to err) { assume("(>= x 10)") }
+        }
+      main.start()
+    }
+
+  /** The answer of a root block containing [loopProgram]'s loop to `x == condition`. */
+  private fun loopAnswer(
+    bound: Int,
+    condition: Int,
+    unrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
+  ): Answer {
+    val program = loopProgram(bound)
+    val procedure = program.procedures.single()
+    val branch = procedure.locs.single { it.name == "branch" }
+    val edges = procedure.edges.filterTo(linkedSetOf()) { it.source != branch }
+    val locations = edges.flatMapTo(linkedSetOf()) { listOf(it.source, it.target) }
+    val root = Block("R", procedure.initLoc, branch, locations, edges)
+    assertTrue(hasInternalCycle(root)) { "fixture shape: $root" }
+    @Suppress("UNCHECKED_CAST")
+    val x = (procedure.vars.single { it.name == "x" } as VarDecl<IntType>).ref
+    val behavior =
+      PredicateBlockBehavior(
+        program,
+        procedure,
+        root,
+        roster,
+        generalizationGas = 2,
+        generalizers = listOf(DssGeneralizerKind.SEMANTIC),
+        semanticUnrollings = unrollings,
+      )
+    behavior.runInitialAnalysis()
+    val messages =
+      behavior.onViolationCondition(DssViolationConditionMessage("E", Eq(x, Int(condition))))
+    return Answer(messages.toList(), behavior.statistics())
+  }
+
+  @Test
+  fun `in a block with a loop, a semantic generalization is checked along the unrolled loop`() {
+    val answer = loopAnswer(bound = 2, condition = 12)
+    assertEquals("1", answer.statistics["probesRefuted"], "${answer.statistics}")
+    assertTrue(answer.violations.isEmpty(), "${answer.messages}")
+    val post = answer.postconditions.single().postcondition!!
+    val x = ExprUtils.getVars(post).single { it.name == "x" }
+    @Suppress("UNCHECKED_CAST")
+    assertTrue(
+      operators.isUnsat(And(post, Geq((x as VarDecl<IntType>).ref, Int(12)))),
+      "the postcondition excludes the generalization x >= 12: $post",
+    )
+  }
+
+  @Test
+  fun `a condition only a longer run of the loop reaches fails its probe and is sent exactly`() {
+    val generalized = loopAnswer(bound = 5, condition = 5)
+    val exact = loopAnswer(bound = 5, condition = 5, unrollings = 0)
+    assertEquals("1", generalized.statistics["probesFailed"], "${generalized.statistics}")
+    assertEquals(1, generalized.violations.size, "${generalized.messages}")
+    assertEquals(
+      exact.violations.map { it.violationCondition },
+      generalized.violations.map { it.violationCondition },
+    )
+  }
+
+  @Test
+  fun `without unrollings a block with a loop gets no semantic probe`() {
+    val answer = loopAnswer(bound = 2, condition = 12, unrollings = 0)
+    assertEquals("0", answer.statistics["probes"], "${answer.statistics}")
+    assertTrue(answer.violations.isEmpty(), "${answer.messages}")
   }
 
   @Test

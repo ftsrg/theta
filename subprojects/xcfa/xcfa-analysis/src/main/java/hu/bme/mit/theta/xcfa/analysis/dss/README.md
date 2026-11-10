@@ -47,6 +47,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-generalize-violations` | off | The same as adding `GSPACER` to `--dss-generalizers` |
 | `--dss-generalizer-combination` | `FIRST` | How several generalizers of one list give one generalization: `FIRST` with a candidate, the `UNION` of all, or a `CHAIN` where each weakens the previous result |
 | `--dss-generalization-gas` | `2` | Failed probes per sender (`GSPACER`: per sender and condition shape) before it is no longer generalized |
+| `--dss-semantic-unrollings` | `3` | `SEMANTIC` probes in a block with an internal cycle: a candidate is checked along the paths through at most this many back edges (`0`: none there) |
 | `--dss-conjecture-invariants` | off | Conjecture invariants where violation conditions keep drifting at a block boundary; the blocks check them, and a broken one is retracted (see [Conjectured invariants](#conjectured-invariants)). `FORWARD` or `BACKWARD`, not with `PROCESS` |
 | `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
 | `--dss-block-local-pool` | off | Seed a block only with the pool conditions over at least one of its variables |
@@ -189,9 +190,12 @@ iteration longer in one go. There are two methods, in `Generalizers.kt`:
   example, `x == -2 - k && n >= -1` for `k = 0, 1, 2` becomes `x <= -2 && n >= -1`.
 * `SEMANTIC` needs no history. `SemanticGeneralizer` splits each cube's equalities into two
   bounds and drops literals one at a time while the rest stays unreachable from the block's start
-  states (exactly, by the block's weakest precondition; a block with an internal cycle is not
-  generalized). From `x == -2 && n >= -1` and start states with `x >= 0`, it gets `x <= -2`
-  already from the first condition.
+  states, by the block's weakest precondition. From `x == -2 && n >= -1` and start states with
+  `x >= 0`, it gets `x <= -2` already from the first condition. A block with an internal cycle has
+  no exact weakest precondition, so there it covers only the paths through at most
+  `--dss-semantic-unrollings` back edges of a depth-first search from the entry
+  (`computeBoundedViolationCondition`). A candidate that only a longer path reaches passes this
+  check, and its probe then fails.
 
 With several, `--dss-generalizer-combination` decides: `FIRST` takes the first method in list
 order that has a candidate, `UNION` probes their disjunction, and `CHAIN` lets each weaken the

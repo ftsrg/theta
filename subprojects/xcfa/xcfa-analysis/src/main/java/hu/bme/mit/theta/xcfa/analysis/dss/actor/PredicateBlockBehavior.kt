@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.BlockXcfaExtraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
@@ -48,6 +49,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalizers
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectAssumePreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.combinePredPrecs
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeBoundedViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computePathViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.extractBlockXcfa
@@ -85,6 +87,9 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * With a positive [generalizationGas], a start state is first analyzed against a generalization of
  * the received conditions by [generalizers] ([Generalizers]). Only its SAFE result is used:
  * refuting the weaker target refutes the received conditions too. Its UNSAFE result is discarded.
+ * `SEMANTIC` checks its candidates against the start states by the weakest precondition, which in a
+ * block with an internal cycle only covers the paths through at most [semanticUnrollings] back
+ * edges (none: no semantic generalization there).
  *
  * A conjecture (`DssConjectureMessage`) is assumed at the start like a restriction, but can be
  * retracted. Its condition at the exit, and the may violations received for it, are searched for in
@@ -110,6 +115,7 @@ class PredicateBlockBehavior(
   private val hasCut: () -> Boolean = { cutBlock(block) != null },
   generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
+  private val semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -826,17 +832,21 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * Whether no start state reaches a condition at the exit, by the block's exact weakest
-   * precondition; null for a block with an internal cycle, which has none. Not deciding is "no".
+   * Whether no start state reaches a condition at the exit, by the block's weakest precondition.
+   * With an internal cycle there is no exact one, and a path beyond [semanticUnrollings] back edges
+   * may still reach it: the probe then fails. Not deciding is "no".
    */
   private fun unreachableFromStartStates(): ((Expr<BoolType>) -> Boolean)? {
-    if (usesPathViolations) return null
+    if (usesPathViolations && semanticUnrollings <= 0) return null
     val start = And(Or(startStates().map { it.first.state }), startRestriction())
     return { condition ->
+      val targets = mapOf(block.finalLocation to condition)
       try {
-        operators.isUnsat(
-          And(start, computeViolationCondition(block, mapOf(block.finalLocation to condition)))
-        )
+        val atEntry =
+          if (usesPathViolations)
+            computeBoundedViolationCondition(block, targets, semanticUnrollings)
+          else computeViolationCondition(block, targets)
+        operators.isUnsat(And(start, atEntry))
       } catch (e: InterruptedException) {
         throw e
       } catch (e: Exception) {
