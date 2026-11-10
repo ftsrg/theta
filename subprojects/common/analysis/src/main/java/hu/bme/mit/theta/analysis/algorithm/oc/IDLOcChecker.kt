@@ -30,6 +30,8 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 
+private const val CHUNK_SIZE = 4096
+
 class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Boolean = false) :
   OcChecker<E>() {
   override val solver: Solver = solverFactory.createSolver()
@@ -82,8 +84,22 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     return Or(Eq(Inc(clk1), clk2), Eq(Inc(clk2), clk1))
   }
 
+  // asserted in chunks: a solver call per ordering constraint dominates the encoding time
+  private val pending = mutableListOf<Expr<BoolType>>()
+
+  private fun assert(expr: Expr<BoolType>) {
+    pending.add(expr)
+    if (pending.size >= CHUNK_SIZE) flush()
+  }
+
+  private fun flush() {
+    if (pending.isEmpty()) return
+    solver.add(if (pending.size == 1) pending.first() else And(pending.toList()))
+    pending.clear()
+  }
+
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
-    cond?.let { solver.add(Imply(it, expr)) } ?: solver.add(expr)
+    assert(cond?.let { Imply(it, expr) } ?: expr)
 
   private fun addLt(cond: Expr<BoolType>?, clk1: Int, clk2: Int) {
     check(clk1 != clk2)
@@ -107,12 +123,9 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   }
 
   private fun addNeq(clkVars: Collection<ConstDecl<IntType>>) {
-    clkVars.forEach { v1 ->
-      clkVars.forEach { v2 ->
-        if (v1 != v2) {
-          solver.add(Neq(v1.ref, v2.ref))
-        }
-      }
+    val vars = clkVars.toList()
+    for ((index, v1) in vars.withIndex()) {
+      for (v2 in vars.subList(index + 1, vars.size)) assert(Neq(v1.ref, v2.ref))
     }
   }
 
@@ -180,11 +193,19 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     // FR
     rfs.forEach { (v, vRfs) ->
       val writes = events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }
+      val rfsFrom = vRfs.groupBy { it.from }
       writes?.forEach { w1 ->
         writes.forEach { w2 ->
-          if (w1 != w2) {
-            vRfs.forEach { rf ->
-              if (w1 == rf.from && rf.to.potentialSameMemory(w2)) {
+          // a read from w1 is of the cell of w1, which w2 may never write; w2 before w1 is no ws
+          if (
+            w1 != w2 &&
+              w1.potentialSameMemory(w2) &&
+              (w1.clkId == w2.clkId || !ppos[w2.clkId, w1.clkId])
+          ) {
+            rfsFrom[w1]?.forEach { rf ->
+              val r = rf.to
+              // nothing to enforce when the read is before w2 anyway
+              if (r.potentialSameMemory(w2) && (r.clkId == w2.clkId || !ppos[r.clkId, w2.clkId])) {
                 val wsExpr =
                   And(
                     w1.guardExpr,
@@ -222,6 +243,7 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
 
     addNeq(clkGlobalVars.values)
     addNeq(clkAtomicVars.values)
+    flush()
   }
 
   override fun getHappensBefore(): GlobalRelation {
