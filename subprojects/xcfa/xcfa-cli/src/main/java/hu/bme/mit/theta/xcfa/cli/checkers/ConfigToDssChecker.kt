@@ -36,8 +36,6 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
-import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockBehavior
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssExprCodec
@@ -148,7 +146,8 @@ fun getDssChecker(
     ?.let { throw IllegalArgumentException("--dss-checker-backends: $it cannot check DSS blocks") }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
-    if (dssConfig.executor == DssExecutor.CONCURRENT) CONCURRENT_DSS_SOLVER else DEFAULT_DSS_SOLVER
+    if (dssConfig.executor == DssExecutor.CONCURRENT) dssConfig.concurrentSolver
+    else dssConfig.solver
   // The counterexample monitor's registry is global: only concurrent block checkers go without it
   val cexMonitor =
     if (dssConfig.executor == DssExecutor.CONCURRENT) CexMonitorOptions.DISABLE

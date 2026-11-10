@@ -283,8 +283,8 @@ data class BTOR2FrontendConfig(
 
 /**
  * Every solver the backend may use. Exhaustive over the backend configs, so a new one has to say
- * which solvers it uses. A portfolio's and DSS's are not known up front: their sub-configurations
- * pick their own.
+ * which solvers it uses. A portfolio's are not known up front: its sub-configurations pick their
+ * own.
  */
 fun SpecBackendConfig.solverNames(): List<String> =
   when (this) {
@@ -296,7 +296,7 @@ fun SpecBackendConfig.solverNames(): List<String> =
     is BoundedConfig -> listOf(bmcConfig.bmcSolver, indConfig.indSolver, itpConfig.itpSolver)
     is OcConfig -> listOf(smtSolver, unsatReferenceSolver)
     is PortfolioConfig -> listOf()
-    is DssConfig -> listOf()
+    is DssConfig -> listOf(solver, concurrentSolver)
     is MddConfig -> listOf(solver)
     is MddCegarConfig -> listOf(solver, refinementSolver)
     is Ic3Config -> listOf(solver)
