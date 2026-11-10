@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.complex27
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
+import java.io.File
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -89,13 +90,14 @@ class Complex27ChainTest {
     program: XCFA,
     parseContext: ParseContext = ParseContext(),
     property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+    witness: File? = null,
   ): STM =
     complex27(
       program,
       emptySet(),
       parseContext,
       XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(
-        inputConfig = InputConfig(property = XcfaProperty(property)),
+        inputConfig = InputConfig(property = XcfaProperty(property), witness = witness),
         debugConfig = DebugConfig(debug = true),
       ),
       NullLogger.getInstance(),
@@ -367,5 +369,17 @@ class Complex27ChainTest {
   fun aSmallProgramKeepsThePredicateLeader() {
     val order = chain(stmFor(looping()))
     assertTrue(order.first().startsWith("PRED_CART-BW_BIN_ITP"), "first was ${order.first()}")
+  }
+
+  @Test
+  fun aWitnessSteersTheCegarConfigurationsAlongItsSegments() {
+    fun searches(witness: File?) =
+      nodesOf(stmFor(looping(), witness = witness))
+        .mapNotNull {
+          (it.config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search
+        }
+        .toSet()
+    assertEquals(setOf(Search.SEGMENT_ORDER), searches(File("witness.yml")))
+    assertFalse(Search.SEGMENT_ORDER in searches(null))
   }
 }

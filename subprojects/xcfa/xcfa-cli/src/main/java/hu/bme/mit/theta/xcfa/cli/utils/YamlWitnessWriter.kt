@@ -65,9 +65,9 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
-import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -145,7 +145,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           trace as Trace<XcfaState<PtrState<*>>, XcfaAction>
           val lasso =
             if (property.inputProperty == ErrorDetection.TERMINATION)
-              XcfaTraceConcretizer.concretizeLasso(trace, cexSolverFactory, parseContext)
+              XcfaTraceConcretizer().concretizeLasso(trace, cexSolverFactory, parseContext)
             else null
           // A rejected termination witness has a path to a violated invariant, often no lasso
           if (lasso == null && property.isTerminationWitnessValidation) {
@@ -155,12 +155,13 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
             lasso?.trace
               ?: withTimeout(CONCRETIZATION_TIMEOUT_SECONDS) {
-                XcfaTraceConcretizer.concretize(
-                  trace,
-                  cexSolverFactory,
-                  parseContext,
-                  wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-                )
+                XcfaTraceConcretizer()
+                  .concretize(
+                    trace,
+                    cexSolverFactory,
+                    parseContext,
+                    wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+                  )
               }
 
           val witness =

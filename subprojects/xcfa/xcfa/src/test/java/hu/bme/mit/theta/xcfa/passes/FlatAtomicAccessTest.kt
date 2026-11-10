@@ -28,6 +28,8 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelTy
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.memory.FlatMemoryPass
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
 import java.math.BigInteger
 import org.junit.jupiter.api.Assertions.assertFalse

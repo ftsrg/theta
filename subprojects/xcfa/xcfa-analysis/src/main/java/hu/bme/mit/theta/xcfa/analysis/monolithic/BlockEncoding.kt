@@ -27,9 +27,9 @@ import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
-import hu.bme.mit.theta.xcfa.passes.EliminateSelfLoops
-import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.structure.EliminateSelfLoops
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 
 /**

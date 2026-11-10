@@ -212,7 +212,7 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
   }
 
   @ParameterizedTest
@@ -242,7 +242,7 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
   }
 
   /** DSS block programs start at a synthetic location that is not flagged as initial. */

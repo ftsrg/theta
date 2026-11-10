@@ -3,14 +3,14 @@
 Gradle module: `:theta-xcfa`. It contains:
 
 - the XCFA model in `model/`: `XCFA`, the builders, the `XcfaLabel`s and the Kotlin DSL in `Dsl.kt`;
-- the procedure passes in `passes/`, which normalize, lower and instrument a model;
+- the procedure passes in `passes/`, which normalize, lower and instrument a model, grouped into subpackages by topic (see the passes README);
 - shared utilities (`utils/`), the witness formats (`witnesses/`) and `XcfaToC.kt`.
 
 The formalism is described in [README.md](README.md). The C pass pipeline, phase by phase with its ordering constraints, is in [passes/README.md](src/main/java/hu/bme/mit/theta/xcfa/passes/README.md). Read it before adding or moving a pass.
 
 ## Build and test
 
-- `./gradlew :theta-xcfa:test`. The pass tests build small XCFAs with the DSL (`passes/PassTests.kt`, `UnrollExitsTest.kt`).
+- `./gradlew :theta-xcfa:test`. The pass tests build small XCFAs with the DSL (`passes/PassTests.kt`, `passes/UnrollExitsTest.kt`).
 - A pass that runs on C input is also exercised by `:theta-c2xcfa:test`, because its `getXcfaFromC` runs the whole `CPasses` pipeline. It must also pass the canary gate, `:theta-xcfa-cli:fixtureTest` and `canaryTest` ([canaries/README.md](../xcfa-cli/canaries/README.md)). The fixture harness runs only `--portfolio STABLE` or `--backend NONE` with fixed options, so behaviour reachable only under other flags (e.g. `--force-unroll`) needs a unit test here instead. A pass refusal is expected there as `FRONTEND-FAIL`.
 
 ## Invariants / gotchas

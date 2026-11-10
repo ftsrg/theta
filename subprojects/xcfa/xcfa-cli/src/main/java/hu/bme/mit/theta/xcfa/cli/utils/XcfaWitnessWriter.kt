@@ -22,6 +22,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import java.io.File
 
 interface XcfaWitnessWriter {
@@ -39,32 +40,37 @@ interface XcfaWitnessWriter {
      *   case.
      */
     fun getSvCompWitnessWriter(
+      inputType: InputType,
       property: XcfaProperty,
       parseContext: ParseContext,
       safetyResult: SafetyResult<*, *>,
     ): XcfaWitnessWriter? =
-      when (property.inputProperty) {
-        ErrorDetection.ERROR_LOCATION,
-        ErrorDetection.OVERFLOW ->
-          // multi-threaded violation witnesses use the format 2.2 concurrency extension
-          // (thread_id, multi-follow segments)
-          YamlWitnessWriter()
-        // not supported witness for Arrays, Floats, and Heap is not detected
+      if (inputType == InputType.SVLIB) {
+        SvLibWitnessWriter()
+      } else {
+        when (property.inputProperty) {
+          ErrorDetection.ERROR_LOCATION,
+          ErrorDetection.OVERFLOW ->
+            // multi-threaded violation witnesses use the format 2.2 concurrency extension
+            // (thread_id, multi-follow segments)
+            YamlWitnessWriter()
+          // not supported witness for Arrays, Floats, and Heap is not detected
 
-        ErrorDetection.MEMSAFETY ->
-          if (parseContext.multiThreading) {
-            safetyResult.getWitnessWriter(null, YamlWitnessWriter())
-          } else {
-            safetyResult.getWitnessWriter(null, YamlWitnessWriter())
-          }
+          ErrorDetection.MEMSAFETY ->
+            if (parseContext.multiThreading) {
+              safetyResult.getWitnessWriter(null, YamlWitnessWriter())
+            } else {
+              safetyResult.getWitnessWriter(null, YamlWitnessWriter())
+            }
 
-        ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
+          ErrorDetection.MEMCLEANUP -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
-        ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
+          ErrorDetection.DATA_RACE -> safetyResult.getWitnessWriter(null, YamlWitnessWriter())
 
-        ErrorDetection.TERMINATION -> YamlWitnessWriter()
+          ErrorDetection.TERMINATION -> YamlWitnessWriter()
 
-        else -> null
+          else -> null
+        }
       }
 
     private fun SafetyResult<*, *>.getWitnessWriter(

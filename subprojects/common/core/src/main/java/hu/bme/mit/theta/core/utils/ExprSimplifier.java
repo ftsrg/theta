@@ -109,6 +109,7 @@ public final class ExprSimplifier {
                     // Integer
 
                     .addCase(IntToRatExpr.class, this::simplifyIntToRat)
+                    .addCase(IntToBvExpr.class, this::simplifyIntToBv)
                     .addCase(IntAddExpr.class, this::simplifyIntAdd)
                     .addCase(IntSubExpr.class, this::simplifyIntSub)
                     .addCase(IntPosExpr.class, this::simplifyIntPos)
@@ -200,6 +201,8 @@ public final class ExprSimplifier {
                     .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
                     .addCase(FpMathFuncExpr.class, this::simplifyFpMathFunc)
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
+                    .addCase(FpIsInfiniteExpr.class, this::simplifyFpIsInfinite)
+                    .addCase(FpIsZeroExpr.class, this::simplifyFpIsZero)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
                     .addCase(FpFromIeeeBvExpr.class, this::simplifyFpFromIeeeBv)
@@ -1157,6 +1160,17 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
+    private Expr<BvType> simplifyIntToBv(final IntToBvExpr expr, final Valuation val) {
+        final Expr<IntType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof IntLitExpr) {
+            final IntLitExpr litOp = (IntLitExpr) op;
+            return expr.with(op).eval(val);
+        }
+
+        return expr.with(op);
+    }
+
     private Expr<BoolType> simplifyEnumEqExpr(final EnumEqExpr expr, final Valuation val) {
         final Expr<EnumType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<EnumType> rightOp = simplify(expr.getRightOp(), val);
@@ -2011,6 +2025,16 @@ public final class ExprSimplifier {
             return Bool(
                     (((FpLitExpr) op).isNegativeInfinity()
                             || ((FpLitExpr) op).isPositiveInfinity()));
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BoolType> simplifyFpIsZero(final FpIsZeroExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr litExpr) {
+            return Bool((litExpr.isNegativeZero() || litExpr.isPositiveZero()));
         }
 
         return expr.with(op);

@@ -165,6 +165,7 @@ final class Z3TermTransformer {
         this.addFunc("fp.isNaN", this.exprUnaryOperator(FpIsNanExpr::create));
         this.addFunc("isinfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
         this.addFunc("fp.isInfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
+        this.addFunc("fp.isZero", this.exprUnaryOperator(FpIsZeroExpr::create));
         this.addFunc("fp.roundtoint", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.roundToIntegral", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
         this.addFunc("fp.sqrt", this.exprFpUnaryOperator(FpSqrtExpr::create));
@@ -267,6 +268,14 @@ final class Z3TermTransformer {
                             op,
                             FpType.of(type.getExponent(), type.getSignificand()),
                             true);
+                });
+        this.environment.put(
+                Tuple2.of("int_to_bv", 1),
+                (term, model, vars) -> {
+                    BvType type = (BvType) transformSort(term.getSort());
+                    Expr<IntType> op =
+                            (Expr<IntType>) this.transform(term.getArgs()[0], model, vars);
+                    return IntToBvExpr.of(op, type.getSize());
                 });
         this.environment.put(
                 Tuple2.of("extract", 1),

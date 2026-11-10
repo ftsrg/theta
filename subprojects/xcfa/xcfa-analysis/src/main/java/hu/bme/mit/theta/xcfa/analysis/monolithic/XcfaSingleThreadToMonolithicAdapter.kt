@@ -58,8 +58,8 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.passes.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.memory.DereferenceToArrayPass
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.witnesses.InvariantCheckMetaData
 import hu.bme.mit.theta.xcfa.witnesses.UndefinedBehaviorMetaData

@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest

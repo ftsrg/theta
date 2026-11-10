@@ -1,0 +1,16 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc havocExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (assign (x x0))
+    (havoc x)))
+
+(declare-const input Int)
+
+(verify-call havocExample (input))
+(get-witness)

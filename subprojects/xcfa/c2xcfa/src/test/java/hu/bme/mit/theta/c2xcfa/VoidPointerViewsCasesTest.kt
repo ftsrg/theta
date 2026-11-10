@@ -23,7 +23,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticTyp
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
-import hu.bme.mit.theta.xcfa.passes.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest

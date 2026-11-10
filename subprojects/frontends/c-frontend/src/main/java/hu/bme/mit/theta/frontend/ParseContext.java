@@ -36,7 +36,7 @@ import java.util.Set;
 
 public class ParseContext {
     private final FrontendMetadata metadata;
-    private final CStmtCounter cStmtCounter;
+    private CStmtCounter cStmtCounter;
     private Set<ArithmeticTrait> arithmeticTraits = new LinkedHashSet<>();
     private ArchitectureType architecture = ArchitectureType.LP64;
     private Boolean multiThreading = false;
@@ -281,6 +281,15 @@ public class ParseContext {
 
     public CStmtCounter getCStmtCounter() {
         return cStmtCounter;
+    }
+
+    public void setC(boolean isC) {
+        if (isC && this.cStmtCounter == null) this.cStmtCounter = new CStmtCounter();
+        else if (!isC) this.cStmtCounter = null;
+    }
+
+    public boolean isC() {
+        return cStmtCounter != null;
     }
 
     public FlatAddressSpace getFlatAddressSpace() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -214,8 +214,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
                     new XcfaEdge(
                             from,
                             middle,
-                            new InvokeLabel(
-                                    calledProcedure.getName(), params, EmptyMetaData.INSTANCE),
+                            new InvokeLabel(calledProcedure, params, EmptyMetaData.INSTANCE),
                             EmptyMetaData.INSTANCE);
             builder.addEdge(callEdge);
 

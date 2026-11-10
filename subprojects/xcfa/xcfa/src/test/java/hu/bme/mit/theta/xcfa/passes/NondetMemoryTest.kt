@@ -24,6 +24,9 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.library.NondetFunctionPass
+import hu.bme.mit.theta.xcfa.passes.structure.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.structure.NormalizePass
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

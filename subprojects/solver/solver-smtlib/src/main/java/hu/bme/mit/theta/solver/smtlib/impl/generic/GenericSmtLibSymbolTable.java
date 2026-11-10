@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,19 +30,18 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
-
-    static final Pattern problematicCharactersRegex = Pattern.compile("[:#]");
+    static final Pattern smtLibSymbolRegex =
+            Pattern.compile("[a-zA-Z~!@$%^&*_\\-+=<>.?/][a-zA-Z0-9~!@$%^&*_\\-+=<>.?/]*");
 
     public static String encodeSymbol(String name) {
-        if (problematicCharactersRegex.matcher(name).find()) {
-            char[] chars = name.toCharArray();
-            if (chars[0] == '|' && chars[chars.length - 1] == '|') {
+        if (smtLibSymbolRegex.matcher(name).matches()) {
+            return name;
+        } else {
+            if (name.startsWith("|") && name.endsWith("|")) {
                 return name;
             } else {
                 return "|%s|".formatted(name);
             }
-        } else {
-            return name;
         }
     }
 

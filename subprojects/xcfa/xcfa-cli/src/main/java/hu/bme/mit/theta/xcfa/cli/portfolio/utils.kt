@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.cli.params.ConeOfInfluenceMode.NO_COI
 import hu.bme.mit.theta.xcfa.cli.params.Domain.EXPL
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SERVER_ERROR
 import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.SOLVER_ERROR
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes.VERIFICATION_STUCK
 import hu.bme.mit.theta.xcfa.cli.params.ExprSplitterOptions.WHOLE
 import hu.bme.mit.theta.xcfa.cli.params.InitPrec.EMPTY
 import hu.bme.mit.theta.xcfa.cli.params.POR.AASPOR
@@ -126,6 +127,9 @@ val anythingButServerError =
   )
 
 val solverError = ExceptionTrigger(ErrorCodeException(SOLVER_ERROR.code), label = "SolverError")
+
+val verificationStuck =
+  ExceptionTrigger(ErrorCodeException(VERIFICATION_STUCK.code), label = "VerificationStuck")
 
 val anyError = ExceptionTrigger(label = "Anything")
 
@@ -428,9 +432,10 @@ fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
     chcOutputConfig = portfolioConfig.outputConfig.chcOutputConfig,
     witnessConfig =
       WitnessConfig(
-        enabled = WitnessLevel.SVCOMP,
-        concretizerSolver = "Z3",
-        validateConcretizerSolver = false,
+        enabled = portfolioConfig.outputConfig.witnessConfig.enabled,
+        concretizerSolver = portfolioConfig.outputConfig.witnessConfig.concretizerSolver,
+        validateConcretizerSolver =
+          portfolioConfig.outputConfig.witnessConfig.validateConcretizerSolver,
         inputFileForWitness =
           portfolioConfig.outputConfig.witnessConfig.inputFileForWitness
             ?: portfolioConfig.inputConfig.input,

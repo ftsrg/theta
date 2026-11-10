@@ -139,6 +139,27 @@ class XcfaCliVerifyTest {
         )
       )
     }
+
+    @JvmStatic
+    fun svLibFiles(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/svlib/annotated-loop-head.svlib", null),
+        Arguments.of("/svlib/check-true-annotate-tag.svlib", null),
+        Arguments.of("/svlib/check-true-middle.svlib", "--domain PRED_CART"),
+        Arguments.of("/svlib/goto.svlib", null),
+        Arguments.of("/svlib/havoc.svlib", null),
+        Arguments.of("/svlib/if-assign.svlib", null),
+        Arguments.of("/svlib/if-simple-safe.svlib", null),
+        Arguments.of("/svlib/if-simple-unsafe.svlib", null),
+        Arguments.of("/svlib/loop-check-true-annotate-tag.svlib", null),
+        Arguments.of("/svlib/loop-simple-safe.svlib", "--domain PRED_CART"),
+        Arguments.of("/svlib/multi-assign.svlib", null),
+        Arguments.of("/svlib/procedure-call.svlib", null),
+        Arguments.of("/svlib/return.svlib", null),
+        Arguments.of("/svlib/return-if.svlib", null),
+        Arguments.of("/svlib/return-while.svlib", null),
+      )
+    }
   }
 
   @ParameterizedTest
@@ -285,6 +306,22 @@ class XcfaCliVerifyTest {
         "CHC",
         "--chc-transformation",
         chcTransformation.toString(),
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--debug",
+      )
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("svLibFiles")
+  fun testSvLibVerify(filePath: String, extraArgs: String?) {
+    main(
+      arrayOf(
+        "--input-type",
+        "SVLIB",
         "--input",
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",
