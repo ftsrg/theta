@@ -25,6 +25,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.UCSolver;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -56,7 +57,21 @@ public final class JavaSMTSolverManager extends SolverManager {
         final var solver = Solvers.valueOf(solverName);
 
         return new ManagedFactory(
-                JavaSMTSolverFactory.create(solver, new String[] {"--nonLinearArithmetic=USE"}));
+                JavaSMTSolverFactory.create(
+                        solver,
+                        new String[] {"--nonLinearArithmetic=USE"},
+                        interpolationOptions(solver)));
+    }
+
+    /**
+     * MathSAT's default, eager FP solver gives no proofs, so it cannot interpolate over floats;
+     * {@code theory.fp.mode=2} can, and the SMT-LIB MathSAT driver uses it too. Non-interpolating
+     * MathSAT solvers keep the default.
+     */
+    private static Map<String, String> interpolationOptions(final Solvers solver) {
+        return solver == Solvers.MATHSAT5
+                ? Map.of("solver.mathsat5.furtherOptions", "theory.fp.mode=2")
+                : Map.of();
     }
 
     @Override

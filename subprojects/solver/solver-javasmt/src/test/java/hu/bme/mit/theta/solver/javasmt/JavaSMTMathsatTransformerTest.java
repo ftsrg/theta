@@ -19,9 +19,11 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Extract;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.Gt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -29,6 +31,9 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.FpUtils;
+import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpPattern;
+import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import org.junit.jupiter.api.Test;
 import org.kframework.mpfr.BigFloat;
@@ -71,6 +76,26 @@ public class JavaSMTMathsatTransformerTest {
                 JavaSMTSolverFactory.create(Solvers.MATHSAT5, new String[] {}).createSolver()) {
             solver.add(Lt(x.getRef(), zero));
             assertTrue(solver.check().isSat());
+        }
+    }
+
+    /** The default, eager FP solver gives no proofs; the manager's interpolating solver must. */
+    @Test
+    public void testFpInterpolation() throws Exception {
+        final FpType type = FpType(8, 24);
+        final ConstDecl<FpType> x = Const("x", type);
+        final var zero = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
+        try (final ItpSolver solver =
+                JavaSMTSolverManager.create()
+                        .getSolverFactory("JavaSMT:MATHSAT5")
+                        .createItpSolver()) {
+            final ItpMarker a = solver.createMarker();
+            final ItpMarker b = solver.createMarker();
+            final ItpPattern pattern = solver.createBinPattern(a, b);
+            solver.add(a, Lt(x.getRef(), zero));
+            solver.add(b, Gt(x.getRef(), zero));
+            assertTrue(solver.check().isUnsat());
+            assertNotNull(solver.getInterpolant(pattern).eval(a));
         }
     }
 }
