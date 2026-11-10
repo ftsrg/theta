@@ -257,7 +257,11 @@ class XcfaOcChecker(
 
       logger.mainStep("Start checking...")
       val status: SolverStatus?
-      val checkerTime = measureTime { status = solve(checker, Or(targets)) }
+      val checkerTime = measureTime {
+        // a violation has to be an execution, not only a model of the relaxed ordering constraints
+        status =
+          solve(checker, Or(targets)).let { if (it?.isSat == true) checker.distinctModel() else it }
+      }
       logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
       logger.info("Propagated clauses: ${checker.getPropagatedClauses().size}")
       checker.solver.statistics.let {

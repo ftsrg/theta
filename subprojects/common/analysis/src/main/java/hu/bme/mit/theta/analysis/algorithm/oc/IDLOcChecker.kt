@@ -56,6 +56,13 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
 
   private var prepared = false
 
+  /**
+   * Whether all clocks are asserted to differ. A refutation holds without that, so it is added only
+   * for a race condition, which compares neighbouring clock values, or to make a model an
+   * execution.
+   */
+  private var allDistinct = false
+
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
 
   // kept across checks: a solver refuses a second declaration of the same name
@@ -79,6 +86,13 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   /** Whether the atomic units of [e1] and [e2] are at neighbouring clock values. */
   override fun raceCondition(e1: E, e2: E): Expr<BoolType> {
     check(isSc && e1.clkId != e2.clkId)
+    if (!allDistinct) {
+      allDistinct = true
+      if (prepared) {
+        addNeq(clkGlobalVars.values)
+        flush()
+      }
+    }
     val clk1 = e1.clkId.clkGlobalVar.ref
     val clk2 = e2.clkId.clkGlobalVar.ref
     return Or(Eq(Inc(clk1), clk2), Eq(Inc(clk2), clk1))
@@ -241,9 +255,29 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
       }
     }
 
-    addNeq(clkGlobalVars.values)
+    if (allDistinct) addNeq(clkGlobalVars.values)
     addNeq(clkAtomicVars.values)
     flush()
+  }
+
+  override fun distinctModel(): SolverStatus? {
+    while (!allDistinct) {
+      val model = solver.model.toMap()
+      val clocks = clkGlobalVars.values
+      if (clocks.any { it !in model }) {
+        allDistinct = true
+        addNeq(clocks)
+      } else {
+        val tied = clocks.groupBy { model[it] }.values.filter { it.size > 1 }
+        if (tied.isEmpty()) return SolverStatus.SAT
+        tied.forEach { addNeq(it) }
+      }
+      flush()
+      val status =
+        assumption?.let { (solver as AssumingSolver).checkAssuming(it) } ?: solver.check()
+      if (status?.isSat != true) return status
+    }
+    return SolverStatus.SAT
   }
 
   override fun getHappensBefore(): GlobalRelation {
