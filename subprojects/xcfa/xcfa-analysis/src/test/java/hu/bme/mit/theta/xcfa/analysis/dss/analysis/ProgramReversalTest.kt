@@ -25,7 +25,11 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.backwardInvariants
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.combineInvariants
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
@@ -196,5 +200,29 @@ class ProgramReversalTest {
         main.start()
       }
     assertThrows<UnsupportedOperationException> { reverseProgram(xcfa) }
+  }
+
+  /**
+   * States of a run without the error target may hold the entry's, so they are not complemented.
+   */
+  @Test
+  fun `backward invariants come only from runs that kept the error as a target`() {
+    val reversal = reverseProgram(counterXcfa(bad = 1))
+    val procedure = reversal.procedure
+    val error = procedure.errorLoc.get()
+    val block = Block("R", procedure.initLoc, error, procedure.locs, procedure.edges)
+    val graph = BlockGraph.fromBlocksWithoutEdges(listOf(block))
+    val everywhere = procedure.locs.associateWith { listOf<Expr<BoolType>>(True()) }
+    val targetless =
+      DssBlockWitness(everywhere, emptyList(), emptyList(), errorFreeInvariants = null)
+
+    val forward = combineInvariants(procedure, graph, mapOf("R" to targetless)).invariants
+    assertTrue(forward.values.all { it == listOf(True()) }) { "$forward" }
+    val dropped = backwardInvariants(reversal, graph, mapOf("R" to targetless)).invariants
+    assertTrue(dropped.values.all { it == null }) { "$dropped" }
+
+    val kept = targetless.copy(errorFreeInvariants = everywhere)
+    val complemented = backwardInvariants(reversal, graph, mapOf("R" to kept)).invariants
+    assertTrue(complemented.values.any { it != null }) { "$complemented" }
   }
 }

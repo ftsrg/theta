@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.DataInputStream
@@ -430,15 +431,8 @@ private const val RECORD_PATH = 2
 private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: DssBlockWitness?) {
   out.writeBoolean(witness != null)
   if (witness == null) return
-  val invariants = witness.invariants
-  out.writeBoolean(invariants != null)
-  if (invariants != null) {
-    out.writeInt(invariants.size)
-    for ((location, states) in invariants) {
-      codec.writeLocation(out, location)
-      writeExprs(out, codec, states)
-    }
-  }
+  writeInvariants(out, codec, witness.invariants)
+  writeInvariants(out, codec, witness.errorFreeInvariants)
   out.writeInt(witness.violations.size)
   for (record in witness.violations) {
     when (record) {
@@ -469,10 +463,8 @@ private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: Ds
 
 private fun readWitness(input: DataInputStream, codec: DssExprCodec): DssBlockWitness? {
   if (!input.readBoolean()) return null
-  val invariants =
-    if (input.readBoolean())
-      List(input.readInt()) { codec.readLocation(input) to readExprs(input, codec) }.toMap()
-    else null
+  val invariants = readInvariants(input, codec)
+  val errorFreeInvariants = readInvariants(input, codec)
   val violations =
     List(input.readInt()) {
       val kind = input.readUnsignedByte()
@@ -490,5 +482,27 @@ private fun readWitness(input: DataInputStream, codec: DssExprCodec): DssBlockWi
         else -> error("Unknown DSS violation record kind $kind")
       }
     }
-  return DssBlockWitness(invariants, violations, readExprs(input, codec))
+  return DssBlockWitness(invariants, violations, readExprs(input, codec), errorFreeInvariants)
 }
+
+private fun writeInvariants(
+  out: DataOutputStream,
+  codec: DssExprCodec,
+  invariants: Map<XcfaLocation, List<Expr<BoolType>>>?,
+) {
+  out.writeBoolean(invariants != null)
+  if (invariants == null) return
+  out.writeInt(invariants.size)
+  for ((location, states) in invariants) {
+    codec.writeLocation(out, location)
+    writeExprs(out, codec, states)
+  }
+}
+
+private fun readInvariants(
+  input: DataInputStream,
+  codec: DssExprCodec,
+): Map<XcfaLocation, List<Expr<BoolType>>>? =
+  if (input.readBoolean())
+    List(input.readInt()) { codec.readLocation(input) to readExprs(input, codec) }.toMap()
+  else null

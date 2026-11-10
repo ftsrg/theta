@@ -40,11 +40,16 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/** One block's witness data; [invariants] is null unless known for all real entry states. */
+/**
+ * One block's witness data; [invariants] is null unless known for all real entry states.
+ * [errorFreeInvariants] are those of runs that kept the error locations as targets only, so they
+ * exclude the error's states, as complementing them for a backward network needs.
+ */
 data class DssBlockWitness(
   val invariants: Map<XcfaLocation, List<Expr<BoolType>>>?,
   val violations: List<DssViolationRecord>,
   val reported: List<Expr<BoolType>>,
+  val errorFreeInvariants: Map<XcfaLocation, List<Expr<BoolType>>>?,
 )
 
 sealed interface DssViolationRecord {
@@ -67,17 +72,25 @@ data class DssPathViolation(
 
 data class DssInvariants(val invariants: Map<XcfaLocation, List<Expr<BoolType>>?>) : Proof
 
+/**
+ * The blocks' invariants by location; with [errorFree], their
+ * [DssBlockWitness.errorFreeInvariants].
+ */
 fun combineInvariants(
   procedure: XcfaProcedure,
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
+  errorFree: Boolean = false,
 ): DssInvariants =
   DssInvariants(
     procedure.locs.associateWith { location ->
       val blocks = blockGraph.blocks.filter { location in it.locations }
       if (blocks.isEmpty()) return@associateWith null
       blocks.flatMap { block ->
-        val invariants = witnesses[block.id]?.invariants ?: return@associateWith null
+        val witness = witnesses[block.id] ?: return@associateWith null
+        val invariants =
+          (if (errorFree) witness.errorFreeInvariants else witness.invariants)
+            ?: return@associateWith null
         invariants[location].orEmpty()
       }
     }
@@ -85,15 +98,18 @@ fun combineInvariants(
 
 /**
  * Invariants of the original program from a backward network's (DSS on [reversal]) at quiescence.
- * Those over-approximate the states that can reach an error, so their complements contain the
- * entry's states and are closed under the program's steps. Ones over temporaries are left out.
+ * Those over-approximate the states that can reach an error and, taken from runs that kept the
+ * reversed program's error (the entry) as a target, exclude the entry's states, so their
+ * complements contain them and are closed under the program's steps. Ones over temporaries are left
+ * out.
  */
 fun backwardInvariants(
   reversal: ProgramReversal,
   blockGraph: BlockGraph,
   witnesses: Map<String, DssBlockWitness>,
 ): DssInvariants {
-  val reversed = combineInvariants(reversal.procedure, blockGraph, witnesses).invariants
+  val reversed =
+    combineInvariants(reversal.procedure, blockGraph, witnesses, errorFree = true).invariants
   return DssInvariants(
     reversal.original.locs.associateWith { location ->
       val states = reversal.reversedOf[location]?.let(reversed::get) ?: return@associateWith null

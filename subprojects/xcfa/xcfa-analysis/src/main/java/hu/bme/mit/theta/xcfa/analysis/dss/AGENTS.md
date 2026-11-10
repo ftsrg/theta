@@ -72,6 +72,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
 - A `DssRestrictionMessage` only ever strengthens a block's start states, while a conjecture's
   invariant is dropped again when it is retracted; neither enters a violation condition. A block
   under either, or fed by one, reports no witness invariants, and records them only without both.
+- `backwardInvariants` complements the reached states, which is valid only if they exclude the
+  entry's states (the reversed program's error): it takes `errorFreeInvariants`, recorded by runs
+  that kept the error targets. A targetless run's states are valid forward invariants only.
 - Networks of one run need unique block ids (the backward network uses `R.`). A failure reaches
   only its own network (`DssConnection.failureScope`), and a network with a shut-down block is
   never SAFE.

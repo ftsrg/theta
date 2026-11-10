@@ -182,7 +182,16 @@ class PredicateBlockBehavior(
 
   private val ownTargets: List<XcfaLocation> = block.locations.filter { it.error }
 
-  private val invariantsByStart = HashMap<Expr<BoolType>, Map<XcfaLocation, List<Expr<BoolType>>>>()
+  /**
+   * The states a SAFE run reached, and whether it kept the block's error locations as targets: only
+   * then do they exclude the error's states, which a complemented (backward) witness needs.
+   */
+  private class RecordedStates(
+    val states: Map<XcfaLocation, List<Expr<BoolType>>>,
+    val keptTargets: Boolean,
+  )
+
+  private val invariantsByStart = HashMap<Expr<BoolType>, RecordedStates>()
   private val violationRecords = mutableListOf<DssViolationRecord>()
   private val reportedViolationConditions = mutableListOf<Expr<BoolType>>()
 
@@ -296,8 +305,15 @@ class PredicateBlockBehavior(
     inputVersions[message.senderId] = message.version
     if (message.restricted) restrictedInputs += message.senderId
     else restrictedInputs -= message.senderId
-    val stored = preconditions.put(message.senderId, received.toMutableList())
-    return stored == null || !statesEqual(received, stored)
+    val stored = preconditions[message.senderId]
+    if (stored != null && statesEqual(received, stored)) {
+      // The recorded witness states are keyed by the stored states, which the new ones only repeat
+      preconditions[message.senderId] =
+        stored.map { it.copy(precision = message.precision) }.toMutableList()
+      return false
+    }
+    preconditions[message.senderId] = received.toMutableList()
+    return true
   }
 
   /**
@@ -585,15 +601,18 @@ class PredicateBlockBehavior(
       val entry = extraction.entryLocation
       val keepEntry = block.isRoot || entry.incomingEdges.any { it != extraction.preconditionEdge }
       invariantsByStart[start.state] =
-        proof
-          .getPartitions()
-          .entries
-          .filter { (clone, _) -> keepEntry || clone != entry }
-          .mapNotNull { (clone, states) ->
-            extraction.originalLocations[clone]?.let { it to states }
-          }
-          .groupBy({ it.first }, { it.second })
-          .mapValues { (_, states) -> states.flatten().map { it.toExpr() }.distinct() }
+        RecordedStates(
+          proof
+            .getPartitions()
+            .entries
+            .filter { (clone, _) -> keepEntry || clone != entry }
+            .mapNotNull { (clone, states) ->
+              extraction.originalLocations[clone]?.let { it to states }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, states) -> states.flatten().map { it.toExpr() }.distinct() },
+          keepSpecificationTargets,
+        )
     }
     val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
     return RunResult.Safe(
@@ -858,23 +877,33 @@ class PredicateBlockBehavior(
   override fun statistics(): Map<String, String> = statistics.toMap()
 
   override fun witness(): DssBlockWitness =
-    DssBlockWitness(invariants(), violationRecords.toList(), reportedViolationConditions.toList())
+    DssBlockWitness(
+      invariants(keptTargetsOnly = false),
+      violationRecords.toList(),
+      reportedViolationConditions.toList(),
+      invariants(keptTargetsOnly = true),
+    )
 
-  /** Invariants from start states that cover the block's real entries, else from top. */
-  private fun invariants(): Map<XcfaLocation, List<Expr<BoolType>>>? {
+  /**
+   * Invariants from start states that cover the block's real entries, else from top; with
+   * [keptTargetsOnly], only from runs that kept the error locations as targets.
+   */
+  private fun invariants(keptTargetsOnly: Boolean): Map<XcfaLocation, List<Expr<BoolType>>>? {
     if (restricted) return null
+    val recorded =
+      if (keptTargetsOnly) invariantsByStart.filterValues { it.keptTargets } else invariantsByStart
     val stored = preconditions.values.flatten().map { it.state }.distinct()
     val cover =
       when {
         !block.isRoot &&
           preconditions.keys.containsAll(block.predecessorIds) &&
           stored.isNotEmpty() &&
-          stored.all { it in invariantsByStart } -> stored
-        True() in invariantsByStart -> listOf(True())
+          stored.all { it in recorded } -> stored
+        True() in recorded -> listOf(True())
         else -> return null
       }
     return cover
-      .flatMap { invariantsByStart.getValue(it).entries }
+      .flatMap { recorded.getValue(it).states.entries }
       .groupBy({ it.key }, { it.value })
       .mapValues { (_, states) -> states.flatten().distinct() }
   }
