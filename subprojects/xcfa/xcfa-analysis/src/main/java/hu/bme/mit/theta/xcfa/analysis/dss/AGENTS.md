@@ -45,6 +45,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   recognized by structural equality.
 - An undecided query of `DssPredicateOperators` throws `DssUndecidedQueryException`, never a
   default answer.
+- A block run's postcondition and precision pass through `quantifierFree`
+  (`--dss-quantified-predicates`), which may only weaken them. Its witness states may only be
+  replaced by equivalents (`quantifierFreeIfEquivalent`): `backwardInvariants` complements them.
 - Checker-selection strategies index factories by position and must be thread-safe.
 - Routing belongs to `DssBlockActor`, analysis to `DssBlockBehavior`; behaviors return messages,
   they never send them.

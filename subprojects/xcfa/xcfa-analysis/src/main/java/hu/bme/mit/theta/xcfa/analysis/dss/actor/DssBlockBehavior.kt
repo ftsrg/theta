@@ -52,6 +52,7 @@ class DssBlockStatistics {
   var mayAnalyses = 0
   var mayViolationsSent = 0
   var conjectureFailures = 0
+  var quantifiedFormulas = 0
 
   fun toMap(): Map<String, String> =
     linkedMapOf(
@@ -66,6 +67,7 @@ class DssBlockStatistics {
         "mayAnalyses" to mayAnalyses,
         "mayVcSent" to mayViolationsSent,
         "conjectureFailures" to conjectureFailures,
+        "quantified" to quantifiedFormulas,
       )
       .mapValues { it.value.toString() }
 }

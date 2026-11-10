@@ -56,6 +56,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
 | `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
 | `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
+| `--dss-quantified-predicates` | `KEEP` | Quantifiers in a block checker's proof: `KEEP`, `FALLBACK` (DSS's own failing queries are retried on `--dss-fallback-solver`), `DROP` (weakened away) or `ELIMINATE` (Z3 quantifier elimination, the rest weakened away); see [Quantified predicates](#quantified-predicates) |
 | `--dss-conjecture-generalizers` | `GSPACER` | The generalizers that propose conjectures, combined by `--dss-generalizer-combination` |
 
 A checker over its budget is stopped (`DssBudget.kt`): a watchdog interrupts its running solver
@@ -236,6 +237,30 @@ and every block before it on the path reaches the condition sent back, up to the
 retracts the conjecture. This needs the coordinator in the quiescence check, which only a single
 network gives it (not `BIDIRECTIONAL`), and in-process blocks (not `PROCESS`). A location is
 never conjectured where a block needs per-path conditions, which the may violations lack.
+
+## Quantified predicates
+
+`Z3:new` gets its interpolants from a Horn query. For nonlinear arithmetic, the answer can keep
+quantifiers, e.g. `exists p. (p-1)*(p-1) < 100 && 100 <= p*p && p != 10`. With MathSAT blocks
+this happens whenever MathSAT cannot interpolate a trace and the block falls back to `Z3:new`. Such
+a predicate ends up in the block's postcondition, precision and invariants. MathSAT takes no
+quantifiers, so DSS's own query on it fails, and the run is unknown. `--dss-quantified-predicates`
+decides what happens (`QuantifiedPredicates.kt`):
+
+* `KEEP` leaves them as they are.
+* `FALLBACK` retries every DSS query that fails on the main solver on `--dss-fallback-solver`, in
+  the blocks and in the coordinators. The quantified predicates still travel to other blocks.
+* `DROP` weakens them away in the postcondition and precision a block sends: a quantified
+  subformula becomes true where it occurs positively and false where negatively
+  (`withoutQuantifiers`).
+* `ELIMINATE` first replaces each quantified subformula by Z3's quantifier elimination (`qe`, then
+  `qe2`), and weakens away what is left.
+
+Weakening is sound for what a block sends: a postcondition still covers the exit states, and
+predicates never decide soundness. A witness state is not weakened, as a backward witness
+complements it: it only takes the exact eliminations, and what keeps a quantifier is left out of
+the C witness, which prints exact invariants only. The block statistics count the formulas with a
+quantifier as `quantified`.
 
 ## Known limitations
 

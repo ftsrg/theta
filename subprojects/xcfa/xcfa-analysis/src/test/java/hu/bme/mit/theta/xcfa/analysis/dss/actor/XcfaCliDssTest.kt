@@ -159,6 +159,9 @@ class XcfaCliDssTest {
           listOf("--dss-checker-backends", "KIND,CEGAR", "--dss-checker-budget", "1", CUT),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-fallback-solver", "Z3:new"),
           listOf("--dss-solver", "Z3"),
+          listOf("--dss-quantified-predicates", "DROP"),
+          listOf("--dss-quantified-predicates", "ELIMINATE"),
+          listOf("--dss-quantified-predicates", "FALLBACK", "--dss-fallback-solver", "Z3:new"),
           listOf("--dss-block-local-pool"),
         )
         .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
@@ -273,6 +276,12 @@ class XcfaCliDssTest {
         "--dss-expl-checker",
       )
     assertTrue(thrown != null && "--dss-expl-checker" in output) { output }
+  }
+
+  @Test
+  fun `a query fallback without a fallback solver is rejected`() {
+    val (output, thrown) = runDss("safe", "--dss-quantified-predicates", "FALLBACK")
+    assertTrue(thrown != null && "--dss-quantified-predicates FALLBACK" in output) { output }
   }
 
   @Test

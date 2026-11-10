@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
@@ -246,6 +247,14 @@ data class DssConfig(
     description = "A block checker that fails with --dss-solver is retried once with this solver",
   )
   var fallbackSolver: String? = null,
+  @Parameter(
+    names = ["--dss-quantified-predicates"],
+    description =
+      "Quantifiers in a block checker's proof (from Z3:new interpolants): KEEP them, retry DSS's " +
+        "own failing queries on --dss-fallback-solver (FALLBACK), weaken them away (DROP), or " +
+        "eliminate them with Z3 and weaken away the rest (ELIMINATE)",
+  )
+  var quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
   @Parameter(
     names = ["--dss-expl-checker"],
     description = "Add an EXPL CEGAR block checker after --dss-checker-backends",

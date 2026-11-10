@@ -73,6 +73,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
@@ -254,6 +255,13 @@ fun getDssChecker(
     "--dss-generalization-gas must be positive"
   }
   require(dssConfig.semanticUnrollings >= 0) { "--dss-semantic-unrollings must not be negative" }
+  require(
+    dssConfig.quantifiedPredicates != DssQuantifiedPredicates.FALLBACK ||
+      dssConfig.fallbackSolver != null
+  ) {
+    "--dss-quantified-predicates FALLBACK retries DSS's queries on --dss-fallback-solver, which " +
+      "is not set"
+  }
   val blockLogger = BlockAnalysisLogger(logger)
   val solver =
     dssConfig.solver
@@ -298,6 +306,9 @@ fun getDssChecker(
     }
   val checkerRoster = DssCheckerRoster(checkers, selectionStrategy, dssConfig.checkerBudgetMs)
   val dssSolverFactory = SolverManager.resolveSolverFactory(solver)
+  val queryFallbackFactory =
+    if (dssConfig.quantifiedPredicates != DssQuantifiedPredicates.FALLBACK) null
+    else SolverManager.resolveSolverFactory(dssConfig.fallbackSolver!!)
   val behaviors = ConcurrentHashMap<String, DssBlockBehavior>()
   val bidirectional = direction == DssDirection.BIDIRECTIONAL
   val forwardIndex = if (forwardGraph != null) 0 else null
@@ -336,6 +347,8 @@ fun getDssChecker(
             generalizers = probeGeneralizers,
             generalizerCombination = dssConfig.generalizerCombination,
             semanticUnrollings = dssConfig.semanticUnrollings,
+            fallbackSolverFactory = queryFallbackFactory,
+            quantifiedPredicates = dssConfig.quantifiedPredicates,
             cutOnTimeout = dssConfig.cutOnTimeout,
             hasCut = {
               cutTargetOf(block.id, forward)?.let { target ->
@@ -384,6 +397,7 @@ fun getDssChecker(
                 dssConfig.conjectureGas,
                 generalizers = dssConfig.conjectureGeneralizers,
                 combination = dssConfig.generalizerCombination,
+                fallbackSolverFactory = queryFallbackFactory,
               )
               .also { conjectures = it }
           }
@@ -405,6 +419,7 @@ fun getDssChecker(
               dssSolverFactory,
               sharedVars = procedure.vars + xcfa.globalVars.map { it.wrappedVar },
               shareInvariants = dssConfig.shareInvariants,
+              fallbackSolverFactory = queryFallbackFactory,
             )
             .also { meeting = it }
         }

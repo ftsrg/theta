@@ -42,6 +42,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
@@ -55,6 +57,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.extractBlockXcfa
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasQuantifier
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
@@ -82,7 +85,9 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * exit states reports `false` to the observers, so `DssMeetingActor` can certify converged regions.
  * A restriction (`DssRestrictionMessage`) is conjoined to every start state; violation conditions
  * stay exact, as they are computed from the block's own paths only. [finishing] marks one of its
- * network's `finishingBlocks`, which a finisher checker may analyze.
+ * network's `finishingBlocks`, which a finisher checker may analyze. [quantifiedPredicates] decides
+ * what becomes of quantifiers in a checker's proof, and a query that fails on [solverFactory] is
+ * retried on [fallbackSolverFactory].
  *
  * With a positive [generalizationGas], a start state is first analyzed against a generalization of
  * the received conditions by [generalizers] ([Generalizers]). Only its SAFE result is used:
@@ -116,6 +121,8 @@ class PredicateBlockBehavior(
   generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
   private val semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
+  private val fallbackSolverFactory: SolverFactory? = null,
+  quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -160,8 +167,24 @@ class PredicateBlockBehavior(
   )
 
   private val operators by lazy {
-    DssPredicateOperators(solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER))
+    DssPredicateOperators(
+      solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
+      fallbackSolverFactory,
+    )
   }
+
+  private val quantifierCleaner = DssQuantifierCleaner(quantifiedPredicates)
+
+  /** The postconditions and precisions a run hands on pass here; they may get weaker. */
+  private fun quantifierFree(expr: Expr<BoolType>): Expr<BoolType> {
+    if (!hasQuantifier(expr)) return expr
+    statistics.quantifiedFormulas++
+    return quantifierCleaner.clean(expr)
+  }
+
+  /** Witness states, which a backward witness complements, may only become equivalent. */
+  private fun quantifierFreeIfEquivalent(expr: Expr<BoolType>): Expr<BoolType> =
+    if (!hasQuantifier(expr)) expr else quantifierCleaner.equivalent(expr)
 
   private val startPrecision: Set<Expr<BoolType>> by lazy {
     if (!useGlobalPredicatePool) return@lazy emptySet()
@@ -584,7 +607,9 @@ class PredicateBlockBehavior(
       }
     }
     if (reuseBlockPrecision) {
-      (result.prec.orElse(null) as? XcfaPrec<*>)?.let { ownPrecision += it.collectPreds() }
+      (result.prec.orElse(null) as? XcfaPrec<*>)?.let { prec ->
+        ownPrecision += prec.collectPreds().map(::quantifierFree).collectPreds()
+      }
     }
     if (result.isUnsafe) {
       // A probe's path may end in its may condition, so it says nothing about real error paths
@@ -610,13 +635,15 @@ class PredicateBlockBehavior(
               extraction.originalLocations[clone]?.let { it to states }
             }
             .groupBy({ it.first }, { it.second })
-            .mapValues { (_, states) -> states.flatten().map { it.toExpr() }.distinct() },
+            .mapValues { (_, states) ->
+              states.flatten().map { quantifierFreeIfEquivalent(it.toExpr()) }.distinct()
+            },
           keepSpecificationTargets,
         )
     }
-    val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
+    val reached = proof.getPartitions().values.flatten().map { quantifierFree(it.toExpr()) }
     return RunResult.Safe(
-      normalize(packPostcondition(result, extraction.exitLocation)),
+      normalize(quantifierFree(packPostcondition(result, extraction.exitLocation))),
       reached.collectPreds() + start.precision,
     )
   }

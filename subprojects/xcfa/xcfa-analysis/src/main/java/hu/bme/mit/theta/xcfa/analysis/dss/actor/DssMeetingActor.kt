@@ -81,7 +81,8 @@ data class DssMeet(
  * With [shareInvariants], a certified summary is sent to the other direction's blocks starting at
  * the same location, which conjoin it to their preconditions: the error paths stay the same, so
  * every later certified summary still covers them. Only formulas over [sharedVars] are sent. A
- * failing query disables this actor, never the networks.
+ * failing query disables this actor, never the networks; with [fallbackSolverFactory] it is first
+ * retried there.
  */
 class DssMeetingActor(
   override val connection: DssConnection,
@@ -91,11 +92,12 @@ class DssMeetingActor(
   solverFactory: SolverFactory,
   private val sharedVars: Set<VarDecl<*>>,
   private val shareInvariants: Boolean = true,
+  fallbackSolverFactory: SolverFactory? = null,
 ) : DssWorker(COORDINATOR_ID) {
 
   private val forwardSide = Side(forward)
   private val backwardSide = Side(backward)
-  private val operators = DssPredicateOperators(solverFactory)
+  private val operators = DssPredicateOperators(solverFactory, fallbackSolverFactory)
   private val modelSolver = lazy { withSolverConstructionLock { solverFactory.createSolver() } }
   private val unsatCache = HashMap<Expr<BoolType>, Boolean>()
   private var shutdown = false

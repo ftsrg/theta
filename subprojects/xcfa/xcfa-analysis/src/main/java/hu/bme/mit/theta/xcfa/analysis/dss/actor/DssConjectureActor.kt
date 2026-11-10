@@ -54,7 +54,8 @@ private const val SEMANTIC_DEPTH = 6
  *
  * The semantic generalizer keeps a G that no path entering L from outside its cycles reaches: by
  * weakest preconditions back through acyclic blocks to the root, else by the latest summaries.
- * Which G is proposed only decides how useful it is; soundness rests on the obligations alone.
+ * Which G is proposed only decides how useful it is; soundness rests on the obligations alone. A
+ * query that fails on [solverFactory] is retried on [fallbackSolverFactory], if there is one.
  */
 class DssConjectureActor(
   override val connection: DssConnection,
@@ -65,6 +66,7 @@ class DssConjectureActor(
   initialConjectures: List<Pair<XcfaLocation, Expr<BoolType>>> = emptyList(),
   generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   combination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
+  fallbackSolverFactory: SolverFactory? = null,
 ) : DssWorker(COORDINATOR_ID) {
 
   private class Live(
@@ -78,7 +80,7 @@ class DssConjectureActor(
   private val endingAt = blockGraph.blocks.groupBy { it.finalLocation }
   private val keys = HashMap<XcfaLocation, String>()
   private val generalizer = Generalizers(generalizers, combination, gas)
-  private val operators = DssPredicateOperators(solverFactory)
+  private val operators = DssPredicateOperators(solverFactory, fallbackSolverFactory)
   private val live = LinkedHashMap<Int, Live>()
   private val liveAt = HashMap<XcfaLocation, Int>()
   private val retractionsAt = HashMap<XcfaLocation, Int>()
