@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+
 /** The analysis of a [DssBlockActor], without routing. */
 interface DssBlockBehavior {
 
@@ -32,6 +34,13 @@ interface DssBlockBehavior {
 
   fun onMayViolation(message: DssMayViolationMessage): Collection<DssMessage> =
     throw UnsupportedOperationException("${javaClass.simpleName} cannot check conjectures")
+
+  /**
+   * A cut replaced the neighbor [oldId] by the pieces [replacements] that border this block: what
+   * it sent stands for each piece until the piece sends its own, and [block] is this block with its
+   * new neighbors. The pieces are sent the latest messages of this block.
+   */
+  fun onNeighborReplaced(oldId: String, block: Block, replacements: Set<String>) {}
 
   fun witness(): DssBlockWitness? = null
 

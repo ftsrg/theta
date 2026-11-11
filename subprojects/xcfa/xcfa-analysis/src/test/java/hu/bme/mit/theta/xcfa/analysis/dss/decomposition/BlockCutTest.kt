@@ -36,9 +36,13 @@ class BlockCutTest {
     }
   }
 
-  private fun cutOf(graph: BlockGraph, id: String): Pair<Block, BlockGraph> {
+  private fun cutOf(
+    graph: BlockGraph,
+    id: String,
+    decomposition: DssBlockDecomposition = DEFAULT_BLOCK_CUT,
+  ): Pair<Block, BlockGraph> {
     val block = graph.blocks.single { it.id == id }
-    val cut = checkNotNull(graph.cut(id)) { "$id has no cut" }
+    val cut = checkNotNull(graph.cut(id, decomposition)) { "$id has no cut" }
     assertCovers(block, cut.blocks.filter { it.id.startsWith("${id}_") })
     return block to cut
   }
@@ -114,20 +118,24 @@ class BlockCutTest {
   }
 
   @Test
-  fun `a whole-loop block is cut at its head into the way in, the loop and the way out`() {
+  fun `a whole-loop block is cut by the linear decomposition at its branches and joins`() {
     val graph = MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).decompose(loopProcedure())
     val loopBlockId = graph.blocks.single { it.isRoot }.id
     val after = graph.blocks.single { !it.isRoot }
-    val (_, cut) = cutOf(graph, loopBlockId)
+    val (_, cut) = cutOf(graph, loopBlockId, LinearBlockDecomposition())
 
     val wayIn = cut.root
     assertEquals("loophead", wayIn.finalLocation.name)
-    val loop = cut.at("loophead", "loophead")
     val wayOut = cut.at("loophead", "afterloop")
-    assertEquals(4, cut.blocks.size)
-    assertEquals(wayIn, cut.root)
-    assertEquals(setOf(loop.id, wayOut.id), wayIn.successorIds)
-    assertEquals(setOf(loop.id, wayOut.id), loop.successorIds)
+    val intoLoop = cut.at("loophead", "body")
+    val loopBack = cut.at("bodyJoin", "loophead")
+    assertEquals(graph.blocks.size - 1 + 6, cut.blocks.size)
+    assertEquals(setOf(wayOut.id, intoLoop.id), wayIn.successorIds)
+    // The head is reached from the way in and from the loop, and left towards both
+    assertEquals(setOf(wayIn.id, loopBack.id), wayOut.predecessorIds)
+    assertEquals(setOf(wayIn.id, loopBack.id), intoLoop.predecessorIds)
+    assertEquals(setOf(wayOut.id, intoLoop.id), loopBack.successorIds)
+    // The way out is the only piece the next block hears from
     assertEquals(setOf(after.id), wayOut.successorIds)
     assertEquals(setOf(wayOut.id), cut.blocks.single { it.id == after.id }.predecessorIds)
   }
@@ -154,15 +162,16 @@ class BlockCutTest {
         .single()
     val graph = MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).decompose(procedure)
     val selfLoop = graph.blocks.single { it.id in it.successorIds }
-    val (_, cut) = cutOf(graph, selfLoop.id)
+    val (_, cut) = cutOf(graph, selfLoop.id, LinearBlockDecomposition())
 
     val body = cut.at("h", "h")
-    val exit = cut.blocks.single { it.initialLocation.name == "h" && it != body }
-    assertEquals(3, cut.blocks.size)
+    val exits = cut.blocks.filter { it.initialLocation.name == "h" && it != body }
     assertEquals(2, body.edges.size)
-    assertEquals(setOf(body.id, exit.id), body.successorIds)
-    assertEquals(setOf(body.id, exit.id), cut.root.successorIds)
-    assertTrue(exit.successorIds.isEmpty())
+    assertEquals(3, exits.size)
+    // The body comes back to the head, so it is left by the body and by every exit
+    assertEquals(exits.map { it.id }.toSet() + body.id, body.successorIds)
+    assertEquals(exits.map { it.id }.toSet() + body.id, cut.root.successorIds)
+    assertTrue(body.id in body.predecessorIds)
   }
 
   @Test
@@ -184,13 +193,13 @@ class BlockCutTest {
           ),
         )
       )
-    val (_, cut) = cutOf(graph, "rest")
+    val (_, cut) = cutOf(graph, "rest", LinearBlockDecomposition())
     assertEquals(3, cut.blocks.size)
     assertEquals(setOf("rest_0", "rest_1"), cut.root.successorIds)
     assertTrue(cut.blocks.filter { it != cut.root }.all { it.initialLocation == s })
 
     val single = SingleBlockDecomposition.decompose(procedure)
-    val (_, rootCut) = cutOf(single, single.root.id)
+    val (_, rootCut) = cutOf(single, single.root.id, LinearBlockDecomposition())
     assertEquals(1, rootCut.blocks.count { it.initialLocation == procedure.initLoc })
   }
 
@@ -216,12 +225,15 @@ class BlockCutTest {
     assertTrue(loopBlock.initialLocation.name == "h" && loopBlock.finalLocation.error) {
       "fixture shape: ${loopBlock.initialLocation} -> ${loopBlock.finalLocation}"
     }
-    val (_, cut) = cutOf(graph, loopBlock.id)
+    val (_, cut) = cutOf(graph, loopBlock.id, LinearBlockDecomposition())
 
-    val loop = cut.at("h", "h")
-    val exit = cut.blocks.single { it.initialLocation.name == "h" && it != loop }
-    assertEquals(setOf(cut.root.id, loop.id), loop.predecessorIds)
-    assertEquals(setOf(cut.root.id, loop.id), exit.predecessorIds)
+    val toStep = cut.at("h", "step")
+    val backToHead = cut.blocks.filter { it.initialLocation.name == "step" }
+    val skip = backToHead.single { it.edges.size == 1 }
+    val increment = backToHead.single { it.edges.size == 2 }
+    // Whatever comes back to the head is a predecessor of the pieces that start there
+    assertEquals(setOf(cut.root.id, skip.id, increment.id), toStep.predecessorIds)
+    assertTrue(skip.id in toStep.predecessorIds && increment.id in toStep.predecessorIds)
   }
 
   @Test
@@ -238,5 +250,140 @@ class BlockCutTest {
     val graph = SingleBlockDecomposition.decompose(procedure)
     assertNull(cutBlock(graph.root))
     assertNull(graph.cut(graph.root.id))
+  }
+
+  /** init -> a, a -> c over b1 or b2, then c -> d -> e -> final: eight edges, a diamond inside. */
+  private fun diamondChainProcedure(): XcfaProcedure =
+    xcfa("diamondChain") {
+        procedure("main") {
+          "x" type Int()
+          (init to "a") { "x" assign "0" }
+          ("a" to "b1") { assume("(< x 1)") }
+          ("a" to "b2") { assume("(>= x 1)") }
+          ("b1" to "c") { "x" assign "1" }
+          ("b2" to "c") { "x" assign "2" }
+          ("c" to "d") { "x" assign "3" }
+          ("d" to "e") { "x" assign "4" }
+          ("e" to final) { "x" assign "5" }
+        }
+      }
+      .procedures
+      .single()
+
+  private val decompositions: Map<String, DssBlockDecomposition> =
+    linkedMapOf(
+      "LINEAR" to LinearBlockDecomposition(),
+      "MERGE" to MergeBlockDecomposition(),
+      "MERGE_ABSORB_SELF_LOOPS" to SelfLoopAbsorbingDecomposition(),
+      "MERGE_ACYCLIC" to AcyclicMergeDecomposition(),
+      "MIN_CUT" to MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW),
+      "MIN_CUT_ABSORB_SELF_LOOPS" to
+        MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS),
+      "MIN_CUT_ACYCLIC" to MinCutDecomposition(loopHandling = CutLoopHandling.FORBID),
+      "NONE" to SingleBlockDecomposition,
+    )
+
+  private val diamondBlock: Block by lazy {
+    SingleBlockDecomposition.decompose(diamondChainProcedure()).root
+  }
+
+  @Test
+  fun `the linear decomposition cuts a block at every branch and join`() {
+    val pieces = checkNotNull(cutBlock(diamondBlock, LinearBlockDecomposition()))
+    assertCovers(diamondBlock, pieces)
+    // init -> a, the two ways from a to c, and c to the end
+    assertEquals(listOf(1, 2, 2, 3), pieces.map { it.edges.size }.sorted())
+  }
+
+  @Test
+  fun `the merge decomposition cuts a block in two`() {
+    val pieces = checkNotNull(cutBlock(diamondBlock, MergeBlockDecomposition()))
+    assertCovers(diamondBlock, pieces)
+    assertEquals(2, pieces.size)
+  }
+
+  @Test
+  fun `the min-cut decomposition cuts a block where fewest edges go between the pieces`() {
+    val pieces = checkNotNull(cutBlock(diamondBlock, MinCutDecomposition()))
+    assertCovers(diamondBlock, pieces)
+    assertEquals(2, pieces.size)
+    assertEquals(
+      pieces.single { it.initialLocation == diamondBlock.initialLocation }.finalLocation,
+      pieces.single { it.finalLocation == diamondBlock.finalLocation }.initialLocation,
+    )
+  }
+
+  @Test
+  fun `the default cut is the min-cut decomposition that absorbs self loops`() {
+    assertEquals(
+      cutBlock(diamondBlock, MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)),
+      cutBlock(diamondBlock),
+    )
+  }
+
+  @Test
+  fun `no decomposition means no cut`() {
+    assertNull(cutBlock(diamondBlock, SingleBlockDecomposition))
+  }
+
+  @Test
+  fun `a decomposition that cannot handle the block gives no cut`() {
+    assertNull(cutBlock(diamondBlock, DssBlockDecomposition { error("unsupported") }))
+  }
+
+  @Test
+  fun `a decomposition whose pieces lose a path gives no cut`() {
+    val lossy = DssBlockDecomposition { procedure ->
+      val whole = SingleBlockDecomposition.decompose(procedure).root
+      val kept = whole.edges.take(whole.edges.size - 1).toSet()
+      val last = kept.last()
+      BlockGraph.fromBlocksWithoutEdges(
+        listOf(
+          whole.copy(id = "a", edges = kept, finalLocation = last.target),
+          whole.copy(id = "b", edges = setOf(last), initialLocation = last.target),
+        )
+      )
+    }
+    assertNull(cutBlock(diamondBlock, lossy))
+  }
+
+  @Test
+  fun `every decomposition cuts a block into pieces that keep its paths, or does not cut it`() {
+    val blocks =
+      listOf(chainProcedure(), branchProcedure(), diamondChainProcedure()).map {
+        SingleBlockDecomposition.decompose(it).root
+      } +
+        MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).decompose(loopProcedure()).blocks
+    for ((name, decomposition) in decompositions) {
+      for (block in blocks) {
+        val pieces = cutBlock(block, decomposition) ?: continue
+        assertTrue(pieces.size >= 2) { "$name gave ${pieces.size} pieces for ${block.id}" }
+        assertCovers(block, pieces)
+      }
+    }
+  }
+
+  @Test
+  fun `every decomposition replaces a block of a graph by pieces that keep it consistent`() {
+    val graph = MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).decompose(loopProcedure())
+    for ((name, decomposition) in decompositions) {
+      for (block in graph.blocks) {
+        val cut = graph.cut(block.id, decomposition) ?: continue
+        cut.checkConsistency()
+        assertTrue(cut.blocks.size > graph.blocks.size) { "$name did not split ${block.id}" }
+      }
+    }
+  }
+
+  @Test
+  fun `the pieces of a block take over its neighbors`() {
+    val graph = MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).decompose(loopProcedure())
+    val after = graph.blocks.single { !it.isRoot }
+    val cut = checkNotNull(graph.cut(after.id, LinearBlockDecomposition()))
+    val pieces = cut.blocks.filter { it.id.startsWith("${after.id}_") }
+    val entries = pieces.filter { it.initialLocation == after.initialLocation }
+    assertTrue(entries.isNotEmpty())
+    assertTrue(entries.all { graph.root.id in it.predecessorIds })
+    assertEquals(entries.map { it.id }.toSet(), cut.root.successorIds)
   }
 }

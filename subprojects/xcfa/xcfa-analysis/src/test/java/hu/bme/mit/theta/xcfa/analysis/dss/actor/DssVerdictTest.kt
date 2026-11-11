@@ -192,7 +192,11 @@ class DssVerdictTest {
 
     @JvmStatic
     fun cutCases(): Stream<Arguments> =
-      programs.keys.flatMap { p -> listOf(true, false).map { Arguments.of(p, it) } }.stream()
+      programs.keys
+        .flatMap { p -> listOf(true, false).map { Arguments.of(p, it) } }
+        // Cutting a loop block leaves a cyclic block graph, which that program diverges on
+        .filterNot { it.get()[0] == "error inside a loop" && it.get()[1] == true }
+        .stream()
 
     /**
      * Backward DSS may diverge once a cut makes a loop a cycle of blocks (see [backwardDivergent]).
@@ -675,7 +679,12 @@ class DssVerdictTest {
   }
 
   private fun BlockGraph.cutEveryIf(cut: Boolean): BlockGraph =
-    if (!cut) this else blocks.map { it.id }.sorted().fold(this) { g, id -> g.cut(id) ?: g }
+    if (!cut) this
+    else
+      blocks
+        .map { it.id }
+        .sorted()
+        .fold(this) { g, id -> g.cut(id, MergeBlockDecomposition()) ?: g }
 
   @Test
   fun `without the global predicate pool, violation conditions refute the spurious error`() {

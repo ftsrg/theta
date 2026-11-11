@@ -52,7 +52,9 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
 | `--dss-block-local-pool` | off | Seed a block only with the pool conditions over at least one of its variables |
 | `--dss-checker-budget` | `0` | Milliseconds each checker gets in turn, 4-fold after every round (`0`: no budget); needs `PRIORITY` |
-| `--dss-cut-on-timeout` | off | A block whose round of checkers all run out of their budget is cut, and DSS starts over; needs `--dss-checker-budget` |
+| `--dss-cut-on-timeout` | off | A block whose round of checkers all run out of their budget is cut; needs `--dss-checker-budget` |
+| `--dss-cut-strategy` | `--dss-decomposition` | The decomposition that cuts a block, applied to the block alone: any of the `--dss-decomposition` values (`NONE` cuts nothing, so it is `MIN_CUT_ABSORB_SELF_LOOPS` there) |
+| `--dss-cut-restart` | `BLOCK` | `BLOCK` replaces only the cut block by its pieces, `ALL` starts the run over; `BLOCK` needs `FORWARD` or `BACKWARD`, `SEQUENTIAL`, no conjectures and no `FINISHER`, else `ALL` is used |
 | `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
 | `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
 | `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
@@ -67,13 +69,22 @@ stopped mid-call; on the others, the checker stops at its next call. The checker
 finished a block's last analysis starts its next one.
 
 With `--dss-cut-on-timeout`, a round that every checker runs out of cuts the block instead of
-growing the budget (`BlockCut.kt`): at one location, as in `MIN_CUT`, and also between the edges
-leaving the entry or the cut location that share no location, so a loop head splits into the loop
-and its exit. The whole run then starts over on the new block graph, as the other blocks'
-summaries were computed for the old one. A block without a cut gets the growing budgets. A loop
-cut this way becomes a cycle of blocks, on which DSS need not terminate (see below). `BACKWARD`
-cuts its own blocks; `BIDIRECTIONAL` cuts the forward block (also for a backward block, the one
-it reverses) and rebuilds the backward graph from the cut forward graph.
+growing the budget (`BlockCut.kt`): the block is copied into a procedure of its own, cut by the
+`--dss-cut-strategy` decomposition as a whole procedure would be, and the pieces are mapped back.
+The copy gets an edge to enter by if its entry branches and one to leave by if a loop runs through
+its exit, as a decomposition expects one way in and a dead end out; the pieces drop them. A cut
+that would lose a path is refused, as is one into a single piece. A block without a cut gets the growing
+budgets. A loop cut this way becomes a cycle of blocks, on which DSS need not terminate (see
+below). `BACKWARD` cuts its own blocks; `BIDIRECTIONAL` cuts the forward block (also for a backward
+block, the one it reverses) and rebuilds the backward graph from the cut forward graph.
+
+With `--dss-cut-restart BLOCK`, the cut block is replaced by its pieces while the run goes on. The
+pieces start like any block, then receive the last postconditions of the block's predecessors (at
+the entry pieces) and the last violation conditions of its successors (at the exit pieces); what
+the block sent and is still queued is dropped, as a newer message replaces an older one of the
+same sender anyway. What the block sent and a neighbor stored stands for each adjacent piece until
+the piece sends its own message, which replaces it. Every other block keeps its state. `ALL` instead starts the whole run over on
+the cut graph, as the other executors do.
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.

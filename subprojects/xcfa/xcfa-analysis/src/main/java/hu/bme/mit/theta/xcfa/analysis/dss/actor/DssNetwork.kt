@@ -27,8 +27,25 @@ class DssNetwork(val blockGraph: BlockGraph, val behaviorFor: (Block) -> DssBloc
   val blockIds: Set<String> = blockGraph.blocks.mapTo(linkedSetOf()) { it.id }
 }
 
-/** [result], and the index of the network it came from; null if from the coordinator. */
-data class DssRun(val result: DssResult, val network: Int?)
+/**
+ * [result], and the index of the network it came from; null if from the coordinator. [blockGraphs]
+ * are the networks' graphs when the run ended, which differ from the given ones if blocks were cut
+ * in place (empty if the executor does not report them).
+ */
+data class DssRun(
+  val result: DssResult,
+  val network: Int?,
+  val blockGraphs: List<BlockGraph> = emptyList(),
+)
+
+/**
+ * Cuts block [blockId] of [graph] in place of restarting the run (null: it has no cut). The new
+ * graph keeps every other block, with its predecessors and successors rewired to the pieces.
+ */
+fun interface DssBlockCutter {
+
+  fun cut(graph: BlockGraph, blockId: String): BlockGraph?
+}
 
 /**
  * Builds the coordinator of a multi-network run: an actor with the observer's view of every network

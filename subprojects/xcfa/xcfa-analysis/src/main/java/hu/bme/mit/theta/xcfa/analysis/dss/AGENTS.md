@@ -25,9 +25,16 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   `DssBudgetExceededException` into a result or a checker failure (`BoundedChecker` falls back to
   its uninterpolated proof when interpolation runs out, which is still a proof).
 - A `DssBlockCutRequest` must reach `getDssChecker`, which restarts with the block cut (`PROCESS`
-  rebuilds it by class name, and its workers redo the cuts from `DssConfig.workerCuts`).
-- A block cut must keep the block's paths: every piece takes all of the block's edges out of each
-  location it passes through, and a piece reaching an exit that has successors ends there.
+  rebuilds it by class name, and its workers redo the cuts from `DssConfig.workerCuts`), or the
+  sequential executor, which replaces the block in place when it has a `DssBlockCutter`. There a
+  piece must hear the latest message of every outer neighbor (`DssMessageBroadcaster` keeps them),
+  the neighbors must re-key what they stored from the block to the adjacent pieces
+  (`onNeighborReplaced`) and its queued messages be dropped, or a stale entry under the old id
+  would outlive the block.
+- A block cut is a decomposition run on a copy of the block (`cloneBlock`, shared with
+  `extractBlockXcfa`), and must keep the block's paths: every piece takes all of the block's edges
+  out of each location it passes through, and a piece reaching an exit that has successors ends
+  there. `keepsPaths` refuses anything else, so a new decomposition needs no cut-specific code.
 - In `BIDIRECTIONAL` a cut is of a forward block (a backward block's request cuts the forward
   block it reverses, `cutTargetOf`), and the backward graph is rebuilt from the cut forward one,
   so the two directions keep sharing their block boundaries.

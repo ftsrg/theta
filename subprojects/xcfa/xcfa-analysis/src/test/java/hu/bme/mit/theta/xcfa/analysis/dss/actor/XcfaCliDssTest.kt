@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -316,16 +317,96 @@ class XcfaCliDssTest {
   @ParameterizedTest
   @ValueSource(strings = ["FORWARD", "BACKWARD", "BIDIRECTIONAL"])
   fun `a block that every checker runs out of is cut, and the run starts over`(direction: String) {
+    // BIDIRECTIONAL cannot cut in place, so the default also starts over there
+    val restart =
+      if (direction == "BIDIRECTIONAL") emptyArray() else arrayOf("--dss-cut-restart", "ALL")
     val cut =
       listOf("branches", "branches_unsafe").map { program ->
         val (output, thrown) =
-          runDss(program, *cutting, "--dss-direction", direction, "--loglevel", "INFO")
+          runDss(program, *cutting, *restart, "--dss-direction", direction, "--loglevel", "INFO")
         if (thrown != null) throw AssertionError(output, thrown)
         val verdict = output.lines().last { it.contains("SafetyResult") }
         assertTrue(verdict.contains(expected(program))) { output }
         "starting over with it cut" in output
       }
     assertTrue(if (direction == "BIDIRECTIONAL") cut.any { it } else cut.all { it }) { "$cut" }
+  }
+
+  /**
+   * Loop-free programs only, as for [cutting]; [decomposition] decides how many blocks there are.
+   */
+  @ParameterizedTest(name = "{0}, {1}")
+  @CsvSource("FORWARD,NONE", "FORWARD,MERGE", "BACKWARD,NONE", "BACKWARD,MERGE")
+  fun `a cut block is replaced in place while the other blocks keep running`(
+    direction: String,
+    decomposition: String,
+  ) {
+    val cut =
+      listOf("branches", "branches_unsafe").map { program ->
+        val (output, thrown) =
+          runDss(
+            program,
+            "--dss-expl-checker",
+            "--dss-checker-budget",
+            "1",
+            CUT,
+            "--dss-decomposition",
+            decomposition,
+            "--dss-direction",
+            direction,
+            "--loglevel",
+            "INFO",
+          )
+        if (thrown != null) throw AssertionError(output, thrown)
+        val verdict = output.lines().last { it.contains("SafetyResult") }
+        assertTrue(verdict.contains(expected(program))) { output }
+        assertTrue("starting over" !in output) { output }
+        "replacing it by its pieces" in output
+      }
+    assertTrue(cut.any { it }) { "no block was cut in place: $cut" }
+  }
+
+  /** The cut uses the decomposition of the run unless `--dss-cut-strategy` names another. */
+  @ParameterizedTest
+  @EnumSource(DssDecomposition::class)
+  fun `every decomposition can cut a block, and keeps the verdict`(strategy: DssDecomposition) {
+    for (program in listOf("branches", "branches_unsafe")) {
+      val (output, thrown) = runDss(program, *cutting, "--dss-cut-strategy", strategy.name)
+      if (thrown != null) throw AssertionError(output, thrown)
+      assertTrue(output.lines().last { it.contains("SafetyResult") }.contains(expected(program))) {
+        output
+      }
+    }
+  }
+
+  @Test
+  fun `a block is cut with the decomposition of the run unless another strategy is named`() {
+    fun cuts(vararg options: String): List<String> {
+      val (output, thrown) =
+        runDss(
+          "branches",
+          "--dss-expl-checker",
+          "--dss-checker-budget",
+          "1",
+          CUT,
+          *options,
+          "--loglevel",
+          "INFO",
+        )
+      if (thrown != null) throw AssertionError(output, thrown)
+      return output.lines().filter { "replacing it by its pieces" in it }
+    }
+
+    val merged = cuts("--dss-decomposition", "MERGE")
+    assertTrue(merged.isNotEmpty()) { "no block was cut" }
+    assertEquals(merged, cuts("--dss-decomposition", "MERGE", "--dss-cut-strategy", "MERGE"))
+    // NONE cuts nothing, so a run that does not decompose cuts as MIN_CUT_ABSORB_SELF_LOOPS
+    val single = cuts("--dss-decomposition", "NONE")
+    assertTrue(single.isNotEmpty()) { "no block was cut" }
+    assertEquals(
+      single,
+      cuts("--dss-decomposition", "NONE", "--dss-cut-strategy", "MIN_CUT_ABSORB_SELF_LOOPS"),
+    )
   }
 
   @Test

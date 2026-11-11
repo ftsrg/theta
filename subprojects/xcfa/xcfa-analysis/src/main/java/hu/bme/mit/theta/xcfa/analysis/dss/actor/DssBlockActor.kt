@@ -19,7 +19,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 
 /** CPAchecker's `DssAnalysisWorker`: routes the messages of one block's [behavior]. */
 class DssBlockActor(
-  private val block: Block,
+  private var block: Block,
   override val connection: DssConnection,
   private val behavior: DssBlockBehavior,
 ) : DssWorker(block.id) {
@@ -27,6 +27,17 @@ class DssBlockActor(
   private var shutdown = false
 
   override fun shutdownRequested(): Boolean = shutdown
+
+  /** A cut replaced this block: it handles no more messages, and sends no statistics. */
+  fun retire() {
+    shutdown = true
+  }
+
+  /** A cut replaced the neighbor [oldId] by [replacements]: [newBlock] has the new neighbors. */
+  fun neighborReplaced(oldId: String, newBlock: Block, replacements: Set<String>) {
+    block = newBlock
+    behavior.onNeighborReplaced(oldId, newBlock, replacements)
+  }
 
   override fun processMessage(message: DssMessage): Collection<DssMessage> =
     when (message.type) {
@@ -92,8 +103,8 @@ class DssBlockActor(
       broadcast(behavior.initialMessages())
       true
     } catch (e: Throwable) { // CPAchecker catches `Exception | Error` here, too
+      // True if a cut absorbed it, so that the other blocks still start
       connection.reportFailure(DssExceptionMessage(id, e))
-      false
     } finally {
       connection.active.remove(id)
     }

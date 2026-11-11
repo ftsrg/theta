@@ -15,28 +15,135 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.decomposition
 
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import java.util.Optional
+
+/** What cuts a block unless a decomposition is named: two pieces with the fewest edges between. */
+val DEFAULT_BLOCK_CUT: DssBlockDecomposition =
+  MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
 
 /**
- * [block] in smaller pieces (null if it has no cut), for a block too hard for every checker. It is
- * cut at one more location or at none, and the edges leaving the entry or the cut location start
- * separate pieces wherever they share no location, so a loop head splits into its loop and its
- * exit. As in [MinCutDecomposition], the fewest edges into the cut location win, then the cut whose
- * largest piece is the smallest.
+ * [block] in smaller pieces (null if it has no cut), for a block too hard for every checker: the
+ * [decomposition] applied to the block alone, as if it were a procedure of its own. The pieces keep
+ * all the paths of the block:
+ * - they share no edge and cover the block's reachable ones, and take every edge out of a location
+ *   they pass through;
+ * - one ends at the block's exit if a successor starts there, and none passes through the exit or
+ *   (unless the block is the root) the entry;
+ * - a root block keeps its single root piece, as a block graph has exactly one root.
  *
- * Every piece takes all of the block's edges out of each location it passes through, and a piece
- * reaching the block's exit (if a successor starts there) or entry ends there, so the pieces cover
- * exactly the block's paths. A root has no piece ending at its entry and a single one starting
- * there, as a block graph has one root.
+ * A decomposition that gives one piece, or cannot handle the block, gives no cut.
  */
-fun cutBlock(block: Block, searchBudget: Long = DEFAULT_CUT_SEARCH_BUDGET): List<Block>? =
-  BlockCutSearch(block, searchBudget).best()
+fun cutBlock(block: Block, decomposition: DssBlockDecomposition = DEFAULT_BLOCK_CUT): List<Block>? {
+  val reachable = reachableEdges(block)
+  if (reachable.size < 2) return null
+  val clone = cloneBlock(block, edges = reachable)
+  // A decomposition wants one way in and a dead end out, but an entry can branch, and a loop can
+  // run through the exit: the block gets an edge to enter and to leave by, dropped from the pieces
+  val enter = clone.entry.takeIf { it.outgoingEdges.size > 1 }?.let(::enteringEdge)
+  val leave = clone.exit.takeIf { it.outgoingEdges.isNotEmpty() }?.let(::leavingEdge)
+  val added = listOfNotNull(enter, leave)
+  val procedure =
+    XcfaProcedure(
+      name = block.id,
+      params = emptyList(),
+      vars = emptySet(),
+      locs = clone.originalLocations.keys + added.flatMap { listOf(it.source, it.target) },
+      edges = clone.edges + added,
+      initLoc = enter?.source ?: clone.entry,
+      finalLoc = Optional.empty(),
+      errorLoc = Optional.empty(),
+    )
+  val graph =
+    try {
+      decomposition.decompose(procedure)
+    } catch (e: IllegalStateException) {
+      return null
+    }
+  fun originalOf(location: XcfaLocation) =
+    when (location) {
+      enter?.source -> block.initialLocation
+      leave?.target -> block.finalLocation
+      else -> clone.originalLocations.getValue(location)
+    }
+  val pieces =
+    graph.blocks
+      .map { piece -> piece to piece.edges.filter { it !in added } }
+      // What is left of a piece that only enters or leaves the block is nothing
+      .filter { (_, edges) -> edges.isNotEmpty() }
+      .mapIndexed { index, (piece, edges) ->
+        Block(
+          id = "${block.id}_$index",
+          initialLocation = originalOf(piece.initialLocation),
+          finalLocation = originalOf(piece.finalLocation),
+          locations = piece.locations.mapTo(linkedSetOf(), ::originalOf),
+          edges = edges.mapTo(linkedSetOf()) { clone.originalEdges.getValue(it) },
+        )
+      }
+  return pieces.takeIf { it.size >= 2 && keepsPaths(block, reachable, it) }
+}
+
+private fun connect(source: XcfaLocation, target: XcfaLocation): XcfaEdge =
+  XcfaEdge(source, target, SequenceLabel(emptyList()), EmptyMetaData).also {
+    source.outgoingEdges.add(it)
+    target.incomingEdges.add(it)
+  }
+
+/** An edge from a new location to [entry], which stands for entering the block. */
+private fun enteringEdge(entry: XcfaLocation) =
+  connect(XcfaLocation("${entry.name}__in", metadata = EmptyMetaData), entry)
+
+/** An edge from [exit] to a new dead end, which stands for leaving the block. */
+private fun leavingEdge(exit: XcfaLocation) =
+  connect(exit, XcfaLocation("${exit.name}__out", metadata = EmptyMetaData))
+
+/** The block's edges reachable from its entry. */
+private fun reachableEdges(block: Block): Set<XcfaEdge> {
+  val bySource = block.edges.groupBy { it.source }
+  val edges = linkedSetOf<XcfaEdge>()
+  val seen = hashSetOf(block.initialLocation)
+  val waitlist = ArrayDeque(listOf(block.initialLocation))
+  while (waitlist.isNotEmpty()) {
+    for (edge in bySource[waitlist.removeFirst()].orEmpty()) {
+      edges += edge
+      if (seen.add(edge.target)) waitlist.addLast(edge.target)
+    }
+  }
+  return edges
+}
+
+private fun keepsPaths(block: Block, reachable: Set<XcfaEdge>, pieces: List<Block>): Boolean {
+  if (pieces.sumOf { it.edges.size } != reachable.size) return false
+  if (pieces.flatMapTo(hashSetOf()) { it.edges } != reachable) return false
+  // Where the successors start, and where a loop block's states come back to its entry
+  val exit = block.finalLocation.takeIf { block.successorIds.isNotEmpty() }
+  val entry = block.initialLocation.takeUnless { block.isRoot }
+  val bySource = reachable.groupBy { it.source }
+  for (piece in pieces) {
+    for (location in piece.locations - piece.initialLocation - piece.finalLocation) {
+      if (location == exit || location == entry) return false
+      if (!piece.edges.containsAll(bySource[location].orEmpty())) return false
+    }
+  }
+  if (exit != null && pieces.none { it.finalLocation == exit }) return false
+  if (block.isRoot) {
+    if (pieces.count { it.initialLocation == block.initialLocation } != 1) return false
+    if (pieces.any { it.finalLocation == block.initialLocation }) return false
+  }
+  return true
+}
 
 /** This graph with block [id] replaced by its [cutBlock] pieces, or null if it has no cut. */
-fun BlockGraph.cut(id: String): BlockGraph? {
+fun BlockGraph.cut(
+  id: String,
+  decomposition: DssBlockDecomposition = DEFAULT_BLOCK_CUT,
+): BlockGraph? {
   val block = blocks.singleOrNull { it.id == id } ?: error("BlockGraph has no block with id '$id'")
-  val pieces = cutBlock(block) ?: return null
+  val pieces = cutBlock(block, decomposition) ?: return null
   val entries = pieces.filter { it.initialLocation == block.initialLocation }.map { it.id }
   val exits = pieces.filter { it.finalLocation == block.finalLocation }.map { it.id }
   val outerPredecessors = block.predecessorIds - id
@@ -62,154 +169,4 @@ fun BlockGraph.cut(id: String): BlockGraph? {
       )
     }
   return BlockGraph((others + wired).toSet()).also { it.checkConsistency() }
-}
-
-private class BlockCutSearch(private val block: Block, private val budget: Long) {
-
-  /** The block's edges reachable from its entry, by source. */
-  private val outgoing: Map<XcfaLocation, List<XcfaEdge>> =
-    buildMap<XcfaLocation, MutableList<XcfaEdge>> {
-      val bySource = block.edges.groupBy { it.source }
-      val seen = mutableSetOf(block.initialLocation)
-      val waitlist = ArrayDeque(listOf(block.initialLocation))
-      while (waitlist.isNotEmpty()) {
-        val location = waitlist.removeFirst()
-        for (edge in bySource[location].orEmpty()) {
-          getOrPut(location) { mutableListOf() }.add(edge)
-          if (seen.add(edge.target)) waitlist.addLast(edge.target)
-        }
-      }
-    }
-
-  private val reachableEdges: Set<XcfaEdge> = outgoing.values.flatten().toSet()
-
-  /** Where the block's postcondition goes; without a successor the exit is only a dead end. */
-  private val exit: XcfaLocation? = block.finalLocation.takeIf { block.successorIds.isNotEmpty() }
-
-  /** A piece returning to the entry of a loop block hands its states to the entry pieces. */
-  private val entry: XcfaLocation? = block.initialLocation.takeUnless { block.isRoot }
-
-  private val candidates: List<XcfaLocation> =
-    reachableEdges
-      .map { it.target }
-      .distinct()
-      .filter { it != block.initialLocation && it != block.finalLocation && it in outgoing }
-      .sortedBy { it.name }
-
-  private var visits = 0L
-
-  private class Walk(
-    val edges: MutableSet<XcfaEdge> = linkedSetOf(),
-    val locations: MutableSet<XcfaLocation> = linkedSetOf(),
-    /** Passed through, i.e. all of their edges taken. */
-    val passed: MutableSet<XcfaLocation> = linkedSetOf(),
-    val exits: MutableSet<XcfaLocation> = linkedSetOf(),
-    var returnsToStart: Boolean = false,
-  ) {
-    fun absorb(other: Walk) {
-      edges += other.edges
-      locations += other.locations
-      passed += other.passed
-      exits += other.exits
-      returnsToStart = returnsToStart || other.returnsToStart
-    }
-  }
-
-  private class Cut(val pieces: List<Block>, val cost: Int, val name: String) {
-    val largest = pieces.maxOf { it.edges.size }
-  }
-
-  fun best(): List<Block>? {
-    if (block.initialLocation !in outgoing) return null
-    var best: Cut? = null
-    for (cut in listOf(null) + candidates) {
-      if (visits > budget) break
-      val found = evaluate(cut) ?: continue
-      val current = best
-      if (
-        current == null ||
-          compareValuesBy(
-            found,
-            current,
-            { it.cost },
-            { it.largest },
-            { it.pieces.size },
-            { it.name },
-          ) < 0
-      ) {
-        best = found
-      }
-    }
-    return best?.pieces
-  }
-
-  private fun evaluate(cut: XcfaLocation?): Cut? {
-    val stops = setOfNotNull(cut, exit, entry)
-    val starts =
-      listOfNotNull(
-        block.initialLocation,
-        cut,
-        exit?.takeIf { it != block.initialLocation && it in outgoing },
-      )
-    val pieces = mutableListOf<Block>()
-    for (start in starts) {
-      for (group in groups(start, stops)) {
-        if (group.exits.size > 1) return null
-        val final = group.exits.singleOrNull() ?: deadEnd(group.locations, start)
-        pieces += Block("${block.id}_${pieces.size}", start, final, group.locations, group.edges)
-      }
-    }
-    val owned = pieces.sumOf { it.edges.size }
-    if (pieces.size < 2 || owned != reachableEdges.size) return null
-    if (pieces.flatMapTo(hashSetOf()) { it.edges } != reachableEdges) return null
-    // The successors would lose their predecessor
-    if (exit != null && pieces.none { it.finalLocation == exit }) return null
-    val cost = cut?.let { c -> reachableEdges.count { it.target == c } } ?: 0
-    return Cut(pieces, cost, cut?.name.orEmpty())
-  }
-
-  /** The walks from [start]'s edges, merged where they pass through a common location. */
-  private fun groups(start: XcfaLocation, stops: Set<XcfaLocation>): List<Walk> {
-    val walks = outgoing.getValue(start).map { walk(start, it, stops) }
-    val single = walks.any { it.returnsToStart } || (start == block.initialLocation && block.isRoot)
-    if (single) return listOf(Walk().apply { walks.forEach(::absorb) })
-    val groups = mutableListOf<Walk>()
-    for (walk in walks) {
-      val overlapping = groups.filter { group -> group.passed.any { it in walk.passed } }
-      groups.removeAll(overlapping)
-      groups +=
-        Walk().apply {
-          overlapping.forEach(::absorb)
-          absorb(walk)
-        }
-    }
-    return groups
-  }
-
-  private fun walk(start: XcfaLocation, first: XcfaEdge, stops: Set<XcfaLocation>): Walk {
-    val walk = Walk(locations = linkedSetOf(start))
-    val waitlist = ArrayDeque(listOf(first))
-    while (waitlist.isNotEmpty()) {
-      val edge = waitlist.removeFirst()
-      visits++
-      if (!walk.edges.add(edge)) continue
-      val target = edge.target
-      walk.locations += target
-      when {
-        target in stops -> walk.exits += target
-        target == start -> walk.returnsToStart = true
-        // Pieces may share a dead end: it has no edges to take
-        target !in outgoing -> {}
-        walk.passed.add(target) -> waitlist.addAll(outgoing.getValue(target))
-      }
-    }
-    return walk
-  }
-
-  private fun deadEnd(locations: Set<XcfaLocation>, start: XcfaLocation): XcfaLocation =
-    locations
-      .filter { it != start && it !in outgoing }
-      .minWithOrNull(compareBy({ it.error }, { it.name }))
-      ?: locations.firstOrNull { it != start }
-      ?: start
 }

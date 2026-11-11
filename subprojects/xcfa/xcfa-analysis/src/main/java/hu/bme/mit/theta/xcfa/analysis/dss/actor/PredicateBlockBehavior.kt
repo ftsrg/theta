@@ -105,7 +105,7 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
   private val sourceProcedure: XcfaProcedure,
-  private val block: Block,
+  private var block: Block,
   checkerRoster: DssCheckerRoster,
   private val useGlobalPredicatePool: Boolean = true,
   private val resetPrecisionForEveryRun: Boolean = false,
@@ -899,6 +899,28 @@ class PredicateBlockBehavior(
         false
       }
     }
+  }
+
+  /**
+   * What the replaced neighbor sent stands for each of its pieces next to this block, until the
+   * piece sends its own message, which replaces it. A piece with no path to an error or no
+   * reachable exit keeps the stale one, an over-approximation of what the neighbor knew.
+   */
+  override fun onNeighborReplaced(oldId: String, block: Block, replacements: Set<String>) {
+    this.block = block
+    val predecessors = replacements.filter { it in block.predecessorIds }
+    val successors = replacements.filter { it in block.successorIds }
+    preconditions.remove(oldId)?.let { stored ->
+      predecessors.forEach { preconditions[it] = stored.toMutableList() }
+    }
+    inputVersions.remove(oldId)?.let { version ->
+      predecessors.forEach { inputVersions[it] = version }
+    }
+    if (restrictedInputs.remove(oldId)) restrictedInputs += predecessors
+    violationConditions.remove(oldId)?.let { stored ->
+      successors.forEach { violationConditions[it] = stored.toMutableList() }
+    }
+    mayViolations.values.forEach { it.remove(oldId) }
   }
 
   override fun statistics(): Map<String, String> = statistics.toMap()

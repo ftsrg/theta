@@ -66,6 +66,14 @@ enum class DssExecutor {
   PROCESS,
 }
 
+/** What `--dss-cut-on-timeout` starts over after it cuts a block. */
+enum class DssCutRestart {
+  /** Only the cut block: it is replaced by its pieces and the other blocks keep their state. */
+  BLOCK,
+  /** The whole run, on the cut block graph. */
+  ALL,
+}
+
 /** How a checker of [DssConfig.checkerBackends] is picked for a block analysis. */
 enum class DssCheckerSelectionMethod {
   /** Cycles the checker list. */
@@ -235,6 +243,21 @@ data class DssConfig(
         "into smaller blocks, and DSS starts over",
   )
   var cutOnTimeout: Boolean = false,
+  @Parameter(
+    names = ["--dss-cut-strategy"],
+    description =
+      "--dss-cut-on-timeout: the --dss-decomposition that cuts a block, applied to the block " +
+        "alone (default: --dss-decomposition itself, MIN_CUT_ABSORB_SELF_LOOPS for NONE, which " +
+        "cuts nothing)",
+  )
+  var cutStrategy: DssDecomposition? = null,
+  @Parameter(
+    names = ["--dss-cut-restart"],
+    description =
+      "--dss-cut-on-timeout: BLOCK replaces only the cut block by its pieces (FORWARD or " +
+        "BACKWARD, SEQUENTIAL, without conjectures or a FINISHER; else ALL), ALL starts the run over",
+  )
+  var cutRestart: DssCutRestart = DssCutRestart.BLOCK,
   @Parameter(
     names = ["--dss-solver"],
     description =

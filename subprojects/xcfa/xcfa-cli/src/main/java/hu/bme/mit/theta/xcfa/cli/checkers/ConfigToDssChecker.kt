@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockBehavior
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockCutter
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssBlockWitness
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssConjectureActor
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssCoordinatorFactory
@@ -110,6 +111,7 @@ import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions
 import hu.bme.mit.theta.xcfa.cli.params.DssCegarDomain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
 import hu.bme.mit.theta.xcfa.cli.params.DssConfig
+import hu.bme.mit.theta.xcfa.cli.params.DssCutRestart
 import hu.bme.mit.theta.xcfa.cli.params.DssDecomposition
 import hu.bme.mit.theta.xcfa.cli.params.DssDirection
 import hu.bme.mit.theta.xcfa.cli.params.DssExecutor
@@ -171,6 +173,7 @@ fun getDssChecker(
     dssConfig.fallbackSolver,
   )
   checkDssSupports(config.inputConfig.property)
+  val cutDecomposition = decompositionOf(cutStrategyOf(dssConfig))
   val procedure =
     (if (xcfa.isInlined) xcfa.initProcedures.singleOrNull()?.first
     else xcfa.procedures.singleOrNull())
@@ -179,18 +182,7 @@ fun getDssChecker(
           "procedures) - see xcfa-analysis's dss/README.md's Known Limitations."
       )
 
-  val decomposition: DssBlockDecomposition =
-    when (dssConfig.decomposition) {
-      DssDecomposition.LINEAR -> LinearBlockDecomposition()
-      DssDecomposition.MERGE -> MergeBlockDecomposition()
-      DssDecomposition.MERGE_ABSORB_SELF_LOOPS -> SelfLoopAbsorbingDecomposition()
-      DssDecomposition.MERGE_ACYCLIC -> AcyclicMergeDecomposition()
-      DssDecomposition.MIN_CUT -> MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW)
-      DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS ->
-        MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
-      DssDecomposition.MIN_CUT_ACYCLIC -> MinCutDecomposition(loopHandling = CutLoopHandling.FORBID)
-      DssDecomposition.NONE -> SingleBlockDecomposition
-    }
+  val decomposition = decompositionOf(dssConfig.decomposition)
   val direction = dssConfig.direction
   val reversal = if (direction == DssDirection.FORWARD) null else reverseProgram(xcfa)
   // Shared block boundaries are where the two directions can meet
@@ -210,9 +202,9 @@ fun getDssChecker(
   // backward graph from the forward one, so that the two directions still share their boundaries
   fun cutBlockAt(id: String) {
     val forward = forwardGraph
-    if (forward == null) backwardGraph = cutToRestart(backwardGraph!!, id)
+    if (forward == null) backwardGraph = cutToRestart(backwardGraph!!, id, cutDecomposition)
     else {
-      forwardGraph = cutToRestart(forward, id)
+      forwardGraph = cutToRestart(forward, id, cutDecomposition)
       backwardGraph = backwardOf(forwardGraph)
     }
   }
@@ -265,6 +257,14 @@ fun getDssChecker(
     "--dss-cut-on-timeout cuts blocks that the checkers run out of their budget on, so it needs " +
       "--dss-checker-budget"
   }
+  // A single network the cut block is replaced in; the others would have to follow it
+  val cutInPlace =
+    dssConfig.cutOnTimeout &&
+      dssConfig.cutRestart == DssCutRestart.BLOCK &&
+      dssConfig.executor == DssExecutor.SEQUENTIAL &&
+      direction != DssDirection.BIDIRECTIONAL &&
+      !dssConfig.conjectureInvariants &&
+      !finisherSelection
   require(!dssConfig.conjectureInvariants || dssConfig.conjectureGeneralizers.isNotEmpty()) {
     "--dss-conjecture-invariants needs at least one --dss-conjecture-generalizers entry"
   }
@@ -372,9 +372,11 @@ fun getDssChecker(
             quantifiedPredicates = dssConfig.quantifiedPredicates,
             cutOnTimeout = dssConfig.cutOnTimeout,
             hasCut = {
-              cutTargetOf(block.id, forward)?.let { target ->
-                cutBlock(cutGraph.blocks.single { it.id == target }) != null
-              } == true
+              if (cutInPlace) cutBlock(block, cutDecomposition) != null
+              else
+                cutTargetOf(block.id, forward)?.let { target ->
+                  cutBlock(cutGraph.blocks.single { it.id == target }, cutDecomposition) != null
+                } == true
             },
           )
           .also { behaviors[block.id] = it }
@@ -450,7 +452,24 @@ fun getDssChecker(
         when (dssConfig.executor) {
           DssExecutor.CONCURRENT ->
             runDssNetworks(networks, coordinator, maxParallelBlocks = dssConfig.maxParallelBlocks)
-          DssExecutor.SEQUENTIAL -> runDssNetworksSequentially(networks, coordinator)
+          DssExecutor.SEQUENTIAL ->
+            runDssNetworksSequentially(
+              networks,
+              coordinator,
+              cutter =
+                DssBlockCutter { graph, id ->
+                    graph.cut(id, cutDecomposition)?.also {
+                      logger.write(
+                        Logger.Level.INFO,
+                        "DSS: every checker ran out of its budget on block %s, replacing it by its " +
+                          "pieces: %s\n",
+                        id,
+                        it.getStatistics(),
+                      )
+                    }
+                  }
+                  .takeIf { cutInPlace },
+            )
           DssExecutor.PROCESS ->
             runDssNetworksInProcesses(
               networks.map { it.blockGraph },
@@ -496,6 +515,10 @@ fun getDssChecker(
     }
   }
   val dssRun = checkNotNull(finished)
+  // Blocks cut in place: the graph the run ended with is the one the witnesses are about
+  dssRun.blockGraphs.singleOrNull()?.let { graph ->
+    if (forwardGraph != null) forwardGraph = graph else backwardGraph = graph
+  }
 
   val witnesses =
     if (dssConfig.executor == DssExecutor.PROCESS) processWitnesses
@@ -545,8 +568,33 @@ fun getDssChecker(
   }
 }
 
-private fun cutToRestart(blockGraph: BlockGraph, id: String): BlockGraph =
-  checkNotNull(blockGraph.cut(id)) { "DSS block $id was to be cut, but it has no cut" }
+private fun decompositionOf(decomposition: DssDecomposition): DssBlockDecomposition =
+  when (decomposition) {
+    DssDecomposition.LINEAR -> LinearBlockDecomposition()
+    DssDecomposition.MERGE -> MergeBlockDecomposition()
+    DssDecomposition.MERGE_ABSORB_SELF_LOOPS -> SelfLoopAbsorbingDecomposition()
+    DssDecomposition.MERGE_ACYCLIC -> AcyclicMergeDecomposition()
+    DssDecomposition.MIN_CUT -> MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW)
+    DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS ->
+      MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
+    DssDecomposition.MIN_CUT_ACYCLIC -> MinCutDecomposition(loopHandling = CutLoopHandling.FORBID)
+    DssDecomposition.NONE -> SingleBlockDecomposition
+  }
+
+/** What cuts a block: the decomposition of the run, which for `NONE` cuts nothing, so another. */
+private fun cutStrategyOf(dssConfig: DssConfig): DssDecomposition =
+  dssConfig.cutStrategy
+    ?: dssConfig.decomposition.takeUnless { it == DssDecomposition.NONE }
+    ?: DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS
+
+private fun cutToRestart(
+  blockGraph: BlockGraph,
+  id: String,
+  decomposition: DssBlockDecomposition,
+): BlockGraph =
+  checkNotNull(blockGraph.cut(id, decomposition)) {
+    "DSS block $id was to be cut, but it has no cut"
+  }
 
 /**
  * The block that `--dss-cut-on-timeout` cuts for block [id], or null if none: a backward block of

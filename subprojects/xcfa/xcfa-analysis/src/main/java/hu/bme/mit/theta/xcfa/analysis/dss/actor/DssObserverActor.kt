@@ -25,7 +25,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 class DssObserverActor(
   id: String,
   override val connection: DssConnection,
-  private val numberOfBlocks: Int,
+  private var numberOfBlocks: Int,
   private val networks: List<Set<String>> = emptyList(),
 ) : DssWorker(id) {
 
@@ -41,6 +41,12 @@ class DssObserverActor(
     private set
 
   override fun shutdownRequested(): Boolean = shutdown
+
+  /** A cut replaced block [oldId] by [pieces]: their statistics are waited for instead. */
+  fun blockReplaced(oldId: String, pieces: Int) {
+    numberOfBlocks += pieces - 1
+    statsReceivedFrom.remove(oldId)
+  }
 
   override fun processMessage(message: DssMessage): Collection<DssMessage> {
     when (message.type) {
