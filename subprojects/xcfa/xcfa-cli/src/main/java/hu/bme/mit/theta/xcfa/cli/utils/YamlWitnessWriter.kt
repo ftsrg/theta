@@ -269,7 +269,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     // the racing pair directly from the raw trace's flags so the witness is still conformant.
     if (property.inputProperty == ErrorDetection.DATA_RACE) {
       @Suppress("UNCHECKED_CAST") val rawTrace = trace as Trace<XcfaState<*>, XcfaAction>
-      val threadIds = ThreadIdEmission(rawTrace, parseContext)
+      val threadIds = ThreadIdEmission(rawTrace, parseContext, targetOnly = true)
       reconstructDataRaceFromFlags(rawTrace, inputFile, threadIds)?.let { targetWaypoints ->
         val dataRaceMetadata =
           getMetadata(
@@ -301,6 +301,11 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       runCatching { violationTarget(trace as Trace<XcfaState<*>, XcfaAction>, inputFile) }
         .onFailure { logger.info("Could not locate the violation target: ${it.message}") }
         .getOrNull()
+    @Suppress("UNCHECKED_CAST")
+    val targetThreadId =
+      (trace as Trace<XcfaState<*>, XcfaAction>).let { t ->
+        violatingPid(t)?.let { ThreadIdEmission(t, parseContext, targetOnly = true).ofPid(it) }
+      }
 
     return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
       val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
@@ -316,6 +321,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           ltlSpecification = ltlSpecification,
           architecture = architecture,
           targetLocation = loc,
+          threadId = targetThreadId,
         )
       } ?: generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
     } else if (
@@ -332,6 +338,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           ltlSpecification = ltlSpecification,
           architecture = architecture,
           targetLocation = it,
+          threadId = targetThreadId,
         )
       } ?: generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
     } else generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
@@ -376,8 +383,15 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     ltlSpecification: String,
     architecture: ArchitectureConfig.ArchitectureType?,
     targetLocation: Location,
+    threadId: Int? = null,
   ): String {
-    val metadata = getMetadata(inputFile, ltlSpecification, architecture)
+    val metadata =
+      getMetadata(
+        inputFile,
+        ltlSpecification,
+        architecture,
+        formatVersion = if (threadId != null) "2.2" else "2.1",
+      )
     val witness =
       YamlWitness(
         entryType = EntryType.VIOLATION,
@@ -392,6 +406,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                     null,
                     location = targetLocation,
                     Action.FOLLOW,
+                    threadId,
                   )
                 )
               )
@@ -1013,14 +1028,15 @@ private fun getTargetLocation(inputFile: File, metadata: MetaData?): Location? =
  * that reaches the error location. Edges into the error location often have no position of their
  * own, so the earlier labels of that process are searched as well.
  */
+private fun violatingPid(trace: Trace<out XcfaState<*>, XcfaAction>): Int? =
+  trace.states.last().processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
+    ?: trace.actions.lastOrNull()?.pid
+
 private fun violationTarget(
   trace: Trace<out XcfaState<*>, XcfaAction>,
   inputFile: File,
 ): Location? {
-  val pid =
-    trace.states.last().processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
-      ?: trace.actions.lastOrNull()?.pid
-      ?: return null
+  val pid = violatingPid(trace) ?: return null
   for (action in trace.actions.asReversed()) {
     if (action.pid != pid) continue
     for (label in action.edge.getFlatLabels().asReversed()) {
@@ -1282,11 +1298,14 @@ private fun DataRaceAccess.toTargetWaypoint(
  * 0, and a spawned process is numbered when its creation is emitted as a thread-registering
  * `function_enter` waypoint, in trace order -- matching the witness-anchored numbering of the
  * format (the k-th registering waypoint of the witness denotes thread k). A process whose creation
- * could not be emitted gets `any`. For single-threaded programs no `thread_id`s are emitted.
+ * cannot be emitted fails the witness, except in a [targetOnly] fallback witness, which registers
+ * no threads: there a non-entry process gets `any`. For single-threaded programs no `thread_id`s
+ * are emitted.
  */
 private class ThreadIdEmission(
   concrTrace: Trace<out XcfaState<*>, XcfaAction>,
   parseContext: ParseContext,
+  private val targetOnly: Boolean = false,
 ) {
   private val enabled = parseContext.multiThreading
   private val threadIds = mutableMapOf<String, Int>()
@@ -1296,11 +1315,14 @@ private class ThreadIdEmission(
     concrTrace.states.firstOrNull()?.processes?.keys?.forEach { threadIds["$it"] = 0 }
   }
 
-  fun ofPid(pid: Int): Int? =
-    if (enabled) threadIds["$pid"] ?: WaypointContent.ANY_THREAD_ID else null
+  fun ofPid(pid: Int): Int? = if (enabled) threadIds["$pid"] ?: unregistered("$pid") else null
 
   fun ofEdge(edge: WitnessEdge?): Int? =
-    if (enabled) edge?.threadId?.let { threadIds[it] ?: WaypointContent.ANY_THREAD_ID } else null
+    if (enabled) edge?.threadId?.let { threadIds[it] ?: unregistered(it) } else null
+
+  private fun unregistered(pid: String): Int =
+    if (targetOnly) WaypointContent.ANY_THREAD_ID
+    else error("No thread-registering waypoint for process $pid")
 
   /**
    * The thread of a node's waypoint: the erroring process for a violation node, otherwise the
@@ -1321,15 +1343,16 @@ private class ThreadIdEmission(
    */
   fun registrations(edge: WitnessEdge, inputFile: File): List<WaypointContent> {
     if (!enabled) return emptyList()
+    check(!targetOnly) { "A target-only witness registers no threads" }
     val newPids = edge.target.xcfaLocations.keys - edge.source.xcfaLocations.keys
-    return newPids.mapNotNull { pid ->
+    return newPids.map { pid ->
       // without a column, validators take the first matching call on the line
       val location =
         threadCreateLocation(edge, inputFile)
           ?: (edge.endline ?: edge.startline)?.let {
             Location(fileName = inputFile.name, line = it)
           }
-          ?: return@mapNotNull null
+          ?: error("No source location for the creation of process $pid")
       threadIds["$pid"] = nextThreadId++
       WaypointContent(
         type = WaypointType.FUNCTION_ENTER,
