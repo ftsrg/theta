@@ -176,10 +176,14 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     this.events = events.values.flatMap { it.values }.flatten()
     hbVars = Array(Event.clkSize) { arrayOfNulls(Event.clkSize) }
 
-    // PPO
-    ppos.forEachPair { i, j, enabled ->
-      if (enabled) {
-        addHb(null, i, j)
+    // PPO: under SC the clocks are integers, so the program order edges imply their closure
+    if (isSc) {
+      pos.forEach { if (it.from.clkId != it.to.clkId) addLt(null, it.from.clkId, it.to.clkId) }
+    } else {
+      ppos.forEachPair { i, j, enabled ->
+        if (enabled) {
+          addHb(null, i, j)
+        }
       }
     }
     pos.forEach {
