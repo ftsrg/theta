@@ -632,12 +632,24 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           targetLocation = targetLocation,
         )
         ?.let {
-          // to avoid multiple segments for the target location, we need to remove the existing
-          // follow waypoint and only keep the target
-          if (it.type == WaypointType.TARGET && waypoints.lastOrNull()?.location == it.location) {
-            waypoints.removeLast()
+          // One C statement can span several XCFA edges (e.g. an inlined memcpy), each yielding
+          // a waypoint at the statement's location. Every waypoint is a separate segment, so a
+          // validator would have to reach the statement once per edge. Keep only the target, and
+          // of the assumptions only the first: the later ones describe mid-statement states.
+          val last = waypoints.lastOrNull()
+          if (it.type == WaypointType.TARGET) {
+            while (waypoints.lastOrNull()?.location == it.location) {
+              waypoints.removeLast()
+            }
+            waypoints.add(it)
+          } else if (
+            !(it.type == WaypointType.ASSUMPTION &&
+              last?.type == WaypointType.ASSUMPTION &&
+              last.location == it.location &&
+              last.threadId == it.threadId)
+          ) {
+            waypoints.add(it)
           }
-          waypoints.add(it)
         }
       if (outgoing != null) {
         waypoints.addAll(threadIds.registrations(outgoing, inputFile))
