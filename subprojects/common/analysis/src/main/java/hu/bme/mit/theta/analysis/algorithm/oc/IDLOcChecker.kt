@@ -101,7 +101,7 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   // asserted in chunks: a solver call per ordering constraint dominates the encoding time
   private val pending = mutableListOf<Expr<BoolType>>()
 
-  private fun assert(expr: Expr<BoolType>) {
+  private fun add(expr: Expr<BoolType>) {
     pending.add(expr)
     if (pending.size >= CHUNK_SIZE) flush()
   }
@@ -113,7 +113,7 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   }
 
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
-    assert(cond?.let { Imply(it, expr) } ?: expr)
+    add(cond?.let { Imply(it, expr) } ?: expr)
 
   private fun addLt(cond: Expr<BoolType>?, clk1: Int, clk2: Int) {
     check(clk1 != clk2)
@@ -139,7 +139,7 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   private fun addNeq(clkVars: Collection<ConstDecl<IntType>>) {
     val vars = clkVars.toList()
     for ((index, v1) in vars.withIndex()) {
-      for (v2 in vars.subList(index + 1, vars.size)) assert(Neq(v1.ref, v2.ref))
+      for (v2 in vars.subList(index + 1, vars.size)) add(Neq(v1.ref, v2.ref))
     }
   }
 
