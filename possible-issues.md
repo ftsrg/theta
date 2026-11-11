@@ -20,10 +20,3 @@ but they used MathSAT for fewer queries. A native crash ends the run, so no fall
 
 `Z3TermTransformer` (legacy and new) does on some float tasks; being an `Error`, it escapes every
 `catch (e: Exception)` fallback, including DSS's checker and solver fallbacks.
-
-## DSS rejects a procedure whose entry lies on a cycle
-
-`while_infinite_loop_{1,2,3}`: the `BlockGraph` check `must have exactly one root block (no
-predecessors), but found 0 among [SB1]` fails for `MIN_CUT_ABSORB_SELF_LOOPS`, so these tasks error
-instead of being analyzed. An older build solved `while_infinite_loop_3` with the same
-decomposition, so this may be a regression.
