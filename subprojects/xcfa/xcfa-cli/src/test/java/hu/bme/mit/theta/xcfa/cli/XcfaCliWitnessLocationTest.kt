@@ -57,6 +57,7 @@ class XcfaCliWitnessLocationTest {
         Arguments.of("overflow-call-in-statement.c", "no-overflow"),
         Arguments.of("overflow-assert-argument.c", "no-overflow"),
         Arguments.of("deref-if-guard.c", "valid-memsafety"),
+        Arguments.of("deref-memcpy.c", "valid-memsafety"),
       )
 
     @JvmStatic
@@ -94,6 +95,12 @@ class XcfaCliWitnessLocationTest {
     assertEquals(line, targets[0].location.line)
     assertEquals(column, targets[0].location.column) {
       "The target must point at '$code' on line $line of $file"
+    }
+    // a validator would have to reach the target statement once per waypoint at its location
+    val beforeTarget =
+      witness.waypoints().zipWithNext().firstOrNull { it.second == targets[0] }?.first
+    assertTrue(beforeTarget?.location != targets[0].location) {
+      "$beforeTarget repeats the target location"
     }
 
     val validation =
