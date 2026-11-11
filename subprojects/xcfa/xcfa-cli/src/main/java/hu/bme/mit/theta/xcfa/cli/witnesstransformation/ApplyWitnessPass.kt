@@ -600,13 +600,16 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
             ) {
               "Not handled: $constraint"
             }
+            // Names resolve to the last variable with that C name, so `v` goes last: an inlined
+            // callee may have a variable of the same name (e.g. the parameter the result is passed
+            // to)
             getBoolExpressionFromC(
               constraint.value.replace("\\result", cNameOpt.get() as String),
               parseContext,
               false,
               false,
               NullLogger.getInstance(),
-              builder.getVars() + builder.parent.getVars().map { it.wrappedVar },
+              (builder.getVars() + builder.parent.getVars().map { it.wrappedVar }).toList() + v,
             )
           } else {
             True() // no cname

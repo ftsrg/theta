@@ -66,6 +66,12 @@ class XcfaCliNonTerminationValidateTest {
           "/c/nontermination/Swingers.yml",
           "--property /c/nontermination/prop/termination.prp",
         ),
+        // the callee's parameter has the same C name as the variable `\result` is assigned to
+        Arguments.of(
+          "/c/nontermination/ResultNameClash.c",
+          "/c/nontermination/ResultNameClash.yml",
+          "--property /c/nontermination/prop/termination.prp",
+        ),
       )
     }
 
