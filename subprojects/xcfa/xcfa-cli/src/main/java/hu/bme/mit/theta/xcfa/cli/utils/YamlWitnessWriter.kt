@@ -276,7 +276,9 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             inputFile,
             ltlSpecification,
             architecture,
-            formatVersion = if (parseContext.multiThreading) "2.2" else "2.1",
+            formatVersion =
+              if (!parseContext.multiThreading) "2.1"
+              else targetOnlyFormatVersion(targetWaypoints.map { it.waypoint.threadId }),
           )
         return WitnessYamlConfig.encodeToString(
           listOf(
@@ -395,7 +397,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         inputFile,
         ltlSpecification,
         architecture,
-        formatVersion = if (threadId != null) "2.2" else "2.1",
+        formatVersion = if (threadId == null) "2.1" else targetOnlyFormatVersion(listOf(threadId)),
       )
     val witness =
       YamlWitness(
@@ -1033,6 +1035,10 @@ private fun getTargetLocation(inputFile: File, metadata: MetaData?): Location? =
  * that reaches the error location. Edges into the error location often have no position of their
  * own, so the earlier labels of that process are searched as well.
  */
+/** `thread_id: any` needs format 2.4; numeric thread ids are format 2.2. */
+private fun targetOnlyFormatVersion(threadIds: List<Int?>): String =
+  if (WaypointContent.ANY_THREAD_ID in threadIds) "2.4" else "2.2"
+
 private fun violatingPid(trace: Trace<out XcfaState<*>, XcfaAction>): Int? =
   trace.states.last().processes.entries.firstOrNull { it.value.locs.peek()?.error == true }?.key
     ?: trace.actions.lastOrNull()?.pid
