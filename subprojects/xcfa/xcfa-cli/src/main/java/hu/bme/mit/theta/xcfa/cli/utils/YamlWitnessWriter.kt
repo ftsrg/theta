@@ -1281,8 +1281,8 @@ private fun DataRaceAccess.toTargetWaypoint(
  * Assigns format-2.2 `thread_id`s to the runtime processes of a trace: the entry process is thread
  * 0, and a spawned process is numbered when its creation is emitted as a thread-registering
  * `function_enter` waypoint, in trace order -- matching the witness-anchored numbering of the
- * format (the k-th registering waypoint of the witness denotes thread k). For single-threaded
- * programs no `thread_id`s are emitted.
+ * format (the k-th registering waypoint of the witness denotes thread k). A process whose creation
+ * could not be emitted gets `any`. For single-threaded programs no `thread_id`s are emitted.
  */
 private class ThreadIdEmission(
   concrTrace: Trace<out XcfaState<*>, XcfaAction>,
@@ -1296,10 +1296,11 @@ private class ThreadIdEmission(
     concrTrace.states.firstOrNull()?.processes?.keys?.forEach { threadIds["$it"] = 0 }
   }
 
-  fun ofPid(pid: Int): Int? = if (enabled) threadIds["$pid"] else null
+  fun ofPid(pid: Int): Int? =
+    if (enabled) threadIds["$pid"] ?: WaypointContent.ANY_THREAD_ID else null
 
   fun ofEdge(edge: WitnessEdge?): Int? =
-    if (enabled) edge?.threadId?.let { threadIds[it] } else null
+    if (enabled) edge?.threadId?.let { threadIds[it] ?: WaypointContent.ANY_THREAD_ID } else null
 
   /**
    * The thread of a node's waypoint: the erroring process for a violation node, otherwise the
@@ -1322,7 +1323,6 @@ private class ThreadIdEmission(
     if (!enabled) return emptyList()
     val newPids = edge.target.xcfaLocations.keys - edge.source.xcfaLocations.keys
     return newPids.mapNotNull { pid ->
-      threadIds["$pid"] = nextThreadId++
       // without a column, validators take the first matching call on the line
       val location =
         threadCreateLocation(edge, inputFile)
@@ -1330,6 +1330,7 @@ private class ThreadIdEmission(
             Location(fileName = inputFile.name, line = it)
           }
           ?: return@mapNotNull null
+      threadIds["$pid"] = nextThreadId++
       WaypointContent(
         type = WaypointType.FUNCTION_ENTER,
         location = location,
