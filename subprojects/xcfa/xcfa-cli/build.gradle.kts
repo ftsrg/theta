@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-chc-frontend"))
+    implementation(project(":theta-svlib-frontend"))
     implementation(project(":theta-core"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-xcfa"))
@@ -208,6 +209,10 @@ val fixtureTest by
         )
         (project.findProperty("theta.canary.svBenchmarks"))?.let {
             systemProperty("theta.canary.svBenchmarks", it.toString())
+        }
+        // Rows run this many at once (default 4).
+        (project.findProperty("theta.fixture.jobs"))?.let {
+            systemProperty("theta.fixture.jobs", it.toString())
         }
 
         // Depends on the benchmarks and the built archive, not only on this project's inputs.

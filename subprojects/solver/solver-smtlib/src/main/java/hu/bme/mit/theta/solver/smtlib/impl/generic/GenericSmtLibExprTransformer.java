@@ -66,9 +66,11 @@ import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
@@ -101,6 +103,7 @@ import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
@@ -206,6 +209,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(IntLeqExpr.class, this::transformIntLeq)
                 .addCase(IntLtExpr.class, this::transformIntLt)
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
+                .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                 // Enums
 
@@ -273,9 +277,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(FpMaxExpr.class, this::transformFpMax)
                 .addCase(FpMinExpr.class, this::transformFpMin)
                 .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                 .addCase(FpRemExpr.class, this::transformFpRem)
                 .addCase(FpIsNanExpr.class, this::transformFpIsNaN)
                 .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                .addCase(FpIsZeroExpr.class, this::transformFpIsZero)
                 .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                 .addCase(FpToBvExpr.class, this::transformFpToBv)
                 .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
@@ -625,6 +631,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformIntToRat(final IntToRatExpr expr) {
         return String.format("(to_real %s)", toTerm(expr.getOp()));
+    }
+
+    protected String transformIntToBv(final IntToBvExpr expr) {
+        return String.format("(int_to_bv %s)", toTerm(expr.getOp()));
     }
 
     /*
@@ -1061,6 +1071,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         return String.format("(fp.isInfinite %s)", toTerm(expr.getOp()));
     }
 
+    protected String transformFpIsZero(final FpIsZeroExpr expr) {
+        return String.format("(fp.isZero %s)", toTerm(expr.getOp()));
+    }
+
     protected String transformFpFromBv(final FpFromBvExpr expr) {
         if (expr.isSigned()) {
             return String.format(
@@ -1102,9 +1116,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformFpFromIeeeBv(final FpFromIeeeBvExpr expr) {
-        // The inverse of fp.to_ieee_bv; equally unavailable over generic SMT-LIB.
-        throw new UnsupportedOperationException(
-                "IEEE bit reinterpretation (fp.to_ieee_bv) is not available over generic SMT-LIB");
+        // Standard SMT-LIB, unlike the other direction: every NaN pattern denotes the one NaN.
+        return String.format(
+                "((_ to_fp %d %d) %s)",
+                expr.getFpType().getExponent(),
+                expr.getFpType().getSignificand(),
+                toTerm(expr.getOp()));
     }
 
     protected String transformFpToFp(final FpToFpExpr expr) {
@@ -1212,6 +1229,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                             "(store %s %s %s)", running, toTerm(elem.get1()), toTerm(elem.get2()));
         }
         return running;
+    }
+
+    private String transformFpMathFunc(final FpMathFuncExpr expr) {
+        final String funcSymbol = transformer.toSymbol(SmtLibMathFuncDecls.funcDecl(expr));
+        return "(%s %s)".formatted(funcSymbol, toTerm(expr.getOp()));
     }
 
     private String transformDereference(final Dereference<?, ?, ?> expr) {

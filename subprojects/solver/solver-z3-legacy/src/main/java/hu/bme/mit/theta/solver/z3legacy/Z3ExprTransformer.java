@@ -125,6 +125,7 @@ final class Z3ExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                         // Bitvectors
 
@@ -186,9 +187,11 @@ final class Z3ExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                        .addCase(FpIsZeroExpr.class, this::transformFpIsZero)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
                         .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
@@ -566,6 +569,12 @@ final class Z3ExprTransformer {
         return context.mkInt2Real(opTerm);
     }
 
+    private com.microsoft.z3legacy.Expr transformIntToBv(final IntToBvExpr expr) {
+        final com.microsoft.z3legacy.IntExpr opTerm =
+                (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
+        return context.mkInt2BV(expr.getSize(), opTerm);
+    }
+
     private com.microsoft.z3legacy.Expr transformBvLit(final BvLitExpr expr) {
         return context.mkBV(
                 BvUtils.neutralBvLitExprToBigInteger(expr).toString(), expr.getType().getSize());
@@ -859,9 +868,22 @@ final class Z3ExprTransformer {
         return context.mkFPIsInfinite(opTerm);
     }
 
+    private com.microsoft.z3legacy.Expr transformFpIsZero(final FpIsZeroExpr expr) {
+        final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+        return context.mkFPIsZero(opTerm);
+    }
+
     private com.microsoft.z3legacy.Expr transformFpSqrt(final FpSqrtExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
+    }
+
+    /** An uninterpreted function per function and sort, named after the operator label. */
+    private com.microsoft.z3legacy.Expr transformFpMathFunc(final FpMathFuncExpr expr) {
+        final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
+        final Sort sort = transformer.toSort(expr.getType());
+        final FuncDecl func = context.mkFuncDecl(expr.getOperatorLabel(), new Sort[] {sort}, sort);
+        return context.mkApp(func, opTerm);
     }
 
     private com.microsoft.z3legacy.Expr transformFpRoundToIntegral(

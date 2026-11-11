@@ -22,6 +22,8 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.atn.PredictionMode
+import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.antlr.v4.runtime.tree.ParseTree
 
 /**
@@ -49,14 +51,28 @@ fun parseTypeAware(input: CharStream): CParser.CompilationUnitContext =
   parseC(input, collectTypedefNames(input))
 
 /** The real parse: an identifier is a type name only if it was actually `typedef`'d. */
-private fun parseC(input: CharStream, typedefNames: Set<String>): CParser.CompilationUnitContext {
-  input.seek(0)
-  val parser = CParser(CommonTokenStream(CLexer(input)))
-  parser.typedefNames.addAll(typedefNames)
-  parser.permissiveTypeNames = false
-  parser.errorHandler = BailErrorStrategy()
-  return parser.compilationUnit()
-}
+private fun parseC(input: CharStream, typedefNames: Set<String>): CParser.CompilationUnitContext =
+  twoStage { mode ->
+    input.seek(0)
+    val parser = CParser(CommonTokenStream(CLexer(input)))
+    parser.typedefNames.addAll(typedefNames)
+    parser.permissiveTypeNames = false
+    parser.errorHandler = BailErrorStrategy()
+    parser.interpreter.predictionMode = mode
+    parser.compilationUnit()
+  }
+
+/**
+ * Runs [parse] with SLL prediction and repeats it with full LL only if that fails. SLL is much
+ * faster on deeply nested code (if-else chains of thousands of lines), and where it succeeds it
+ * gives the same tree.
+ */
+private fun <T> twoStage(parse: (PredictionMode) -> T): T =
+  try {
+    parse(PredictionMode.SLL)
+  } catch (e: ParseCancellationException) {
+    parse(PredictionMode.LL)
+  }
 
 /**
  * The typedef names of the translation unit, from a permissive parse that tolerates errors.
@@ -74,12 +90,19 @@ fun collectTypedefNames(input: CharStream): Set<String> {
 
 /** Harvests one translation unit's typedef names, following any `#include` it names. */
 private fun collectTypedefNamesFrom(input: CharStream, names: MutableSet<String>) {
-  val parser = CParser(CommonTokenStream(CLexer(input)))
-  parser.removeErrorListeners() // a file that does not parse still tells us its typedefs, and those
-  // names are often exactly what lets the *real* parse of it succeed; complain about it later
+  val start = input.index()
   val tree =
     try {
-      parser.compilationUnit()
+      // A clean SLL parse first; a file that does not parse that way gets the tolerant LL parse.
+      twoStage { mode ->
+        input.seek(start)
+        val parser = CParser(CommonTokenStream(CLexer(input)))
+        parser.removeErrorListeners() // a file that does not parse still tells us its typedefs,
+        // and those names are often exactly what lets the *real* parse of it succeed
+        if (mode == PredictionMode.SLL) parser.errorHandler = BailErrorStrategy()
+        parser.interpreter.predictionMode = mode
+        parser.compilationUnit()
+      }
     } catch (e: Exception) {
       return
     }

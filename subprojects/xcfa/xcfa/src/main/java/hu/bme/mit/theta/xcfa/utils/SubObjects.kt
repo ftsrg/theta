@@ -41,6 +41,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 const val HEAP_SUBOBJECT = "__theta_heap_subobject"
 
 /**
+ * Marks an object with static storage that a library call hands out: allocated like `alloca`, but
+ * never released and not a heap block, so it is neither a leak nor validly freed.
+ */
+const val STATIC_OBJECT = "__theta_static_object"
+
+/**
  * The cell layout of objects under the cell models, and the allocation of their sub-objects.
  *
  * An aggregate member or element is a separate object whose base lives in a cell of its parent (or
@@ -157,7 +163,7 @@ class SubObjects(private val parseContext: ParseContext) {
    * variable or a memory cell.
    */
   private fun alloca(target: Expr<*>, size: Int, marker: String): XcfaLabel =
-    InvokeLabel(
+    InvokeLabel.retFirst(
       marker,
       listOf(target, Fitsall(null, parseContext).getValue("$size")),
       metadata = EmptyMetaData,

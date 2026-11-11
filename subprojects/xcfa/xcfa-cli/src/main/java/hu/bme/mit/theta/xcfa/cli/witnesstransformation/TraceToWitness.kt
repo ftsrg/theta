@@ -34,7 +34,7 @@ import hu.bme.mit.theta.xcfa.model.ChoiceType
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
 import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.witnesses.WitnessEdge
 import hu.bme.mit.theta.xcfa.witnesses.WitnessNode

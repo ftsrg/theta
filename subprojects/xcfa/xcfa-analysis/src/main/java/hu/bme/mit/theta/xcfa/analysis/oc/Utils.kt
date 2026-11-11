@@ -28,9 +28,10 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
-import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import hu.bme.mit.theta.xcfa.passes.WitnessOptimizer
+import hu.bme.mit.theta.xcfa.passes.concurrency.AtomicReadsOneWritePass
+import hu.bme.mit.theta.xcfa.passes.memory.AllocationSitesPass
+import hu.bme.mit.theta.xcfa.passes.witness.WitnessOptimizer
 
 internal typealias E = XcfaEvent
 
@@ -93,6 +94,8 @@ private constructor(
       cnt = 0
     }
 
+    private lateinit var allocationSitesPass: AllocationSitesPass
+
     fun of(
       procedure: XcfaProcedure,
       parseContext: ParseContext,
@@ -104,9 +107,16 @@ private constructor(
       startHistory: List<String> = listOf(),
       lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
     ): Thread {
+      if (!::allocationSitesPass.isInitialized) {
+        allocationSitesPass = AllocationSitesPass(parseContext)
+      }
       val passManager =
         ProcedurePassManager(
-          listOf(WitnessOptimizer(params, parseContext), AtomicReadsOneWritePass())
+          listOfNotNull(
+            allocationSitesPass,
+            WitnessOptimizer(params, parseContext),
+            AtomicReadsOneWritePass(),
+          )
         )
       val p = procedure.optimizeFurther(passManager, "${procedure.name}[$pid]", pid.toString())
       return Thread(pid, p, guard, pidVar, startEvent, startHistory, lastWrites)

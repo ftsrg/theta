@@ -211,7 +211,7 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
           else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(it)
           else error("Bad type")
         }
-      val label = InvokeLabel(this.builder.name, exprs, EmptyMetaData)
+      val label = InvokeLabel(this.builder, exprs, EmptyMetaData)
       this@SequenceLabelContext.labelList.add(label)
       return SequenceLabel(this@SequenceLabelContext.labelList)
     }
@@ -223,7 +223,8 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
           else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(it)
           else error("Bad type")
         }
-      val label = InvokeLabel(this, exprs, EmptyMetaData)
+      // param directions aren't available, so we use INOUT to fit all
+      val label = InvokeLabel(this, exprs.map { it to ParamDirection.INOUT }, EmptyMetaData)
       this@SequenceLabelContext.labelList.add(label)
       return SequenceLabel(this@SequenceLabelContext.labelList)
     }

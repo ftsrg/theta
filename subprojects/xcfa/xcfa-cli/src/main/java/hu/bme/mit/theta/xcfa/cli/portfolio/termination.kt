@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.cli.params.Domain.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.witnesses.hasInvariantChecks
 
 fun termination(
   xcfa: XCFA,
@@ -151,7 +152,19 @@ fun termination(
     }
 
     val (startingConfig: ConfigNode, endConfig: ConfigNode) =
-      if (xcfa.isInlined) {
+      if (xcfa.isInlined && xcfa.hasInvariantChecks) {
+        // Only the bounded engines check the invariants of a witness
+        val kind = kind(300_000, "Z3:4.13")
+        val imcCVC5 = imc(300_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
+        val imcMathSAT =
+          imc(300_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
+        val kindMathSAT =
+          kind(300_000, portfolioConfig.solverVersionOrLatestFallback("mathsat", "5.6.10"))
+
+        kind then imcCVC5 then imcMathSAT then kindMathSAT
+
+        Pair(kind, kindMathSAT)
+      } else if (xcfa.isInlined) {
         if (types.any { it is BvType }) {
           val expl = expl(100_000, portfolioConfig.solverVersionOrLatestFallback("cvc5", "1.0.8"))
           val predcart =

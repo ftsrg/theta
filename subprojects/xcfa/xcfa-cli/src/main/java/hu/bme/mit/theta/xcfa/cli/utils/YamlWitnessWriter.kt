@@ -65,8 +65,9 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.passes.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
-import hu.bme.mit.theta.xcfa.passes.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.SYNC_VAR_METADATA_KEY
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa.toCConstraint
 import hu.bme.mit.theta.xcfa.utils.collectVars
@@ -74,7 +75,30 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.io.File
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.encodeToString
+
+/**
+ * The concretizer checks the whole trace again, with another solver than the analysis. That check
+ * can take longer than the analysis itself, and then the target-only witness is written instead.
+ * The bound is short: a portfolio step that prints its result late gets only 10% more time.
+ */
+private const val CONCRETIZATION_TIMEOUT_SECONDS = 10L
+
+/** [block] in a daemon thread: a native solver call cannot be interrupted, only left behind. */
+private fun <T> withTimeout(seconds: Long, block: () -> T): T {
+  val executor = Executors.newSingleThreadExecutor { Thread(it).apply { isDaemon = true } }
+  try {
+    return executor.submit(Callable(block)).get(seconds, TimeUnit.SECONDS)
+  } catch (e: ExecutionException) {
+    throw e.cause as? Exception ?: e
+  } finally {
+    executor.shutdownNow()
+  }
+}
 
 class YamlWitnessWriter : XcfaWitnessWriter {
 
@@ -118,13 +142,27 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             }
           }
         if (trace is Trace<*, *>) {
+          trace as Trace<XcfaState<PtrState<*>>, XcfaAction>
+          val lasso =
+            if (property.inputProperty == ErrorDetection.TERMINATION)
+              XcfaTraceConcretizer().concretizeLasso(trace, cexSolverFactory, parseContext)
+            else null
+          // A rejected termination witness has a path to a violated invariant, often no lasso
+          if (lasso == null && property.isTerminationWitnessValidation) {
+            logger.benchmark("No lasso found, writing no violation witness")
+            return
+          }
           val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-            XcfaTraceConcretizer.concretize(
-              trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
-              cexSolverFactory,
-              parseContext,
-              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-            )
+            lasso?.trace
+              ?: withTimeout(CONCRETIZATION_TIMEOUT_SECONDS) {
+                XcfaTraceConcretizer()
+                  .concretize(
+                    trace,
+                    cexSolverFactory,
+                    parseContext,
+                    wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+                  )
+              }
 
           val witness =
             violationWitnessFromConcreteTrace(
@@ -134,6 +172,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               property,
               parseContext,
               witnessfile,
+              lasso?.cycleStart,
             )
 
           if (witness.content.isEmpty()) {
@@ -155,10 +194,15 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           }
         }
       } catch (e: Exception) {
+        if (property.isTerminationWitnessValidation) {
+          logger.benchmark("Could not emit witness, writing no violation witness")
+          logger.info(e.message)
+          return
+        }
         logger.benchmark(
           "Could not emit witness, writing reachability witness with target only if possible"
         )
-        logger.info(e.message)
+        logger.info("%s", e.message)
         val bestEffortWitness =
           generateBestEffortWitness(
             safetyResult,
@@ -178,7 +222,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           YamlWitness(
             entryType = EntryType.INVARIANTS,
             metadata = metadata,
-            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext),
+            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext, property),
           )
 
         witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
@@ -451,6 +495,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
+    cycleStart: Int?,
   ): YamlWitness {
     // last state is cycle_head, find its earliest occurrence
     // stem is everything beforehand
@@ -458,28 +503,29 @@ class YamlWitnessWriter : XcfaWitnessWriter {
 
     val cycleHead = concrTrace.states.last()
     val cycleHeadFirst =
-      concrTrace.states
-        .indexOfFirst {
-          it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
-            it.sGlobal == cycleHead.sGlobal
-        }
-        .let { index ->
-          if (index == concrTrace.states.size - 1) {
-            // we go backwards, and find a candidate.
-            val revIdx =
-              1 +
-                concrTrace.states.subList(0, concrTrace.states.size - 1).reversed().indexOfFirst {
-                  it.processes.values.map { it.locs } ==
-                    cycleHead.processes.values.map { it.locs } &&
-                    it.sGlobal.toMap().all { (key, value) ->
-                      cycleHead.sGlobal.toMap()[key] == value
-                    }
-                }
-            concrTrace.states.size - 1 - revIdx
-          } else {
-            index
+      cycleStart
+        ?: concrTrace.states
+          .indexOfFirst {
+            it.processes.values.map { it.locs } == cycleHead.processes.values.map { it.locs } &&
+              it.sGlobal == cycleHead.sGlobal
           }
-        }
+          .let { index ->
+            if (index == concrTrace.states.size - 1) {
+              // we go backwards, and find a candidate.
+              val revIdx =
+                1 +
+                  concrTrace.states.subList(0, concrTrace.states.size - 1).reversed().indexOfFirst {
+                    it.processes.values.map { it.locs } ==
+                      cycleHead.processes.values.map { it.locs } &&
+                      it.sGlobal.toMap().all { (key, value) ->
+                        cycleHead.sGlobal.toMap()[key] == value
+                      }
+                  }
+              concrTrace.states.size - 1 - revIdx
+            } else {
+              index
+            }
+          }
     if (cycleHeadFirst == -1) {
       error("Lasso not found")
     }
@@ -697,6 +743,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     property: XcfaProperty,
     parseContext: ParseContext,
     witnessfile: File,
+    cycleStart: Int? = null,
   ): YamlWitness =
     when (property.inputProperty) {
       ErrorDetection.TERMINATION -> {
@@ -707,6 +754,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           property,
           parseContext,
           witnessfile,
+          cycleStart,
         )
       }
 
@@ -1280,7 +1328,11 @@ private class ThreadIdEmission(
   }
 }
 
-private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<ContentItem> {
+private fun Proof.toContent(
+  inputFile: File,
+  parseContext: ParseContext,
+  property: XcfaProperty? = null,
+): List<ContentItem> {
   if (this is ARG<*, *>) {
     val locMap =
       nodes
@@ -1318,6 +1370,17 @@ private fun Proof.toContent(inputFile: File, parseContext: ParseContext): List<C
   if (this is DssInvariants) return toContent(inputFile, parseContext)
   if (this is LocationInvariants && isTransitionInvariant)
     return transitionInvariantContent(inputFile, parseContext)
+  if (
+    this is LocationInvariants &&
+      !StaticCoiPass.enabled &&
+      property?.inputProperty in setOf(ErrorDetection.ERROR_LOCATION, ErrorDetection.OVERFLOW)
+  )
+  // the verdict is already decided: an empty witness is valid, a failed export must not cost it
+  return try {
+      loopInvariantContent(inputFile, parseContext)
+    } catch (_: Throwable) {
+      listOf()
+    }
   return listOf()
 }
 

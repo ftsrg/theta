@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.Geq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Gt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsInfinite;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsZero;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Lt;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Max;
@@ -57,6 +58,7 @@ import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
@@ -128,8 +130,13 @@ public class FpTestUtils {
                     {FpIsNanExpr.class, Bool(false), IsNan(Fp16NInf())},
                     {FpIsNanExpr.class, Bool(false), IsNan(Fp16("0.0"))},
                     {FpIsInfiniteExpr.class, Bool(false), IsInfinite(Fp16("0.0"))},
-                    {FpIsInfiniteExpr.class, Bool(true), IsInfinite(FpTestUtils.Fp16PInf())},
-                    {FpIsInfiniteExpr.class, Bool(true), IsInfinite(FpTestUtils.Fp16NInf())},
+                    {FpIsInfiniteExpr.class, Bool(true), IsInfinite(Fp16PInf())},
+                    {FpIsInfiniteExpr.class, Bool(true), IsInfinite(Fp16NInf())},
+                    {FpIsZeroExpr.class, Bool(true), IsZero(Fp16("0.0"))},
+                    {FpIsZeroExpr.class, Bool(true), IsZero(Fp16("-0.0"))},
+                    {FpIsZeroExpr.class, Bool(false), IsZero(Fp16("7.15"))},
+                    {FpIsZeroExpr.class, Bool(false), IsZero(Fp16NInf())},
+                    {FpIsZeroExpr.class, Bool(false), IsZero(Fp16NaN())},
                     {FpLeqExpr.class, Bool(true), Leq(Fp16("7.14"), Fp16("7.15"))},
                     {FpLeqExpr.class, Bool(true), Leq(Fp16("7.14"), Fp16("7.14"))},
                     {FpLeqExpr.class, Bool(false), Leq(Fp16("-7.14"), Fp16("-7.15"))},

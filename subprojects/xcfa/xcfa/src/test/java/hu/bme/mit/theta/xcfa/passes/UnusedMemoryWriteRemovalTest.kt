@@ -23,6 +23,9 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelTy
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.structure.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.structure.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.structure.UnusedVarPass
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

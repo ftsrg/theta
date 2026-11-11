@@ -18,11 +18,14 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
@@ -32,8 +35,21 @@ fun XcfaBuilder.getPtrSizeVar(): VarDecl<ArrayType<*, *>> =
   getVars().find { it.wrappedVar.name == "__theta_ptr_size" }!!.wrappedVar
     as VarDecl<ArrayType<*, *>>
 
-fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel =
-  writeGhost(parseContext, getPtrSizeVar(), base, size)
+/**
+ * Records [base] as a live object of [size] address units. The size array holds `size + 1` for a
+ * live object and 0 for one that is not (never allocated or released), so that an empty block, as
+ * `malloc(0)` may return, is live and can be freed. Readers compare against this encoding.
+ */
+fun XcfaBuilder.allocate(parseContext: ParseContext, base: Expr<*>, size: Expr<*>): StmtLabel {
+  val fitsall = Fitsall(null, parseContext)
+  val encoded = Add(fitsall.castToFitsall(size), fitsall.unitValue)
+  val value = ExprUtils.simplify(encoded).takeIf { it is LitExpr<*> } ?: encoded
+  parseContext.metadata.create(value, "cType", fitsall)
+  return writeGhost(parseContext, getPtrSizeVar(), base, value)
+}
+
+private fun Fitsall.castToFitsall(value: Expr<*>): Expr<*> =
+  if (smtType is IntType || value.type == smtType) value else castTo(value)
 
 /**
  * The extent of each flat slot (size plus gap), keyed by its start; 0 for a non-start. Written once
@@ -59,6 +75,13 @@ fun XcfaLabel.isGhostArrayInit(): Boolean =
     (stmt as AssignStmt<*>).varDecl.let { it.name in GHOST_ARRAYS && it.type is ArrayType<*, *> } &&
     (stmt as AssignStmt<*>).expr is ArrayLitExpr<*, *>
 
+/** The pointer a write to a memsafety ghost array is keyed by, if this is such a write. */
+val XcfaLabel.ghostWriteIndex: Expr<*>?
+  get() =
+    ((this as? StmtLabel)?.stmt as? AssignStmt<*>)
+      ?.takeIf { it.varDecl.name in GHOST_ARRAYS }
+      ?.let { (it.expr as? ArrayWriteExpr<*, *>)?.index }
+
 /** Writes [value] at pointer [index] of a pointer-indexed, Fitsall-valued ghost array. */
 fun writeGhost(
   parseContext: ParseContext,
@@ -71,25 +94,17 @@ fun writeGhost(
   val fitsall = Fitsall(null, parseContext)
   val pointerType = CPointer(null, null, parseContext)
   val indexCast = if (pointerType.smtType is IntType) index else pointerType.castTo(index)
-  val valueCast = if (fitsall.smtType is IntType) value else fitsall.castTo(value)
+  val valueCast = fitsall.castToFitsall(value)
   val write = ArrayWriteExpr.create<Type, Type>(arr.ref, indexCast, valueCast)
   return AssignStmtLabel(arr, write)
 }
 
 /**
- * Marks the object as no longer live, by giving it size 0.
- *
- * A negative sentinel (-1) would only work if sizes were compared as signed. They are Fitsall-typed
- * and Fitsall is *unsigned*, so under bitvector arithmetic -1 is the largest representable value: a
- * freed object would then look bigger than any other, `free` would not register, and a program that
- * frees everything would still be reported as leaking. Size 0 means "not live" under signed and
- * unsigned semantics alike, and coincides with the array's default value -- so an object that was
- * never allocated is treated the same as a freed one, which is what the checks want anyway.
+ * Marks the object as no longer live, by writing 0 (see [allocate]). This coincides with the
+ * array's default value, so an object that was never allocated is treated the same as a freed one.
  */
-fun XcfaBuilder.deallocate(parseContext: ParseContext, base: Expr<*>): StmtLabel {
-  val type = Fitsall(null, parseContext)
-  return allocate(parseContext, base, type.nullValue)
-}
+fun XcfaBuilder.deallocate(parseContext: ParseContext, base: Expr<*>): StmtLabel =
+  writeGhost(parseContext, getPtrSizeVar(), base, Fitsall(null, parseContext).nullValue)
 
 fun XcfaBuilder.allocateUnit(parseContext: ParseContext, base: Expr<*>): StmtLabel {
   val type = Fitsall(null, parseContext)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,5 +39,7 @@
  * hu.bme.mit.theta.core.type.inttype.IntLeqExpr}: less or equal
  *
  * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntToRatExpr}: cast to rational
+ *
+ * <p>- {@link hu.bme.mit.theta.core.type.inttype.IntToBvExpr}: cast to bitvector
  */
 package hu.bme.mit.theta.core.type.inttype;

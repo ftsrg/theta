@@ -55,6 +55,7 @@ import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
@@ -62,6 +63,8 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import java.math.BigInteger;
@@ -246,6 +249,9 @@ final class JavaSMTTermTransformer {
         addEnvFunc(
                 FunctionDeclarationKind.FP_IS_INF,
                 exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        addEnvFunc(
+                FunctionDeclarationKind.FP_IS_ZERO,
+                exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr::create));
         //        addEnvFunc("fp.isInfinite",
         // exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
         addEnvFunc(
@@ -520,6 +526,16 @@ final class JavaSMTTermTransformer {
                     return BvSExtExpr.of(op, BvType.of(type.getSize()));
                 });
         environment.put(
+                Tuple2.of(FunctionDeclarationKind.INT_TO_BV, 1),
+                (term, args, model, vars) -> {
+                    BitvectorType type =
+                            (BitvectorType)
+                                    context.getFormulaManager()
+                                            .getFormulaType((BitvectorFormula) term);
+                    final Expr<IntType> op = (Expr<IntType>) transform(args.get(0), model, vars);
+                    return IntToBvExpr.of(op, type.getSize());
+                });
+        environment.put(
                 Tuple2.of(FunctionDeclarationKind.EQ_ZERO, 1),
                 (term, args, model, vars) -> {
                     final Expr<?> op = transform(args.get(0), model, vars);
@@ -714,6 +730,13 @@ final class JavaSMTTermTransformer {
                         value.getMantissa(), value.getMantissaSizeWithoutHiddenBit()));
     }
 
+    private static final Pattern MATH_FUNC_NAME = Pattern.compile("(fpmath\\.[a-z0-9]+)-\\d+-\\d+");
+
+    private static FpMathFuncExpr.Function mathFunctionOf(final String name) {
+        final var matcher = MATH_FUNC_NAME.matcher(name);
+        return matcher.matches() ? FpMathFuncExpr.Function.fromLabel(matcher.group(1)) : null;
+    }
+
     private Expr<?> transformApp(
             Formula f,
             final FunctionDeclaration<?> funcDecl,
@@ -733,6 +756,9 @@ final class JavaSMTTermTransformer {
             return otherFuncs.get(key3).apply(f, args, model, vars);
         } else if (otherFuncs.containsKey(key4)) {
             return otherFuncs.get(key4).apply(f, args, model, vars);
+        } else if (mathFunctionOf(funcDecl.getName()) != null && args.size() == 1) {
+            return FpMathFuncExpr.create(
+                    mathFunctionOf(funcDecl.getName()), transform(args.get(0), model, vars));
         } else {
             final var paramExprs =
                     args.stream().map((Formula term) -> (Expr) toExpr(term)).toList();

@@ -109,6 +109,7 @@ public final class ExprSimplifier {
                     // Integer
 
                     .addCase(IntToRatExpr.class, this::simplifyIntToRat)
+                    .addCase(IntToBvExpr.class, this::simplifyIntToBv)
                     .addCase(IntAddExpr.class, this::simplifyIntAdd)
                     .addCase(IntSubExpr.class, this::simplifyIntSub)
                     .addCase(IntPosExpr.class, this::simplifyIntPos)
@@ -198,7 +199,10 @@ public final class ExprSimplifier {
                     .addCase(FpMaxExpr.class, this::simplifyFpMax)
                     .addCase(FpMinExpr.class, this::simplifyFpMin)
                     .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
+                    .addCase(FpMathFuncExpr.class, this::simplifyFpMathFunc)
                     .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
+                    .addCase(FpIsInfiniteExpr.class, this::simplifyFpIsInfinite)
+                    .addCase(FpIsZeroExpr.class, this::simplifyFpIsZero)
                     .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
                     .addCase(FpToBvExpr.class, this::simplifyFpToBv)
                     .addCase(FpFromIeeeBvExpr.class, this::simplifyFpFromIeeeBv)
@@ -521,10 +525,6 @@ public final class ExprSimplifier {
 
     private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
         final Set<Expr<BoolType>> ops = CollectionUtil.createSet();
-
-        if (expr.getOps().isEmpty()) {
-            return True();
-        }
 
         for (final Expr<BoolType> op : expr.getOps()) {
             final Expr<BoolType> opVisited = simplify(op, val);
@@ -1158,6 +1158,17 @@ public final class ExprSimplifier {
         }
 
         return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyIntToBv(final IntToBvExpr expr, final Valuation val) {
+        final Expr<IntType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof IntLitExpr) {
+            final IntLitExpr litOp = (IntLitExpr) op;
+            return expr.with(op).eval(val);
+        }
+
+        return expr.with(op);
     }
 
     private Expr<BoolType> simplifyEnumEqExpr(final EnumEqExpr expr, final Valuation val) {
@@ -2019,6 +2030,16 @@ public final class ExprSimplifier {
         return expr.with(op);
     }
 
+    private Expr<BoolType> simplifyFpIsZero(final FpIsZeroExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr litExpr) {
+            return Bool((litExpr.isNegativeZero() || litExpr.isPositiveZero()));
+        }
+
+        return expr.with(op);
+    }
+
     private Expr<FpType> simplifyFpRoundToIntegral(
             final FpRoundToIntegralExpr expr, final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
@@ -2262,6 +2283,18 @@ public final class ExprSimplifier {
             return expr.with(op).eval(val);
         }
 
+        return expr.with(op);
+    }
+
+    /** Folds only the exact special values: any other result is the program's libm's to give. */
+    private Expr<FpType> simplifyFpMathFunc(final FpMathFuncExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+        if (op instanceof FpLitExpr lit) {
+            final var special = expr.getFunction().specialValue(lit);
+            if (special.isPresent()) {
+                return special.get();
+            }
+        }
         return expr.with(op);
     }
 

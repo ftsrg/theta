@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -132,6 +132,8 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
     }
 
     private String parseItpResponse(final String response) {
+        throwIfSolverError(response);
+
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
         final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
         try {
@@ -141,12 +143,7 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
             parser.addErrorListener(new ThrowExceptionErrorListener());
             return extractString(parser.term());
         } catch (Exception e) {
-            try {
-                throw new SmtLibSolverException(
-                        parser.response().general_response_error().reason.getText());
-            } catch (Exception ex) {
-                throw new SmtLibSolverException("Could not parse solver output: " + response, e);
-            }
+            throw new SmtLibSolverException("Could not parse solver output: " + response, e);
         }
     }
 

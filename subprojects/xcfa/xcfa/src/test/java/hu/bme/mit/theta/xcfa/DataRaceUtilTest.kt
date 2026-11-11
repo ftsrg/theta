@@ -18,6 +18,10 @@ package hu.bme.mit.theta.xcfa
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.*
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.DeterministicPass
+import hu.bme.mit.theta.xcfa.passes.structure.NormalizePass
+import hu.bme.mit.theta.xcfa.passes.structure.UnusedLocRemovalPass
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.isDataRacePossible
 import org.junit.jupiter.api.Assertions

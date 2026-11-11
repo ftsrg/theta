@@ -72,6 +72,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.getStatistics
+import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
@@ -118,7 +119,8 @@ fun getDssChecker(
   val dssConfig = config.backendConfig.specConfig as DssConfig
   checkDssSupports(config.inputConfig.property)
   val procedure =
-    xcfa.procedures.singleOrNull()
+    (if (xcfa.isInlined) xcfa.initProcedures.singleOrNull()?.first
+    else xcfa.procedures.singleOrNull())
       ?: error(
         "DSS only supports single-procedure programs so far (found ${xcfa.procedures.size} " +
           "procedures) - see xcfa-analysis's dss/README.md's Known Limitations."

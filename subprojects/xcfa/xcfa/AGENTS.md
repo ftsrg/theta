@@ -3,14 +3,14 @@
 Gradle module: `:theta-xcfa`. It contains:
 
 - the XCFA model in `model/`: `XCFA`, the builders, the `XcfaLabel`s and the Kotlin DSL in `Dsl.kt`;
-- the procedure passes in `passes/`, which normalize, lower and instrument a model;
+- the procedure passes in `passes/`, which normalize, lower and instrument a model, grouped into subpackages by topic (see the passes README);
 - shared utilities (`utils/`), the witness formats (`witnesses/`) and `XcfaToC.kt`.
 
 The formalism is described in [README.md](README.md). The C pass pipeline, phase by phase with its ordering constraints, is in [passes/README.md](src/main/java/hu/bme/mit/theta/xcfa/passes/README.md). Read it before adding or moving a pass.
 
 ## Build and test
 
-- `./gradlew :theta-xcfa:test`. The pass tests build small XCFAs with the DSL (`passes/PassTests.kt`, `UnrollExitsTest.kt`).
+- `./gradlew :theta-xcfa:test`. The pass tests build small XCFAs with the DSL (`passes/PassTests.kt`, `passes/UnrollExitsTest.kt`).
 - A pass that runs on C input is also exercised by `:theta-c2xcfa:test`, because its `getXcfaFromC` runs the whole `CPasses` pipeline. It must also pass the canary gate, `:theta-xcfa-cli:fixtureTest` and `canaryTest` ([canaries/README.md](../xcfa-cli/canaries/README.md)). The fixture harness runs only `--portfolio STABLE` or `--backend NONE` with fixed options, so behaviour reachable only under other flags (e.g. `--force-unroll`) needs a unit test here instead. A pass refusal is expected there as `FRONTEND-FAIL`.
 
 ## Invariants / gotchas
@@ -22,6 +22,6 @@ The formalism is described in [README.md](README.md). The C pass pipeline, phase
 5. `InlineProceduresPass` splices the callee's own `VarDecl`s (`inlineCallSite` without `freshFrame`), so all inlined calls of a procedure share one set of locals. A value that must be fresh on every call needs an explicit havoc.
 6. With a force bound, `UnrollPass` unrolls every countable loop before it forces one. A forced unroll marks the procedure `unsafeUnrollUsed`, and xcfa-cli then reports a Safe result as Unknown unless `--accept-unreliable-safe` is given.
 7. **The passes run inside the frontend build** (`getXcfaFromC` calls `build()`, which runs `optimize()`), so an exception thrown by a pass is a frontend failure ("Frontend failed!", printed after "ParsingResult Success").
-8. **A pass that cannot model a construct exactly must refuse it.** Never approximate. Use `check`/`error` (the convention in `CLibraryFunctionsPass`), or leave the `InvokeLabel` in place so that it fails later as "No such method …". If byte addressing would make the construct exact, throw `RequiresByteAddressedMemoryException` instead: the CLI rebuilds under `--memory-model bytes` (`MemoryFunctionsPass.giveUp` does this).
+8. **A pass that cannot model a construct exactly must refuse it.** Never approximate. Use `check`/`error` (the convention in `CLibraryFunctionsPass`), or leave the `InvokeLabel` in place so that it fails later as "No such method …". The one exception is a sound over-approximation whose imprecise value is a havocked variable recorded in `XcfaBuilder.overApproximatedVars` (see the passes `README.md`): xcfa-cli then reports an Unsafe result as Unknown if its counterexample depends on that value (`LibraryStubsPass` does this for stubbed library calls, `FpFunctionsToExprsPass` for math functions such as `exp` and `sin`). If byte addressing would make the construct exact, throw `RequiresByteAddressedMemoryException` instead: the CLI rebuilds under `--memory-model bytes` (`MemoryFunctionsPass.giveUp` does this).
 9. **A pass sees every memory model** (`parseContext.memoryModel`). Under `multi`/`flat`, a dereference has to be `Dereference(base, index)`: `Dereference(p + k, i)` names no object, and writes through it are silently lost. Fold `p + k` into the index the way `MemoryFunctionsPass.splitOffset` does. Under `bytes`, addresses are resolved later by `ByteMemoryPass`.
 10. **Labels are a sequence of flat labels** after `NormalizePass`. Iterate them with `getFlatLabels()` and rebuild with `SequenceLabel`.

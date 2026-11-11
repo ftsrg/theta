@@ -38,8 +38,9 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.optimizeFurther
 import hu.bme.mit.theta.xcfa.passes.*
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.LBE_LOCAL
-import hu.bme.mit.theta.xcfa.passes.LbePass.LbeLevel.NO_LBE
+import hu.bme.mit.theta.xcfa.passes.property.DataRaceToReachabilityPass
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.LBE_LOCAL
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass.LbeLevel.NO_LBE
 
 @Suppress("LocalVariableName")
 fun multithreadPortfolio(

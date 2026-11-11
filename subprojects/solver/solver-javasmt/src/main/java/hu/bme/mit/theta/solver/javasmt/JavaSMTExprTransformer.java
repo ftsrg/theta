@@ -66,9 +66,11 @@ import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsZeroExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMathFuncExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
 import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
@@ -100,6 +102,7 @@ import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToBvExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
@@ -231,6 +234,7 @@ final class JavaSMTExprTransformer {
                         .addCase(IntLeqExpr.class, this::transformIntLeq)
                         .addCase(IntLtExpr.class, this::transformIntLt)
                         .addCase(IntToRatExpr.class, this::transformIntToRat)
+                        .addCase(IntToBvExpr.class, this::transformIntToBv)
 
                         // Bitvectors
 
@@ -292,9 +296,11 @@ final class JavaSMTExprTransformer {
                         .addCase(FpMaxExpr.class, this::transformFpMax)
                         .addCase(FpMinExpr.class, this::transformFpMin)
                         .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                        .addCase(FpMathFuncExpr.class, this::transformFpMathFunc)
                         .addCase(FpRemExpr.class, this::transformFpRem)
                         .addCase(FpIsNanExpr.class, this::transformFpIsNan)
                         .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                        .addCase(FpIsZeroExpr.class, this::transformFpIsZero)
                         .addCase(FpFromBvExpr.class, this::transformFpFromBv)
                         .addCase(FpToBvExpr.class, this::transformFpToBv)
                         .addCase(FpFromIeeeBvExpr.class, this::transformFpFromIeeeBv)
@@ -645,6 +651,11 @@ final class JavaSMTExprTransformer {
         return rationalFormulaManager.sum(List.of((IntegerFormula) toTerm(expr.getOp())));
     }
 
+    private Formula transformIntToBv(final IntToBvExpr expr) {
+        return bitvectorFormulaManager.makeBitvector(
+                expr.getSize(), (IntegerFormula) toTerm(expr.getOp()));
+    }
+
     private Formula transformBvLit(final BvLitExpr expr) {
         return bitvectorFormulaManager.makeBitvector(
                 expr.getType().getSize(), BvUtils.neutralBvLitExprToBigInteger(expr));
@@ -953,6 +964,11 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.isInfinity(opTerm);
     }
 
+    private Formula transformFpIsZero(final FpIsZeroExpr expr) {
+        final FloatingPointFormula opTerm = (FloatingPointFormula) toTerm(expr.getOp());
+        return floatingPointFormulaManager.isZero(opTerm);
+    }
+
     private Formula transformFpSqrt(final FpSqrtExpr expr) {
         final FloatingPointFormula opTerm = (FloatingPointFormula) toTerm(expr.getOp());
         return floatingPointFormulaManager.sqrt(
@@ -1212,6 +1228,28 @@ final class JavaSMTExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    /**
+     * An uninterpreted function per function and sort: one name may not carry two signatures, so
+     * the sort is part of the name ({@code fpmath.exp-8-24}).
+     */
+    private Formula transformFpMathFunc(final FpMathFuncExpr expr) {
+        final var type = expr.getType();
+        final Formula opTerm = toTerm(expr.getOp());
+        final var sort = transformer.toSort(type);
+        final var funcDecl =
+                context.getFormulaManager()
+                        .getUFManager()
+                        .declareUF(
+                                "%s-%d-%d"
+                                        .formatted(
+                                                expr.getOperatorLabel(),
+                                                type.getExponent(),
+                                                type.getSignificand()),
+                                sort,
+                                List.of(sort));
+        return context.getFormulaManager().getUFManager().callUF(funcDecl, opTerm);
     }
 
     private Formula transformDereference(final Dereference<?, ?, ?> expr) {

@@ -1,0 +1,18 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc choiceExample
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (choice
+      (assign (x x0))
+      (assign (x 0))
+      (assign (x 1)))))
+
+(declare-const input Int)
+
+(verify-call choiceExample (input))
+(get-witness)

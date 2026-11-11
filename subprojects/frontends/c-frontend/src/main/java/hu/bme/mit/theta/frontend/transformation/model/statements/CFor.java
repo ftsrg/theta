@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.frontend.ParseContext;
 
-public class CFor extends CStatement {
+public class CFor extends CLoop {
 
     private final CStatement body;
     private final CStatement init;
@@ -45,6 +45,7 @@ public class CFor extends CStatement {
         return increment;
     }
 
+    @Override
     public CStatement getGuard() {
         return guard;
     }
@@ -53,6 +54,7 @@ public class CFor extends CStatement {
         return init;
     }
 
+    @Override
     public CStatement getBody() {
         return body;
     }

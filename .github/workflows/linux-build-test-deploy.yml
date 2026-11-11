@@ -233,7 +233,9 @@ jobs:
       - name: Run the canary and fixture suites
         run: |
           status=0
-          ./gradlew :theta-xcfa-cli:fixtureTest -x buildArchiveTheta-svcomp || status=1
+          # The runner has 4 cores and a verdict fixture's portfolio uses more than one.
+          ./gradlew :theta-xcfa-cli:fixtureTest -x buildArchiveTheta-svcomp \
+            -Ptheta.fixture.jobs=2 || status=1
           ./gradlew :theta-xcfa-cli:canaryTest -x buildArchiveTheta-svcomp -x fixtureTest \
             -Ptheta.canary.jobs=2 || status=1
           exit $status
@@ -242,6 +244,7 @@ jobs:
         shell: python3 {0}
         run: |
           import glob
+          import os
           import re
           import xml.etree.ElementTree as ET
           failed = []
@@ -260,8 +263,28 @@ jobs:
               text = f"{len(failed)} failing fixtures/canaries\n" + "\n".join(failed)
           else:
               text = "the suites failed without a test failure; see the step log"
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          with open("canary-comment.md", "w") as comment:
+              comment.write(f"### :x: Canary suite failures ([run]({run_url}))\n\n```\n{text}\n```\n")
           text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
           print(f"::error title=Canary suite failures::{text}")
+      - name: Comment failures on the PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+        continue-on-error: true
+        with:
+          comment_tag: 'canary-failures'
+          mode: 'recreate'
+          filePath: canary-comment.md
+      # Only rewrites an earlier failure comment, so that a fixed PR does not keep a stale list.
+      - name: Mark the PR comment as passing
+        if: success() && github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+        continue-on-error: true
+        with:
+          comment_tag: 'canary-failures'
+          create_if_not_exists: false
+          message: ':white_check_mark: Canary and fixture suites pass.'
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v3.1.2

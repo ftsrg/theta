@@ -42,7 +42,7 @@ class MutexStateTest {
 
   private fun MutexState.call(name: String, vararg params: Expr<*>) =
     apply(
-      InvokeLabel(name, listOf(ret.ref) + params, EmptyMetaData, isLibraryFunction = true),
+      InvokeLabel.retFirst(name, listOf(ret.ref) + params, EmptyMetaData, isLibraryFunction = true),
       global,
     )
 
@@ -167,7 +167,7 @@ class MutexStateTest {
     val pointer = Var("pointer", Int())
     val explicit = ExplState.of(ImmutableValuation.builder().put(pointer, attr).build())
     val label =
-      InvokeLabel(
+      InvokeLabel.retFirst(
         "pthread_mutexattr_init",
         listOf(ret.ref, pointer.ref),
         EmptyMetaData,
@@ -178,18 +178,20 @@ class MutexStateTest {
   }
 
   @Test
-  fun unrelatedLibraryCallsLeaveMutexStateUnchanged() {
+  fun unrelatedLibraryCallsAreRejected() {
     val mutexState = recursive()
     val label =
       InvokeLabel("unknown_library_function", emptyList(), EmptyMetaData, isLibraryFunction = true)
-    assertSame(mutexState, mutexState.apply(label, global))
     val initial = state(mutexState)
     val loc = initial.processes.getValue(0).locs.peek()
     loc.outgoingEdges.add(XcfaEdge(loc, loc, label, EmptyMetaData))
-    val action = getXcfaLts(Random(0)).getEnabledActionsFor(initial).single()
-    val result = initial.apply(action)
-    assertEquals(initial.processes, result.processes)
-    assertEquals(mutexState, result.mutexState)
+    val exception =
+      assertThrows(IllegalStateException::class.java) {
+        getXcfaLts(Random(0)).getEnabledActionsFor(initial)
+      }
+    assertTrue(
+      exception.message!!.contains("Unsupported library function: unknown_library_function")
+    )
   }
 
   private fun state(mutexState: MutexState): XcfaState<PtrState<ExplState>> {
@@ -214,7 +216,7 @@ class MutexStateTest {
     val initial = state(MutexState())
     val loc = initial.processes.getValue(0).locs.peek()
     val init =
-      InvokeLabel(
+      InvokeLabel.retFirst(
         "pthread_mutex_init",
         listOf(ret.ref, address, Int(0)),
         EmptyMetaData,

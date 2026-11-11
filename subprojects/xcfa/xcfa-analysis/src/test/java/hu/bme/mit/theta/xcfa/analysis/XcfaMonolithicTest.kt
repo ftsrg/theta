@@ -43,6 +43,7 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.math.BigInteger
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -135,6 +136,7 @@ class XcfaMonolithicTest {
         "/03nondetfunction.c",
         "/04multithread.c",
         "/07mutex.c",
+        "/39mutex_after_main.c",
         "/10ptr.c",
       )
     }
@@ -202,7 +204,7 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
   }
 
   @ParameterizedTest
@@ -232,6 +234,19 @@ class XcfaMonolithicTest {
       }
     val monolithic = adapter.monolithicExpr
 
-    genericTest(xcfa, parseContext, monolithic)
+    genericTest(adapter.model, parseContext, monolithic)
+  }
+
+  @Test
+  fun testThreadsStartedFromUnrolledLoop() {
+    val property = XcfaProperty(ErrorDetection.ERROR_LOCATION)
+    val (xcfa, _) = build("/38thread_start_in_loop.c", property)
+    val parseContext = ParseContext().apply { multiThreading = true }
+    val monolithic =
+      XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, true).monolithicExpr
+
+    // main and one thread per copy of the start label, each copy with its own error location
+    assertEquals(3, monolithic.ctrlVars.count { "__loc_" in it.name })
+    assertEquals(2, monolithic.propExpr.ops.count { it !is TrueExpr })
   }
 }

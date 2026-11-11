@@ -1,0 +1,22 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc absPlusTwo
+  ((x0 Int))
+  ((x Int))
+  ()
+  (sequence
+    (if (<= 0 x0)
+      (assign (x x0))
+      (assign (x (- 0 x0))))
+    (!
+      (assign (x (+ x 1)))
+      :tag check-before-first-increment
+      :check-true (<= 0 x))
+    (assign (x (+ x 1)))))
+
+(declare-const input Int)
+
+(verify-call absPlusTwo (input))
+(get-witness)

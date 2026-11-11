@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import com.beust.jcommander.ParameterException
 import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations
@@ -138,6 +139,27 @@ class XcfaCliVerifyTest {
         )
       )
     }
+
+    @JvmStatic
+    fun svLibFiles(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of("/svlib/annotated-loop-head.svlib", null),
+        Arguments.of("/svlib/check-true-annotate-tag.svlib", null),
+        Arguments.of("/svlib/check-true-middle.svlib", "--domain PRED_CART"),
+        Arguments.of("/svlib/goto.svlib", null),
+        Arguments.of("/svlib/havoc.svlib", null),
+        Arguments.of("/svlib/if-assign.svlib", null),
+        Arguments.of("/svlib/if-simple-safe.svlib", null),
+        Arguments.of("/svlib/if-simple-unsafe.svlib", null),
+        Arguments.of("/svlib/loop-check-true-annotate-tag.svlib", null),
+        Arguments.of("/svlib/loop-simple-safe.svlib", "--domain PRED_CART"),
+        Arguments.of("/svlib/multi-assign.svlib", null),
+        Arguments.of("/svlib/procedure-call.svlib", null),
+        Arguments.of("/svlib/return.svlib", null),
+        Arguments.of("/svlib/return-if.svlib", null),
+        Arguments.of("/svlib/return-while.svlib", null),
+      )
+    }
   }
 
   @ParameterizedTest
@@ -227,6 +249,24 @@ class XcfaCliVerifyTest {
     }
   }
 
+  @Test
+  fun testBlockEncodingIsRejectedWhenMultithreaded() {
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--backend",
+        "BOUNDED",
+        "--block-encoding",
+        "--input",
+        javaClass.getResource("/c/dekker.i")!!.path,
+        "--stacktrace",
+        "--debug",
+      )
+    val e = assertThrows<ParameterException> { main(params) }
+    Assertions.assertTrue("NoBlockEncodingWhenMultithreaded" in e.message!!)
+  }
+
   //  @ParameterizedTest
   //  @MethodSource("cFiles")
   fun testCWitness(filePath: String, extraArgs: String?) {
@@ -266,6 +306,22 @@ class XcfaCliVerifyTest {
         "CHC",
         "--chc-transformation",
         chcTransformation.toString(),
+        "--input",
+        javaClass.getResource(filePath)!!.path,
+        "--stacktrace",
+        *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        "--debug",
+      )
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("svLibFiles")
+  fun testSvLibVerify(filePath: String, extraArgs: String?) {
+    main(
+      arrayOf(
+        "--input-type",
+        "SVLIB",
         "--input",
         javaClass.getResource(filePath)!!.path,
         "--stacktrace",

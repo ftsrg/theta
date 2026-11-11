@@ -43,6 +43,9 @@ import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
+/** Name prefix of the IEEE bits written through a floating-point union member. */
+const val FP_BITS_PREFIX = "__theta_fpbits"
+
 fun getXcfaFromC(
   stream: InputStream,
   parseContext: ParseContext,
@@ -60,6 +63,7 @@ fun getXcfaFromC(
 
   val frontendXcfaBuilder = FrontendXcfaBuilder(parseContext, property, warningLogger)
   val builder = frontendXcfaBuilder.buildXcfa(program)
+  VoidPointerViews(parseContext, builder).check()
   val xcfa = builder.build()
 
   if (collectStatistics) {

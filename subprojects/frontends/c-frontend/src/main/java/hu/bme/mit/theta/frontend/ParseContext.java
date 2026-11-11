@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.frontend;
 
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType;
@@ -24,7 +25,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CAr
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -33,7 +36,7 @@ import java.util.Set;
 
 public class ParseContext {
     private final FrontendMetadata metadata;
-    private final CStmtCounter cStmtCounter;
+    private CStmtCounter cStmtCounter;
     private Set<ArithmeticTrait> arithmeticTraits = new LinkedHashSet<>();
     private ArchitectureType architecture = ArchitectureType.LP64;
     private Boolean multiThreading = false;
@@ -75,6 +78,16 @@ public class ParseContext {
      */
     private boolean checkDataRace = false;
 
+    /**
+     * The integers the program converts pointers to, and whether it frees memory. An allocation
+     * never reuses the address of a freed block, so with both a verdict may depend on an address
+     * comparison that the model decides one way only. The difference of two such integers, an
+     * offset, is no address.
+     */
+    private final Set<Expr<?>> addressIntegers = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    private boolean deallocation = false;
+
     // Which cells of a memory object (keyed by its compile-time base id) are `_Atomic`, so that the
     // data-race check can exclude accesses to them. `_Atomic` is a property of the accessed *cell*
     // --
@@ -99,11 +112,16 @@ public class ParseContext {
     // base so the race check can follow that chain to the object the atomicity is recorded against.
     private final Map<BigInteger, Map<Integer, BigInteger>> subObjectCells = new LinkedHashMap<>();
 
+    // (parent address, cell) -> address of the static subobject the cell holds.
+    private final Map<BigInteger, Map<BigInteger, BigInteger>> staticSubObjectAddresses =
+            new LinkedHashMap<>();
+
     // Compile-time base ids of global objects, mapped to the object they are a part of (if any).
     private final Map<BigInteger, BigInteger> staticObjectParents = new LinkedHashMap<>();
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
     private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
+    private final Set<Expr<?>> ghostMemoryBases = new LinkedHashSet<>();
 
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
@@ -116,6 +134,18 @@ public class ParseContext {
 
     public void setSourceTraits(Map<String, Integer> sourceTraits) {
         this.sourceTraits = sourceTraits;
+    }
+
+    public boolean isAddressReuseObservable() {
+        return deallocation && !addressIntegers.isEmpty();
+    }
+
+    public Set<Expr<?>> getAddressIntegers() {
+        return addressIntegers;
+    }
+
+    public void setDeallocation(boolean deallocation) {
+        this.deallocation = deallocation;
     }
 
     public boolean isCheckMemsafety() {
@@ -253,8 +283,26 @@ public class ParseContext {
         return cStmtCounter;
     }
 
+    public void setC(boolean isC) {
+        if (isC && this.cStmtCounter == null) this.cStmtCounter = new CStmtCounter();
+        else if (!isC) this.cStmtCounter = null;
+    }
+
+    public boolean isC() {
+        return cStmtCounter != null;
+    }
+
     public FlatAddressSpace getFlatAddressSpace() {
         return flatAddressSpace;
+    }
+
+    public void registerGhostMemoryBase(Expr<?> base) {
+        ghostMemoryBases.add(base);
+    }
+
+    /** Whether this base holds ghost cells whose unwritten values are zero. */
+    public boolean isGhostMemoryBase(Expr<?> base) {
+        return ghostMemoryBases.contains(base);
     }
 
     /** Records that every cell of the object at base id [base] is `_Atomic`. */
@@ -306,6 +354,23 @@ public class ParseContext {
         }
         Map<Integer, BigInteger> cells = subObjectCells.get(parentBase);
         return cells == null ? null : cells.get(unitOffset);
+    }
+
+    /**
+     * Records that cell [unit] of the static object at [parentAddress] holds the address of a
+     * static subobject. As an address, it is a constant whatever the program writes to the cell.
+     */
+    public void recordStaticSubObjectAddress(
+            BigInteger parentAddress, BigInteger unit, BigInteger address) {
+        staticSubObjectAddresses
+                .computeIfAbsent(parentAddress, k -> new LinkedHashMap<>())
+                .put(unit, address);
+    }
+
+    /** The address recorded by {@link #recordStaticSubObjectAddress}, or null if there is none. */
+    public BigInteger staticSubObjectAddressAt(BigInteger parentAddress, BigInteger unit) {
+        Map<BigInteger, BigInteger> cells = staticSubObjectAddresses.get(parentAddress);
+        return cells == null ? null : cells.get(unit);
     }
 
     /**

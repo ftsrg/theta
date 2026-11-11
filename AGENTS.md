@@ -36,7 +36,7 @@ Warning: **`timeout N theta-start.sh …` does NOT kill the verifier.** The scri
 - Running the jar directly needs `LD_LIBRARY_PATH=<dist>/lib` (legacy Z3) and `--smt-home <dist>/solvers`. The packaged `theta-start.sh` (template at `scripts/theta-start.sh`) sets these but hardcodes `-Xmx14210m -Xss120m`.
 - Full distribution: `./gradlew buildArchiveTheta-svcomp -x test` → `subprojects/xcfa/xcfa-cli/build/distributions/Theta-svcomp.zip`. The canary and fixture suites re-extract it into `Theta-svcomp/` when the zip is newer; anything else run from that directory needs it removed after a rebuild.
 - Parse-only smoke test: `--svcomp --backend NONE --loglevel RESULT --property <prp> --architecture ILP32|LP64` (success marker: `ParsingResult Success`).
-- Canary regression gate: `./gradlew :theta-xcfa-cli:canaryTest` builds the `Theta-svcomp` distribution and runs ~268 real sv-benchmarks tasks (parse-only by default — `--backend NONE` per task; `-Ptheta.canary.mode=full` checks verdicts instead) plus the feature-guard fixtures. The fixtures alone — the fast half, a few minutes — are `:theta-xcfa-cli:fixtureTest`. **Run this before any frontend or pass change lands.** For each new frontend/grammar capability add a `canaries/fixtures/` program that fails before your change and passes after, and a `fixtures/fixtures.tsv` row. See `subprojects/xcfa/xcfa-cli/canaries/README.md`.
+- Canary regression gate: `./gradlew :theta-xcfa-cli:canaryTest` builds the `Theta-svcomp` distribution and runs ~268 real sv-benchmarks tasks (parse-only by default — `--backend NONE` per task; `-Ptheta.canary.mode=full` checks verdicts instead) plus the feature-guard fixtures. The fixtures alone — about ten minutes with 4 parallel jobs, at most 60 s each and one per issue — are `:theta-xcfa-cli:fixtureTest`. **Run this before any frontend or pass change lands.** For each new frontend/grammar capability add a `canaries/fixtures/` program that fails before your change and passes after, and a `fixtures/fixtures.tsv` row. See `subprojects/xcfa/xcfa-cli/canaries/README.md`.
 
 ## Subproject map
 
@@ -134,5 +134,5 @@ Only draft on yes. Never do it silently. This project has multiple contributors 
 **Module already documented?** Then upkeep is part of your edit, not a separate favor:
 - If your change makes a statement in the module's `AGENTS.md`/`USING.md` wrong (renamed class, changed signature/invariant, extra step in a recipe), update that doc **in the same change** — no need to ask. State what you updated in your summary.
 - If you *learned* something the docs lack (a non-obvious invariant, a gotcha that cost you time), propose a one-liner addition at the end of the task — ask, don't add silently.
-- Never add suspected bugs/smells to these docs — those go to `possible-issues.md` at the repo root (and when you fix one, delete its entry there).
+- Never add suspected bugs/smells to these docs — offer to create issues for those in the Theta repo with user approval.
 - Same applies to the root file you're reading: if the subproject map or a pointer here went stale, fix it.
