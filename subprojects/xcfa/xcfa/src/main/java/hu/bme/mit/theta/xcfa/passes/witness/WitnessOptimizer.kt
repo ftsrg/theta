@@ -49,6 +49,11 @@ import java.math.BigInteger
  * assumptions followed by concrete assignments, removing duplicate segment updates and trivial
  * labels. Thread-start parameters guarded by the segment counter are rewritten similarly, by
  * extracting the guard as an assumption and passing the selected literal value to the start label.
+ *
+ * Only the update of the [next segment][nextSegment] is turned into an assumption: once a path has
+ * passed every lower segment, that segment's counter value is certain when its own waypoint is
+ * reached. Any other guarded update may or may not fire there (e.g., a loop head visited before the
+ * segment is due), so it is kept as it is.
  */
 class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
   ProcedurePass {
@@ -88,7 +93,9 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       loc.outgoingEdges.toList().forEach { edge ->
         // simplifying an edge updates the valuation, so each edge needs its own copy
         val edgeValuation = MutableValuation.copyOf(mergedValuation)
-        val passedSegments = valuations.flatMap { it.second }.toMutableSet()
+        // a segment is only passed at a join if it is passed on every incoming path
+        val passedSegments =
+          valuations.map { it.second }.reduce { a, b -> a intersect b }.toMutableSet()
         val oldLabels = edge.getFlatLabels()
         val simplifiedLabels =
           oldLabels.flatMap {
@@ -131,17 +138,18 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
     labels: List<XcfaLabel>,
     passedSegmentValues: MutableSet<BigInteger>,
   ): List<XcfaLabel> {
-    var updatedSegment = false
     val newLabels = mutableListOf<XcfaLabel>()
     labels.forEach { label ->
       val segmentUpdates = getSegmentUpdates(label)
       if (segmentUpdates.isNotEmpty()) {
-        val segmentUpdate = segmentUpdates.find { it.current.value !in passedSegmentValues }
-        if (updatedSegment || segmentUpdate == null) {
-          // do not add the segment update
+        val next = nextSegment(passedSegmentValues)
+        val segmentUpdate = segmentUpdates.find { it.current.value == next }
+        if (segmentUpdates.all { it.current.value in passedSegmentValues }) {
+          // the counter is past every alternative: the update cannot fire
+        } else if (segmentUpdate == null) {
+          newLabels.add(label)
         } else {
           passedSegmentValues.add(segmentUpdate.current.value)
-          updatedSegment = true
           var insertIndex = newLabels.size
           while (insertIndex > 0) {
             val l = newLabels[insertIndex - 1]
@@ -215,16 +223,13 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       label.params.map { param ->
         var segmentCond: Expr<BoolType>? = null
         var nextSegmentAlternative: LitExpr<*>? = null
-        var minNotPassedSegment: BigInteger? = null
+        val next = nextSegment(passedSegmentValues)
         var expr = param
         while (expr is IteExpr<*>) {
           segmentIteValues<LitExpr<*>>(expr)?.let { (segmentValue, paramValue) ->
-            if (segmentValue.value !in passedSegmentValues) {
-              if (minNotPassedSegment == null || segmentValue.value < minNotPassedSegment) {
-                segmentCond = expr.cond
-                nextSegmentAlternative = paramValue
-                minNotPassedSegment = segmentValue.value
-              }
+            if (segmentValue.value == next) {
+              segmentCond = expr.cond
+              nextSegmentAlternative = paramValue
             }
           }
           expr = expr.`else`
@@ -237,6 +242,16 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       }
     return if (assumption == null) null
     else listOf(StmtLabel(assumption), label.copy(params = newParams))
+  }
+
+  /**
+   * The lowest segment not passed on the path. A guarded update of it is the waypoint's own (other
+   * threads' updates are guarded by their thread id), so the counter is certainly on it there.
+   */
+  private fun nextSegment(passedSegmentValues: Set<BigInteger>): BigInteger {
+    var next = BigInteger.ZERO
+    while (next in passedSegmentValues) next++
+    return next
   }
 
   private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {
