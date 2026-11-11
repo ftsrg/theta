@@ -256,6 +256,13 @@ data class DssConfig(
   )
   var quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
   @Parameter(
+    names = ["--dss-nonlinear-solver"],
+    description =
+      "Solver used in place of --dss-solver for a program with nonlinear integer arithmetic and " +
+        "neither floats nor bitwise operations; --dss-solver is then the fallback solver",
+  )
+  var nonlinearSolver: String? = null,
+  @Parameter(
     names = ["--dss-expl-checker"],
     description = "Add an EXPL CEGAR block checker after --dss-checker-backends",
   )

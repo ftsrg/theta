@@ -58,6 +58,7 @@ Only single-procedure programs and error-location reachability are supported.
 | `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
 | `--dss-quantified-predicates` | `KEEP` | Quantifiers in a block checker's proof: `KEEP`, `FALLBACK` (DSS's own failing queries are retried on `--dss-fallback-solver`), `DROP` (weakened away) or `ELIMINATE` (Z3 quantifier elimination, the rest weakened away); see [Quantified predicates](#quantified-predicates) |
 | `--dss-conjecture-generalizers` | `GSPACER` | The generalizers that propose conjectures, combined by `--dss-generalizer-combination` |
+| `--dss-nonlinear-solver` | none | Replaces `--dss-solver` for a program with nonlinear integer arithmetic and neither floats nor bitwise operations; `--dss-solver` then becomes the fallback |
 
 A checker over its budget is stopped (`DssBudget.kt`): a watchdog interrupts its running solver
 call, and it is retried in the next round, so a block never counts as safe unless some checker
