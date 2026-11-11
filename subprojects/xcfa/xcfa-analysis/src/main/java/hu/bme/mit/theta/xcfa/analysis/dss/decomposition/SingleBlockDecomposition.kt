@@ -37,8 +37,10 @@ object SingleBlockDecomposition : DssBlockDecomposition {
       }
     }
     checkNotNull(lastLocation) { "Procedure ${procedure.name} has no location without successors" }
-    return BlockGraph.fromBlocksWithoutEdges(
-      listOf(
+    // Not wired by locations: an edgeless procedure's exit is its entry, which would make SB1 its
+    // own predecessor and leave the graph without a root
+    return BlockGraph(
+      setOf(
         Block(
           id = "SB1",
           initialLocation = procedure.initLoc,
