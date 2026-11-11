@@ -301,11 +301,16 @@ class YamlWitnessWriter : XcfaWitnessWriter {
       runCatching { violationTarget(trace as Trace<XcfaState<*>, XcfaAction>, inputFile) }
         .onFailure { logger.info("Could not locate the violation target: ${it.message}") }
         .getOrNull()
+    // an undeterminable target thread gets `any`: an absent thread_id would mean the main thread
     @Suppress("UNCHECKED_CAST")
     val targetThreadId =
-      (trace as Trace<XcfaState<*>, XcfaAction>).let { t ->
-        violatingPid(t)?.let { ThreadIdEmission(t, parseContext, targetOnly = true).ofPid(it) }
-      }
+      if (!parseContext.multiThreading) null
+      else
+        runCatching {
+            val t = trace as Trace<XcfaState<*>, XcfaAction>
+            violatingPid(t)?.let { ThreadIdEmission(t, parseContext, targetOnly = true).ofPid(it) }
+          }
+          .getOrNull() ?: WaypointContent.ANY_THREAD_ID
 
     return if (property.inputProperty == ErrorDetection.ERROR_LOCATION) {
       val call = metadata?.astNodes?.find { it -> it is CCall && it.functionId == "reach_error" }
