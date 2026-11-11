@@ -637,6 +637,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     targetLocation: Location? = null,
   ): List<WaypointContent> {
     val waypoints = mutableListOf<WaypointContent>()
+    // per thread: the start of the statement whose thread-creating edge it is still inside
+    val createdAt = mutableMapOf<Int?, Location>()
     for (i in 0..witnessTrace.length()) {
       val incoming = witnessTrace.actions.getOrNull(i - 1)
       val outgoing = witnessTrace.actions.getOrNull(i)
@@ -668,13 +670,25 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             !(it.type == WaypointType.ASSUMPTION &&
               last?.type == WaypointType.ASSUMPTION &&
               last.location == it.location &&
-              last.threadId == it.threadId)
+              last.threadId == it.threadId) &&
+              // after the thread creation, the rest of the statement is no new visit of it
+              !(it.type == WaypointType.ASSUMPTION && createdAt[it.threadId] == it.location)
           ) {
             waypoints.add(it)
           }
         }
       if (outgoing != null) {
-        waypoints.addAll(threadIds.registrations(outgoing, inputFile))
+        val start =
+          outgoing.startline?.let { line ->
+            outgoing.startcol?.let { Location(inputFile.name, line = line, column = it + 1) }
+          }
+        val thread = threadIds.ofEdge(outgoing)
+        if (createdAt[thread] != start) createdAt.remove(thread)
+        val registrations = threadIds.registrations(outgoing, inputFile)
+        if (registrations.isNotEmpty()) {
+          (start ?: threadCreateStart(outgoing, inputFile))?.let { createdAt[thread] = it }
+        }
+        waypoints.addAll(registrations)
         outgoing.toSegment(inputFile, threadId = threadIds.ofEdge(outgoing))?.let {
           waypoints.add(it)
         }
@@ -1084,6 +1098,20 @@ private fun threadCreateLocation(edge: WitnessEdge, inputFile: File): Location? 
   if (call.lineNumberStop <= 0 || call.colNumberStop < 0) return null
   if (!call.sourceText.trimEnd().endsWith(")")) return null
   return getStopLocation(inputFile, call)
+}
+
+/** Where the thread-creating call starts, as the waypoints of its statement are located. */
+private fun threadCreateStart(edge: WitnessEdge, inputFile: File): Location? {
+  val call =
+    edge.edge?.getCMetaData()?.astNodes?.filterIsInstance<CCall>()?.firstOrNull {
+      it.functionId == "pthread_create"
+    } ?: return null
+  if (call.lineNumberStart <= 0 || call.colNumberStart < 0) return null
+  return Location(
+    fileName = inputFile.name,
+    line = call.lineNumberStart,
+    column = call.colNumberStart + 1,
+  )
 }
 
 private fun getLocation(inputFile: File, witnessEdge: WitnessEdge?): Location? {
