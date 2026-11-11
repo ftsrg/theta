@@ -179,6 +179,8 @@ class DssInPlaceCutTest {
     val run = run(chain(listOf("B", "R", "A")), log, cutAt = "start", violatingBlock = "B")
 
     assertEquals(DssResult.UNSAFE, run.result)
+    // The root that reports it may be a piece, which is still in the one network
+    assertEquals(0, run.network)
     assertTrue("A_1:vc<-B" in log) { "$log" }
     assertTrue("A_0:vc<-A_1" in log && "R:vc<-A_0" in log) { "$log" }
     assertFalse("R:vc<-A" in log) { "$log" }

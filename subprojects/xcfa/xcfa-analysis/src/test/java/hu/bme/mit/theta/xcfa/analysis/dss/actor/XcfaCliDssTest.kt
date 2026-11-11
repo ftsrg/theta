@@ -367,6 +367,35 @@ class XcfaCliDssTest {
   }
 
   /** The cut uses the decomposition of the run unless `--dss-cut-strategy` names another. */
+  /** The trace of an UNSAFE verdict is what the violation witness is made from. */
+  @ParameterizedTest
+  @CsvSource(
+    "ALL,MIN_CUT_ABSORB_SELF_LOOPS",
+    "BLOCK,MIN_CUT_ABSORB_SELF_LOOPS",
+    "BLOCK,MERGE",
+    "BLOCK,LINEAR",
+  )
+  fun `a run that cut a block still stitches the violation path`(
+    restart: String,
+    strategy: String,
+  ) {
+    val (output, thrown) =
+      runDss(
+        "branches_unsafe",
+        *cutting,
+        "--dss-cut-restart",
+        restart,
+        "--dss-cut-strategy",
+        strategy,
+        "--loglevel",
+        "INFO",
+      )
+    if (thrown != null) throw AssertionError(output, thrown)
+    assertTrue("stitching the violation path failed" !in output) { output }
+    val length = Regex("Trace length: (\\d+)").find(output)?.groupValues?.get(1)?.toInt()
+    assertTrue(length != null && length > 0) { "empty violation trace: $output" }
+  }
+
   @ParameterizedTest
   @EnumSource(DssDecomposition::class)
   fun `every decomposition can cut a block, and keeps the verdict`(strategy: DssDecomposition) {

@@ -240,9 +240,8 @@ fun runDssNetworksSequentially(
     }
   }
 
-  return DssRun(
-    observer.verdict(),
-    networkOf(networks, observer.resultSender) { executorId(networks, it) },
-    if (cutting) listOf(currentGraph) else emptyList(),
-  )
+  // Cutting needs one network, and the root block that reports a violation may be a new piece
+  val network =
+    if (cutting) 0 else networkOf(networks, observer.resultSender) { executorId(networks, it) }
+  return DssRun(observer.verdict(), network, if (cutting) listOf(currentGraph) else emptyList())
 }

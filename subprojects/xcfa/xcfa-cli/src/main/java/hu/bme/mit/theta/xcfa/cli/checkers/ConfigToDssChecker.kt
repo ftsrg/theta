@@ -653,6 +653,8 @@ private fun meetPath(
   return reversal.originalPath(fromEntry) + toError
 }
 
+private const val STITCH_TRACE_LINES = 8
+
 private fun stitchViolationPath(
   solverFactory: SolverFactory,
   logger: Logger,
@@ -665,7 +667,11 @@ private fun stitchViolationPath(
         if (it == null) logger.write(Logger.Level.INFO, "DSS: no violation path to stitch\n")
       }
   } catch (e: Exception) {
-    logger.write(Logger.Level.INFO, "DSS: stitching the violation path failed: %s\n", e)
+    logger.write(
+      Logger.Level.INFO,
+      "DSS: stitching the violation path failed: %s\n",
+      e.stackTraceToString().lines().take(STITCH_TRACE_LINES).joinToString("\n"),
+    )
     null
   }
 
