@@ -362,21 +362,25 @@ private constructor(
   }
 
   /**
-   * Converts the target valuation to an action. The valuation must contain the edge index in the
-   * `__edge_` variable.
+   * Converts the target valuation to an action, with the values of its havocs the valuation
+   * determines. The valuation must contain the edge index in the `__edge_` variable.
    */
   fun valToAction(valuation: Valuation): XcfaAction {
     val valMap = valuation.toMap()
     val edge = edges[valMap.entries.first { it.key.name == "__edge_" }.value.value]
-    if (blocks == null) return XcfaAction(pid = 0, edge = edge)
-    val procedure = model.initProcedures.first().first.name
-    return XcfaAction(
-      0,
-      edge.source,
-      edge.target,
-      blocks.expand(procedure, edge, valuation),
-      edge.metadata,
-    )
+    val action =
+      if (blocks == null) XcfaAction(pid = 0, edge = edge)
+      else {
+        val procedure = model.initProcedures.first().first.name
+        XcfaAction(
+          0,
+          edge.source,
+          edge.target,
+          blocks.expand(procedure, edge, valuation),
+          edge.metadata,
+        )
+      }
+    return action.withInputs(action.inputsFrom(valuation))
   }
 }
 

@@ -374,8 +374,8 @@ class XcfaMultiThreadToMonolithicAdapter(
   }
 
   /**
-   * Converts the target valuation to an action. The valuation must contain the edge index in the
-   * `__edge_` variable.
+   * Converts the target valuation to an action, with the values of its havocs the valuation
+   * determines. The valuation must contain the edge index in the `__edge_` variable.
    */
   fun valToAction(valuation: Valuation): XcfaAction {
     val valMap = valuation.toMap()
@@ -384,7 +384,8 @@ class XcfaMultiThreadToMonolithicAdapter(
       edgeMap.entries
         .find { (_, id) -> id == edgeVarValue }
         ?.let { (edge, _) ->
-          return XcfaAction(pid = threadIds[start]!!, edge = edge)
+          val action = XcfaAction(pid = threadIds[start]!!, edge = edge)
+          return action.withInputs(action.inputsFrom(valuation))
         }
     }
     error("No edge found for edge id $edgeVarValue")

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -30,7 +31,10 @@ import hu.bme.mit.theta.xcfa.analysis.monolithic.BlockEncoding
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.model.NondetLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -109,5 +113,17 @@ class BlockEncodingTest {
     val labels = result.asUnsafe().cex.actions.flatMap { it.label.getAllLabels() }
     assertTrue(labels.none { it is NondetLabel })
     assertTrue(labels.none { BlockEncoding.CHOICE_PREFIX in it.toString() })
+  }
+
+  @Test
+  fun aCounterexampleGivesTheValuesOfItsHavocs() {
+    val result = check("loop_unsafe.c", blockEncoding = true, maxBound = 5)
+    assertTrue(result.isUnsafe)
+    val actions = result.asUnsafe().cex.actions
+    for (action in actions) {
+      val havocs = action.label.getFlatLabels().count { it is StmtLabel && it.stmt is HavocStmt<*> }
+      assertEquals(havocs, action.inputs?.size)
+    }
+    assertTrue(actions.any { action -> action.inputs!!.any { it != null } })
   }
 }

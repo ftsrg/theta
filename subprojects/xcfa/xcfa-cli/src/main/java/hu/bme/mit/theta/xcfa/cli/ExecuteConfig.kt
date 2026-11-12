@@ -644,6 +644,7 @@ internal fun concretizeTrace(
   trace: Cex?,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
+  logger: Logger,
 ): Trace<XcfaState<ExplState>, XcfaAction> =
   if (config.frontendConfig.inputType == InputType.BTOR2) {
     Btor2XcfaTraceConcretizer.concretize(
@@ -664,5 +665,7 @@ internal fun concretizeTrace(
         ),
         parseContext,
         wrapExprTraceCheckerWithDataRaceCondition(config.inputConfig.property, parseContext),
+        config.inputConfig.property?.verifiedProperty != ErrorDetection.DATA_RACE,
+        logger,
       )
   }

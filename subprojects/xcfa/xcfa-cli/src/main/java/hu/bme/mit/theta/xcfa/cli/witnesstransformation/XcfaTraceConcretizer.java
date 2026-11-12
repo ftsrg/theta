@@ -22,16 +22,22 @@ import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.getDereferences;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.isWritten;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabels;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.StmtApplier;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.ptr.PtrState;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -64,6 +70,9 @@ import kotlin.Triple;
  * output a concrete counterexample
  */
 public class XcfaTraceConcretizer {
+
+    private static final Cache<Trace<?, ?>, Trace<XcfaState<ExplState>, XcfaAction>> CONCRETIZED =
+            CacheBuilder.newBuilder().weakKeys().build();
 
     /**
      * Reverse map (renamed/SSA variable -> original declaration) over all of `state`'s processes.
@@ -156,18 +165,181 @@ public class XcfaTraceConcretizer {
             ParseContext parseContext,
             Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
                     exprTraceCheckerWrapper) {
-        final Trace<XcfaState<?>, XcfaAction> sbeTrace =
-                splitLabels(keepNamedVars(trace, parseContext)).trace();
+        return concretize(trace, solverFactory, parseContext, exprTraceCheckerWrapper, false);
+    }
+
+    public Trace<XcfaState<ExplState>, XcfaAction> concretize(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            SolverFactory solverFactory,
+            ParseContext parseContext,
+            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
+                    exprTraceCheckerWrapper,
+            boolean useModel) {
+        return concretize(
+                trace,
+                solverFactory,
+                parseContext,
+                exprTraceCheckerWrapper,
+                useModel,
+                NullLogger.getInstance());
+    }
+
+    /**
+     * With {@code useModel}, the values the backend found come first: the trace is replayed with
+     * the values its actions give their havocs, else solved at once with every value its states
+     * give, else with those of the named variables only. An interpolating check of a long trace
+     * with large steps can take hours, so it is the last resort. Each witness writer concretizes
+     * the same trace, so the result is cached per trace.
+     */
+    public Trace<XcfaState<ExplState>, XcfaAction> concretize(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
+            SolverFactory solverFactory,
+            ParseContext parseContext,
+            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
+                    exprTraceCheckerWrapper,
+            boolean useModel,
+            Logger logger) {
+        // subclasses build other states from the same model
+        final boolean cache = useModel && getClass() == XcfaTraceConcretizer.class;
+        if (cache) {
+            final var cached = CONCRETIZED.getIfPresent(trace);
+            if (cached != null) {
+                return cached;
+            }
+        }
+        final SplitTrace named = splitLabels(keepNamedVars(trace, parseContext));
+        if (useModel) {
+            final SplitTrace full = splitLabels(trace);
+            List<Valuation> valuations = replay(trace, full);
+            String how = "replaying the backend's model";
+            if (valuations == null) {
+                valuations = solveTrace(full.trace(), solverFactory);
+                how = "solving it with the backend's state values";
+            }
+            if (valuations == null) {
+                valuations = solveTrace(named.trace(), solverFactory);
+                how = "solving it with the named variables' values";
+            }
+            if (valuations != null) {
+                logger.info("Concretized the trace by %s", how);
+                final var concrete = toConcreteTrace(full.trace(), valuations, parseContext);
+                if (cache) {
+                    CONCRETIZED.put(trace, concrete);
+                }
+                return concrete;
+            }
+        }
         final ExprTraceChecker<ItpRefutation> checker =
                 exprTraceCheckerWrapper.apply(
                         ExprTraceFwBinItpChecker.create(
                                 BoolExprs.True(),
                                 BoolExprs.True(),
                                 solverFactory.createItpSolver()));
-        final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
+        final ExprTraceStatus<ItpRefutation> status = checker.check(named.trace());
         checkArgument(status.isFeasible(), "Infeasible trace.");
+        logger.info("Concretized the trace by an interpolating check");
         return toConcreteTrace(
-                sbeTrace, status.asFeasible().getValuations().getStates(), parseContext);
+                named.trace(), status.asFeasible().getValuations().getStates(), parseContext);
+    }
+
+    /**
+     * The states of {@code split} when {@code trace} is executed from its first state, each havoc
+     * taking the value its action gives it, else the value the state after the action determines.
+     * The variable of a havoc with neither stays unknown; null if a step reads an unknown value,
+     * cannot be evaluated, or is blocked.
+     */
+    private List<Valuation> replay(
+            Trace<XcfaState<PtrState<?>>, XcfaAction> trace, SplitTrace split) {
+        final MutableValuation val =
+                trace.getState(0).getSGlobal().getInnerState() instanceof ExplState init
+                        ? MutableValuation.copyOf(init)
+                        : new MutableValuation();
+        final List<Valuation> valuations = new ArrayList<>();
+        valuations.add(ImmutableValuation.copyOf(val));
+        try {
+            for (int i = 0; i < trace.getActions().size(); ++i) {
+                final Iterator<LitExpr<?>> next = splitInputs(trace, i).iterator();
+                for (int j = split.positions().get(i); j < split.positions().get(i + 1); ++j) {
+                    for (XcfaLabel label : getFlatLabels(split.trace().getAction(j).getLabel())) {
+                        if (label instanceof StmtLabel stmtLabel
+                                && stmtLabel.getStmt() instanceof HavocStmt<?> havoc) {
+                            final LitExpr<?> value = next.hasNext() ? next.next() : null;
+                            if (value != null
+                                    && value.getType().equals(havoc.getVarDecl().getType())) {
+                                val.put(havoc.getVarDecl(), value);
+                            } else {
+                                val.remove(havoc.getVarDecl());
+                            }
+                        } else if (StmtApplier.apply(label.toStmt(), val, false)
+                                != StmtApplier.ApplyResult.SUCCESS) {
+                            return null;
+                        }
+                    }
+                    valuations.add(ImmutableValuation.copyOf(val));
+                }
+            }
+        } catch (RuntimeException e) {
+            // a step the evaluator does not support: the trace is solved instead
+            return null;
+        }
+        return valuations;
+    }
+
+    /**
+     * The values of the havocs action {@code i} has after {@link #splitLabels}, as its backend or
+     * the next state gives them; null where unknown, such as for a havoc a start label became.
+     */
+    private List<LitExpr<?>> splitInputs(Trace<XcfaState<PtrState<?>>, XcfaAction> trace, int i) {
+        final XcfaAction action = trace.getAction(i);
+        List<LitExpr<?>> inputs = action.getInputs();
+        if (inputs == null
+                && trace.getState(i + 1).getSGlobal().getInnerState() instanceof ExplState post) {
+            inputs = action.inputsFrom(post);
+        }
+        final List<XcfaLabel> labels = getFlatLabels(action.getLabel());
+        final boolean fits =
+                inputs != null
+                        && inputs.size()
+                                == labels.stream()
+                                        .filter(
+                                                l ->
+                                                        l instanceof StmtLabel stmtLabel
+                                                                && stmtLabel.getStmt()
+                                                                        instanceof HavocStmt<?>)
+                                        .count();
+        final List<LitExpr<?>> aligned = new ArrayList<>();
+        final Iterator<LitExpr<?>> next = fits ? inputs.iterator() : null;
+        for (XcfaLabel label : labels) {
+            if (label instanceof StmtLabel stmtLabel
+                    && stmtLabel.getStmt() instanceof HavocStmt<?>) {
+                aligned.add(fits ? next.next() : null);
+            } else if (label instanceof StartLabel) {
+                aligned.add(null);
+            }
+        }
+        return aligned;
+    }
+
+    /** The state valuations of a model of the whole trace, or null if it has none. */
+    private List<Valuation> solveTrace(
+            Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory) {
+        final Solver solver = solverFactory.createSolver();
+        final List<VarIndexing> indexings = new ArrayList<>();
+        indexings.add(VarIndexingFactory.indexing(0));
+        solver.add(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+        for (int i = 1; i < trace.getStates().size(); ++i) {
+            final XcfaAction action = trace.getAction(i - 1);
+            indexings.add(indexings.get(i - 1).add(action.nextIndexing()));
+            solver.add(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
+            solver.add(PathUtils.unfold(action.toExpr(), indexings.get(i - 1)));
+        }
+        if (!solver.check().isSat()) {
+            return null;
+        }
+        final Valuation model = solver.getModel();
+        return indexings.stream()
+                .map(indexing -> PathUtils.extractValuation(model, indexing))
+                .toList();
     }
 
     /** A concrete lasso: the state at `cycleStart` equals the last state of the trace. */

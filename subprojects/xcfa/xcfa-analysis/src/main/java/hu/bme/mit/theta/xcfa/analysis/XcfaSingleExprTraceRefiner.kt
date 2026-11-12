@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.model.Valuation
 import java.util.*
 
 /**
@@ -62,6 +63,19 @@ fun <S : ExprState, A : ExprAction> threadWriteTriples(rawTrace: Trace<S, A>): T
       )
     }
   return Trace.of(states, actions)
+}
+
+/** [trace] with the values of its havocs that [valuations], one per state, determine. */
+private fun <S : ExprState, A : ExprAction> withInputs(
+  trace: Trace<S, A>,
+  valuations: List<Valuation>,
+): Trace<S, A> {
+  if (valuations.size != trace.states.size) return trace
+  val actions =
+    trace.actions.mapIndexed { i, a ->
+      if (a is XcfaAction) a.withInputs(a.inputsFrom(valuations[i + 1])) as A else a
+    }
+  return Trace.of(trace.states, actions)
 }
 
 /**

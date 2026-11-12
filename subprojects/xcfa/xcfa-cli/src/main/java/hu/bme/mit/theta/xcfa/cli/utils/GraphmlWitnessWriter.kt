@@ -24,6 +24,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -224,6 +225,8 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
               cexSolverFactory,
               parseContext,
               wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+              property?.verifiedProperty != ErrorDetection.DATA_RACE,
+              logger,
             )
 
         val witnessTrace =

@@ -39,6 +39,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureT
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
+import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
@@ -88,6 +89,8 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
                 cexSolverFactory,
                 parseContext,
                 wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+                property?.verifiedProperty != ErrorDetection.DATA_RACE,
+                logger,
               )
           witnessfile.writeText(concreteTrace.toSvLibViolationWitness(parseContext))
         }

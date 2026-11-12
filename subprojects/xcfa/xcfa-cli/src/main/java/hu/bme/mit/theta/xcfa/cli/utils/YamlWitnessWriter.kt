@@ -161,6 +161,8 @@ class YamlWitnessWriter : XcfaWitnessWriter {
                     cexSolverFactory,
                     parseContext,
                     wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+                    property?.verifiedProperty != ErrorDetection.DATA_RACE,
+                    logger,
                   )
               }
 
