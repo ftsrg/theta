@@ -1,0 +1,254 @@
+- entry_type: 'violation_sequence'
+  metadata:
+    format_version: '2.1'
+    uuid: '32a699ff-4156-4d8d-96d7-dd9468d0c25d'
+    creation_time: '2026-11-11T00:18:37Z'
+    producer:
+      name: 'Theta'
+      version: 'no version found'
+    task:
+      input_files:
+      - 'ResultNameClash.c'
+      input_file_hashes:
+        'ResultNameClash.c': '191de643282f9e63dc503d4fab7c1f1e1d13d62c02c05880a19ed8c3c2ea7e64'
+      specification: 'CHECK( init(main()), LTL(F end) )'
+      data_model: 'ILP32'
+      language: 'C'
+  content:
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 11
+          column: 3
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 12
+          column: 3
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 12
+          column: 13
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 5
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'function_return'
+        constraint:
+          value: '\result == 1'
+          format: 'ext_c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 39
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 14
+          column: 5
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 5
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 16
+        action: 'follow'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'true'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 4
+          column: 3
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 12
+          column: 13
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'function_return'
+        constraint:
+          value: '\result == 2'
+          format: 'ext_c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 39
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 14
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 16
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 4
+          column: 3
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 12
+          column: 13
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'function_return'
+        constraint:
+          value: '\result == 1'
+          format: 'ext_c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 13
+          column: 39
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'branching'
+        constraint:
+          value: 'false'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 14
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 5
+        action: 'cycle'
+  - segment:
+    - waypoint:
+        type: 'assumption'
+        constraint:
+          value: '1'
+          format: 'c_expression'
+        location:
+          file_name: 'ResultNameClash.c'
+          line: 17
+          column: 16
+        action: 'cycle'
