@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
@@ -407,8 +409,31 @@ internal class XcfaOcValueAnalysis(
       }
       is NotExpr -> evaluate(expr.op)?.let { op -> booleans(False() in op, True() in op) }
       is BvAndExpr -> enumerate(expr) ?: maskedValues(expr)
+      // a compare-and-swap: its constants together can take more values than the result
+      is IteExpr<*> -> enumerate(expr) ?: branchValues(expr)
+      is EqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, true)
+      is NeqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, false)
       else -> enumerate(expr)
     }
+
+  private fun branchValues(expr: IteExpr<*>): Set<LitExpr<*>>? {
+    val cond = evaluate(expr.cond)
+    return when {
+      cond != null && cond.isEmpty() -> NOTHING
+      cond == FALSE -> evaluate(expr.`else`)
+      cond != null && False() !in cond -> evaluate(expr.then)
+      else -> evaluate(expr.then).join(evaluate(expr.`else`))
+    }
+  }
+
+  private fun comparison(left: Expr<*>, right: Expr<*>, equal: Boolean): Set<LitExpr<*>>? {
+    val lefts = evaluate(left) ?: return null
+    val rights = evaluate(right) ?: return null
+    if (lefts.isEmpty() || rights.isEmpty()) return NOTHING
+    val same = lefts.any { it in rights }
+    val different = lefts.size > 1 || rights.size > 1 || lefts != rights
+    return if (equal) booleans(same, different) else booleans(different, same)
+  }
 
   /**
    * Masking an unknown value only keeps some bits of the mask, like an index into a ring buffer.

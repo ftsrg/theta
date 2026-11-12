@@ -240,6 +240,20 @@ class XcfaOcCheckerTest {
     Assertions.assertEquals(!safe, result.isUnsafe)
   }
 
+  /** The value analysis evaluates a compare-and-swap by its branches. */
+  @ParameterizedTest
+  @CsvSource(
+    "/42cas_index_unsafe.c,flat,false",
+    "/42cas_index_unsafe.c,multi,false",
+    "/43cas_index_safe.c,flat,true",
+    "/43cas_index_safe.c,multi,true",
+  )
+  fun testCompareAndSwapAddress(program: String, memoryModel: MemoryModelType, safe: Boolean) {
+    val result = check(program, property, OcDecisionProcedureType.IDL, memoryModel = memoryModel)
+    Assertions.assertEquals(safe, result.isSafe)
+    Assertions.assertEquals(!safe, result.isUnsafe)
+  }
+
   @Test
   fun testThreadLocalAggregateUnsupported() {
     Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
