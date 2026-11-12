@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import com.google.common.collect.MapMaker
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType.WRITE
 import hu.bme.mit.theta.analysis.algorithm.oc.IOcChecker
@@ -22,6 +24,10 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.analysis.DataRaceAccess
+import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.dereferences
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /** The conflicting access pairs of two atomic units, racing when the units are adjacent. */
 internal class RaceCandidate(val pairs: List<Pair<E, E>>, adjacent: Expr<BoolType>) {
@@ -59,4 +65,38 @@ internal fun raceCandidates(
     val (e1, e2) = pairs.first()
     RaceCandidate(pairs, checker.raceCondition(e1, e2))
   }
+}
+
+/**
+ * The racing accesses of the data races the OC checker reported, by counterexample: IDL reports a
+ * race as two conflicting accesses whose clocks are adjacent in the model. Witness writers fall
+ * back to this pair when the counterexample cannot be concretized. The main thread is [MAIN_PID].
+ */
+object XcfaOcDataRaces {
+  const val MAIN_PID = 0
+
+  // weak identity keys: a result's counterexample is only kept while the result is
+  private val races: MutableMap<Cex, Pair<DataRaceAccess, DataRaceAccess>> =
+    MapMaker().weakKeys().makeMap()
+
+  internal fun record(cex: Cex, e1: E, e2: E) {
+    races[cex] = e1.access() to e2.access()
+  }
+
+  fun of(cex: Cex?): Pair<DataRaceAccess, DataRaceAccess>? = cex?.let { races[it] }
+
+  // the flat label holding the access, as XcfaDataRaceCheck reports it: the edge's own label may
+  // span several statements
+  private fun E.access(): DataRaceAccess {
+    val labels = edge.label.getFlatLabels()
+    val label =
+      if (array != null) labels.firstOrNull { it.dereferences.isNotEmpty() }
+      else labels.firstOrNull { const.varDecl in it.collectVars() }
+    return DataRaceAccess(pid, edge, label ?: edge.label)
+  }
+}
+
+/** The counterexample of a data race whose trace could not be extracted. */
+internal class RaceOnlyCex : Cex {
+  override fun length() = 0
 }
