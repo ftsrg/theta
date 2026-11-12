@@ -21,6 +21,8 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.BooleanGlobalRelation
+import hu.bme.mit.theta.analysis.algorithm.oc.Event
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.exception.NotSolvableException
@@ -232,6 +234,26 @@ class XcfaOcChecker(
         this.ppos = ppos
         this.wss = wss
       }
+      logStatistics()
+    }
+
+    private fun logStatistics() {
+      val events = eg.events.mapValues { it.value.values.flatten() }
+      val memory = events.filterKeys { it in eg.memoryDecls }.values.flatten()
+      val all = events.values.flatten()
+      fun counts(es: List<E>) =
+        "${es.count { it.type == EventType.READ }} reads, ${es.count { it.type == EventType.WRITE }} writes"
+      logger.info(
+        "Event graph: ${counts(all)} of ${events.size} variables (memory: ${counts(memory)}); " +
+          "${eg.rfs.values.sumOf { it.size }} read-from and ${wss.values.sumOf { it.size }} " +
+          "write-order candidates; ${Event.clkSize} clocks; ${eg.unrollExits.size} unroll exits"
+      )
+      eg.rfs.entries
+        .sortedByDescending { it.value.size }
+        .take(4)
+        .forEach { (v, rfs) ->
+          logger.info("  ${v.name}: ${counts(events[v].orEmpty())}, ${rfs.size} read-from")
+        }
     }
 
     override fun close() {
