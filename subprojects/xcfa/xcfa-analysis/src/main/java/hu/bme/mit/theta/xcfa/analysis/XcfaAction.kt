@@ -18,17 +18,9 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.algorithm.bounded.ReversibleAction
 import hu.bme.mit.theta.analysis.ptr.PtrAction
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
-import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
-import hu.bme.mit.theta.xcfa.utils.getFlatLabels
-import hu.bme.mit.theta.xcfa.utils.isWritten
 
 data class XcfaAction
 @JvmOverloads
@@ -38,13 +30,6 @@ constructor(
   private val lastWrites: WriteTriples = emptyMap(),
   private val nextCnt: Int = 0,
 ) : PtrAction(lastWrites, nextCnt), ReversibleAction {
-
-  /**
-   * The values the havocs of [label] took, in flat label order, as far as the backend knows them
-   * (null where it does not). Only a hint for the trace concretizer, so it is not part of equality.
-   */
-  var inputs: List<LitExpr<*>?>? = null
-    private set
 
   val source: XcfaLocation = edge.source
   val target: XcfaLocation = edge.target
@@ -77,33 +62,6 @@ constructor(
   }
 
   fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
-    return XcfaAction(pid, edge, writeTriples, nextCnt).withInputs(inputs)
-  }
-
-  fun withInputs(inputs: List<LitExpr<*>?>?): XcfaAction {
-    return XcfaAction(pid, edge, lastWrites, nextCnt).also { it.inputs = inputs }
-  }
-
-  /**
-   * The values of this action's havocs that [post], a valuation after the action, determines: that
-   * of each havoc whose variable no later label of the action writes.
-   */
-  fun inputsFrom(post: Valuation): List<LitExpr<*>?> {
-    val writtenLater = mutableSetOf<VarDecl<*>>()
-    val values = ArrayDeque<LitExpr<*>?>()
-    for (flat in label.getFlatLabels().asReversed()) {
-      val stmt = (flat as? StmtLabel)?.stmt
-      if (stmt is HavocStmt<*>) {
-        values.addFirst(
-          if (stmt.varDecl in writtenLater) null else post.eval(stmt.varDecl).orElse(null)
-        )
-        writtenLater.add(stmt.varDecl)
-      } else if (stmt != null) {
-        writtenLater.addAll(StmtUtils.getWrittenVars(stmt))
-      } else {
-        writtenLater.addAll(flat.collectVarsWithAccessType().filter { it.value.isWritten }.keys)
-      }
-    }
-    return values.toList()
+    return XcfaAction(pid, source, target, label, edge.metadata, writeTriples, nextCnt)
   }
 }

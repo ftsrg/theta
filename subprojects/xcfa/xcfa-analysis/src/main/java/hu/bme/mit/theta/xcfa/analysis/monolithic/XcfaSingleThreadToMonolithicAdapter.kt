@@ -50,6 +50,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.analysis.HintedTrace
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -264,7 +265,11 @@ private constructor(
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
+    return HintedTrace.of(
+      trace.states.map(this::valToState),
+      trace.states.drop(1).map(this::valToAction),
+      trace.states,
+    )
   }
 
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants {
@@ -362,25 +367,21 @@ private constructor(
   }
 
   /**
-   * Converts the target valuation to an action, with the values of its havocs the valuation
-   * determines. The valuation must contain the edge index in the `__edge_` variable.
+   * Converts the target valuation to an action. The valuation must contain the edge index in the
+   * `__edge_` variable.
    */
   fun valToAction(valuation: Valuation): XcfaAction {
     val valMap = valuation.toMap()
     val edge = edges[valMap.entries.first { it.key.name == "__edge_" }.value.value]
-    val action =
-      if (blocks == null) XcfaAction(pid = 0, edge = edge)
-      else {
-        val procedure = model.initProcedures.first().first.name
-        XcfaAction(
-          0,
-          edge.source,
-          edge.target,
-          blocks.expand(procedure, edge, valuation),
-          edge.metadata,
-        )
-      }
-    return action.withInputs(action.inputsFrom(valuation))
+    if (blocks == null) return XcfaAction(pid = 0, edge = edge)
+    val procedure = model.initProcedures.first().first.name
+    return XcfaAction(
+      0,
+      edge.source,
+      edge.target,
+      blocks.expand(procedure, edge, valuation),
+      edge.metadata,
+    )
   }
 }
 

@@ -119,11 +119,11 @@ class BlockEncodingTest {
   fun aCounterexampleGivesTheValuesOfItsHavocs() {
     val result = check("loop_unsafe.c", blockEncoding = true, maxBound = 5)
     assertTrue(result.isUnsafe)
-    val actions = result.asUnsafe().cex.actions
-    for (action in actions) {
+    val cex = result.asUnsafe().cex as HintedTrace<*>
+    cex.actions.forEachIndexed { i, action ->
       val havocs = action.label.getFlatLabels().count { it is StmtLabel && it.stmt is HavocStmt<*> }
-      assertEquals(havocs, action.inputs?.size)
+      assertEquals(havocs, cex.inputs[i].size)
     }
-    assertTrue(actions.any { action -> action.inputs!!.any { it != null } })
+    assertTrue(cex.inputs.any { inputs -> inputs.any { it != null } })
   }
 }

@@ -22,8 +22,6 @@ import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.getDereferences;
 import static hu.bme.mit.theta.xcfa.utils.AccessUtilsKt.isWritten;
 import static hu.bme.mit.theta.xcfa.utils.UtilsKt.getFlatLabels;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.StmtApplier;
@@ -57,6 +55,8 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import hu.bme.mit.theta.xcfa.analysis.HintedTrace;
+import hu.bme.mit.theta.xcfa.analysis.HintedTraceKt;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.*;
@@ -70,9 +70,6 @@ import kotlin.Triple;
  * output a concrete counterexample
  */
 public class XcfaTraceConcretizer {
-
-    private static final Cache<Trace<?, ?>, Trace<XcfaState<ExplState>, XcfaAction>> CONCRETIZED =
-            CacheBuilder.newBuilder().weakKeys().build();
 
     /**
      * Reverse map (renamed/SSA variable -> original declaration) over all of `state`'s processes.
@@ -186,10 +183,9 @@ public class XcfaTraceConcretizer {
 
     /**
      * With {@code useModel}, the values the backend found come first: the trace is replayed with
-     * the values its actions give their havocs, else solved at once with every value its states
+     * the havoc values of a {@link HintedTrace}, else solved at once with every value its states
      * give, else with those of the named variables only. An interpolating check of a long trace
-     * with large steps can take hours, so it is the last resort. Each witness writer concretizes
-     * the same trace, so the result is cached per trace.
+     * with large steps can take hours, so it is the last resort.
      */
     public Trace<XcfaState<ExplState>, XcfaAction> concretize(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
@@ -199,14 +195,6 @@ public class XcfaTraceConcretizer {
                     exprTraceCheckerWrapper,
             boolean useModel,
             Logger logger) {
-        // subclasses build other states from the same model
-        final boolean cache = useModel && getClass() == XcfaTraceConcretizer.class;
-        if (cache) {
-            final var cached = CONCRETIZED.getIfPresent(trace);
-            if (cached != null) {
-                return cached;
-            }
-        }
         final SplitTrace named = splitLabels(keepNamedVars(trace, parseContext));
         if (useModel) {
             final SplitTrace full = splitLabels(trace);
@@ -222,11 +210,7 @@ public class XcfaTraceConcretizer {
             }
             if (valuations != null) {
                 logger.info("Concretized the trace by %s", how);
-                final var concrete = toConcreteTrace(full.trace(), valuations, parseContext);
-                if (cache) {
-                    CONCRETIZED.put(trace, concrete);
-                }
-                return concrete;
+                return toConcreteTrace(full.trace(), valuations, parseContext);
             }
         }
         final ExprTraceChecker<ItpRefutation> checker =
@@ -244,9 +228,9 @@ public class XcfaTraceConcretizer {
 
     /**
      * The states of {@code split} when {@code trace} is executed from its first state, each havoc
-     * taking the value its action gives it, else the value the state after the action determines.
-     * The variable of a havoc with neither stays unknown; null if a step reads an unknown value,
-     * cannot be evaluated, or is blocked.
+     * taking the value the hints give it, else the value the state after the action determines. The
+     * variable of a havoc with neither stays unknown; null if a step reads an unknown value, cannot
+     * be evaluated, or is blocked.
      */
     private List<Valuation> replay(
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace, SplitTrace split) {
@@ -286,15 +270,17 @@ public class XcfaTraceConcretizer {
     }
 
     /**
-     * The values of the havocs action {@code i} has after {@link #splitLabels}, as its backend or
-     * the next state gives them; null where unknown, such as for a havoc a start label became.
+     * The values of the havocs action {@code i} has after {@link #splitLabels}, as the backend's
+     * hints or the next state give them; null where unknown, such as for a havoc a start label
+     * became.
      */
     private List<LitExpr<?>> splitInputs(Trace<XcfaState<PtrState<?>>, XcfaAction> trace, int i) {
         final XcfaAction action = trace.getAction(i);
-        List<LitExpr<?>> inputs = action.getInputs();
-        if (inputs == null
-                && trace.getState(i + 1).getSGlobal().getInnerState() instanceof ExplState post) {
-            inputs = action.inputsFrom(post);
+        List<LitExpr<?>> inputs = null;
+        if (trace instanceof HintedTrace<?> hinted) {
+            inputs = hinted.getInputs().get(i);
+        } else if (trace.getState(i + 1).getSGlobal().getInnerState() instanceof ExplState post) {
+            inputs = HintedTraceKt.havocValues(action, post);
         }
         final List<XcfaLabel> labels = getFlatLabels(action.getLabel());
         final boolean fits =

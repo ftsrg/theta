@@ -44,6 +44,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.analysis.HintedTrace
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -308,7 +309,11 @@ class XcfaMultiThreadToMonolithicAdapter(
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
+    return HintedTrace.of(
+      trace.states.map(this::valToState),
+      trace.states.drop(1).map(this::valToAction),
+      trace.states,
+    )
   }
 
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants {
@@ -374,8 +379,8 @@ class XcfaMultiThreadToMonolithicAdapter(
   }
 
   /**
-   * Converts the target valuation to an action, with the values of its havocs the valuation
-   * determines. The valuation must contain the edge index in the `__edge_` variable.
+   * Converts the target valuation to an action. The valuation must contain the edge index in the
+   * `__edge_` variable.
    */
   fun valToAction(valuation: Valuation): XcfaAction {
     val valMap = valuation.toMap()
@@ -384,8 +389,7 @@ class XcfaMultiThreadToMonolithicAdapter(
       edgeMap.entries
         .find { (_, id) -> id == edgeVarValue }
         ?.let { (edge, _) ->
-          val action = XcfaAction(pid = threadIds[start]!!, edge = edge)
-          return action.withInputs(action.inputsFrom(valuation))
+          return XcfaAction(pid = threadIds[start]!!, edge = edge)
         }
     }
     error("No edge found for edge id $edgeVarValue")
