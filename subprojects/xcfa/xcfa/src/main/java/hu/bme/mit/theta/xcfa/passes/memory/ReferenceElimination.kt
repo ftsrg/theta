@@ -68,6 +68,7 @@ import hu.bme.mit.theta.xcfa.passes.structure.DeterministicPass
 import hu.bme.mit.theta.xcfa.passes.structure.NormalizePass
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.SubObjects
 import hu.bme.mit.theta.xcfa.utils.bumpAllocate
 import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
@@ -580,7 +581,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       if (type is CArray) maxOf(units, CPointer(null, null, parseContext).width() / 8L) else units
     } else
       when (type) {
-        is CStruct -> if (type.isUnion) 1L else type.unitCount.toLong()
+        is CStruct -> if (type.isUnion) unionCells(type).toLong() else type.unitCount.toLong()
         else -> flatCellCount(type)?.toLong() ?: FlatAddressSpace.UNKNOWN_EXTENT.toLong()
       }
 
@@ -588,12 +589,18 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     when (type) {
       is CArray -> {
         val dim = ObjectLayout.constantDimension(type) ?: return null
-        val elem = flatCellCount(type.embeddedType) ?: return null
+        val element = type.embeddedType
+        // an array element union keeps one cell, as in SubObjects.flatArraySize
+        val elem =
+          if (element is CStruct && element.isUnion) 1 else flatCellCount(element) ?: return null
         dim * elem
       }
-      is CStruct -> if (type.isUnion) 1 else type.unitCount
+      is CStruct -> if (type.isUnion) unionCells(type) else type.unitCount
       else -> 1
     }
+
+  /** A union spans the cells its initialization writes: one, or its bytes if byte-laid-out. */
+  private fun unionCells(type: CStruct) = SubObjects(parseContext).unionCellCount(type)
 
   /**
    * Sizes the object a taken address points to. An array is aliased with its own first element (`&a
@@ -615,7 +622,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         // trailing fields
         embeddedType is CStruct && parseContext.memoryModel.flatAddressing() ->
           flatCellCount(embeddedType)
-        embeddedType is CStruct -> if (embeddedType.isUnion) 1 else embeddedType.fields.size
+        embeddedType is CStruct ->
+          if (embeddedType.isUnion) unionCells(embeddedType) else embeddedType.fields.size
         embeddedType is CArray -> flatCellCount(embeddedType)
         else -> 1
       }

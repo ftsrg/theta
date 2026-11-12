@@ -114,7 +114,7 @@ private constructor(
         ProcedurePassManager(
           listOfNotNull(
             allocationSitesPass,
-            WitnessOptimizer(params, parseContext),
+            WitnessOptimizer(params, parseContext, procedure.name),
             AtomicReadsOneWritePass(),
           )
         )
