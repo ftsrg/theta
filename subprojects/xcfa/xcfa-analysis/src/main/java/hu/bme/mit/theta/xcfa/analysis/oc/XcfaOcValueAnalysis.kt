@@ -38,6 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import java.math.BigInteger
@@ -408,13 +409,47 @@ internal class XcfaOcValueAnalysis(
           booleans(ops.all { it == null || True() in it }, ops.any { it == null || False() in it })
       }
       is NotExpr -> evaluate(expr.op)?.let { op -> booleans(False() in op, True() in op) }
-      is BvAndExpr -> enumerate(expr) ?: maskedValues(expr)
+      is BvAndExpr -> enumerate(expr) ?: operandwise(expr) ?: maskedValues(expr)
+      is BvURemExpr -> enumerate(expr) ?: operandwise(expr) ?: remainders(expr)
       // a compare-and-swap: its constants together can take more values than the result
       is IteExpr<*> -> enumerate(expr) ?: branchValues(expr)
       is EqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, true)
       is NeqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, false)
-      else -> enumerate(expr)
+      else -> enumerate(expr) ?: operandwise(expr)
     }
+
+  /** Over the values of the operands: these may take fewer combinations than the constants. */
+  private fun operandwise(expr: Expr<*>): Set<LitExpr<*>>? {
+    if (expr.ops.isEmpty()) return null
+    val operands = expr.ops.map { evaluate(it) ?: return null }
+    if (operands.any { it.isEmpty() }) return NOTHING
+    val size = operands.fold(1L) { n, op -> (n * op.size).coerceAtMost(MAX_COMBINATIONS + 1L) }
+    if (size > MAX_COMBINATIONS) return null
+    var combinations = listOf(listOf<Expr<*>>())
+    operands.forEach { op -> combinations = combinations.flatMap { c -> op.map { c + it } } }
+    return try {
+      combinations
+        .mapTo(HashSet()) { expr.withOps(it).eval(ImmutableValuation.empty()) as LitExpr<*> }
+        .takeIf { it.size <= MAX_VALUES }
+    } catch (_: RuntimeException) {
+      null
+    }
+  }
+
+  /** A remainder is below its divisor, like an index into a ring buffer. */
+  private fun remainders(expr: BvURemExpr): Set<LitExpr<*>>? {
+    val divisors =
+      evaluate(expr.rightOp)?.map { BvUtils.neutralBvLitExprToBigInteger(it as BvLitExpr) }
+        ?: return null
+    if (divisors.isEmpty()) return NOTHING
+    // the remainder of a division by zero is the dividend
+    val bound = divisors.max()
+    if (divisors.any { it.signum() == 0 } || bound > BigInteger.valueOf(MAX_VALUES.toLong()))
+      return null
+    return (0 until bound.toInt())
+      .map { BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(it.toLong()), expr.type.size) }
+      .toSet()
+  }
 
   private fun branchValues(expr: IteExpr<*>): Set<LitExpr<*>>? {
     val cond = evaluate(expr.cond)
@@ -484,6 +519,7 @@ internal class XcfaOcValueAnalysis(
 
   private companion object {
     const val MAX_VALUES = 64
+    const val MAX_COMBINATIONS = 1024
     const val MAX_MASK_BITS = 6
     val MANY_CONSTANTS = Any()
     val NO_CONSTANT = Any()
