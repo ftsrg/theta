@@ -26,10 +26,13 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.LOGICAL_THREAD_ID
 import hu.bme.mit.theta.xcfa.ThetaHelperDeclarations.Witness.SEGMENT_COUNTER
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
@@ -50,13 +53,17 @@ import java.math.BigInteger
  * labels. Thread-start parameters guarded by the segment counter are rewritten similarly, by
  * extracting the guard as an assumption and passing the selected literal value to the start label.
  *
- * Only the update of the [next segment][nextSegment] is turned into an assumption: once a path has
- * passed every lower segment, that segment's counter value is certain when its own waypoint is
- * reached. Any other guarded update may or may not fire there (e.g., a loop head visited before the
- * segment is due), so it is kept as it is.
+ * Only the update of this procedure's [next segment][Segments.next] may become an assumption, and
+ * only if that is sound: either the path passed every lower segment, so the counter is certain
+ * there, or a single label of the whole program can fire the segment, and only in this thread, so a
+ * path passing it early cannot follow the witness. Any other guarded update may or may not fire
+ * (e.g., a loop head visited before the segment is due), so it is kept as it is.
  */
-class WitnessOptimizer(private val params: List<Expr<*>>, private val parseContext: ParseContext) :
-  ProcedurePass {
+class WitnessOptimizer(
+  private val params: List<Expr<*>>,
+  private val parseContext: ParseContext,
+  private val procedureName: String? = null,
+) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val segmentVar: VarDecl<*>? =
@@ -77,6 +84,14 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
         initialValuation.put(param.first, params[index] as LitExpr<*>)
       }
     }
+
+    // the segments this procedure's own waypoints pass; the others are left to other threads
+    val labels = builder.getEdges().flatMap { it.getFlatLabels() }
+    val threadId = logicalThreadId(labels, initialValuation)
+    val alternatives = labels.map { segmentValues(it, threadId).distinct() }
+    val ownSegments = alternatives.flatten().map { it.first }.toSortedSet()
+    val unique = uniqueSegments(builder, labels, alternatives)
+    val segments = Segments(ownSegments, unique)
 
     // Other threads may write globals and memory between two edges, so only locals carry over.
     val localVars = builder.getVars() + builder.getParams().map { it.first }
@@ -100,27 +115,29 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
         val simplifiedLabels =
           oldLabels.flatMap {
             val simplified = it.simplify(edgeValuation, parseContext)
-            simplifyStartLabelLogicalThread(simplified, passedSegments) ?: listOf(simplified)
+            simplifyStartLabelLogicalThread(simplified, passedSegments, segments)
+              ?: listOf(simplified)
           }
         edgeValuation.decls.filter { it !in localVars }.forEach { edgeValuation.remove(it) }
 
         val newLabels =
-          simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, passedSegments).filter {
-            if (it is StmtLabel) {
-              if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
-                val expr = it.stmt.expr
-                if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
+          simplifySegmentCounterUpdates(segmentVar, simplifiedLabels, passedSegments, segments)
+            .filter {
+              if (it is StmtLabel) {
+                if (it.stmt is AssignStmt<*> && it.stmt.varDecl.name == SEGMENT_COUNTER) {
+                  val expr = it.stmt.expr
+                  if (expr is RefExpr<*> && expr.decl.name == SEGMENT_COUNTER) {
+                    return@filter false
+                  } else if (expr is IntLitExpr) {
+                    var i = BigInteger.valueOf(0)
+                    while (i < expr.value) passedSegments.add(i++)
+                  }
+                } else if (it.stmt is AssumeStmt && it.stmt.cond == True()) {
                   return@filter false
-                } else if (expr is IntLitExpr) {
-                  var i = BigInteger.valueOf(0)
-                  while (i < expr.value) passedSegments.add(i++)
                 }
-              } else if (it.stmt is AssumeStmt && it.stmt.cond == True()) {
-                return@filter false
               }
+              true
             }
-            true
-          }
 
         if (newLabels != oldLabels) {
           builder.removeEdge(edge)
@@ -133,22 +150,143 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
     return builder
   }
 
+  /**
+   * The segments of [alternatives] no label but one of this procedure can fire, and which only this
+   * thread fires there: the procedure runs in a single thread, or the alternative is guarded by
+   * this thread's id.
+   */
+  private fun uniqueSegments(
+    builder: XcfaProcedureBuilder,
+    labels: List<XcfaLabel>,
+    alternatives: List<List<Pair<BigInteger, Boolean>>>,
+  ): Set<BigInteger> {
+    val procedures = runCatching { builder.parent.getProcedures() }.getOrNull() ?: return setOf()
+    val others = procedures.filter { it !== builder }
+    val fired =
+      (labels + others.flatMap { p -> p.getEdges().flatMap { it.getFlatLabels() } }).map {
+        firedSegments(it) ?: return setOf()
+      }
+    val firing = fired.flatten().groupingBy { it }.eachCount()
+    val name = { p: XcfaProcedureBuilder -> if (p === builder) procedureName ?: p.name else p.name }
+    val single = instances(name(builder), procedures, name, setOf()) <= 1
+    return alternatives
+      .flatten()
+      .filter { (segment, guarded) -> firing[segment] == 1 && (single || guarded) }
+      .map { it.first }
+      .toSet()
+  }
+
+  /**
+   * The segments [label] may fire, i.e., the guards of segment-counter ites anywhere in it (also
+   * those a temporary carries to the counter); null for a label that cannot be inspected.
+   */
+  private fun firedSegments(label: XcfaLabel): Set<BigInteger>? {
+    val stmt = (label as? StmtLabel)?.stmt
+    val exprs =
+      when {
+        label is StartLabel -> label.params
+        label is InvokeLabel -> label.params
+        stmt is AssignStmt<*> -> listOf(stmt.expr)
+        stmt is AssumeStmt -> listOf(stmt.cond)
+        label.collectVars().none { it.name == SEGMENT_COUNTER } -> listOf()
+        else -> return null
+      }
+    return exprs.flatMap(::iteSegments).toSet()
+  }
+
+  private fun iteSegments(expr: Expr<*>): List<BigInteger> =
+    listOfNotNull((expr as? IteExpr<*>)?.let { ownSegment(it.cond, null)?.first }) +
+      expr.ops.flatMap(::iteSegments)
+
+  /** How many threads may run [procedure], capped at 2. */
+  private fun instances(
+    procedure: String,
+    procedures: Collection<XcfaProcedureBuilder>,
+    name: (XcfaProcedureBuilder) -> String,
+    seen: Set<String>,
+  ): Int {
+    if (procedure in seen) return 2
+    val callers =
+      procedures.flatMap { p ->
+        p.getEdges()
+          .flatMap { it.getFlatLabels() }
+          .filter {
+            (it as? StartLabel)?.name == procedure || (it as? InvokeLabel)?.name == procedure
+          }
+          .map { name(p) }
+      }
+    if (callers.isEmpty()) return 1
+    return callers.sumOf { instances(it, procedures, name, seen + procedure) }.coerceAtMost(2)
+  }
+
+  /** The literal this procedure's logical thread id is set to, if it is known before the run. */
+  private fun logicalThreadId(labels: List<XcfaLabel>, initial: MutableValuation): BigInteger? =
+    labels
+      .mapNotNull { ((it as? StmtLabel)?.stmt as? AssignStmt<*>) }
+      .filter { it.varDecl.name == LOGICAL_THREAD_ID }
+      .map { (ExprUtils.simplify(it.expr, initial) as? IntLitExpr)?.value }
+      .distinct()
+      .singleOrNull()
+
+  /**
+   * The segments whose guarded alternatives in [label] may fire in this thread (all but those
+   * guarded by another logical thread id), each with whether it is guarded by [threadId].
+   */
+  private fun segmentValues(
+    label: XcfaLabel,
+    threadId: BigInteger?,
+  ): List<Pair<BigInteger, Boolean>> {
+    val exprs =
+      if (label is StartLabel) label.params
+      else
+        listOfNotNull(
+          ((label as? StmtLabel)?.stmt as? AssignStmt<*>)
+            ?.takeIf { it.varDecl.name == SEGMENT_COUNTER }
+            ?.expr
+        )
+    return exprs.flatMap { expr ->
+      generateSequence(expr as? IteExpr<*>) { it.`else` as? IteExpr<*> }
+        .mapNotNull { ownSegment(it.cond, threadId) }
+        .toList()
+    }
+  }
+
+  private fun ownSegment(cond: Expr<BoolType>, threadId: BigInteger?): Pair<BigInteger, Boolean>? {
+    val conjuncts = if (cond is AndExpr) cond.ops else listOf(cond)
+    var segment: BigInteger? = null
+    var guarded = false
+    for (eq in conjuncts.filterIsInstance<EqExpr<*>>()) {
+      val name = (eq.leftOp as? RefExpr<*>)?.decl?.name
+      val value = (eq.rightOp as? IntLitExpr)?.value ?: continue
+      if (name == SEGMENT_COUNTER) segment = value
+      if (name == LOGICAL_THREAD_ID && threadId != null) {
+        if (value != threadId) return null
+        guarded = true
+      }
+    }
+    return segment?.let { it to guarded }
+  }
+
   private fun simplifySegmentCounterUpdates(
     segmentVar: VarDecl<*>,
     labels: List<XcfaLabel>,
     passedSegmentValues: MutableSet<BigInteger>,
+    segments: Segments,
   ): List<XcfaLabel> {
     val newLabels = mutableListOf<XcfaLabel>()
+    // the labels below are simplified as if the edge were atomic, so at most one update is forced
+    var forced = false
     labels.forEach { label ->
       val segmentUpdates = getSegmentUpdates(label)
       if (segmentUpdates.isNotEmpty()) {
-        val next = nextSegment(passedSegmentValues)
+        val next = segments.next(passedSegmentValues)
         val segmentUpdate = segmentUpdates.find { it.current.value == next }
         if (segmentUpdates.all { it.current.value in passedSegmentValues }) {
           // the counter is past every alternative: the update cannot fire
-        } else if (segmentUpdate == null) {
+        } else if (segmentUpdate == null || forced) {
           newLabels.add(label)
         } else {
+          forced = true
           passedSegmentValues.add(segmentUpdate.current.value)
           var insertIndex = newLabels.size
           while (insertIndex > 0) {
@@ -216,6 +354,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   private fun simplifyStartLabelLogicalThread(
     label: XcfaLabel,
     passedSegmentValues: Set<BigInteger>,
+    segments: Segments,
   ): List<XcfaLabel>? {
     if (label !is StartLabel) return null
     var assumption: AssumeStmt? = null
@@ -223,7 +362,7 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
       label.params.map { param ->
         var segmentCond: Expr<BoolType>? = null
         var nextSegmentAlternative: LitExpr<*>? = null
-        val next = nextSegment(passedSegmentValues)
+        val next = segments.next(passedSegmentValues)
         var expr = param
         while (expr is IteExpr<*>) {
           segmentIteValues<LitExpr<*>>(expr)?.let { (segmentValue, paramValue) ->
@@ -245,13 +384,19 @@ class WitnessOptimizer(private val params: List<Expr<*>>, private val parseConte
   }
 
   /**
-   * The lowest segment not passed on the path. A guarded update of it is the waypoint's own (other
-   * threads' updates are guarded by their thread id), so the counter is certainly on it there.
+   * [own] are the segments this procedure may fire, [unique] those of them no other label or thread
+   * can fire. The next segment is the lowest own one not passed on the path, if it is sound to
+   * force: when every lower segment is passed, or when it is [unique].
    */
-  private fun nextSegment(passedSegmentValues: Set<BigInteger>): BigInteger {
-    var next = BigInteger.ZERO
-    while (next in passedSegmentValues) next++
-    return next
+  private class Segments(val own: Set<BigInteger>, val unique: Set<BigInteger>) {
+    fun next(passed: Set<BigInteger>): BigInteger? =
+      own.firstOrNull { it !in passed }?.takeIf { next -> next in unique || allBelow(passed, next) }
+
+    private fun allBelow(passed: Set<BigInteger>, next: BigInteger): Boolean {
+      var i = BigInteger.ZERO
+      while (i < next) if (i++ !in passed) return false
+      return true
+    }
   }
 
   private inline fun <reified L : Expr<*>> segmentIteValues(e: IteExpr<*>): Pair<IntLitExpr, L>? {
