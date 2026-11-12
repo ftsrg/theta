@@ -113,7 +113,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
-      ReferenceElimination(parseContext),
+      // leaves procedures with pointer parameters to the run after inlining, which sees what the
+      // callers pass
+      ReferenceElimination(parseContext, beforeInlining = true),
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
