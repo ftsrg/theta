@@ -96,6 +96,18 @@ class XcfaOcChecker(
 
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
+  /**
+   * Whether a round that is deepened anyway may skip the proof of the property: its first exit
+   * query then also asks for a violation, so a round without reached exits still decides it.
+   */
+  private val deferProofs = decisionProcedure == OcDecisionProcedureType.IDL && maxExitQueries != 0
+
+  /**
+   * The property is still checked on its own in exponentially spaced rounds, to find violations.
+   */
+  private fun isProofRound(round: Int) =
+    round <= 2 || (Integer.bitCount(round) == 1 && Integer.numberOfTrailingZeros(round) % 2 == 1)
+
   override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyProof, Cex> {
     // A negative upper bound means "unbounded": keep deepening the force-unroll bound (BMC-style)
     // until a reliable result is found or resources run out.
@@ -106,13 +118,34 @@ class XcfaOcChecker(
     }
     var bound = forceUnrollBoundStart
     val bounds = mutableMapOf<String, Int>()
+    fun deepened(reached: Set<String>) =
+      reached
+        .filter { UnrollCut.of(it).deepenable }
+        .associateWith { (bounds[it] ?: forceUnrollBoundStart) + forceUnrollBoundStep }
+        .filterValues { unbounded || it <= forceUnrollBoundEnd }
+    var rounds = 0
     while (unbounded || bound <= forceUnrollBoundEnd) {
       logger.mainStep(
         "\nChecking with force loop unroll bound: $bound" +
           if (bounds.isEmpty()) "" else " (deepened: $bounds)"
       )
+      rounds++
       val (result, reached) =
         Round(unroll(bound, bounds)).use { round ->
+          val deferred =
+            deferProofs &&
+              !isProofRound(rounds) &&
+              round.xcfa.unsafeUnrollUsed &&
+              !acceptUnreliableSafe
+          val early = if (deferred) round.reachedExits(withViolation = true) else null
+          round.violation?.let {
+            logger.mainStep("OC checker result: $it")
+            return it
+          }
+          // without a deeper round to follow, this round has to decide the property itself
+          if (early != null && (round.propertyProved || deepened(early).isNotEmpty())) {
+            return@use SafetyResult.safe<EmptyProof, Cex>(EmptyProof.getInstance()) to early
+          }
           val result = round.checkProperty()
           logger.mainStep("OC checker result: $result")
           if (!result.isSafe || !round.xcfa.unsafeUnrollUsed || acceptUnreliableSafe) {
@@ -120,7 +153,7 @@ class XcfaOcChecker(
           }
           if (maxExitQueries == 0) return@use result to null
           logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
-          result to round.reachedExits()
+          result to (early ?: round.reachedExits())
         }
       if (reached == null) {
         logger.mainStep("Incomplete loop unroll bound ($bound) used: safe result is unreliable.")
@@ -132,11 +165,7 @@ class XcfaOcChecker(
         return result
       }
       logger.mainStep("Unroll bounds reached at: $reached")
-      val deepened =
-        reached
-          .filter { UnrollCut.of(it).deepenable }
-          .associateWith { (bounds[it] ?: forceUnrollBoundStart) + forceUnrollBoundStep }
-          .filterValues { unbounded || it <= forceUnrollBoundEnd }
+      val deepened = deepened(reached)
       if (deepened.isEmpty()) break
       bounds.putAll(deepened)
     }
@@ -235,11 +264,10 @@ class XcfaOcChecker(
 
     fun checkProperty(): SafetyResult<EmptyProof, Cex> = query { checkProperty(it) }
 
-    private fun checkProperty(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
-      val races = races
-      val targets = races?.map { it.condition } ?: eg.violations.map { it.guard }
-      if (targets.isEmpty()) return SafetyResult.safe(EmptyProof.getInstance())
+    /** The conditions under which the property is violated. */
+    private val targets by lazy { races?.map { it.condition } ?: eg.violations.map { it.guard } }
 
+    private val autoConflicts by lazy {
       logger.info(
         "Auto conflict time (ms): " +
           measureTime {
@@ -253,6 +281,21 @@ class XcfaOcChecker(
             }
             .inWholeMilliseconds
       )
+    }
+
+    /** Set by [reachedExits] when its first query was also for a violation, and found one. */
+    var violation: SafetyResult<EmptyProof, Cex>? = null
+      private set
+
+    /** Whether [reachedExits] refuted a violation together with the exits. */
+    var propertyProved = false
+      private set
+
+    private fun checkProperty(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
+      val races = races
+      if (targets.isEmpty()) return SafetyResult.safe(EmptyProof.getInstance())
+
+      autoConflicts
       races?.let { logger.info("Race candidates: ${it.size}") }
 
       logger.mainStep("Start checking...")
@@ -283,30 +326,33 @@ class XcfaOcChecker(
           SafetyResult.safe(EmptyProof.getInstance())
         }
 
-        status?.isSat == true -> {
-          if (memoryModel == SC) {
-            val trace =
-              try {
-                val extractor = XcfaOcTraceExtractor(xcfa, checker, eg)
-                if (races == null) extractor.trace
-                else {
-                  val model = GuardValues(checker.solver.model)
-                  val race = races.first { model.holds(it.condition) }
-                  val (e1, e2) =
-                    race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
-                  extractor.raceTrace(e1, e2)
-                }
-              } catch (e: Exception) {
-                logger.info("OC checker trace extraction failed: ${e.message}")
-                EmptyCex.getInstance()
-              }
-            SafetyResult.unsafe(trace, EmptyProof.getInstance())
-          } else {
-            SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
-          }
-        }
+        status?.isSat == true -> unsafeResult(checker)
 
         else -> SafetyResult.unknown()
+      }
+    }
+
+    private fun unsafeResult(checker: OcChecker<E>): SafetyResult<EmptyProof, Cex> {
+      val races = races
+      return if (memoryModel == SC) {
+        val trace =
+          try {
+            val extractor = XcfaOcTraceExtractor(xcfa, checker, eg)
+            if (races == null) extractor.trace
+            else {
+              val model = GuardValues(checker.solver.model)
+              val race = races.first { model.holds(it.condition) }
+              val (e1, e2) =
+                race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
+              extractor.raceTrace(e1, e2)
+            }
+          } catch (e: Exception) {
+            logger.info("OC checker trace extraction failed: ${e.message}")
+            EmptyCex.getInstance()
+          }
+        SafetyResult.unsafe(trace, EmptyProof.getInstance())
+      } else {
+        SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
       }
     }
 
@@ -314,25 +360,44 @@ class XcfaOcChecker(
      * The keys of the unroll exits some consistent execution reaches. Undecided exits count as
      * reached, which only costs an unnecessary deepening.
      */
-    fun reachedExits(): Set<String> {
+    fun reachedExits(withViolation: Boolean = false): Set<String> {
       val exitsByKey = eg.unrollExits.groupBy { it.key }
       val remaining = exitsByKey.keys.toMutableSet()
       val reached = mutableSetOf<String>()
       var queries = 0
-      while (remaining.isNotEmpty()) {
+      // only the first query is also for a violation: later ones leave the property undecided
+      var violations = if (withViolation) targets else listOf()
+      if (withViolation && violations.isEmpty()) propertyProved = true
+      while (remaining.isNotEmpty() || violations.isNotEmpty()) {
         if (queries++ == maxExitQueries) {
           reached.addAll(remaining)
           break
         }
-        val target = Or(remaining.flatMap { exitsByKey.getValue(it) }.map { it.guard })
+        val asked = violations
+        violations = listOf()
+        val target = Or(asked + remaining.flatMap { exitsByKey.getValue(it) }.map { it.guard })
         val found = query { checker ->
-          val status: SolverStatus?
-          val time = measureTime { status = solve(checker, target) }
+          if (asked.isNotEmpty()) autoConflicts
+          var status: SolverStatus?
+          val time = measureTime {
+            status = solve(checker, target)
+            // a violation has to be an execution, not only a model of the relaxed constraints
+            if (status?.isSat == true && GuardValues(checker.solver.model).holdsAny(asked)) {
+              status = checker.distinctModel()
+            }
+          }
           logger.info("Exit query $queries: $status in ${time.inWholeMilliseconds} ms")
           when {
-            status?.isUnsat == true -> emptyList()
+            status?.isUnsat == true -> {
+              if (asked.isNotEmpty()) propertyProved = true
+              emptyList()
+            }
             status?.isSat == true -> {
               val model = GuardValues(checker.solver.model)
+              if (model.holdsAny(asked)) {
+                violation = unsafeResult(checker)
+                return@query emptyList()
+              }
               remaining
                 .filter { key -> exitsByKey.getValue(key).any { model.holds(it.guard) } }
                 .ifEmpty { null }
@@ -340,6 +405,7 @@ class XcfaOcChecker(
             else -> null // undecided
           }
         }
+        if (violation != null) return emptySet()
         if (found == null) {
           reached.addAll(remaining)
           break
@@ -372,6 +438,8 @@ class XcfaOcChecker(
   /** Guards share their subterms, so evaluating them as trees takes exponential time. */
   private class GuardValues(private val model: Valuation) {
     private val values = IdentityHashMap<Expr<BoolType>, Boolean>()
+
+    fun holdsAny(guards: List<Expr<BoolType>>): Boolean = guards.any { holds(it) }
 
     fun holds(guard: Expr<BoolType>): Boolean =
       try {
