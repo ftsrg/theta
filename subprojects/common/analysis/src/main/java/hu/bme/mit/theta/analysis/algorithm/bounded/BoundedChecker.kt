@@ -63,8 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param needProof Whether a safe result carries an invariant, over-approximating the reachable
  *   states; otherwise its proof is `true`.
  * @param interpolateProof Whether that invariant is projected onto the model's variables by
- *   interpolation (with [itpSolver]), which need not keep it inductive; without it, or if that
- *   fails, the other states of its paths are free variables, i.e. implicitly existential.
+ *   interpolation; otherwise the other states of its paths are implicitly existential.
  */
 class BoundedChecker
 @JvmOverloads

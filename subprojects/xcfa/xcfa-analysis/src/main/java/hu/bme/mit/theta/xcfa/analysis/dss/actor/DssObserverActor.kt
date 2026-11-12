@@ -16,11 +16,9 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 /**
- * CPAchecker's `DssObserverWorker`: waits for a `RESULT` and every block's `STATISTIC`.
- *
- * With several [networks] (block ids per network), a failure ends only its own network: the run
- * fails once every network has, and the first `RESULT` wins. A later, different `RESULT` means one
- * network is unsound, so the run fails instead of picking one.
+ * CPAchecker's `DssObserverWorker`: waits for a `RESULT` and every block's `STATISTIC`. With
+ * several [networks], a failure ends only its own network, and two different `RESULT`s fail the
+ * run.
  */
 class DssObserverActor(
   id: String,

@@ -92,9 +92,8 @@ public interface SolverBase extends AutoCloseable {
     }
 
     /**
-     * Asks a query running on another thread to stop, which may then throw or report an unknown
-     * status but never claims a result it did not prove. The solver may be unusable afterwards.
-     * Safe to call from any thread; backends that cannot be interrupted ignore it.
+     * Asks a query running on another thread to stop; it may then throw or report unknown, and the
+     * solver may be unusable afterwards. Backends that cannot be interrupted ignore it.
      */
     default void interrupt() {}
 }

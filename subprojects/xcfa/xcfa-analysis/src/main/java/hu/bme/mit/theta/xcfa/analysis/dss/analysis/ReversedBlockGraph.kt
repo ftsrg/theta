@@ -22,12 +22,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 /**
- * The blocks of [forward] reversed, so that every forward block boundary is a boundary of the
- * reversed program, too: only there can the two directions' conditions meet.
- *
- * A reversed block containing an error location would get a second entry there, so such a block is
- * cut linearly. If the result is still no valid block graph, the reversed program is decomposed
- * linearly, keeping the forward boundaries.
+ * The blocks of [forward] reversed, so the two directions share their block boundaries, where their
+ * conditions can meet. A reversed block containing an error location is cut linearly.
  */
 fun reverseBlockGraph(forward: BlockGraph, reversal: ProgramReversal): BlockGraph {
   val boundaries =

@@ -105,6 +105,7 @@ data class DssConfig(
   var decomposition: DssDecomposition = DssDecomposition.MERGE,
   @Parameter(
     names = ["--dss-direction"],
+    hidden = true,
     description =
       "FORWARD, BACKWARD (DSS on the reversed program), or BIDIRECTIONAL (both, meeting where " +
         "their conditions intersect)",
@@ -112,6 +113,7 @@ data class DssConfig(
   var direction: DssDirection = DssDirection.FORWARD,
   @Parameter(
     names = ["--dss-share-invariants"],
+    hidden = true,
     description =
       "--dss-direction BIDIRECTIONAL: conjoin each direction's converged summaries to the other " +
         "direction's preconditions",
@@ -132,6 +134,7 @@ data class DssConfig(
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.PRIORITY,
   @Parameter(
     names = ["--dss-cegar-domain"],
+    hidden = true,
     description =
       "Abstract domain of the CEGAR block checkers: PRED_CART, or EXPL tracking the variables of " +
         "the predicates DSS passes as precision",
@@ -139,6 +142,7 @@ data class DssConfig(
   var cegarDomain: DssCegarDomain = DssCegarDomain.PRED_CART,
   @Parameter(
     names = ["--dss-interpolate-bounded-proofs"],
+    hidden = true,
     description =
       "Turn the proofs of the BMC/KIND/IMC block checkers into invariants over the program " +
         "variables by interpolation (otherwise path formulas over fresh variables)",
@@ -149,6 +153,7 @@ data class DssConfig(
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
   @Parameter(
     names = ["--dss-max-parallel-blocks"],
+    hidden = true,
     description =
       "--dss-executor CONCURRENT: at most this many block analyses run at the same time (0: no " +
         "limit); every block keeps its own thread",
@@ -175,6 +180,7 @@ data class DssConfig(
   var reuseBlockPrecision: Boolean = false,
   @Parameter(
     names = ["--dss-generalizers"],
+    hidden = true,
     description =
       "Comma-separated generalizers of the received violation conditions (GSPACER, SEMANTIC); " +
         "before each block analysis, their generalization is tried as a probe, never sent or " +
@@ -183,11 +189,13 @@ data class DssConfig(
   var generalizers: List<DssGeneralizerKind> = emptyList(),
   @Parameter(
     names = ["--dss-generalize-violations"],
+    hidden = true,
     description = "The same as adding GSPACER to --dss-generalizers",
   )
   var generalizeViolations: Boolean = false,
   @Parameter(
     names = ["--dss-generalizer-combination"],
+    hidden = true,
     description =
       "How several --dss-generalizers (and --dss-conjecture-generalizers) give one " +
         "generalization: FIRST with a candidate, the UNION of all, or a CHAIN where each weakens " +
@@ -196,6 +204,7 @@ data class DssConfig(
   var generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
   @Parameter(
     names = ["--dss-generalization-gas"],
+    hidden = true,
     description =
       "Failed probes per sender (GSPACER: per sender and condition shape) before it is no " +
         "longer generalized",
@@ -203,6 +212,7 @@ data class DssConfig(
   var generalizationGas: Int = 2,
   @Parameter(
     names = ["--dss-semantic-unrollings"],
+    hidden = true,
     description =
       "SEMANTIC probes in a block with an internal cycle: a candidate is checked along the paths " +
         "through at most this many of its back edges (0: no SEMANTIC probes there)",
@@ -210,6 +220,7 @@ data class DssConfig(
   var semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
   @Parameter(
     names = ["--dss-conjecture-invariants"],
+    hidden = true,
     description =
       "Conjecture invariants from violation conditions that keep drifting at a block boundary; " +
         "the blocks check them, and a broken one is retracted (FORWARD or BACKWARD, not PROCESS)",
@@ -217,12 +228,14 @@ data class DssConfig(
   var conjectureInvariants: Boolean = false,
   @Parameter(
     names = ["--dss-conjecture-gas"],
+    hidden = true,
     description =
       "--dss-conjecture-invariants: retracted conjectures per location before it gets no more",
   )
   var conjectureGas: Int = 2,
   @Parameter(
     names = ["--dss-block-local-pool"],
+    hidden = true,
     description =
       "Seed a block's initial precision only with the --dss-global-predicate-pool conditions " +
         "over at least one variable of the block",
@@ -238,6 +251,7 @@ data class DssConfig(
   var checkerBudgetMs: Long = 0,
   @Parameter(
     names = ["--dss-cut-on-timeout"],
+    hidden = true,
     description =
       "With --dss-checker-budget: a block that every checker runs out of its budget on is cut " +
         "into smaller blocks, and DSS starts over",
@@ -245,6 +259,7 @@ data class DssConfig(
   var cutOnTimeout: Boolean = false,
   @Parameter(
     names = ["--dss-cut-strategy"],
+    hidden = true,
     description =
       "--dss-cut-on-timeout: the --dss-decomposition that cuts a block, applied to the block " +
         "alone (default: --dss-decomposition itself, MIN_CUT_ABSORB_SELF_LOOPS for NONE, which " +
@@ -253,6 +268,7 @@ data class DssConfig(
   var cutStrategy: DssDecomposition? = null,
   @Parameter(
     names = ["--dss-cut-restart"],
+    hidden = true,
     description =
       "--dss-cut-on-timeout: BLOCK replaces only the cut block by its pieces (FORWARD or " +
         "BACKWARD, SEQUENTIAL, without conjectures or a FINISHER; else ALL), ALL starts the run over",
@@ -292,6 +308,7 @@ data class DssConfig(
   var explChecker: Boolean = false,
   @Parameter(
     names = ["--dss-conjecture-generalizers"],
+    hidden = true,
     description =
       "--dss-conjecture-invariants: comma-separated generalizers that propose the conjectures " +
         "(GSPACER, SEMANTIC), combined by --dss-generalizer-combination",

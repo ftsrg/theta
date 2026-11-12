@@ -29,11 +29,8 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 /**
  * The block checkers of [dssConfig], in roster order: `--dss-checker-backends`, then the EXPL
- * checker of `--dss-expl-checker`. [checkerFor] builds one on a given solver (null: the checker's
- * default).
- *
- * With `--dss-checker-budget`, every checker runs on [DeadlineSolverManager] solvers, which is what
- * enforces the budget; with `--dss-fallback-solver`, each checker is retried once on that solver.
+ * checker. With a budget they run on [DeadlineSolverManager] solvers; with a fallback solver each
+ * is retried once on it.
  */
 internal fun blockCheckers(
   dssConfig: DssConfig,

@@ -43,10 +43,8 @@ enum class DssGeneralizerCombination {
 }
 
 /**
- * What a generalizer may ask besides the received conditions: [isUnsat] decides the usefulness
- * checks (an undecided query must throw), and [unreachable] says whether no state that matters
- * reaches a condition; it is null where that cannot be checked. It may miss long paths: that only
- * costs a failed probe or conjecture.
+ * What a generalizer may ask: [isUnsat] (an undecided query must throw), and [unreachable], null
+ * where unreachability cannot be checked.
  */
 class GeneralizationContext(
   val isUnsat: (Expr<BoolType>) -> Boolean,
@@ -64,9 +62,8 @@ internal constructor(val condition: Expr<BoolType>, internal val parts: List<Par
 }
 
 /**
- * The generalizers of [kinds], in order, combined by [combination]. Under CHAIN, GSPACER adds its
- * candidate to the previous result, as it works from the conditions' history, not from a formula.
- * Every result is weaker than the received conditions, and none is valid.
+ * The generalizers of [kinds], in order, combined by [combination]. Every result is weaker than the
+ * received conditions, and none is valid.
  */
 class Generalizers(
   kinds: List<DssGeneralizerKind>,
@@ -145,14 +142,9 @@ class Generalizers(
 }
 
 /**
- * Semantic generalization, without history: each cube of a condition in linear normal form, with
- * its equalities split into two bounds, loses literals one at a time while the rest stays
- * [GeneralizationContext.unreachable]. Literals over auxiliary variables stay, as they are tied to
- * the havocs that produced them. For `x == -2 && n >= -1` and states with `x >= 0` this gives `x <=
- * -2`, from the first condition on.
- *
- * Each sender (a [generalize] key) has [gas] failed candidates before it is no longer generalized,
- * and a failed candidate is never proposed again.
+ * Semantic generalization: each cube of a condition loses literals one at a time while the rest
+ * stays [GeneralizationContext.unreachable]; for `x == -2 && n >= -1` and states with `x >= 0` this
+ * gives `x <= -2`. Each sender has [gas] failed candidates.
  */
 class SemanticGeneralizer(private val gas: Int) {
 

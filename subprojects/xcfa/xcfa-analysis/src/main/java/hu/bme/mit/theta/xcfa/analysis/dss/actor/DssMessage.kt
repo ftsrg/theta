@@ -63,11 +63,8 @@ sealed class DssMessage {
 }
 
 /**
- * [version] numbers the sender's postconditions, and [inputs] gives the version of each
- * predecessor's postcondition it was computed from, so `DssMeetingActor` can tell a converged
- * region apart. A [restricted] postcondition was computed under an imported invariant: it covers
- * the states of every error path, but is no invariant of the program. An [observerOnly] one reports
- * `false`, which successors never receive.
+ * [version] and [inputs] let `DssMeetingActor` tell a converged region apart. A [restricted]
+ * postcondition was computed under an imported invariant, so it is no invariant of the program.
  */
 data class DssPostConditionMessage(
   override val senderId: String,

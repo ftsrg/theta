@@ -19,10 +19,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 /**
- * A block's locations and edges copied, so that the copies' incoming and outgoing edges are the
- * block's alone. A loop head that is both entry and exit gets an [entry] copy of its own
- * (CPAchecker's INITIAL vs. FINAL): one traversal then covers one iteration, and the [exit] has no
- * edges out.
+ * A block's locations and edges copied. A loop head that is both entry and exit gets an [entry]
+ * copy of its own (CPAchecker's INITIAL vs. FINAL), so one traversal covers one iteration.
  */
 class BlockClone(
   /** Every location of the block, to its copy; the entry copy of a loop head is not in here. */

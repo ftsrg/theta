@@ -559,6 +559,7 @@ data class BoundedConfig(
   var initPrec: InitPrec = InitPrec.EMPTY,
   @Parameter(
     names = ["--interpolate-proof"],
+    hidden = true,
     description =
       "Express a BMC/k-induction safety proof over the program variables by interpolation, " +
         "as an invariant that need not be inductive (otherwise it is an inductive path " +

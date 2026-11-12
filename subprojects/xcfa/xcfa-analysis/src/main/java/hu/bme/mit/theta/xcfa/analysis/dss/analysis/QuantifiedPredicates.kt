@@ -57,8 +57,7 @@ fun hasQuantifier(expr: Expr<*>): Boolean =
 
 /**
  * A quantifier-free formula implied by [expr]: a quantified subformula becomes true where it occurs
- * positively and false where it occurs negatively. A subformula under both polarities (an iff, an
- * ite) that contains one is replaced as a whole the same way.
+ * positively and false where negatively (one under both polarities is replaced as a whole).
  */
 fun withoutQuantifiers(expr: Expr<BoolType>): Expr<BoolType> = weaken(expr, positive = true)
 
@@ -91,10 +90,8 @@ fun replaceQuantified(
   }
 
 /**
- * Makes the formulas leaving a block quantifier-free as [mode] says; `KEEP` and `FALLBACK` leave
- * them. [clean] only weakens, which keeps a postcondition an over-approximation and only changes
- * which predicates a precision has. A witness state takes [equivalent]: a backward witness
- * complements it, and the complement of a weaker state is stronger.
+ * Makes the formulas leaving a block quantifier-free as [mode] says. [clean] only weakens; a
+ * witness state takes [equivalent], as a backward witness complements it.
  */
 class DssQuantifierCleaner(private val mode: DssQuantifiedPredicates) {
 

@@ -67,22 +67,12 @@ data class DssMeet(
 )
 
 /**
- * Combines a forward and a backward network of [program]. A forward violation condition holds
- * states that reach an error, a backward one states the entry reaches; both are exact, so where
- * they intersect at one location, the program is UNSAFE ([meet]).
+ * Combines a forward and a backward network of [program]. Both directions' violation conditions are
+ * exact, so where they intersect at one location, the program is UNSAFE ([meet]).
  *
- * A region of blocks that contains all predecessors of its members, each of whose latest
- * postcondition was computed from states covering its predecessors' latest ones, is a fixpoint: its
- * postconditions over-approximate the states of every error path at the locations where all blocks
- * ending there belong to it ("certified"), whatever the rest of the network still does. Where both
- * directions' certified summaries are disjoint, no error path passes; if those locations cut every
- * path from the entry to an error, the program is SAFE.
- *
- * With [shareInvariants], a certified summary is sent to the other direction's blocks starting at
- * the same location, which conjoin it to their preconditions: the error paths stay the same, so
- * every later certified summary still covers them. Only formulas over [sharedVars] are sent. A
- * failing query disables this actor, never the networks; with [fallbackSolverFactory] it is first
- * retried there.
+ * A converged region certifies the summaries at the locations it covers. Where both directions'
+ * certified summaries are disjoint, no error path passes; if those locations cut every path from
+ * the entry to an error, the program is SAFE. A failing query disables only this actor.
  */
 class DssMeetingActor(
   override val connection: DssConnection,

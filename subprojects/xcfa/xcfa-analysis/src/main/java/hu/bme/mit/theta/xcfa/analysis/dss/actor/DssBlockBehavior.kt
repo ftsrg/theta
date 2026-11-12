@@ -36,9 +36,8 @@ interface DssBlockBehavior {
     throw UnsupportedOperationException("${javaClass.simpleName} cannot check conjectures")
 
   /**
-   * A cut replaced the neighbor [oldId] by the pieces [replacements] that border this block: what
-   * it sent stands for each piece until the piece sends its own, and [block] is this block with its
-   * new neighbors. The pieces are sent the latest messages of this block.
+   * A cut replaced the neighbor [oldId] by [replacements]: what it sent stands for each piece until
+   * the piece sends its own. [block] is this block with its new neighbors.
    */
   fun onNeighborReplaced(oldId: String, block: Block, replacements: Set<String>) {}
 

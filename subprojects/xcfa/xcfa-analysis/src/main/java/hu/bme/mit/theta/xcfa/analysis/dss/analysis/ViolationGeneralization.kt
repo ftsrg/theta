@@ -50,14 +50,9 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import java.math.BigInteger
 
 /**
- * GSpacer's global guidance (Krishnan et al., FMSD 2024) for violation conditions: a receiver
- * clusters the cubes of the conditions it got from each sender by their shape, and when the numbers
- * of one shape keep drifting, it conjectures a condition covering all of them, the widened convex
- * hull or, failing that, the cube without its drifting literals.
- *
- * A generalization is a *may* condition: it may contain states that reach no error, so it is only
- * ever a probe target, never sent as a violation condition. Each shape of each sender has [gas]
- * failed probes before it is no longer generalized.
+ * GSpacer's global guidance (Krishnan et al., FMSD 2024) for violation conditions: cubes of one
+ * shape whose numbers keep drifting are covered by their widened convex hull, or by the cube
+ * without its drifting literals. The result is a *may* condition, only ever a probe target.
  */
 class ViolationGeneralizer(private val gas: Int, private val minClusterSize: Int = 2) {
 
@@ -423,10 +418,8 @@ private fun withoutDrifting(cube: Cube, varying: List<Int>): Expr<BoolType> =
   Cube(cube.linear.filterIndexed { j, _ -> j !in varying }, cube.opaque).toExpr()
 
 /**
- * The convex hull of the cluster's bound vectors [points], widened to infinity along each direction
- * in which they keep moving, with the hull's parameters eliminated by Fourier-Motzkin (over the
- * rationals, an over-approximation of the integer projection). Null if no direction moves
- * monotonically or the elimination grows too large.
+ * The convex hull of [points], widened along each direction they keep moving in, by Fourier-Motzkin
+ * over the rationals. Null if no direction moves monotonically or the elimination grows too large.
  */
 private fun widenedHull(
   cube: Cube,

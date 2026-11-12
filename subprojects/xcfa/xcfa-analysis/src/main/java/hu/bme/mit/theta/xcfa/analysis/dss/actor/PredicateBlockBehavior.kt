@@ -81,26 +81,12 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
 /**
  * CPAchecker's `DssBlockAnalysis`, running a Theta checker on the extracted block.
  *
- * With [trackSummaries], postconditions carry their version and inputs, and an analysis without
- * exit states reports `false` to the observers, so `DssMeetingActor` can certify converged regions.
- * A restriction (`DssRestrictionMessage`) is conjoined to every start state; violation conditions
- * stay exact, as they are computed from the block's own paths only. [finishing] marks one of its
- * network's `finishingBlocks`, which a finisher checker may analyze. [quantifiedPredicates] decides
- * what becomes of quantifiers in a checker's proof, and a query that fails on [solverFactory] is
- * retried on [fallbackSolverFactory].
+ * Restrictions and conjectures are conjoined to every start state; violation conditions stay exact,
+ * as they come from the block's own paths only.
  *
- * With a positive [generalizationGas], a start state is first analyzed against a generalization of
- * the received conditions by [generalizers] ([Generalizers]). Only its SAFE result is used:
- * refuting the weaker target refutes the received conditions too. Its UNSAFE result is discarded.
- * `SEMANTIC` checks its candidates against the start states by the weakest precondition, which in a
- * block with an internal cycle only covers the paths through at most [semanticUnrollings] back
- * edges (none: no semantic generalization there).
- *
- * A conjecture (`DssConjectureMessage`) is assumed at the start like a restriction, but can be
- * retracted. Its condition at the exit, and the may violations received for it, are searched for in
- * a separate pass from the same start states; a reached one is sent on as the weakest precondition
- * over all paths (`DssMayViolationMessage`), and from the root it refutes the conjecture. That pass
- * never touches the violation conditions, records or invariants.
+ * Generalized targets ([generalizers]) are only probes: only their SAFE result is used. A
+ * conjecture is checked in a separate pass, which never touches the violation conditions or
+ * invariants.
  */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
@@ -522,10 +508,8 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * The may pass of the conjectures [ids]: their conditions and may violations as the only target.
-   * The sent condition does not depend on the start state, so one reaching start state is enough.
-   * Whatever keeps this block from checking a conjecture refutes it, as an unchecked one is
-   * unsound.
+   * The may pass of the conjectures [ids]. Whatever keeps this block from checking a conjecture
+   * refutes it, as an unchecked one is unsound.
    */
   private fun analyzeMayViolations(ids: Collection<Int>): List<DssMessage> =
     ids.distinct().mapNotNull { id ->
@@ -748,12 +732,9 @@ class PredicateBlockBehavior(
   private val cuttable: Boolean by lazy { hasCut() }
 
   /**
-   * Gives every checker the roster's budget in turn, multiplying it after each round; a checker
-   * that fails other than by running out of budget is dropped. There is no unlimited round, so a
-   * checker that never finishes cannot stop the others from being retried with more time.
-   *
-   * With [cutOnTimeout], a round that every remaining checker runs out of asks for the block to be
-   * cut ([DssBlockCutRequest]) instead, unless [hasCut] finds no cut for it.
+   * Gives every checker the roster's budget in turn, growing it after each round. There is no
+   * unlimited round, so a checker that never finishes cannot starve the others. With
+   * [cutOnTimeout], a round that every checker runs out of asks for the block to be cut instead.
    */
   private fun <T> runWithBudgets(analysis: (CheckerFactory) -> T): T {
     val first = lastFinisher

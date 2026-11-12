@@ -51,13 +51,9 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import java.util.Optional
 
 /**
- * [original] with every edge reversed, so DSS on [xcfa] runs from the error locations towards the
- * entry: its violation conditions are exact sets of states reachable from the entry, and its
- * postconditions over-approximate the states that can reach an error.
- *
- * `__rev_init` leads to the clone of every error location, and the clone of the original entry is
- * the error; locations that cannot reach an error are left out. Clones are renamed, as
- * [XcfaLocation] equality would otherwise conflate them with the originals.
+ * [original] with every edge reversed: `__rev_init` leads to every error location, and the original
+ * entry is the error. Clones are renamed, as [XcfaLocation] equality would conflate them with the
+ * originals.
  */
 class ProgramReversal(
   val original: XcfaProcedure,

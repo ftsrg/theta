@@ -32,8 +32,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 
 /**
  * Solver-backed operators of CPAchecker's distributed predicate CPA. A query the solver fails on
- * throws [DssUndecidedQueryException]: it must never be taken as satisfiable or unsatisfiable. With
- * [fallbackSolverFactory], a query the main solver fails on is retried on that one first.
+ * (also on [fallbackSolverFactory], if given) throws [DssUndecidedQueryException].
  */
 class DssPredicateOperators(
   solverFactory: SolverFactory,

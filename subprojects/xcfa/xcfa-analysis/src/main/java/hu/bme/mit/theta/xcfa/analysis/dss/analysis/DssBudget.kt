@@ -45,13 +45,10 @@ fun Throwable.isDssBudgetExceeded(): Boolean =
   generateSequence(this) { it.cause }.any { it is DssBudgetExceededException }
 
 /**
- * The deadline of the block analysis running on this thread. Theta's checkers cannot be
- * interrupted, but they spend their time in solver calls: the solvers of [DeadlineSolverManager]
- * refuse to start a call once the deadline has passed, and a watchdog interrupts
- * ([SolverBase.interrupt]) the calls still running when it passes.
- *
- * An interrupted call may surface as any solver or checker failure, so every exception that leaves
- * an expired deadline counts as an overrun, not as a failure of the checker.
+ * The deadline of the block analysis on this thread, enforced in solver calls:
+ * [DeadlineSolverManager] solvers refuse new calls after it, and a watchdog interrupts running
+ * ones. Any exception that leaves an expired deadline counts as an overrun, not as a checker
+ * failure.
  */
 object DssDeadline {
 

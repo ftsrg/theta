@@ -32,122 +32,42 @@ Only single-procedure programs and error-location reachability are supported.
 | Option | Default | Meaning |
 |---|---|---|
 | `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
-| `--dss-direction` | `FORWARD` | `FORWARD`, `BACKWARD` (DSS on the reversed program), `BIDIRECTIONAL` (both at once, see [Directions](#directions)) |
-| `--dss-share-invariants` | `true` | `BIDIRECTIONAL`: conjoin each direction's converged summaries to the other direction's preconditions |
-| `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one. `BIDIRECTIONAL` accepts `CEGAR` only, except for the finisher of `FINISHER` |
-| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs, first, only on blocks whose postconditions no block builds on: forward the last blocks, backward the program's first ones; the others go by priority) |
-| `--dss-cegar-domain` | `PRED_CART` | Domain of the `CEGAR` checkers: `PRED_CART`, or `EXPL` tracking the variables of the predicates DSS passes as precision (reported back as `v = v` atoms) |
-| `--dss-interpolate-bounded-proofs` | `true` | Turn the proofs of the bounded checkers (`BMC`, `KIND`, `IMC`, ...) into invariants over the program variables, by interpolating them against the states one step from an error; otherwise (and where interpolation fails) they are path formulas over fresh, implicitly existential variables |
+| `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one |
+| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs first on the blocks without successors) |
+| `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
+| `--dss-checker-budget` | `0` | Milliseconds each checker gets in turn, 4-fold after every round (`0`: no budget); needs `PRIORITY` |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
-| `--dss-max-parallel-blocks` | `0` | `CONCURRENT`: at most this many block analyses at a time (`0`: no limit) |
+| `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
+| `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
+| `--dss-nonlinear-solver` | none | Replaces `--dss-solver` for nonlinear integer programs without floats or bitwise operations; `--dss-solver` then becomes the fallback |
+| `--dss-quantified-predicates` | `KEEP` | Quantifiers in a checker's proof (`Z3:new` interpolants): `KEEP`, `FALLBACK` (retry DSS's failing queries on the fallback solver), `DROP` (weaken them away), `ELIMINATE` (Z3 quantifier elimination, then `DROP`) |
 | `--dss-global-predicate-pool` | `false` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
-| `--dss-generalizers` | none | Comma-separated generalizers of the received violation conditions, `GSPACER` and `SEMANTIC`; before each analysis their generalization is tried as a probe (see [Generalized violation conditions](#generalized-violation-conditions)) |
-| `--dss-generalize-violations` | off | The same as adding `GSPACER` to `--dss-generalizers` |
-| `--dss-generalizer-combination` | `FIRST` | How several generalizers of one list give one generalization: `FIRST` with a candidate, the `UNION` of all, or a `CHAIN` where each weakens the previous result |
-| `--dss-generalization-gas` | `2` | Failed probes per sender (`GSPACER`: per sender and condition shape) before it is no longer generalized |
-| `--dss-semantic-unrollings` | `3` | `SEMANTIC` probes in a block with an internal cycle: a candidate is checked along the paths through at most this many back edges (`0`: none there) |
-| `--dss-conjecture-invariants` | off | Conjecture invariants where violation conditions keep drifting at a block boundary; the blocks check them, and a broken one is retracted (see [Conjectured invariants](#conjectured-invariants)). `FORWARD` or `BACKWARD`, not with `PROCESS` |
-| `--dss-conjecture-gas` | `2` | Retracted conjectures per location before it gets no more |
-| `--dss-block-local-pool` | off | Seed a block only with the pool conditions over at least one of its variables |
-| `--dss-checker-budget` | `0` | Milliseconds each checker gets in turn, 4-fold after every round (`0`: no budget); needs `PRIORITY` |
-| `--dss-cut-on-timeout` | off | A block whose round of checkers all run out of their budget is cut; needs `--dss-checker-budget` |
-| `--dss-cut-strategy` | `--dss-decomposition` | The decomposition that cuts a block, applied to the block alone: any of the `--dss-decomposition` values (`NONE` cuts nothing, so it is `MIN_CUT_ABSORB_SELF_LOOPS` there) |
-| `--dss-cut-restart` | `BLOCK` | `BLOCK` replaces only the cut block by its pieces, `ALL` starts the run over; `BLOCK` needs `FORWARD` or `BACKWARD`, `SEQUENTIAL`, no conjectures and no `FINISHER`, else `ALL` is used |
-| `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
-| `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
-| `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
-| `--dss-quantified-predicates` | `KEEP` | Quantifiers in a block checker's proof: `KEEP`, `FALLBACK` (DSS's own failing queries are retried on `--dss-fallback-solver`), `DROP` (weakened away) or `ELIMINATE` (Z3 quantifier elimination, the rest weakened away); see [Quantified predicates](#quantified-predicates) |
-| `--dss-conjecture-generalizers` | `GSPACER` | The generalizers that propose conjectures, combined by `--dss-generalizer-combination` |
-| `--dss-nonlinear-solver` | none | Replaces `--dss-solver` for a program with nonlinear integer arithmetic and neither floats nor bitwise operations; `--dss-solver` then becomes the fallback |
 
-A checker over its budget is stopped (`DssBudget.kt`): a watchdog interrupts its running solver
-call, and it is retried in the next round, so a block never counts as safe unless some checker
-finished it. Only solvers that implement `SolverBase.interrupt` (Z3, `Z3:new`, JavaSMT) can be
-stopped mid-call; on the others, the checker stops at its next call. The checker that
-finished a block's last analysis starts its next one.
-
-With `--dss-cut-on-timeout`, a round that every checker runs out of cuts the block instead of
-growing the budget (`BlockCut.kt`): the block is copied into a procedure of its own, cut by the
-`--dss-cut-strategy` decomposition as a whole procedure would be, and the pieces are mapped back.
-The copy gets an edge to enter by if its entry branches and one to leave by if a loop runs through
-its exit, as a decomposition expects one way in and a dead end out; the pieces drop them. A cut
-that would lose a path is refused, as is one into a single piece. A block without a cut gets the growing
-budgets. A loop cut this way becomes a cycle of blocks, on which DSS need not terminate (see
-below). `BACKWARD` cuts its own blocks; `BIDIRECTIONAL` cuts the forward block (also for a backward
-block, the one it reverses) and rebuilds the backward graph from the cut forward graph.
-
-With `--dss-cut-restart BLOCK`, the cut block is replaced by its pieces while the run goes on. The
-pieces start like any block, then receive the last postconditions of the block's predecessors (at
-the entry pieces) and the last violation conditions of its successors (at the exit pieces); what
-the block sent and is still queued is dropped, as a newer message replaces an older one of the
-same sender anyway. What the block sent and a neighbor stored stands for each adjacent piece until
-the piece sends its own message, which replaces it. Every other block keeps its state. `ALL` instead starts the whole run over on
-the cut graph, as the other executors do.
+A checker over its budget is stopped by a watchdog that interrupts its solver call (`DssBudget.kt`)
+and retried in the next round, so a block never counts as safe unless some checker finished it.
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.
 `PROCESS` runs any solver in parallel, at the price of one JVM per worker.
 
-## Directions
+### Experimental (hidden) options
 
-**Backward** is DSS on the reversed program (`reverseProgram`, `ProgramReversal.kt`). There,
-`__rev_init` leads to every error location, and the original entry is the error location (if
-edges enter it, a dead-end `__rev_err` follows it instead); locations that cannot reach an error
-are left out. An assignment `x := e` becomes
-`assume x == e; havoc x`, and with `x` in `e`, `havoc t; assume x == e[t/x]; x := t; havoc t`.
-The weakest existential precondition of a reversed label is the strongest postcondition of the
-original, so:
-
-* the reversed program's violation conditions are exact sets of states that the entry reaches;
-* its postconditions over-approximate the states that can reach an error.
-
-Labels without an exact reversal throw. The complements of the backward invariants are the SAFE
-witness invariants (those over temporaries are left out), and violation paths are mapped back to
-the program.
-
-**Bidirectional** runs both networks in one run (`runDssNetworks`, `runDssNetworksSequentially`,
-`runDssNetworksInProcesses`). Backward block ids are prefixed with `R.`, and the backward blocks
-are the forward ones reversed (`reverseBlockGraph`), so the two share every block boundary.
-
-* Each network reaches SAFE by its own quiescence.
-* A failing network leaves the other one running.
-* The first verdict wins; a contradicting one fails the run.
-
-`DssMeetingActor` sees both networks' messages:
-
-* **UNSAFE** where a forward and a backward violation condition intersect at one location. Their
-  auxiliary variables are kept apart.
-* **Certified summaries.** Postconditions carry a version number and the version of each input
-  they were computed from, and cover every state those inputs reach at the exit: a block whose run
-  without targets is not safe fails instead of dropping those states. Take a region of blocks that contains every predecessor of its members,
-  where each member's latest postcondition was computed from inputs that cover its predecessors'
-  latest ones. This region is a fixpoint, so it covers every error path's states at each location
-  whose incoming blocks all belong to it.
-* **SAFE** when locations where certified summaries are disjoint, together with those that cannot
-  reach an error, cut every path from the entry to an error.
-* **Shared invariants.** With `--dss-share-invariants`, a certified summary is sent
-  (`DssRestrictionMessage`) to the other direction's blocks that start at the same location, and
-  they conjoin it to their start states. The error paths stay the same, and violation conditions
-  are unaffected, as they are computed from a block's own paths. A postcondition under a restriction
-  is no program invariant, so such blocks report no witness invariants.
-
-A SAFE verdict from a cut comes without invariants. The bounded block checkers are rejected here:
-their summaries keep free path variables whose names recur across runs, which the intersections
-above would conflate. The one exception is a bounded finisher (`FINISHER`): the meeting actor
-ignores the finishing blocks' postconditions (`DssMeetingSide.uncertified`), so it certifies no
-summary where they end.
+These are for benchmarking and may change: `--dss-direction BACKWARD|BIDIRECTIONAL` (DSS on the
+reversed program, `ProgramReversal.kt`, or both directions meeting in `DssMeetingActor`),
+`--dss-generalizers` (probes with generalized violation conditions, `Generalizers.kt`),
+`--dss-conjecture-invariants` (`DssConjectureActor`), `--dss-cut-on-timeout` (cut a block that
+every checker times out on, `BlockCut.kt`), and their tuning flags.
 
 ## Packages
 
 * `dss.decomposition` — `Block`, `BlockGraph`, the decompositions and the block cut.
 * `dss.analysis` — block extraction (`extractBlockXcfa`), violation conditions
   (`computeViolationCondition`, `DssAuxVars`), postconditions, solver-backed operators,
-  precisions, the checker roster, the program reversal (`reverseProgram`, `reverseBlockGraph`).
+  precisions, the checker roster, the program reversal.
 * `dss.actor` — the actor network: `DssBlockActor` + `PredicateBlockBehavior` (CPAchecker's
-  `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses, and for several
-  networks `DssNetwork` and `DssMeetingActor`.
+  `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses.
 * `xcfa-cli` — `--backend DSS` (`ConfigToDssChecker.kt`, `DssConfig`).
 
 Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depend on `xcfa-cli`.
@@ -161,9 +81,7 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
   paths, covering all of its targets at once. The postcondition of an unsafe run comes from a second
   run without targets.
 * **Blocks with an internal cycle** (Theta-only decompositions) get per-path violation conditions:
-  the weakest precondition along each counterexample, accumulated as a disjunction `U`. A run yields
-  one path, possibly a known one, so a known path triggers a run from `pre ∧ ¬U`, and a block that
-  found a new path re-analyzes even an unchanged postcondition; it stops after a run without one.
+  the weakest precondition along each counterexample, accumulated as a disjunction.
 * **Precision** is the set of atoms of the reached states plus the start precision, not
   location-specific; the start state's own atoms are always added.
 * **Valid postconditions are normalized to `true`**, and non-top start states are analyzed first.
@@ -172,9 +90,7 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
 * **A violation condition reached from top is always reported**, also when it was sent before: the
   predecessor replaces its stored condition with each new one, so suppressing it would lose it.
 * **Witnesses**: correctness witnesses from the block invariants, violation witnesses stitched along
-  the violation conditions. CPAchecker's DSS reports none. A block's states at its entry are left
-  out unless it is the root or re-enters its entry: they are its preconditions, which the
-  predecessors' exits cover, and a bounded checker's interpolant may leave them unconstrained.
+  the violation conditions. CPAchecker's DSS reports none.
 
 ## Soundness and termination
 
@@ -184,95 +100,8 @@ states. As in CPAchecker's `AlwaysReplacePreconditionHandler`, a postcondition r
 stored from its sender, every analysis starts from all stored preconditions, and a predecessor that
 has not sent anything yet counts as top; a block stops only when a sender repeats its states.
 
-The meeting actor trusts only message contents: the versions of a certified region, never timing,
-so its SAFE holds under every executor. A query it cannot decide disables it, never the networks.
-
 Termination is not guaranteed, in CPAchecker either: a loop block can keep refuting ever longer
 violation conditions while refinement finds new predicates.
-
-## Generalized violation conditions
-
-With `--dss-generalizers`, a block refutes the conditions a sender keeps sending one loop
-iteration longer in one go. There are two methods, in `Generalizers.kt`:
-
-* `GSPACER` follows GSpacer's global guidance (Krishnan et al., *Global guidance for local
-  generalization in model checking*, FMSD 2024). `ViolationGeneralizer` keeps every sender's
-  conditions as cubes in linear normal form, clustered by shape. When the bounds of a shape
-  drift, it conjectures their convex hull, widened in the direction of the drift (with the hull's
-  parameters eliminated by Fourier-Motzkin), or else the cube without its drifting literals. For
-  example, `x == -2 - k && n >= -1` for `k = 0, 1, 2` becomes `x <= -2 && n >= -1`.
-* `SEMANTIC` needs no history. `SemanticGeneralizer` splits each cube's equalities into two
-  bounds and drops literals one at a time while the rest stays unreachable from the block's start
-  states, by the block's weakest precondition. From `x == -2 && n >= -1` and start states with
-  `x >= 0`, it gets `x <= -2` already from the first condition. A block with an internal cycle has
-  no exact weakest precondition, so there it covers only the paths through at most
-  `--dss-semantic-unrollings` back edges of a depth-first search from the entry
-  (`computeBoundedViolationCondition`). A candidate that only a longer path reaches passes this
-  check, and its probe then fails.
-
-With several, `--dss-generalizer-combination` decides: `FIRST` takes the first method in list
-order that has a candidate, `UNION` probes their disjunction, and `CHAIN` lets each weaken the
-previous result (`GSPACER` adds its candidate, as it works from the history, not from a formula).
-
-A generalization may contain states that reach no error, so it is only a probe. A start state is
-first analyzed against the received conditions or the generalization. If that run is SAFE, the
-received conditions are refuted from that start state, and its postcondition is used. If it is
-UNSAFE, the result is discarded and the exact analysis runs. A generalization is never sent,
-never enters a path condition or witness, and never causes an UNSAFE verdict. Each failed probe
-costs gas, in each method it came from.
-
-This helps where the refuting block is not on the cycle that produces the conditions. Blocks on
-the cycle start from their own summaries, which can be too weak to refute any generalization.
-
-## Conjectured invariants
-
-With `--dss-conjecture-invariants`, `DssConjectureActor` handles the cycle case. It generalizes
-the violation conditions arriving at each block boundary L with `--dss-conjecture-generalizers`,
-and for a generalization G it conjectures the invariant `!G` at L. For `SEMANTIC`, "unreachable"
-means from the blocks entering L from outside its cycles: by weakest preconditions back through
-acyclic blocks to the root, else by the latest summaries. Then:
-
-* The blocks starting at L conjoin `!G` to their start states, so their postconditions get
-  stronger, and so do those of the blocks around the cycle.
-* The blocks ending at L must not reach G at their exit. A block that does sends the weakest
-  precondition of reaching it, over all its paths, to its predecessors (`DssMayViolationMessage`).
-  They search for it in a separate pass from the same start states and pass it on in the same way.
-* When the root reaches such a condition, a real path breaks `!G`, and the conjecture is retracted:
-  every block drops it, and the blocks that assumed it analyze again. A chain longer than twice
-  the number of blocks retracts it too, as does a block that cannot check it.
-
-Nothing of this becomes a violation condition, a witness record or a verdict, so UNSAFE stays
-sound. SAFE is still quiescence, now with conjectures live. Suppose a path from the entry breaks one,
-and take the first block boundary where it leaves a conjectured invariant. Up to there it is a path
-of the restricted program, so the stored preconditions cover it: the block ending there reaches G,
-and every block before it on the path reaches the condition sent back, up to the root, which
-retracts the conjecture. This needs the coordinator in the quiescence check, which only a single
-network gives it (not `BIDIRECTIONAL`), and in-process blocks (not `PROCESS`). A location is
-never conjectured where a block needs per-path conditions, which the may violations lack.
-
-## Quantified predicates
-
-`Z3:new` gets its interpolants from a Horn query. For nonlinear arithmetic, the answer can keep
-quantifiers, e.g. `exists p. (p-1)*(p-1) < 100 && 100 <= p*p && p != 10`. With MathSAT blocks
-this happens whenever MathSAT cannot interpolate a trace and the block falls back to `Z3:new`. Such
-a predicate ends up in the block's postcondition, precision and invariants. MathSAT takes no
-quantifiers, so DSS's own query on it fails, and the run is unknown. `--dss-quantified-predicates`
-decides what happens (`QuantifiedPredicates.kt`):
-
-* `KEEP` leaves them as they are.
-* `FALLBACK` retries every DSS query that fails on the main solver on `--dss-fallback-solver`, in
-  the blocks and in the coordinators. The quantified predicates still travel to other blocks.
-* `DROP` weakens them away in the postcondition and precision a block sends: a quantified
-  subformula becomes true where it occurs positively and false where negatively
-  (`withoutQuantifiers`).
-* `ELIMINATE` first replaces each quantified subformula by Z3's quantifier elimination (`qe`, then
-  `qe2`), and weakens away what is left.
-
-Weakening is sound for what a block sends: a postcondition still covers the exit states, and
-predicates never decide soundness. A witness state is not weakened, as a backward witness
-complements it: it only takes the exact eliminations, and what keeps a quantifier is left out of
-the C witness, which prints exact invariants only. The block statistics count the formulas with a
-quantifier as `quantified`.
 
 ## Known limitations
 
@@ -281,18 +110,5 @@ quantifier as `quantified`.
 * Single procedure only; labels without a weakest-precondition rule (calls, memory operations,
   fences) make the block analysis fail.
 * A solver query DSS itself cannot decide gives an unknown verdict.
-* Witness invariants appear only at C statements that start an XCFA edge; without every block's
-  records, an UNSAFE verdict has an empty trace.
-* `BACKWARD` and `BIDIRECTIONAL` reject a program whose labels have no exact reversal, also where
-  `FORWARD` would not compute a violation condition over them.
-* A SAFE verdict proven by a bidirectional cut, or by a network under restrictions or live
-  conjectures, carries few or no witness invariants.
-* `BACKWARD` can diverge on a safe program whose reversed loop stays a cycle of the block graph:
-  the loop's postcondition, first computed from top, need not be the least fixpoint, so it admits
-  every unrolling of the backward violation conditions. The tests see it with `LINEAR` and `MERGE`,
-  also with `--dss-conjecture-invariants`; `BIDIRECTIONAL` may still finish by a cut.
-* `BIDIRECTIONAL` takes `CEGAR` block checkers only, except for a `FINISHER`'s finisher (see
-  [Directions](#directions)).
-* Witness invariants keep only integer and Boolean conjuncts over the variables in scope at their
-  statement (globals, and the locals of the function its labels use); bit-vector, floating-point
-  and memory terms, block-scoped locals and uninterpolated bounded proofs contribute nothing.
+* Witness invariants appear only at C statements that start an XCFA edge, and keep only integer and
+  Boolean conjuncts over the variables in scope there.

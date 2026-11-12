@@ -144,10 +144,8 @@ private class BackwardConditions(
 }
 
 /**
- * [computeViolationCondition] over the paths of [block] that take at most [unrollings] back edges
- * of a depth-first search from its entry, so for blocks with internal cycles too. It
- * under-approximates the weakest precondition: a start state outside it reaches [targets] along no
- * such path, maybe along a longer one.
+ * [computeViolationCondition] over the paths of [block] taking at most [unrollings] back edges, so
+ * for cyclic blocks too; an under-approximation of the weakest precondition.
  */
 fun computeBoundedViolationCondition(
   block: Block,
@@ -352,11 +350,8 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
 }
 
 /**
- * A condition without auxiliary variables equivalent to [condition], or null if there is none this
- * way. An auxiliary variable a conjunct defines as `a == t` is first replaced by `t` (see
- * [substituteAuxDefinitions]). Conjuncts linked by shared auxiliary variables but no program
- * variable constrain only the havocked values: they are dropped if satisfiable ([isSatisfiable]),
- * else the condition is false.
+ * A condition without auxiliary variables equivalent to [condition], or null. Conjuncts over
+ * auxiliary variables only are dropped if satisfiable, else the condition is false.
  */
 fun withoutAuxVars(
   condition: Expr<BoolType>,
@@ -386,9 +381,8 @@ fun withoutAuxVars(
 }
 
 /**
- * [conjuncts] without the definitions `a == t` of auxiliary variables `a` not in `t`, with `t` put
- * for `a`: `exists a. a == t && P(a)` is `P(t)`. A reversed `x := f(x)` havocs the old value of `x`
- * and then defines it so. Only exact equalities count: an IEEE `fp.eq` is none.
+ * [conjuncts] with each definition `a == t` of an auxiliary variable substituted, as `exists a. a
+ * == t && P(a)` is `P(t)`. Only exact equalities count: an IEEE `fp.eq` is none.
  */
 private fun substituteAuxDefinitions(conjuncts: List<Expr<BoolType>>): List<Expr<BoolType>> {
   var current = conjuncts

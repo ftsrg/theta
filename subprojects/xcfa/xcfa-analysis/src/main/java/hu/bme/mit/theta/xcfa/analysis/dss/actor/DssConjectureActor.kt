@@ -40,22 +40,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 private const val SEMANTIC_DEPTH = 6
 
 /**
- * Conjectures invariants for a network whose violation conditions keep drifting around a cycle of
- * blocks (dss/README.md, *Conjectured invariants*). The conditions arriving at each block entry go
- * to [generalizers]; for a generalization G at location L, the blocks starting at L assume `!G`,
- * and those ending at L must not reach G. A block that reaches G, or a may violation derived from
- * it, sends the weakest precondition on like a violation condition.
+ * Conjectures invariants where violation conditions keep drifting around a cycle of blocks: for a
+ * generalization G at location L, the blocks starting at L assume `!G`, and those ending at L must
+ * not reach G (dss/README.md, *Conjectured invariants*).
  *
- * The root reaching one means a real path breaks the conjecture; so does a chain longer than
- * [maxHops], conservatively. Both retract it everywhere, and each location has [gas] retractions.
- * Until then, quiescence is SAFE: the first time a path left `!G` at L, the block ending there
- * would have reached G from preconditions covering it, and the chain back to the root would have
- * followed that path. Sound only while this actor takes part in its network's quiescence.
- *
- * The semantic generalizer keeps a G that no path entering L from outside its cycles reaches: by
- * weakest preconditions back through acyclic blocks to the root, else by the latest summaries.
- * Which G is proposed only decides how useful it is; soundness rests on the obligations alone. A
- * query that fails on [solverFactory] is retried on [fallbackSolverFactory], if there is one.
+ * The root reaching G, or a chain longer than [maxHops], retracts the conjecture. Until then,
+ * quiescence is SAFE; this is sound only while this actor takes part in the network's quiescence.
  */
 class DssConjectureActor(
   override val connection: DssConnection,

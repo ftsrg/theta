@@ -740,9 +740,8 @@ private fun getDefaultConfig(backend: Backend): XcfaConfig<*, *> {
 }
 
 /**
- * Runs an EXPL CEGAR checker on DSS's predicate precisions: it tracks the variables of the given
- * predicates, and reports its final precision as one `v = v` atom per tracked variable, the only
- * predicate form that `--dss-reuse-block-precision` can store without changing what it tracks.
+ * Runs an EXPL CEGAR checker on DSS's predicate precisions: it tracks their variables, and reports
+ * its final precision as one `v = v` atom per tracked variable.
  */
 fun adaptExplChecker(inner: XcfaChecker): XcfaChecker =
   object : XcfaChecker {

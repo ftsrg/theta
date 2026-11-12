@@ -97,11 +97,8 @@ fun combineInvariants(
   )
 
 /**
- * Invariants of the original program from a backward network's (DSS on [reversal]) at quiescence.
- * Those over-approximate the states that can reach an error and, taken from runs that kept the
- * reversed program's error (the entry) as a target, exclude the entry's states, so their
- * complements contain them and are closed under the program's steps. Ones over temporaries are left
- * out.
+ * Invariants of the original program from a backward network's (DSS on [reversal]): complements of
+ * its error-free invariants, which over-approximate the states that can reach an error.
  */
 fun backwardInvariants(
   reversal: ProgramReversal,

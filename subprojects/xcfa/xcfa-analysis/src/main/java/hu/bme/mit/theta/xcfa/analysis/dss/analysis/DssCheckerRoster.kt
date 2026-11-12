@@ -62,9 +62,8 @@ class FastestCheckerSelectionStrategy :
 }
 
 /**
- * The last checker is a finisher, whose postconditions may be too coarse to build on: it analyzes
- * only the [finishingBlocks], first there, with the others as fallbacks. The other blocks use the
- * others by priority.
+ * The last checker is a finisher, used first on the [finishingBlocks] only, as its postconditions
+ * may be too coarse to build on. The other blocks use the others by priority.
  */
 class FinisherCheckerSelectionStrategy :
   DssCheckerSelectionStrategy by PriorityCheckerSelectionStrategy() {
@@ -80,19 +79,16 @@ class FinisherCheckerSelectionStrategy :
 }
 
 /**
- * The blocks whose postconditions no other block builds on, as they have no successors: forward the
- * last blocks, backward the program's first ones, as the original entry is the reversed error. The
- * meeting actor of `BIDIRECTIONAL` reads their postconditions only from a CEGAR finisher.
+ * The blocks without successors, whose postconditions no other block builds on (backward: the
+ * program's first blocks).
  */
 fun BlockGraph.finishingBlocks(): Set<String> =
   blocks.filter { it.successorIds.isEmpty() }.mapTo(linkedSetOf()) { it.id }
 
 /**
- * The block checkers of a run, handed out by [strategy]; each block uses its [forBlock] view.
- *
- * With a positive [budgetMs], a block analysis gives each checker that many milliseconds in turn
- * and multiplies the budget by [BUDGET_GROWTH] after every round, so no checker can block the
- * others. The checkers must then use [DeadlineSolverManager] solvers, which enforce the budget.
+ * The block checkers of a run, handed out by [strategy]. With a positive [budgetMs], each checker
+ * gets that many milliseconds in turn, growing by [BUDGET_GROWTH] per round; the checkers must then
+ * use [DeadlineSolverManager] solvers, which enforce it.
  */
 class DssCheckerRoster(
   private val checkers: List<CheckerFactory>,

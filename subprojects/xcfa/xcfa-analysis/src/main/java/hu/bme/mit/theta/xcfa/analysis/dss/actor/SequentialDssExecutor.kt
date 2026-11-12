@@ -39,11 +39,8 @@ private fun executorId(networks: List<DssNetwork>, index: Int) =
 
 /**
  * [runDssActorsSequentially] for several [networks]: a network is SAFE once its own queues are
- * empty after a round, unless one of its blocks has shut down (it failed).
- *
- * With a [cutter], a block that asks to be cut ([DssBlockCutRequest]) is replaced by its pieces
- * while the others keep their state. That needs one network and no [coordinator] or visualization,
- * which would have to follow the new blocks; otherwise the request fails the network as usual.
+ * empty after a round. With a [cutter] (one network only), a block that asks to be cut is replaced
+ * by its pieces while the others keep their state.
  */
 fun runDssNetworksSequentially(
   networks: List<DssNetwork>,

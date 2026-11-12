@@ -55,11 +55,8 @@ import java.io.File
 import java.math.BigInteger
 
 /**
- * DSS's invariants at C statements that start an edge, where the program point is its source;
- * positions also used inside an edge, or with unknown states, are skipped.
- *
- * Each state keeps only the conjuncts that validators read as Theta does (see [isExactInC]), over
- * variables in scope at the position: dropping a conjunct weakens the state, so it stays valid.
+ * DSS's invariants at C statements that start an edge. Each state keeps only the conjuncts that
+ * validators read as Theta does ([isExactInC]) and that are in scope, which only weakens it.
  */
 internal fun DssInvariants.toContent(
   inputFile: File,
@@ -151,10 +148,8 @@ private fun declaringFunction(decl: VarDecl<*>, parseContext: ParseContext): Str
 }
 
 /**
- * Whether [decl] may be named at [position], a statement of C function [function] (null: unknown):
- * globals always, function-level locals and parameters of [function] once declared. The frontend
- * leaves statements' function names empty, so [function] comes from the locals the statement uses.
- * Block-scoped locals are named `function::block::name`; their block's extent is unknown.
+ * Whether [decl] may be named at [position] of C function [function]: globals always, and
+ * function-level locals and parameters of [function] once declared.
  */
 private fun isInScope(
   decl: VarDecl<*>,
@@ -174,8 +169,7 @@ private val LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE)
 
 /**
  * Whether `toC` prints [expr] as a C expression with the same meaning: integer and Boolean terms
- * only. Bit-vector, floating-point and memory terms print with other semantics or not as C, integer
- * division and modulo follow SMT-LIB, and a literal must be a valid `long long` constant.
+ * without division or modulo (which follow SMT-LIB), with `long long` literals.
  */
 private fun isExactInC(expr: Expr<*>): Boolean {
   val operands =

@@ -94,8 +94,9 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   allow the label in `checkSupported` (`ViolationConditions.kt`) only if `toStmt` is exact, and add
   a case in `BlockAnalysisPrimitivesTest`. The backward direction needs an exact inverse in
   `ProgramReversal.kt` (otherwise it must throw), with a case in `ProgramReversalTest`.
-- New `--dss-*` option: `DssConfig.kt` in `xcfa-cli`, wired in `ConfigToDssChecker.kt`; add it to
-  `README.md` here and `XcfaCliDssTest`.
+- New `--dss-*` option: `DssConfig.kt` in `xcfa-cli`, wired in `ConfigToDssChecker.kt`, with a
+  case in `XcfaCliDssTest`. Keep it `hidden = true` until it is stable (master keeps few public
+  options); only public ones go into `README.md`'s table.
 - New generalization method: a `DssGeneralizerKind` entry and its cases in `Generalizers`
   (`generalize`, `failed`); it can only use what `GeneralizationContext` offers. Add a
   `DssVerdictTest` matrix for it, and run it alone first: a case it fails to help can diverge.

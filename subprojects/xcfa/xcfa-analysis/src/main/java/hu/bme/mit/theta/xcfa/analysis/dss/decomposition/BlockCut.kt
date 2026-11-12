@@ -27,16 +27,9 @@ val DEFAULT_BLOCK_CUT: DssBlockDecomposition =
   MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
 
 /**
- * [block] in smaller pieces (null if it has no cut), for a block too hard for every checker: the
- * [decomposition] applied to the block alone, as if it were a procedure of its own. The pieces keep
- * all the paths of the block:
- * - they share no edge and cover the block's reachable ones, and take every edge out of a location
- *   they pass through;
- * - one ends at the block's exit if a successor starts there, and none passes through the exit or
- *   (unless the block is the root) the entry;
- * - a root block keeps its single root piece, as a block graph has exactly one root.
- *
- * A decomposition that gives one piece, or cannot handle the block, gives no cut.
+ * [block] in smaller pieces by [decomposition] applied to the block alone, or null if that gives no
+ * more than one piece. The pieces share no edge, keep every path of the block, and a root block
+ * keeps a single root piece.
  */
 fun cutBlock(block: Block, decomposition: DssBlockDecomposition = DEFAULT_BLOCK_CUT): List<Block>? {
   val reachable = reachableEdges(block)
