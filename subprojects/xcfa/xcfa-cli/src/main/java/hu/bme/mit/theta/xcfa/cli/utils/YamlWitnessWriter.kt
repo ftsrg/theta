@@ -57,6 +57,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcDataRaces
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -173,6 +174,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
               parseContext,
               witnessfile,
               lasso?.cycleStart,
+              XcfaOcDataRaces.of(safetyResult.asUnsafe().cex),
             )
 
           if (witness.content.isEmpty()) {
@@ -192,6 +194,12 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           } else {
             witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
           }
+        } else if (property.inputProperty == ErrorDetection.DATA_RACE) {
+          ocRaceWitness(safetyResult, inputFile, parseContext, ltlSpecification, architecture)
+            ?.let {
+              logger.benchmark("No trace to concretize, writing the racing pair only")
+              witnessfile.writeText(it)
+            }
         }
       } catch (e: Exception) {
         if (property.isTerminationWitnessValidation) {
@@ -242,6 +250,11 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     architecture: ArchitectureConfig.ArchitectureType?,
     logger: Logger,
   ): String {
+    if (property.inputProperty == ErrorDetection.DATA_RACE) {
+      ocRaceWitness(safetyResult, inputFile, parseContext, ltlSpecification, architecture)?.let {
+        return it
+      }
+    }
 
     val trace =
       safetyResult.asUnsafe().cex.let {
@@ -368,6 +381,49 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         content = EmptyProof.getInstance().toContent(inputFile, parseContext),
       )
     witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
+  }
+
+  /**
+   * The racing pair the OC checker read off its model, without the trace leading to it. Only the
+   * main thread is known; the other accesses get `any`.
+   */
+  private fun ocRaceWitness(
+    safetyResult: SafetyResult<*, *>,
+    inputFile: File,
+    parseContext: ParseContext,
+    ltlSpecification: String,
+    architecture: ArchitectureConfig.ArchitectureType?,
+  ): String? {
+    val (access1, access2) = XcfaOcDataRaces.of(safetyResult.asUnsafe().cex) ?: return null
+    val threadId = { pid: Int ->
+      if (!parseContext.multiThreading) null
+      else if (pid == XcfaOcDataRaces.MAIN_PID) 0 else WaypointContent.ANY_THREAD_ID
+    }
+    val targets =
+      runCatching {
+          listOf(access1, access2).map {
+            Waypoint(it.toTargetWaypoint(inputFile, threadId(it.pid)))
+          }
+        }
+        .getOrNull() ?: return null
+    val metadata =
+      getMetadata(
+        inputFile,
+        ltlSpecification,
+        architecture,
+        formatVersion =
+          if (!parseContext.multiThreading) "2.1"
+          else targetOnlyFormatVersion(targets.map { it.waypoint.threadId }),
+      )
+    return WitnessYamlConfig.encodeToString(
+      listOf(
+        YamlWitness(
+          entryType = EntryType.VIOLATION,
+          metadata = metadata,
+          content = listOf(ContentItem(targets)),
+        )
+      )
+    )
   }
 
   override fun generateEmptyViolationWitness(
@@ -731,6 +787,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     inputFile: File,
     property: XcfaProperty,
     parseContext: ParseContext,
+    ocRace: Pair<DataRaceAccess, DataRaceAccess>?,
   ): YamlWitness {
     val witnessTrace =
       traceToWitness(trace = concrTrace, parseContext = parseContext, property = property)
@@ -770,13 +827,17 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     val targetWaypoints =
       if (race != null) {
         listOf(race.access1, race.access2).map { access ->
-          Waypoint(access.toTargetWaypoint(inputFile, threadIds))
+          Waypoint(access.toTargetWaypoint(inputFile, threadIds.ofPid(access.pid)))
         }
       } else {
         // --datarace-to-reachability rewrote the property to an inserted error location, so the
         // final state no longer has both conflicting accesses enabled: reconstruct the racing pair
-        // from the flag the error state is blocked on (see DataRaceToReachabilityPass) instead.
+        // from the flag the error state is blocked on (see DataRaceToReachabilityPass), or take the
+        // pair the OC checker read off its model.
         reconstructDataRaceFromFlags(concrTrace, inputFile, threadIds)
+          ?: ocRace?.toList()?.map { access ->
+            Waypoint(access.toTargetWaypoint(inputFile, threadIds.ofPid(access.pid)))
+          }
           ?: listOf(Waypoint(targetWaypointAtViolation(concrTrace, inputFile, threadIds)))
       }
     content.add(ContentItem(targetWaypoints))
@@ -792,6 +853,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
     parseContext: ParseContext,
     witnessfile: File,
     cycleStart: Int? = null,
+    ocRace: Pair<DataRaceAccess, DataRaceAccess>? = null,
   ): YamlWitness =
     when (property.inputProperty) {
       ErrorDetection.TERMINATION -> {
@@ -813,6 +875,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
           inputFile,
           property,
           parseContext,
+          ocRace,
         )
       }
 
@@ -1314,10 +1377,7 @@ private fun WitnessEdge.toSegment(
  * The target waypoint of a data race witness: one of the two conflicting accesses, located at the
  * accessing statement and executed by the racing thread.
  */
-private fun DataRaceAccess.toTargetWaypoint(
-  inputFile: File,
-  threadIds: ThreadIdEmission,
-): WaypointContent {
+private fun DataRaceAccess.toTargetWaypoint(inputFile: File, threadId: Int?): WaypointContent {
   // the access may be anywhere in its statement (e.g. in a `&&` operand), so the full expression
   // locates it, not the exportable statement start
   val location =
@@ -1328,7 +1388,7 @@ private fun DataRaceAccess.toTargetWaypoint(
     type = WaypointType.TARGET,
     location = location,
     action = Action.FOLLOW,
-    threadId = threadIds.ofPid(pid),
+    threadId = threadId,
   )
 }
 
