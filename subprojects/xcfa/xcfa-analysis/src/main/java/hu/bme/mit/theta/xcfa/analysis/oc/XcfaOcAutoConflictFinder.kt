@@ -44,6 +44,8 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
   val po = { from: E, to: E -> if (from.clkId == to.clkId) true else ppos[from.clkId, to.clkId] }
   val flatRfs = rfs.values.flatten().toMutableList()
   val conflicts = mutableListOf<Reason>()
+  // po only depends on the clocks, so the read-from edge between two clocks is searched once
+  val rfBetween = mutableMapOf<Pair<Int, Int>, Reason?>()
 
   fun findSimplePath(from: E, to: E): Reason? {
     if (from.clkId == to.clkId) {
@@ -51,7 +53,12 @@ internal val SimpleConflictFinder = XcfaOcAutoConflictFinder { events, ppos, rfs
       return null
     }
     if (po(from, to)) return PoReason
-    return flatRfs.find { po(from, it.from) && po(it.to, to) }?.let { RelationReason(it) }
+    val clocks = from.clkId to to.clkId
+    if (clocks !in rfBetween) {
+      rfBetween[clocks] =
+        flatRfs.find { po(from, it.from) && po(it.to, to) }?.let { RelationReason(it) }
+    }
+    return rfBetween[clocks]
   }
 
   // Cycle of two RF edges (plus po edges)
