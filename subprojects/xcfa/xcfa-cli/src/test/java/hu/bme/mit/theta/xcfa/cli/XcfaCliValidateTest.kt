@@ -157,6 +157,34 @@ class XcfaCliValidateTest {
           null,
           "SafetyResult Safe",
         ),
+        // an absent thread_id is the main thread, which cannot pass a waypoint in writer
+        Arguments.of(
+          "/c/witness-validation/concurrent-unreach.i",
+          "/c/witness-validation/concurrent-unreach.no-thread-id-witness.yml",
+          null,
+          "SafetyResult Safe",
+        ),
+        // the same, without registering the writer thread
+        Arguments.of(
+          "/c/witness-validation/concurrent-unreach.i",
+          "/c/witness-validation/concurrent-unreach.unregistered-witness.yml",
+          null,
+          "SafetyResult Safe",
+        ),
+        // thread_id any lets the writer thread pass the waypoint
+        Arguments.of(
+          "/c/witness-validation/concurrent-unreach.i",
+          "/c/witness-validation/concurrent-unreach.any-thread-witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
+        // thread_ids are ignored for single-threaded programs
+        Arguments.of(
+          "/c/witness-validation/single-thread-id.i",
+          "/c/witness-validation/single-thread-id.witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
         // a no-data-race witness with a multi-follow final segment is confirmed
         Arguments.of(
           "/c/witness-validation/concurrent-data-race.i",
