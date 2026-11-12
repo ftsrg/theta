@@ -16,15 +16,20 @@
 package hu.bme.mit.theta.xcfa.passes.procedures
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -47,8 +52,10 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * total (a pointer that matches no candidate -- e.g. NULL -- would be undefined behavior in C).
  *
  * The candidate set is the set of functions whose address is taken anywhere in the program (see
- * [FunctionIds]), restricted to those actually defined in this XCFA with a matching arity. This
- * must run before [InlineProceduresPass] so that the direct calls it emits are inlined normally.
+ * [FunctionIds]), restricted to those actually defined in this XCFA with a matching arity. A call
+ * through a pointer has no prototype, so its values are converted to the types of the function it
+ * reaches, as C converts them for a call with one. This must run before [InlineProceduresPass] so
+ * that the direct calls it emits are inlined normally.
  *
  * Programs that never call through a function pointer contain no marker call and are left
  * bit-for-bit unchanged.
@@ -107,15 +114,13 @@ class FunctionPointerCallsPass(
 
     val pointerType = CComplexType.getType(functionPointer, parseContext)
     val candidates =
-      FunctionIds.getAll()
-        .filter { (name, _) ->
-          builder.parent.getProcedures().any { proc ->
-            proc.name == name && proc.getParams().size == arguments.size + 1
-          }
-        }
-        .map { (name, id) ->
-          Pair(name, AbstractExprs.Eq(functionPointer, pointerType.getValue(id.toString())))
-        }
+      FunctionIds.getAll().mapNotNull { (name, id) ->
+        val proc =
+          builder.parent.getProcedures().firstOrNull {
+            it.name == name && it.getParams().size == arguments.size + 1
+          } ?: return@mapNotNull null
+        Triple(name, proc, AbstractExprs.Eq(functionPointer, pointerType.getValue(id.toString())))
+      }
 
     if (candidates.isEmpty()) {
       uniqueWarningLogger.write(
@@ -128,17 +133,10 @@ class FunctionPointerCallsPass(
 
     val branches =
       candidates
-        .map { (name, guard) ->
+        .map { (name, proc, guard) ->
           SequenceLabel(
-            listOf(
-              StmtLabel(AssumeStmt.of(guard), metadata = invokeLabel.metadata),
-              InvokeLabel.retFirst(
-                name,
-                listOf(returnValue) + arguments,
-                metadata = invokeLabel.metadata,
-                tempLookup = invokeLabel.tempLookup,
-              ),
-            )
+            listOf(StmtLabel(AssumeStmt.of(guard), metadata = invokeLabel.metadata)) +
+              typedCall(builder, name, proc, invokeLabel, returnValue, arguments)
           )
         }
         .toMutableList()
@@ -149,7 +147,7 @@ class FunctionPointerCallsPass(
       SequenceLabel(
         listOf(
           StmtLabel(
-            AssumeStmt.of(And(candidates.map { (_, guard) -> Not(guard) })),
+            AssumeStmt.of(And(candidates.map { (_, _, guard) -> Not(guard) })),
             metadata = invokeLabel.metadata,
           ),
           havocReturnValue(returnValue, invokeLabel),
@@ -157,6 +155,63 @@ class FunctionPointerCallsPass(
       )
     )
     return branches
+  }
+
+  /**
+   * The call of [proc], with the arguments converted to its parameter types and its result, held in
+   * a variable of its own return type, converted to the type of [returnValue].
+   */
+  private fun typedCall(
+    builder: XcfaProcedureBuilder,
+    name: String,
+    proc: XcfaProcedureBuilder,
+    invokeLabel: InvokeLabel,
+    returnValue: Expr<*>,
+    arguments: List<Expr<*>>,
+  ): List<XcfaLabel> {
+    val params = proc.getParams().map { it.first }
+    val converted =
+      params.drop(1).zip(arguments).map { (param, argument) ->
+        if (param.type == argument.type) argument
+        else convert(CComplexType.getType(param.ref, parseContext), argument, param.type)
+      }
+    val call = { result: Expr<*> ->
+      InvokeLabel.retFirst(
+        name,
+        listOf(result) + converted,
+        metadata = invokeLabel.metadata,
+        tempLookup = invokeLabel.tempLookup,
+      )
+    }
+    if (params.first().type == returnValue.type) return listOf(call(returnValue))
+    val result = Decls.Var("__theta_indirect_ret_${resultCount++}", params.first().type)
+    parseContext.metadata.create(
+      result.ref,
+      "cType",
+      CComplexType.getType(params.first().ref, parseContext),
+    )
+    builder.addVar(result)
+    val target = (returnValue as RefExpr<*>).decl as VarDecl<*>
+    val assign =
+      AssignStmt.of(
+        cast(target, target.type),
+        cast(
+          convert(CComplexType.getType(returnValue, parseContext), result.ref, target.type),
+          target.type,
+        ),
+      )
+    return listOf(call(result.ref), StmtLabel(assign, metadata = invokeLabel.metadata))
+  }
+
+  private var resultCount = 0
+
+  private fun convert(to: CComplexType, value: Expr<*>, type: Type): Expr<*> {
+    val converted = to.castTo(value)
+    if (converted.type != type)
+      throw UnsupportedFrontendElementException(
+        "Call through a function pointer converts a ${value.type} value to $type"
+      )
+    return converted
   }
 
   private fun havocReturnValue(returnValue: Expr<*>, invokeLabel: InvokeLabel): XcfaLabel =
