@@ -254,7 +254,13 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
 
     @Override
     public void close() {
-        context.close();
+        // The prover has native resources of its own (MathSAT: an environment per prover), which
+        // closing the context does not free.
+        try {
+            solver.close();
+        } finally {
+            context.close();
+        }
     }
 
     @Override
