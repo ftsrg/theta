@@ -57,7 +57,6 @@ import hu.bme.mit.theta.xcfa.passes.loops.UnrollCut
 import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
 import hu.bme.mit.theta.xcfa.passes.memory.ReferenceElimination
 import hu.bme.mit.theta.xcfa.passes.structure.AssumeFalseRemovalPass
-import hu.bme.mit.theta.xcfa.utils.defaultValue
 import java.util.IdentityHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -594,8 +593,10 @@ class XcfaOcChecker(
                 conseq =
                   And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
               }
-            } else if (parseContext.isGhostMemoryBase(rel.to.array)) {
-              conseq = And(conseq, Eq(rel.to.const.ref, rel.to.const.type.defaultValue))
+            } else {
+              parseContext.getGhostMemoryInitialValue(rel.to.array)?.let {
+                conseq = And(conseq, Eq(rel.to.const.ref, it))
+              }
             }
             solver.add(Imply(rel.declRef, conseq)) // RF-Val
           }

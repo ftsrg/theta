@@ -108,6 +108,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     "--ptr-size-in-memory requires the OC backend"
   }
   PtrSizeToMemoryPass.enabled = config.frontendConfig.ptrSizeInMemory
+  PtrSizeToMemoryPass.mutexesEnabled = config.backendConfig.backend == Backend.OC
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
   if (config.backendConfig.backend == Backend.CEGAR) {

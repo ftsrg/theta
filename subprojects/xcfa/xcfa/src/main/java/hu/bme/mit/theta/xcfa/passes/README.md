@@ -45,7 +45,7 @@ Each phase below is one group in `CPasses`, in order.
 | memory model | `FlatMemoryPass`, `ByteMemoryPass` | fold `(base, offset)` to one flat address, then split wide cells into bytes; both no-ops unless their `--memory-model` is selected | after every pass that creates or rewrites a dereference; `ByteMemoryPass` after `FlatMemoryPass` |
 | final | `UnusedVarPass`, `EmptyEdgeRemovalPass`, `UnusedLocRemovalPass` | drop what the instrumentation made dead, and the writes to global objects that nothing reads (a union only as a whole) | last |
 | | `DataRaceToReachabilityPass` | the portfolio's form of the data-race reduction, on the finished XCFA | after the `mem*` calls are spelled out and unresolved calls havoced |
-| | `PtrSizeToMemoryPass` | with `--ptr-size-in-memory` (OC only), move the memory-safety ghost arrays into memory, and their constant static entries into tables in the reads | last: anything before it may still rewrite dereferences |
+| | `PtrSizeToMemoryPass` | with `--ptr-size-in-memory` (OC only), move the memory-safety ghost arrays into memory, and their constant static entries into tables in the reads; under flat with the OC backend, also the mutex ownership arrays of `SymbolicMutexPass` | last: anything before it may still rewrite dereferences |
 
 Passes not in this pipeline are used by individual backends: `MutexToVarPass`,
 `AssumeFalseRemovalPass`, `AtomicReadsOneWritePass`, `AllocationSitesPass` and `WitnessOptimizer` by
