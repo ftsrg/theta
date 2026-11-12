@@ -674,23 +674,27 @@ class UnrollPass(
 
   private fun findLoop(builder: XcfaProcedureBuilder): Loop? { // DFS
     val stack = Stack<XcfaLocation>()
+    // The stack never holds a location twice; unrolled code makes it deep, so test membership here
+    val onStack = HashSet<XcfaLocation>()
     val explored = mutableSetOf<XcfaEdge>()
     stack.push(builder.initLoc)
+    onStack.add(builder.initLoc)
     while (stack.isNotEmpty()) {
       val current = stack.peek()
       val edgesToExplore = current.outgoingEdges subtract explored
       if (edgesToExplore.isEmpty()) {
-        stack.pop()
+        onStack.remove(stack.pop())
       } else {
         // Deterministic given EXPLORATION_SEED: `edgesToExplore` keeps insertion order (the sets
         // it comes from are linked), so indexing it with a seeded source repeats exactly.
         val edge = edgesToExplore.elementAt(exploration.nextInt(edgesToExplore.size))
-        if (edge.target in stack) { // loop found
+        if (edge.target in onStack) { // loop found
           getLoop(builder, edge)?.let {
             return it
           }
         } else {
           stack.push(edge.target)
+          onStack.add(edge.target)
         }
         explored.add(edge)
       }
