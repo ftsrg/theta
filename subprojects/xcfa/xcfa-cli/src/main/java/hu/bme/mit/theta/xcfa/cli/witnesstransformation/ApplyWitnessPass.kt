@@ -64,11 +64,13 @@ import kotlin.jvm.optionals.getOrNull
  *   (happens-before) order: a waypoint of thread B in segment i+1 can only be passed once the
  *   waypoint of thread A in segment i has been. They are also *atomic*, so the instrumentation
  *   itself can never introduce a data race (which would break `no-data-race` validation).
+ * - Thread ids are only checked if the program creates threads (has a [StartLabel]); otherwise
+ *   `thread_id`s are ignored. An absent `thread_id` denotes the main thread, `any` any thread.
  * - The pass is applied to every procedure; each waypoint is instrumented in the procedure(s) where
- *   its location matches. A waypoint carrying a `thread_id` is only applied in the procedure that
- *   the denoted thread executes (thread 0 is the entry procedure; thread k is registered by the
- *   k-th `function_enter` waypoint of the witness that sits on a thread-creating call, i.e., an
- *   edge with a [StartLabel]).
+ *   its location matches. A waypoint of a thread is only applied in the procedure that the thread
+ *   executes (thread 0 is the entry procedure; thread k is registered by the k-th `function_enter`
+ *   waypoint of the witness that sits on a thread-creating call, i.e., an edge with a
+ *   [StartLabel]).
  * - On top of the *static* (per-procedure) filtering above, the segments are guarded by a *runtime*
  *   logical thread id, so an instrumented thread instance only advances a segment if it is the very
  *   thread the witness refers to (this matters when the same procedure runs as several threads, or
@@ -93,6 +95,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val threadProcedures: Map<Int, String>,
     /** the thread-creating `function_enter` waypoints, in registration (witness) order */
     val registrations: List<ThreadRegistration>,
+    /** every procedure started as a thread, whether or not the witness registers it */
+    val threadRoots: Set<String>,
   )
 
   private interface LastSegmentManager<T : Type> {
@@ -246,8 +250,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     // Logical thread ids are only tracked when the witness thread numbering could be resolved.
     val threadingEnabled = instrumentation.threadProcedures.isNotEmpty()
     val isEntry = builder.parent.getInitProcedures().any { it.first.name == builder.name }
-    val isThreadRoot =
-      builder.name in instrumentation.threadProcedures.filterKeys { it != 0 }.values
+    val isThreadRoot = builder.name in instrumentation.threadRoots
     // The entry thread and spawned-thread roots are the only procedures whose logical id is set;
     // everywhere else (e.g. a non-inlined callee) we fall back to segment-only guarding.
     val hasTid = threadingEnabled && (isEntry || isThreadRoot)
@@ -340,8 +343,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
         // The segment is only passed once the counter is on it AND the executing thread is the one
         // the waypoint names; this per-waypoint guard replaces the plain segment predicate.
-        val guardPred =
-          threadGuard(currentSegmentPred, wp.waypoint.threadId, hasTid, logicalThreadId)
+        val guardPred = threadGuard(currentSegmentPred, wp.waypoint.thread, hasTid, logicalThreadId)
         val segmentUpdate =
           if (isLastSegment && firstCycle > -1) {
             Pair(guardPred, Int(firstCycle))
@@ -669,18 +671,29 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   }
 
   /**
-   * Waypoints carrying a `thread_id` are only applied in the procedure that the denoted thread
-   * executes. The filter only disambiguates among the *known* thread root procedures: a waypoint is
-   * never excluded from a procedure outside the registry (e.g., a function that could not be
-   * inlined), and waypoints without a (resolvable) `thread_id` are applied wherever their location
-   * matches.
+   * The thread a waypoint is restricted to: an absent `thread_id` is the main thread, `any` (null)
+   * is unrestricted.
+   */
+  private val WaypointContent.thread: Int?
+    get() =
+      when (threadId) {
+        null -> 0
+        WaypointContent.ANY_THREAD_ID -> null
+        else -> threadId
+      }
+
+  /**
+   * Waypoints are only applied in the procedure that their thread executes. The filter only
+   * disambiguates among the *registered* thread root procedures: a waypoint is never excluded from
+   * a procedure outside the registry (e.g., a function that could not be inlined), and `any`
+   * waypoints are applied wherever their location matches.
    */
   private fun mayExecuteInProcedure(
     wp: WaypointContent,
     builder: XcfaProcedureBuilder,
     instrumentation: Instrumentation,
   ): Boolean {
-    val threadId = wp.threadId ?: return true
+    val threadId = wp.thread ?: return true
     val procedureName = instrumentation.threadProcedures[threadId] ?: return true
     return procedureName == builder.name || builder.name !in instrumentation.threadProcedures.values
   }
@@ -714,9 +727,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
    * Augments every thread-creating [StartLabel] of [builder] so that the spawned thread receives a
    * logical id, and advances the segment counter when the corresponding `function_enter` waypoint
    * is passed. The id handed over is the registration index `k` while the registering segment is
-   * the current one and the spawning thread matches; otherwise it is [INVALID_THREAD_ID]. A single
-   * StartLabel may carry several registrations (e.g. a thread-creating call visited in several
-   * segments), which are folded into a nested `ite`.
+   * the current one and the spawning thread matches; otherwise (including threads the witness never
+   * registers) it is [INVALID_THREAD_ID]. A single StartLabel may carry several registrations (e.g.
+   * a thread-creating call visited in several segments), which are folded into a nested `ite`.
    */
   private fun registerThreads(
     builder: XcfaProcedureBuilder,
@@ -728,8 +741,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
   ) {
     val segmentCounter = instrumentation.segmentCounter
     val lastSegment = instrumentation.lastSegmentManager
-    val registeredRoots = instrumentation.threadProcedures.filterKeys { it != 0 }.values.toSet()
-    if (registeredRoots.isEmpty()) return
+    val threadRoots = instrumentation.threadRoots
+    if (threadRoots.isEmpty()) return
 
     val startLabelLine =
       getStatementToEdge(builder)
@@ -747,7 +760,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
     for (edge in builder.getEdges().toSet()) {
       val flatLabels = edge.getFlatLabels()
-      if (flatLabels.none { it is StartLabel && it.name in registeredRoots }) continue
+      if (flatLabels.none { it is StartLabel && it.name in threadRoots }) continue
 
       builder.removeEdge(edge)
       var source = edge.source
@@ -762,7 +775,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
 
       for (label in flatLabels) {
-        if (label is StartLabel && label.name in registeredRoots) {
+        if (label is StartLabel && label.name in threadRoots) {
           val line = startLabelLine[label]
           val regs =
             instrumentation.registrations.filter {
@@ -812,7 +825,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
 
   private fun createInstrumentation(parent: XcfaBuilder): Instrumentation {
     val segmentCounter = Var(SEGMENT_COUNTER, Int())
-    val (threadProcedures, registrations) = mapThreads(parent)
+    val (threadProcedures, registrations, threadRoots) = mapThreads(parent)
     val targetCount = witness.targetCount
     val lastSegmentManager =
       if (targetCount > 1) {
@@ -835,7 +848,13 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     // Global: waypoints of different threads must see the same segment progression.
     parent.addVar(XcfaGlobalVar(segmentCounter, Int(0), atomic = true))
     parent.addVar(XcfaGlobalVar(lastSegmentManager.varDecl, Int(0), atomic = true))
-    return Instrumentation(segmentCounter, lastSegmentManager, threadProcedures, registrations)
+    return Instrumentation(
+      segmentCounter,
+      lastSegmentManager,
+      threadProcedures,
+      registrations,
+      threadRoots,
+    )
   }
 
   /**
@@ -843,12 +862,14 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
    * thread-registering `function_enter` waypoint -- one whose location is a thread-creating call,
    * i.e., a statement carrying a [StartLabel] -- registers thread k with the procedure started
    * there. Returns both the id -> procedure-name map and the per-registration details (segment,
-   * spawning thread, ...) used to drive the runtime thread numbering. If the witness references
-   * `thread_id`s beyond the registrations found this way, the numbering cannot be trusted and empty
-   * results are returned: waypoints are then matched by location only, which over-approximates the
-   * witness but stays sound.
+   * spawning thread, ...) used to drive the runtime thread numbering, and the set of all procedures
+   * started as threads. Empty results are returned for single-threaded programs, and if the witness
+   * references `thread_id`s beyond the registrations found this way (the numbering cannot be
+   * trusted): waypoints are then matched by location only.
    */
-  private fun mapThreads(parent: XcfaBuilder): Pair<Map<Int, String>, List<ThreadRegistration>> {
+  private fun mapThreads(
+    parent: XcfaBuilder
+  ): Triple<Map<Int, String>, List<ThreadRegistration>, Set<String>> {
     val startedProcedures =
       parent.getProcedures().flatMap { procedure ->
         getStatementToEdge(procedure).mapNotNull { (statement, label, _) ->
@@ -857,6 +878,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           else null
         }
       }
+    if (startedProcedures.isEmpty()) return Triple(emptyMap(), emptyList(), emptySet())
 
     val segments = witness.content.mapNotNull { it.segment }
     val registrations = mutableListOf<ThreadRegistration>()
@@ -875,7 +897,7 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
                 segmentIndex,
                 started.first,
                 started.third,
-                wp.threadId,
+                wp.thread,
               )
             )
           }
@@ -888,9 +910,9 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       registrations.forEach { put(it.threadId, it.startedProcedure) }
     }
 
-    val maxUsedThreadId = segments.flatten().mapNotNull { it.waypoint.threadId }.maxOrNull() ?: 0
-    return if (maxUsedThreadId >= nextThreadId) Pair(emptyMap(), emptyList())
-    else Pair(threadProcedures, registrations)
+    val maxUsedThreadId = segments.flatten().mapNotNull { it.waypoint.thread }.maxOrNull() ?: 0
+    return if (maxUsedThreadId >= nextThreadId) Triple(emptyMap(), emptyList(), emptySet())
+    else Triple(threadProcedures, registrations, startedProcedures.map { it.third }.toSet())
   }
 }
 

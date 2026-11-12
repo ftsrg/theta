@@ -273,21 +273,20 @@ class XcfaOcChecker(
 
         status?.isSat == true -> {
           if (memoryModel == SC) {
+            val race = races?.let { racingPair(checker, it) }
             val trace =
               try {
                 val extractor = XcfaOcTraceExtractor(xcfa, checker, eg)
                 if (races == null) extractor.trace
                 else {
-                  val model = GuardValues(checker.solver.model)
-                  val race = races.first { model.holds(it.condition) }
-                  val (e1, e2) =
-                    race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
+                  val (e1, e2) = race ?: error("No racing pair holds in the model.")
                   extractor.raceTrace(e1, e2)
                 }
               } catch (e: Exception) {
                 logger.info("OC checker trace extraction failed: ${e.message}")
-                EmptyCex.getInstance()
+                if (race != null) RaceOnlyCex() else EmptyCex.getInstance()
               }
+            race?.let { (e1, e2) -> XcfaOcDataRaces.record(trace, e1, e2) }
             SafetyResult.unsafe(trace, EmptyProof.getInstance())
           } else {
             SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
@@ -356,6 +355,15 @@ class XcfaOcChecker(
       return checker.check(eg.events, eg.pos, ppos, eg.rfs, wss)
     }
   }
+
+  /** The conflicting accesses of a race candidate whose clocks are adjacent in the model. */
+  private fun racingPair(checker: OcChecker<E>, races: List<RaceCandidate>): Pair<E, E>? =
+    runCatching {
+        val model = GuardValues(checker.solver.model)
+        val race = races.first { model.holds(it.condition) }
+        race.pairs.first { (e1, e2) -> model.holds(race.pairCondition(e1, e2)) }
+      }
+      .getOrNull()
 
   /** Guards share their subterms, so evaluating them as trees takes exponential time. */
   private class GuardValues(private val model: Valuation) {

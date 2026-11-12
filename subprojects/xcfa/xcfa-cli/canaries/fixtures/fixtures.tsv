@@ -560,3 +560,5 @@ ternary_array_index.c	efficient	LP64	UNSAFE	an unparenthesized ?: array index se
 ternary_funcptr_table_index.c	efficient	LP64	UNSAFE	a call through a function-pointer table indexed by ?: dispatches to the selected element
 index_side_effects.c	efficient	LP64	SAFE	assignment and comma operators in an array index keep their side effects and sequencing
 ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or a case label selects by its guard
+address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken global union spans the cells its initialization writes
+address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
