@@ -24,13 +24,16 @@ import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 /** First budget of a block checker; it grows 4-fold per round (see `DssCheckerRoster`). */
-private const val EMERGENT_CHECKER_BUDGET_MS = 30_000L
+private const val EMERGENT_CHECKER_BUDGET_MS = 90_000L
 
 /** Of the block checkers and DSS's own queries; legacy Z3 is far slower on floats. */
 private const val EMERGENT_SOLVER = "JavaSMT:MATHSAT5"
 
 /** Retried on when MathSAT fails a block. */
 private const val EMERGENT_FALLBACK_SOLVER = "Z3:new"
+
+/** Replaces MathSAT on nonlinear integer programs without floats or bitwise operations. */
+private const val EMERGENT_NONLINEAR_SOLVER = "Z3:new"
 
 /** Only DSS; fails on properties that no pass reduces to error-location reachability. */
 fun emergent27(
@@ -50,7 +53,7 @@ fun emergent27(
   fun getStm(inProcess: Boolean): STM {
     val dss =
       ConfigNode(
-        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-KIND-CEGAR-EXPL-BUDGET-$inProcess",
+        "DSS-MIN_CUT_ABSORB_SELF_LOOPS-KIND-CEGAR-BUDGET-CUT-$inProcess",
         baseDssConfig.copy(
           backendConfig =
             baseDssConfig.backendConfig.copy(
@@ -64,9 +67,14 @@ fun emergent27(
                   checkerBackends = listOf(Backend.KIND, Backend.CEGAR),
                   checkerSelection = DssCheckerSelectionMethod.PRIORITY,
                   checkerBudgetMs = EMERGENT_CHECKER_BUDGET_MS,
-                  explChecker = true,
+                  // A block every checker times out on is cut in place into acyclic pieces
+                  cutOnTimeout = true,
+                  cutStrategy = DssDecomposition.MERGE_ACYCLIC,
+                  cutRestart = DssCutRestart.BLOCK,
+                  interpolateBoundedProofs = false,
                   solver = EMERGENT_SOLVER,
                   fallbackSolver = EMERGENT_FALLBACK_SOLVER,
+                  nonlinearSolver = EMERGENT_NONLINEAR_SOLVER,
                 ),
             )
         ),
