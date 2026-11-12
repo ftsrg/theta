@@ -17,8 +17,10 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.DataInputStream
@@ -37,6 +39,7 @@ private const val REQUEST_INIT = 1
 private const val REQUEST_POST_CONDITION = 2
 private const val REQUEST_VIOLATION_CONDITION = 3
 private const val REQUEST_WITNESS = 4
+private const val REQUEST_RESTRICTION = 5
 private const val REPLY_OK = 0
 private const val REPLY_ERROR = 1
 private const val INTERRUPT_POLL_MILLIS = 100
@@ -57,6 +60,10 @@ fun BlockGraph.fingerprint(): String =
     "${b.id}>${b.successorIds.sorted().joinToString(",")}<${b.predecessorIds.sorted().joinToString(",")}"
   }
 
+/** The workers of a multi-network run must decompose every network the same way. */
+fun fingerprint(blockGraphs: List<BlockGraph>): String =
+  blockGraphs.joinToString("|") { it.fingerprint() }
+
 /** [runDssActors] with every block analysis in a worker process, so any solver runs in parallel. */
 fun runDssActorsInProcesses(
   blockGraph: BlockGraph,
@@ -65,8 +72,31 @@ fun runDssActorsInProcesses(
   maxProcesses: Int = 0,
   startupTimeoutMillis: Int = 300_000,
   witnesses: MutableMap<String, DssBlockWitness>? = null,
-): DssResult {
-  val ids = blockGraph.blocks.map { it.id }
+): DssResult =
+  runDssNetworksInProcesses(
+      listOf(blockGraph),
+      launcher,
+      { codec },
+      maxProcesses = maxProcesses,
+      startupTimeoutMillis = startupTimeoutMillis,
+      witnesses = witnesses,
+    )
+    .result
+
+/**
+ * [runDssNetworks] with every block analysis in a worker process; [codecOf] gives the codec of a
+ * block's own program. The coordinator runs in this process.
+ */
+fun runDssNetworksInProcesses(
+  blockGraphs: List<BlockGraph>,
+  launcher: DssWorkerLauncher,
+  codecOf: (String) -> DssExprCodec,
+  coordinator: DssCoordinatorFactory? = null,
+  maxProcesses: Int = 0,
+  startupTimeoutMillis: Int = 300_000,
+  witnesses: MutableMap<String, DssBlockWitness>? = null,
+): DssRun {
+  val ids = blockGraphs.flatMap { graph -> graph.blocks.map { it.id } }
   val processCount = if (maxProcesses <= 0) ids.size else minOf(maxProcesses, ids.size)
   val groups = List(processCount) { i -> ids.filterIndexed { j, _ -> j % processCount == i } }
   val workers = arrayOfNulls<DssWorkerConnection>(processCount)
@@ -104,14 +134,20 @@ fun runDssActorsInProcesses(
         check(readString(input) == HELLO) { "Unexpected DSS worker handshake" }
         val index = input.readInt()
         val fingerprint = readString(input)
-        check(fingerprint == blockGraph.fingerprint()) {
+        check(fingerprint == fingerprint(blockGraphs)) {
           "DSS worker $index decomposed the program differently: $fingerprint"
         }
-        workers[index] = DssWorkerConnection(groups[index], processes[index], socket, input, codec)
+        workers[index] =
+          DssWorkerConnection(groups[index], processes[index], socket, input, codecOf)
       }
       val workerOf = groups.indices.flatMap { i -> groups[i].map { it to workers[i]!! } }.toMap()
       val result =
-        runDssActors(blockGraph, behaviorFor = { workerOf.getValue(it.id).behavior(it.id) })
+        runDssNetworks(
+          blockGraphs.map { graph ->
+            DssNetwork(graph) { workerOf.getValue(it.id).behavior(it.id) }
+          },
+          coordinator,
+        )
       // Before the workers are closed: a worker left unusable by the run only loses its blocks
       witnesses?.let { collected ->
         for ((id, worker) in workerOf) {
@@ -131,29 +167,35 @@ private class DssWorkerConnection(
   private val process: Process,
   private val socket: Socket,
   private val input: DataInputStream,
-  private val codec: DssExprCodec,
+  private val codecOf: (String) -> DssExprCodec,
 ) {
 
   private val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
 
   @Volatile private var broken = false
 
-  fun behavior(blockId: String): DssBlockBehavior =
-    object : DssBlockBehavior {
-      override fun initialMessages() = request(REQUEST_INIT, blockId) {}
+  fun behavior(blockId: String): DssBlockBehavior {
+    val codec = codecOf(blockId)
+    return object : DssBlockBehavior {
+      override fun initialMessages() = request(REQUEST_INIT, blockId, codec) {}
 
       override fun onPostCondition(message: DssPostConditionMessage) =
-        request(REQUEST_POST_CONDITION, blockId) { writeMessage(it, codec, message) }
+        request(REQUEST_POST_CONDITION, blockId, codec) { writeMessage(it, codec, message) }
 
       override fun onViolationCondition(message: DssViolationConditionMessage) =
-        request(REQUEST_VIOLATION_CONDITION, blockId) { writeMessage(it, codec, message) }
+        request(REQUEST_VIOLATION_CONDITION, blockId, codec) { writeMessage(it, codec, message) }
+
+      override fun onRestriction(message: DssRestrictionMessage) =
+        request(REQUEST_RESTRICTION, blockId, codec) { writeMessage(it, codec, message) }
 
       override fun witness() = request(REQUEST_WITNESS, blockId, {}) { readWitness(it, codec) }
     }
+  }
 
   private fun request(
     kind: Int,
     blockId: String,
+    codec: DssExprCodec,
     payload: (DataOutputStream) -> Unit,
   ): List<DssMessage> =
     request(kind, blockId, payload) { input -> List(input.readInt()) { readMessage(input, codec) } }
@@ -206,9 +248,11 @@ private class DssWorkerConnection(
     val message = readString(input)
     val stackTrace = readString(input)
     val remote = DssWorkerException("$className in the worker of $blockId: $message", stackTrace)
-    return if (className == DssUndecidedQueryException::class.java.name)
-      DssUndecidedQueryException(remote)
-    else remote
+    return when (className) {
+      DssUndecidedQueryException::class.java.name -> DssUndecidedQueryException(remote)
+      DssBlockCutRequest::class.java.name -> DssBlockCutRequest(blockId, remote)
+      else -> remote
+    }
   }
 
   private val exitDescription: String
@@ -231,6 +275,15 @@ fun serveDssBlocks(
   fingerprint: String,
   behaviors: Map<String, DssBlockBehavior>,
   codec: DssExprCodec,
+) = serveDssBlocks(port, index, fingerprint, behaviors) { codec }
+
+/** Worker side of [runDssNetworksInProcesses]; [codecOf] gives the codec of a block's program. */
+fun serveDssBlocks(
+  port: Int,
+  index: Int,
+  fingerprint: String,
+  behaviors: Map<String, DssBlockBehavior>,
+  codecOf: (String) -> DssExprCodec,
 ) {
   // A worker busy in a solver call would notice a killed main process only afterwards
   ProcessHandle.current().parent().ifPresent { parent ->
@@ -261,8 +314,10 @@ fun serveDssBlocks(
       val request = runCatching {
         val behavior = behaviors[blockId] ?: error("DSS worker $index does not serve $blockId")
         behavior to
-          if (kind == REQUEST_INIT || kind == REQUEST_WITNESS) null else readMessage(input, codec)
+          if (kind == REQUEST_INIT || kind == REQUEST_WITNESS) null
+          else readMessage(input, codecOf(blockId))
       }
+      val codec by lazy { codecOf(blockId) }
       val answer: Result<(DataOutputStream) -> Unit> =
         request.mapCatching { (behavior, message) ->
           if (kind == REQUEST_WITNESS) {
@@ -275,6 +330,7 @@ fun serveDssBlocks(
               REQUEST_POST_CONDITION -> behavior.onPostCondition(message as DssPostConditionMessage)
               REQUEST_VIOLATION_CONDITION ->
                 behavior.onViolationCondition(message as DssViolationConditionMessage)
+              REQUEST_RESTRICTION -> behavior.onRestriction(message as DssRestrictionMessage)
               else -> error("Unknown DSS worker request $kind")
             }
           return@mapCatching { out ->
@@ -302,7 +358,9 @@ fun serveDssBlocks(
 
 private const val MESSAGE_POST_CONDITION = 1
 private const val MESSAGE_VIOLATION_CONDITION = 2
+private const val MESSAGE_RESTRICTION = 3
 
+/** A restriction's targets are routing only: the worker's block is the target. */
 private fun writeMessage(out: DataOutputStream, codec: DssExprCodec, message: DssMessage) {
   when (message) {
     is DssPostConditionMessage -> {
@@ -310,12 +368,25 @@ private fun writeMessage(out: DataOutputStream, codec: DssExprCodec, message: Ds
       writeString(out, message.senderId)
       writeExprs(out, codec, message.postconditions)
       writeExprs(out, codec, message.precision)
+      out.writeInt(message.version)
+      out.writeInt(message.inputs.size)
+      for ((sender, version) in message.inputs) {
+        writeString(out, sender)
+        out.writeInt(version)
+      }
+      out.writeBoolean(message.restricted)
+      out.writeBoolean(message.observerOnly)
     }
     is DssViolationConditionMessage -> {
       out.writeByte(MESSAGE_VIOLATION_CONDITION)
       writeString(out, message.senderId)
       out.writeBoolean(message.violationCondition != null)
       message.violationCondition?.let { codec.write(out, it) }
+    }
+    is DssRestrictionMessage -> {
+      out.writeByte(MESSAGE_RESTRICTION)
+      writeString(out, message.senderId)
+      codec.write(out, message.restriction)
     }
     else -> error("A block behavior does not send ${message.type} messages")
   }
@@ -328,7 +399,12 @@ private fun readMessage(input: DataInputStream, codec: DssExprCodec): DssMessage
         readString(input),
         readExprs(input, codec),
         readExprs(input, codec).toSet(),
+        version = input.readInt(),
+        inputs = List(input.readInt()) { readString(input) to input.readInt() }.toMap(),
+        restricted = input.readBoolean(),
+        observerOnly = input.readBoolean(),
       )
+    MESSAGE_RESTRICTION -> DssRestrictionMessage(readString(input), codec.read(input))
     MESSAGE_VIOLATION_CONDITION ->
       DssViolationConditionMessage(
         readString(input),
@@ -355,15 +431,8 @@ private const val RECORD_PATH = 2
 private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: DssBlockWitness?) {
   out.writeBoolean(witness != null)
   if (witness == null) return
-  val invariants = witness.invariants
-  out.writeBoolean(invariants != null)
-  if (invariants != null) {
-    out.writeInt(invariants.size)
-    for ((location, states) in invariants) {
-      codec.writeLocation(out, location)
-      writeExprs(out, codec, states)
-    }
-  }
+  writeInvariants(out, codec, witness.invariants)
+  writeInvariants(out, codec, witness.errorFreeInvariants)
   out.writeInt(witness.violations.size)
   for (record in witness.violations) {
     when (record) {
@@ -394,10 +463,8 @@ private fun writeWitness(out: DataOutputStream, codec: DssExprCodec, witness: Ds
 
 private fun readWitness(input: DataInputStream, codec: DssExprCodec): DssBlockWitness? {
   if (!input.readBoolean()) return null
-  val invariants =
-    if (input.readBoolean())
-      List(input.readInt()) { codec.readLocation(input) to readExprs(input, codec) }.toMap()
-    else null
+  val invariants = readInvariants(input, codec)
+  val errorFreeInvariants = readInvariants(input, codec)
   val violations =
     List(input.readInt()) {
       val kind = input.readUnsignedByte()
@@ -415,5 +482,27 @@ private fun readWitness(input: DataInputStream, codec: DssExprCodec): DssBlockWi
         else -> error("Unknown DSS violation record kind $kind")
       }
     }
-  return DssBlockWitness(invariants, violations, readExprs(input, codec))
+  return DssBlockWitness(invariants, violations, readExprs(input, codec), errorFreeInvariants)
 }
+
+private fun writeInvariants(
+  out: DataOutputStream,
+  codec: DssExprCodec,
+  invariants: Map<XcfaLocation, List<Expr<BoolType>>>?,
+) {
+  out.writeBoolean(invariants != null)
+  if (invariants == null) return
+  out.writeInt(invariants.size)
+  for ((location, states) in invariants) {
+    codec.writeLocation(out, location)
+    writeExprs(out, codec, states)
+  }
+}
+
+private fun readInvariants(
+  input: DataInputStream,
+  codec: DssExprCodec,
+): Map<XcfaLocation, List<Expr<BoolType>>>? =
+  if (input.readBoolean())
+    List(input.readInt()) { codec.readLocation(input) to readExprs(input, codec) }.toMap()
+  else null

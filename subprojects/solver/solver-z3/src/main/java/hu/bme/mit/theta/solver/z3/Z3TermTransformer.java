@@ -69,8 +69,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.kframework.mpfr.BigFloat;
@@ -280,41 +278,25 @@ final class Z3TermTransformer {
         this.environment.put(
                 Tuple2.of("extract", 1),
                 (term, model, vars) -> {
-                    Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
-                    String termStr = term.toString();
-                    Matcher match = pattern.matcher(termStr);
-                    if (match.find()) {
-                        int to = Integer.parseInt(match.group(1)) + 1;
-                        int from = Integer.parseInt(match.group(2));
-                        Expr<BvType> op =
-                                (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
-                        return BvExtractExpr.of(op, IntExprs.Int(from), IntExprs.Int(to));
-                    } else {
-                        throw new com.microsoft.z3.Z3Exception("Not supported: " + term);
-                    }
+                    // The indices come from the declaration: the term's text may start with
+                    // let bindings that hold other extracts.
+                    final var params = term.getFuncDecl().getParameters();
+                    int to = params[0].getInt() + 1;
+                    int from = params[1].getInt();
+                    Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                    return BvExtractExpr.of(op, IntExprs.Int(from), IntExprs.Int(to));
                 });
         // Z3 introduces `(_ bit2bool k) x` when it reasons about individual bits of a bitvector:
-        // the term is true exactly when bit k of x is set. It has no counterpart in theta's
-        // expression language, so back-transformation fell through to toFuncLitExpr, which needs a
-        // model and threw `NullPointerException: Unsupported function 'bit2bool'` when there was
-        // none -- a common failure of the bitvector encoding.
-        //
-        // The bit index is read from the term's own text, the way the `extract` case above does it.
+        // the term is true exactly when bit k of x is set. Theta has no such expression, so it is
+        // read back as a one-bit extract compared with 1.
         this.environment.put(
                 Tuple2.of("bit2bool", 1),
                 (term, model, vars) -> {
-                    Pattern pattern = Pattern.compile("bit2bool ([0-9]+)");
-                    Matcher match = pattern.matcher(term.toString());
-                    if (match.find()) {
-                        int index = Integer.parseInt(match.group(1));
-                        Expr<BvType> op =
-                                (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
-                        return AbstractExprs.Eq(
-                                BvExtractExpr.of(op, IntExprs.Int(index), IntExprs.Int(index + 1)),
-                                BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
-                    } else {
-                        throw new com.microsoft.z3.Z3Exception("Not supported: " + term);
-                    }
+                    int index = term.getFuncDecl().getParameters()[0].getInt();
+                    Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                    return AbstractExprs.Eq(
+                            BvExtractExpr.of(op, IntExprs.Int(index), IntExprs.Int(index + 1)),
+                            BvUtils.bigIntegerToNeutralBvLitExpr(java.math.BigInteger.ONE, 1));
                 });
         this.environment.put(
                 Tuple2.of("zero_extend", 1),

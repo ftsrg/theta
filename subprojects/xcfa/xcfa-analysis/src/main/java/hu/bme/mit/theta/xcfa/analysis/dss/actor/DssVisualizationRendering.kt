@@ -24,6 +24,10 @@ private fun ansiColorFor(type: DssMessageType): String =
     DssMessageType.EXCEPTION -> "[1;31m" // bold red
     DssMessageType.RESULT -> "[1;35m" // bold magenta
     DssMessageType.STATISTIC -> "[34m" // blue
+    DssMessageType.CONJECTURE,
+    DssMessageType.MAY_VIOLATION,
+    DssMessageType.CONJECTURE_FAILED,
+    DssMessageType.RESTRICTION -> "[36m" // cyan
   }
 
 private fun payloadSummary(message: DssMessage): String? =
@@ -33,6 +37,13 @@ private fun payloadSummary(message: DssMessage): String? =
     is DssExceptionMessage -> message.error.message
     is DssResultMessage -> message.result.toString()
     is DssStatisticsMessage -> message.stats.takeIf { it.isNotEmpty() }?.toString()
+    is DssRestrictionMessage -> "${message.targetIds}: ${message.restriction}"
+    is DssConjectureMessage ->
+      if (message.retracted) "#${message.conjecture} retracted"
+      else
+        "#${message.conjecture} ${message.restrictedIds}/${message.obligedIds}: ${message.condition}"
+    is DssMayViolationMessage -> "#${message.conjecture}: ${message.condition}"
+    is DssConjectureFailedMessage -> "#${message.conjecture}"
   }
 
 private fun DssLogEntry.render(startMillis: Long): String {

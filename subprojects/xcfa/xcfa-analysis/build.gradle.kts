@@ -34,3 +34,8 @@ dependencies {
     testImplementation(project(":theta-xcfa-cli"))
     testImplementation(project(":theta-graph-solver"))
 }
+
+tasks.test {
+    // Z3 solvers keep their native contexts until the JVM exits, and the DSS tests build many
+    forkEvery = 1
+}

@@ -15,21 +15,29 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
-/** Broadcasts `RESULT(SAFE)` once all threads wait and all queues and [active] are empty. */
+/**
+ * Broadcasts `RESULT(SAFE)` once all threads wait and all queues and [active] are empty; with
+ * [ids], only those of one network count. A failed network's threads end, so it never looks idle.
+ */
 class DssThreadMonitor(
   private val threadsToMonitor: List<Thread>,
   private val broadcaster: DssMessageBroadcaster,
   private val active: MutableSet<String>,
   private val id: String = "dss-monitor",
   private val pollIntervalMillis: Long = 10,
+  private val ids: Set<String>? = null,
 ) : Thread(id) {
+
+  private fun idle(): Boolean =
+    if (ids == null) broadcaster.isEmpty() && active.isEmpty()
+    else broadcaster.isEmpty(ids) && active.none { it in ids }
 
   override fun run() {
     while (true) {
       val allWaiting =
         threadsToMonitor.all { it.state == State.WAITING || it.state == State.TIMED_WAITING }
 
-      if (allWaiting && broadcaster.isEmpty() && active.isEmpty()) {
+      if (allWaiting && idle()) {
         broadcaster.broadcastToAll(DssResultMessage(id, DssResult.SAFE))
         return
       }

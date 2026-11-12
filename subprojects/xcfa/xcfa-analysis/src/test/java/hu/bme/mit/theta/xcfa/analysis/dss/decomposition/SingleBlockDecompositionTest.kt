@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.decomposition
 
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.xcfa.model.*
+import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -54,6 +55,46 @@ class SingleBlockDecompositionTest {
     assertEquals(procedure.locs, block.locations)
     assertTrue(block.finalLocation.outgoingEdges.isEmpty())
     assertTrue(block.predecessorIds.isEmpty() && block.successorIds.isEmpty())
+  }
+
+  /** What the passes leave of `while (1) { assert(x == 0); }` after `x = 0`. */
+  private fun edgelessProcedure(): XcfaProcedure {
+    val init = XcfaLocation("init", initial = true, metadata = EmptyMetaData)
+    val final = XcfaLocation("final", final = true, metadata = EmptyMetaData)
+    val error = XcfaLocation("error", error = true, metadata = EmptyMetaData)
+    return XcfaProcedure(
+      name = "main",
+      params = emptyList(),
+      vars = emptySet(),
+      locs = setOf(init, final, error),
+      edges = emptySet(),
+      initLoc = init,
+      finalLoc = Optional.of(final),
+      errorLoc = Optional.of(error),
+    )
+  }
+
+  @Test
+  fun `an edgeless procedure is one empty root block in every decomposition`() {
+    val procedure = edgelessProcedure()
+    val decompositions =
+      listOf(
+        SingleBlockDecomposition,
+        LinearBlockDecomposition(),
+        MergeBlockDecomposition(),
+        SelfLoopAbsorbingDecomposition(),
+        AcyclicMergeDecomposition(),
+      ) + CutLoopHandling.entries.map { MinCutDecomposition(loopHandling = it) }
+
+    for (decomposition in decompositions) {
+      val graph = decomposition.decompose(procedure)
+
+      graph.checkConsistency()
+      val root = graph.blocks.single()
+      assertSame(graph.root, root, "$decomposition")
+      assertEquals(procedure.initLoc, root.initialLocation)
+      assertTrue(root.edges.isEmpty() && root.successorIds.isEmpty(), "$decomposition")
+    }
   }
 
   @Test

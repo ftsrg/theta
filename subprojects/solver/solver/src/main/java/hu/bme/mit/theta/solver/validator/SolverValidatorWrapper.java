@@ -110,6 +110,11 @@ public class SolverValidatorWrapper implements Solver {
     }
 
     @Override
+    public void interrupt() {
+        solver.interrupt();
+    }
+
+    @Override
     public void close() throws Exception {
         solver.close();
     }

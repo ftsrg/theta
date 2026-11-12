@@ -16,18 +16,28 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.END_TO_END_TIMEOUT
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseBlockGraph
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.reverseProgram
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SelfLoopAbsorbingDecomposition
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cut
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
@@ -83,6 +93,9 @@ class DssVerdictTest {
 
     private val programs = loopFree + loops
 
+    /** The experimental options only get smoke tests: each case runs the whole DSS network. */
+    private val smokeLoops = listOf("loop with a branching body", "nondeterministic counter")
+
     /**
      * DSS does not terminate on the safe error-inside-a-loop program when the loop stays a cycle of
      * the block graph (termination is not guaranteed).
@@ -105,6 +118,69 @@ class DssVerdictTest {
         }
         .stream()
     }
+
+    /** The decomposition `EMERGENT` runs DSS with. */
+    @JvmStatic
+    fun generalizationCases(): Stream<Arguments> =
+      listOf(true, false)
+        .map { Arguments.of(smokeLoops[0], Decomposition.MIN_CUT_ABSORB, it) }
+        .stream()
+
+    /** The generalization cases, with both generalizers under each combination but FIRST. */
+    @JvmStatic
+    fun combinationCases(): Stream<Arguments> =
+      generalizationCases()
+        .toList()
+        .flatMap { case ->
+          listOf(DssGeneralizerCombination.UNION, DssGeneralizerCombination.CHAIN).map {
+            Arguments.of(*case.get(), it)
+          }
+        }
+        .stream()
+
+    /** A cyclic block graph, where plain DSS can diverge. */
+    @JvmStatic
+    fun conjectureCases(): Stream<Arguments> =
+      listOf(true, false).map { Arguments.of(smokeLoops[1], Decomposition.LINEAR, it) }.stream()
+
+    /** A decomposition that keeps the loop as a cycle of blocks. */
+    @JvmStatic fun wrongConjectureCases(): Stream<Arguments> = conjectureCases()
+
+    /** A loop program in every new direction, on the default decomposition. */
+    @JvmStatic
+    fun directionCases(): Stream<Arguments> =
+      listOf(smokeLoops[0])
+        .flatMap { program ->
+          Direction.entries.flatMap { direction ->
+            listOf(true, false).map { safe ->
+              Arguments.of(program, Decomposition.MERGE, direction, safe)
+            }
+          }
+        }
+        .filterNot {
+          it.get()[0] in backwardDivergent &&
+            it.get()[1] in cyclic &&
+            it.get()[2] == Direction.BACKWARD &&
+            it.get()[3] == true
+        }
+        .stream()
+
+    /**
+     * Backward DSS does not terminate on these safe programs when the reversed loop stays a cycle:
+     * its postcondition, first computed from top, is not the least fixpoint and admits every
+     * unrolling.
+     */
+    private val backwardDivergent =
+      setOf("guarded loop", "error inside a loop", "nondeterministic counter")
+
+    @JvmStatic
+    fun cutCases(): Stream<Arguments> =
+      listOf(true, false).map { Arguments.of(smokeLoops[1], it) }.stream()
+
+    /** BIDIRECTIONAL cuts the forward graph and rebuilds the backward one from it. */
+    @JvmStatic
+    fun directionCutCases(): Stream<Arguments> =
+      listOf(true, false).map { Arguments.of(smokeLoops[0], Direction.BIDIRECTIONAL, it) }.stream()
 
     private fun branchXcfa(safe: Boolean): XCFA =
       xcfa("branch") {
@@ -313,6 +389,9 @@ class DssVerdictTest {
     wholeProgram: XCFA,
     blockGraph: BlockGraph,
     useGlobalPredicatePool: Boolean = true,
+    generalizationGas: Int = 0,
+    generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+    combination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
   ): DssResult {
     blockGraph.checkConsistency()
     val procedure = wholeProgram.procedures.single()
@@ -321,13 +400,149 @@ class DssVerdictTest {
       runDssActorsSequentially(
         blockGraph,
         behaviorFor = { block ->
-          PredicateBlockBehavior(wholeProgram, procedure, block, roster, useGlobalPredicatePool)
+          PredicateBlockBehavior(
+            wholeProgram,
+            procedure,
+            block,
+            roster,
+            useGlobalPredicatePool,
+            generalizationGas = generalizationGas,
+            generalizers = generalizers,
+            generalizerCombination = combination,
+          )
         },
       )
     }
   }
 
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("generalizationCases")
+  fun `semantic generalization keeps the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val semantic = listOf(DssGeneralizerKind.SEMANTIC)
+    assertEquals(
+      expected(safe),
+      checkDecomposed(xcfa, blockGraph, generalizationGas = 2, generalizers = semantic),
+    )
+  }
+
+  @ParameterizedTest(name = "{3}: {0}, {1}, safe={2}")
+  @MethodSource("combinationCases")
+  fun `combined generalizers keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+    combination: DssGeneralizerCombination,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val both = listOf(DssGeneralizerKind.GSPACER, DssGeneralizerKind.SEMANTIC)
+    assertEquals(
+      expected(safe),
+      checkDecomposed(
+        xcfa,
+        blockGraph,
+        generalizationGas = 2,
+        generalizers = both,
+        combination = combination,
+      ),
+    )
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("generalizationCases")
+  fun `generalized violation conditions keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    assertEquals(expected(safe), checkDecomposed(xcfa, blockGraph, generalizationGas = 2))
+  }
+
   private fun expected(safe: Boolean) = if (safe) DssResult.SAFE else DssResult.UNSAFE
+
+  /** [checkDecomposed] with a conjecture coordinator, which first proposes [initial]. */
+  private fun checkWithConjectures(
+    wholeProgram: XCFA,
+    blockGraph: BlockGraph,
+    gas: Int = 2,
+    initial: List<Pair<XcfaLocation, Expr<BoolType>>> = emptyList(),
+    generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+  ): DssResult {
+    blockGraph.checkConsistency()
+    val procedure = wholeProgram.procedures.single()
+    val roster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    return assertTimeoutPreemptively<DssResult>(END_TO_END_TIMEOUT) {
+      runDssNetworksSequentially(
+          listOf(
+            DssNetwork(blockGraph) { block ->
+              PredicateBlockBehavior(wholeProgram, procedure, block, roster)
+            }
+          ),
+          coordinator = { connection ->
+            DssConjectureActor(
+              connection,
+              blockGraph,
+              SolverManager.resolveSolverFactory("Z3"),
+              gas,
+              initialConjectures = initial,
+              generalizers = generalizers,
+            )
+          },
+        )
+        .result
+    }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("conjectureCases")
+  fun `semantic conjectures keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val semantic = listOf(DssGeneralizerKind.SEMANTIC)
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph, generalizers = semantic))
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("conjectureCases")
+  fun `conjectured invariants keep the verdict`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph))
+  }
+
+  /**
+   * Claims every block boundary unreachable: each reached one must be retracted, which leaves gas
+   * for the generalized conjectures that a cyclic block graph still needs.
+   */
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("wrongConjectureCases")
+  fun `a conjecture broken by a real path is retracted`(
+    program: String,
+    decomposition: Decomposition,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val blockGraph = decomposition.decompose(xcfa.procedures.single())
+    val boundaries = blockGraph.blocks.map { it.initialLocation }.distinct()
+    val initial = boundaries.map { it to True() }
+    assertEquals(expected(safe), checkWithConjectures(xcfa, blockGraph, initial = initial))
+  }
 
   @ParameterizedTest(name = "{0}, {1}, safe={2}")
   @MethodSource("cases")
@@ -340,6 +555,104 @@ class DssVerdictTest {
     val blockGraph = decomposition.decompose(xcfa.procedures.single())
     assertEquals(expected(safe), checkDecomposed(xcfa, blockGraph))
   }
+
+  enum class Direction {
+    BACKWARD,
+    BIDIRECTIONAL,
+    BIDIRECTIONAL_SHARING,
+  }
+
+  /** The verdict of [direction], run as `--dss-direction` runs it. */
+  private fun checkDirection(
+    wholeProgram: XCFA,
+    decomposition: Decomposition,
+    direction: Direction,
+    cutEvery: Boolean = false,
+  ): DssRun {
+    val procedure = wholeProgram.procedures.single()
+    val reversal = reverseProgram(wholeProgram)
+    val roster = DssCheckerRoster(listOf { x -> cegarChecker(x) })
+    val tracked = direction != Direction.BACKWARD
+    fun behaviors(program: XCFA, programProcedure: XcfaProcedure) = { block: Block ->
+      PredicateBlockBehavior(program, programProcedure, block, roster, trackSummaries = tracked)
+    }
+    return assertTimeoutPreemptively<DssRun>(END_TO_END_TIMEOUT) {
+      if (direction == Direction.BACKWARD) {
+        val graph =
+          decomposition.decompose(reversal.procedure).cutEveryIf(cutEvery).also {
+            it.checkConsistency()
+          }
+        runDssNetworksSequentially(
+          listOf(DssNetwork(graph, behaviors(reversal.xcfa, reversal.procedure)))
+        )
+      } else {
+        val forward = decomposition.decompose(procedure).cutEveryIf(cutEvery)
+        val backward = reverseBlockGraph(forward, reversal).withIdPrefix("R.")
+        backward.checkConsistency()
+        runDssNetworksSequentially(
+          listOf(
+            DssNetwork(forward, behaviors(wholeProgram, procedure)),
+            DssNetwork(backward, behaviors(reversal.xcfa, reversal.procedure)),
+          ),
+          coordinator = { connection ->
+            DssMeetingActor(
+              connection,
+              procedure,
+              DssMeetingSide(forward, procedure.locs.associateWith { it }),
+              DssMeetingSide(backward, reversal.originalOf),
+              SolverManager.resolveSolverFactory("Z3"),
+              sharedVars = procedure.vars,
+              shareInvariants = direction == Direction.BIDIRECTIONAL_SHARING,
+            )
+          },
+        )
+      }
+    }
+  }
+
+  @ParameterizedTest(name = "{0}, {1}, {2}, safe={3}")
+  @MethodSource("directionCases")
+  fun `every direction gives the verdict of the program`(
+    program: String,
+    decomposition: Decomposition,
+    direction: Direction,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    assertEquals(expected(safe), checkDirection(xcfa, decomposition, direction).result)
+  }
+
+  /** As `--dss-cut-on-timeout` cuts blocks, of the decomposition `EMERGENT` runs DSS with. */
+  @ParameterizedTest(name = "{0}, safe={1}")
+  @MethodSource("cutCases")
+  fun `cutting every block keeps the verdict`(program: String, safe: Boolean) {
+    val xcfa = programs.getValue(program)(safe)
+    val decomposed = Decomposition.MIN_CUT_ABSORB.decompose(xcfa.procedures.single())
+    val cut = decomposed.cutEveryIf(true)
+    assertTrue(cut.blocks.size > decomposed.blocks.size) { "nothing to cut in $decomposed" }
+    assertEquals(expected(safe), checkDecomposed(xcfa, cut))
+  }
+
+  /** As `--dss-cut-on-timeout` cuts in the new directions: BIDIRECTIONAL cuts the forward graph. */
+  @ParameterizedTest(name = "{0}, {1}, safe={2}")
+  @MethodSource("directionCutCases")
+  fun `cutting every block keeps the verdict in both new directions`(
+    program: String,
+    direction: Direction,
+    safe: Boolean,
+  ) {
+    val xcfa = programs.getValue(program)(safe)
+    val run = checkDirection(xcfa, Decomposition.MIN_CUT_ABSORB, direction, cutEvery = true)
+    assertEquals(expected(safe), run.result)
+  }
+
+  private fun BlockGraph.cutEveryIf(cut: Boolean): BlockGraph =
+    if (!cut) this
+    else
+      blocks
+        .map { it.id }
+        .sorted()
+        .fold(this) { g, id -> g.cut(id, MergeBlockDecomposition()) ?: g }
 
   @Test
   fun `without the global predicate pool, violation conditions refute the spurious error`() {

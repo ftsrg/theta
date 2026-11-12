@@ -217,18 +217,19 @@ class YamlWitnessWriter : XcfaWitnessWriter {
         witnessfile.writeText(bestEffortWitness)
       }
     } else if (safetyResult.isSafe) {
-      try {
-        val witness =
-          YamlWitness(
-            entryType = EntryType.INVARIANTS,
-            metadata = metadata,
-            content = safetyResult.asSafe().proof.toContent(inputFile, parseContext, property),
-          )
-
-        witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
-      } catch (e: Exception) {
-        logger.info("Could not emit witness, outputting empty witness")
-      }
+      // `toC` reports an unsupported expression with TODO(), an Error rather than an Exception
+      val content =
+        try {
+          safetyResult.asSafe().proof.toContent(inputFile, parseContext, property)
+        } catch (e: Exception) {
+          logger.info("Could not emit invariants, outputting empty witness: ${e.message}")
+          emptyList()
+        } catch (e: NotImplementedError) {
+          logger.info("Could not emit invariants, outputting empty witness: ${e.message}")
+          emptyList()
+        }
+      val witness = YamlWitness(entryType = EntryType.INVARIANTS, metadata = metadata, content)
+      witnessfile.writeText(WitnessYamlConfig.encodeToString(listOf(witness)))
     }
   }
 

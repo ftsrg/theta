@@ -20,8 +20,12 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
@@ -90,5 +94,110 @@ class DssExecutorTest {
     assertEquals(DssResult.UNSAFE, executor.runEcho(chain(), violatingBlock = "B"))
     assertEquals(DssResult.UNSAFE, executor.runEcho(join(), violatingBlock = "C"))
     assertEquals(DssResult.UNSAFE, executor.runEcho(selfLoop(), violatingBlock = "X"))
+  }
+
+  enum class NetworkExecutor(val run: (List<DssNetwork>) -> DssRun) {
+    CONCURRENT({ runDssNetworks(it) }),
+    SEQUENTIAL({ runDssNetworksSequentially(it) }),
+  }
+
+  private class FailingBehavior : DssBlockBehavior {
+    override fun initialMessages(): Collection<DssMessage> = error("analysis failed")
+
+    override fun onPostCondition(message: DssPostConditionMessage) = initialMessages()
+
+    override fun onViolationCondition(message: DssViolationConditionMessage) = initialMessages()
+  }
+
+  @ParameterizedTest
+  @EnumSource(NetworkExecutor::class)
+  fun `a failing network leaves the other one to reach SAFE`(executor: NetworkExecutor) {
+    val failing = DssNetwork(chain().withIdPrefix("F.")) { FailingBehavior() }
+    val working = DssNetwork(join()) { EchoBlockAnalysis(it.id) }
+    val run =
+      assertTimeoutPreemptively<DssRun>(Duration.ofSeconds(10)) {
+        executor.run(listOf(failing, working))
+      }
+    assertEquals(DssRun(DssResult.SAFE, 1), run)
+  }
+
+  @ParameterizedTest
+  @EnumSource(NetworkExecutor::class)
+  fun `a run fails when all its networks fail`(executor: NetworkExecutor) {
+    val first = DssNetwork(chain().withIdPrefix("F.")) { FailingBehavior() }
+    val second = DssNetwork(join()) { FailingBehavior() }
+    assertThrows<IllegalStateException> {
+      assertTimeoutPreemptively<DssRun>(Duration.ofSeconds(10)) {
+        executor.run(listOf(first, second))
+      }
+    }
+  }
+
+  @Test
+  fun `disagreeing verdicts fail the run instead of picking one`() {
+    val queue = createDssMessageQueue()
+    val observer =
+      DssObserverActor(
+        "observer",
+        DssConnection(queue, DssMessageBroadcaster(emptyMap()), mutableSetOf()),
+        numberOfBlocks = 2,
+        networks = listOf(setOf("a"), setOf("b")),
+      )
+    observer.processMessage(DssResultMessage("a", DssResult.SAFE))
+    observer.processMessage(DssResultMessage("b", DssResult.UNSAFE))
+    assertTrue(observer.shutdownRequested())
+    assertThrows<IllegalStateException> { observer.verdict() }
+  }
+
+  /** Records how many behavior calls overlap; each call takes long enough to overlap if allowed. */
+  private class OverlapCountingBehavior(
+    private val behavior: DssBlockBehavior,
+    private val running: AtomicInteger,
+    private val peak: AtomicInteger,
+  ) : DssBlockBehavior by behavior {
+
+    private fun <T> counted(call: () -> T): T {
+      peak.accumulateAndGet(running.incrementAndGet(), ::maxOf)
+      try {
+        Thread.sleep(50)
+        return call()
+      } finally {
+        running.decrementAndGet()
+      }
+    }
+
+    override fun initialMessages() = counted { behavior.initialMessages() }
+
+    override fun onPostCondition(message: DssPostConditionMessage) = counted {
+      behavior.onPostCondition(message)
+    }
+
+    override fun onViolationCondition(message: DssViolationConditionMessage) = counted {
+      behavior.onViolationCondition(message)
+    }
+  }
+
+  @Test
+  fun `maxParallelBlocks caps the overlapping block analyses and still reaches SAFE`() {
+    val leaves = (1..5).map { "L$it" }
+    val root = block("R", successorIds = leaves.toSet())
+    val blockGraph = BlockGraph(setOf(root) + leaves.map { block(it, predecessorIds = setOf("R")) })
+
+    for ((cap, expectedPeak) in listOf(0 to 6, 2 to 2, 1 to 1)) {
+      val running = AtomicInteger()
+      val peak = AtomicInteger()
+      val result =
+        assertTimeoutPreemptively<DssResult>(Duration.ofSeconds(10)) {
+          runDssActors(
+            blockGraph,
+            maxParallelBlocks = cap,
+            behaviorFor = { OverlapCountingBehavior(EchoBlockAnalysis(it.id), running, peak) },
+          )
+        }
+
+      assertEquals(DssResult.SAFE, result)
+      if (cap == 0) assertTrue(peak.get() > 2, "uncapped peak ${peak.get()}")
+      else assertEquals(expectedPeak, peak.get())
+    }
   }
 }

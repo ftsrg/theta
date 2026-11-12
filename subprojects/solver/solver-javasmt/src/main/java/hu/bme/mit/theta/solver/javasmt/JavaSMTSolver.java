@@ -45,6 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.java_smt.api.BasicProverEnvironment;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.Formula;
@@ -61,6 +62,7 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
 
     private final SolverContext context;
     private final BasicProverEnvironment solver;
+    private final ShutdownManager shutdownManager;
 
     private final Stack<Expr<BoolType>> assertions;
 
@@ -70,17 +72,23 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
     private final Map<String, Expr<BoolType>> assumptions;
     private SolverStatus status;
 
+    /**
+     * {@code shutdownManager} must belong to {@code context} alone, as {@link #interrupt()} shuts
+     * the context down for good.
+     */
     public JavaSMTSolver(
             final JavaSMTSymbolTable symbolTable,
             final JavaSMTTransformationManager transformationManager,
             final JavaSMTTermTransformer termTransformer,
             final SolverContext context,
-            final BasicProverEnvironment solver) {
+            final BasicProverEnvironment solver,
+            final ShutdownManager shutdownManager) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.context = context;
         this.solver = solver;
+        this.shutdownManager = shutdownManager;
 
         assertions = new StackImpl<>();
         assumptions = CollectionUtil.createMap();
@@ -240,8 +248,19 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
     }
 
     @Override
+    public void interrupt() {
+        shutdownManager.requestShutdown("Theta interrupted the solver");
+    }
+
+    @Override
     public void close() {
-        context.close();
+        // The prover has native resources of its own (MathSAT: an environment per prover), which
+        // closing the context does not free.
+        try {
+            solver.close();
+        } finally {
+            context.close();
+        }
     }
 
     @Override

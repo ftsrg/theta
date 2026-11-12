@@ -102,6 +102,7 @@ private constructor(
   private val edgeVar = Decls.Var("__edge_", intType)
   private lateinit var locations: List<XcfaLocation>
   private lateinit var edges: List<XcfaEdge>
+  private lateinit var initLoc: XcfaLocation
 
   override val monolithicExpr: MonolithicExpr
     get() {
@@ -114,6 +115,7 @@ private constructor(
       // Initialize location var, location and edge mappings
       locations = proc.locs.toList()
       edges = proc.edges.toList()
+      initLoc = proc.initLoc
       val locationMap = locations.mapIndexed { index, location -> location to index }.toMap()
       val edgeMap = edges.mapIndexed { index, edge -> edge to index }.toMap()
       locVar = Decls.Var("__loc_", intType)
@@ -267,24 +269,28 @@ private constructor(
     return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
   }
 
+  /**
+   * A reachable state's edge variable holds an incoming edge of its location (-1 initially), so an
+   * invariant over it is split into one disjunct per such edge.
+   */
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants {
     if (proof is TransitionInvariantProof) return transitionProofToModelProof(proof)
+    val invariant = proof.getInvariant()
+    val overEdge = edgeVar in ExprUtils.getVars(invariant)
+    val edgeValues = edgeValues()
     return LocationInvariants(
       locations
         .mapIndexed { index, location ->
-          Pair(
-            location,
-            listOf(
-              PredState.of(
-                withoutChoices(
-                  ExprUtils.simplify(
-                    proof.getInvariant(),
-                    ImmutableValuation.builder().put(locVar, smtInt(index)).build(),
-                  )
-                )
-              )
-            ),
-          )
+          val edgeIndices = if (!overEdge) listOf(null) else edgeValues.getValue(location)
+          val atLocation =
+            Or(
+              edgeIndices.map { edge ->
+                val valuation = ImmutableValuation.builder().put(locVar, smtInt(index))
+                if (edge != null) valuation.put(edgeVar, smtInt(edge))
+                ExprUtils.simplify(invariant, valuation.build())
+              }
+            )
+          Pair(location, listOf(PredState.of(withoutChoices(ExprUtils.simplify(atLocation)))))
         }
         .toMap()
     )
@@ -304,12 +310,11 @@ private constructor(
     }
     val prevLocVar = proof.anyPrev.getValue(locVar)
     val prevEdgeVar = proof.anyPrev.getValue(edgeVar)
+    val edgeValues = edgeValues()
     return LocationInvariants(
       locations
         .mapIndexed { index, location ->
-          val edgeIndices =
-            location.incomingEdges.map(edges::indexOf) +
-              if (location.initial) listOf(-1) else listOf()
+          val edgeIndices = edgeValues.getValue(location)
           val invariant =
             Or(
               edgeIndices.flatMap { edge ->
@@ -331,6 +336,17 @@ private constructor(
         .toMap(),
       true,
     )
+  }
+
+  /**
+   * The values the edge variable can take at each location, as the encoding assigns them: the
+   * indices of the edges into it, and -1 at the initial location (whatever its `initial` flag).
+   */
+  private fun edgeValues(): Map<XcfaLocation, List<Int>> {
+    val incoming = edges.indices.groupBy { edges[it].target }
+    return locations.associateWith {
+      incoming[it].orEmpty() + if (it == initLoc) listOf(-1) else listOf()
+    }
   }
 
   /**

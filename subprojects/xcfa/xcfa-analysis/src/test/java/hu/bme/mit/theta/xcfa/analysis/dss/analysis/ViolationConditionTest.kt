@@ -16,9 +16,11 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
@@ -203,5 +205,42 @@ class ViolationConditionTest {
     assertEquals(setOf(Lt(x, Int(10)), Geq(x, Int(3))), combinePredPrecs(listOf(p1, p2)))
     val p3 = setOf(Gt(y, Int(1)))
     assertEquals(p2 + p3, combinePredPrecs(listOf(p2, p3)))
+  }
+
+  @Test
+  fun `auxiliary variables are dropped from a condition only when they constrain nothing else`() {
+    val x = Var("x", Int()).ref
+    val y = Var("y", Int()).ref
+    @Suppress("UNCHECKED_CAST") val a = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    val bounded = And(Gt(a, Int(0)), Lt(a, Int(10)), Eq(x, Int(1)))
+    assertEquals(Eq(x, Int(1)), withoutAuxVars(bounded) { true })
+    assertEquals(False(), withoutAuxVars(bounded) { false })
+    assertEquals(null, withoutAuxVars(And(Gt(a, y), Eq(x, Int(1)))) { true })
+    assertEquals(Eq(x, y), withoutAuxVars(Eq(x, y)) { error("no auxiliary conjuncts to check") })
+  }
+
+  /** The old values of a reversed `y := y + 1`, run twice from `y == 0`. */
+  @Test
+  fun `auxiliary variables defined by an equality are replaced by their value`() {
+    val y = Var("y", Int()).ref
+    @Suppress("UNCHECKED_CAST") val a = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    @Suppress("UNCHECKED_CAST") val b = (DssAuxVars.of(1, Int()) as VarDecl<IntType>).ref
+    val twice =
+      And(
+        listOf(
+          Geq(y, Int(2)),
+          Eq(y, Add(a, Int(1))),
+          Lt(a, Int(2)),
+          Eq(a, Add(b, Int(1))),
+          Eq(b, Int(0)),
+        )
+      )
+    val one = Add(Int(0), Int(1))
+    assertEquals(
+      And(listOf(Geq(y, Int(2)), Eq(y, Add(one, Int(1))), Lt(one, Int(2)))),
+      withoutAuxVars(twice) { error("no auxiliary conjuncts to check") },
+    )
+    // `y == a + 1` alone does not define `a`, so `a` stays tied to `y`
+    assertEquals(null, withoutAuxVars(And(Eq(y, Add(a, Int(1))), Lt(a, Int(2)))) { true })
   }
 }

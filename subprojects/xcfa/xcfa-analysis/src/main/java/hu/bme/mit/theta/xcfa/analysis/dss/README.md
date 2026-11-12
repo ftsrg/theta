@@ -33,22 +33,39 @@ Only single-procedure programs and error-location reachability are supported.
 |---|---|---|
 | `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one |
-| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once) |
+| `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs first on the blocks without successors) |
+| `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |
+| `--dss-checker-budget` | `0` | Milliseconds each checker gets in turn, 4-fold after every round (`0`: no budget); needs `PRIORITY` |
 | `--dss-executor` | `SEQUENTIAL` | `SEQUENTIAL`, `CONCURRENT` (one thread per block, uses `Z3:new`), `PROCESS` (one worker process per block) |
-| `--dss-global-predicate-pool` | `true` | Seed every block's precision with all assume conditions of the program |
+| `--dss-solver` | `Z3` | Solver of the block checkers and of DSS's own queries (`Z3:new` for `CONCURRENT`) |
+| `--dss-fallback-solver` | none | A block checker that throws is retried once with this solver |
+| `--dss-nonlinear-solver` | none | Replaces `--dss-solver` for nonlinear integer programs without floats or bitwise operations; `--dss-solver` then becomes the fallback |
+| `--dss-quantified-predicates` | `KEEP` | Quantifiers in a checker's proof (`Z3:new` interpolants): `KEEP`, `FALLBACK` (retry DSS's failing queries on the fallback solver), `DROP` (weaken them away), `ELIMINATE` (Z3 quantifier elimination, then `DROP`) |
+| `--dss-global-predicate-pool` | `false` | Seed every block's precision with all assume conditions of the program |
 | `--dss-reset-precision` | off | Start every analysis with the initial precision (CPAchecker's `resetPrecisionForEveryRun`) |
 | `--dss-reuse-block-precision` | off | Add the predicates of a block's earlier CEGAR runs to its next runs |
+
+A checker over its budget is stopped by a watchdog that interrupts its solver call (`DssBudget.kt`)
+and retried in the next round, so a block never counts as safe unless some checker finished it.
 
 The executor defaults to `SEQUENTIAL` because the default legacy Z3 binding crashes natively when
 used by several threads. `Z3:new` is thread-safe, but its interpolation fails on some C arithmetic.
 `PROCESS` runs any solver in parallel, at the price of one JVM per worker.
 
+### Experimental (hidden) options
+
+These are for benchmarking and may change: `--dss-direction BACKWARD|BIDIRECTIONAL` (DSS on the
+reversed program, `ProgramReversal.kt`, or both directions meeting in `DssMeetingActor`),
+`--dss-generalizers` (probes with generalized violation conditions, `Generalizers.kt`),
+`--dss-conjecture-invariants` (`DssConjectureActor`), `--dss-cut-on-timeout` (cut a block that
+every checker times out on, `BlockCut.kt`), and their tuning flags.
+
 ## Packages
 
-* `dss.decomposition` — `Block`, `BlockGraph` and the decompositions.
+* `dss.decomposition` — `Block`, `BlockGraph`, the decompositions and the block cut.
 * `dss.analysis` — block extraction (`extractBlockXcfa`), violation conditions
   (`computeViolationCondition`, `DssAuxVars`), postconditions, solver-backed operators,
-  precisions, the checker roster.
+  precisions, the checker roster, the program reversal.
 * `dss.actor` — the actor network: `DssBlockActor` + `PredicateBlockBehavior` (CPAchecker's
   `DssBlockAnalysis`), observer, quiescence monitor, executors, witnesses.
 * `xcfa-cli` — `--backend DSS` (`ConfigToDssChecker.kt`, `DssConfig`).
@@ -93,5 +110,5 @@ violation conditions while refinement finds new predicates.
 * Single procedure only; labels without a weakest-precondition rule (calls, memory operations,
   fences) make the block analysis fail.
 * A solver query DSS itself cannot decide gives an unknown verdict.
-* Witness invariants appear only at C statements that start an XCFA edge; without every block's
-  records, an UNSAFE verdict has an empty trace.
+* Witness invariants appear only at C statements that start an XCFA edge, and keep only integer and
+  Boolean conjuncts over the variables in scope there.

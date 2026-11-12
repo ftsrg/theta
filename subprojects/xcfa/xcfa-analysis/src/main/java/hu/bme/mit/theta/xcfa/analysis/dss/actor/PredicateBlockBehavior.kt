@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -32,26 +33,44 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.BlockXcfaExtraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssAuxVars
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssBlockCutRequest
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster.Companion.BUDGET_GROWTH
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalizers
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectAssumePreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.combinePredPrecs
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeBoundedViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computePathViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.computeViolationCondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.extractBlockXcfa
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasQuantifier
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withoutAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cutBlock
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.utils.collectVars
 
 /** Legacy Z3: its interpolation handles C integer arithmetic, but it is not thread-safe. */
 const val DEFAULT_DSS_SOLVER = "Z3"
@@ -59,18 +78,46 @@ const val DEFAULT_DSS_SOLVER = "Z3"
 /** The solver of the concurrent executor, which needs a thread-safe one. */
 const val CONCURRENT_DSS_SOLVER = "Z3:new"
 
-/** CPAchecker's `DssBlockAnalysis`, running a Theta checker on the extracted block. */
+/**
+ * CPAchecker's `DssBlockAnalysis`, running a Theta checker on the extracted block.
+ *
+ * Restrictions and conjectures are conjoined to every start state; violation conditions stay exact,
+ * as they come from the block's own paths only.
+ *
+ * Generalized targets ([generalizers]) are only probes: only their SAFE result is used. A
+ * conjecture is checked in a separate pass, which never touches the violation conditions or
+ * invariants.
+ */
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
   private val sourceProcedure: XcfaProcedure,
-  private val block: Block,
-  private val checkerRoster: DssCheckerRoster,
+  private var block: Block,
+  checkerRoster: DssCheckerRoster,
   private val useGlobalPredicatePool: Boolean = true,
   private val resetPrecisionForEveryRun: Boolean = false,
   private val reuseBlockPrecision: Boolean = false,
+  private val blockLocalPool: Boolean = false,
   private val checkerFallback: Boolean = false,
   private val solverFactory: SolverFactory? = null,
+  private val trackSummaries: Boolean = false,
+  finishing: Boolean = false,
+  generalizationGas: Int = 0,
+  private val cutOnTimeout: Boolean = false,
+  private val hasCut: () -> Boolean = { cutBlock(block) != null },
+  generalizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
+  generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
+  private val semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
+  private val fallbackSolverFactory: SolverFactory? = null,
+  quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
 ) : DssBlockBehavior {
+
+  private val checkerRoster = checkerRoster.forBlock(finishing)
+
+  private val generalizer =
+    if (generalizationGas <= 0 || generalizers.isEmpty()) null
+    else Generalizers(generalizers, generalizerCombination, generalizationGas)
+
+  private val statistics = DssBlockStatistics()
 
   private data class Summary(val state: Expr<BoolType>, val precision: Set<Expr<BoolType>>) {
     val isTop: Boolean
@@ -94,17 +141,44 @@ class PredicateBlockBehavior(
 
   private val pathViolationsSoFar = linkedSetOf<Expr<BoolType>>()
 
+  /**
+   * Whether the last analysis found a new error path: then the block's other paths are still to be
+   * searched, also when the predecessor answers with an unchanged postcondition.
+   */
+  private var pathsPending = false
+
   private data class AnalysisResult(
     val summaries: List<Summary>,
     val violationCondition: Expr<BoolType>?,
   )
 
   private val operators by lazy {
-    DssPredicateOperators(solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER))
+    DssPredicateOperators(
+      solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
+      fallbackSolverFactory,
+    )
   }
 
+  private val quantifierCleaner = DssQuantifierCleaner(quantifiedPredicates)
+
+  /** The postconditions and precisions a run hands on pass here; they may get weaker. */
+  private fun quantifierFree(expr: Expr<BoolType>): Expr<BoolType> {
+    if (!hasQuantifier(expr)) return expr
+    statistics.quantifiedFormulas++
+    return quantifierCleaner.clean(expr)
+  }
+
+  /** Witness states, which a backward witness complements, may only become equivalent. */
+  private fun quantifierFreeIfEquivalent(expr: Expr<BoolType>): Expr<BoolType> =
+    if (!hasQuantifier(expr)) expr else quantifierCleaner.equivalent(expr)
+
   private val startPrecision: Set<Expr<BoolType>> by lazy {
-    if (useGlobalPredicatePool) wholeProgram.collectAssumePreds() else emptySet()
+    if (!useGlobalPredicatePool) return@lazy emptySet()
+    val pool = wholeProgram.collectAssumePreds()
+    if (!blockLocalPool) return@lazy pool
+    // The block leaves the other variables unchanged; the precondition's atoms keep them
+    val blockVars = block.edges.flatMapTo(hashSetOf()) { it.label.collectVars() }
+    pool.filterTo(linkedSetOf()) { pred -> ExprUtils.getVars(pred).any { it in blockVars } }
   }
 
   private var fastestChecker: Int? = null
@@ -117,18 +191,95 @@ class PredicateBlockBehavior(
 
   private val ownTargets: List<XcfaLocation> = block.locations.filter { it.error }
 
-  private val invariantsByStart = HashMap<Expr<BoolType>, Map<XcfaLocation, List<Expr<BoolType>>>>()
+  /**
+   * The states a SAFE run reached, and whether it kept the block's error locations as targets: only
+   * then do they exclude the error's states, which a complemented (backward) witness needs.
+   */
+  private class RecordedStates(
+    val states: Map<XcfaLocation, List<Expr<BoolType>>>,
+    val keptTargets: Boolean,
+  )
+
+  private val invariantsByStart = HashMap<Expr<BoolType>, RecordedStates>()
   private val violationRecords = mutableListOf<DssViolationRecord>()
   private val reportedViolationConditions = mutableListOf<Expr<BoolType>>()
+
+  /** The conjunction of all received restrictions; only ever strengthened. */
+  private var restriction: Expr<BoolType> = True()
+  private var postconditionVersion = 0
+  private val inputVersions = LinkedHashMap<String, Int>()
+  private val restrictedInputs = HashSet<String>()
+
+  /** The invariants of the live conjectures this block's start states assume, by id. */
+  private val assumed = LinkedHashMap<Int, Expr<BoolType>>()
+
+  private class Obligation(val condition: Expr<BoolType>, val maxHops: Int)
+
+  /** The conditions of the live conjectures this block must not reach at its exit. */
+  private val obligations = LinkedHashMap<Int, Obligation>()
+
+  /** The latest may violation of each sender, with its hops left, per conjecture. */
+  private val mayViolations = LinkedHashMap<Int, LinkedHashMap<String, Pair<Expr<BoolType>, Int>>>()
+  private val retractedConjectures = HashSet<Int>()
+
+  /** Exit states under a restriction cover the error paths only: no program invariant. */
+  private val restricted: Boolean
+    get() = restriction != True() || assumed.isNotEmpty() || restrictedInputs.isNotEmpty()
+
+  private fun startRestriction(): Expr<BoolType> = And(listOf(restriction) + assumed.values)
+
+  private fun canAnalyze() = block.isRoot || preconditions.isNotEmpty()
 
   override fun initialMessages(): Collection<DssMessage> = runInitialAnalysis()
 
   override fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage> =
-    if (storePrecondition(message)) analyzePrecondition() else emptyList()
+    if (storePrecondition(message) || pathsPending) analyzePrecondition() else emptyList()
 
   override fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage> =
     if (storeViolationCondition(message)) analyzeViolationCondition(message.senderId)
     else emptyList()
+
+  /** A stronger start state can only refute more, so only received conditions are re-analyzed. */
+  override fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> {
+    if (operators.isLeq(restriction, message.restriction)) return emptyList()
+    restriction = And(restriction, message.restriction)
+    return if (violationConditions.isNotEmpty() && canAnalyze()) analyzePrecondition()
+    else emptyList()
+  }
+
+  /**
+   * An assumed conjecture changes the postconditions too: the blocks ending at its location check
+   * it against them. A retraction drops everything kept for the conjecture.
+   */
+  override fun onConjecture(message: DssConjectureMessage): Collection<DssMessage> {
+    val id = message.conjecture
+    if (message.retracted) {
+      if (!retractedConjectures.add(id)) return emptyList()
+      obligations.remove(id)
+      mayViolations.remove(id)
+      val wasAssumed = assumed.remove(id) != null
+      return if (wasAssumed && canAnalyze()) analyzePrecondition() else emptyList()
+    }
+    if (id in retractedConjectures) return emptyList()
+    statistics.conjectures++
+    val assumes = block.id in message.restrictedIds
+    if (assumes) assumed[id] = Not(message.condition)
+    if (block.id in message.obligedIds) {
+      obligations[id] = Obligation(message.condition, message.maxHops)
+    }
+    return if (assumes && canAnalyze()) analyzePrecondition() else analyzeMayViolations(listOf(id))
+  }
+
+  /** Like [storeViolationCondition]: the message replaces its sender's earlier one. */
+  override fun onMayViolation(message: DssMayViolationMessage): Collection<DssMessage> {
+    val id = message.conjecture
+    if (id in retractedConjectures) return emptyList()
+    val stored = mayViolations.getOrPut(id) { LinkedHashMap() }
+    val old = stored.remove(message.senderId)?.first
+    if (operators.isUnsat(message.condition)) return emptyList()
+    stored[message.senderId] = message.condition to message.hopsLeft
+    return if (message.condition == old) emptyList() else analyzeMayViolations(listOf(id))
+  }
 
   private fun top() = Summary(True(), startPrecision)
 
@@ -139,8 +290,11 @@ class PredicateBlockBehavior(
   fun runInitialAnalysis(): Collection<DssMessage> {
     return when (val result = run(top(), violationCondition = null)) {
       is RunResult.Safe ->
-        if (!block.isRoot || result.postcondition == False()) emptyList()
-        else reportPostconditions(listOf(Summary(result.postcondition, result.precision)))
+        if (!block.isRoot) emptyList()
+        else
+          reportPostconditions(
+            listOf(Summary(result.postcondition, result.precision)).filter { it.state != False() }
+          )
       is RunResult.Unsafe -> {
         containsViolationInsideBlock = true
         result.path?.let {
@@ -157,8 +311,18 @@ class PredicateBlockBehavior(
    */
   fun storePrecondition(message: DssPostConditionMessage): Boolean {
     val received = message.postconditions.map { Summary(it, message.precision) }
-    val stored = preconditions.put(message.senderId, received.toMutableList())
-    return stored == null || !statesEqual(received, stored)
+    inputVersions[message.senderId] = message.version
+    if (message.restricted) restrictedInputs += message.senderId
+    else restrictedInputs -= message.senderId
+    val stored = preconditions[message.senderId]
+    if (stored != null && statesEqual(received, stored)) {
+      // The recorded witness states are keyed by the stored states, which the new ones only repeat
+      preconditions[message.senderId] =
+        stored.map { it.copy(precision = message.precision) }.toMutableList()
+      return false
+    }
+    preconditions[message.senderId] = received.toMutableList()
+    return true
   }
 
   /**
@@ -176,9 +340,11 @@ class PredicateBlockBehavior(
     val condition =
       requireNotNull(message.violationCondition) { "Expected a violation condition in $message" }
     val sender = message.senderId
+    statistics.violationConditionsReceived++
     val old = violationConditions.remove(sender).orEmpty().toSet()
     if (operators.isUnsat(condition)) return false
     violationConditions[sender] = mutableListOf(condition)
+    generalizer?.record(sender, condition)
     return condition !in old
   }
 
@@ -190,7 +356,8 @@ class PredicateBlockBehavior(
       violationConditions.flatMap { (sender, conditions) -> conditions.map { sender to it } }
     val result = analyzeViolationCondition(received)
     return reportViolationCondition(result.violationCondition) +
-      reportPostconditions(result.summaries)
+      reportPostconditions(result.summaries) +
+      analyzeMayViolations(obligations.keys + mayViolations.keys)
   }
 
   fun analyzeViolationCondition(sender: String): Collection<DssMessage> {
@@ -211,30 +378,42 @@ class PredicateBlockBehavior(
     received: List<Pair<String, Expr<BoolType>>>
   ): AnalysisResult {
     val violations = received.map { it.second }
-    val startStates = linkedSetOf<Summary>()
-    startStates.addAll(preconditions.values.flatten())
-    if (block.isRoot) startStates.add(top())
-    // Non-top first: a top summary would otherwise deduplicate the others away
-    val orderedStartStates = startStates.sortedBy { it.isTop }.map { it to false }.toMutableList()
-    val speculative =
-      !block.isRoot &&
-        !preconditions.keys.containsAll(block.predecessorIds) &&
-        startStates.none { it.isTop }
-    if (speculative) orderedStartStates += top() to true
     val violationCondition = if (violations.isEmpty()) null else Or(violations)
+    var generalization = generalizationOf(received)
     val summaries = mutableListOf<Summary>()
     var targetReached = false
     var reportReceivedViolations = false
     val pathViolations = mutableListOf<Expr<BoolType>>()
-    var analyzedTrivial = false
-    for ((start, discardSummary) in orderedStartStates) {
-      if (start.isTop && analyzedTrivial) continue
-      analyzedTrivial = analyzedTrivial || start.isTop
-      val precision =
-        if (resetPrecisionForEveryRun || start.isTop) startPrecision
-        else combinePrecisionIfPossible() ?: start.precision
-      // Without the start state's atoms, the block-end abstraction can forget the precondition
-      val startState = start.copy(precision = precision + listOf(start.state).collectPreds())
+    for ((start, discardSummary) in startStates()) {
+      val startState = prepared(start)
+
+      // A speculative run looks for violations only, which a probe cannot find
+      val probe = generalization?.takeUnless { discardSummary }
+      if (probe != null && violationCondition != null) {
+        statistics.probes++
+        val probeStart =
+          startState.copy(precision = startState.precision + listOf(probe.condition).collectPreds())
+        val result =
+          try {
+            run(probeStart, Or(violationCondition, probe.condition), probe = true)
+          } catch (e: InterruptedException) {
+            throw e
+          } catch (e: Exception) {
+            if (e is DssBlockCutRequest || e.isDssBudgetExceeded()) throw e
+            // The exact run below decides; a probe must not fail an analysis that would succeed
+            RunResult.Unsafe(null)
+          }
+        if (result is RunResult.Safe) {
+          statistics.probesRefuted++
+          if (result.postcondition != False()) {
+            summaries += Summary(result.postcondition, result.precision)
+          }
+          continue
+        }
+        statistics.probesFailed++
+        generalizer?.failed(probe)
+        generalization = null
+      }
 
       when (val result = run(startState, violationCondition)) {
         is RunResult.Safe -> {
@@ -247,28 +426,37 @@ class PredicateBlockBehavior(
           if (!discardSummary) {
             val summary =
               run(startState, violationCondition = null, keepSpecificationTargets = false)
-            if (summary is RunResult.Safe && summary.postcondition != False()) {
+            // Dropping these states would leave the postcondition short of what its inputs name
+            check(summary is RunResult.Safe) {
+              "Block ${block.id}: the run without targets reached an error location: $summary"
+            }
+            if (summary.postcondition != False()) {
               summaries += Summary(summary.postcondition, summary.precision)
             }
           }
           targetReached = true
           // Never suppressed: the predecessor replaces its stored condition with every new one
           if (violations.isNotEmpty()) reportReceivedViolations = true
-          result.path?.let {
-            pathViolations += it.condition
-            violationRecords +=
-              DssPathViolation(
-                it.condition,
-                it.edges,
-                it.reachedReceivedViolation,
-                if (it.reachedReceivedViolation) received else emptyList(),
-              )
-          }
+          result.path
+            ?.let { newPathFrom(startState, it, violationCondition) }
+            ?.let {
+              pathViolations += it.condition
+              violationRecords +=
+                DssPathViolation(
+                  it.condition,
+                  it.edges,
+                  it.reachedReceivedViolation,
+                  if (it.reachedReceivedViolation) received else emptyList(),
+                )
+            }
         }
       }
     }
 
-    if (!targetReached) return AnalysisResult(summaries, null)
+    if (!targetReached) {
+      pathsPending = false
+      return AnalysisResult(summaries, null)
+    }
     if (usesPathViolations) {
       val condition = accumulatePathViolations(pathViolations)
       return AnalysisResult(summaries, condition)
@@ -291,6 +479,85 @@ class PredicateBlockBehavior(
     return AnalysisResult(summaries, newViolationCondition)
   }
 
+  /**
+   * Every stored precondition (top for the root), paired with whether its summary is dropped: the
+   * speculative run from top while a predecessor has not sent anything. Top comes at most once.
+   */
+  private fun startStates(): List<Pair<Summary, Boolean>> {
+    val startStates = linkedSetOf<Summary>()
+    startStates.addAll(preconditions.values.flatten())
+    if (block.isRoot) startStates.add(top())
+    // Non-top first: a top summary would otherwise deduplicate the others away
+    val ordered = startStates.sortedBy { it.isTop }.map { it to false }.toMutableList()
+    val speculative =
+      !block.isRoot &&
+        !preconditions.keys.containsAll(block.predecessorIds) &&
+        startStates.none { it.isTop }
+    if (speculative) ordered += top() to true
+    val firstTop = ordered.indexOfFirst { it.first.isTop }
+    return ordered.filterIndexed { index, (start, _) -> !start.isTop || index == firstTop }
+  }
+
+  private fun prepared(start: Summary): Summary {
+    val precision =
+      if (resetPrecisionForEveryRun || start.isTop) startPrecision
+      else combinePrecisionIfPossible() ?: start.precision
+    // Without the start state's atoms, the block-end abstraction can forget the precondition
+    val startAtoms = listOf(start.state, startRestriction()).collectPreds()
+    return start.copy(precision = precision + startAtoms)
+  }
+
+  /**
+   * The may pass of the conjectures [ids]. Whatever keeps this block from checking a conjecture
+   * refutes it, as an unchecked one is unsound.
+   */
+  private fun analyzeMayViolations(ids: Collection<Int>): List<DssMessage> =
+    ids.distinct().mapNotNull { id ->
+      val parts =
+        listOfNotNull(obligations[id]?.let { it.condition to it.maxHops }) +
+          mayViolations[id]?.values.orEmpty()
+      if (parts.isEmpty()) null
+      else analyzeMayViolation(id, Or(parts.map { it.first }), parts.minOf { it.second })
+    }
+
+  private fun analyzeMayViolation(id: Int, target: Expr<BoolType>, hopsLeft: Int): DssMessage? {
+    statistics.mayAnalyses++
+    // Per-path conditions would have to search the other paths too, as violation conditions do
+    if (usesPathViolations) return conjectureFailed(id)
+    val condition =
+      try {
+        val reached =
+          startStates().any { (start, _) ->
+            val startState = prepared(start)
+            val withTarget =
+              startState.copy(precision = startState.precision + listOf(target).collectPreds())
+            run(
+              withTarget,
+              target,
+              keepSpecificationTargets = false,
+              recordInvariants = false,
+              probe = true,
+            ) is
+              RunResult.Unsafe
+          }
+        if (!reached) return null
+        if (block.isRoot || hopsLeft <= 0) return conjectureFailed(id)
+        computeViolationCondition(block, mapOf(block.finalLocation to target))
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        if (e is DssBlockCutRequest || e.isDssBudgetExceeded()) throw e
+        return conjectureFailed(id)
+      }
+    statistics.mayViolationsSent++
+    return DssMayViolationMessage(block.id, id, condition, hopsLeft - 1)
+  }
+
+  private fun conjectureFailed(id: Int): DssMessage {
+    statistics.conjectureFailures++
+    return DssConjectureFailedMessage(block.id, id)
+  }
+
   private fun targetsOfOwnViolations(): Map<XcfaLocation, Expr<BoolType>> =
     ownTargets.associateWith { True() }
 
@@ -303,12 +570,15 @@ class PredicateBlockBehavior(
     start: Summary,
     violationCondition: Expr<BoolType>?,
     keepSpecificationTargets: Boolean = true,
+    recordInvariants: Boolean = true,
+    probe: Boolean = false,
   ): RunResult {
+    statistics.analyses++
     val extraction =
       extractBlockXcfa(
         sourceProcedure,
         block,
-        precondition = start.state.takeUnless { start.isTop },
+        precondition = And(start.state, startRestriction()).takeUnless { it == True() },
         violationCondition = violationCondition,
         keepSpecificationTargets = keepSpecificationTargets,
       )
@@ -321,24 +591,43 @@ class PredicateBlockBehavior(
       }
     }
     if (reuseBlockPrecision) {
-      (result.prec.orElse(null) as? XcfaPrec<*>)?.let { ownPrecision += it.collectPreds() }
+      (result.prec.orElse(null) as? XcfaPrec<*>)?.let { prec ->
+        ownPrecision += prec.collectPreds().map(::quantifierFree).collectPreds()
+      }
     }
     if (result.isUnsafe) {
+      // A probe's path may end in its may condition, so it says nothing about real error paths
       return RunResult.Unsafe(
-        if (usesPathViolations) pathViolation(result.asUnsafe().cex, extraction) else null
+        if (usesPathViolations && !probe) pathViolation(result.asUnsafe().cex, extraction) else null
       )
     }
     val proof = result.asSafe().proof
-    invariantsByStart[start.state] =
-      proof
-        .getPartitions()
-        .entries
-        .mapNotNull { (clone, states) -> extraction.originalLocations[clone]?.let { it to states } }
-        .groupBy({ it.first }, { it.second })
-        .mapValues { (_, states) -> states.flatten().map { it.toExpr() }.distinct() }
-    val reached = proof.getPartitions().values.flatten().map { it.toExpr() }
+    // Witness invariants need a start state that covers the block's entries; a retracted
+    // conjecture's would outlive it here
+    if (recordInvariants && startRestriction() == True()) {
+      // The entry's states are the preconditions, which the predecessors' exits already cover;
+      // a bounded checker's proof may say nothing about them, which would hide the others
+      val entry = extraction.entryLocation
+      val keepEntry = block.isRoot || entry.incomingEdges.any { it != extraction.preconditionEdge }
+      invariantsByStart[start.state] =
+        RecordedStates(
+          proof
+            .getPartitions()
+            .entries
+            .filter { (clone, _) -> keepEntry || clone != entry }
+            .mapNotNull { (clone, states) ->
+              extraction.originalLocations[clone]?.let { it to states }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, states) ->
+              states.flatten().map { quantifierFreeIfEquivalent(it.toExpr()) }.distinct()
+            },
+          keepSpecificationTargets,
+        )
+    }
+    val reached = proof.getPartitions().values.flatten().map { quantifierFree(it.toExpr()) }
     return RunResult.Safe(
-      normalize(packPostcondition(result, extraction.exitLocation)),
+      normalize(quantifierFree(packPostcondition(result, extraction.exitLocation))),
       reached.collectPreds() + start.precision,
     )
   }
@@ -376,10 +665,40 @@ class PredicateBlockBehavior(
     return PathViolation(condition, actions.last().isOn(extraction.violationConditionEdge), edges)
   }
 
+  /**
+   * [found], or if its path is already known, a path from [start] outside all known ones (null if
+   * there is none). A run yields one path, and its predecessors may refute every path sent so far,
+   * so a known path must not hide the others; [pathsPending] makes the block look again.
+   */
+  private fun newPathFrom(
+    start: Summary,
+    found: PathViolation,
+    violationCondition: Expr<BoolType>?,
+  ): PathViolation? {
+    if (found.condition !in pathViolationsSoFar) return found
+    val exclusions =
+      pathViolationsSoFar.map {
+        checkNotNull(withoutAuxVars(it) { condition -> !operators.isUnsat(condition) }) {
+          "Block ${block.id}: a path violation condition ties nondeterministic values to program " +
+            "variables, so the known error paths cannot be excluded: $it"
+        }
+      }
+    val outside = start.copy(state = And(start.state, Not(Or(exclusions))))
+    val next =
+      (run(outside, violationCondition, recordInvariants = false) as? RunResult.Unsafe)?.path
+        ?: return null
+    check(next.condition !in pathViolationsSoFar) {
+      "Block ${block.id}: an excluded error path recurred: ${next.condition}"
+    }
+    return next
+  }
+
   /** Predecessors keep only the last condition per sender, so refuted paths must stay in. */
   private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): Expr<BoolType>? {
-    if (new.isEmpty()) return null
+    val before = pathViolationsSoFar.size
     pathViolationsSoFar += new
+    pathsPending = !block.isRoot && pathViolationsSoFar.size > before
+    if (new.isEmpty()) return null
     return Or(pathViolationsSoFar)
   }
 
@@ -387,7 +706,8 @@ class PredicateBlockBehavior(
     sourceProcedure.vars + wholeProgram.globalVars.map { it.wrappedVar }
   }
 
-  private inline fun <T> runWithCheckerFallback(analysis: (CheckerFactory) -> T): T {
+  private inline fun <T> runWithCheckerFallback(noinline analysis: (CheckerFactory) -> T): T {
+    if (checkerRoster.budgeted) return runWithBudgets(analysis)
     val leader = fastestChecker
     if (checkerRoster.ranksPerBlock && leader == null) return runEveryChecker(analysis)
     val order = leader?.let { listOf(it) + (0 until checkerRoster.size).filter { i -> i != it } }
@@ -402,6 +722,46 @@ class PredicateBlockBehavior(
       } catch (e: Exception) {
         failure?.addSuppressed(e) ?: run { failure = e }
       }
+    }
+    throw checkNotNull(failure)
+  }
+
+  /** The checker that finished this block's last analysis; it starts the next one. */
+  private var lastFinisher: Int? = null
+
+  private val cuttable: Boolean by lazy { hasCut() }
+
+  /**
+   * Gives every checker the roster's budget in turn, growing it after each round. There is no
+   * unlimited round, so a checker that never finishes cannot starve the others. With
+   * [cutOnTimeout], a round that every checker runs out of asks for the block to be cut instead.
+   */
+  private fun <T> runWithBudgets(analysis: (CheckerFactory) -> T): T {
+    val first = lastFinisher
+    val order = listOfNotNull(first) + (0 until checkerRoster.size).filter { it != first }
+    val failed = BooleanArray(checkerRoster.size)
+    var failure: Exception? = null
+    var budget = checkerRoster.budgetMs
+    while (order.any { !failed[it] }) {
+      for (index in order) {
+        if (failed[index]) continue
+        // An executor shutting down interrupts the thread; the rounds would go on forever
+        if (Thread.interrupted()) throw InterruptedException()
+        try {
+          val result = DssDeadline.within(budget) { analysis(checkerRoster[index]) }
+          lastFinisher = index
+          return result
+        } catch (e: InterruptedException) {
+          throw e
+        } catch (e: Exception) {
+          if (e.isDssBudgetExceeded()) continue
+          failed[index] = true
+          failure?.addSuppressed(e) ?: run { failure = e }
+        }
+      }
+      if (cutOnTimeout && order.any { !failed[it] } && cuttable) throw DssBlockCutRequest(block.id)
+      budget =
+        if (budget > Long.MAX_VALUE / 1_000_000 / BUDGET_GROWTH) budget else budget * BUDGET_GROWTH
     }
     throw checkNotNull(failure)
   }
@@ -439,13 +799,18 @@ class PredicateBlockBehavior(
   }
 
   private fun reportPostconditions(summaries: List<Summary>): Collection<DssMessage> {
-    if (summaries.isEmpty()) return emptyList()
+    if (summaries.isEmpty() && !trackSummaries) return emptyList()
     val unique = deduplicateStates(summaries)
     return listOf(
       DssPostConditionMessage(
         block.id,
-        unique.map { it.state },
+        unique.map { it.state }.ifEmpty { listOf(False()) },
         unique.flatMapTo(linkedSetOf()) { it.precision },
+        version = if (trackSummaries) ++postconditionVersion else 0,
+        inputs = if (trackSummaries) inputVersions.toMap() else emptyMap(),
+        restricted = restricted,
+        // Successors keep the sender's older states instead, which still cover the exit
+        observerOnly = unique.isEmpty(),
       )
     )
   }
@@ -473,26 +838,102 @@ class PredicateBlockBehavior(
     if (condition == null || condition == False()) return emptyList()
     if (block.isRoot && operators.isUnsat(condition)) return emptyList()
     reportedViolationConditions += condition
+    statistics.violationConditionsSent++
+    statistics.largestViolationCondition =
+      maxOf(statistics.largestViolationCondition, ExprUtils.getAtoms(condition).size)
     return listOf(DssViolationConditionMessage(block.id, condition))
   }
 
-  override fun witness(): DssBlockWitness =
-    DssBlockWitness(invariants(), violationRecords.toList(), reportedViolationConditions.toList())
+  /** A query the solver cannot decide skips the generalization, never the analysis. */
+  private fun generalizationOf(received: List<Pair<String, Expr<BoolType>>>): Generalization? {
+    if (received.isEmpty()) return null
+    val generalizer = generalizer ?: return null
+    return try {
+      generalizer.generalize(
+        received,
+        GeneralizationContext(operators::isUnsat, unreachableFromStartStates()),
+      )
+    } catch (e: DssUndecidedQueryException) {
+      null
+    }
+  }
 
-  /** Invariants from start states that cover the block's real entries, else from top. */
-  private fun invariants(): Map<XcfaLocation, List<Expr<BoolType>>>? {
+  /**
+   * Whether no start state reaches a condition at the exit, by the block's weakest precondition.
+   * With an internal cycle there is no exact one, and a path beyond [semanticUnrollings] back edges
+   * may still reach it: the probe then fails. Not deciding is "no".
+   */
+  private fun unreachableFromStartStates(): ((Expr<BoolType>) -> Boolean)? {
+    if (usesPathViolations && semanticUnrollings <= 0) return null
+    val start = And(Or(startStates().map { it.first.state }), startRestriction())
+    return { condition ->
+      val targets = mapOf(block.finalLocation to condition)
+      try {
+        val atEntry =
+          if (usesPathViolations)
+            computeBoundedViolationCondition(block, targets, semanticUnrollings)
+          else computeViolationCondition(block, targets)
+        operators.isUnsat(And(start, atEntry))
+      } catch (e: InterruptedException) {
+        throw e
+      } catch (e: Exception) {
+        false
+      }
+    }
+  }
+
+  /**
+   * What the replaced neighbor sent stands for each of its pieces next to this block, until the
+   * piece sends its own message, which replaces it. A piece with no path to an error or no
+   * reachable exit keeps the stale one, an over-approximation of what the neighbor knew.
+   */
+  override fun onNeighborReplaced(oldId: String, block: Block, replacements: Set<String>) {
+    this.block = block
+    val predecessors = replacements.filter { it in block.predecessorIds }
+    val successors = replacements.filter { it in block.successorIds }
+    preconditions.remove(oldId)?.let { stored ->
+      predecessors.forEach { preconditions[it] = stored.toMutableList() }
+    }
+    inputVersions.remove(oldId)?.let { version ->
+      predecessors.forEach { inputVersions[it] = version }
+    }
+    if (restrictedInputs.remove(oldId)) restrictedInputs += predecessors
+    violationConditions.remove(oldId)?.let { stored ->
+      successors.forEach { violationConditions[it] = stored.toMutableList() }
+    }
+    mayViolations.values.forEach { it.remove(oldId) }
+  }
+
+  override fun statistics(): Map<String, String> = statistics.toMap()
+
+  override fun witness(): DssBlockWitness =
+    DssBlockWitness(
+      invariants(keptTargetsOnly = false),
+      violationRecords.toList(),
+      reportedViolationConditions.toList(),
+      invariants(keptTargetsOnly = true),
+    )
+
+  /**
+   * Invariants from start states that cover the block's real entries, else from top; with
+   * [keptTargetsOnly], only from runs that kept the error locations as targets.
+   */
+  private fun invariants(keptTargetsOnly: Boolean): Map<XcfaLocation, List<Expr<BoolType>>>? {
+    if (restricted) return null
+    val recorded =
+      if (keptTargetsOnly) invariantsByStart.filterValues { it.keptTargets } else invariantsByStart
     val stored = preconditions.values.flatten().map { it.state }.distinct()
     val cover =
       when {
         !block.isRoot &&
           preconditions.keys.containsAll(block.predecessorIds) &&
           stored.isNotEmpty() &&
-          stored.all { it in invariantsByStart } -> stored
-        True() in invariantsByStart -> listOf(True())
+          stored.all { it in recorded } -> stored
+        True() in recorded -> listOf(True())
         else -> return null
       }
     return cover
-      .flatMap { invariantsByStart.getValue(it).entries }
+      .flatMap { recorded.getValue(it).states.entries }
       .groupBy({ it.key }, { it.value })
       .mapValues { (_, states) -> states.flatten().distinct() }
   }

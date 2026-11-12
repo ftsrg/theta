@@ -32,11 +32,15 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 
 /**
  * Solver-backed operators of CPAchecker's distributed predicate CPA. A query the solver fails on
- * throws [DssUndecidedQueryException]: it must never be taken as satisfiable or unsatisfiable.
+ * (also on [fallbackSolverFactory], if given) throws [DssUndecidedQueryException].
  */
-class DssPredicateOperators(solverFactory: SolverFactory) {
+class DssPredicateOperators(
+  solverFactory: SolverFactory,
+  fallbackSolverFactory: SolverFactory? = null,
+) {
 
   private val solver = OperatorSolver(solverFactory)
+  private val fallback = fallbackSolverFactory?.let(::OperatorSolver)
 
   fun isUnsat(expr: Expr<BoolType>): Boolean {
     if (expr == False()) return true
@@ -44,7 +48,16 @@ class DssPredicateOperators(solverFactory: SolverFactory) {
     return try {
       solver.isUnsat(expr)
     } catch (e: Exception) {
-      throw DssUndecidedQueryException(e)
+      // A budget or an interruption belongs to the analysis, not to the solver
+      val second =
+        fallback.takeUnless { e is InterruptedException || e.isDssBudgetExceeded() }
+          ?: throw DssUndecidedQueryException(e)
+      try {
+        second.isUnsat(expr)
+      } catch (f: Exception) {
+        f.addSuppressed(e)
+        throw DssUndecidedQueryException(f)
+      }
     }
   }
 

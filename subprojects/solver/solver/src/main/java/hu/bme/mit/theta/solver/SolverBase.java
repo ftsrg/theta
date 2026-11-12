@@ -90,4 +90,10 @@ public interface SolverBase extends AutoCloseable {
     default Expr<BoolType> eliminateQuantifiers(Expr<BoolType> expr, String tactic) {
         return expr;
     }
+
+    /**
+     * Asks a query running on another thread to stop; it may then throw or report unknown, and the
+     * solver may be unusable afterwards. Backends that cannot be interrupted ignore it.
+     */
+    default void interrupt() {}
 }

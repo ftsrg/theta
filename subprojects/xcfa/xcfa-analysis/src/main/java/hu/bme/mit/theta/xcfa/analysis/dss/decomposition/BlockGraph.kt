@@ -57,6 +57,20 @@ class BlockGraph(val blocks: Set<Block>) {
     }
   }
 
+  /** Keeps the ids of two networks of one run apart. */
+  fun withIdPrefix(prefix: String): BlockGraph =
+    BlockGraph(
+      blocks
+        .map { block ->
+          block.copy(
+            id = prefix + block.id,
+            predecessorIds = block.predecessorIds.mapTo(linkedSetOf()) { prefix + it },
+            successorIds = block.successorIds.mapTo(linkedSetOf()) { prefix + it },
+          )
+        }
+        .toCollection(linkedSetOf())
+    )
+
   companion object {
 
     /** `Y` succeeds `X` iff `Y` starts where `X` ends. */

@@ -20,6 +20,10 @@ import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
@@ -43,6 +47,16 @@ enum class DssDecomposition {
   NONE,
 }
 
+/** Which way DSS runs (see `xcfa-analysis's dss/README.md`). */
+enum class DssDirection {
+  /** From the entry: postconditions forward, violation conditions backward. */
+  FORWARD,
+  /** DSS on the reversed program, from the error locations towards the entry. */
+  BACKWARD,
+  /** Both at once, combined where their conditions and summaries meet. */
+  BIDIRECTIONAL,
+}
+
 enum class DssExecutor {
   /** One thread per block; uses `Z3:new`, as legacy Z3 is not thread-safe. */
   CONCURRENT,
@@ -50,6 +64,14 @@ enum class DssExecutor {
   SEQUENTIAL,
   /** Every block in a worker process of its own, so any solver can run in parallel. */
   PROCESS,
+}
+
+/** What `--dss-cut-on-timeout` starts over after it cuts a block. */
+enum class DssCutRestart {
+  /** Only the cut block: it is replaced by its pieces and the other blocks keep their state. */
+  BLOCK,
+  /** The whole run, on the cut block graph. */
+  ALL,
 }
 
 /** How a checker of [DssConfig.checkerBackends] is picked for a block analysis. */
@@ -60,6 +82,18 @@ enum class DssCheckerSelectionMethod {
   PRIORITY,
   /** A block's first analysis runs every checker, later ones start with the fastest. */
   FASTEST,
+  /**
+   * The last checker is a finisher: only the blocks whose postconditions no block builds on use it,
+   * first (forward the last blocks, backward the first ones); the others go by priority.
+   */
+  FINISHER,
+}
+
+/** The abstract domain of the `CEGAR` entries of [DssConfig.checkerBackends]. */
+enum class DssCegarDomain(val domain: Domain) {
+  PRED_CART(Domain.PRED_CART),
+  /** Tracks the variables of the predicates DSS passes as precision. */
+  EXPL(Domain.EXPL),
 }
 
 @Serializable
@@ -69,6 +103,23 @@ data class DssConfig(
     description = "How to decompose the input procedure into DSS blocks",
   )
   var decomposition: DssDecomposition = DssDecomposition.MERGE,
+  @Parameter(
+    names = ["--dss-direction"],
+    hidden = true,
+    description =
+      "FORWARD, BACKWARD (DSS on the reversed program), or BIDIRECTIONAL (both, meeting where " +
+        "their conditions intersect)",
+  )
+  var direction: DssDirection = DssDirection.FORWARD,
+  @Parameter(
+    names = ["--dss-share-invariants"],
+    hidden = true,
+    description =
+      "--dss-direction BIDIRECTIONAL: conjoin each direction's converged summaries to the other " +
+        "direction's preconditions",
+    arity = 1,
+  )
+  var shareInvariants: Boolean = true,
   @Parameter(
     names = ["--dss-checker-backends"],
     description =
@@ -81,15 +132,40 @@ data class DssConfig(
     description = "Which of --dss-checker-backends a block analysis starts with",
   )
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.PRIORITY,
+  @Parameter(
+    names = ["--dss-cegar-domain"],
+    hidden = true,
+    description =
+      "Abstract domain of the CEGAR block checkers: PRED_CART, or EXPL tracking the variables of " +
+        "the predicates DSS passes as precision",
+  )
+  var cegarDomain: DssCegarDomain = DssCegarDomain.PRED_CART,
+  @Parameter(
+    names = ["--dss-interpolate-bounded-proofs"],
+    hidden = true,
+    description =
+      "Turn the proofs of the BMC/KIND/IMC block checkers into invariants over the program " +
+        "variables by interpolation (otherwise path formulas over fresh variables)",
+    arity = 1,
+  )
+  var interpolateBoundedProofs: Boolean = true,
   @Parameter(names = ["--dss-executor"], description = "How the block analyses are run")
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
   @Parameter(
+    names = ["--dss-max-parallel-blocks"],
+    hidden = true,
+    description =
+      "--dss-executor CONCURRENT: at most this many block analyses run at the same time (0: no " +
+        "limit); every block keeps its own thread",
+  )
+  var maxParallelBlocks: Int = 0,
+  @Parameter(
     names = ["--dss-global-predicate-pool"],
     description = "Seed every block's initial precision with every assume condition of the program",
-    // A Boolean flag that defaults to true needs arity 1 to be turned off
+    // Takes a value, so runs that pass `--dss-global-predicate-pool false` keep working
     arity = 1,
   )
-  var globalPredicatePool: Boolean = true,
+  var globalPredicatePool: Boolean = false,
   @Parameter(
     names = ["--dss-reset-precision"],
     description =
@@ -102,10 +178,149 @@ data class DssConfig(
       "Also start every CEGAR block analysis with the predicates of the block's earlier analyses",
   )
   var reuseBlockPrecision: Boolean = false,
+  @Parameter(
+    names = ["--dss-generalizers"],
+    hidden = true,
+    description =
+      "Comma-separated generalizers of the received violation conditions (GSPACER, SEMANTIC); " +
+        "before each block analysis, their generalization is tried as a probe, never sent or " +
+        "reported. None by default",
+  )
+  var generalizers: List<DssGeneralizerKind> = emptyList(),
+  @Parameter(
+    names = ["--dss-generalize-violations"],
+    hidden = true,
+    description = "The same as adding GSPACER to --dss-generalizers",
+  )
+  var generalizeViolations: Boolean = false,
+  @Parameter(
+    names = ["--dss-generalizer-combination"],
+    hidden = true,
+    description =
+      "How several --dss-generalizers (and --dss-conjecture-generalizers) give one " +
+        "generalization: FIRST with a candidate, the UNION of all, or a CHAIN where each weakens " +
+        "the previous result",
+  )
+  var generalizerCombination: DssGeneralizerCombination = DssGeneralizerCombination.FIRST,
+  @Parameter(
+    names = ["--dss-generalization-gas"],
+    hidden = true,
+    description =
+      "Failed probes per sender (GSPACER: per sender and condition shape) before it is no " +
+        "longer generalized",
+  )
+  var generalizationGas: Int = 2,
+  @Parameter(
+    names = ["--dss-semantic-unrollings"],
+    hidden = true,
+    description =
+      "SEMANTIC probes in a block with an internal cycle: a candidate is checked along the paths " +
+        "through at most this many of its back edges (0: no SEMANTIC probes there)",
+  )
+  var semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
+  @Parameter(
+    names = ["--dss-conjecture-invariants"],
+    hidden = true,
+    description =
+      "Conjecture invariants from violation conditions that keep drifting at a block boundary; " +
+        "the blocks check them, and a broken one is retracted (FORWARD or BACKWARD, not PROCESS)",
+  )
+  var conjectureInvariants: Boolean = false,
+  @Parameter(
+    names = ["--dss-conjecture-gas"],
+    hidden = true,
+    description =
+      "--dss-conjecture-invariants: retracted conjectures per location before it gets no more",
+  )
+  var conjectureGas: Int = 2,
+  @Parameter(
+    names = ["--dss-block-local-pool"],
+    hidden = true,
+    description =
+      "Seed a block's initial precision only with the --dss-global-predicate-pool conditions " +
+        "over at least one variable of the block",
+  )
+  var blockLocalPool: Boolean = false,
+  @Parameter(
+    names = ["--dss-checker-budget"],
+    description =
+      "Milliseconds a block checker runs before the next one takes its turn; the budget grows " +
+        "4-fold after every round of the block checkers (0: a checker runs until it ends). " +
+        "Needs --dss-checker-selection PRIORITY",
+  )
+  var checkerBudgetMs: Long = 0,
+  @Parameter(
+    names = ["--dss-cut-on-timeout"],
+    hidden = true,
+    description =
+      "With --dss-checker-budget: a block that every checker runs out of its budget on is cut " +
+        "into smaller blocks, and DSS starts over",
+  )
+  var cutOnTimeout: Boolean = false,
+  @Parameter(
+    names = ["--dss-cut-strategy"],
+    hidden = true,
+    description =
+      "--dss-cut-on-timeout: the --dss-decomposition that cuts a block, applied to the block " +
+        "alone (default: --dss-decomposition itself, MIN_CUT_ABSORB_SELF_LOOPS for NONE, which " +
+        "cuts nothing)",
+  )
+  var cutStrategy: DssDecomposition? = null,
+  @Parameter(
+    names = ["--dss-cut-restart"],
+    hidden = true,
+    description =
+      "--dss-cut-on-timeout: BLOCK replaces only the cut block by its pieces (FORWARD or " +
+        "BACKWARD, SEQUENTIAL, without conjectures or a FINISHER; else ALL), ALL starts the run over",
+  )
+  var cutRestart: DssCutRestart = DssCutRestart.BLOCK,
+  @Parameter(
+    names = ["--dss-solver"],
+    description =
+      "Solver of the block checkers and of DSS's own queries (default: Z3, or Z3:new for " +
+        "--dss-executor CONCURRENT)",
+  )
+  var solver: String? = null,
+  @Parameter(
+    names = ["--dss-fallback-solver"],
+    description = "A block checker that fails with --dss-solver is retried once with this solver",
+  )
+  var fallbackSolver: String? = null,
+  @Parameter(
+    names = ["--dss-quantified-predicates"],
+    description =
+      "Quantifiers in a block checker's proof (from Z3:new interpolants): KEEP them, retry DSS's " +
+        "own failing queries on --dss-fallback-solver (FALLBACK), weaken them away (DROP), or " +
+        "eliminate them with Z3 and weaken away the rest (ELIMINATE)",
+  )
+  var quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
+  @Parameter(
+    names = ["--dss-nonlinear-solver"],
+    description =
+      "Solver used in place of --dss-solver for a program with nonlinear integer arithmetic and " +
+        "neither floats nor bitwise operations; --dss-solver is then the fallback solver",
+  )
+  var nonlinearSolver: String? = null,
+  @Parameter(
+    names = ["--dss-expl-checker"],
+    description = "Add an EXPL CEGAR block checker after --dss-checker-backends",
+  )
+  var explChecker: Boolean = false,
+  @Parameter(
+    names = ["--dss-conjecture-generalizers"],
+    hidden = true,
+    description =
+      "--dss-conjecture-invariants: comma-separated generalizers that propose the conjectures " +
+        "(GSPACER, SEMANTIC), combined by --dss-generalizer-combination",
+  )
+  var conjectureGeneralizers: List<DssGeneralizerKind> = listOf(DssGeneralizerKind.GSPACER),
   @Parameter(names = ["--dss-worker-port"], hidden = true) var workerPort: Int = 0,
   @Parameter(names = ["--dss-worker-index"], hidden = true) var workerIndex: Int = 0,
   @Parameter(names = ["--dss-worker-blocks"], hidden = true)
   var workerBlocks: List<String> = emptyList(),
+  /** The blocks cut so far, in order, so that a worker's block graph is the main process's. */
+  @Parameter(names = ["--dss-worker-cuts"], hidden = true)
+  var workerCuts: List<String> = emptyList(),
 ) : SpecBackendConfig
 
 /** The cex monitor's registry is global, so concurrent checkers must go without it. */

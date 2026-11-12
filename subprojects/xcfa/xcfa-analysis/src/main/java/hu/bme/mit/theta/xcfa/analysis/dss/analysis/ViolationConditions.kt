@@ -22,12 +22,19 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.WpState
@@ -81,6 +88,19 @@ object DssAuxVars {
     vars.forEachIndexed { index, decl -> substitution.put(decl, get(index, decl.type).ref) }
     return substitution.build().apply(expr)
   }
+
+  /** The first index no auxiliary variable of [expr] uses. */
+  fun nextIndex(expr: Expr<*>): Int =
+    collectVars(expr).mapNotNull(::indexOf).maxOrNull()?.plus(1) ?: 0
+
+  /** [expr] with its auxiliary variables moved by [offset], so a conjunction keeps them apart. */
+  fun <T : Type> shift(expr: Expr<T>, offset: Int): Expr<T> {
+    val vars = collectVars(expr)
+    if (vars.isEmpty() || offset == 0) return expr
+    val substitution = BasicSubstitution.builder()
+    for (decl in vars) substitution.put(decl, get(indexOf(decl)!! + offset, decl.type).ref)
+    return substitution.build().apply(expr)
+  }
 }
 
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
@@ -120,6 +140,70 @@ private class BackwardConditions(
     for (edge in edgesFrom(location)) disjuncts += wep(edge.label, at(edge.target))
     onStack.remove(location)
     return orStates(disjuncts).also { memo[location] = it }
+  }
+}
+
+/**
+ * [computeViolationCondition] over the paths of [block] taking at most [unrollings] back edges, so
+ * for cyclic blocks too; an under-approximation of the weakest precondition.
+ */
+fun computeBoundedViolationCondition(
+  block: Block,
+  targets: Map<XcfaLocation, Expr<BoolType>>,
+  unrollings: Int,
+): Expr<BoolType> {
+  require(unrollings >= 0) { "Negative unrolling bound: $unrollings" }
+  val conditions = BoundedBackwardConditions(block, targets, unrollings)
+  return toViolationCondition(
+    orStates(conditions.entryEdges.mapNotNull { conditions.through(it, taken = 0) })
+  )
+}
+
+private class BoundedBackwardConditions(
+  private val block: Block,
+  private val targets: Map<XcfaLocation, Expr<BoolType>>,
+  private val unrollings: Int,
+) {
+
+  val entryEdges: List<XcfaEdge> = block.initialLocation.outgoingEdges.filter { it in block.edges }
+
+  private fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
+    location.outgoingEdges.filter { it in block.edges && location != block.finalLocation }
+
+  /** Without these the block is acyclic, and each one taken moves a path to the next copy. */
+  private val backEdges: Set<XcfaEdge> =
+    HashSet<XcfaEdge>().also { back ->
+      val done = HashSet<XcfaLocation>()
+      val onStack = HashSet<XcfaLocation>()
+      fun visit(location: XcfaLocation) {
+        onStack += location
+        for (edge in edgesFrom(location)) {
+          if (edge.target in onStack) back += edge else if (edge.target !in done) visit(edge.target)
+        }
+        onStack -= location
+        done += location
+      }
+      // A split loop head ends the block where it starts: an edge into it closes no cycle
+      if (block.initialLocation != block.finalLocation) visit(block.initialLocation)
+      else entryEdges.forEach { if (it.target !in done) visit(it.target) }
+    }
+
+  private val memo = HashMap<Pair<XcfaLocation, Int>, WpState>()
+
+  /** The condition of taking [edge] after [taken] back edges, or null past the bound. */
+  fun through(edge: XcfaEdge, taken: Int): WpState? {
+    val next = if (edge in backEdges) taken + 1 else taken
+    return if (next > unrollings) null else wep(edge.label, at(edge.target, next))
+  }
+
+  private fun at(location: XcfaLocation, taken: Int): WpState {
+    memo[location to taken]?.let {
+      return it
+    }
+    val disjuncts = mutableListOf<WpState>()
+    targets[location]?.let { disjuncts += WpState.of(it) }
+    for (edge in edgesFrom(location)) through(edge, taken)?.let { disjuncts += it }
+    return orStates(disjuncts).also { memo[location to taken] = it }
   }
 }
 
@@ -263,4 +347,69 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
       }
     }
   return Or(factored)
+}
+
+/**
+ * A condition without auxiliary variables equivalent to [condition], or null. Conjuncts over
+ * auxiliary variables only are dropped if satisfiable, else the condition is false.
+ */
+fun withoutAuxVars(
+  condition: Expr<BoolType>,
+  isSatisfiable: (Expr<BoolType>) -> Boolean,
+): Expr<BoolType>? {
+  fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
+    if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
+  val components = mutableListOf<Pair<MutableSet<VarDecl<*>>, MutableList<Expr<BoolType>>>>()
+  for (conjunct in substituteAuxDefinitions(conjuncts(condition))) {
+    val vars = ExprUtils.getVars(conjunct).toMutableSet()
+    val linked =
+      components.filter { (other, _) -> vars.any { it in other && DssAuxVars.isAux(it) } }
+    components.removeAll(linked)
+    val exprs = linked.flatMap { it.second }.toMutableList().apply { add(conjunct) }
+    linked.forEach { vars.addAll(it.first) }
+    components += vars to exprs
+  }
+  val kept = mutableListOf<Expr<BoolType>>()
+  for ((vars, exprs) in components) {
+    when {
+      vars.none(DssAuxVars::isAux) -> kept += exprs
+      vars.any { !DssAuxVars.isAux(it) } -> return null
+      !isSatisfiable(And(exprs)) -> return False()
+    }
+  }
+  return And(kept)
+}
+
+/**
+ * [conjuncts] with each definition `a == t` of an auxiliary variable substituted, as `exists a. a
+ * == t && P(a)` is `P(t)`. Only exact equalities count: an IEEE `fp.eq` is none.
+ */
+private fun substituteAuxDefinitions(conjuncts: List<Expr<BoolType>>): List<Expr<BoolType>> {
+  var current = conjuncts
+  while (true) {
+    val (definition, aux, value) =
+      current.firstNotNullOfOrNull { conjunct ->
+        auxDefinition(conjunct)?.let { (aux, value) -> Triple(conjunct, aux, value) }
+      } ?: return current
+    val substitution = BasicSubstitution.builder().put(aux, value).build()
+    current = current.filter { it !== definition }.map { substitution.apply(it) }
+  }
+}
+
+private fun auxDefinition(conjunct: Expr<BoolType>): Pair<VarDecl<*>, Expr<*>>? {
+  val equality =
+    when (conjunct) {
+      is IntEqExpr,
+      is RatEqExpr,
+      is BvEqExpr,
+      is IffExpr,
+      is ArrayEqExpr<*, *> -> conjunct as EqExpr<*>
+      else -> return null
+    }
+  for ((side, other) in
+    listOf(equality.leftOp to equality.rightOp, equality.rightOp to equality.leftOp)) {
+    val decl = (side as? RefExpr<*>)?.decl as? VarDecl<*> ?: continue
+    if (DssAuxVars.isAux(decl) && decl !in ExprUtils.getVars(other)) return decl to other
+  }
+  return null
 }

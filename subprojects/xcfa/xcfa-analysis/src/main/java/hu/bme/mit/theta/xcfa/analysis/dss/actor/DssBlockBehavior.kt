@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+
 /** The analysis of a [DssBlockActor], without routing. */
 interface DssBlockBehavior {
 
@@ -24,5 +26,56 @@ interface DssBlockBehavior {
 
   fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage>
 
+  fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> = emptyList()
+
+  /** Ignoring a conjecture would leave another block's assumption of it unchecked. */
+  fun onConjecture(message: DssConjectureMessage): Collection<DssMessage> =
+    throw UnsupportedOperationException("${javaClass.simpleName} cannot check conjectures")
+
+  fun onMayViolation(message: DssMayViolationMessage): Collection<DssMessage> =
+    throw UnsupportedOperationException("${javaClass.simpleName} cannot check conjectures")
+
+  /**
+   * A cut replaced the neighbor [oldId] by [replacements]: what it sent stands for each piece until
+   * the piece sends its own. [block] is this block with its new neighbors.
+   */
+  fun onNeighborReplaced(oldId: String, block: Block, replacements: Set<String>) {}
+
   fun witness(): DssBlockWitness? = null
+
+  /** Counters for the block's `STATISTIC` message. */
+  fun statistics(): Map<String, String> = emptyMap()
+}
+
+/** The counters of a [PredicateBlockBehavior]. */
+class DssBlockStatistics {
+  var analyses = 0
+  var violationConditionsReceived = 0
+  var violationConditionsSent = 0
+  var largestViolationCondition = 0
+  var probes = 0
+  var probesRefuted = 0
+  var probesFailed = 0
+  var conjectures = 0
+  var mayAnalyses = 0
+  var mayViolationsSent = 0
+  var conjectureFailures = 0
+  var quantifiedFormulas = 0
+
+  fun toMap(): Map<String, String> =
+    linkedMapOf(
+        "analyses" to analyses,
+        "vcReceived" to violationConditionsReceived,
+        "vcSent" to violationConditionsSent,
+        "vcMaxAtoms" to largestViolationCondition,
+        "probes" to probes,
+        "probesRefuted" to probesRefuted,
+        "probesFailed" to probesFailed,
+        "conjectures" to conjectures,
+        "mayAnalyses" to mayAnalyses,
+        "mayVcSent" to mayViolationsSent,
+        "conjectureFailures" to conjectureFailures,
+        "quantified" to quantifiedFormulas,
+      )
+      .mapValues { it.value.toString() }
 }
