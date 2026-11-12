@@ -149,10 +149,12 @@ class XcfaOcChecker(
             return@use SafetyResult.safe<EmptyProof, Cex>(EmptyProof.getInstance()) to early
           }
           val result = round.checkProperty()
-          logger.mainStep("OC checker result: $result")
           if (!result.isSafe || !round.xcfa.unsafeUnrollUsed || acceptUnreliableSafe) {
+            logger.mainStep("OC checker result: $result")
             return result
           }
+          // not a verdict yet, so not logged in the form that readers of the output take for one
+          logger.mainStep("No violation within the unroll bounds.")
           if (maxExitQueries == 0) return@use result to null
           logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
           result to (early ?: round.reachedExits())
