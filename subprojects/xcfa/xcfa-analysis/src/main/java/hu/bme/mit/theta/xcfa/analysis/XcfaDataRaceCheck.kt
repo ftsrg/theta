@@ -50,8 +50,6 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import hu.bme.mit.theta.xcfa.ErrorDetection
-import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.*
@@ -237,17 +235,6 @@ fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
     status
   }
 }
-
-/** Applies [wrapExprTraceCheckerWithDataRaceCondition] only when the property is a data race. */
-fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
-  property: XcfaProperty?,
-  parseContext: ParseContext,
-): (ExprTraceChecker<T>) -> ExprTraceChecker<T> =
-  if (property?.verifiedProperty == ErrorDetection.DATA_RACE) {
-    { wrapExprTraceCheckerWithDataRaceCondition(it, parseContext) }
-  } else {
-    { it }
-  }
 
 private sealed class GlobalAccessWithMutexes(
   /** The (flat) label the access was found in -- the concurrent-witness writer reports it. */

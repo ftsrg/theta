@@ -24,11 +24,9 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.wrapExprTraceCheckerWithDataRaceCondition
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.targetToWitness
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.traceToWitness
@@ -224,8 +222,7 @@ class GraphmlWitnessWriter : XcfaWitnessWriter {
               safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
               cexSolverFactory,
               parseContext,
-              wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-              property?.verifiedProperty != ErrorDetection.DATA_RACE,
+              property,
               logger,
             )
 

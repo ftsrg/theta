@@ -55,9 +55,12 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import hu.bme.mit.theta.xcfa.ErrorDetection;
+import hu.bme.mit.theta.xcfa.XcfaProperty;
 import hu.bme.mit.theta.xcfa.analysis.HintedTrace;
 import hu.bme.mit.theta.xcfa.analysis.HintedTraceKt;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
+import hu.bme.mit.theta.xcfa.analysis.XcfaDataRaceCheckKt;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.*;
 import java.util.*;
@@ -162,27 +165,16 @@ public class XcfaTraceConcretizer {
             ParseContext parseContext,
             Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
                     exprTraceCheckerWrapper) {
-        return concretize(trace, solverFactory, parseContext, exprTraceCheckerWrapper, false);
-    }
-
-    public Trace<XcfaState<ExplState>, XcfaAction> concretize(
-            Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
-            SolverFactory solverFactory,
-            ParseContext parseContext,
-            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
-                    exprTraceCheckerWrapper,
-            boolean useModel) {
-        return concretize(
-                trace,
+        return concretizeByInterpolation(
+                splitLabels(keepNamedVars(trace, parseContext)).trace(),
                 solverFactory,
                 parseContext,
                 exprTraceCheckerWrapper,
-                useModel,
                 NullLogger.getInstance());
     }
 
     /**
-     * With {@code useModel}, the values the backend found come first: the trace is replayed with
+     * Except for data races, the values the backend found come first: the trace is replayed with
      * the havoc values of a {@link HintedTrace}, else solved at once with every value its states
      * give, else with those of the named variables only. An interpolating check of a long trace
      * with large steps can take hours, so it is the last resort.
@@ -191,12 +183,23 @@ public class XcfaTraceConcretizer {
             Trace<XcfaState<PtrState<?>>, XcfaAction> trace,
             SolverFactory solverFactory,
             ParseContext parseContext,
-            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
-                    exprTraceCheckerWrapper,
-            boolean useModel,
+            XcfaProperty property,
             Logger logger) {
-        final SplitTrace named = splitLabels(keepNamedVars(trace, parseContext));
-        if (useModel) {
+        final Trace<XcfaState<?>, XcfaAction> named =
+                splitLabels(keepNamedVars(trace, parseContext)).trace();
+        if (property != null && property.getVerifiedProperty() == ErrorDetection.DATA_RACE) {
+            // The last state of a racing trace only says that the two accesses may alias. Only the
+            // wrapped interpolating check asserts that they do: the backend's values may give them
+            // different addresses, and the witness would then show no race.
+            return concretizeByInterpolation(
+                    named,
+                    solverFactory,
+                    parseContext,
+                    it ->
+                            XcfaDataRaceCheckKt.wrapExprTraceCheckerWithDataRaceCondition(
+                                    it, parseContext),
+                    logger);
+        } else {
             final SplitTrace full = splitLabels(trace);
             List<Valuation> valuations = replay(trace, full);
             String how = "replaying the backend's model";
@@ -205,25 +208,36 @@ public class XcfaTraceConcretizer {
                 how = "solving it with the backend's state values";
             }
             if (valuations == null) {
-                valuations = solveTrace(named.trace(), solverFactory);
+                valuations = solveTrace(named, solverFactory);
                 how = "solving it with the named variables' values";
             }
-            if (valuations != null) {
-                logger.info("Concretized the trace by %s", how);
-                return toConcreteTrace(full.trace(), valuations, parseContext);
+            if (valuations == null) {
+                return concretizeByInterpolation(
+                        named, solverFactory, parseContext, Function.identity(), logger);
             }
+            logger.info("Concretized the trace by %s", how);
+            return toConcreteTrace(full.trace(), valuations, parseContext);
         }
+    }
+
+    private Trace<XcfaState<ExplState>, XcfaAction> concretizeByInterpolation(
+            Trace<XcfaState<?>, XcfaAction> named,
+            SolverFactory solverFactory,
+            ParseContext parseContext,
+            Function<ExprTraceChecker<ItpRefutation>, ExprTraceChecker<ItpRefutation>>
+                    exprTraceCheckerWrapper,
+            Logger logger) {
         final ExprTraceChecker<ItpRefutation> checker =
                 exprTraceCheckerWrapper.apply(
                         ExprTraceFwBinItpChecker.create(
                                 BoolExprs.True(),
                                 BoolExprs.True(),
                                 solverFactory.createItpSolver()));
-        final ExprTraceStatus<ItpRefutation> status = checker.check(named.trace());
+        final ExprTraceStatus<ItpRefutation> status = checker.check(named);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         logger.info("Concretized the trace by an interpolating check");
         return toConcreteTrace(
-                named.trace(), status.asFeasible().getValuations().getStates(), parseContext);
+                named, status.asFeasible().getValuations().getStates(), parseContext);
     }
 
     /**
