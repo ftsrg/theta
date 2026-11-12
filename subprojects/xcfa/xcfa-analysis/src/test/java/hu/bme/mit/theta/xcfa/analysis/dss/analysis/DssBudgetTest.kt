@@ -115,7 +115,7 @@ class DssBudgetTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = ["Z3", "Z3:new", "JavaSMT:MATHSAT5"])
+  @ValueSource(strings = ["Z3", "Z3:new", "JavaSMT:Z3"])
   fun `a deadline stops a long query of an interruptible backend`(name: String) {
     ensureDefaultSolversRegistered(getDefaultPredCegarConfig(), NullLogger.getInstance())
     DeadlineSolverManager.ensureRegistered(name)

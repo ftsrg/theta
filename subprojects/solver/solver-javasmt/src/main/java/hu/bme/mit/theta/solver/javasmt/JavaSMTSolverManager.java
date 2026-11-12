@@ -67,7 +67,7 @@ public final class JavaSMTSolverManager extends SolverManager {
      * MathSAT's default, eager FP solver gives no proofs, so it cannot interpolate over floats;
      * {@code theory.fp.mode=2} can. Non-interpolating solvers keep the default.
      */
-    private static Map<String, String> interpolationOptions(final Solvers solver) {
+    static Map<String, String> interpolationOptions(final Solvers solver) {
         return solver == Solvers.MATHSAT5
                 ? Map.of("solver.mathsat5.furtherOptions", "theory.fp.mode=2")
                 : Map.of();
