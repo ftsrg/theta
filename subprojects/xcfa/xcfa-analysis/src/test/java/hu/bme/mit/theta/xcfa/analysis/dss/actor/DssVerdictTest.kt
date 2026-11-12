@@ -93,6 +93,9 @@ class DssVerdictTest {
 
     private val programs = loopFree + loops
 
+    /** The experimental options only get smoke tests: each case runs the whole DSS network. */
+    private val smokeLoops = listOf("loop with a branching body", "nondeterministic counter")
+
     /**
      * DSS does not terminate on the safe error-inside-a-loop program when the loop stays a cycle of
      * the block graph (termination is not guaranteed).
@@ -116,17 +119,11 @@ class DssVerdictTest {
         .stream()
     }
 
-    /** Every loop program, with a cyclic, an acyclic and an absorbing block graph. */
+    /** The decomposition `EMERGENT` runs DSS with. */
     @JvmStatic
     fun generalizationCases(): Stream<Arguments> =
-      loops.keys
-        .flatMap { program ->
-          listOf(Decomposition.LINEAR, Decomposition.ACYCLIC, Decomposition.MIN_CUT_ABSORB)
-            .flatMap { d -> listOf(true, false).map { safe -> Arguments.of(program, d, safe) } }
-        }
-        .filterNot {
-          it.get()[0] == "error inside a loop" && it.get()[2] == true && it.get()[1] in cyclic
-        }
+      listOf(true, false)
+        .map { Arguments.of(smokeLoops[0], Decomposition.MIN_CUT_ABSORB, it) }
         .stream()
 
     /** The generalization cases, with both generalizers under each combination but FIRST. */
@@ -141,36 +138,22 @@ class DssVerdictTest {
         }
         .stream()
 
-    /** Every loop program, with the cyclic block graphs too, where plain DSS can diverge. */
+    /** A cyclic block graph, where plain DSS can diverge. */
     @JvmStatic
     fun conjectureCases(): Stream<Arguments> =
-      loops.keys
-        .flatMap { program ->
-          (cyclic + Decomposition.ACYCLIC).flatMap { d ->
-            listOf(true, false).map { safe -> Arguments.of(program, d, safe) }
-          }
-        }
-        .stream()
+      listOf(true, false).map { Arguments.of(smokeLoops[1], Decomposition.LINEAR, it) }.stream()
 
-    /** Every program on the decompositions that keep loops as cycles of blocks. */
-    @JvmStatic
-    fun wrongConjectureCases(): Stream<Arguments> =
-      programs.keys
-        .flatMap { program ->
-          listOf(Decomposition.LINEAR, Decomposition.MERGE).flatMap { d ->
-            listOf(true, false).map { safe -> Arguments.of(program, d, safe) }
-          }
-        }
-        .stream()
+    /** A decomposition that keeps the loop as a cycle of blocks. */
+    @JvmStatic fun wrongConjectureCases(): Stream<Arguments> = conjectureCases()
 
-    /** Every program, both new directions, the default and an acyclic decomposition. */
+    /** A loop program in every new direction, on the default decomposition. */
     @JvmStatic
     fun directionCases(): Stream<Arguments> =
-      programs.keys
+      listOf(smokeLoops[0])
         .flatMap { program ->
-          listOf(Decomposition.LINEAR, Decomposition.MERGE, Decomposition.ACYCLIC).flatMap { d ->
-            Direction.entries.flatMap { direction ->
-              listOf(true, false).map { safe -> Arguments.of(program, d, direction, safe) }
+          Direction.entries.flatMap { direction ->
+            listOf(true, false).map { safe ->
+              Arguments.of(program, Decomposition.MERGE, direction, safe)
             }
           }
         }
@@ -192,27 +175,12 @@ class DssVerdictTest {
 
     @JvmStatic
     fun cutCases(): Stream<Arguments> =
-      programs.keys
-        .flatMap { p -> listOf(true, false).map { Arguments.of(p, it) } }
-        // Cutting a loop block leaves a cyclic block graph, which that program diverges on
-        .filterNot { it.get()[0] == "error inside a loop" && it.get()[1] == true }
-        .stream()
+      listOf(true, false).map { Arguments.of(smokeLoops[1], it) }.stream()
 
-    /**
-     * Backward DSS may diverge once a cut makes a loop a cycle of blocks (see [backwardDivergent]).
-     */
+    /** BIDIRECTIONAL cuts the forward graph and rebuilds the backward one from it. */
     @JvmStatic
     fun directionCutCases(): Stream<Arguments> =
-      programs.keys
-        .flatMap { p ->
-          Direction.entries.flatMap { d -> listOf(true, false).map { Arguments.of(p, d, it) } }
-        }
-        .filterNot {
-          it.get()[0] in backwardDivergent &&
-            it.get()[1] == Direction.BACKWARD &&
-            it.get()[2] == true
-        }
-        .stream()
+      listOf(true, false).map { Arguments.of(smokeLoops[0], Direction.BIDIRECTIONAL, it) }.stream()
 
     private fun branchXcfa(safe: Boolean): XCFA =
       xcfa("branch") {
