@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.AssumingSolver
+import hu.bme.mit.theta.solver.InterruptibleSolver
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
@@ -58,11 +59,29 @@ import hu.bme.mit.theta.xcfa.passes.memory.ReferenceElimination
 import hu.bme.mit.theta.xcfa.passes.structure.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.utils.defaultValue
 import java.util.IdentityHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
 private const val MAX_AUTO_CONFLICT_RFS = 5000
 
 private const val ASSERTION_CHUNK_SIZE = 4096
+
+/**
+ * The least time an exit query of a round gets once the round has found an exit to deepen. Such a
+ * query only decides which other cuts to deepen now: a stopped one is asked again in the next
+ * round.
+ */
+private val MIN_EXIT_QUERY_BUDGET = 30.seconds
+
+private val budgetTimer: ScheduledExecutorService by lazy {
+  Executors.newSingleThreadScheduledExecutor {
+    Thread(it, "oc-exit-query-budget").apply { isDaemon = true }
+  }
+}
 
 /**
  * Bounded OC checking; IDL under SC checks data races natively. With [maxExitQueries] != 0 (< 0: no
@@ -125,6 +144,7 @@ class XcfaOcChecker(
         .filter { UnrollCut.of(it).deepenable }
         .associateWith { (bounds[it] ?: forceUnrollBoundStart) + forceUnrollBoundStep }
         .filterValues { unbounded || it <= forceUnrollBoundEnd }
+    fun deepenable(key: String) = deepened(setOf(key)).isNotEmpty()
     var rounds = 0
     while (unbounded || bound <= forceUnrollBoundEnd) {
       logger.mainStep(
@@ -139,7 +159,7 @@ class XcfaOcChecker(
               !isProofRound(rounds) &&
               round.xcfa.unsafeUnrollUsed &&
               !acceptUnreliableSafe
-          val early = if (deferred) round.reachedExits(withViolation = true) else null
+          val early = if (deferred) round.reachedExits(::deepenable, withViolation = true) else null
           round.violation?.let {
             logger.mainStep("OC checker result: $it")
             return it
@@ -157,7 +177,7 @@ class XcfaOcChecker(
           logger.mainStep("No violation within the unroll bounds.")
           if (maxExitQueries == 0) return@use result to null
           logger.mainStep("Incomplete loop unroll used: checking whether the bounds are reached...")
-          result to (early ?: round.reachedExits())
+          result to (early ?: round.reachedExits(::deepenable))
         }
       if (reached == null) {
         logger.mainStep("Incomplete loop unroll bound ($bound) used: safe result is unreliable.")
@@ -329,6 +349,7 @@ class XcfaOcChecker(
         status =
           solve(checker, Or(targets)).let { if (it?.isSat == true) checker.distinctModel() else it }
       }
+      solvingTime += checkerTime
       logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
       logger.info("Propagated clauses: ${checker.getPropagatedClauses().size}")
       checker.solver.statistics.let {
@@ -382,9 +403,11 @@ class XcfaOcChecker(
 
     /**
      * The keys of the unroll exits some consistent execution reaches. Undecided exits count as
-     * reached, which only costs an unnecessary deepening.
+     * reached, which only costs an unnecessary deepening. Once an exit is found that will be
+     * deepened, a query that takes longer than the round so far is stopped, and the exits it asked
+     * for count as not reached: the next round asks for them again.
      */
-    fun reachedExits(withViolation: Boolean = false): Set<String> {
+    fun reachedExits(deepenable: (String) -> Boolean, withViolation: Boolean = false): Set<String> {
       val exitsByKey = eg.unrollExits.groupBy { it.key }
       val remaining = exitsByKey.keys.toMutableSet()
       val reached = mutableSetOf<String>()
@@ -400,15 +423,22 @@ class XcfaOcChecker(
         val asked = violations
         violations = listOf()
         val target = Or(asked + remaining.flatMap { exitsByKey.getValue(it) }.map { it.guard })
+        val budget =
+          if (reached.any(deepenable)) maxOf(MIN_EXIT_QUERY_BUDGET, solvingTime) else null
         val found = query { checker ->
           if (asked.isNotEmpty()) autoConflicts
-          var status: SolverStatus?
+          var status: SolverStatus? = null
           val time = measureTime {
-            status = solve(checker, target)
+            status = withinBudget(budget) { solve(checker, target) }
             // a violation has to be an execution, not only a model of the relaxed constraints
             if (status?.isSat == true && GuardValues(checker.solver.model).holdsAny(asked)) {
               status = checker.distinctModel()
             }
+          }
+          solvingTime += time
+          if (interrupted) {
+            logger.info("Exit query $queries: stopped after ${time.inWholeMilliseconds} ms")
+            return@query emptyList()
           }
           logger.info("Exit query $queries: $status in ${time.inWholeMilliseconds} ms")
           when {
@@ -442,6 +472,40 @@ class XcfaOcChecker(
     }
 
     private var queryCount = 0
+
+    /** The time the queries of this round took so far. */
+    private var solvingTime = Duration.ZERO
+
+    /** Whether a budget stopped a check, after which the solver of the round checks no more. */
+    private var interrupted = false
+
+    /** The result of [check], or null if it ran out of [budget] and was stopped. */
+    private fun <T> withinBudget(budget: Duration?, check: () -> T): T? {
+      val solver = checker.solver as? InterruptibleSolver
+      if (budget == null || solver == null) return check()
+      val lock = Any()
+      var running = true
+      val timer =
+        budgetTimer.schedule(
+          {
+            synchronized(lock) {
+              if (running) {
+                interrupted = true
+                solver.interrupt()
+              }
+            }
+          },
+          budget.inWholeMilliseconds,
+          TimeUnit.MILLISECONDS,
+        )
+      try {
+        val result = runCatching(check)
+        synchronized(lock) { running = false }
+        return if (interrupted) null else result.getOrThrow()
+      } finally {
+        timer.cancel(false)
+      }
+    }
 
     private fun solve(checker: OcChecker<E>, target: Expr<BoolType>): SolverStatus? {
       logger.info("Adding constraints...")
