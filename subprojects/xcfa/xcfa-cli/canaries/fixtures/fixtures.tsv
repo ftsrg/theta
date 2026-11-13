@@ -565,3 +565,5 @@ address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-
 calloc_bool_bytes.c	bitvector	ILP32	SAFE	a _Bool cell is its byte under bytes, so calloc's zero fill and a char view reach it	bytes
 main_argv_memsafety.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	memory safety of a main that reads argv is refused: nothing allocates what argv points to
 race_index_from_unknown_call.c	efficient	ILP32	UNKNOWN:no-data-race	a race whose address needs an over-approximated library value is not reported
+pthread_join_runtime_handle.c	efficient	ILP32	SAFE	with a variable handle index the handles hold thread ids, and a join waits for the thread its handle holds
+pthread_join_runtime_handle_unsafe.c	efficient	ILP32	UNSAFE	planted bug: with handles that hold thread ids, a thread left unjoined may write after the check
