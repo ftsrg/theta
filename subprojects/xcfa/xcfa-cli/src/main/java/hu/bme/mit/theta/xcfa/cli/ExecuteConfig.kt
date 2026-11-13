@@ -500,7 +500,12 @@ private fun backend(
                   if (
                     !portfolioRun &&
                       xcfa != null &&
-                      unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
+                      unsafeDependsOnOverApproximation(
+                        result.asUnsafe().cex,
+                        xcfa,
+                        dataRace =
+                          config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE,
+                      )
                   ) {
                     // Within a portfolio, another config may still settle the task (a Safe verdict
                     // is sound under over-approximation), so hand over instead of ending on

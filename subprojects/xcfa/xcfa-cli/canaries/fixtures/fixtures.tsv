@@ -564,3 +564,4 @@ address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken
 address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
 calloc_bool_bytes.c	bitvector	ILP32	SAFE	a _Bool cell is its byte under bytes, so calloc's zero fill and a char view reach it	bytes
 main_argv_memsafety.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	memory safety of a main that reads argv is refused: nothing allocates what argv points to
+race_index_from_unknown_call.c	efficient	ILP32	UNKNOWN:no-data-race	a race whose address needs an over-approximated library value is not reported
