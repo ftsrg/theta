@@ -569,3 +569,4 @@ pthread_join_runtime_handle.c	efficient	ILP32	SAFE	with a variable handle index 
 pthread_join_runtime_handle_unsafe.c	efficient	ILP32	UNSAFE	planted bug: with handles that hold thread ids, a thread left unjoined may write after the check
 split_pointer_from_load.c	efficient	LP64	SAFE	a split pointer assigned a pointer loaded from memory, or LP64's (void *)0, starts at offset 0	multi
 split_pointer_from_load_unsafe.c	efficient	LP64	UNSAFE	planted bug: a split pointer loaded from memory reaches the element it names	multi
+struct_first_member_view.c	efficient	ILP32	SAFE	a struct whose first member is a separate object is not viewed through a pointer to that member under the cell models
