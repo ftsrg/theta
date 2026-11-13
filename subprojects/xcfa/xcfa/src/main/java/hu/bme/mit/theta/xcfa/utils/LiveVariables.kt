@@ -60,7 +60,11 @@ fun strongLiveVars(
               else -> l
             }
           is HavocStmt<*> -> if (stmt.varDecl in locals) l - stmt.varDecl else l
-          else -> l + label.collectVarsWithAccessType().keys
+          else -> {
+            val (readVars, writtenVars) =
+              label.collectVarsWithAccessType().toList().partition { it.second == READ }
+            l + readVars.map { it.first }.toSet() - writtenVars.map { it.first }.toSet()
+          }
         }
     }
     val src = live.getOrPut(edge.source) { mutableSetOf() }

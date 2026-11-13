@@ -19,31 +19,40 @@ package hu.bme.mit.theta.frontend.svlib
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.SkipStmt
+import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.utils.getAllLabels
+import hu.bme.mit.theta.xcfa.utils.strongLiveVars
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.misc.Interval
 
-internal fun newLoc(prefix: String = "l", tags: Set<String> = setOf()) =
-  XcfaLocation(prefix + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags))
+internal fun newLoc(prefix: String = "l", tags: Set<String> = setOf(), procedure: String? = null) =
+  XcfaLocation(prefix + XcfaLocation.uniqueCounter(), metadata = SvLibTagMetadata(tags, procedure))
+
+// passes keep metadata, so information relevant for witnesses is stored there
+internal fun witnessStep(metadata: SvLibWitnessMetadata) =
+  StmtLabel(Stmts.Skip(), metadata = metadata)
+
+fun XcfaLabel.isWitnessStep() =
+  this is StmtLabel && stmt is SkipStmt && (metadata as? SvLibWitnessMetadata) != null
 
 private var tmpVarCnt = 0
 const val tmpVarPrefix = "__theta"
+const val GLOBAL_SCOPE = "__theta_global"
 
 internal fun VarDecl<*>.createTemp() = Decls.Var("${tmpVarPrefix}_${name}_${tmpVarCnt++}", type)
 
 internal fun XcfaProcedureBuilder.insertCheck(
   location: XcfaLocation,
   condition: Expr<BoolType>,
-  metadata: SvLibSourceMetadata,
+  metadata: SvLibWitnessMetadata,
 ): XcfaLocation {
   val originalOutgoingEdges = location.outgoingEdges.toMutableList()
   val nextLoc = newLoc()
@@ -64,6 +73,20 @@ internal fun XcfaProcedureBuilder.insertCheck(
   }
 
   return nextLoc
+}
+
+internal fun XcfaProcedureBuilder.havocUninitializedVars() {
+  val initEdge = initLoc.outgoingEdges.singleOrNull() ?: return
+  val liveVars = strongLiveVars(this)[initLoc].orEmpty()
+
+  val uninits =
+    getVars()
+      .filter { getParams().all { (param, dir) -> param != it || dir == ParamDirection.OUT } }
+      .filter { it in liveVars }
+      .map { StmtLabel(Stmts.Havoc(it), metadata = initEdge.metadata) }
+
+  removeEdge(initEdge)
+  addEdge(initEdge.withLabel(SequenceLabel(initEdge.getAllLabels() + uninits, initEdge.metadata)))
 }
 
 internal fun ParserRuleContext.unsupported(message: String) =

@@ -16,10 +16,12 @@
 package hu.bme.mit.theta.xcfa.passes.structure
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -42,6 +44,7 @@ import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.mergeIncomingValuations
+import hu.bme.mit.theta.xcfa.utils.recordPassInvariants
 import hu.bme.mit.theta.xcfa.utils.simplify
 
 /**
@@ -51,8 +54,11 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  */
 private const val MAX_PATHS = 4
 
-class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) :
-  ProcedurePass {
+class SimplifyExprsPass(
+  val parseContext: ParseContext,
+  val property: XcfaProperty? = null,
+  private val recordPassInvariants: Boolean = false,
+) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
@@ -167,6 +173,16 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
       edges = LinkedHashSet(builder.getEdges())
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
+    if (recordPassInvariants)
+      valuations
+        .map { (edge, valuation) ->
+          edge.target to
+            ImmutableValuation.from(valuation.toMap() - constValuation.toMap().keys).toExpr()
+        }
+        .groupBy { it.first }
+        .forEach { (location, invariants) ->
+          parseContext.recordPassInvariants(location, BoolExprs.Or(invariants.map { it.second }))
+        }
     return builder
   }
 

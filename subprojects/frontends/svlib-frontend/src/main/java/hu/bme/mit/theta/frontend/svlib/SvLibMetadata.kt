@@ -15,23 +15,33 @@
  */
 package hu.bme.mit.theta.frontend.svlib
 
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class SvLibTagMetadata(val tags: Set<String> = setOf()) : MetaData() {
+class SvLibTagMetadata(val tags: Set<String> = setOf(), val procedure: String? = null) :
+  MetaData() {
   override fun combine(other: MetaData) =
-    if (other is SvLibTagMetadata) SvLibTagMetadata(this.tags + other.tags) else this
+    if (other is SvLibTagMetadata)
+      SvLibTagMetadata(this.tags + other.tags, this.procedure ?: other.procedure)
+    else this
+
+  override fun keepsLocation() = tags.isNotEmpty()
 
   override fun isSubstantial() = tags.isNotEmpty()
 
   override fun toString() = tags.joinToString(" ")
 }
 
-class SvLibSourceMetadata(val source: String) : MetaData() {
-  override fun combine(other: MetaData) =
-    if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}")
-    else this
+sealed class SvLibWitnessMetadata : MetaData() {
+  override fun combine(other: MetaData) = other as? SvLibWitnessMetadata ?: this
 
-  override fun isSubstantial() = source.isNotEmpty()
+  override fun isSubstantial() = true
 
-  override fun toString() = source
+  data class InitProcVars(val procedure: String) : SvLibWitnessMetadata()
+
+  data class Havoc(val vars: List<VarDecl<*>>) : SvLibWitnessMetadata()
+
+  data class Choice(val index: Int) : SvLibWitnessMetadata()
+
+  data class Annotation(val property: String, val tag: String?) : SvLibWitnessMetadata()
 }

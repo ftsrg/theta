@@ -310,7 +310,7 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
     ),
     listOf(
       // optimizing
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, recordPassInvariants = true),
       UnrollPass(),
       EmptyEdgeRemovalPass(),
     ),
@@ -324,7 +324,7 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
     ),
     listOf(
       EmptyEdgeRemovalPass(),
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, recordPassInvariants = true),
       UnusedLocRemovalPass(),
       RemoveDeadEnds(parseContext),
       EliminateSelfLoops(),

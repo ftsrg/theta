@@ -24,6 +24,7 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.io.FileInputStream
 import java.nio.file.Path
 import org.antlr.v4.runtime.CharStreams
@@ -109,6 +110,7 @@ internal class SvLibFrontendTest {
     assertNotNull(taggedLocation)
     assertEquals(2, taggedLocation!!.outgoingEdges.size)
     assertTrue(taggedLocation.outgoingEdges.any { it.target.error })
+    assertEquals("tagCheckExample", (taggedLocation.metadata as SvLibTagMetadata).procedure)
   }
 
   @Test
@@ -119,7 +121,11 @@ internal class SvLibFrontendTest {
     val vars = xcfa.collectVars()
     assertTrue(vars.any { it.name.contains("__theta") })
 
-    val sequenceLabels = procedure.edges.map(XcfaEdge::label).filterIsInstance<SequenceLabel>()
+    val sequenceLabels =
+      procedure.edges
+        .filter { it.source != procedure.initLoc }
+        .map(XcfaEdge::label)
+        .filterIsInstance<SequenceLabel>()
     assertEquals(2, sequenceLabels.size)
 
     val initAssign = sequenceLabels[0]
@@ -135,9 +141,72 @@ internal class SvLibFrontendTest {
     val procedure = xcfa.procedures.first()
 
     assertTrue(
-      procedure.edges.map(XcfaEdge::label).filterIsInstance<StmtLabel>().any {
-        it.stmt is HavocStmt<*>
+      procedure.edges
+        .filter { it.source != procedure.initLoc }
+        .flatMap(XcfaEdge::getFlatLabels)
+        .filterIsInstance<StmtLabel>()
+        .any { it.stmt is HavocStmt<*> }
+    )
+  }
+
+  @Test
+  fun havocStatementStartsWithWitnessMarker() {
+    val xcfa: XCFA = parseResource("havoc.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val havocEdge =
+      procedure.edges.single { edge ->
+        edge.getFlatLabels().any {
+          (it.metadata as? SvLibWitnessMetadata) is SvLibWitnessMetadata.Havoc
+        }
       }
+    val labels = havocEdge.getFlatLabels()
+    assertTrue(labels.first().isWitnessStep())
+    assertTrue(labels.all { it.metadata === labels.first().metadata })
+    assertTrue(labels.drop(1).all { (it as StmtLabel).stmt is HavocStmt<*> })
+  }
+
+  @Test
+  fun procedureBodyStartsWithWitnessMarker() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+
+    xcfa.procedures.forEach { procedure ->
+      val labels = procedure.initLoc.outgoingEdges.single().getFlatLabels()
+      assertTrue(labels.first().isWitnessStep())
+      assertTrue(labels.all { it.metadata === labels.first().metadata })
+      assertEquals(
+        SvLibWitnessMetadata.InitProcVars(procedure.name),
+        (labels.first().metadata as SvLibWitnessMetadata),
+      )
+    }
+  }
+
+  @Test
+  fun procedureEntryHavocsVarsReadBeforeAssignment() {
+    val xcfa: XCFA = parseResource("uninitialized-read.svlib")
+
+    val entryHavocs =
+      xcfa.procedures
+        .single()
+        .initLoc
+        .outgoingEdges
+        .single()
+        .getFlatLabels()
+        .mapNotNull { ((it as? StmtLabel)?.stmt as? HavocStmt<*>)?.varDecl?.name }
+        .toSet()
+
+    assertEquals(setOf("x", "r"), entryHavocs)
+  }
+
+  @Test
+  fun inlineCheckTrueIsAttributedToItsTag() {
+    val xcfa: XCFA = parseResource("check-true-middle.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val metadata = procedure.edges.single { it.target.error }.label.metadata as SvLibWitnessMetadata
+    assertEquals(
+      SvLibWitnessMetadata.Annotation(":check-true (<= 0 x)", "check-before-first-increment"),
+      metadata,
     )
   }
 
@@ -179,7 +248,20 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("choice.svlib")
     val procedure = xcfa.procedures.first()
 
-    assertTrue(procedure.initLoc.outgoingEdges.size == 3)
+    assertTrue(procedure.locs.any { it.outgoingEdges.size == 3 })
+  }
+
+  @Test
+  fun choiceBranchesStartWithWitnessMarkers() {
+    val xcfa: XCFA = parseResource("choice.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val branches = procedure.locs.single { it.outgoingEdges.size == 3 }.outgoingEdges
+    assertTrue(branches.all { it.label.isWitnessStep() })
+    assertEquals(
+      (0..2).map { SvLibWitnessMetadata.Choice(it) }.toSet(),
+      branches.map { (it.label.metadata as SvLibWitnessMetadata) }.toSet(),
+    )
   }
 
   @Test

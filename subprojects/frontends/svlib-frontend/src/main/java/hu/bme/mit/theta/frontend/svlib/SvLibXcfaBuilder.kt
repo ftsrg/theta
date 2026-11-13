@@ -47,6 +47,7 @@ class SvLibXcfaBuilder(
 
   fun buildXcfa(parser: SvLibParser): XCFA {
     visit(parser.script())
+    procedures.keys.forEach { it.havocUninitializedVars() }
     return xcfaBuilder.build()
   }
 
@@ -116,7 +117,7 @@ class SvLibXcfaBuilder(
               locations.forEach {
                 it.insertCheck(
                   property.relationalTerm().original,
-                  SvLibSourceMetadata("${ctx.symbol().original} ${attribute.original}"),
+                  SvLibWitnessMetadata.Annotation(attribute.original, tag),
                 )
               }
             }
@@ -227,9 +228,10 @@ class SvLibXcfaBuilder(
     Decls.Var(symbol.original, type).also {
       xcfaBuilder.addVar(XcfaGlobalVar(it))
       globalSymbolTable.registerVar(it)
+      recordMetadata(it, "declaredIn", GLOBAL_SCOPE)
     }
 
-  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibSourceMetadata) =
+  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibWitnessMetadata) =
     context.let { (procedure, symbolTable) ->
       procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()), metadata)
     }
