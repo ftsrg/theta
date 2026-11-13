@@ -521,6 +521,8 @@ htons_exact.c	bitvector	LP64	SAFE	htons and htonl reverse the bytes (bitvector)
 inet_addr_literal.c	efficient	LP64	SAFE	inet_addr of a literal is exact
 socket_atoi_overflow.c	efficient	LP64	UNSAFE:no-overflow	the Juliet connect_socket bad pattern needs no over-approximated value
 socket_atoi_guarded.c	efficient	LP64	SAFE:no-overflow	the Juliet connect_socket good pattern
+narrowing_signed_conversion.c	efficient	LP64	SAFE	a narrowing conversion to a signed type wraps modulo 2^N (GCC)
+narrowing_signed_conversion.bug.c	efficient	LP64	UNSAFE	(int) of a 64-bit enum value keeps its low 32 bits
 void_pointer_byte_view.c	efficient	LP64	SAFE	a struct and an int viewed as bytes through void * are rebuilt under the bytes model
 void_pointer_byte_write.c	bitvector	LP64	FRONTEND-FAIL	a mixed view is refused when the model is pinned to one without byte cells	multi
 stored_pointer_byte_view.c	efficient	LP64	UNSAFE	a byte view through a pointer stored in a struct field is found under bytes
