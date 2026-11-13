@@ -27,8 +27,11 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
@@ -36,8 +39,14 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr
 import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
@@ -51,12 +60,14 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
 import hu.bme.mit.theta.xcfa.passes.splitIf
+import hu.bme.mit.theta.xcfa.utils.MALLOC_VAR_NAME
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.mallocVar
+import java.math.BigInteger
 import java.util.Optional
 
 /**
@@ -98,6 +109,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     // program allocates nothing at runtime; seeding it also registers the static slots.
     if (parseContext.memoryModel.flatAddressing()) {
       builder.parent.ensureMallocVar(parseContext, pointerType)
+      trackBases(builder)
     }
 
     annotateFree(builder)
@@ -423,13 +435,31 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   ): Pair<List<XcfaLabel>, Expr<BoolType>> {
     val ptr = pointerType.smtType
     val sizeVar = builder.parent.getPtrSizeVar()
+    val end = fitsall.getValue("${lastByte(deref) + 1}")
+    val known = provenance(deref.array)?.takeIf { it != nullBase }
     staticSizes(builder.parent)?.let { sizes ->
       val address =
         Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
       val valid = sizes.map { (start, size) -> inObject(address, start, size) }
-      return Pair(emptyList(), Not(Or(valid)))
+      val unknownBad = Not(Or(valid))
+      if (known == null) return Pair(emptyList(), unknownBad)
+      // Every object is static here, so the base's size is one of the constants.
+      val size =
+        sizes.entries.fold(fitsall.nullValue as Expr<*>) { rest, (start, size) ->
+          Ite<Type>(Eq(known, cast(start, ptr)), cast(size, rest.type), cast(rest, rest.type))
+        }
+      val knownBad = outsideObject(address, known, size, end)
+      if (known is LitExpr<*>) return Pair(emptyList(), knownBad)
+      return Pair(emptyList(), ite(Neq(known, nullBase), knownBad, unknownBad))
     }
     val extentVar = builder.parent.getObjExtentVar()!!
+    val address =
+      Add(cast(pointerType.castTo(deref.array), ptr), cast(pointerType.castTo(deref.offset), ptr))
+    val knownBad =
+      known?.let {
+        outsideObject(address, it, ArrayReadExpr.create<Type, Type>(sizeVar.ref, it), end)
+      }
+    if (known is LitExpr<*>) return Pair(emptyList(), knownBad!!)
     val counter = builder.parent.mallocVar(parseContext)
     val witness = Var("__theta_slot_${witnessCount++}", ptr)
     builder.addVar(witness)
@@ -461,20 +491,199 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     val baseSize = ArrayReadExpr.create<Type, Type>(sizeVar.ref, base)
     // Under bytes the access spans its value's bytes, all of which must be in the object. Past the
     // last of them, as the array holds size + 1 (see allocate).
-    val end = fitsall.getValue("${lastByte(deref) + 1}")
-    @Suppress("UNCHECKED_CAST")
+    val unknownBad =
+      ite(direct, Leq(baseSize, Add(offset, end)), Or(Not(inRange), Leq(size, Add(index, end))))
+    // A base known at runtime decides the check alone: the slot the address falls in may be another
+    // object's, which the witness would accept.
     val bad =
-      Ite<BoolType>(
-        direct,
-        Leq(baseSize, Add(offset, end)),
-        Or(Not(inRange), Leq(size, Add(index, end))),
-      )
-        as Expr<BoolType>
+      if (known == null) unknownBad
+      else {
+        val knownExtent = ArrayReadExpr.create<Type, Type>(extentVar.ref, known)
+        ite(And(Neq(known, nullBase), Gt(knownExtent, fitsall.nullValue)), knownBad!!, unknownBad)
+      }
     return Pair(
       listOf(StmtLabel(HavocStmt.of(witness)), StmtLabel(Assume(Or(Not(inRange), inSlot)))),
       bad,
     )
   }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun ite(cond: Expr<BoolType>, then: Expr<BoolType>, `else`: Expr<BoolType>) =
+    Ite<BoolType>(cond, then, `else`) as Expr<BoolType>
+
+  /**
+   * Whether the access at [address] up to [end] units past it leaves the object starting at [base]
+   * whose array entry is [size] (its size + 1, see allocate), or that object is not live.
+   */
+  private fun outsideObject(
+    address: Expr<*>,
+    base: Expr<*>,
+    size: Expr<*>,
+    end: Expr<*>,
+  ): Expr<BoolType> {
+    val index = Sub(address, cast(base, address.type)).toFitsall()
+    return Or(Lt(address, cast(base, address.type)), Leq(size, Add(index, end)))
+  }
+
+  /** The base of an address whose object is not known, see [trackBases]. */
+  private val nullBase: Expr<*> by lazy { pointerType.nullValue }
+
+  /** The ghost base of each local tracked by [trackBases]. */
+  private val bases = mutableMapOf<VarDecl<*>, VarDecl<*>>()
+
+  /**
+   * Gives each local that may hold a pointer a ghost `__theta_base_*` holding the start of the
+   * object its value was derived from, or 0 when that is not known.
+   *
+   * The flat address line has no object in a pointer, so `p[3]` past the end of `int a[2]` lands in
+   * the next object and the witness check accepts it. The ghost restores what C means by the
+   * pointer's provenance: an access through `p` is then checked against the bounds of `p`'s object.
+   * Where the base is not known (a pointer loaded from memory, a global, an integer turned into a
+   * pointer), the ghost is 0 and the access gets the witness check as before.
+   *
+   * Only procedure locals are tracked: their writes are thread-local, and all of them are visible
+   * here. A ghost is updated before each assignment to its local, from the ghosts of the values it
+   * is computed from ([provenance]), and is reset by any other write.
+   */
+  private fun trackBases(builder: XcfaProcedureBuilder) {
+    val locals = builder.getVars()
+    val assigns =
+      builder
+        .getEdges()
+        .flatMap { it.getFlatLabels() }
+        .mapNotNull { (it as? StmtLabel)?.stmt as? AssignStmt<*> }
+        .filter { it.varDecl in locals && it.varDecl.type !is BoolType }
+    val tracked = mutableSetOf<VarDecl<*>>()
+    val ghost = { v: VarDecl<*> ->
+      if (v in tracked) bases.getOrPut(v) { ghostOf(builder, v) } else null
+    }
+    do {
+      val before = tracked.size
+      assigns.forEach {
+        if (it.varDecl !in tracked && provenance(it.expr, ghost) != null) tracked.add(it.varDecl)
+      }
+    } while (tracked.size != before)
+    if (tracked.isEmpty()) return
+    tracked.forEach { ghost(it) }
+    val ptr = pointerType.smtType
+    fun update(v: VarDecl<*>, value: Expr<*>) =
+      StmtLabel(AssignStmt.of(cast(bases[v]!!, ptr), cast(value, ptr)))
+    val mallocVar = builder.parent.mallocVar(parseContext)
+    for (edge in ArrayList(builder.getEdges())) {
+      val labels = edge.getFlatLabels()
+      val updated =
+        labels.flatMap { label ->
+          val assign = (label as? StmtLabel)?.stmt as? AssignStmt<*>
+          when {
+            assign != null && assign.varDecl in tracked ->
+              // An allocation reads the shared counter; the ghost copies the result instead of
+              // reading the counter a second time, which another thread may have bumped.
+              if (stripCasts(assign.expr) == mallocVar.ref)
+                listOf(label, update(assign.varDecl, assign.varDecl.ref))
+              else listOf(update(assign.varDecl, provenance(assign.expr) ?: nullBase), label)
+            else -> {
+              val written =
+                label.collectVarsWithAccessType().filter { (v, access) ->
+                  v in tracked && access.isWritten
+                }
+              written.keys.map { update(it, nullBase) } + label
+            }
+          }
+        }
+      if (updated.size != labels.size) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(SequenceLabel(updated, edge.label.metadata)))
+      }
+    }
+    val reset = tracked.map { update(it, nullBase) }
+    builder.initLoc.outgoingEdges.toList().forEach {
+      builder.removeEdge(it)
+      builder.addEdge(it.withLabel(SequenceLabel(reset + it.getFlatLabels(), it.label.metadata)))
+    }
+  }
+
+  private var baseCount = 0
+
+  private fun ghostOf(builder: XcfaProcedureBuilder, v: VarDecl<*>): VarDecl<*> =
+    Var("__theta_base_${v.name}_${baseCount++}", pointerType.smtType).also(builder::addVar)
+
+  private fun stripCasts(e: Expr<*>): Expr<*> =
+    if (e is BvZExtExpr || e is BvSExtExpr || e is BvExtractExpr) stripCasts(e.ops[0]) else e
+
+  private fun isPointer(e: Expr<*>): Boolean =
+    runCatching { CComplexType.getType(e, parseContext) }.getOrNull() is CPointer
+
+  private fun Expr<*>.hasDeref(): Boolean =
+    this is Dereference<*, *, *> || ops.any { it.hasDeref() }
+
+  /**
+   * The start of the object the value of [e] points into, as an expression over the ghost bases
+   * ([nullBase] when not known), or null when [e] is a plain integer that carries no pointer.
+   *
+   * A sum carries the base of its one pointer operand; with more than one, or under any other
+   * arithmetic on a pointer, the base is not known. So is that of a pointer loaded from memory.
+   */
+  private fun provenance(e: Expr<*>, ghost: (VarDecl<*>) -> VarDecl<*>? = { bases[it] }): Expr<*>? {
+    fun known(p: Expr<*>?) = p?.let { cast(pointerType.castTo(it), pointerType.smtType) }
+    return when (e) {
+      is RefExpr<*> -> {
+        val v = e.decl as? VarDecl<*>
+        when {
+          v == null -> null
+          v.name == MALLOC_VAR_NAME -> known(e)
+          ghost(v) != null -> ghost(v)!!.ref
+          isPointer(e) -> nullBase
+          else -> null
+        }
+      }
+      is LitExpr<*> -> {
+        val value = literalValue(e)
+        val slot = value?.let { parseContext.flatAddressSpace.slotAt(it) }
+        when {
+          slot != null -> pointerType.getValue(slot.start().toString())
+          isPointer(e) -> nullBase
+          else -> null
+        }
+      }
+      is Dereference<*, *, *> -> if (isPointer(e)) nullBase else null
+      is AddExpr<*> -> {
+        val carried = e.ops.mapNotNull { provenance(it, ghost) }
+        when (carried.size) {
+          0 -> null
+          1 -> carried[0]
+          else -> nullBase
+        }
+      }
+      is SubExpr<*> ->
+        if (provenance(e.rightOp, ghost) == null) provenance(e.leftOp, ghost) else nullBase
+      is IteExpr<*> -> {
+        val then = provenance(e.then, ghost)
+        val otherwise = provenance(e.`else`, ghost)
+        when {
+          then == null && otherwise == null -> null
+          e.cond.hasDeref() -> nullBase
+          then == otherwise -> then
+          else -> Ite<Type>(e.cond, known(then ?: nullBase), known(otherwise ?: nullBase))
+        }
+      }
+      is BvZExtExpr,
+      is BvSExtExpr,
+      is BvExtractExpr -> provenance(e.ops[0], ghost)
+      else ->
+        when {
+          e.type is BoolType -> null
+          e.ops.any { provenance(it, ghost) != null } || isPointer(e) -> nullBase
+          else -> null
+        }
+    }
+  }
+
+  private fun literalValue(e: LitExpr<*>): BigInteger? =
+    when (e) {
+      is IntLitExpr -> e.value
+      is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(e)
+      else -> null
+    }
 
   /**
    * The start and size of each object when these are constants: all set on the entry path and
