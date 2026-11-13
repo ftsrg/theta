@@ -562,3 +562,4 @@ index_side_effects.c	efficient	LP64	SAFE	assignment and comma operators in an ar
 ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or a case label selects by its guard
 address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken global union spans the cells its initialization writes
 address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
+calloc_bool_bytes.c	bitvector	ILP32	SAFE	a _Bool cell is its byte under bytes, so calloc's zero fill and a char view reach it	bytes
