@@ -1207,15 +1207,17 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       )
     }
     if (lhs in splitVars.keys) {
-      // Only a *flat* pointer value: a plain (never-split) variable, or a literal such as `NULL`.
-      // Deliberately NOT a dereference: `p = *q` loads a pointer that was *stored* to memory, and
-      // storing a split pointer writes base and offset to two separate channels (see the
-      // MemoryAssignStmt case). Reading only the base back and forcing the offset to 0 would
-      // silently drop a stored mid-object offset and address the wrong cell, so that case keeps
-      // failing loudly instead.
+      // Only a *flat* pointer value: a plain (never-split) variable, a constant such as `NULL`
+      // (LP64's `(void *)0` is a sign-extended int zero), or a load: storing a mid-object pointer
+      // is
+      // refused, so memory holds no offset, and an unsplit loaded pointer is a base at offset 0
+      // too.
       val flatPointerValue =
         !rhs.containsSplitRefs(splitVars) &&
-          (strippedRhs is RefExpr<*> || strippedRhs is LitExpr<*>)
+          (strippedRhs is RefExpr<*> ||
+            strippedRhs is LitExpr<*> ||
+            strippedRhs is Dereference<*, *, *> ||
+            ExprUtils.simplify(strippedRhs) is LitExpr<*>)
       if (flatPointerValue) {
         // `p = s` where `p` became split (through later arithmetic) but `s` never did: a plain
         // pointer value is a base id at offset 0. Seed the halves accordingly -- `p_base = s`,
