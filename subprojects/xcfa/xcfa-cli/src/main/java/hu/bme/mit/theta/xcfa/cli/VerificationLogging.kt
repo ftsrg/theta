@@ -125,7 +125,7 @@ internal fun postVerificationLogging(
             if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
               val trace = retrieveTrace(safetyResult)
               val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-                concretizeTrace(trace, config, parseContext)
+                concretizeTrace(trace, config, parseContext, logger)
 
               writeTraceAsDot(resultFolder, concrTrace, logger)
 
