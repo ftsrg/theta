@@ -562,3 +562,8 @@ index_side_effects.c	efficient	LP64	SAFE	assignment and comma operators in an ar
 ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or a case label selects by its guard
 address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken global union spans the cells its initialization writes
 address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
+flat_pointer_past_object.c	efficient	LP64	UNSAFE:valid-memsafety	a pointer is bounded by its own object, not the slot its address lands in	flat
+flat_pointer_nondet_past_object.c	efficient	ILP32	UNSAFE:valid-memsafety	a symbolic index past a pointer's object is caught though it lands in the next one	flat
+flat_pointer_walk_in_bounds.c	efficient	LP64	SAFE:valid-memsafety	pointer arithmetic and copies inside one object are not flagged	flat
+flat_pointer_copy_use_after_free.c	efficient	ILP32	UNSAFE:valid-memsafety	a copy of a freed pointer keeps its object, so using it is caught	flat
+memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a struct of another cell layout is not walked by the destination's cells
