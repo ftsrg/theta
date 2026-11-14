@@ -29,6 +29,8 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaToEventGraph
+import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
 import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import org.junit.jupiter.api.Assertions
@@ -164,20 +166,7 @@ class XcfaOcCheckerTest {
     arithmetic: ArithmeticType = ArithmeticType.efficient,
     memoryModel: MemoryModelType = MemoryModelType.multi,
   ): SafetyResult<*, *> {
-    val stream = javaClass.getResourceAsStream(program)
-    val parseContext = ParseContext()
-    parseContext.arithmetic = arithmetic
-    parseContext.memoryModel = memoryModel
-    // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
-    // detected between.
-    val lbeLevel = LbePass.defaultLevel
-    LbePass.defaultLevel = LbePass.LbeLevel.NO_LBE
-    val xcfa =
-      try {
-        getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first
-      } finally {
-        LbePass.defaultLevel = lbeLevel
-      }
+    val (xcfa, parseContext) = parse(program, property, arithmetic, memoryModel)
     return XcfaOcChecker(
         xcfa = xcfa,
         property = property,
@@ -192,6 +181,28 @@ class XcfaOcCheckerTest {
         maxExitQueries = maxExitQueries,
       )
       .check(null)
+  }
+
+  private fun parse(
+    program: String,
+    property: XcfaProperty,
+    arithmetic: ArithmeticType = ArithmeticType.efficient,
+    memoryModel: MemoryModelType = MemoryModelType.multi,
+  ): Pair<XCFA, ParseContext> {
+    val stream = javaClass.getResourceAsStream(program)
+    val parseContext = ParseContext()
+    parseContext.arithmetic = arithmetic
+    parseContext.memoryModel = memoryModel
+    // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
+    // detected between.
+    val lbeLevel = LbePass.defaultLevel
+    LbePass.defaultLevel = LbePass.LbeLevel.NO_LBE
+    return try {
+      getXcfaFromC(stream!!, parseContext, false, property, NullLogger.getInstance()).first to
+        parseContext
+    } finally {
+      LbePass.defaultLevel = lbeLevel
+    }
   }
 
   @ParameterizedTest
@@ -258,6 +269,19 @@ class XcfaOcCheckerTest {
   )
   fun testCompareAndSwapAddress(program: String, memoryModel: MemoryModelType, safe: Boolean) {
     val result = check(program, property, OcDecisionProcedureType.IDL, memoryModel = memoryModel)
+    Assertions.assertEquals(safe, result.isSafe)
+    Assertions.assertEquals(!safe, result.isUnsafe)
+  }
+
+  /** A write under a guard bounding its value, like `if (n >= 0) head = n`, writes only those. */
+  @ParameterizedTest
+  @CsvSource("/49guarded_write_safe.c,true", "/49guarded_write_unsafe.c,false")
+  fun testGuardedWriteValues(program: String, safe: Boolean) {
+    val (xcfa, parseContext) = parse(program, property)
+    val eventGraph =
+      XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty, true, true).create()
+    Assertions.assertEquals(safe, eventGraph.violations.isEmpty())
+    val result = check(program, property, OcDecisionProcedureType.IDL)
     Assertions.assertEquals(safe, result.isSafe)
     Assertions.assertEquals(!safe, result.isUnsafe)
   }
