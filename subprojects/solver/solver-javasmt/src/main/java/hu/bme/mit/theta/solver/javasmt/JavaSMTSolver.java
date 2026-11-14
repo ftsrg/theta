@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.AssumingSolver;
 import hu.bme.mit.theta.solver.InterruptibleSolver;
 import hu.bme.mit.theta.solver.Solver;
@@ -332,8 +333,13 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver, Interrupt
         }
 
         private LitExpr<?> extractArrayLiteral(final Formula formula) {
-            final Expr<?> expr = termTransformer.toExpr(formula);
-            return (LitExpr<?>) expr;
+            // The model's value of the array, which solvers give as stores into a constant array.
+            final Formula term = model.eval(formula);
+            if (term == null) {
+                return null;
+            }
+            final Expr<?> expr = ExprUtils.simplify(termTransformer.toExpr(term));
+            return expr instanceof LitExpr<?> lit ? lit : null;
         }
 
         private LitExpr<?> extractBvConstLiteral(final Formula formula) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,9 +52,11 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -167,6 +169,26 @@ public final class JavaSMTSolverTest {
 
         // Assert
         assertEquals(ca.getType(), val.getType());
+    }
+
+    @MethodSource("operations")
+    @ParameterizedTest(name = "solver: {0}")
+    public void testBvArrayModelValue(Solvers solvers, Solver solver) {
+        initJavaSMTSolverTest(solvers, solver);
+        // The model gives an array as stores into a constant array: its value must be a literal.
+        final ConstDecl<ArrayType<BvType, BvType>> arr = Const("mem", Array(BvType(8), BvType(8)));
+        solver.add(
+                BvExprs.Eq(
+                        Read(arr.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, 8)),
+                        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(42), 8)));
+
+        assertTrue(solver.check().isSat());
+        final Optional<LitExpr<ArrayType<BvType, BvType>>> val = solver.getModel().eval(arr);
+        assertTrue(val.isPresent());
+        assertEquals(
+                BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(42), 8),
+                Read(val.get(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, 8))
+                        .eval(ImmutableValuation.empty()));
     }
 
     // @Test

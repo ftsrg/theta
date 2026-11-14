@@ -756,6 +756,11 @@ final class JavaSMTTermTransformer {
             return otherFuncs.get(key3).apply(f, args, model, vars);
         } else if (otherFuncs.containsKey(key4)) {
             return otherFuncs.get(key4).apply(f, args, model, vars);
+        } else if (args.size() == 1
+                && funcDecl.getKind() == FunctionDeclarationKind.CONST
+                && context.getFormulaManager().getFormulaType(f).isArrayType()) {
+            // A constant array, which CVC5 names after its `(as const T)` sort ascription
+            return transformLit(f, transform(args.get(0), model, vars));
         } else if (mathFunctionOf(funcDecl.getName()) != null && args.size() == 1) {
             return FpMathFuncExpr.create(
                     mathFunctionOf(funcDecl.getName()), transform(args.get(0), model, vars));

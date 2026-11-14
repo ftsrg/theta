@@ -52,17 +52,19 @@ import java.math.BigInteger
 /**
  * Stores the memsafety ghost arrays in memory, which lets solvers without arrays check memory
  * safety. Under multi, `size[k]` is the cell at offset `k` of the null object, which no checked
- * access can reach; under flat, where all program memory has base 0, each array gets a base of its
- * own. Under flat, the ownership arrays of mutexes at symbolic addresses
- * ([XcfaBuilder.mutexArrays]) can be stored there too.
+ * access can reach; under flat addressing (flat and bytes), where all program memory has base 0,
+ * each array gets a base of its own. Under bytes the cells stay whole: this pass runs after
+ * [ByteMemoryPass], and as every program cell is a byte by then, they share no partition with it.
+ * Under flat, the ownership arrays of mutexes at symbolic addresses ([XcfaBuilder.mutexArrays])
+ * can be stored there too.
  *
  * A cell nothing wrote reads its array's initial value; the OC encoding is what provides that (see
  * [ParseContext.getGhostMemoryInitialValue]), so this pass is for that backend only.
  *
- * Under flat, constant writes to static addresses on the entry path of the init procedure describe
- * static objects, which later code only overwrites on a path that has already failed the check.
- * They become a table in the reads, as each would otherwise be a read-from candidate of every
- * symbolic read. This holds for the memsafety ghosts only.
+ * Under flat addressing, constant writes to static addresses on the entry path of the init
+ * procedure describe static objects, which later code only overwrites on a path that has already
+ * failed the check. They become a table in the reads, as each would otherwise be a read-from
+ * candidate of every symbolic read. This holds for the memsafety ghosts only.
  */
 class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePass {
 
@@ -94,7 +96,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
   private fun takeCensus(xcfa: XcfaBuilder, ghosts: Set<VarDecl<ArrayType<*, *>>>): Census {
     val found = ghosts.associateWith { mutableMapOf<LitExpr<*>, LitExpr<*>>() }
     val entryLabels = mutableSetOf<XcfaLabel>()
-    val flat = parseContext.memoryModel == ArchitectureConfig.MemoryModelType.flat
+    val flat = parseContext.memoryModel.flatAddressing()
     val staticEnd = parseContext.flatAddressSpace.end().takeIf { flat }
     if (flat)
       xcfa.getInitProcedures().forEach { (init, _) ->
@@ -163,10 +165,10 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
     if (!memsafety && mutexes.isEmpty()) return builder
     val ghosts: MutableMap<VarDecl<ArrayType<*, *>>, Expr<*>> = LinkedHashMap()
     if (memsafety)
-      when (parseContext.memoryModel) {
-        ArchitectureConfig.MemoryModelType.multi ->
+      when {
+        parseContext.memoryModel == ArchitectureConfig.MemoryModelType.multi ->
           ghosts[builder.parent.getPtrSizeVar()] = pointerType.nullValue
-        ArchitectureConfig.MemoryModelType.flat ->
+        parseContext.memoryModel.flatAddressing() ->
           listOfNotNull(
               builder.parent.getPtrSizeVar(),
               builder.parent.getObjExtentVar(),
