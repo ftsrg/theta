@@ -30,6 +30,8 @@ import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 
+private const val CHUNK_SIZE = 4096
+
 class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Boolean = false) :
   OcChecker<E>() {
   override val solver: Solver = solverFactory.createSolver()
@@ -54,6 +56,13 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
 
   private var prepared = false
 
+  /**
+   * Whether all clocks are asserted to differ. A refutation holds without that, so it is added only
+   * for a race condition, which compares neighbouring clock values, or to make a model an
+   * execution.
+   */
+  private var allDistinct = false
+
   private lateinit var hbVars: Array<Array<ConstDecl<BoolType>?>> // happens-before variables
 
   // kept across checks: a solver refuses a second declaration of the same name
@@ -77,13 +86,34 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   /** Whether the atomic units of [e1] and [e2] are at neighbouring clock values. */
   override fun raceCondition(e1: E, e2: E): Expr<BoolType> {
     check(isSc && e1.clkId != e2.clkId)
+    if (!allDistinct) {
+      allDistinct = true
+      if (prepared) {
+        addNeq(clkGlobalVars.values)
+        flush()
+      }
+    }
     val clk1 = e1.clkId.clkGlobalVar.ref
     val clk2 = e2.clkId.clkGlobalVar.ref
     return Or(Eq(Inc(clk1), clk2), Eq(Inc(clk2), clk1))
   }
 
+  // asserted in chunks: a solver call per ordering constraint dominates the encoding time
+  private val pending = mutableListOf<Expr<BoolType>>()
+
+  private fun add(expr: Expr<BoolType>) {
+    pending.add(expr)
+    if (pending.size >= CHUNK_SIZE) flush()
+  }
+
+  private fun flush() {
+    if (pending.isEmpty()) return
+    solver.add(if (pending.size == 1) pending.first() else And(pending.toList()))
+    pending.clear()
+  }
+
   private fun addImpl(cond: Expr<BoolType>?, expr: Expr<BoolType>) =
-    cond?.let { solver.add(Imply(it, expr)) } ?: solver.add(expr)
+    add(cond?.let { Imply(it, expr) } ?: expr)
 
   private fun addLt(cond: Expr<BoolType>?, clk1: Int, clk2: Int) {
     check(clk1 != clk2)
@@ -107,12 +137,9 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
   }
 
   private fun addNeq(clkVars: Collection<ConstDecl<IntType>>) {
-    clkVars.forEach { v1 ->
-      clkVars.forEach { v2 ->
-        if (v1 != v2) {
-          solver.add(Neq(v1.ref, v2.ref))
-        }
-      }
+    val vars = clkVars.toList()
+    for ((index, v1) in vars.withIndex()) {
+      for (v2 in vars.subList(index + 1, vars.size)) add(Neq(v1.ref, v2.ref))
     }
   }
 
@@ -149,10 +176,14 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     this.events = events.values.flatMap { it.values }.flatten()
     hbVars = Array(Event.clkSize) { arrayOfNulls(Event.clkSize) }
 
-    // PPO
-    ppos.forEachPair { i, j, enabled ->
-      if (enabled) {
-        addHb(null, i, j)
+    // PPO: under SC the clocks are integers, so the program order edges imply their closure
+    if (isSc) {
+      pos.forEach { if (it.from.clkId != it.to.clkId) addLt(null, it.from.clkId, it.to.clkId) }
+    } else {
+      ppos.forEachPair { i, j, enabled ->
+        if (enabled) {
+          addHb(null, i, j)
+        }
       }
     }
     pos.forEach {
@@ -180,11 +211,19 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
     // FR
     rfs.forEach { (v, vRfs) ->
       val writes = events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }
+      val rfsFrom = vRfs.groupBy { it.from }
       writes?.forEach { w1 ->
         writes.forEach { w2 ->
-          if (w1 != w2) {
-            vRfs.forEach { rf ->
-              if (w1 == rf.from && rf.to.potentialSameMemory(w2)) {
+          // a read from w1 is of the cell of w1, which w2 may never write; w2 before w1 is no ws
+          if (
+            w1 != w2 &&
+              w1.potentialSameMemory(w2) &&
+              (w1.clkId == w2.clkId || !ppos[w2.clkId, w1.clkId])
+          ) {
+            rfsFrom[w1]?.forEach { rf ->
+              val r = rf.to
+              // nothing to enforce when the read is before w2 anyway
+              if (r.potentialSameMemory(w2) && (r.clkId == w2.clkId || !ppos[r.clkId, w2.clkId])) {
                 val wsExpr =
                   And(
                     w1.guardExpr,
@@ -220,8 +259,29 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
       }
     }
 
-    addNeq(clkGlobalVars.values)
+    if (allDistinct) addNeq(clkGlobalVars.values)
     addNeq(clkAtomicVars.values)
+    flush()
+  }
+
+  override fun distinctModel(): SolverStatus? {
+    while (!allDistinct) {
+      val model = solver.model.toMap()
+      val clocks = clkGlobalVars.values
+      if (clocks.any { it !in model }) {
+        allDistinct = true
+        addNeq(clocks)
+      } else {
+        val tied = clocks.groupBy { model[it] }.values.filter { it.size > 1 }
+        if (tied.isEmpty()) return SolverStatus.SAT
+        tied.forEach { addNeq(it) }
+      }
+      flush()
+      val status =
+        assumption?.let { (solver as AssumingSolver).checkAssuming(it) } ?: solver.check()
+      if (status?.isSat != true) return status
+    }
+    return SolverStatus.SAT
   }
 
   override fun getHappensBefore(): GlobalRelation {

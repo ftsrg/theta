@@ -97,6 +97,12 @@ interface IOcChecker<E : Event> {
 abstract class OcChecker<E : Event> : IOcChecker<E> {
   override var assumption: Expr<BoolType>? = null
 
+  /**
+   * Called on a satisfiable check: completes the constraints an encoding left out as unnecessary
+   * for a refutation, and returns the status under them, with a model that is an execution.
+   */
+  open fun distinctModel(): SolverStatus? = SolverStatus.SAT
+
   protected fun <E : Event> addWsCond(ws1: Relation<E>, ws2: Relation<E>) {
     val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
     val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }

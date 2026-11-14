@@ -58,6 +58,10 @@ import hu.bme.mit.theta.xcfa.utils.defaultValue
 import java.util.IdentityHashMap
 import kotlin.time.measureTime
 
+private const val MAX_AUTO_CONFLICT_RFS = 5000
+
+private const val ASSERTION_CHUNK_SIZE = 4096
+
 /**
  * Bounded OC checking; IDL under SC checks data races natively. With [maxExitQueries] != 0 (< 0: no
  * limit), only the cut points whose [unroll exits][UnrollCut] are reachable are unrolled deeper.
@@ -239,7 +243,11 @@ class XcfaOcChecker(
       logger.info(
         "Auto conflict time (ms): " +
           measureTime {
-              val conflicts = conflictFinder.findConflicts(eg.events, ppos, eg.rfs, logger)
+              // the lemmas are redundant hints, and the search is quadratic in the read-from
+              // candidates
+              val conflicts =
+                if (eg.rfs.values.sumOf { it.size } > MAX_AUTO_CONFLICT_RFS) listOf()
+                else conflictFinder.findConflicts(eg.events, ppos, eg.rfs, logger)
               lemmas.addAll(conflicts.map { Not(it.expr) })
               logger.info("Auto conflicts: ${conflicts.size}")
             }
@@ -249,7 +257,11 @@ class XcfaOcChecker(
 
       logger.mainStep("Start checking...")
       val status: SolverStatus?
-      val checkerTime = measureTime { status = solve(checker, Or(targets)) }
+      val checkerTime = measureTime {
+        // a violation has to be an execution, not only a model of the relaxed ordering constraints
+        status =
+          solve(checker, Or(targets)).let { if (it?.isSat == true) checker.distinctModel() else it }
+      }
       logger.info("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
       logger.info("Propagated clauses: ${checker.getPropagatedClauses().size}")
       checker.solver.statistics.let {
@@ -386,13 +398,32 @@ class XcfaOcChecker(
         }.also { values[expr] = it }
   }
 
-  private fun addToSolver(eg: XcfaToEventGraph.EventGraph, solver: Solver) {
+  /**
+   * Asserts constraints in chunks: a solver call per constraint dominates on large event graphs.
+   */
+  private class Assertions(private val solver: Solver) {
+    private val pending = mutableListOf<Expr<BoolType>>()
+
+    fun add(expr: Expr<BoolType>) {
+      pending.add(expr)
+      if (pending.size >= ASSERTION_CHUNK_SIZE) flush()
+    }
+
+    fun flush() {
+      if (pending.isEmpty()) return
+      solver.add(if (pending.size == 1) pending.first() else And(pending.toList()))
+      pending.clear()
+    }
+  }
+
+  private fun addToSolver(eg: XcfaToEventGraph.EventGraph, target: Solver) {
+    val solver = Assertions(target)
     // Value assignment
     eg.events.values
       .flatMap { it.values.flatten() }
       .filter { it.assignment != null }
       .forEach { event ->
-        if (event.guard.isEmpty()) solver.add(event.assignment)
+        if (event.guard.isEmpty()) solver.add(event.assignment!!)
         else solver.add(Imply(event.guardExpr, event.assignment))
       }
 
@@ -429,5 +460,6 @@ class XcfaOcChecker(
           solver.add(Imply(mustRead, Or(rels.map { it.declRef }))) // RF-Some
         }
     }
+    solver.flush()
   }
 }
