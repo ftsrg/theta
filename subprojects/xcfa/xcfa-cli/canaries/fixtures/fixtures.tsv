@@ -566,3 +566,4 @@ flat_pointer_past_object.c	efficient	LP64	UNSAFE:valid-memsafety	a pointer is bo
 flat_pointer_nondet_past_object.c	efficient	ILP32	UNSAFE:valid-memsafety	a symbolic index past a pointer's object is caught though it lands in the next one	flat
 flat_pointer_walk_in_bounds.c	efficient	LP64	SAFE:valid-memsafety	pointer arithmetic and copies inside one object are not flagged	flat
 flat_pointer_copy_use_after_free.c	efficient	ILP32	UNSAFE:valid-memsafety	a copy of a freed pointer keeps its object, so using it is caught	flat
+memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a struct of another cell layout is not walked by the destination's cells
