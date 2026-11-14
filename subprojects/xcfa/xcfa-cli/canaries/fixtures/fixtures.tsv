@@ -575,3 +575,5 @@ flat_pointer_nondet_past_object.c	efficient	ILP32	UNSAFE:valid-memsafety	a symbo
 flat_pointer_walk_in_bounds.c	efficient	LP64	SAFE:valid-memsafety	pointer arithmetic and copies inside one object are not flagged	flat
 flat_pointer_copy_use_after_free.c	efficient	ILP32	UNSAFE:valid-memsafety	a copy of a freed pointer keeps its object, so using it is caught	flat
 memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a struct of another cell layout is not walked by the destination's cells
+pointer_param_end_bound.c	efficient	LP64	SAFE	a pointer parameter compared with a walked pointer keeps the offset its caller binds (one past the end)
+pointer_param_end_bound_bug.c	efficient	LP64	UNSAFE	a walk up to a one-past-the-end parameter still sees every element
