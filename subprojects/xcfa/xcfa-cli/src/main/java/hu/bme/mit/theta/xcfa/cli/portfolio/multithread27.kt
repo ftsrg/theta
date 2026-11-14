@@ -54,6 +54,51 @@ private val anythingButTimeout =
   )
 
 /**
+ * Skips the nodes that a memory model pinned by a frontend fallback turned into a copy of the next
+ * node, which would only repeat its run, and returns the start node. After any error, the earlier
+ * copy goes, as the later one has at least its time; after a failure other than a timeout, the
+ * later one goes, as it would fail the same way.
+ */
+private fun skipCopies(start: Node, edges: MutableSet<Edge>): Node {
+  fun timeout(node: Node) = (node as ConfigNode).config.backendConfig.timeoutMs
+  fun redundant(edge: Edge): Boolean {
+    val (from, to) = edge.source to edge.target
+    if (from !is ConfigNode || to !is ConfigNode || from.name != to.name) return false
+    if (from.config.frontendConfig.ptrSizeInMemory != to.config.frontendConfig.ptrSizeInMemory)
+      return false
+    return edge.trigger === anythingButTimeout ||
+      (edge.trigger === anyError && (timeout(to) == 0L || timeout(to) >= timeout(from)))
+  }
+  // rebuilt in order, as the first matching edge is taken
+  fun retarget(edge: Edge, target: Node?) {
+    val out = edge.source.outEdges.toList()
+    edge.source.outEdges.clear()
+    edges.remove(edge)
+    out.forEach {
+      if (it !== edge) it.source.outEdges.add(it)
+      else if (target != null) edges.add(Edge(it.source, target, it.trigger, it.guard))
+    }
+  }
+  var initial = start
+  while (true) {
+    val copy = edges.firstOrNull(::redundant) ?: return initial
+    if (copy.trigger === anythingButTimeout) {
+      val next =
+        copy.target.outEdges.firstOrNull {
+          it.trigger === anythingButTimeout || it.trigger === anyError
+        }
+      retarget(copy, next?.target)
+    } else {
+      val skipped = copy.source
+      edges.filter { it.target === skipped }.forEach { retarget(it, copy.target) }
+      if (initial === skipped) initial = copy.target
+      edges.removeAll(skipped.outEdges)
+      skipped.outEdges.clear()
+    }
+  }
+}
+
+/**
  * The SV-COMP 2027 multithreaded portfolio. It differs from [multithreadPortfolio] in its OC
  * configurations, chosen on the ConcurrencySafety category: OC time slices lead the reachability,
  * data race and overflow chains.
@@ -476,7 +521,7 @@ fun multithreadPortfolio27(
         }
       }
 
-    return STM(startNode, edges)
+    return STM(skipCopies(startNode, edges), edges)
   }
 
   logger.benchmark("Using portfolio: MULTITHREAD27\n")
