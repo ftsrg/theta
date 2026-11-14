@@ -562,3 +562,11 @@ index_side_effects.c	efficient	LP64	SAFE	assignment and comma operators in an ar
 ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or a case label selects by its guard
 address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken global union spans the cells its initialization writes
 address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
+calloc_bool_bytes.c	bitvector	ILP32	SAFE	a _Bool cell is its byte under bytes, so calloc's zero fill and a char view reach it	bytes
+main_argv_memsafety.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	memory safety of a main that reads argv is refused: nothing allocates what argv points to
+race_index_from_unknown_call.c	efficient	ILP32	UNKNOWN:no-data-race	a race whose address needs an over-approximated library value is not reported
+pthread_join_runtime_handle.c	efficient	ILP32	SAFE	with a variable handle index the handles hold thread ids, and a join waits for the thread its handle holds
+pthread_join_runtime_handle_unsafe.c	efficient	ILP32	UNSAFE	planted bug: with handles that hold thread ids, a thread left unjoined may write after the check
+split_pointer_from_load.c	efficient	LP64	SAFE	a split pointer assigned a pointer loaded from memory, or LP64's (void *)0, starts at offset 0	multi
+split_pointer_from_load_unsafe.c	efficient	LP64	UNSAFE	planted bug: a split pointer loaded from memory reaches the element it names	multi
+struct_first_member_view.c	efficient	ILP32	SAFE	a struct whose first member is a separate object is not viewed through a pointer to that member under the cell models

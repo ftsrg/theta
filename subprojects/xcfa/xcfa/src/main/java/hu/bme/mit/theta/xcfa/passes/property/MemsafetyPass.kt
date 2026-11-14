@@ -41,8 +41,10 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.FlatAddressSpace
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.model.declaration.FunctionIds
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -52,6 +54,7 @@ import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
 import hu.bme.mit.theta.xcfa.passes.splitIf
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
+import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.ensureMallocVar
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -105,6 +108,7 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     annotateDeref(builder)
 
     if (builder in builder.parent.getInitProcedures().map { it.first }) {
+      refuseEnvironmentPointers(builder)
       annotateLost(builder)
     }
 
@@ -113,6 +117,27 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   }
 
   private val pointerType = CPointer(null, null, parseContext)
+
+  /**
+   * The entry point's pointer parameters (`argv`) come from the environment, but nothing allocates
+   * the memory they point to, so every access through them would be reported invalid.
+   */
+  private fun refuseEnvironmentPointers(builder: XcfaProcedureBuilder) {
+    val read =
+      builder
+        .getParams()
+        .filter { (param, direction) ->
+          val type = CComplexType.getType(param.ref, parseContext)
+          direction != ParamDirection.OUT && (type is CPointer || type is CArray)
+        }
+        .firstOrNull { (param, _) -> builder.getEdges().any { param in it.label.collectVars() } }
+    if (read != null) {
+      throw UnsupportedFrontendElementException(
+        "Memory safety of an entry point that reads its pointer parameter ${read.first.name}"
+      )
+    }
+  }
+
   val fitsall = Fitsall(null, parseContext)
 
   private fun breakUpErrors(builder: XcfaProcedureBuilder) {

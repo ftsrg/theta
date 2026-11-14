@@ -121,7 +121,8 @@ public class ParseContext {
     private final Set<BigInteger> staticUnions = new LinkedHashSet<>();
 
     private final FlatAddressSpace flatAddressSpace = new FlatAddressSpace();
-    private final Set<Expr<?>> ghostMemoryBases = new LinkedHashSet<>();
+    // ghost memory base -> the value of its cells that nothing wrote
+    private final Map<Expr<?>, Expr<?>> ghostMemoryBases = new LinkedHashMap<>();
 
     // Members accessed anywhere in the program, keyed by their (structurally compared) type.
     private final Map<CStruct, Set<String>> accessedMembers = new LinkedHashMap<>();
@@ -296,13 +297,15 @@ public class ParseContext {
         return flatAddressSpace;
     }
 
-    public void registerGhostMemoryBase(Expr<?> base) {
-        ghostMemoryBases.add(base);
+    public void registerGhostMemoryBase(Expr<?> base, Expr<?> unwritten) {
+        ghostMemoryBases.put(base, unwritten);
     }
 
-    /** Whether this base holds ghost cells whose unwritten values are zero. */
-    public boolean isGhostMemoryBase(Expr<?> base) {
-        return ghostMemoryBases.contains(base);
+    /**
+     * The value of the ghost cells at this base that nothing wrote; null if it is no ghost base.
+     */
+    public Expr<?> getGhostMemoryInitialValue(Expr<?> base) {
+        return ghostMemoryBases.get(base);
     }
 
     /** Records that every cell of the object at base id [base] is `_Atomic`. */

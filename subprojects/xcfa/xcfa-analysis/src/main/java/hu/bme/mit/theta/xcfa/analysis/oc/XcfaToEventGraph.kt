@@ -453,6 +453,8 @@ internal class XcfaToEventGraph(
       e.raceCandidate =
         property == DATA_RACE &&
           !inLibraryCall &&
+          // a ghost cell is no program memory
+          parseContext.getGhostMemoryInitialValue(deref.array) == null &&
           // an address that cannot be resolved is not known to be atomic: keep it as a candidate
           runCatching { !deref.addressesAtomicData(xcfa.globalVars, parseContext) }
             .getOrDefault(true)

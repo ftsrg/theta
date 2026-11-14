@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.AssumingSolver;
+import hu.bme.mit.theta.solver.InterruptibleSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
@@ -45,6 +46,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.java_smt.api.BasicProverEnvironment;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.Formula;
@@ -53,7 +55,7 @@ import org.sosy_lab.java_smt.api.Model.ValueAssignment;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverException;
 
-final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
+final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver, InterruptibleSolver {
 
     private final JavaSMTSymbolTable symbolTable;
     private final JavaSMTTransformationManager transformationManager;
@@ -61,6 +63,9 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
 
     private final SolverContext context;
     private final BasicProverEnvironment solver;
+
+    /** The shutdown manager of {@code context} alone. */
+    private final ShutdownManager interrupter;
 
     private final Stack<Expr<BoolType>> assertions;
 
@@ -75,12 +80,14 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
             final JavaSMTTransformationManager transformationManager,
             final JavaSMTTermTransformer termTransformer,
             final SolverContext context,
-            final BasicProverEnvironment solver) {
+            final BasicProverEnvironment solver,
+            final ShutdownManager interrupter) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.context = context;
         this.solver = solver;
+        this.interrupter = interrupter;
 
         assertions = new StackImpl<>();
         assumptions = CollectionUtil.createMap();
@@ -147,6 +154,7 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
         final BooleanFormula term = (BooleanFormula) transformationManager.toTerm(assumption);
         try {
             clearState();
+            interrupter.getNotifier().shutdownIfNecessary();
             final boolean unsat = solver.isUnsatWithAssumptions(List.of(term));
             status = unsat ? SolverStatus.UNSAT : SolverStatus.SAT;
             return status;
@@ -156,8 +164,15 @@ final class JavaSMTSolver implements UCSolver, Solver, AssumingSolver {
     }
 
     @Override
+    public void interrupt() {
+        interrupter.requestShutdown("interrupted");
+    }
+
+    @Override
     public SolverStatus check() {
         try {
+            // not every backend checks for an interrupt that came before the check
+            interrupter.getNotifier().shutdownIfNecessary();
             final boolean unsat = solver.isUnsat();
             status = unsat ? SolverStatus.UNSAT : SolverStatus.SAT;
             return status;

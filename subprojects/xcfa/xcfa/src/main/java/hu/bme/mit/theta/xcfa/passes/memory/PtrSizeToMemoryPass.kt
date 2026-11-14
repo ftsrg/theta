@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -52,20 +53,27 @@ import java.math.BigInteger
  * Stores the memsafety ghost arrays in memory, which lets solvers without arrays check memory
  * safety. Under multi, `size[k]` is the cell at offset `k` of the null object, which no checked
  * access can reach; under flat, where all program memory has base 0, each array gets a base of its
- * own.
+ * own. Under flat, the ownership arrays of mutexes at symbolic addresses
+ * ([XcfaBuilder.mutexArrays]) can be stored there too.
  *
- * A cell nothing wrote reads 0, the arrays' default; the OC encoding is what provides that (see
- * [ParseContext.isGhostMemoryBase]), so this pass is for that backend only.
+ * A cell nothing wrote reads its array's initial value; the OC encoding is what provides that (see
+ * [ParseContext.getGhostMemoryInitialValue]), so this pass is for that backend only.
  *
  * Under flat, constant writes to static addresses on the entry path of the init procedure describe
  * static objects, which later code only overwrites on a path that has already failed the check.
  * They become a table in the reads, as each would otherwise be a read-from candidate of every
- * symbolic read.
+ * symbolic read. This holds for the memsafety ghosts only.
  */
 class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePass {
 
   companion object {
     var enabled = false
+
+    /**
+     * Whether the mutex ownership arrays go to memory under flat: as arrays, their initial values
+     * are constant arrays, which Yices refuses, and every write is a candidate of every read.
+     */
+    var mutexesEnabled = false
     private const val CENSUS_KEY = "ghostArrayCensus"
   }
 
@@ -79,6 +87,9 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
   )
 
   private lateinit var census: Census
+
+  /** The value of each ghost's cells that nothing wrote. */
+  private lateinit var initialValues: Map<VarDecl<ArrayType<*, *>>, Expr<*>>
 
   private fun takeCensus(xcfa: XcfaBuilder, ghosts: Set<VarDecl<ArrayType<*, *>>>): Census {
     val found = ghosts.associateWith { mutableMapOf<LitExpr<*>, LitExpr<*>>() }
@@ -142,25 +153,41 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
       else -> null
     }
 
+  @Suppress("UNCHECKED_CAST")
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!enabled || !parseContext.isCheckMemsafety) return builder
-    val ghosts: Map<VarDecl<ArrayType<*, *>>, Expr<*>> =
+    val memsafety = enabled && parseContext.isCheckMemsafety
+    val mutexes =
+      if (mutexesEnabled && parseContext.memoryModel == ArchitectureConfig.MemoryModelType.flat)
+        builder.parent.mutexArrays
+      else emptyMap()
+    if (!memsafety && mutexes.isEmpty()) return builder
+    val ghosts: MutableMap<VarDecl<ArrayType<*, *>>, Expr<*>> = LinkedHashMap()
+    if (memsafety)
       when (parseContext.memoryModel) {
         ArchitectureConfig.MemoryModelType.multi ->
-          mapOf(builder.parent.getPtrSizeVar() to pointerType.nullValue)
+          ghosts[builder.parent.getPtrSizeVar()] = pointerType.nullValue
         ArchitectureConfig.MemoryModelType.flat ->
           listOfNotNull(
               builder.parent.getPtrSizeVar(),
               builder.parent.getObjExtentVar(),
               builder.parent.getObjHeapVar(),
             )
-            .withIndex()
-            .associate { (i, ghost) -> ghost to pointerType.getValue("${i + 1}") }
+            .forEach { ghosts[it] = pointerType.getValue("${ghosts.size + 1}") }
         else -> error("The memsafety ghosts cannot be stored in memory under this memory model")
       }
-    ghosts.values.forEach(parseContext::registerGhostMemoryBase)
+    val sizeGhosts = ghosts.keys.toSet()
+    mutexes.keys.forEach {
+      ghosts[it as VarDecl<ArrayType<*, *>>] = pointerType.getValue("${ghosts.size + 1}")
+    }
+    initialValues =
+      ghosts.keys.associateWith { ghost: VarDecl<ArrayType<*, *>> ->
+        mutexes[ghost] ?: ghost.type.elemType.defaultValue
+      }
+    ghosts.forEach { (ghost, base) ->
+      parseContext.registerGhostMemoryBase(base, initialValues.getValue(ghost))
+    }
     census =
-      builder.parent.metaData.getOrPut(CENSUS_KEY) { takeCensus(builder.parent, ghosts.keys) }
+      builder.parent.metaData.getOrPut(CENSUS_KEY) { takeCensus(builder.parent, sizeGhosts) }
         as Census
     builder.getEdges().toList().forEach { edge ->
       builder.removeEdge(edge)
@@ -200,7 +227,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
     when (this) {
       is AssumeStmt -> AssumeStmt.of(cast(cond.rewrite(ghosts), cond.type))
       is AssignStmt<*> -> {
-        check(varDecl.type !is ArrayType<*, *>) { "Unsupported assignment of $varDecl" }
+        check(varDecl !in ghosts.keys) { "Unsupported assignment of $varDecl" }
         AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.rewrite(ghosts), varDecl.type))
       }
       is MemoryAssignStmt<*, *, *> ->
@@ -213,7 +240,12 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
         this
       }
       is SkipStmt -> this
-      else -> error("Unsupported statement next to the ghosts: $this")
+      else ->
+        this.also {
+          check(StmtUtils.getVars(it).none { v -> v in ghosts.keys }) {
+            "Unsupported statement next to the ghosts: $it"
+          }
+        }
     }
 
   /** The simplifier may have folded the array's current value into [this]: it can be a literal. */
@@ -224,7 +256,7 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
     when {
       this == ghost.ref -> listOf()
       this is ArrayLitExpr<*, *> -> {
-        check(elseElem == ghost.type.elemType.defaultValue) { "Unsupported value of $ghost: $this" }
+        check(elseElem == initialValues.getValue(ghost)) { "Unsupported value of $ghost: $this" }
         elements.map { entry ->
           MemoryAssignStmt.of(
             cell(ghost, ghosts, entry.get1()),
@@ -249,16 +281,20 @@ class PtrSizeToMemoryPass(private val parseContext: ParseContext) : ProcedurePas
           Ite<Type>(Eq(at, entry.get1()), entry.get2(), rest)
         }
       }
-      val ghost = ghosts.keys.find { it.ref == array } ?: error("Unsupported array read: $this")
-      val at = index.rewrite(ghosts)
-      val rest: Expr<*> =
-        if (ghost in census.dynamicWrites) cell(ghost, ghosts, at)
-        else ghost.type.elemType.defaultValue
-      return census.tables.getValue(ghost).entries.fold(rest) { other, (key, value) ->
-        Ite<Type>(Eq(at, key), value, other)
+      val ghost = ghosts.keys.find { it.ref == array }
+      if (ghost != null) {
+        val at = index.rewrite(ghosts)
+        val table = census.tables[ghost] ?: return cell(ghost, ghosts, at)
+        val rest: Expr<*> =
+          if (ghost in census.dynamicWrites) cell(ghost, ghosts, at)
+          else initialValues.getValue(ghost)
+        return table.entries.fold(rest) { other, (key, value) ->
+          Ite<Type>(Eq(at, key), value, other)
+        }
       }
     }
-    check(type !is ArrayType<*, *>) { "Unsupported array term: $this" }
+    // other arrays stay whole variables
+    check(ghosts.keys.none { it.ref == this }) { "Unsupported use of a ghost array: $this" }
     return if (ops.isEmpty()) this else map { it.rewrite(ghosts) }
   }
 
