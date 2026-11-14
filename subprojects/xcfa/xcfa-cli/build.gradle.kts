@@ -232,6 +232,8 @@ canaryTest { dependsOn(fixtureTest) }
 
 // Keep the long sweeps out of the ordinary test task.
 tasks.named<Test>("test") {
+    // native solver memory outlives the tests that used it: a JVM per class keeps it bounded
+    forkEvery = 1
     filter {
         excludeTestsMatching("*CanarySuiteTest*")
         excludeTestsMatching("*FixtureSuiteTest*")
