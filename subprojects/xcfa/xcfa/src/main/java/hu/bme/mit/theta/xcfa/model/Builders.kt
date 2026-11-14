@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
@@ -58,6 +59,12 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
 
   /** The format variable of each marker id of [hu.bme.mit.theta.xcfa.passes.FormatAccessPass]. */
   val formatMarkers: MutableMap<Int, VarDecl<*>> = LinkedHashMap()
+
+  /**
+   * The ownership arrays of [hu.bme.mit.theta.xcfa.passes.concurrency.SymbolicMutexPass] whose
+   * elements are not arrays, each with the value of its cells that nothing wrote.
+   */
+  val mutexArrays: MutableMap<VarDecl<*>, LitExpr<*>> = LinkedHashMap()
 
   fun getVars(): Set<XcfaGlobalVar> = vars
 

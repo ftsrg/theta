@@ -43,6 +43,7 @@ import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
@@ -84,15 +85,26 @@ import java.math.BigInteger
  * [SYNC_VAR_METADATA_KEY] metadata flag. Theta models such non-scalar objects as plain integers, so
  * their valuations (e.g. `m == 0`) are not legal C expressions over the original program; consumers
  * that emit C-expression constraints (e.g. violation witnesses) use this flag to exclude them.
+ *
+ * A thread handle is normally an identity key resolved statically ([getParam]). When some
+ * `pthread_create`/`pthread_join` handle has no static identity (`&t[i]` in a loop that cannot be
+ * unrolled) and [runtimeThreadHandles] is set, every handle of the program holds its thread's id
+ * instead: a start writes a fresh id into `*thread`, the thread sets its [THREAD_DONE] flag on exit
+ * ([ThreadResultPass]), and a join waits for the flag of the id its handle holds.
  */
 class CLibraryFunctionsPass(
   val parseContext: ParseContext,
   /** Model `strlen` exactly; off where the loop's unbounded memory could look like divergence. */
   private val modelStringLength: Boolean = false,
+  /** Allow thread ids kept in the handles; needs [ThreadResultPass] later in the pipeline. */
+  private val runtimeThreadHandles: Boolean = false,
 ) : ProcedurePass {
 
   /** The procedures that the program defines; a call to one of them is not a library call. */
   private var defined: Set<String> = emptySet()
+
+  /** Whether the thread handles of this model hold thread ids (see the class documentation). */
+  private var runtimeHandles = false
 
   /** The model that [bufferStubCalled] was computed for. */
   private var scanned: XcfaBuilder? = null
@@ -161,6 +173,8 @@ class CLibraryFunctionsPass(
     const val THREAD_NEXT_RESULT_ID = "__theta_thread_next_result_id"
     /** Prefix of the variable that holds the result id of the thread last started on a handle. */
     const val THREAD_RESULT_ID_PREFIX = "__theta_thread_result_id_"
+    /** `_Atomic` global flagging, by result id, the threads that have exited (runtime handles). */
+    const val THREAD_DONE = "__theta_thread_done"
 
     private var uniqueCounter = 0
 
@@ -219,6 +233,20 @@ class CLibraryFunctionsPass(
           }
         }
     }
+    // Every procedure has its own instance of this pass; the flag global makes them agree.
+    runtimeHandles =
+      runtimeThreadHandles &&
+        (builder.parent.getVars().any { it.wrappedVar.name == THREAD_DONE } ||
+          builder.parent.getProcedures().any { procedure ->
+            procedure.getEdges().any { edge ->
+              edge.getFlatLabels().any {
+                it is InvokeLabel &&
+                  (it.name == "pthread_create" || it.name == "pthread_join") &&
+                  !it.hasStaticHandle()
+              }
+            }
+          })
+    if (runtimeHandles) threadDone(builder)
     val atomicLocations = getAtomicBlockInnerLocations(builder).toSet()
     for (edge in ArrayList(builder.getEdges())) {
       val edges = edge.splitIf(this::predicate)
@@ -389,43 +417,54 @@ class CLibraryFunctionsPass(
               }
 
               "pthread_join" -> {
-                val handle = invokeLabel.getParam(1)
+                val wait: List<XcfaLabel>
+                val joinedId: () -> VarDecl<*>
+                if (runtimeHandles) {
+                  val id = idVar(builder, "join")
+                  joinedId = { id }
+                  val held = CComplexType.getSignedInt(parseContext).castTo(invokeLabel.params[1])
+                  val exited = cast(read(threadDone(builder), id.ref), Bool())
+                  wait =
+                    listOf(
+                      AssignStmtLabel(id, held, metadata),
+                      StmtLabel(Assume(exited), metadata = metadata),
+                    )
+                } else {
+                  val handle = invokeLabel.getParam(1)
+                  joinedId = { resultIdVar(builder, invokeLabel.params[1], handle) }
+                  wait = listOf(JoinLabel(handle, metadata))
+                }
                 val retval = invokeLabel.params.getOrNull(2)?.takeUnless { it.isNullPointer() }
                 // The joined thread is finished, so its slot is final: a plain read suffices.
                 val storeResult =
                   retval?.let {
                     val results = threadResults(builder, it.type)
-                    val id = resultIdVar(builder, invokeLabel.params[1], handle)
                     val offset = CComplexType.getSignedLong(parseContext).nullValue
                     StmtLabel(
                       MemoryAssignStmt.of(
                         Dereference.of(it, offset, it.type),
-                        cast(
-                          Read(
-                            cast(results.ref, results.type as ArrayType<Type, Type>),
-                            cast(id.ref, resultIdType),
-                          ),
-                          it.type,
-                        ),
+                        cast(read(results, joinedId().ref), it.type),
                       ),
                       metadata = metadata,
                     )
                   }
                 addSeq(
-                  listOfNotNull(
-                    JoinLabel(handle, metadata),
-                    storeResult,
-                    AssignStmtLabel(
-                      invokeLabel.params[0] as RefExpr<*>,
-                      zeroOf(invokeLabel.params[0]),
-                      metadata,
-                    ),
-                  )
+                  wait +
+                    listOfNotNull(
+                      storeResult,
+                      AssignStmtLabel(
+                        invokeLabel.params[0] as RefExpr<*>,
+                        zeroOf(invokeLabel.params[0]),
+                        metadata,
+                      ),
+                    )
                 )
               }
 
               "pthread_create" -> {
-                val handle = invokeLabel.getParam(1)
+                // with runtime handles, the start's own handle only names the new thread
+                val handle =
+                  if (runtimeHandles) idVar(builder, "start") else invokeLabel.getParam(1)
                 val funcptr = invokeLabel.getParam(3)
                 val startRoutine =
                   checkNotNull(builder.parent.getProcedures().find { it.name == funcptr.name }) {
@@ -439,26 +478,41 @@ class CLibraryFunctionsPass(
                     CComplexType.getType(it.ref, parseContext).castTo(invokeLabel.params[4])
                   } ?: invokeLabel.params[4]
                 // A thread whose result may be joined gets a fresh result id as an extra argument;
-                // ThreadResultPass makes its start routine store the result under it.
+                // ThreadResultPass makes its start routine store the result under it. With runtime
+                // handles every thread gets one, held by its handle and flagged when it exits.
                 val resultId =
-                  if (threadResultsUsed(builder)) {
-                    val id = resultIdVar(builder, invokeLabel.params[1], handle)
+                  if (runtimeHandles || threadResultsUsed(builder)) {
+                    val id =
+                      if (runtimeHandles) null
+                      else resultIdVar(builder, invokeLabel.params[1], handle)
                     val next = nextResultId(builder)
                     // Passed through a local: start labels must not read atomic globals.
                     val arg =
                       Decls.Var("${THREAD_RESULT_ID_PREFIX}arg_${uniqueCounter++}", resultIdType)
                         .also(builder::addVar)
-                    atomically(
-                      listOf(
-                        AssignStmtLabel(arg, next.ref, metadata),
-                        AssignStmtLabel(id, next.ref, metadata),
-                        AssignStmtLabel(
-                          next,
-                          Add(listOf(next.ref, next.type.integerOf(1))),
-                          metadata,
-                        ),
+                    val record =
+                      if (id != null) AssignStmtLabel(id, next.ref, metadata)
+                      else {
+                        // OC takes no initial value of a global, so the flag is cleared here
+                        val done = threadDone(builder)
+                        AssignStmtLabel(done, write(done, next.ref, Bool(false)), metadata)
+                      }
+                    val start =
+                      atomically(
+                        listOf(
+                          AssignStmtLabel(arg, next.ref, metadata),
+                          record,
+                          AssignStmtLabel(
+                            next,
+                            Add(listOf(next.ref, next.type.integerOf(1))),
+                            metadata,
+                          ),
+                        )
                       )
-                    ) to arg
+                    val held =
+                      if (runtimeHandles) listOf(storeHandle(invokeLabel.params[1], arg, metadata))
+                      else emptyList()
+                    start + held to arg
                   } else null
                 // int(0) to solve StartLabel not handling return params
                 addSeq(
@@ -951,6 +1005,78 @@ class CLibraryFunctionsPass(
 
   private fun nextResultId(builder: XcfaProcedureBuilder): VarDecl<*> =
     atomicGlobal(builder, THREAD_NEXT_RESULT_ID, resultIdType)
+
+  private fun threadDone(builder: XcfaProcedureBuilder): VarDecl<*> =
+    atomicGlobal(builder, THREAD_DONE, ArrayType.of(resultIdType, Bool()))
+
+  /** A local holding a thread id, with the C type the id has. */
+  private fun idVar(builder: XcfaProcedureBuilder, kind: String): VarDecl<*> =
+    Decls.Var("__theta_thread_${kind}_id_${uniqueCounter++}", resultIdType).also {
+      builder.addVar(it)
+      parseContext.metadata.create(it.ref, "cType", CComplexType.getSignedInt(parseContext))
+    }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun read(array: VarDecl<*>, index: Expr<*>): Expr<*> =
+    Read(cast(array.ref, array.type as ArrayType<Type, Type>), cast(index, resultIdType))
+
+  @Suppress("UNCHECKED_CAST")
+  private fun write(array: VarDecl<*>, index: Expr<*>, value: Expr<*>): Expr<*> {
+    val type = array.type as ArrayType<Type, Type>
+    return Write(cast(array.ref, type), cast(index, resultIdType), cast(value, type.elemType))
+  }
+
+  /**
+   * `*thread = id` for the `pthread_t *thread` argument [ptr] of a start: `&x`, `&t[i]`, a pointer
+   * variable `p` or `p + i`.
+   */
+  private fun storeHandle(ptr: Expr<*>, id: VarDecl<*>, metadata: MetaData): XcfaLabel {
+    val unsupported = { error("Unsupported pthread_create handle: $ptr") }
+    val element = { base: Expr<*>, offset: Expr<*> ->
+      val pointee =
+        (CComplexType.getType(ptr, parseContext) as? CPointer)?.embeddedType ?: unsupported()
+      Dereference(cast(base, ptr.type), cast(offset, ptr.type), pointee.smtType).also {
+        parseContext.metadata.create(it, "cType", pointee)
+      }
+    }
+    val target =
+      when (ptr) {
+        is Reference<*, *> -> ptr.expr
+        is RefExpr<*> -> element(ptr, CComplexType.getSignedLong(parseContext).nullValue)
+        // the pointer sum folded into the index, as a sum names no object under multi/flat
+        is AddExpr<*> -> {
+          val base =
+            ptr.ops.singleOrNull {
+              val type = CComplexType.getType(it, parseContext)
+              type is CPointer || type is CArray
+            }
+          if (base !is RefExpr<*>) unsupported()
+          val rest = ptr.ops - base
+          element(base, if (rest.size == 1) rest.single() else Add(rest))
+        }
+        else -> unsupported()
+      }
+    if (target !is RefExpr<*> && target !is Dereference<*, *, *>) unsupported()
+    parseContext.metadata.create(id.ref, "cType", CComplexType.getSignedInt(parseContext))
+    val value = CComplexType.getType(target, parseContext).castTo(id.ref)
+    return AssignStmtLabel(target, value, metadata)
+  }
+
+  /** Whether [getParam] names this call's handle (`params[1]`) by a variable. */
+  private fun InvokeLabel.hasStaticHandle(): Boolean {
+    var param = params.getOrNull(1) ?: return true
+    while (param is Reference<*, *>) param = param.expr
+    return when (param) {
+      is RefExpr<*> -> true
+      is Dereference<*, *, *> -> param.array is RefExpr<*> && param.offset.asConstant() != null
+      is AddExpr<*> -> {
+        var base = param.ops.filter { it.asConstant() == null }.singleOrNull()
+        while (base is PosExpr<*>) base = base.op
+        base is RefExpr<*>
+      }
+      else -> false
+    }
+  }
 
   /**
    * The variable holding the result id of the thread last started on [handle], in the scope of the

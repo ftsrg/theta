@@ -22,17 +22,20 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.MemoryModelType
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
 import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
 
 class XcfaOcCheckerTest {
@@ -151,10 +154,12 @@ class XcfaOcCheckerTest {
     maxExitQueries: Int = -1,
     forceUnrollBoundEnd: Int = -1,
     arithmetic: ArithmeticType = ArithmeticType.efficient,
+    memoryModel: MemoryModelType = MemoryModelType.multi,
   ): SafetyResult<*, *> {
     val stream = javaClass.getResourceAsStream(program)
     val parseContext = ParseContext()
     parseContext.arithmetic = arithmetic
+    parseContext.memoryModel = memoryModel
     // As the CLI runs the OC checker: without LBE, which would merge the atomic units races are
     // detected between.
     val lbeLevel = LbePass.defaultLevel
@@ -211,6 +216,42 @@ class XcfaOcCheckerTest {
         arithmetic = ArithmeticType.bitvector,
       )
     Assertions.assertTrue(result.isUnsafe)
+  }
+
+  /** The owners of mutexes on the heap are kept in an array, or under flat in ghost memory. */
+  @ParameterizedTest
+  @CsvSource(
+    "/40heap_mutex_norace.c,false,true",
+    "/40heap_mutex_norace.c,true,true",
+    "/41heap_mutex_race.c,false,false",
+    "/41heap_mutex_race.c,true,false",
+  )
+  fun testHeapMutexesUnderFlat(program: String, inMemory: Boolean, safe: Boolean) {
+    val property = XcfaProperty(ErrorDetection.DATA_RACE)
+    val enabled = PtrSizeToMemoryPass.mutexesEnabled
+    val result =
+      try {
+        PtrSizeToMemoryPass.mutexesEnabled = inMemory
+        check(program, property, OcDecisionProcedureType.IDL, memoryModel = MemoryModelType.flat)
+      } finally {
+        PtrSizeToMemoryPass.mutexesEnabled = enabled
+      }
+    Assertions.assertEquals(safe, result.isSafe)
+    Assertions.assertEquals(!safe, result.isUnsafe)
+  }
+
+  /** The value analysis evaluates a compare-and-swap by its branches. */
+  @ParameterizedTest
+  @CsvSource(
+    "/42cas_index_unsafe.c,flat,false",
+    "/42cas_index_unsafe.c,multi,false",
+    "/43cas_index_safe.c,flat,true",
+    "/43cas_index_safe.c,multi,true",
+  )
+  fun testCompareAndSwapAddress(program: String, memoryModel: MemoryModelType, safe: Boolean) {
+    val result = check(program, property, OcDecisionProcedureType.IDL, memoryModel = memoryModel)
+    Assertions.assertEquals(safe, result.isSafe)
+    Assertions.assertEquals(!safe, result.isUnsafe)
   }
 
   @Test

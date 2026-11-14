@@ -1091,6 +1091,7 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
             return castToUnion(struct, operand, operandType);
         }
         refuseResizingPointerCast(operandType, actualType);
+        refuseSubObjectView(operandType, actualType);
         Expr<?> expr = actualType.castTo(operand);
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
@@ -1178,6 +1179,44 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                     "Viewing a %s through a %s pointer is not supported."
                             .formatted(fromPointee.getTypeName(), toPointee.getTypeName()));
         }
+    }
+
+    /**
+     * Under the cell models a nested aggregate member is a separate object whose base sits in a
+     * cell of its parent, so viewing a struct whose first cell holds such a base through a pointer
+     * to another type (its first member, a scalar) reads the base instead of the member. Refused;
+     * the bytes model lays members out inline.
+     */
+    private void refuseSubObjectView(CComplexType from, CComplexType to) {
+        if (byteAddressed() || !(to instanceof CPointer toPtr) || toPtr.isFunctionPointer()) return;
+        final CComplexType fromPointee;
+        if (from instanceof CArray fromArray) fromPointee = fromArray.getEmbeddedType();
+        else if (from instanceof CPointer fromPtr && !fromPtr.isFunctionPointer())
+            fromPointee = fromPtr.getEmbeddedType();
+        else return;
+        final CComplexType toPointee = toPtr.getEmbeddedType();
+        if (fromPointee == null
+                || toPointee == null
+                || fromPointee instanceof CVoid
+                || toPointee instanceof CVoid
+                || fromPointee.equals(toPointee)) return;
+        if (startsWithSubObject(fromPointee) || startsWithSubObject(toPointee)) {
+            throw new RequiresByteAddressedMemoryException(
+                    "Viewing a struct whose first member is a separate object through a pointer"
+                            + " to another type is not supported.");
+        }
+    }
+
+    /** Whether cell 0 of a [type] object holds the base of a separate sub-object. */
+    private static boolean startsWithSubObject(CComplexType type) {
+        if (!(type instanceof CStruct struct) || struct.isUnion() || struct.getFields().isEmpty()) {
+            return false;
+        }
+        CComplexType first = struct.getFields().get(0).get2();
+        if (!struct.inlinesAggregates()) return first instanceof CStruct || first instanceof CArray;
+        // Laid out inline, only a union is a separate object.
+        while (first instanceof CArray array) first = array.getEmbeddedType();
+        return first instanceof CStruct inner && (inner.isUnion() || startsWithSubObject(inner));
     }
 
     private static boolean isScalarPointee(CComplexType type) {

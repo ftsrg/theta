@@ -108,6 +108,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     "--ptr-size-in-memory requires the OC backend"
   }
   PtrSizeToMemoryPass.enabled = config.frontendConfig.ptrSizeInMemory
+  PtrSizeToMemoryPass.mutexesEnabled = config.backendConfig.backend == Backend.OC
   DataRaceToReachabilityPass.enabled = config.frontendConfig.enableDataRaceToReachability
 
   if (config.backendConfig.backend == Backend.CEGAR) {
@@ -499,7 +500,12 @@ private fun backend(
                   if (
                     !portfolioRun &&
                       xcfa != null &&
-                      unsafeDependsOnOverApproximation(result.asUnsafe().cex, xcfa)
+                      unsafeDependsOnOverApproximation(
+                        result.asUnsafe().cex,
+                        xcfa,
+                        dataRace =
+                          config.inputConfig.property.inputProperty == ErrorDetection.DATA_RACE,
+                      )
                   ) {
                     // Within a portfolio, another config may still settle the task (a Safe verdict
                     // is sound under over-approximation), so hand over instead of ending on
