@@ -199,6 +199,19 @@ internal class SvLibFrontendTest {
   }
 
   @Test
+  fun taggedLocationKnowsItsLiveVars() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+
+    val metadata =
+      xcfa.procedures
+        .flatMap { it.locs }
+        .map { it.metadata }
+        .filterIsInstance<SvLibTagMetadata>()
+        .single { "check-after-increment" in it.tags }
+    assertEquals(setOf("x"), metadata.liveVars.map { it.name }.toSet())
+  }
+
+  @Test
   fun inlineCheckTrueIsAttributedToItsTag() {
     val xcfa: XCFA = parseResource("check-true-middle.svlib")
     val procedure = xcfa.procedures.first()

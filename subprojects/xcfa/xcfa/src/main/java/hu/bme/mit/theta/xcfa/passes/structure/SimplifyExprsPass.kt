@@ -173,16 +173,18 @@ class SimplifyExprsPass(
       edges = LinkedHashSet(builder.getEdges())
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
-    if (recordPassInvariants)
+    if (recordPassInvariants) {
+      val unassignedAt = builder.unassignedConsts(constValuation)
       valuations
         .map { (edge, valuation) ->
           edge.target to
-            ImmutableValuation.from(valuation.toMap() - constValuation.toMap().keys).toExpr()
+            ImmutableValuation.from(valuation.toMap() - unassignedAt(edge.target)).toExpr()
         }
         .groupBy { it.first }
         .forEach { (location, invariants) ->
           parseContext.recordPassInvariants(location, BoolExprs.Or(invariants.map { it.second }))
         }
+    }
     return builder
   }
 
@@ -315,5 +317,33 @@ class SimplifyExprsPass(
         } ?: true // no writing label found for v -> remove
       }
     } while (changed) // no change, no point in iterating further
+  }
+
+  /**
+   * The constants that may still be unassigned at a location, i.e., their single write is not on
+   * every path to it.
+   */
+  private fun XcfaProcedureBuilder.unassignedConsts(
+    constValuation: Valuation
+  ): (XcfaLocation) -> Set<VarDecl<*>> {
+    val unassignedLocs =
+      constValuation.toMap().keys.filterIsInstance<VarDecl<*>>().associateWith { v ->
+        val writes = getEdges().filter { it.collectVarsWithAccessType()[v]?.isWritten == true }
+        if (writes.isEmpty()) getLocs() else initLoc.reachableAvoiding(writes.toSet())
+      }
+    return { location -> unassignedLocs.filterValues { location in it }.keys }
+  }
+
+  private fun XcfaLocation.reachableAvoiding(edges: Set<XcfaEdge>): Set<XcfaLocation> {
+    val reached = mutableSetOf(this)
+    val toVisit = ArrayDeque(listOf(this))
+    while (toVisit.isNotEmpty()) {
+      toVisit
+        .removeFirst()
+        .outgoingEdges
+        .filter { it !in edges }
+        .forEach { if (reached.add(it.target)) toVisit.add(it.target) }
+    }
+    return reached
   }
 }

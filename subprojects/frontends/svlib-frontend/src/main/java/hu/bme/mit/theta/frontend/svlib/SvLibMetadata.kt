@@ -20,9 +20,14 @@ import hu.bme.mit.theta.xcfa.model.MetaData
 
 class SvLibTagMetadata(val tags: Set<String> = setOf(), val procedure: String? = null) :
   MetaData() {
+  /** set by the [SvLibXcfaBuilder] once the whole script is parsed */
+  var liveVars: Set<VarDecl<*>> = setOf()
+
   override fun combine(other: MetaData) =
     if (other is SvLibTagMetadata)
-      SvLibTagMetadata(this.tags + other.tags, this.procedure ?: other.procedure)
+      SvLibTagMetadata(this.tags + other.tags, this.procedure ?: other.procedure).also {
+        it.liveVars = this.liveVars intersect other.liveVars
+      }
     else this
 
   override fun keepsLocation() = tags.isNotEmpty()

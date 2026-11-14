@@ -153,7 +153,7 @@ private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
         val invariants =
           stateInvariants.map { stateInvariant ->
             ExprUtils.simplify(BoolExprs.And(listOf(stateInvariant) + passInvariants[location]))
-              .projectToScope(metadata.procedure, parseContext)
+              .projectToScope(metadata, parseContext)
           }
         metadata.tags.forEach {
           invariantsByTag.getOrPut(it) { mutableListOf() }.addAll(invariants)
@@ -167,20 +167,22 @@ private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
     .toSvLibCorrectnessWitness()
 }
 
-/** Existentially quantifies the variables not in scope in [procedure]. */
+/**
+ * Existentially quantifies the variables that are neither global nor live at the tagged location.
+ */
 private fun Expr<BoolType>.projectToScope(
-  procedure: String?,
+  tag: SvLibTagMetadata,
   parseContext: ParseContext,
 ): Expr<BoolType> {
-  val metadata = parseContext.metadata
   val outOfScope =
     ExprUtils.getVars(this).filterNot {
-      val declaredIn = metadata.getMetadataValue(it, "declaredIn").getOrNull()
-      declaredIn == GLOBAL_SCOPE || (procedure != null && declaredIn == procedure)
+      it in tag.liveVars ||
+        parseContext.metadata.getMetadataValue(it, "declaredIn").getOrNull() == GLOBAL_SCOPE
     }
   if (outOfScope.isEmpty()) return this
 
-  val params = outOfScope.associateWith { v -> Decls.Param("${v.name}__proj", v.type) }
+  val params =
+    outOfScope.mapIndexed { i, v -> v to Decls.Param("${v.name}__proj_$i", v.type) }.toMap()
   val quantified = BoolExprs.Exists(params.values, ExprUtils.changeDecls(this, params))
   return ExprUtils.simplify(quantified)
 }

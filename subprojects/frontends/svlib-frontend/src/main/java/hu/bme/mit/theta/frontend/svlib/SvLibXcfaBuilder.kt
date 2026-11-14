@@ -29,6 +29,7 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.strongLiveVars
 import org.antlr.v4.runtime.CharStream
 
 class SvLibXcfaBuilder(
@@ -47,7 +48,13 @@ class SvLibXcfaBuilder(
 
   fun buildXcfa(parser: SvLibParser): XCFA {
     visit(parser.script())
-    procedures.keys.forEach { it.havocUninitializedVars() }
+    procedures.keys.forEach { procedure ->
+      procedure.havocUninitializedVars()
+      val liveVars = strongLiveVars(procedure)
+      procedure.getLocs().forEach {
+        (it.metadata as? SvLibTagMetadata)?.liveVars = liveVars[it].orEmpty()
+      }
+    }
     return xcfaBuilder.build()
   }
 
