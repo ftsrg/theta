@@ -16,10 +16,14 @@
 package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
@@ -42,6 +46,8 @@ class SvLibXcfaBuilder(
   private val globalSymbolTable = SvLibSymbolTable()
   private val procedures = LinkedHashMap<XcfaProcedureBuilder, SvLibSymbolTable>()
   private val taggedLocations: MutableMap<String, Set<XcfaLocation>> = LinkedHashMap()
+  private val modelSymbols = mutableListOf<Decl<*>>()
+  private val assertions = mutableListOf<Expr<BoolType>>()
 
   var generateWitness: Boolean = false
     private set
@@ -55,6 +61,7 @@ class SvLibXcfaBuilder(
         (it.metadata as? SvLibTagMetadata)?.liveVars = liveVars[it].orEmpty()
       }
     }
+    recordMetadata(GLOBAL_SCOPE, "modelSymbols", modelSymbols.toList())
     return xcfaBuilder.build()
   }
 
@@ -64,7 +71,7 @@ class SvLibXcfaBuilder(
 
   override fun visitDeclareConstCommand(ctx: DeclareConstCommandContext) {
     val cmd = ctx.cmd_declareConst()
-    createGlobalVar(cmd.symbol(), sortOf(cmd.sort()))
+    modelSymbols += createGlobalVar(cmd.symbol(), sortOf(cmd.sort()))
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
@@ -100,12 +107,38 @@ class SvLibXcfaBuilder(
         ?: throw ctx.symbol().illegal("no such procedure '$name'")
 
     val termTransformer = SvLibTermTransformer(globalSymbolTable)
-    val args =
-      procedure.getParams().zip(ctx.term()).map { (param, term) ->
-        termTransformer.toExpr(term.original, param.first.type)
+    val inputs =
+      procedure.getParams().filter { (_, dir) -> dir == ParamDirection.IN }.map { it.first }
+    if (inputs.size != ctx.term().size)
+      throw ctx.illegal("mismatched arguments for procedure '$name'")
+    val inputArgs =
+      inputs.zip(ctx.term()).associate { (param, term) ->
+        param to termTransformer.toExpr(term.original, param.type)
       }
 
-    xcfaBuilder.addEntryPoint(procedure, args)
+    // the inputs are bound by a call, so the procedure stays unchanged for its other callers
+    val entry = XcfaProcedureBuilder("${tmpVarPrefix}_verify_$name", procedurePassManager)
+    entry.createInitLoc()
+    entry.createFinalLoc()
+    val args =
+      procedure.getParams().map { (param, _) ->
+        inputArgs[param] ?: param.createTemp().also(entry::addVar).ref
+      }
+    val assumptions = assertions.map { StmtLabel(Stmts.Assume(it)) }
+    entry.addEdge(
+      XcfaEdge(
+        entry.initLoc,
+        entry.finalLoc.get(),
+        SequenceLabel(assumptions + InvokeLabel(procedure, args, EmptyMetaData)),
+        EmptyMetaData,
+      )
+    )
+    xcfaBuilder.addEntryPoint(entry, listOf())
+  }
+
+  override fun visitAssertCommand(ctx: AssertCommandContext) {
+    val term = ctx.cmd_assert().term().original
+    assertions += SvLibTermTransformer(globalSymbolTable).toExpr(term, Bool())
   }
 
   override fun visitAnnotateTagCommand(ctx: AnnotateTagCommandContext) {
@@ -143,12 +176,17 @@ class SvLibXcfaBuilder(
     throw ctx.unsupported("command 'select-trace'")
 
   override fun visitDeclareFunCommand(ctx: DeclareFunCommandContext) {
-    val sorts = ctx.cmd_declareFun().sort().map { sortOf(it) }
-    val type =
-      if (sorts.size == 1) sorts.first()
-      else sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) }
-    val name = ctx.cmd_declareFun().symbol().original
-    globalSymbolTable.put(Decls.Const(name, type), name, ctx.original)
+    val cmd = ctx.cmd_declareFun()
+    val sorts = cmd.sort().map { sortOf(it) }
+    // a nullary function is a constant, handled like declare-const
+    if (sorts.size == 1) {
+      modelSymbols += createGlobalVar(cmd.symbol(), sorts.first())
+      return
+    }
+    val name = cmd.symbol().original
+    val function = Decls.Const(name, sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) })
+    globalSymbolTable.put(function, name, ctx.original)
+    modelSymbols += function
   }
 
   private fun declareProcedure(

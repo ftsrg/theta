@@ -77,6 +77,8 @@ class SvLibExprTransformer {
     val constExpr = ExprUtils.changeDecls(expr, symbolTable.varToConst)
     return transformationManager.toTerm(constExpr)
   }
+
+  fun toSort(type: Type): String = transformationManager.toSort(type)
 }
 
 class SvLibSymbolTable : GenericSmtLibSymbolTable {

@@ -18,7 +18,13 @@ package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.*
@@ -169,8 +175,9 @@ internal class SvLibFrontendTest {
   @Test
   fun procedureBodyStartsWithWitnessMarker() {
     val xcfa: XCFA = parseResource("procedure-call.svlib")
+    val entry = xcfa.initProcedures.single().first
 
-    xcfa.procedures.forEach { procedure ->
+    (xcfa.procedures - entry).forEach { procedure ->
       val labels = procedure.initLoc.outgoingEdges.single().getFlatLabels()
       assertTrue(labels.first().isWitnessStep())
       assertTrue(labels.all { it.metadata === labels.first().metadata })
@@ -187,7 +194,7 @@ internal class SvLibFrontendTest {
 
     val entryHavocs =
       xcfa.procedures
-        .single()
+        .single { it.name == "uninitializedRead" }
         .initLoc
         .outgoingEdges
         .single()
@@ -209,6 +216,43 @@ internal class SvLibFrontendTest {
         .filterIsInstance<SvLibTagMetadata>()
         .single { "check-after-increment" in it.tags }
     assertEquals(setOf("x"), metadata.liveVars.map { it.name }.toSet())
+  }
+
+  @Test
+  fun verifyCallBindsInputsInEntryWrapper() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+
+    val call =
+      xcfa.initProcedures
+        .single()
+        .first
+        .edges
+        .flatMap { it.getFlatLabels() }
+        .filterIsInstance<InvokeLabel>()
+        .single()
+    assertEquals("callExample", call.name)
+    assertEquals("input", (call.params.first() as RefExpr<*>).decl.name)
+  }
+
+  @Test
+  fun entryWrapperAssumesAssertionsBeforeTheCall() {
+    val xcfa: XCFA = parseResource("model-symbols.svlib")
+
+    val labels = xcfa.initProcedures.single().first.edges.single().getFlatLabels()
+    val assumption = (labels.first() as StmtLabel).stmt as AssumeStmt
+    assertEquals(setOf("c"), ExprUtils.getVars(assumption.cond).map { it.name }.toSet())
+    assertTrue(labels.last() is InvokeLabel)
+  }
+
+  @Test
+  fun modelSymbolsAreRecordedInDeclarationOrder() {
+    val metadata = mutableMapOf<Pair<Any, String>, Any>()
+    parseResource("model-symbols.svlib") { owner, key, value -> metadata[owner to key] = value }
+
+    val symbols = metadata[GLOBAL_SCOPE to "modelSymbols"] as List<Decl<*>>
+    assertEquals(listOf("f", "c", "input"), symbols.map { it.name })
+    assertTrue(symbols.first().type is FuncType<*, *>)
+    assertTrue(symbols.drop(1).all { it is VarDecl<*> })
   }
 
   @Test
@@ -280,9 +324,9 @@ internal class SvLibFrontendTest {
   @Test
   fun multipleProceduresCreated() {
     val xcfa: XCFA = parseResource("procedure-call.svlib")
-    assertEquals(2, xcfa.procedures.size)
+    assertEquals(3, xcfa.procedures.size)
 
-    val procedure = xcfa.initProcedures.first().first
+    val procedure = xcfa.procedures.single { it.name == "callExample" }
     val calledProcedure = xcfa.procedures.first()
     val calls = procedure.edges.map(XcfaEdge::label).filterIsInstance<InvokeLabel>()
     assertEquals(1, calls.size)
@@ -350,14 +394,17 @@ internal class SvLibFrontendTest {
     }
   }
 
-  private fun parseResource(name: String) =
+  private fun parseResource(
+    name: String,
+    recordMetadata: (Any, String, Any) -> Unit = { _, _, _ -> },
+  ) =
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
       val file = Path.of(resource!!.toURI()).toFile()
       SvLibFrontend()
         .buildXcfa(
           FileInputStream(file),
-          { _, _, _ -> },
+          recordMetadata,
           ConsoleLogger(Logger.Level.INFO),
           ProcedurePassManager(),
         )

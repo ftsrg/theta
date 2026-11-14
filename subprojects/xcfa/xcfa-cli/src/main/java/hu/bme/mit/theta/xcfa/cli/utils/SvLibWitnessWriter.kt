@@ -18,22 +18,36 @@ package hu.bme.mit.theta.xcfa.cli.utils
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.ConstDecl
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr
+import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
+import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.svlib.*
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -84,14 +98,14 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
     } else if (safetyResult.isUnsafe) {
       when (val cex = safetyResult.asUnsafe().cex) {
         is Trace<*, *> -> {
-          val concreteTrace =
+          val (concreteTrace, constants) =
             SvLibXcfaTraceConcretizer()
-              .concretize(
+              .concretizeWithModel(
                 cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
                 cexSolverFactory,
                 parseContext,
               )
-          witnessfile.writeText(concreteTrace.toSvLibViolationWitness(parseContext))
+          witnessfile.writeText(concreteTrace.toSvLibViolationWitness(constants, parseContext))
         }
         else -> generateEmptyViolationWitness(inputFile, ltlSpecification, architecture)
       }
@@ -204,18 +218,24 @@ private fun Map<String, Expr<BoolType>>.toSvLibCorrectnessWitness(): String {
 }
 
 private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
-  parseContext: ParseContext
+  constants: Valuation,
+  parseContext: ParseContext,
 ): String {
   val initState = this.states.firstOrNull() ?: throw IllegalStateException("empty trace")
   val xcfa = initState.xcfa ?: throw IllegalStateException("no XCFA associated with trace")
 
   val initVal = initState.sGlobal.getVal()
+  val modelSymbols =
+    parseContext.metadata.getMetadataValue(GLOBAL_SCOPE, "modelSymbols").getOrNull()
+      as? List<Decl<*>> ?: emptyList()
   val globalVarMap =
-    initVal.toMap().filter { (varDecl, _) -> varDecl in xcfa.globalVars.map { it.wrappedVar } }
-  val model = SmtLibModel(emptyMap()) // TODO extract function definitions from trace model
-
-  val entryProcedure =
-    xcfa.initProcedures.firstOrNull()?.first ?: throw IllegalStateException("no entry procedure")
+    initVal.toMap().filter { (varDecl, _) ->
+      varDecl in xcfa.globalVars.map { it.wrappedVar } && varDecl !in modelSymbols
+    }
+  val model =
+    modelSymbols.map {
+      it.defineWith(initVal.eval(it).getOrNull() ?: constants.eval(it).getOrNull())
+    }
 
   var property: String? = null
   val steps =
@@ -248,6 +268,11 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
       }
     }
 
+  // the verified procedure is called by a wrapper, so its body is the first one entered
+  val entryProcedure =
+    steps.filterIsInstance<InitProcVarsStep>().firstOrNull()?.procedure
+      ?: throw IllegalStateException("no entry procedure")
+
   val witness =
     SvLibViolationWitness(
       model,
@@ -278,10 +303,75 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
     val varLookup = currentState.varLookup.firstOrNull()?.reverseMapping() ?: emptyMap()
     return ExplState.of(valuation.changeVars(varLookup, keepAll = true))
   }
+
+  /** Also returns the values of the uninterpreted constants and functions used by the trace. */
+  fun concretizeWithModel(
+    trace: Trace<XcfaState<PtrState<*>>, XcfaAction>,
+    solverFactory: SolverFactory,
+    parseContext: ParseContext,
+  ): Pair<Trace<XcfaState<ExplState>, XcfaAction>, Valuation> {
+    val checker = ModelKeepingTraceChecker(solverFactory.createSolver())
+    return concretize(trace, solverFactory, parseContext) { checker } to checker.constants
+  }
+}
+
+/**
+ * Checks the feasibility of a trace without interpolation, and keeps the values of the constants
+ * from the same model as the states, so that they are consistent.
+ */
+private class ModelKeepingTraceChecker(private val solver: Solver) :
+  ExprTraceChecker<ItpRefutation> {
+  var constants: Valuation = ImmutableValuation.empty()
+    private set
+
+  override fun check(trace: Trace<out ExprState, out ExprAction>): ExprTraceStatus<ItpRefutation> {
+    val indexings = mutableListOf(VarIndexingFactory.indexing(0))
+    solver.add(PathUtils.unfold(trace.getState(0).toExpr(), indexings[0]))
+    for (i in 1 until trace.states.size) {
+      indexings += indexings[i - 1].add(trace.getAction(i - 1).nextIndexing())
+      solver.add(PathUtils.unfold(trace.getState(i).toExpr(), indexings[i]))
+      solver.add(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings[i - 1]))
+    }
+    check(solver.check().isSat) { "Infeasible trace." }
+
+    val model = solver.model
+    constants =
+      ImmutableValuation.from(
+        model.decls
+          .filter { it is ConstDecl<*> && it !is IndexedConstDecl<*> }
+          .mapNotNull { decl -> model.eval(decl).getOrNull()?.let { decl to it } }
+          .toMap()
+      )
+    val valuations = indexings.map { PathUtils.extractValuation(model, it) }
+    return ExprTraceStatus.feasible(Trace.of(valuations, trace.actions))
+  }
+}
+
+/** The model definition of this constant or function, with a default value if it has none. */
+private fun Decl<*>.defineWith(value: LitExpr<*>?): String {
+  val transformer = SvLibExprTransformer()
+  val params = mutableListOf<VarDecl<*>>()
+  var type = this.type
+  var body: Expr<*>? = value
+  while (type is FuncType<*, *>) {
+    val param = Decls.Var("x${params.size}", type.paramType)
+    params += param
+    body =
+      when (body) {
+        null -> null
+        is FuncLitExpr<*, *> -> ExprUtils.changeDecls(body.result, mapOf(body.param to param))
+        else -> throw IllegalStateException("Unexpected value of '$name': $value")
+      }
+    type = type.resultType
+  }
+  val paramList = params.joinToString(" ") { "(${it.name} ${transformer.toSort(it.type)})" }
+  val term = transformer.toTerm(body ?: TypeUtils.getDefaultValue(type))
+  val symbol = GenericSmtLibSymbolTable.encodeSymbol(name)
+  return "(define-fun $symbol ($paramList) ${transformer.toSort(type)} $term)"
 }
 
 private data class SvLibViolationWitness(
-  val model: SmtLibModel,
+  val model: List<String>,
   val globalVarValuation: Valuation,
   val entryProcedure: XcfaProcedure,
   val steps: List<SvLibViolationWitnessStep>,
@@ -290,7 +380,7 @@ private data class SvLibViolationWitness(
   override fun toString(): String {
     return """
       ((select-trace 
-        (model ${if (model.decls.isEmpty()) "" else "$model"})
+        (model${if (model.isEmpty()) "" else "\n" + model.joinToString("\n") { "          $it" }})
         (init-global-vars ${globalVarValuation.toSvLib()})
         (entry-proc ${entryProcedure.name})
         (steps${if (steps.isEmpty()) "" else "\n" + steps.joinToString("\n" ) { "          $it" }})
