@@ -188,32 +188,33 @@ class PointerArithmeticTest {
   }
 
   @Test
-  fun `loading a pointer through a dereference into a later-split variable is still refused`() {
-    // `p = *q` loads a pointer *value* that was stored to memory. A stored split pointer writes its
-    // base and offset to two separate channels (see the `MemoryAssignStmt` handling), so reading it
-    // back through a single dereference and forcing the offset to 0 (as the plain-copy branch does
-    // for `p = s`) would silently drop a stored mid-object offset and address the wrong cell later.
-    // `flatPointerValue` only accepts a bare variable or a literal on the right-hand side, so a
-    // `Dereference` must still fall through to the bare-use refusal -- this is what is pinned here,
-    // guarding against a future, more permissive rewrite of that check.
+  fun `loading a pointer through a dereference into a later-split variable builds`() {
+    // Storing a split pointer is refused, so a pointer loaded from memory is a base at offset 0;
+    // the fixtures check the verdict.
+    buildBoth(
+      """
+      extern void reach_error();
+      int use(int **q) {
+        int *p = *q;
+        p++;
+        return *p;
+      }
+      int main() {
+        int a[2];
+        int *p1 = a;
+        int *q = p1;
+        return use(&q);
+      }
+      """
+        .trimIndent()
+    )
+  }
+
+  @Test
+  fun `storing a split pointer into memory is refused`() {
+    // What makes the load above sound: memory never holds an offset.
     assertThrows(IllegalStateException::class.java) {
-      buildBoth(
-        """
-        extern void reach_error();
-        int use(int **q) {
-          int *p = *q;
-          p++;
-          return *p;
-        }
-        int main() {
-          int a[2];
-          int *p1 = a;
-          int *q = p1;
-          return use(&q);
-        }
-        """
-          .trimIndent()
-      )
+      buildBoth(main("int a[2]; int *s[1]; int *p = a; p++; s[0] = p;"))
     }
   }
 

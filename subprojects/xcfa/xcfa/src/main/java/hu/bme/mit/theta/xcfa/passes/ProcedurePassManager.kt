@@ -96,11 +96,16 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
-      // rewrites `&t[i]`
+      // rewrites `&t[i]`; in a phase of its own, so that CLibraryFunctionsPass sees every
+      // procedure's handles unrolled when it decides whether handles need to hold thread ids
       PthreadArrayHandleUnrollPass(parseContext),
+    ),
+    listOf(
       CLibraryFunctionsPass(
         parseContext,
         modelStringLength = property.inputProperty != ErrorDetection.TERMINATION,
+        // a join that waits on a flag blocks where a termination analysis expects a join label
+        runtimeThreadHandles = property.inputProperty != ErrorDetection.TERMINATION,
       ),
       // before ReferenceElimination, which folds the `&barrier` handle away
       PthreadBarrierPass(parseContext),
@@ -113,7 +118,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
-      ReferenceElimination(parseContext),
+      // leaves procedures with pointer parameters to the run after inlining, which sees what the
+      // callers pass
+      ReferenceElimination(parseContext, beforeInlining = true),
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),

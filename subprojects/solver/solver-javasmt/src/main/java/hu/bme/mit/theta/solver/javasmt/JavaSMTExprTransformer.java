@@ -120,7 +120,9 @@ import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -147,6 +149,13 @@ final class JavaSMTExprTransformer {
     private final SolverContext context;
 
     private final Cache<Expr<?>, Formula> exprToTerm;
+
+    // unbounded while one expression is transformed: evicting a shared subterm of a DAG
+    // mid-traversal would transform it again at each occurrence
+    private Map<Expr<?>, Formula> transforming = new IdentityHashMap<>();
+    private int transformDepth = 0;
+    // a bound variable has a different term in each scope
+    private int quantifierScopes = 0;
     private final DispatchTable<Formula> table;
     private final Env env;
 
@@ -355,10 +364,24 @@ final class JavaSMTExprTransformer {
      */
 
     public Formula toTerm(final Expr<?> expr) {
+        final Formula known = quantifierScopes == 0 ? transforming.get(expr) : null;
+        if (known != null) {
+            return known;
+        }
+        transformDepth++;
         try {
-            return exprToTerm.get(expr, () -> table.dispatch(expr));
+            final Formula term = exprToTerm.get(expr, () -> table.dispatch(expr));
+            if (quantifierScopes == 0) {
+                transforming.put(expr, term);
+            }
+            return term;
         } catch (final ExecutionException e) {
             throw new AssertionError("Unhandled case: " + expr, e);
+        } finally {
+            if (--transformDepth == 0 && !transforming.isEmpty()) {
+                // clearing would walk the whole table of the largest expression so far
+                transforming = new IdentityHashMap<>();
+            }
         }
     }
 
@@ -430,19 +453,23 @@ final class JavaSMTExprTransformer {
 
     private Formula transformExists(final ExistsExpr expr) {
         env.push();
+        quantifierScopes++;
         final List<Formula> paramTerms = transformParamDecls(expr.getParamDecls());
         final BooleanFormula opTerm = (BooleanFormula) toTerm(expr.getOp());
         final BooleanFormula result = quantifiedFormulaManager.exists(paramTerms, opTerm);
         env.pop();
+        quantifierScopes--;
         return result;
     }
 
     private Formula transformForall(final ForallExpr expr) {
         env.push();
+        quantifierScopes++;
         final List<Formula> paramTerms = transformParamDecls(expr.getParamDecls());
         final BooleanFormula opTerm = (BooleanFormula) toTerm(expr.getOp());
         final BooleanFormula result = quantifiedFormulaManager.forall(paramTerms, opTerm);
         env.pop();
+        quantifierScopes--;
         return result;
     }
 
@@ -1301,5 +1328,6 @@ final class JavaSMTExprTransformer {
 
     public void reset() {
         exprToTerm.invalidateAll();
+        transforming.clear();
     }
 }

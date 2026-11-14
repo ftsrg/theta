@@ -54,6 +54,7 @@ import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -67,6 +68,13 @@ final class Z3ExprTransformer {
     private final Context context;
 
     private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
+
+    // unbounded while one expression is transformed: evicting a shared subterm of a DAG
+    // mid-traversal would transform it again at each occurrence
+    private Map<Expr<?>, com.microsoft.z3.Expr> transforming = new IdentityHashMap<>();
+    private int transformDepth = 0;
+    // a bound variable has a different term in each scope
+    private int quantifierScopes = 0;
     private final DispatchTable<com.microsoft.z3.Expr> table;
     private final Env env;
 
@@ -238,10 +246,24 @@ final class Z3ExprTransformer {
      */
 
     public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+        final com.microsoft.z3.Expr known = quantifierScopes == 0 ? transforming.get(expr) : null;
+        if (known != null) {
+            return known;
+        }
+        transformDepth++;
         try {
-            return exprToTerm.get(expr, () -> table.dispatch(expr));
+            final com.microsoft.z3.Expr term = exprToTerm.get(expr, () -> table.dispatch(expr));
+            if (quantifierScopes == 0) {
+                transforming.put(expr, term);
+            }
+            return term;
         } catch (final ExecutionException e) {
             throw new AssertionError("Unhandled case: " + expr, e);
+        } finally {
+            if (--transformDepth == 0 && !transforming.isEmpty()) {
+                // clearing would walk the whole table of the largest expression so far
+                transforming = new IdentityHashMap<>();
+            }
         }
     }
 
@@ -316,19 +338,23 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformExists(final ExistsExpr expr) {
         env.push();
+        quantifierScopes++;
         final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
         final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
         final BoolExpr result = context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
         env.pop();
+        quantifierScopes--;
         return result;
     }
 
     private com.microsoft.z3.Expr transformForall(final ForallExpr expr) {
         env.push();
+        quantifierScopes++;
         final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
         final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
         final BoolExpr result = context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
         env.pop();
+        quantifierScopes--;
         return result;
     }
 
@@ -1156,5 +1182,6 @@ final class Z3ExprTransformer {
 
     public void reset() {
         exprToTerm.invalidateAll();
+        transforming.clear();
     }
 }

@@ -49,6 +49,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntModExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -92,8 +93,17 @@ import java.math.BigInteger
  */
 class UnsupportedPointerSplitException(message: String) : IllegalStateException(message)
 
-/** Removes all references in favor of creating arrays instead. */
-class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
+/**
+ * Removes all references in favor of creating arrays instead.
+ *
+ * With [beforeInlining], a procedure with a pointer parameter is not base/offset-split: that split
+ * has to assume the parameter points to offset 0, while the caller may pass a mid-object address
+ * such as one past the end of an array. The run after inlining splits it with the binding in view.
+ */
+class ReferenceElimination(
+  val parseContext: ParseContext,
+  private val beforeInlining: Boolean = false,
+) : ProcedurePass {
 
   companion object {
 
@@ -155,6 +165,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     val complexChanged =
       if (parseContext.memoryModel.flatAddressing()) {
         runFlatReferenceElimination(builder)
+      } else if (beforeInlining && builder.hasPointerParams()) {
+        false
       } else {
         runComplexReferenceElimination(builder)
       }
@@ -164,6 +176,12 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
     return builder
   }
+
+  private fun XcfaProcedureBuilder.hasPointerParams(): Boolean =
+    getParams().any { (param, direction) ->
+      direction != ParamDirection.OUT &&
+        CComplexType.getType(param.ref, parseContext).let { it is CPointer || it is CArray }
+    }
 
   /** Atomic lowering can consume the last real address use, leaving only lifetime markers. */
   private fun removeUnusedLifetimeMarkers(builder: XcfaProcedureBuilder) {
@@ -1207,15 +1225,17 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
       )
     }
     if (lhs in splitVars.keys) {
-      // Only a *flat* pointer value: a plain (never-split) variable, or a literal such as `NULL`.
-      // Deliberately NOT a dereference: `p = *q` loads a pointer that was *stored* to memory, and
-      // storing a split pointer writes base and offset to two separate channels (see the
-      // MemoryAssignStmt case). Reading only the base back and forcing the offset to 0 would
-      // silently drop a stored mid-object offset and address the wrong cell, so that case keeps
-      // failing loudly instead.
+      // Only a *flat* pointer value: a plain (never-split) variable, a constant such as `NULL`
+      // (LP64's `(void *)0` is a sign-extended int zero), either converted to a pointer type
+      // ([isPointerCast]), or a load: storing a mid-object pointer is refused, so memory holds no
+      // offset, and an unsplit loaded pointer is a base at offset 0 too.
       val flatPointerValue =
         !rhs.containsSplitRefs(splitVars) &&
-          (strippedRhs is RefExpr<*> || strippedRhs is LitExpr<*>)
+          (strippedRhs is RefExpr<*> ||
+            strippedRhs is LitExpr<*> ||
+            strippedRhs is Dereference<*, *, *> ||
+            strippedRhs.isPointerCast() ||
+            ExprUtils.simplify(strippedRhs) is LitExpr<*>)
       if (flatPointerValue) {
         // `p = s` where `p` became split (through later arithmetic) but `s` never did: a plain
         // pointer value is a base id at offset 0. Seed the halves accordingly -- `p_base = s`,
@@ -1239,6 +1259,19 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     }
     val rewrittenRhs = rhs.changeComplexReferredVars(splitVars)
     return listOf(AssignStmt.of(cast(lhs, lhs.type), cast(rewrittenRhs, lhs.type)))
+  }
+
+  /**
+   * `x mod 2^w` for a plain variable or literal `x`, with `w` the pointer width: integer arithmetic
+   * spells a conversion to a pointer type (an array passed as `(int *)a`) this way. Its value is
+   * still a flat pointer, which is what an inlined parameter binding assigns.
+   */
+  private fun Expr<*>.isPointerCast(): Boolean {
+    if (this !is IntModExpr) return false
+    val value = leftOp.stripPos()
+    val modulus = (rightOp as? IntLitExpr)?.value ?: return false
+    return (value is RefExpr<*> || value is LitExpr<*>) &&
+      modulus == BigInteger.TWO.pow(CComplexType.getUnsignedLong(parseContext).width())
   }
 
   /**

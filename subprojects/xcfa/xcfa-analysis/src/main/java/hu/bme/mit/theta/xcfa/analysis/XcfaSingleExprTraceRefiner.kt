@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.model.Valuation
 import java.util.*
 
 /**
@@ -62,6 +63,15 @@ fun <S : ExprState, A : ExprAction> threadWriteTriples(rawTrace: Trace<S, A>): T
       )
     }
   return Trace.of(states, actions)
+}
+
+/** [trace] with the havoc values [valuations], one per state, determine as hints. */
+private fun <S : ExprState, A : ExprAction> withInputs(
+  trace: Trace<S, A>,
+  valuations: List<Valuation>,
+): Trace<S, A> {
+  if (valuations.size != trace.states.size || trace.actions.any { it !is XcfaAction }) return trace
+  return HintedTrace.of(trace.states, trace.actions as List<XcfaAction>, valuations) as Trace<S, A>
 }
 
 /**
@@ -129,7 +139,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     logger.write(Logger.Level.SUBSTEP, "done, result: %s%n", cexStatus)
     assert(cexStatus.isFeasible() || cexStatus.isInfeasible()) { "Unknown CEX status" }
     return if (cexStatus.isFeasible()) {
-      RefinerResult.unsafe(traceToConcretize)
+      RefinerResult.unsafe(withInputs(traceToConcretize, cexStatus.asFeasible().valuations.states))
     } else {
       val refutation = cexStatus.asInfeasible().refutation
       logger.write(Logger.Level.DETAIL, "|  |  |  Refutation: %s%n", refutation)

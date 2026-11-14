@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
@@ -36,6 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr
 import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr
 import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import java.math.BigInteger
@@ -94,6 +97,14 @@ internal class XcfaOcValueAnalysis(
   private val allCandidates: Map<E, List<R>> = rfs.values.flatten().groupBy { it.to }
 
   private val conjunctsOf = HashMap<Expr<BoolType>, Set<Expr<BoolType>>>()
+
+  // guards are immutable and shared by the events of a path segment: keyed by identity
+  private val impliedBy = IdentityHashMap<Set<Expr<BoolType>>, Set<Expr<BoolType>>>()
+
+  private val implications =
+    IdentityHashMap<Set<Expr<BoolType>>, IdentityHashMap<Set<Expr<BoolType>>, Boolean>>()
+
+  private val certainlyEarlierWrites = HashMap<E, List<E>>()
 
   // RF-Some binds a read only if a candidate executes with it, see the solver encoding
   private val boundReads: Set<E> =
@@ -236,12 +247,16 @@ internal class XcfaOcValueAnalysis(
   private fun everyAddressWritten(read: E, rels: List<R>): Boolean {
     val arrays = read.array?.let { valuesAt(read, it) } ?: return false
     val offsets = read.offset?.let { valuesAt(read, it) } ?: return false
+    val earlier =
+      certainlyEarlierWrites.getOrPut(read) {
+        rels
+          .map { it.from }
+          .filter {
+            it.const !in memoryGarbages && ordered(it, read) && implies(read.guard, it.guard)
+          }
+      }
     val written =
-      rels
-        .map { it.from }
-        .filter {
-          it.const !in memoryGarbages && ordered(it, read) && implies(read.guard, it.guard)
-        }
+      earlier
         .mapNotNull { w ->
           val array = w.array?.let { valuesAt(w, it) }?.singleOrNull() ?: return@mapNotNull null
           val offset = w.offset?.let { valuesAt(w, it) }?.singleOrNull() ?: return@mapNotNull null
@@ -334,7 +349,13 @@ internal class XcfaOcValueAnalysis(
     }
 
   private fun implies(premise: Set<Expr<BoolType>>, conclusion: Set<Expr<BoolType>>): Boolean =
-    conclusion.all { condition -> premise.any { condition in conjuncts(it) } }
+    implications
+      .getOrPut(premise) { IdentityHashMap() }
+      .getOrPut(conclusion) {
+        val implied =
+          impliedBy.getOrPut(premise) { premise.flatMapTo(hashSetOf()) { conjuncts(it) } }
+        implied.containsAll(conclusion)
+      }
 
   /** The conditions a guard implies. A merged path condition implies what all its paths do. */
   private fun conjuncts(guard: Expr<BoolType>): Set<Expr<BoolType>> =
@@ -388,9 +409,66 @@ internal class XcfaOcValueAnalysis(
           booleans(ops.all { it == null || True() in it }, ops.any { it == null || False() in it })
       }
       is NotExpr -> evaluate(expr.op)?.let { op -> booleans(False() in op, True() in op) }
-      is BvAndExpr -> enumerate(expr) ?: maskedValues(expr)
-      else -> enumerate(expr)
+      is BvAndExpr -> enumerate(expr) ?: operandwise(expr) ?: maskedValues(expr)
+      is BvURemExpr -> enumerate(expr) ?: operandwise(expr) ?: remainders(expr)
+      // a compare-and-swap: its constants together can take more values than the result
+      is IteExpr<*> -> enumerate(expr) ?: branchValues(expr)
+      is EqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, true)
+      is NeqExpr<*> -> enumerate(expr) ?: comparison(expr.leftOp, expr.rightOp, false)
+      else -> enumerate(expr) ?: operandwise(expr)
     }
+
+  /** Over the values of the operands: these may take fewer combinations than the constants. */
+  private fun operandwise(expr: Expr<*>): Set<LitExpr<*>>? {
+    if (expr.ops.isEmpty()) return null
+    val operands = expr.ops.map { evaluate(it) ?: return null }
+    if (operands.any { it.isEmpty() }) return NOTHING
+    val size = operands.fold(1L) { n, op -> (n * op.size).coerceAtMost(MAX_COMBINATIONS + 1L) }
+    if (size > MAX_COMBINATIONS) return null
+    var combinations = listOf(listOf<Expr<*>>())
+    operands.forEach { op -> combinations = combinations.flatMap { c -> op.map { c + it } } }
+    return try {
+      combinations
+        .mapTo(HashSet()) { expr.withOps(it).eval(ImmutableValuation.empty()) as LitExpr<*> }
+        .takeIf { it.size <= MAX_VALUES }
+    } catch (_: RuntimeException) {
+      null
+    }
+  }
+
+  /** A remainder is below its divisor, like an index into a ring buffer. */
+  private fun remainders(expr: BvURemExpr): Set<LitExpr<*>>? {
+    val divisors =
+      evaluate(expr.rightOp)?.map { BvUtils.neutralBvLitExprToBigInteger(it as BvLitExpr) }
+        ?: return null
+    if (divisors.isEmpty()) return NOTHING
+    // the remainder of a division by zero is the dividend
+    val bound = divisors.max()
+    if (divisors.any { it.signum() == 0 } || bound > BigInteger.valueOf(MAX_VALUES.toLong()))
+      return null
+    return (0 until bound.toInt())
+      .map { BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(it.toLong()), expr.type.size) }
+      .toSet()
+  }
+
+  private fun branchValues(expr: IteExpr<*>): Set<LitExpr<*>>? {
+    val cond = evaluate(expr.cond)
+    return when {
+      cond != null && cond.isEmpty() -> NOTHING
+      cond == FALSE -> evaluate(expr.`else`)
+      cond != null && False() !in cond -> evaluate(expr.then)
+      else -> evaluate(expr.then).join(evaluate(expr.`else`))
+    }
+  }
+
+  private fun comparison(left: Expr<*>, right: Expr<*>, equal: Boolean): Set<LitExpr<*>>? {
+    val lefts = evaluate(left) ?: return null
+    val rights = evaluate(right) ?: return null
+    if (lefts.isEmpty() || rights.isEmpty()) return NOTHING
+    val same = lefts.any { it in rights }
+    val different = lefts.size > 1 || rights.size > 1 || lefts != rights
+    return if (equal) booleans(same, different) else booleans(different, same)
+  }
 
   /**
    * Masking an unknown value only keeps some bits of the mask, like an index into a ring buffer.
@@ -441,6 +519,7 @@ internal class XcfaOcValueAnalysis(
 
   private companion object {
     const val MAX_VALUES = 64
+    const val MAX_COMBINATIONS = 1024
     const val MAX_MASK_BITS = 6
     val MANY_CONSTANTS = Any()
     val NO_CONSTANT = Any()

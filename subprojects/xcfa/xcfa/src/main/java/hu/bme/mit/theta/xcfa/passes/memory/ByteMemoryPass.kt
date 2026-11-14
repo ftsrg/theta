@@ -23,6 +23,9 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.Neq
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.ZExt
 import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.fptype.FpType
 import hu.bme.mit.theta.core.utils.BvUtils
@@ -66,9 +69,13 @@ import java.math.BigInteger
  * `u.value = 1.0; u.parts.msw` reads cells nothing ever wrote and returns an unconstrained value.
  * Refusing says the same thing out loud.
  *
- * A cell whose element type is neither of those is left untouched: a byte (`Bv8`) is already a
- * single cell. Byte splitting is a bitvector operation, so the model presumes bitvector arithmetic;
- * an `IntType` cell (integer arithmetic) has no fixed width and is likewise left alone.
+ * A `_Bool` cell (`Bv1`) is kept in its byte, which reads as true unless it is 0: left in an array
+ * of its own, it never saw the bytes a `memset` or a `char` view wrote, so `calloc`'d flags read
+ * unconstrained values.
+ *
+ * A cell whose element type is none of those is left untouched: a byte (`Bv8`) is already a single
+ * cell. Byte splitting is a bitvector operation, so the model presumes bitvector arithmetic; an
+ * `IntType` cell (integer arithmetic) has no fixed width and is likewise left alone.
  */
 class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -99,6 +106,11 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
 
   /** Whether [type] occupies more than one byte and is a whole number of them. */
   private fun wide(type: Type): Boolean = byteWidth(type) != null
+
+  /** Whether [type] is the one-bit cell of a `_Bool`, which occupies a byte of its own. */
+  private fun bit(type: Type): Boolean = type is BvType && type.size == 1
+
+  private val byteZero = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 8)
 
   /**
    * Refuses a float in byte-addressed memory. See the class comment for why the IEEE round trip
@@ -154,6 +166,11 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
     builder: XcfaProcedureBuilder,
   ): XcfaLabel {
     val deref = stmt.deref
+    if (bit(deref.type)) {
+      val cell = byteCell(deref.array.expandReads(), deref.offset.expandReads(), 0)
+      val value = ZExt(cast(stmt.expr.expandReads(), BvType.of(1)), BvType.of(8))
+      return StmtLabel(MemoryAssignStmt.create(cell, value), metadata = EmptyMetaData)
+    }
     if (!wide(deref.type)) {
       return StmtLabel(
         rebuildMemoryAssign(deref.expandOps(), stmt.expr.expandReads()),
@@ -192,7 +209,12 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
   /** Replaces every wide dereference read inside this expression with its byte `Concat`. */
   @Suppress("UNCHECKED_CAST")
   private fun <T : Type> Expr<T>.expandReads(): Expr<T> =
-    if (this is Dereference<*, *, *> && wide(type)) {
+    if (this is Dereference<*, *, *> && bit(type)) {
+      val cell = byteCell(array.expandReads(), offset.expandReads(), 0)
+      val one = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, 1)
+      val zero = BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 1)
+      cast(Ite(Neq(cell, byteZero), one, zero), type) as Expr<T>
+    } else if (this is Dereference<*, *, *> && wide(type)) {
       val base = array.expandReads()
       val offset = offset.expandReads()
       val n = byteWidth(type)!!

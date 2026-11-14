@@ -87,7 +87,8 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
                 cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
                 cexSolverFactory,
                 parseContext,
-                wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
+                property,
+                logger,
               )
           witnessfile.writeText(concreteTrace.toSvLibViolationWitness(parseContext))
         }
