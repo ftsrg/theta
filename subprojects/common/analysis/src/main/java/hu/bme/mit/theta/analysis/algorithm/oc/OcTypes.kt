@@ -105,12 +105,14 @@ enum class RelationType {
 
 data class Relation<E : Event>(val type: RelationType, val from: E, val to: E) {
 
-  val decl: ConstDecl<BoolType> =
+  // Created on first use: most rf candidates of a large program are pruned before the encoding.
+  val decl: ConstDecl<BoolType> by lazy {
     Decls.Const(
       "${type.toString().lowercase()}_${from.const.name}_${to.const.name}",
       BoolExprs.Bool(),
     )
-  val declRef: RefExpr<BoolType> = RefExpr.of(decl)
+  }
+  val declRef: RefExpr<BoolType> by lazy { RefExpr.of(decl) }
 
   override fun toString() =
     "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"

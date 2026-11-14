@@ -23,6 +23,13 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -30,6 +37,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection.DATA_RACE
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel.SC
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import java.math.BigInteger
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 
 @Suppress("unused")
@@ -150,7 +158,31 @@ internal class XcfaEvent(
       return false
     if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic)
       return false
+    if (distinctDisplacements(other)) return false
     return valuesMeet(other)
+  }
+
+  // null also when the term reads a variable (see distinctDisplacements)
+  private val offsetSplit by lazy {
+    offset?.splitDisplacement()?.takeIf { (base, _) ->
+      base.all { ExprUtils.getVars(it).isEmpty() }
+    }
+  }
+
+  /**
+   * Whether the two addresses are the same term plus different constants, as the bytes of one
+   * object, or two members reached through one pointer, are. The term must be over constants only:
+   * an SSA constant has one value per execution, a variable may differ between the two events.
+   */
+  private fun distinctDisplacements(other: XcfaEvent): Boolean {
+    if (array == null || array != other.array) return false
+    val (base, displacement) = offsetSplit ?: return false
+    val (otherBase, otherDisplacement) = other.offsetSplit ?: return false
+    if (base != otherBase) return false
+    val difference = displacement - otherDisplacement
+    val type = offset!!.type
+    return if (type is BvType) difference.mod(BigInteger.TWO.pow(type.size)) != BigInteger.ZERO
+    else difference != BigInteger.ZERO
   }
 
   private fun valuesMeet(other: XcfaEvent): Boolean =
@@ -200,3 +232,26 @@ internal val Reason.to: E
       is FromReadReason<*> -> (this as FromReadReason<E>).w
       else -> error("Unsupported reason type.")
     }
+
+/** [this] as a term plus a literal displacement (0 if there is none); null if it is a literal. */
+private fun Expr<*>.splitDisplacement(): Pair<List<Expr<*>>, BigInteger>? {
+  val ops =
+    when (this) {
+      is BvAddExpr -> this.ops
+      is IntAddExpr -> this.ops
+      is LitExpr<*> -> return null
+      else -> return Pair(listOf(this), BigInteger.ZERO)
+    }
+  val literals = ops.filterIsInstance<LitExpr<*>>()
+  val rest = ops.filter { it !is LitExpr<*> }
+  if (rest.isEmpty()) return null
+  val displacement =
+    literals.sumOf {
+      when (it) {
+        is BvLitExpr -> BvUtils.neutralBvLitExprToBigInteger(it)
+        is IntLitExpr -> it.value
+        else -> return null
+      }
+    }
+  return Pair(rest, displacement)
+}
