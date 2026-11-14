@@ -251,6 +251,11 @@ class XcfaOcChecker(
             decisionProcedure != OcDecisionProcedureType.PROPAGATOR,
           )
           .create()
+      logger.info(
+        "Event graph: ${eg.events.values.sumOf { it.values.sumOf { e -> e.size } }} events," +
+          " ${eg.rfs.values.sumOf { it.size }} read-from candidates," +
+          " ${eg.violations.size} violations"
+      )
       memoryModel.filter(eg.events, eg.pos, eg.wss).let { (ppos, wss) ->
         this.ppos = ppos
         this.wss = wss

@@ -79,6 +79,14 @@ class XcfaOcCheckerTest {
           arrayOf("/28overwrite_in_atomic_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/29alloca_thread_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
           arrayOf("/31conditional_join_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          // single-threaded: the candidates and branches are decided on the forward values
+          arrayOf("/42forward_conditional_overwrite_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/43forward_overwrite_safe.c", dp, SafetyResult<*, *>::isSafe),
+          arrayOf("/44forward_known_branch_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/45forward_known_branch_safe.c", dp, SafetyResult<*, *>::isSafe),
+          arrayOf("/46forward_pointer_in_memory_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/47forward_two_addresses_unsafe.c", dp, SafetyResult<*, *>::isUnsafe),
+          arrayOf("/48forward_two_addresses_safe.c", dp, SafetyResult<*, *>::isSafe),
         )
       } +
         // the propagator fails to look up the rf terms of this program's memory accesses
