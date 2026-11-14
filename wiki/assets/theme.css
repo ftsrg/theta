@@ -1,0 +1,74 @@
+/* Theta wiki palette.
+ *
+ * Header/nav: neutral dark gray (the logo wordmark is white, so the header must stay dark
+ * in both colour schemes). Accent: the crimson from the Theta logo (#900028), lightened in
+ * dark mode where the original is too dim to read against a dark background.
+ */
+
+:root {
+  --theta-crimson: #900028;
+  --theta-crimson-light: #d4536e;
+  --theta-gray: #33363b;
+}
+
+/* ---------- primary (header, nav, sidebar highlights) ---------- */
+
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color: var(--theta-gray);
+  --md-primary-fg-color--light: #4a4e55;
+  --md-primary-fg-color--dark: #212429;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+/* Keep the header dark in dark mode too, rather than letting it blend into the page. */
+[data-md-color-scheme="slate"][data-md-color-primary="custom"] {
+  --md-primary-fg-color: #24272b;
+  --md-primary-fg-color--dark: #1a1c1f;
+}
+
+/* ---------- accent (links, hover, focus) ---------- */
+
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--theta-crimson);
+  --md-accent-fg-color--transparent: rgba(144, 0, 40, 0.1);
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+[data-md-color-scheme="slate"][data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--theta-crimson-light);
+  --md-accent-fg-color--transparent: rgba(212, 83, 110, 0.1);
+}
+
+/* Links default to the primary colour, which would render them gray. Use the accent. */
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: var(--theta-crimson);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 215; /* neutral slate instead of Material's default blue-leaning one */
+  --md-typeset-a-color: var(--theta-crimson-light);
+}
+
+/* ---------- small refinements ---------- */
+
+.md-header__button.md-logo img {
+  height: 1.4rem; /* the logo is a wordmark, not a square icon */
+  width: auto;
+}
+
+/* The site name is turned into a home link by hooks.py; keep it looking like the title. */
+.md-header__site-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.md-header__site-link:hover {
+  text-decoration: underline;
+}
+
+/* The mirrored module pages open with an admonition; give it a little more breathing room. */
+.md-typeset .admonition.info:first-of-type {
+  margin-top: 0.8em;
+}
