@@ -95,6 +95,14 @@ internal class XcfaOcValueAnalysis(
 
   private val conjunctsOf = HashMap<Expr<BoolType>, Set<Expr<BoolType>>>()
 
+  // guards are immutable and shared by the events of a path segment: keyed by identity
+  private val impliedBy = IdentityHashMap<Set<Expr<BoolType>>, Set<Expr<BoolType>>>()
+
+  private val implications =
+    IdentityHashMap<Set<Expr<BoolType>>, IdentityHashMap<Set<Expr<BoolType>>, Boolean>>()
+
+  private val certainlyEarlierWrites = HashMap<E, List<E>>()
+
   // RF-Some binds a read only if a candidate executes with it, see the solver encoding
   private val boundReads: Set<E> =
     allCandidates.filterValues { rels -> rels.any { implies(it.to.guard, it.from.guard) } }.keys
@@ -236,12 +244,16 @@ internal class XcfaOcValueAnalysis(
   private fun everyAddressWritten(read: E, rels: List<R>): Boolean {
     val arrays = read.array?.let { valuesAt(read, it) } ?: return false
     val offsets = read.offset?.let { valuesAt(read, it) } ?: return false
+    val earlier =
+      certainlyEarlierWrites.getOrPut(read) {
+        rels
+          .map { it.from }
+          .filter {
+            it.const !in memoryGarbages && ordered(it, read) && implies(read.guard, it.guard)
+          }
+      }
     val written =
-      rels
-        .map { it.from }
-        .filter {
-          it.const !in memoryGarbages && ordered(it, read) && implies(read.guard, it.guard)
-        }
+      earlier
         .mapNotNull { w ->
           val array = w.array?.let { valuesAt(w, it) }?.singleOrNull() ?: return@mapNotNull null
           val offset = w.offset?.let { valuesAt(w, it) }?.singleOrNull() ?: return@mapNotNull null
@@ -334,7 +346,13 @@ internal class XcfaOcValueAnalysis(
     }
 
   private fun implies(premise: Set<Expr<BoolType>>, conclusion: Set<Expr<BoolType>>): Boolean =
-    conclusion.all { condition -> premise.any { condition in conjuncts(it) } }
+    implications
+      .getOrPut(premise) { IdentityHashMap() }
+      .getOrPut(conclusion) {
+        val implied =
+          impliedBy.getOrPut(premise) { premise.flatMapTo(hashSetOf()) { conjuncts(it) } }
+        implied.containsAll(conclusion)
+      }
 
   /** The conditions a guard implies. A merged path condition implies what all its paths do. */
   private fun conjuncts(guard: Expr<BoolType>): Set<Expr<BoolType>> =
