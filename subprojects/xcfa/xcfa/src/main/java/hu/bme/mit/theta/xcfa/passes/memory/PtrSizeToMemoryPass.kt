@@ -55,8 +55,8 @@ import java.math.BigInteger
  * access can reach; under flat addressing (flat and bytes), where all program memory has base 0,
  * each array gets a base of its own. Under bytes the cells stay whole: this pass runs after
  * [ByteMemoryPass], and as every program cell is a byte by then, they share no partition with it.
- * Under flat, the ownership arrays of mutexes at symbolic addresses ([XcfaBuilder.mutexArrays])
- * can be stored there too.
+ * Under flat, the ownership arrays of mutexes at symbolic addresses ([XcfaBuilder.mutexArrays]) can
+ * be stored there too.
  *
  * A cell nothing wrote reads its array's initial value; the OC encoding is what provides that (see
  * [ParseContext.getGhostMemoryInitialValue]), so this pass is for that backend only.
