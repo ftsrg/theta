@@ -153,7 +153,9 @@ class AllocaFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                 addressLabels +
                   listOfNotNull(
                     builder.parent.allocate(parseContext, ret, size(builder, invokeLabel)),
-                    probeInvalidLength(builder, ret, arg, retType),
+                    // the producer of a static object bounds its size itself
+                    if (invokeLabel.name == STATIC_OBJECT) null
+                    else probeInvalidLength(builder, ret, arg, retType),
                     released?.let { AssignStmtLabel(it, ret) },
                   )
               } else {

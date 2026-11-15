@@ -74,6 +74,12 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    */
   val splitPointers: MutableMap<VarDecl<*>, Pair<VarDecl<*>, VarDecl<*>>> = LinkedHashMap()
 
+  /**
+   * The entry point's `argv`, whose memory
+   * [hu.bme.mit.theta.xcfa.passes.library.EntryArgumentsPass] allocates.
+   */
+  val entryArguments: MutableSet<VarDecl<*>> = LinkedHashSet()
+
   /** The keys of [hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass], once known. */
   var threadSpecificKeys: List<ThreadSpecificKey>? = null
 

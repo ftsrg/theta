@@ -60,6 +60,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.library.EntryArgumentsPass
 import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
 import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.passes.splitIf
@@ -132,8 +133,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private val pointerType = CPointer(null, null, parseContext)
 
   /**
-   * The entry point's pointer parameters (`argv`) come from the environment, but nothing allocates
-   * the memory they point to, so every access through them would be reported invalid.
+   * The entry point's pointer parameters come from the environment. Unless [EntryArgumentsPass]
+   * allocates the memory they point to (`argv`), every access through them would be reported
+   * invalid.
    */
   private fun refuseEnvironmentPointers(builder: XcfaProcedureBuilder) {
     val read =
@@ -141,7 +143,9 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
         .getParams()
         .filter { (param, direction) ->
           val type = CComplexType.getType(param.ref, parseContext)
-          direction != ParamDirection.OUT && (type is CPointer || type is CArray)
+          direction != ParamDirection.OUT &&
+            (type is CPointer || type is CArray) &&
+            param !in builder.parent.entryArguments
         }
         .firstOrNull { (param, _) -> builder.getEdges().any { param in it.label.collectVars() } }
     if (read != null) {
