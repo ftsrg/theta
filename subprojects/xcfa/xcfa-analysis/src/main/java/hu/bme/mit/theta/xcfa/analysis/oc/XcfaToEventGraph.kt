@@ -969,7 +969,9 @@ internal class XcfaToEventGraph(
             val done = doneVars.getOrPut(pid) { Decls.Var("__theta_oc_thread_done_$pid", Bool()) }
             edge = doneEdge
             inEdge = false
-            atomicBlock = current.atomics.firstOrNull()
+            // Paths ending inside an atomic block (e.g. an abort) do not pull the end of the others
+            // into that block: their later events would precede the block in program order.
+            atomicBlock = current.atomics.distinct().singleOrNull()
             last = current.lastEvents
             guard = mergeGuards(current.guards)
             lastWrites = mergeWrites(current)
@@ -1015,7 +1017,7 @@ internal class XcfaToEventGraph(
               .toMutableMap()
           var firstLabel = true
           var leadingAssume = true
-          atomicBlock = current.atomics.firstOrNull()
+          atomicBlock = current.atomics.distinct().singleOrNull()
 
           var havocked: VarDecl<*>? = null
           for (label in edge.getFlatLabels()) {
