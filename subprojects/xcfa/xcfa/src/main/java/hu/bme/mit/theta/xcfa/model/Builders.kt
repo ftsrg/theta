@@ -66,6 +66,13 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    */
   val mutexArrays: MutableMap<VarDecl<*>, LitExpr<*>> = LinkedHashMap()
 
+  /**
+   * The global pointers the `multi` memory model split into a base and an offset variable, see
+   * [hu.bme.mit.theta.xcfa.passes.memory.ReferenceElimination], each with its two halves. The
+   * original variable keeps no value in the procedures that split it.
+   */
+  val splitPointers: MutableMap<VarDecl<*>, Pair<VarDecl<*>, VarDecl<*>>> = LinkedHashMap()
+
   fun getVars(): Set<XcfaGlobalVar> = vars
 
   fun getProcedures(): Set<XcfaProcedureBuilder> = procedures

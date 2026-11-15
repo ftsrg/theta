@@ -61,6 +61,7 @@ import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.memory.PtrSizeToMemoryPass
+import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
 import hu.bme.mit.theta.xcfa.passes.splitIf
 import hu.bme.mit.theta.xcfa.utils.MALLOC_VAR_NAME
 import hu.bme.mit.theta.xcfa.utils.POINTER_BASE_CLASSES
@@ -781,6 +782,27 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
   private fun Expr<*>.toFitsall(): Expr<*> =
     if (fitsall.smtType is IntType) this else fitsall.castTo(this)
 
+  /**
+   * The base half of [pointer], which the `multi` model split. Every procedure using the pointer
+   * has to be rewritten onto its halves: one still using the original would leave neither variable
+   * holding the pointer everywhere, so that is refused.
+   */
+  private fun splitBase(
+    builder: XcfaProcedureBuilder,
+    pointer: VarDecl<*>,
+    base: VarDecl<*>,
+  ): VarDecl<*> {
+    if (
+      builder.parent.getProcedures().any { p ->
+        p.getEdges().any { pointer in it.label.collectVars() }
+      }
+    )
+      throw UnsupportedPointerSplitException(
+        "Unsupported pointer arithmetic: ${pointer.name} is split in some procedures only"
+      )
+    return base
+  }
+
   fun annotateLost(builder: XcfaProcedureBuilder) {
     val errorLoc =
       builder.errorLoc.orElseGet { builder.createErrorLoc().let { builder.errorLoc.get() } }
@@ -817,16 +839,23 @@ class MemsafetyPass(private val property: XcfaProperty, private val parseContext
     // violation of memcleanup and not of memtrack. Applying the exemption to both turned 32 of
     // those from correct into missed leaks.
     val trackedIfPointedTo = property.inputProperty != ErrorDetection.MEMCLEANUP
+    val split = builder.parent.splitPointers
+    val halves = split.values.flatMap { it.toList() }.toSet()
     val globalPointers =
       if (!trackedIfPointedTo) emptyList()
       else
         builder.parent
           .getVars()
           .map { it.wrappedVar }
-          .filter { it != anyBase && it != sizeVar }
+          .filter { it != anyBase && it != sizeVar && it !in halves }
           // A ghost (`__malloc`, the slot arrays) may have no C type at all; it is not a pointer.
           .filter {
             runCatching { CComplexType.getType(it.ref, parseContext) }.getOrNull() is CPointer
+          }
+          // A pointer split under multi names its block by its base; one into the block's middle
+          // still keeps it from being definitely lost.
+          .map { pointer ->
+            split[pointer]?.let { splitBase(builder, pointer, it.first) } ?: pointer
           }
     val pointedTo = globalPointers.map { Eq(cast(it.ref, mallocBase.type), mallocBase) }
     val remained =

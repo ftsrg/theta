@@ -577,3 +577,4 @@ flat_pointer_copy_use_after_free.c	efficient	ILP32	UNSAFE:valid-memsafety	a copy
 memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a struct of another cell layout is not walked by the destination's cells
 pointer_param_end_bound.c	efficient	LP64	SAFE	a pointer parameter compared with a walked pointer keeps the offset its caller binds (one past the end)
 pointer_param_end_bound_bug.c	efficient	LP64	UNSAFE	a walk up to a one-past-the-end parameter still sees every element
+memtrack_split_global_safe.c	efficient	LP64	SAFE:valid-memsafety	a global pointer split under multi still keeps its block from being lost	multi
