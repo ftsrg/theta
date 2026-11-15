@@ -310,7 +310,7 @@ fun multithreadPortfolio27(
               val config_OC_PROP_INT =
                 oc("Z3:new", OcDecisionProcedureType.PROPAGATOR, 100_000, ArithmeticType.integer)
               // The propagator gives up on programs whose reads are matched across addresses.
-              val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, 820_000, slice = 80_000)
+              val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, 400_000, slice = 80_000)
               val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 300_000)
               link(config_OC_PROP_INT, config_OC_IDL.first())
               link(config_OC_IDL, config_OC_Z3.first(), config_MULTITHREAD_EXPL_COI_SEQ_ITP)
