@@ -121,6 +121,12 @@ internal class XcfaToEventGraph(
   }
 
   private val threads = mutableSetOf<Thread>()
+
+  /** The threads that start a thread on each handle. */
+  private val handleStarters = mutableMapOf<VarDecl<*>, MutableSet<Int>>()
+
+  /** The handles joined where no thread was started on them, with the joining thread. */
+  private val unstartedJoins = mutableListOf<Pair<VarDecl<*>, Int>>()
   private var indexing = VarIndexingFactory.indexing(0)
   private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
 
@@ -328,6 +334,11 @@ internal class XcfaToEventGraph(
     XcfaEvent.resetIds()
     Thread.resetIds()
     ThreadProcessor(Thread.of(xcfa.initProcedures.first().first, parseContext), true).process()
+    unstartedJoins.forEach { (handle, pid) ->
+      if (handleStarters[handle].orEmpty().any { it != pid }) {
+        exit("join of a thread started in a different thread")
+      }
+    }
     addCrossThreadRelations()
     addJoinOrders()
     val allEvents = events.values.flatMap { it.values.flatten() }
@@ -1273,6 +1284,7 @@ internal class XcfaToEventGraph(
       if (threads.any { it.pidVar == pidVar }) {
         multipleUsePidVars.add(pidVar)
       }
+      handleStarters.getOrPut(pidVar) { mutableSetOf() }.add(pid)
       val newHistory = thread.startHistory + thread.procedure.name
       val newThread =
         Thread.of(
@@ -1305,7 +1317,15 @@ internal class XcfaToEventGraph(
       if (pidVar in multipleUsePidVars) {
         exit("join on a pthread_t variable used in multiple pthread_create calls")
       }
-      threadLookup[pidVar]?.forEach { (g, thread) ->
+      val started = threadLookup[pidVar]
+      if (started == null) {
+        // As in CEGAR, joining a handle that no thread was started on does not wait. One started by
+        // another thread could be joined here, which is checked once every thread is known.
+        unstartedJoins.add(pidVar to pid)
+        last = event(this.pidVar, READ)
+        return
+      }
+      started.forEach { (g, thread) ->
         guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
         val joinEvent = event(this.pidVar, READ).first()
         doneVars[thread.pid]?.let { done ->
@@ -1318,7 +1338,7 @@ internal class XcfaToEventGraph(
         lastEvents.add(joinEvent)
         joinGuards.add(guard)
         thread.joinEvents.add(joinEvent)
-      } ?: exit("thread started in a different thread")
+      }
       guard = joinGuards.toOrInSet()
       last = lastEvents
     }

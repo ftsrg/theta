@@ -1065,14 +1065,21 @@ class CLibraryFunctionsPass(
   /** Whether [getParam] names this call's handle (`params[1]`) by a variable. */
   private fun InvokeLabel.hasStaticHandle(): Boolean {
     var param = params.getOrNull(1) ?: return true
-    while (param is Reference<*, *>) param = param.expr
+    var referenced = false
+    while (param is Reference<*, *>) {
+      param = param.expr
+      referenced = true
+    }
+    // A handle reached through a pointer variable is whatever object the pointer holds at the time.
+    fun isObject(base: Expr<*>) = CComplexType.getType(base, parseContext) !is CPointer
     return when (param) {
-      is RefExpr<*> -> true
-      is Dereference<*, *, *> -> param.array is RefExpr<*> && param.offset.asConstant() != null
+      is RefExpr<*> -> referenced || isObject(param)
+      is Dereference<*, *, *> ->
+        param.array is RefExpr<*> && param.offset.asConstant() != null && isObject(param.array)
       is AddExpr<*> -> {
         var base = param.ops.filter { it.asConstant() == null }.singleOrNull()
         while (base is PosExpr<*>) base = base.op
-        base is RefExpr<*>
+        base is RefExpr<*> && isObject(base)
       }
       else -> false
     }
