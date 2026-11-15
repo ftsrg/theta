@@ -286,6 +286,19 @@ class XcfaOcCheckerTest {
     Assertions.assertEquals(!safe, result.isUnsafe)
   }
 
+  /** An error behind `n >= 0` is discharged if only a negative value of `n` would reach it. */
+  @ParameterizedTest
+  @CsvSource("/50guarded_violation_safe.c,true", "/50guarded_violation_unsafe.c,false")
+  fun testGuardedViolation(program: String, safe: Boolean) {
+    val (xcfa, parseContext) = parse(program, property)
+    val eventGraph =
+      XcfaToEventGraph(xcfa, parseContext, property.verifiedProperty, true, true).create()
+    Assertions.assertEquals(safe, eventGraph.violations.isEmpty())
+    val result = check(program, property, OcDecisionProcedureType.IDL)
+    Assertions.assertEquals(safe, result.isSafe)
+    Assertions.assertEquals(!safe, result.isUnsafe)
+  }
+
   @Test
   fun testThreadLocalAggregateUnsupported() {
     Assertions.assertThrows(UnsupportedFrontendElementException::class.java) {
