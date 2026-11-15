@@ -219,6 +219,21 @@ internal class SvLibFrontendTest {
   }
 
   @Test
+  fun procedureExitKnowsTheTagsAnnotatingOnlyWholeBodies() {
+    val xcfa: XCFA = parseResource("procedure-contracts.svlib")
+
+    val exits =
+      xcfa.procedures
+        .mapNotNull { it.finalLoc.get().metadata as? SvLibProcedureExit }
+        .associateBy { it.procedure }
+    assertEquals(setOf("inc-body", "inc-alias"), exits["inc"]?.tags)
+    assertEquals(setOf("twice-body", "twice-outer"), exits["twice"]?.tags)
+    assertEquals(emptySet<String>(), exits["other"]?.tags)
+    assertEquals(setOf("x"), exits["twice"]?.inputs?.map { it.name }?.toSet())
+    assertEquals(setOf("y"), exits["twice"]?.outputs?.map { it.name }?.toSet())
+  }
+
+  @Test
   fun verifyCallBindsInputsInEntryWrapper() {
     val xcfa: XCFA = parseResource("procedure-call.svlib")
 

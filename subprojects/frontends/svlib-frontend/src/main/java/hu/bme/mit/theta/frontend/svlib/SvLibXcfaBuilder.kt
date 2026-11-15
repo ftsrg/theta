@@ -46,6 +46,7 @@ class SvLibXcfaBuilder(
   private val globalSymbolTable = SvLibSymbolTable()
   private val procedures = LinkedHashMap<XcfaProcedureBuilder, SvLibSymbolTable>()
   private val taggedLocations: MutableMap<String, Set<XcfaLocation>> = LinkedHashMap()
+  private val bodyLocations = mutableSetOf<XcfaLocation>()
   private val modelSymbols = mutableListOf<Decl<*>>()
   private val assertions = mutableListOf<Expr<BoolType>>()
 
@@ -54,11 +55,16 @@ class SvLibXcfaBuilder(
 
   fun buildXcfa(parser: SvLibParser): XCFA {
     visit(parser.script())
+    // contract for tags annotating whole bodies
+    val contractTags = taggedLocations.filterValues { bodyLocations.containsAll(it) }.keys
     procedures.keys.forEach { procedure ->
       procedure.havocUninitializedVars()
       val liveVars = strongLiveVars(procedure)
+      val exit = procedure.finalLoc.get().metadata as SvLibProcedureExit
       procedure.getLocs().forEach {
-        (it.metadata as? SvLibTagMetadata)?.liveVars = liveVars[it].orEmpty()
+        val metadata = it.metadata as? SvLibTagMetadata ?: return@forEach
+        metadata.liveVars = liveVars[it].orEmpty()
+        if (it in bodyLocations) exit.tags += metadata.tags intersect contractTags
       }
     }
     recordMetadata(MODEL_SYMBOLS, "modelSymbols", modelSymbols.toList())
@@ -203,11 +209,13 @@ class SvLibXcfaBuilder(
     xcfaBuilder.addProcedure(procedure)
     procedures[procedure] = procedureSymbolTable
 
-    inputs.getVars().forEach {
+    val inputVars = inputs.getVars()
+    val outputVars = outputs.getVars()
+    inputVars.forEach {
       procedure.addParam(it, ParamDirection.IN)
       procedureSymbolTable.registerVar(it)
     }
-    outputs.getVars().forEach {
+    outputVars.forEach {
       procedure.addParam(it, ParamDirection.OUT)
       procedureSymbolTable.registerVar(it)
     }
@@ -217,7 +225,9 @@ class SvLibXcfaBuilder(
     }
 
     procedure.createInitLoc()
-    procedure.createFinalLoc()
+    procedure.createFinalLoc(
+      SvLibProcedureExit(procedure.name, inputVars.toSet(), outputVars.toSet())
+    )
     procedure.createErrorLoc()
 
     return procedure
@@ -234,6 +244,7 @@ class SvLibXcfaBuilder(
     )
 
     taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
+    bodyLocations += statementVisitor.bodyLocations
   }
 
   private fun sortOf(sort: SortContext): Type =

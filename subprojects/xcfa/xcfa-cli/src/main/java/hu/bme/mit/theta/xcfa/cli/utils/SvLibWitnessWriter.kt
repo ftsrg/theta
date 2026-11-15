@@ -132,11 +132,10 @@ private fun LocationInvariants.toSvLibCorrectnessWitness(parseContext: ParseCont
     .toSvLibCorrectnessWitness(parseContext)
 
 private fun DssInvariants.toSvLibCorrectnessWitness(parseContext: ParseContext) =
-  invariants
-    .mapValues { (_, invariants) -> invariants.orEmpty() }
-    .toSvLibCorrectnessWitness(parseContext)
+  invariants.toSvLibCorrectnessWitness(parseContext)
 
-private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
+/** Maps each location to the states reaching it: none if it is unreachable, null if unknown. */
+private fun Map<XcfaLocation, List<Expr<BoolType>>?>.toSvLibCorrectnessWitness(
   parseContext: ParseContext
 ): String {
   val passInvariants =
@@ -149,56 +148,64 @@ private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
         ?.let { ExprUtils.simplify(BoolExprs.And(it as? MutableList<Expr<BoolType>>)) }
     }
 
-  val invariantsByTag =
-    this.entries.fold(LinkedHashMap<String, MutableList<Expr<BoolType>>>()) {
-      invariantsByTag,
-      (location, stateInvariants) ->
-      val metadata = location.metadata as? SvLibTagMetadata ?: return@fold invariantsByTag
-      if (metadata.tags.isNotEmpty()) {
-        val invariants = mutableListOf<Expr<BoolType>>()
-        if (stateInvariants.isNotEmpty()) invariants.add(BoolExprs.Or(stateInvariants))
-        passInvariants[location]?.let { invariants.add(it) }
+  val locationInvariants =
+    this.map { (location, stateInvariants) ->
+      val reached =
+        stateInvariants?.let { if (it.isEmpty()) BoolExprs.False() else BoolExprs.Or(it) }
+      location to
+        ExprUtils.simplify(BoolExprs.And(listOfNotNull(reached, passInvariants[location])))
+    } + parseContext.removedLocations() // locations removed by passes still matter for tags
 
-        if (invariants.isEmpty()) return@fold invariantsByTag
-
-        val invariant = BoolExprs.And(invariants)
-        val projectedInvariant =
-          ExprUtils.simplify(invariant.projectToScope(metadata, parseContext))
-        metadata.tags.forEach {
-          invariantsByTag.getOrPut(it) { mutableListOf() }.add(projectedInvariant)
-        }
-      }
-      invariantsByTag
-    }
-
-  // locations removed by passes still matter for tags
-  parseContext.removedLocations().forEach { (location, invariant) ->
-    val tagMetadata = location.metadata as? SvLibTagMetadata ?: return@forEach
-    val projectedInvariant = ExprUtils.simplify(invariant.projectToScope(tagMetadata, parseContext))
-    tagMetadata.tags.forEach {
-      invariantsByTag.getOrPut(it) { mutableListOf() }.add(projectedInvariant)
+  val exits =
+    locationInvariants
+      .mapNotNull { (location, _) -> location.metadata as? SvLibProcedureExit }
+      .associateBy { it.procedure }
+  val annotations = LinkedHashMap<String, SvLibTagAnnotation>()
+  fun annotate(
+    tags: Set<String>,
+    invariant: Expr<BoolType>,
+    scope: Set<VarDecl<*>>,
+    attribute: (SvLibTagAnnotation) -> MutableList<Expr<BoolType>>,
+  ) {
+    if (tags.isEmpty()) return
+    val projectedInvariant = ExprUtils.simplify(invariant.projectToScope(scope, parseContext))
+    tags.forEach {
+      attribute(annotations.getOrPut(it, ::SvLibTagAnnotation)).add(projectedInvariant)
     }
   }
 
-  return invariantsByTag
-    .mapValues { (_, invariants) ->
-      if (invariants.isNotEmpty()) ExprUtils.simplify(BoolExprs.Or(invariants))
-      else BoolExprs.True()
+  for ((location, invariant) in locationInvariants) {
+    when (val metadata = location.metadata) {
+      is SvLibTagMetadata -> {
+        annotate(metadata.tags, invariant, metadata.liveVars) { it.invariants }
+        val exit = exits[metadata.procedure] ?: continue
+        annotate(metadata.tags intersect exit.tags, invariant, exit.inputs) { it.requires }
+      }
+      is SvLibProcedureExit ->
+        annotate(metadata.tags, invariant, metadata.inputs + metadata.outputs) { it.ensures }
     }
-    .toSvLibCorrectnessWitness()
+  }
+
+  return annotations.toSvLibCorrectnessWitness()
 }
 
 /**
- * Existentially quantifies the variables that are neither global nor live at the tagged location.
+ * The invariants of the occurrences of a tag, and of their starts and ends if it has a contract.
  */
+private class SvLibTagAnnotation {
+  val invariants = mutableListOf<Expr<BoolType>>()
+  val requires = mutableListOf<Expr<BoolType>>()
+  val ensures = mutableListOf<Expr<BoolType>>()
+}
+
+/** Existentially quantifies the variables that are neither global nor in [scope]. */
 private fun Expr<BoolType>.projectToScope(
-  tag: SvLibTagMetadata,
+  scope: Set<VarDecl<*>>,
   parseContext: ParseContext,
 ): Expr<BoolType> {
   val outOfScope =
     ExprUtils.getVars(this).filterNot {
-      it in tag.liveVars ||
-        parseContext.metadata.getMetadataValue(it, "isGlobal").getOrNull() == true
+      it in scope || parseContext.metadata.getMetadataValue(it, "isGlobal").getOrNull() == true
     }
   if (outOfScope.isEmpty()) return this
 
@@ -208,17 +215,21 @@ private fun Expr<BoolType>.projectToScope(
   return ExprUtils.simplify(quantified)
 }
 
-private fun Map<String, Expr<BoolType>>.toSvLibCorrectnessWitness(): String {
+private fun Map<String, SvLibTagAnnotation>.toSvLibCorrectnessWitness(): String {
   val annotations =
-    this.map { (tag, invariant) ->
-      """
-      (annotate-tag
-        ${GenericSmtLibSymbolTable.encodeSymbol(tag)}
-        :invariant
-      ${SvLibExprTransformer().toTerm(invariant).indent()}
-      )
-      """
-        .trimIndent()
+    this.map { (tag, annotation) ->
+      val attributes =
+        listOf(
+            ":invariant" to annotation.invariants,
+            ":requires" to annotation.requires,
+            ":ensures" to annotation.ensures,
+          )
+          .filter { (_, invariants) -> invariants.isNotEmpty() }
+          .joinToString("\n") { (keyword, invariants) ->
+            val invariant = ExprUtils.simplify(BoolExprs.Or(invariants))
+            "$keyword\n${SvLibExprTransformer().toTerm(invariant).indent(2)}"
+          }
+      "(annotate-tag\n  ${GenericSmtLibSymbolTable.encodeSymbol(tag)}\n${attributes.indent(2)}\n)"
     }
 
   return "(\n${annotations.joinToString("\n\n").indent(2)}\n)\n"

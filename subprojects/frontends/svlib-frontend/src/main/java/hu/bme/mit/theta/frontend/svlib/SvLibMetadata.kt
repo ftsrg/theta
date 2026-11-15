@@ -38,6 +38,22 @@ class SvLibTagMetadata(tags: Set<String> = setOf(), val procedure: String? = nul
   override fun toString() = tags.joinToString(" ")
 }
 
+/** Marks the end of a procedure body, where the [tags] annotating the whole body terminate. */
+class SvLibProcedureExit(
+  val procedure: String,
+  val inputs: Set<VarDecl<*>>,
+  val outputs: Set<VarDecl<*>>,
+) : MetaData() {
+  /** set by the [SvLibXcfaBuilder] once the whole script is parsed */
+  val tags = mutableSetOf<String>()
+
+  override fun combine(other: MetaData) = this
+
+  override fun keepsLocation() = tags.isNotEmpty()
+
+  override fun isSubstantial() = tags.isNotEmpty()
+}
+
 sealed class SvLibWitnessMetadata : MetaData() {
   override fun combine(other: MetaData) = other as? SvLibWitnessMetadata ?: this
 

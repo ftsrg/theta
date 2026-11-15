@@ -40,6 +40,10 @@ class SvLibStatementVisitor(
   val gotos: MutableMap<XcfaEdge, String> = LinkedHashMap()
   private val loops = ArrayDeque<Loop>()
 
+  /** the tagged locations of the statements that make up the whole body */
+  val bodyLocations: MutableSet<XcfaLocation> = LinkedHashSet()
+  private val wholeBody = mutableSetOf<StatementContext>()
+
   fun parseProcedureBody(ctx: StatementContext) {
     val inputs =
       procedure
@@ -50,6 +54,7 @@ class SvLibStatementVisitor(
     val initVars = procedure.getVars() - inputs
     current =
       current.extend(witnessStep(SvLibWitnessMetadata.InitProcVars(procedure.name, initVars)))
+    wholeBody += generateSequence(ctx) { (it as? AnnotatedStatementContext)?.statement() }
     visit(ctx)
     applyGotos()
   }
@@ -215,6 +220,7 @@ class SvLibStatementVisitor(
         .toSet()
     current = current.extend(NopLabel, "__THETA_", tags)
     tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
+    if (ctx in wholeBody) bodyLocations += current
 
     val annotatedStart = current
     visit(ctx.statement())
