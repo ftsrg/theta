@@ -54,51 +54,6 @@ private val anythingButTimeout =
   )
 
 /**
- * Skips the nodes that a memory model pinned by a frontend fallback turned into a copy of the next
- * node, which would only repeat its run, and returns the start node. After any error, the earlier
- * copy goes, as the later one has at least its time; after a failure other than a timeout, the
- * later one goes, as it would fail the same way.
- */
-private fun skipCopies(start: Node, edges: MutableSet<Edge>): Node {
-  fun timeout(node: Node) = (node as ConfigNode).config.backendConfig.timeoutMs
-  fun redundant(edge: Edge): Boolean {
-    val (from, to) = edge.source to edge.target
-    if (from !is ConfigNode || to !is ConfigNode || from.name != to.name) return false
-    if (from.config.frontendConfig.ptrSizeInMemory != to.config.frontendConfig.ptrSizeInMemory)
-      return false
-    return edge.trigger === anythingButTimeout ||
-      (edge.trigger === anyError && (timeout(to) == 0L || timeout(to) >= timeout(from)))
-  }
-  // rebuilt in order, as the first matching edge is taken
-  fun retarget(edge: Edge, target: Node?) {
-    val out = edge.source.outEdges.toList()
-    edge.source.outEdges.clear()
-    edges.remove(edge)
-    out.forEach {
-      if (it !== edge) it.source.outEdges.add(it)
-      else if (target != null) edges.add(Edge(it.source, target, it.trigger, it.guard))
-    }
-  }
-  var initial = start
-  while (true) {
-    val copy = edges.firstOrNull(::redundant) ?: return initial
-    if (copy.trigger === anythingButTimeout) {
-      val next =
-        copy.target.outEdges.firstOrNull {
-          it.trigger === anythingButTimeout || it.trigger === anyError
-        }
-      retarget(copy, next?.target)
-    } else {
-      val skipped = copy.source
-      edges.filter { it.target === skipped }.forEach { retarget(it, copy.target) }
-      if (initial === skipped) initial = copy.target
-      edges.removeAll(skipped.outEdges)
-      skipped.outEdges.clear()
-    }
-  }
-}
-
-/**
  * The SV-COMP 2027 multithreaded portfolio. It differs from [multithreadPortfolio] in its OC
  * configurations, chosen on the ConcurrencySafety category: OC time slices lead the reachability,
  * data race and overflow chains.
@@ -140,33 +95,17 @@ fun multithreadPortfolio27(
         frontendConfig = baseConfig.frontendConfig.copy(lbeLevel = LBE_LOCAL),
       )
 
-    /**
-     * An OC configuration as measured on the ConcurrencySafety category, with an explicit
-     * arithmetic and memory model, so the program is re-read rather than reusing the portfolio's
-     * encoding. Data races are checked natively, which needs IDL. No LBE: an edge is one atomic
-     * unit for OC (and `LbePass` disables non-local LBE for multithreaded programs anyway).
-     */
-    fun oc(
+    fun ocNode(
       solver: String,
       decisionProcedure: OcDecisionProcedureType,
-      requestedMemoryModel: MemoryModelType,
+      memoryModel: MemoryModelType?,
       timeoutMs: Long,
-      requestedArithmetic: ArithmeticType = ArithmeticType.bitvector,
-      ptrSizeInMemory: Boolean = false,
+      arithmetic: ArithmeticType,
+      ptrSizeInMemory: Boolean,
     ): ConfigNode {
-      // A model pinned by a frontend fallback replaces any weaker one (multi < flat < bytes): the
-      // rebuild would fail the same way, and an in-process frontend failure ends the whole run.
-      val pinnedMemoryModel =
-        (baseConfig.frontendConfig.specConfig as? CFrontendConfig)?.memoryModel
-      val memoryModel =
-        if (pinnedMemoryModel != null && pinnedMemoryModel > requestedMemoryModel) pinnedMemoryModel
-        else requestedMemoryModel
-      // bytes has no integer encoding
-      val arithmetic =
-        if (memoryModel == MemoryModelType.bytes) ArithmeticType.bitvector else requestedArithmetic
       val solverName = solver.substringAfter(':').lowercase()
       val name =
-        "MULTITHREAD_OC_${decisionProcedure}_${arithmetic}_${memoryModel}_$solverName-$inProcess"
+        "MULTITHREAD_OC_${decisionProcedure}_${arithmetic}_${memoryModel ?: "auto"}_$solverName-$inProcess"
       return ConfigNode(
         name,
         XcfaConfig(
@@ -202,6 +141,45 @@ fun multithreadPortfolio27(
         ),
         checker,
       )
+    }
+
+    /**
+     * An OC configuration as measured on the ConcurrencySafety category, with an explicit
+     * arithmetic, so the program is re-read rather than reusing the portfolio's encoding. Data
+     * races are checked natively, which needs IDL. No LBE: an edge is one atomic unit for OC (and
+     * `LbePass` disables non-local LBE for multithreaded programs anyway).
+     *
+     * The memory model is left to the frontend, which starts from `multi` (more addresses known to
+     * be disjoint) and falls back to `flat` and `bytes` on what it cannot build; a model pinned by
+     * an earlier fallback is kept. The checker may still refuse a model the frontend built, so the
+     * step comes with its retries under each stronger model, see [link].
+     */
+    fun oc(
+      solver: String,
+      decisionProcedure: OcDecisionProcedureType,
+      timeoutMs: Long,
+      arithmetic: ArithmeticType = ArithmeticType.bitvector,
+      ptrSizeInMemory: Boolean = false,
+    ): List<ConfigNode> {
+      val pinned = (baseConfig.frontendConfig.specConfig as? CFrontendConfig)?.memoryModel
+      val stronger = MemoryModelType.entries.filter { it > (pinned ?: MemoryModelType.multi) }
+      // bytes has no integer encoding: such a step is left out under it
+      return (listOf(pinned) + stronger)
+        .filter { it != MemoryModelType.bytes || arithmetic != ArithmeticType.integer }
+        .map { ocNode(solver, decisionProcedure, it, timeoutMs, arithmetic, ptrSizeInMemory) }
+    }
+
+    /**
+     * Links the memory models of an OC step: a failure other than a timeout retries the step under
+     * the next model, and after the last one goes to [failure]; a timeout goes to [timeout].
+     */
+    fun link(step: List<ConfigNode>, failure: Node, timeout: Node = failure) {
+      step.forEachIndexed { i, node ->
+        val next = step.getOrNull(i + 1) ?: failure
+        // the first matching edge is taken, so the non-timeout edge goes first
+        if (next !== timeout) edges.add(Edge(node, next, anythingButTimeout))
+        edges.add(Edge(node, timeout, anyError))
+      }
     }
 
     val config_MULTITHREAD_EXPL_SEQ_ITP =
@@ -316,78 +294,31 @@ fun multithreadPortfolio27(
           val config_OC =
             if (baseConfig.inputConfig.property.inputProperty == OVERFLOW) {
               val config_OC_PROP_INT =
-                oc(
-                  "Z3:new",
-                  OcDecisionProcedureType.PROPAGATOR,
-                  MemoryModelType.flat,
-                  100_000,
-                  ArithmeticType.integer,
-                )
+                oc("Z3:new", OcDecisionProcedureType.PROPAGATOR, 100_000, ArithmeticType.integer)
               // The propagator gives up on programs whose reads are matched across addresses.
-              val config_OC_IDL =
-                oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 80_000)
-              val config_OC_IDL_FLAT =
-                oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
-              edges.add(Edge(config_OC_PROP_INT, config_OC_IDL, anyError))
-              val config_OC_Z3 =
-                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)
-              edges.add(Edge(config_OC_IDL, config_OC_IDL_FLAT, anyError))
-              // the first matching edge is taken, so the non-timeout edge goes first
-              edges.add(Edge(config_OC_IDL_FLAT, config_OC_Z3, anythingButTimeout))
-              edges.add(Edge(config_OC_IDL_FLAT, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              edges.add(Edge(config_OC_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              config_OC_PROP_INT
+              val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, 820_000)
+              val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 300_000)
+              link(config_OC_PROP_INT, config_OC_IDL.first())
+              link(config_OC_IDL, config_OC_Z3.first(), config_MULTITHREAD_EXPL_COI_SEQ_ITP)
+              link(config_OC_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP)
+              (config_OC_PROP_INT + config_OC_IDL).first()
             } else if (
               baseConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
             ) {
               val config_OC_MEM_YICES =
-                oc(
-                  YICES,
-                  OcDecisionProcedureType.IDL,
-                  MemoryModelType.multi,
-                  250_000,
-                  ptrSizeInMemory = true,
-                )
-              // Under flat, checks over static objects need no ghost state, see MemsafetyPass.
-              val config_OC_MEM_FLAT =
-                oc(
-                  YICES,
-                  OcDecisionProcedureType.IDL,
-                  MemoryModelType.flat,
-                  500_000,
-                  ptrSizeInMemory = true,
-                )
-              val config_OC_MEM =
-                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
-              edges.add(Edge(config_OC_MEM_YICES, config_OC_MEM_FLAT, anyError))
-              edges.add(Edge(config_OC_MEM_FLAT, config_OC_MEM, anyError))
-              // Only reached when the multi model refused the program: Yices cannot do this under
-              // flat if the program joins on a thread's result.
-              val config_OC_MEM_FLAT_Z3 =
-                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
-              edges.add(Edge(config_OC_MEM, config_OC_MEM_FLAT_Z3, anythingButTimeout))
-              edges.add(Edge(config_OC_MEM, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              val config_OC_MEM_BYTES =
-                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
-              edges.add(Edge(config_OC_MEM_FLAT_Z3, config_OC_MEM_BYTES, anythingButTimeout))
-              edges.add(Edge(config_OC_MEM_FLAT_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              edges.add(Edge(config_OC_MEM_BYTES, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              config_OC_MEM_YICES
+                oc(YICES, OcDecisionProcedureType.IDL, 750_000, ptrSizeInMemory = true)
+              // Yices cannot do this under flat if the program joins on a thread's result.
+              val config_OC_MEM = oc("Z3:new", OcDecisionProcedureType.IDL, 100_000)
+              link(config_OC_MEM_YICES, config_OC_MEM.first())
+              link(config_OC_MEM, config_MULTITHREAD_EXPL_COI_SEQ_ITP)
+              config_OC_MEM_YICES.first()
             } else {
-              // Addresses are only known to be disjoint under the multi memory model, which removes
-              // read-from candidates, but it rejects some pointer arithmetic, which flat encodes.
-              val config_OC_MULTI =
-                oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
-              val config_OC_YICES =
-                oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
-              val config_OC_Z3 =
-                oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 400_000)
-              edges.add(Edge(config_OC_MULTI, config_OC_YICES, anyError))
-              // yices has no arrays, which symbolic mutexes need; the non-timeout edge goes first
-              edges.add(Edge(config_OC_YICES, config_OC_Z3, anythingButTimeout))
-              edges.add(Edge(config_OC_YICES, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              edges.add(Edge(config_OC_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP, anyError))
-              config_OC_MULTI
+              val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000)
+              // yices has no arrays, which symbolic mutexes need
+              val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 400_000)
+              link(config_OC_YICES, config_OC_Z3.first(), config_MULTITHREAD_EXPL_COI_SEQ_ITP)
+              link(config_OC_Z3, config_MULTITHREAD_EXPL_COI_SEQ_ITP)
+              config_OC_YICES.first()
             }
 
           edges.add(
@@ -433,44 +364,18 @@ fun multithreadPortfolio27(
             )
 
           if (ArithmeticTrait.ARR in parseContext.arithmeticTraits) {
-            val config_OC_MULTI =
-              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 60_000)
-            val config_OC_FLAT =
-              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.flat, 740_000)
+            val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000)
             // yices has no arrays, which symbolic mutexes need
-            val config_OC_FLAT_Z3 =
-              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 300_000)
-            // Only reached when the flat slices failed for a reason other than time, mostly the
-            // frontend rejecting the program: the byte-level memory model encodes some of those.
-            val config_OC_BYTES =
-              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
-
-            edges.add(Edge(config_OC_MULTI, config_OC_FLAT, anyError))
-            // the first matching edge is taken, so the non-timeout edge goes first
-            edges.add(Edge(config_OC_FLAT, config_OC_FLAT_Z3, anythingButTimeout))
-            edges.add(Edge(config_OC_FLAT, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-            edges.add(Edge(config_OC_FLAT_Z3, config_OC_BYTES, anythingButTimeout))
-            edges.add(Edge(config_OC_FLAT_Z3, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-            edges.add(Edge(config_OC_BYTES, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-
-            config_OC_MULTI
+            val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 300_000)
+            link(config_OC_YICES, config_OC_Z3.first(), config_MULTITHREAD_PRED_SEQ_ITP)
+            link(config_OC_Z3, config_MULTITHREAD_PRED_SEQ_ITP)
+            config_OC_YICES.first()
           } else {
-            val config_OC_MULTI =
-              oc(YICES, OcDecisionProcedureType.IDL, MemoryModelType.multi, 100_000)
-            val config_OC_FLAT =
-              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.flat, 100_000)
-            // Only reached when the flat slice failed for a reason other than time, mostly the
-            // frontend rejecting the program: the byte-level memory model encodes some of those.
-            val config_OC_BYTES =
-              oc("Z3:new", OcDecisionProcedureType.IDL, MemoryModelType.bytes, 100_000)
-
-            edges.add(Edge(config_OC_MULTI, config_OC_FLAT, anyError))
-            // the first matching edge is taken, so the non-timeout edge goes first
-            edges.add(Edge(config_OC_FLAT, config_OC_BYTES, anythingButTimeout))
-            edges.add(Edge(config_OC_FLAT, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-            edges.add(Edge(config_OC_BYTES, config_MULTITHREAD_PRED_SEQ_ITP, anyError))
-
-            config_OC_MULTI
+            val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 100_000)
+            val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 100_000)
+            link(config_OC_YICES, config_OC_Z3.first())
+            link(config_OC_Z3, config_MULTITHREAD_PRED_SEQ_ITP)
+            config_OC_YICES.first()
           }
         }
 
@@ -521,7 +426,7 @@ fun multithreadPortfolio27(
         }
       }
 
-    return STM(skipCopies(startNode, edges), edges)
+    return STM(startNode, edges)
   }
 
   logger.benchmark("Using portfolio: MULTITHREAD27\n")

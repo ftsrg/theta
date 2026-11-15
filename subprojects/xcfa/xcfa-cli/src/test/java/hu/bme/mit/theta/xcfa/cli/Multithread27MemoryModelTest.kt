@@ -24,6 +24,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode
+import hu.bme.mit.theta.xcfa.cli.portfolio.ExceptionTrigger
 import hu.bme.mit.theta.xcfa.cli.portfolio.Node
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.multithreadPortfolio27
@@ -31,15 +32,15 @@ import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
 /**
- * A memory model pinned by a frontend fallback raises the OC nodes of weaker models to it, which
- * makes some of them copies of the node after them: none may run right before its copy.
+ * The OC nodes leave the memory model to the frontend and its fallbacks, or use the one an earlier
+ * fallback pinned. A stronger model is only tried after a failure other than a timeout, and no node
+ * runs right before a copy of itself.
  */
-class Multithread27PinnedModelTest {
+class Multithread27MemoryModelTest {
 
   private fun program() =
     xcfa("") {
@@ -51,13 +52,13 @@ class Multithread27PinnedModelTest {
       main.start()
     }
 
-  private fun stm(property: ErrorDetection, pinned: MemoryModelType?): STM {
+  private fun stm(property: ErrorDetection, pinned: MemoryModelType?, arrays: Boolean): STM {
     val xcfaProperty =
       XcfaProperty(property).also {
         if (property != ErrorDetection.DATA_RACE)
           it.transformSpecification(ErrorDetection.ERROR_LOCATION)
       }
-    val parseContext = ParseContext().apply { addArithmeticTrait(ArithmeticTrait.ARR) }
+    val parseContext = ParseContext().apply { if (arrays) addArithmeticTrait(ArithmeticTrait.ARR) }
     return multithreadPortfolio27(
       program(),
       emptySet(),
@@ -85,40 +86,50 @@ class Multithread27PinnedModelTest {
 
   private fun ConfigNode.run() = name to config.frontendConfig.ptrSizeInMemory
 
+  private fun ocNodes(stm: STM) =
+    reachable(stm).filterIsInstance<ConfigNode>().filter { it.name.startsWith("MULTITHREAD_OC_") }
+
+  private val ConfigNode.memoryModel
+    get() = (config.frontendConfig.specConfig as CFrontendConfig).memoryModel
+
   @ParameterizedTest
   @EnumSource(names = ["ERROR_LOCATION", "DATA_RACE", "OVERFLOW", "MEMSAFETY"])
-  fun noNodeRunsBeforeItsCopy(property: ErrorDetection) {
+  fun aStrongerModelOnlyAfterAFailureOtherThanATimeout(property: ErrorDetection) {
     for (pinned in listOf(null, MemoryModelType.flat, MemoryModelType.bytes)) {
-      reachable(stm(property, pinned)).forEach { node ->
-        node.outEdges.forEach { edge ->
-          val (from, to) = edge.source to edge.target
-          if (from is ConfigNode && to is ConfigNode)
-            assertTrue(from.run() != to.run(), "$property, pinned $pinned: ${from.name} twice")
+      for (arrays in listOf(false, true)) {
+        val stm = stm(property, pinned, arrays)
+        val start = stm.initNode as ConfigNode
+        assertEquals(pinned, start.memoryModel, "$property, pinned $pinned: ${start.name}")
+        val nodes = ocNodes(stm)
+        nodes.forEach { node ->
+          val model = node.memoryModel
+          assertTrue(model == pinned || model!! > (pinned ?: MemoryModelType.multi), node.name)
+        }
+        reachable(stm).forEach { from ->
+          from.outEdges
+            .filter { it.target in nodes && (it.target as ConfigNode).memoryModel != pinned }
+            .forEach { edge ->
+              val trigger = (edge.trigger as ExceptionTrigger).label
+              assertEquals("AnythingButTimeout", trigger, "${from.name} -> ${edge.target.name}")
+            }
         }
       }
     }
   }
 
   @ParameterizedTest
-  @EnumSource(names = ["ERROR_LOCATION", "DATA_RACE", "MEMSAFETY"])
-  fun aPinnedFlatModelStartsWithTheFlatSlice(property: ErrorDetection) {
-    val unpinned = stm(property, null).initNode.name
-    assertTrue("_multi_" in unpinned, "unpinned start: $unpinned")
-    val start = stm(property, MemoryModelType.flat).initNode as ConfigNode
-    assertTrue("_flat_yices2" in start.name, "pinned start: ${start.name}")
-    // the slice of the flat node, not of the multi node it replaces
-    assertTrue(start.config.backendConfig.timeoutMs >= 500_000, "slice of ${start.name}")
-  }
-
-  @Test
-  fun aSkippedCopyKeepsTheOrderOfTheEdges() {
-    // under flat, the multi Z3 memsafety node is the flat Z3 one: after a failure other than a
-    // timeout it goes on to the bytes model, after a timeout to CEGAR
-    val nodes = reachable(stm(ErrorDetection.MEMSAFETY, MemoryModelType.flat))
-    val z3 = nodes.filterIsInstance<ConfigNode>().single { "_flat_new" in it.name }
-    val targets = z3.outEdges.map { it.target.name }
-    assertEquals(2, targets.size, "$targets")
-    assertTrue("_bytes_" in targets[0], "$targets")
-    assertTrue(targets[1].startsWith("MULTITHREAD_EXPL_COI"), "$targets")
+  @EnumSource(names = ["ERROR_LOCATION", "DATA_RACE", "OVERFLOW", "MEMSAFETY"])
+  fun noNodeRunsBeforeItsCopy(property: ErrorDetection) {
+    for (pinned in listOf(null, MemoryModelType.flat, MemoryModelType.bytes)) {
+      for (arrays in listOf(false, true)) {
+        reachable(stm(property, pinned, arrays)).forEach { node ->
+          node.outEdges.forEach { edge ->
+            val (from, to) = edge.source to edge.target
+            if (from is ConfigNode && to is ConfigNode)
+              assertTrue(from.run() != to.run(), "$property, pinned $pinned: ${from.name} twice")
+          }
+        }
+      }
+    }
   }
 }
