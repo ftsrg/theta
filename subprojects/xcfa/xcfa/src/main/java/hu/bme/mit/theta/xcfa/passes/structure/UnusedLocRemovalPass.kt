@@ -15,11 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.passes.structure
 
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.recordRemovedLocation
 
 /** Removes unused locations */
-class UnusedLocRemovalPass : ProcedurePass {
+class UnusedLocRemovalPass(private val parseContext: ParseContext? = null) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     val reachable = mutableSetOf(builder.initLoc)
@@ -34,6 +37,13 @@ class UnusedLocRemovalPass : ProcedurePass {
     // incoming edge from within the cycle, so a predecessor-count test keeps it alive forever. The
     // edges out of that dead cycle then land on live merge points, where the OC checker waits for
     // predecessors that can never execute and gives up on the task with "loops".
+    parseContext?.let { context ->
+      builder
+        .getLocs()
+        .filter { !it.final && !it.error && !it.initial && it !in reachable }
+        .filter { it.metadata.keepsLocation() }
+        .forEach { context.recordRemovedLocation(it, False()) }
+    }
     builder.removeLocs { !it.final && !it.error && !it.initial && it !in reachable }
     return builder
   }

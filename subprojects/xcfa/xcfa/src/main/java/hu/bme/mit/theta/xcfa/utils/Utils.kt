@@ -37,7 +37,6 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
@@ -459,16 +458,3 @@ fun mergeIncomingValuations(
       .reduceOrNull(::intersect)
   return nonModifiedValuation union intersectedValuation
 }
-
-fun ParseContext.recordPassInvariants(location: XcfaLocation, invariant: Expr<BoolType>) {
-  recordPassInvariant(location, invariant)
-  recordPassInvariant(location.name, invariant) // to handle XCFA copies
-}
-
-private fun <T> ParseContext.recordPassInvariant(owner: T, invariant: Expr<BoolType>) =
-  metadata
-    .getMetadataValue(owner, "passInvariants")
-    .ifPresentOrElse(
-      { invariants -> (invariants as? MutableList<Expr<BoolType>>)?.add(invariant) },
-      { metadata.create(owner, "passInvariants", mutableListOf(invariant)) },
-    )

@@ -45,7 +45,7 @@ fun XcfaLabel.isWitnessStep() =
 
 private var tmpVarCnt = 0
 const val tmpVarPrefix = "__theta"
-const val GLOBAL_SCOPE = "__theta_global"
+const val MODEL_SYMBOLS = "__theta_model_symbols"
 
 internal fun VarDecl<*>.createTemp() = Decls.Var("${tmpVarPrefix}_${name}_${tmpVarCnt++}", type)
 

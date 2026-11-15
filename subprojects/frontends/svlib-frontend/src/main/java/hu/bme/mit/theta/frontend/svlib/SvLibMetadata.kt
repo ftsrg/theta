@@ -18,8 +18,9 @@ package hu.bme.mit.theta.frontend.svlib
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class SvLibTagMetadata(val tags: Set<String> = setOf(), val procedure: String? = null) :
-  MetaData() {
+class SvLibTagMetadata(tags: Set<String> = setOf(), val procedure: String? = null) : MetaData() {
+  val tags = tags.toMutableSet()
+
   /** set by the [SvLibXcfaBuilder] once the whole script is parsed */
   var liveVars: Set<VarDecl<*>> = setOf()
 
@@ -42,7 +43,9 @@ sealed class SvLibWitnessMetadata : MetaData() {
 
   override fun isSubstantial() = true
 
-  data class InitProcVars(val procedure: String) : SvLibWitnessMetadata()
+  /** [initVars]: variables that the call can initialize (outputs and locals) */
+  data class InitProcVars(val procedure: String, val initVars: Set<VarDecl<*>>) :
+    SvLibWitnessMetadata()
 
   data class Havoc(val vars: List<VarDecl<*>>) : SvLibWitnessMetadata()
 

@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.recordPassInvariants
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -44,7 +45,6 @@ import hu.bme.mit.theta.xcfa.utils.getNonConcurrentEdges
 import hu.bme.mit.theta.xcfa.utils.isRead
 import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.mergeIncomingValuations
-import hu.bme.mit.theta.xcfa.utils.recordPassInvariants
 import hu.bme.mit.theta.xcfa.utils.simplify
 
 /**
@@ -65,7 +65,7 @@ class SimplifyExprsPass(
       return builder
     }
     checkNotNull(builder.metaData["deterministic"])
-    val unusedLocRemovalPass = UnusedLocRemovalPass()
+    val unusedLocRemovalPass = UnusedLocRemovalPass(parseContext.takeIf { recordPassInvariants })
     var edges = LinkedHashSet(builder.getEdges())
     val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
     // without threads nothing runs concurrently with the entry procedure: its globals change only

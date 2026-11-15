@@ -176,15 +176,15 @@ internal class SvLibFrontendTest {
   fun procedureBodyStartsWithWitnessMarker() {
     val xcfa: XCFA = parseResource("procedure-call.svlib")
     val entry = xcfa.initProcedures.single().first
+    val initializable = mapOf("add" to setOf("sum"), "callExample" to setOf("x", "y"))
 
     (xcfa.procedures - entry).forEach { procedure ->
       val labels = procedure.initLoc.outgoingEdges.single().getFlatLabels()
       assertTrue(labels.first().isWitnessStep())
       assertTrue(labels.all { it.metadata === labels.first().metadata })
-      assertEquals(
-        SvLibWitnessMetadata.InitProcVars(procedure.name),
-        (labels.first().metadata as SvLibWitnessMetadata),
-      )
+      val metadata = labels.first().metadata as SvLibWitnessMetadata.InitProcVars
+      assertEquals(procedure.name, metadata.procedure)
+      assertEquals(initializable[procedure.name], metadata.initVars.map { it.name }.toSet())
     }
   }
 
@@ -249,7 +249,7 @@ internal class SvLibFrontendTest {
     val metadata = mutableMapOf<Pair<Any, String>, Any>()
     parseResource("model-symbols.svlib") { owner, key, value -> metadata[owner to key] = value }
 
-    val symbols = metadata[GLOBAL_SCOPE to "modelSymbols"] as List<Decl<*>>
+    val symbols = metadata[MODEL_SYMBOLS to "modelSymbols"] as List<Decl<*>>
     assertEquals(listOf("f", "c", "input"), symbols.map { it.name })
     assertTrue(symbols.first().type is FuncType<*, *>)
     assertTrue(symbols.drop(1).all { it is VarDecl<*> })

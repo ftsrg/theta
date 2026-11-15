@@ -61,7 +61,7 @@ class SvLibXcfaBuilder(
         (it.metadata as? SvLibTagMetadata)?.liveVars = liveVars[it].orEmpty()
       }
     }
-    recordMetadata(GLOBAL_SCOPE, "modelSymbols", modelSymbols.toList())
+    recordMetadata(MODEL_SYMBOLS, "modelSymbols", modelSymbols.toList())
     return xcfaBuilder.build()
   }
 
@@ -149,7 +149,10 @@ class SvLibXcfaBuilder(
       when (attribute) {
         is TagAttributeContext -> { // annotating a tag with a tag
           val newTag = attribute.symbol().original
-          taggedLocations[newTag] = taggedLocations[tag] ?: emptySet()
+          taggedLocations[newTag] =
+            (taggedLocations[tag] ?: emptySet()).apply {
+              forEach { (it.metadata as? SvLibTagMetadata)?.tags?.add(newTag) }
+            }
         }
         is TagPropertyContext -> {
           when (val property = attribute.property()) {
@@ -217,8 +220,6 @@ class SvLibXcfaBuilder(
     procedure.createFinalLoc()
     procedure.createErrorLoc()
 
-    procedure.getVars().forEach { recordMetadata(it, "declaredIn", procedure.name) }
-
     return procedure
   }
 
@@ -273,7 +274,7 @@ class SvLibXcfaBuilder(
     Decls.Var(symbol.original, type).also {
       xcfaBuilder.addVar(XcfaGlobalVar(it))
       globalSymbolTable.registerVar(it)
-      recordMetadata(it, "declaredIn", GLOBAL_SCOPE)
+      recordMetadata(it, "isGlobal", true)
     }
 
   private fun XcfaLocation.insertCheck(term: String, metadata: SvLibWitnessMetadata) =

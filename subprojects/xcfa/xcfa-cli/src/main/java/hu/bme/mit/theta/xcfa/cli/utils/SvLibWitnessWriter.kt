@@ -25,11 +25,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.ConstDecl
-import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.decl.IndexedConstDecl
-import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.decl.*
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
@@ -56,10 +52,9 @@ import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.model.ParamDirection
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.passes.removedLocations
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.io.File
 import kotlin.jvm.optionals.getOrElse
@@ -128,9 +123,7 @@ class SvLibWitnessWriter : XcfaWitnessWriter {
     inputFile: File,
     ltlSpecification: String,
     architecture: ArchitectureType?,
-  ): String {
-    throw UnsupportedOperationException("SV-LIB violation witnesses are not supported")
-  }
+  ) = "()\n"
 }
 
 private fun LocationInvariants.toSvLibCorrectnessWitness(parseContext: ParseContext) =
@@ -148,14 +141,12 @@ private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
 ): String {
   val passInvariants =
     this.keys.associateWith { location ->
-      val invariants =
-        parseContext.metadata
-          .getMetadataValue(location, "passInvariants")
-          .getOrElse {
-            parseContext.metadata.getMetadataValue(location.name, "passInvariants").getOrNull()
-          }
-          ?.let { it as? MutableList<Expr<BoolType>> } ?: emptyList()
-      ExprUtils.simplify(BoolExprs.And(invariants))
+      parseContext.metadata
+        .getMetadataValue(location, "passInvariants")
+        .getOrElse {
+          parseContext.metadata.getMetadataValue(location.name, "passInvariants").getOrNull()
+        }
+        ?.let { ExprUtils.simplify(BoolExprs.And(it as? MutableList<Expr<BoolType>>)) }
     }
 
   val invariantsByTag =
@@ -163,21 +154,37 @@ private fun Map<XcfaLocation, List<Expr<BoolType>>>.toSvLibCorrectnessWitness(
       invariantsByTag,
       (location, stateInvariants) ->
       val metadata = location.metadata as? SvLibTagMetadata ?: return@fold invariantsByTag
-      if (metadata.tags.isNotEmpty() && stateInvariants.isNotEmpty()) {
-        val invariants =
-          stateInvariants.map { stateInvariant ->
-            ExprUtils.simplify(BoolExprs.And(listOf(stateInvariant) + passInvariants[location]))
-              .projectToScope(metadata, parseContext)
-          }
+      if (metadata.tags.isNotEmpty()) {
+        val invariants = mutableListOf<Expr<BoolType>>()
+        if (stateInvariants.isNotEmpty()) invariants.add(BoolExprs.Or(stateInvariants))
+        passInvariants[location]?.let { invariants.add(it) }
+
+        if (invariants.isEmpty()) return@fold invariantsByTag
+
+        val invariant = BoolExprs.And(invariants)
+        val projectedInvariant =
+          ExprUtils.simplify(invariant.projectToScope(metadata, parseContext))
         metadata.tags.forEach {
-          invariantsByTag.getOrPut(it) { mutableListOf() }.addAll(invariants)
+          invariantsByTag.getOrPut(it) { mutableListOf() }.add(projectedInvariant)
         }
       }
       invariantsByTag
     }
 
+  // locations removed by passes still matter for tags
+  parseContext.removedLocations().forEach { (location, invariant) ->
+    val tagMetadata = location.metadata as? SvLibTagMetadata ?: return@forEach
+    val projectedInvariant = ExprUtils.simplify(invariant.projectToScope(tagMetadata, parseContext))
+    tagMetadata.tags.forEach {
+      invariantsByTag.getOrPut(it) { mutableListOf() }.add(projectedInvariant)
+    }
+  }
+
   return invariantsByTag
-    .mapValues { (_, invariants) -> ExprUtils.simplify(BoolExprs.Or(invariants)) }
+    .mapValues { (_, invariants) ->
+      if (invariants.isNotEmpty()) ExprUtils.simplify(BoolExprs.Or(invariants))
+      else BoolExprs.True()
+    }
     .toSvLibCorrectnessWitness()
 }
 
@@ -191,7 +198,7 @@ private fun Expr<BoolType>.projectToScope(
   val outOfScope =
     ExprUtils.getVars(this).filterNot {
       it in tag.liveVars ||
-        parseContext.metadata.getMetadataValue(it, "declaredIn").getOrNull() == GLOBAL_SCOPE
+        parseContext.metadata.getMetadataValue(it, "isGlobal").getOrNull() == true
     }
   if (outOfScope.isEmpty()) return this
 
@@ -226,7 +233,7 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
 
   val initVal = initState.sGlobal.getVal()
   val modelSymbols =
-    parseContext.metadata.getMetadataValue(GLOBAL_SCOPE, "modelSymbols").getOrNull()
+    parseContext.metadata.getMetadataValue(MODEL_SYMBOLS, "modelSymbols").getOrNull()
       as? List<Decl<*>> ?: emptyList()
   val globalVarMap =
     initVal.toMap().filter { (varDecl, _) ->
@@ -245,13 +252,8 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
         labels.firstOrNull()?.metadata as? SvLibWitnessMetadata ?: return@mapNotNull null
       when (metadata) {
         is SvLibWitnessMetadata.InitProcVars -> {
-          val procedure =
-            xcfa.procedures.find { it.name == metadata.procedure }
-              ?: throw IllegalStateException("call to unknown procedure")
-          InitProcVarsStep(
-            procedure,
-            nextState.sGlobal.getVal().filterLocal(procedure, parseContext),
-          )
+          val values = nextState.sGlobal.getVal().toMap().filterKeys { it in metadata.initVars }
+          InitProcVarsStep(metadata.procedure, ImmutableValuation.from(values))
         }
         is SvLibWitnessMetadata.Havoc -> {
           val values =
@@ -373,7 +375,7 @@ private fun Decl<*>.defineWith(value: LitExpr<*>?): String {
 private data class SvLibViolationWitness(
   val model: List<String>,
   val globalVarValuation: Valuation,
-  val entryProcedure: XcfaProcedure,
+  val entryProcedure: String,
   val steps: List<SvLibViolationWitnessStep>,
   val violatedProperty: String,
 ) {
@@ -382,7 +384,7 @@ private data class SvLibViolationWitness(
       ((select-trace 
         (model${if (model.isEmpty()) "" else "\n" + model.joinToString("\n") { "          $it" }})
         (init-global-vars ${globalVarValuation.toSvLib()})
-        (entry-proc ${entryProcedure.name})
+        (entry-proc $entryProcedure)
         (steps${if (steps.isEmpty()) "" else "\n" + steps.joinToString("\n" ) { "          $it" }})
         (incorrect-annotation $violatedProperty)
       ))
@@ -393,10 +395,10 @@ private data class SvLibViolationWitness(
 
 private sealed class SvLibViolationWitnessStep
 
-private data class InitProcVarsStep(val procedure: XcfaProcedure, val arguments: Valuation) :
+private data class InitProcVarsStep(val procedure: String, val arguments: Valuation) :
   SvLibViolationWitnessStep() {
 
-  override fun toString() = "(init-proc-vars ${procedure.name} ${arguments.toSvLib()})"
+  override fun toString() = "(init-proc-vars $procedure ${arguments.toSvLib()})"
 }
 
 private data class HavocStep(val values: Valuation) : SvLibViolationWitnessStep() {
@@ -423,15 +425,6 @@ private fun Valuation.toSvLib(): String {
     "(${GenericSmtLibSymbolTable.encodeSymbol(varDecl.name)} ${transformer.toTerm(litExpr)})"
   }
 }
-
-private fun Valuation.filterLocal(procedure: XcfaProcedure, parseContext: ParseContext) =
-  this.toMap()
-    .filterKeys { varDecl ->
-      procedure.name ==
-        parseContext.metadata.getMetadataValue(varDecl, "declaredIn")?.getOrNull() &&
-        procedure.params.all { (param, dir) -> param != varDecl || dir != ParamDirection.IN }
-    }
-    .let(ImmutableValuation::from)
 
 private fun String.indent(spaces: Int = 4) =
   this.lineSequence().joinToString("\n") { " ".repeat(spaces) + it }

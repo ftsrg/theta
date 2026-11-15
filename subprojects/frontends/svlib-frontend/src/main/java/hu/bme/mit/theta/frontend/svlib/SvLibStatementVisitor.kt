@@ -41,7 +41,15 @@ class SvLibStatementVisitor(
   private val loops = ArrayDeque<Loop>()
 
   fun parseProcedureBody(ctx: StatementContext) {
-    current = current.extend(witnessStep(SvLibWitnessMetadata.InitProcVars(procedure.name)))
+    val inputs =
+      procedure
+        .getParams()
+        .filter { (_, dir) -> dir != ParamDirection.OUT }
+        .map { it.first }
+        .toSet()
+    val initVars = procedure.getVars() - inputs
+    current =
+      current.extend(witnessStep(SvLibWitnessMetadata.InitProcVars(procedure.name, initVars)))
     visit(ctx)
     applyGotos()
   }

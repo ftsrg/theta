@@ -306,7 +306,7 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
       DeterministicPass(),
       // removing redundant elements
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
+      UnusedLocRemovalPass(parseContext),
     ),
     listOf(
       // optimizing
@@ -320,13 +320,13 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
     ),
     listOf(
       // Clean up procedures after inlining
-      //    InlinedProcedureRemovalPass()
+      InlinedProcedureRemovalPass(parseContext)
     ),
     listOf(
       EmptyEdgeRemovalPass(),
       SimplifyExprsPass(parseContext, recordPassInvariants = true),
-      UnusedLocRemovalPass(),
-      RemoveDeadEnds(parseContext),
+      UnusedLocRemovalPass(parseContext),
+      RemoveDeadEnds(parseContext, recordPassInvariants = true),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),
