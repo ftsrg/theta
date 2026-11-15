@@ -76,7 +76,7 @@ internal fun postTraceGenerationLogging(
       try {
         // TODO no concrete summary implemented for XCFA yet, only traces
         val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> =
-          concretizeTrace(abstractTrace.toTrace(), config, parseContext)
+          concretizeTrace(abstractTrace.toTrace(), config, parseContext, logger)
 
         val concreteTraceFile =
           writeTraceAsFile(resultFolder, modelName, concreteTraces, concrTrace)

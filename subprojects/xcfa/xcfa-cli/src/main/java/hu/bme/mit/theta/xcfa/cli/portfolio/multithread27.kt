@@ -104,11 +104,21 @@ fun multithreadPortfolio27(
     fun oc(
       solver: String,
       decisionProcedure: OcDecisionProcedureType,
-      memoryModel: MemoryModelType,
+      requestedMemoryModel: MemoryModelType,
       timeoutMs: Long,
-      arithmetic: ArithmeticType = ArithmeticType.bitvector,
+      requestedArithmetic: ArithmeticType = ArithmeticType.bitvector,
       ptrSizeInMemory: Boolean = false,
     ): ConfigNode {
+      // A model pinned by a frontend fallback replaces any weaker one (multi < flat < bytes): the
+      // rebuild would fail the same way, and an in-process frontend failure ends the whole run.
+      val pinnedMemoryModel =
+        (baseConfig.frontendConfig.specConfig as? CFrontendConfig)?.memoryModel
+      val memoryModel =
+        if (pinnedMemoryModel != null && pinnedMemoryModel > requestedMemoryModel) pinnedMemoryModel
+        else requestedMemoryModel
+      // bytes has no integer encoding
+      val arithmetic =
+        if (memoryModel == MemoryModelType.bytes) ArithmeticType.bitvector else requestedArithmetic
       val solverName = solver.substringAfter(':').lowercase()
       val name =
         "MULTITHREAD_OC_${decisionProcedure}_${arithmetic}_${memoryModel}_$solverName-$inProcess"

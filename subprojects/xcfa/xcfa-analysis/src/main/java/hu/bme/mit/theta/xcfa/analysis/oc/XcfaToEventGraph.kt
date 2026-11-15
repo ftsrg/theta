@@ -28,15 +28,20 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.OrExpr
+import hu.bme.mit.theta.core.type.bvtype.BvType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprSimplifier
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -47,11 +52,27 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.loops.UnrollCut
 import hu.bme.mit.theta.xcfa.utils.MemoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.addressesAtomicData
+import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferences
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.utils.integerOf
+import hu.bme.mit.theta.xcfa.utils.isWritten
 import hu.bme.mit.theta.xcfa.utils.memoryTypeKey
 import hu.bme.mit.theta.xcfa.utils.references
+import java.util.Collections
+import java.util.IdentityHashMap
+
+/** Reads with more candidates than this get no value: the union would rarely stay small. */
+private const val MAX_VALUE_SOURCES = 4096
+
+/** The most addresses a read is matched at; a narrowed address may have this many values. */
+private const val MAX_ADDRESSES = 4096
+
+/** Shorter `ite` chains over one term are folded as they are. */
+private const val MIN_TABLE = 8
+
+/** The most addresses a havocked address is tried at (see `narrow`). */
+private const val MAX_NARROWED_DOMAIN = 200_000
 
 internal class XcfaToEventGraph(
   private val xcfa: XCFA,
@@ -178,6 +199,131 @@ internal class XcfaToEventGraph(
       .associateWith { it.getNewIndexed() }
       .also { XcfaEvent.memoryGarbages = it.values.toSet() }
 
+  /**
+   * Whether candidates are chosen by [XcfaOcForwardValues] while the graph is built, instead of all
+   * being created first: under SC with a single thread, where creation order is execution order.
+   * Then a statement is also folded on the values first, and a path whose guard folds to false is
+   * not followed: a deref check's slow path then disappears when its fast path is decided.
+   */
+  private val forward: Boolean by lazy {
+    pruneCandidates && property != DATA_RACE && maxPid == 1 && threadSpecificDecls.isEmpty()
+  }
+
+  private val values = XcfaOcForwardValues()
+
+  /** The variables some label initializes: by a write, or by an assumption on its value. */
+  private val written: Set<VarDecl<*>> by lazy {
+    xcfa.procedures
+      .flatMap { it.edges }
+      .flatMap { it.getFlatLabels() }
+      .flatMap { label ->
+        val assumed = ((label as? StmtLabel)?.stmt as? AssumeStmt)?.cond?.vars.orEmpty()
+        label.collectVarsWithAccessType().filter { (_, a) -> a.isWritten }.keys + assumed
+      }
+      .toSet()
+  }
+
+  private val writeValues = HashMap<E, Set<LitExpr<*>>?>()
+
+  /** Globals that some path reaches unwritten: a read of them may take no write's value. */
+  private val partiallyWritten = mutableSetOf<VarDecl<*>>()
+
+  /** The writes of one memory partition in creation order, indexed by their known address. */
+  private class Writes {
+    val all = mutableListOf<E>()
+    val byAddress = HashMap<Pair<LitExpr<*>, LitExpr<*>>, MutableList<E>>()
+    val offsetsByArray = HashMap<LitExpr<*>, MutableSet<LitExpr<*>>>()
+    val vague = mutableListOf<E>()
+  }
+
+  private val forwardWrites = HashMap<VarDecl<*>, Writes>()
+
+  private fun registerWrite(decl: VarDecl<*>, e: E) {
+    val writes = forwardWrites.getOrPut(decl) { Writes() }
+    writes.all.add(e)
+    val arrays = e.array?.let { values.evaluate(it) }
+    val offsets = e.offset?.let { values.evaluate(it) }
+    if (e.array != null) {
+      e.arrayValues = arrays
+      e.offsetValues = offsets
+    }
+    if (arrays?.size == 1 && offsets?.size == 1) {
+      writes.byAddress.getOrPut(arrays.first() to offsets.first()) { mutableListOf() }.add(e)
+      writes.offsetsByArray.getOrPut(arrays.first()) { LinkedHashSet() }.add(offsets.first())
+    } else {
+      writes.vague.add(e)
+    }
+  }
+
+  /**
+   * The writes a read of [decl] at the given addresses, executed under [guard], may take its value
+   * from, oldest first. A write is not one if a later write to the single address executes whenever
+   * the read does: as both precede the read, that one overwrites it.
+   */
+  private fun forwardCandidates(
+    decl: VarDecl<*>,
+    arrays: Set<LitExpr<*>>?,
+    offsets: Set<LitExpr<*>>?,
+    guard: Set<Expr<BoolType>>,
+  ): List<E> {
+    val writes = forwardWrites[decl] ?: return emptyList()
+    if (arrays == null || offsets == null || arrays.size * offsets.size > MAX_ADDRESSES)
+      return writes.all
+    val addresses = arrays.flatMap { a -> offsets.map { o -> a to o } }
+    val result =
+      (writes.vague.filter { it.mayAccess(arrays, offsets) } +
+          addresses.flatMap { writes.byAddress[it].orEmpty() })
+        .sortedBy { it.id }
+    val cover =
+      addresses
+        .singleOrNull()
+        ?.let { writes.byAddress[it] }
+        ?.lastOrNull { guard.containsAll(it.guard) } ?: return result
+    return result.filter { it.id >= cover.id }
+  }
+
+  private fun E.mayAccess(arrays: Set<LitExpr<*>>, offsets: Set<LitExpr<*>>): Boolean =
+    const in memoryGarbages.values ||
+      (arrayValues?.any { it in arrays } ?: true) && (offsetValues?.any { it in offsets } ?: true)
+
+  private fun writeValue(w: E): Set<LitExpr<*>>? {
+    if (writeValues.containsKey(w)) return writeValues[w]
+    val eq = w.assignment as? EqExpr<*>
+    val value =
+      eq
+        ?.takeIf { (it.leftOp as? RefExpr<*>)?.decl == w.const }
+        ?.rightOp
+        ?.let { values.evaluate(it) }
+    writeValues[w] = value
+    return value
+  }
+
+  /** The values a read takes from [candidates]; unwritten ghost cells read their default. */
+  private fun readValue(candidates: List<E>, array: Expr<*>?): Set<LitExpr<*>>? {
+    if (candidates.isEmpty() || candidates.size > MAX_VALUE_SOURCES) return null
+    var result: Set<LitExpr<*>>? = setOf()
+    for (w in candidates) {
+      val value =
+        if (w.const !in memoryGarbages.values) writeValue(w)
+        else array?.let { parseContext.getGhostMemoryInitialValue(it) }?.let { values.evaluate(it) }
+      result = XcfaOcForwardValues.union(result, value)
+      if (result == null || result.size > XcfaOcForwardValues.MAX_VALUES) return null
+    }
+    return result
+  }
+
+  private val Set<Expr<BoolType>>.dead: Boolean
+    get() = False() in this
+
+  /** Or of the paths' guards, with their common conditions kept outside the disjunction. */
+  private fun mergeGuards(guards: List<Set<Expr<BoolType>>>): Set<Expr<BoolType>> {
+    if (!forward || guards.size <= 1) return guards.toOrInSet()
+    val common = guards.reduce { a, b -> a intersect b }
+    val rests = guards.map { it - common }
+    if (rests.any { it.isEmpty() }) return common
+    return common + Or(rests.map { it.toAnd() })
+  }
+
   fun create(): EventGraph {
     XcfaEvent.resetIds()
     Thread.resetIds()
@@ -189,7 +335,8 @@ internal class XcfaToEventGraph(
     // RF-Some would make a read take such a candidate, ruling out every execution: a read that no
     // write can precede is simply unconstrained.
     rfs.values.forEach { rels -> rels.removeIf { before[it.from]?.get(it.to.id) == true } }
-    if (pruneCandidates) {
+    // the forward values already chose the candidates; the fixpoint would redo it at great cost
+    if (pruneCandidates && !forward) {
       val analysis =
         XcfaOcValueAnalysis(
           allEvents,
@@ -278,7 +425,9 @@ internal class XcfaToEventGraph(
   private fun addCrossThreadRelations() {
     val locals = localVars.values.flatMap { it.values }.toSet()
     for ((v, map) in events) {
-      if (map.values.all { it.all { e -> e.assignment == null } })
+      // an initialization on a path the forward values rule out has no event: the reads it could
+      // bind follow it on that path
+      if (map.values.all { it.all { e -> e.assignment == null } } && !(forward && v in written))
         exit("variable $v is not initialized")
       // the only cross-thread local accesses are thread parameters, passed in localFlows
       if (v in locals) continue
@@ -364,6 +513,7 @@ internal class XcfaToEventGraph(
             val e = E(garbage, WRITE, setOf(), pid, firstEdge, E.uniqueClkId())
             e.assignment = True()
             memoryWrites.getOrPut(decl) { mutableSetOf() }.add(e)
+            if (forward) registerWrite(decl, e)
             events.getOrPut(decl) { mutableMapOf() }.getOrPut(thread.pid) { mutableListOf() }.add(e)
             e
           }
@@ -391,6 +541,7 @@ internal class XcfaToEventGraph(
             localValues[decl]?.let { localFlows.add(Imply(e.guardExpr, Eq(e.const.ref, it.ref))) }
           } else {
             lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
+            if (forward) values.define(e.const, globalValue(decl))
           }
         WRITE -> {
           lastWrites[decl] = setOf(e)
@@ -420,10 +571,265 @@ internal class XcfaToEventGraph(
       if (value != null) localFlows.add(underGuard(Eq(const.ref, value)))
       localDefinitions.getOrPut(const) { mutableListOf() }.add(LocalDefinition(guard, value))
       localValues[decl] = const
+      if (forward && value != null) values.define(const, values.evaluate(value))
     }
 
     private fun underGuard(e: Expr<BoolType>): Expr<BoolType> =
       if (guard.isEmpty()) e else Imply(guard.toAnd(), e)
+
+    /** Forgets the incoming paths that cannot execute; one is kept if none can. */
+    private fun SearchItem.dropDeadPaths() {
+      if (guards.size <= 1 || loc.initial) return
+      val live = guards.indices.filter { !guards[it].dead }.ifEmpty { listOf(0) }
+      if (live.size == guards.size) return
+      fun <T> MutableList<T>.keep() {
+        val kept = live.map { this[it] }
+        clear()
+        addAll(kept)
+      }
+      guards.keep()
+      lastWrites.keep()
+      localValues.keep()
+      threadLookups.keep()
+      atomics.keep()
+    }
+
+    private fun mergeWrites(current: SearchItem): MutableMap<VarDecl<*>, Set<E>> {
+      val merged = current.lastWrites.merge().toMutableMap()
+      if (forward && current.lastWrites.size > 1) {
+        merged.keys.forEach { v ->
+          if (current.lastWrites.any { v !in it }) partiallyWritten.add(v)
+        }
+      }
+      return merged
+    }
+
+    private fun globalValue(decl: VarDecl<*>): Set<LitExpr<*>>? {
+      if (decl in partiallyWritten) return null
+      val writes = lastWrites[decl]?.takeIf { it.isNotEmpty() } ?: return null
+      return writes.fold(setOf<LitExpr<*>>() as Set<LitExpr<*>>?) { acc, w ->
+        XcfaOcForwardValues.union(acc, writeValue(w))
+      }
+    }
+
+    private inner class Folded(val expr: Expr<*>, val values: Set<LitExpr<*>>?)
+
+    /** `ite(t == k1, v1, ite(t == k2, v2, ... rest))`, as a lookup by the value of `t`. */
+    private inner class Table(
+      val term: Expr<*>,
+      val cases: Map<LitExpr<*>, Expr<*>>,
+      val rest: Expr<*>,
+    )
+
+    /** The tables of the statement being folded; cleared per statement, as they are large. */
+    private val tables = IdentityHashMap<Expr<*>, Table?>()
+
+    private fun tableOf(ite: IteExpr<*>): Table? {
+      if (tables.containsKey(ite)) return tables[ite]
+      var term: Expr<*>? = null
+      val cases = HashMap<LitExpr<*>, Expr<*>>()
+      var node: Expr<*> = ite
+      while (node is IteExpr<*>) {
+        val cond = node.cond as? EqExpr<*> ?: break
+        val (key, t) =
+          when {
+            cond.rightOp is LitExpr<*> -> cond.rightOp as LitExpr<*> to cond.leftOp
+            cond.leftOp is LitExpr<*> -> cond.leftOp as LitExpr<*> to cond.rightOp
+            else -> break
+          }
+        if (term == null) term = t else if (t != term) break
+        cases.putIfAbsent(key, node.then)
+        node = node.`else`
+      }
+      val table = if (term == null || cases.size < MIN_TABLE) null else Table(term, cases, node)
+      tables[ite] = table
+      return table
+    }
+
+    /** While set, this variable holds none of [otherDomain]: a read there finds no known write. */
+    private var otherAddress: VarDecl<*>? = null
+    private var otherDomain: Set<LitExpr<*>> = setOf()
+
+    /**
+     * Narrows the values of [x], havocked just before `assume([cond])`: every use of it follows the
+     * assumption, so it only takes values that may satisfy it. It is tried at each value of what it
+     * is compared with and each address a write to the memory it addresses may have, and once as
+     * any other value, at which those comparisons fail and the cells hold what the initial writes
+     * and those of unknown address leave.
+     */
+    private fun narrow(x: VarDecl<*>, cond: Expr<BoolType>) {
+      tables.clear()
+      val const = localValues[x.threadVar(pid)] ?: return
+      if (values.valueOf(const) != null) return
+      val cells = cond.dereferences.filter { (it.offset as? RefExpr<*>)?.decl == x }
+      val domain = LinkedHashSet<LitExpr<*>>()
+      collectComparedLiterals(cond, x, domain, Collections.newSetFromMap(IdentityHashMap()))
+      if (cells.isEmpty() && domain.isEmpty()) return
+      for (cell in cells) {
+        val arrays = fold(cell.array, IdentityHashMap()).values ?: return
+        val writes = forwardWrites[cell.memoryDecl] ?: continue
+        arrays.forEach { a -> writes.offsetsByArray[a]?.let { domain.addAll(it) } }
+        writes.vague.forEach { w ->
+          if (w.arrayValues?.any { it in arrays } != false)
+            w.offsetValues?.let { domain.addAll(it) }
+        }
+        if (domain.size > MAX_NARROWED_DOMAIN) return
+      }
+      val condition = fold(cond, IdentityHashMap()).expr
+      otherAddress = x
+      otherDomain = domain
+      val other =
+        try {
+          fold(condition, IdentityHashMap()).values
+        } finally {
+          otherAddress = null
+          otherDomain = setOf()
+        }
+      if (other != XcfaOcForwardValues.FALSE) return
+      val possible = LinkedHashSet<LitExpr<*>>()
+      for (address in domain) {
+        values.define(const, setOf(address))
+        if (fold(condition, IdentityHashMap()).values != XcfaOcForwardValues.FALSE) {
+          possible.add(address)
+          if (possible.size > MAX_ADDRESSES) break
+        }
+      }
+      if (possible.isEmpty() || possible.size > MAX_ADDRESSES) values.forget(const)
+      else values.define(const, possible)
+    }
+
+    /** [this] with every term of a known value replaced by it, on the current state. */
+    @Suppress("UNCHECKED_CAST")
+    private fun Stmt.folded(): Stmt {
+      tables.clear()
+      val memo = IdentityHashMap<Expr<*>, Folded>()
+      return when (this) {
+        is AssignStmt<*> ->
+          AssignStmt.of(varDecl as VarDecl<Type>, cast(fold(expr, memo).expr, varDecl.type))
+        is AssumeStmt -> AssumeStmt.of(cast(fold(cond, memo).expr, Bool()))
+        is MemoryAssignStmt<*, *, *> ->
+          MemoryAssignStmt.of(
+            deref.withOps(deref.ops.map { fold(it, memo).expr }) as Dereference<Type, Type, Type>,
+            cast(fold(expr, memo).expr, deref.type) as Expr<Type>,
+          )
+        else -> this
+      }
+    }
+
+    private fun fold(expr: Expr<*>, memo: IdentityHashMap<Expr<*>, Folded>): Folded =
+      memo.getOrPut(expr) {
+        when (expr) {
+          is LitExpr<*> -> Folded(expr, setOf(expr))
+          is RefExpr<*> -> literalOr(expr, refValue(expr))
+          is Dereference<*, *, *> -> {
+            val ops = expr.ops.map { fold(it, memo) }
+            val rebuilt = expr.withOps(ops.map { it.expr })
+            val decl = expr.memoryDecl
+            val arrays = ops[0].values
+            val candidates =
+              if (otherAddress != null && (expr.offset as? RefExpr<*>)?.decl == otherAddress)
+              // the domain holds the known offsets of the vague writes too
+              forwardWrites[decl]?.vague?.filter {
+                  it.offsetValues == null &&
+                    (arrays == null || it.arrayValues?.any { a -> a in arrays } ?: true)
+                } ?: emptyList()
+              else forwardCandidates(decl, arrays, ops[1].values, guard)
+            val value =
+              if (candidates === forwardWrites[decl]?.all) null
+              else readValue(candidates, ops[0].expr)
+            literalOr(rebuilt, value)
+          }
+          else -> {
+            if (expr.ops.isEmpty()) return@getOrPut Folded(expr, null)
+            if (expr is IteExpr<*>) {
+              tableOf(expr)?.let { table ->
+                val key = fold(table.term, memo)
+                val value = key.values?.singleOrNull()
+                if (value != null) return@getOrPut fold(table.cases[value] ?: table.rest, memo)
+                if (otherAddress != null && (table.term as? RefExpr<*>)?.decl == otherAddress)
+                  return@getOrPut fold(table.rest, memo).let { rest ->
+                    // the cases cover the domain, which the variable avoids
+                    if (table.cases.keys.all { it in otherDomain }) rest else Folded(expr, null)
+                  }
+              }
+            }
+            if (otherAddress != null && expr is EqExpr<*>) {
+              val (a, b) = expr.leftOp to expr.rightOp
+              val other =
+                when (otherAddress) {
+                  (a as? RefExpr<*>)?.decl -> b
+                  (b as? RefExpr<*>)?.decl -> a
+                  else -> null
+                }
+              if (other != null && fold(other, memo).values?.all { it in otherDomain } == true)
+                return@getOrPut Folded(False(), XcfaOcForwardValues.FALSE)
+            }
+            val ops = expr.ops.map { fold(it, memo) }
+            val value = values.combine(expr, ops.map { it.values })
+            val exprs = ops.map { it.expr }
+            val simplified =
+              when (expr) {
+                is OrExpr ->
+                  if (exprs.any { it == True() }) True()
+                  else
+                    exprs
+                      .filter { it != False() }
+                      .let { if (it.isEmpty()) False() else Or(it as List<Expr<BoolType>>) }
+                is AndExpr ->
+                  if (exprs.any { it == False() }) False()
+                  else
+                    exprs
+                      .filter { it != True() }
+                      .let { if (it.isEmpty()) True() else And(it as List<Expr<BoolType>>) }
+                is IteExpr<*> ->
+                  when (exprs[0]) {
+                    True() -> exprs[1]
+                    False() -> exprs[2]
+                    else -> expr.withOps(exprs)
+                  }
+                else ->
+                  if (exprs.indices.all { exprs[it] === expr.ops[it] }) expr
+                  else expr.withOps(exprs)
+              }
+            literalOr(simplified, value)
+          }
+        }
+      }
+
+    private fun collectComparedLiterals(
+      expr: Expr<*>,
+      x: VarDecl<*>,
+      result: MutableSet<LitExpr<*>>,
+      seen: MutableSet<Expr<*>>,
+    ) {
+      if (!seen.add(expr)) return
+      if (expr is EqExpr<*>) {
+        val (a, b) = expr.leftOp to expr.rightOp
+        if ((a as? RefExpr<*>)?.decl == x)
+          fold(b, IdentityHashMap()).values?.let { result.addAll(it) }
+        if ((b as? RefExpr<*>)?.decl == x)
+          fold(a, IdentityHashMap()).values?.let { result.addAll(it) }
+      }
+      expr.ops.forEach { collectComparedLiterals(it, x, result, seen) }
+    }
+
+    private fun refValue(ref: RefExpr<*>): Set<LitExpr<*>>? =
+      when (val decl = ref.decl) {
+        is ConstDecl<*> -> values.valueOf(decl)
+        is VarDecl<*> ->
+          if (decl == otherAddress) null
+          else if (decl.isLocal()) localValues[decl.threadVar(pid)]?.let { values.valueOf(it) }
+          else globalValue(decl)
+        else -> null
+      }
+
+    private fun literalOr(expr: Expr<*>, value: Set<LitExpr<*>>?): Folded {
+      val literal = value?.singleOrNull()
+      val foldable =
+        literal != null &&
+          (literal.type is BoolType || literal.type is BvType || literal.type is IntType)
+      return Folded(if (foldable) literal!! else expr, value)
+    }
 
     private fun memoryEvent(
       deref: Dereference<*, *, *>,
@@ -453,6 +859,8 @@ internal class XcfaToEventGraph(
       e.raceCandidate =
         property == DATA_RACE &&
           !inLibraryCall &&
+          // a ghost cell is no program memory
+          parseContext.getGhostMemoryInitialValue(deref.array) == null &&
           // an address that cannot be resolved is not known to be atomic: keep it as a candidate
           runCatching { !deref.addressesAtomicData(xcfa.globalVars, parseContext) }
             .getOrDefault(true)
@@ -461,10 +869,23 @@ internal class XcfaToEventGraph(
       when (type) {
         // only same-partition writes can be observed (see MemoryTypeKey)
         READ ->
-          memoryWrites[decl]?.forEach {
-            if (it.potentialSameMemory(e)) rfs.add(RelationType.RF, it, e)
+          if (forward) {
+            e.arrayValues = array.let { values.evaluate(it) }
+            e.offsetValues = offset.let { values.evaluate(it) }
+            val all = forwardCandidates(decl, e.arrayValues, e.offsetValues, guard)
+            val candidates = all.filter { it.potentialSameMemory(e) }
+            candidates.forEach { rfs.add(RelationType.RF, it, e) }
+            val readV = readValue(candidates, array)
+            values.define(e.const, readV)
+          } else {
+            memoryWrites[decl]?.forEach {
+              if (it.potentialSameMemory(e)) rfs.add(RelationType.RF, it, e)
+            }
           }
-        WRITE -> memoryWrites.getOrPut(decl) { mutableSetOf() }.add(e)
+        WRITE -> {
+          memoryWrites.getOrPut(decl) { mutableSetOf() }.add(e)
+          if (forward) registerWrite(decl, e)
+        }
       }
       events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
       return listOf(e)
@@ -520,13 +941,24 @@ internal class XcfaToEventGraph(
           "incoming paths disagree on atomic nesting at ${current.loc.name}: ${current.atomics}"
         }
 
+        if (forward) {
+          current.dropDeadPaths()
+          // an edge without events passes its predecessors on, so they reach a merge repeatedly
+          val lastEvents = current.lastEvents.distinct()
+          current.lastEvents.clear()
+          current.lastEvents.addAll(lastEvents)
+        }
+        val unreachable = forward && current.guards.all { it.dead }
+
         if (current.loc.error) {
+          if (unreachable) continue
           val errorGuard = Or(current.guards.map { it.toAnd() })
           violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
           continue
         }
 
         UnrollCut.keyOf(current.loc)?.let { key ->
+          if (unreachable) continue
           unrollExits.add(UnrollExit(key, pid, Or(current.guards.map { it.toAnd() })))
           continue
         }
@@ -539,8 +971,8 @@ internal class XcfaToEventGraph(
             inEdge = false
             atomicBlock = current.atomics.firstOrNull()
             last = current.lastEvents
-            guard = current.guards.toOrInSet()
-            lastWrites = current.lastWrites.merge().toMutableMap()
+            guard = mergeGuards(current.guards)
+            lastWrites = mergeWrites(current)
             val write = event(done, WRITE).first()
             write.assignment = True()
             thread.finalEvents.add(write)
@@ -549,9 +981,23 @@ internal class XcfaToEventGraph(
           }
         }
 
-        val mergedGuard = current.guards.toOrInSet()
+        val mergedGuard = mergeGuards(current.guards)
         val mergedLocalValues = mergeLocalValues(current)
         val assumeConsts = mutableMapOf<Any, MutableList<ConstDecl<*>>>()
+        // the branch conditions are folded on the state before any branch, so that the branches
+        // read the same values of the same terms
+        val foldedConditions =
+          if (!forward || unreachable || current.loc.outgoingEdges.size <= 1) mapOf()
+          else {
+            guard = mergedGuard
+            lastWrites = mergeWrites(current)
+            localValues = mergedLocalValues.toMutableMap()
+            current.loc.outgoingEdges.associateWith { e ->
+              ((e.getFlatLabels().firstOrNull() as? StmtLabel)?.stmt as? AssumeStmt)?.let {
+                it.folded()
+              }
+            }
+          }
 
         for (e in current.loc.outgoingEdges) {
           edge = e
@@ -559,7 +1005,7 @@ internal class XcfaToEventGraph(
           last = current.lastEvents
           // intersection of guards of incoming edges:
           guard = mergedGuard
-          lastWrites = current.lastWrites.merge().toMutableMap()
+          lastWrites = mergeWrites(current)
           localValues = mergedLocalValues.toMutableMap()
           val threadLookup =
             current.threadLookups
@@ -571,12 +1017,37 @@ internal class XcfaToEventGraph(
           var leadingAssume = true
           atomicBlock = current.atomics.firstOrNull()
 
-          edge.getFlatLabels().forEach { label ->
+          var havocked: VarDecl<*>? = null
+          for (label in edge.getFlatLabels()) {
+            if (forward && guard.dead) break
             if (label.references.isNotEmpty()) exit("references")
             leadingAssume = leadingAssume && label is StmtLabel && label.stmt is AssumeStmt
+            val justHavocked = havocked
+            havocked = null
             when (label) {
               is StmtLabel -> {
-                when (val stmt = label.stmt) {
+                val original = label.stmt
+                if (original is AssumeStmt && justHavocked != null)
+                  narrow(justHavocked, original.cond)
+                if (forward && original is HavocStmt<*> && original.varDecl.isLocal())
+                  havocked = original.varDecl
+                val stmt =
+                  when {
+                    !forward -> label.stmt
+                    firstLabel && foldedConditions[e] != null -> foldedConditions[e]!!
+                    else -> label.stmt.folded()
+                  }
+                // a condition known to hold restricts nothing (a branch still needs its assume)
+                if (
+                  forward &&
+                    stmt is AssumeStmt &&
+                    stmt.cond == True() &&
+                    edge.source.outgoingEdges.size == 1
+                ) {
+                  firstLabel = false
+                  continue
+                }
+                when (stmt) {
                   is AssignStmt<*> -> stmt.process()
                   is AssumeStmt -> stmt.process(assumeConsts, firstLabel, leadingAssume)
                   is HavocStmt<*> -> stmt.process()
@@ -673,6 +1144,15 @@ internal class XcfaToEventGraph(
           }
         localFlows.add(Imply(current.guards.toOrInSet().toAnd(), Or(options)))
         merged[v] = phi
+        if (forward) {
+          val forwardValues = this@XcfaToEventGraph.values
+          forwardValues.define(
+            phi,
+            values.fold(setOf<LitExpr<*>>() as Set<LitExpr<*>>?) { acc, value ->
+              XcfaOcForwardValues.union(acc, value?.let { forwardValues.valueOf(it) })
+            },
+          )
+        }
       }
       return merged
     }

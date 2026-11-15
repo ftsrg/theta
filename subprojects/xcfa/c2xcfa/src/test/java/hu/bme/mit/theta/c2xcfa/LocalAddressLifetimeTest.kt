@@ -107,7 +107,7 @@ class LocalAddressLifetimeTest {
       FrontendXcfaBuilder(context, XcfaProperty(ErrorDetection.MEMSAFETY), logger)
         .buildXcfa(program)
     // Inspect lifetime lowering before simplification can propagate the address or drop its writes.
-    for (phase in 0..2) builder.getProcedures().forEach { it.optimize(phase) }
+    for (phase in 0..3) builder.getProcedures().forEach { it.optimize(phase) }
     if (body.startsWith("__atomic_compare_exchange_n")) {
       assertTrue(
         builder.getProcedures().flatMap { it.getVars() }.none { it.name.endsWith("local*") },

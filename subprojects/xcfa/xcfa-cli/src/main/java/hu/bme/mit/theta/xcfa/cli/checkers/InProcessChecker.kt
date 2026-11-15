@@ -108,7 +108,11 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
             "Config timed out but started writing result, trying to wait an additional 10%..."
           )
           val retCode = process.waitFor(config.backendConfig.timeoutMs / 10, TimeUnit.MILLISECONDS)
-          if (retCode != 0) {
+          if (retCode == Int.MIN_VALUE) {
+            // left running, it would compete with the next configuration for CPU time and memory
+            process.destroy(true)
+            throw ErrorCodeException(ExitCodes.TIMEOUT.code)
+          } else if (retCode != 0) {
             throw ErrorCodeException(retCode)
           } else {
             processHandler.safetyResult

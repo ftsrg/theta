@@ -22,9 +22,11 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass
+import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.THREAD_DONE
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.THREAD_NEXT_RESULT_ID
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.THREAD_RESULTS
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass.Companion.THREAD_RESULT_ID_PREFIX
@@ -36,23 +38,27 @@ import hu.bme.mit.theta.xcfa.utils.getFlatLabels
  * Makes started threads store their result for `pthread_join`. [CLibraryFunctionsPass] passes such
  * a thread its result id as an extra start argument; this pass starts a copy of the routine instead
  * that takes the id as a parameter and, on reaching its final location, atomically writes its
- * return value into [THREAD_RESULTS] under that id.
+ * return value into [THREAD_RESULTS] and sets its [THREAD_DONE] flag under that id (whichever of
+ * the two the model has).
  *
  * It runs after inlining, so that the copy is of the routine's finished body, and in its own phase.
  */
 class ThreadResultPass : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    val results =
-      builder.parent.getVars().firstOrNull { it.wrappedVar.name == THREAD_RESULTS }?.wrappedVar
-        ?: return builder
+    val global = { name: String ->
+      builder.parent.getVars().firstOrNull { it.wrappedVar.name == name }?.wrappedVar
+    }
+    val results = global(THREAD_RESULTS)
+    val done = global(THREAD_DONE)
+    if (results == null && done == null) return builder
     for (edge in builder.getEdges().toList()) {
       val labels = edge.getFlatLabels()
       if (labels.none { it.resultId() != null && !it.storesResult() }) continue
       val updated =
         labels.map { label ->
           if (label !is StartLabel || label.resultId() == null || label.storesResult()) label
-          else label.copy(name = storingCopy(builder, label, results).name)
+          else label.copy(name = storingCopy(builder, label, results, done).name)
         }
       builder.removeEdge(edge)
       builder.addEdge(edge.withLabel(SequenceLabel(updated, edge.label.metadata)))
@@ -108,7 +114,8 @@ class ThreadResultPass : ProcedurePass {
   private fun storingCopy(
     builder: XcfaProcedureBuilder,
     label: StartLabel,
-    results: VarDecl<*>,
+    results: VarDecl<*>?,
+    done: VarDecl<*>?,
   ): XcfaProcedureBuilder {
     val name = label.name + SUFFIX
     builder.parent
@@ -122,9 +129,11 @@ class ThreadResultPass : ProcedurePass {
       "Unexpected start of ${routine.name} with ${label.params.size} arguments"
     }
     val ret = routine.getParams().firstOrNull { it.second == ParamDirection.OUT }?.first
-    val resultType = (results.type as ArrayType<*, *>).elemType
-    check(ret != null && ret.type == resultType) {
-      "Unsupported thread result: ${routine.name} does not return a value of type $resultType"
+    if (results != null) {
+      val resultType = (results.type as ArrayType<*, *>).elemType
+      check(ret != null && ret.type == resultType) {
+        "Unsupported thread result: ${routine.name} does not return a value of type $resultType"
+      }
     }
 
     val copy = routine.deepCopy("thread_result").also { it.name = name }
@@ -138,9 +147,12 @@ class ThreadResultPass : ProcedurePass {
         copy.removeEdge(it)
         copy.addEdge(it.withTarget(store))
       }
-      val write = AssignStmtLabel(results, write(results, id.ref, ret.ref))
-      val labels =
-        if (atomic) listOf(write) else listOf(AtomicBeginLabel(), write, AtomicEndLabel())
+      val writes =
+        listOfNotNull(
+          results?.let { AssignStmtLabel(it, write(it, id.ref, ret!!.ref)) },
+          done?.let { AssignStmtLabel(it, write(it, id.ref, True())) },
+        )
+      val labels = if (atomic) writes else listOf(AtomicBeginLabel()) + writes + AtomicEndLabel()
       copy.addEdge(XcfaEdge(store, final, SequenceLabel(labels), final.metadata))
     }
     builder.parent.addProcedure(copy)

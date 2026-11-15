@@ -34,3 +34,6 @@ dependencies {
     testImplementation(project(":theta-xcfa-cli"))
     testImplementation(project(":theta-graph-solver"))
 }
+
+// Native solver memory outlives the tests that used it: a JVM per class keeps it bounded.
+tasks.test { forkEvery = 1 }
