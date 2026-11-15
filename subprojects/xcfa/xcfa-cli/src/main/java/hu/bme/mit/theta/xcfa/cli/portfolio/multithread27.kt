@@ -88,6 +88,7 @@ fun multithreadPortfolio27(
 
   fun getStm(inProcess: Boolean): STM {
     val edges = LinkedHashSet<Edge>()
+    val sliced = mutableSetOf<ConfigNode>()
 
     val multithreadCegarBaseConfig =
       baseConfig.copy(
@@ -153,6 +154,10 @@ fun multithreadPortfolio27(
      * be disjoint) and falls back to `flat` and `bytes` on what it cannot build; a model pinned by
      * an earlier fallback is kept. The checker may still refuse a model the frontend built, so the
      * step comes with its retries under each stronger model, see [link].
+     *
+     * With a [slice], a step not pinned to `flat` or stronger runs only that long first, and also
+     * moves on to `flat` after a timeout, with the rest of [timeoutMs]: OC often ends quickly under
+     * `flat` on programs where it times out under `multi`.
      */
     fun oc(
       solver: String,
@@ -160,25 +165,34 @@ fun multithreadPortfolio27(
       timeoutMs: Long,
       arithmetic: ArithmeticType = ArithmeticType.bitvector,
       ptrSizeInMemory: Boolean = false,
+      slice: Long? = null,
     ): List<ConfigNode> {
       val pinned = (baseConfig.frontendConfig.specConfig as? CFrontendConfig)?.memoryModel
       val stronger = MemoryModelType.entries.filter { it > (pinned ?: MemoryModelType.multi) }
+      val sliceMs = slice?.takeIf { pinned == null || pinned == MemoryModelType.multi }
       // bytes has no integer encoding: such a step is left out under it
       return (listOf(pinned) + stronger)
         .filter { it != MemoryModelType.bytes || arithmetic != ArithmeticType.integer }
-        .map { ocNode(solver, decisionProcedure, it, timeoutMs, arithmetic, ptrSizeInMemory) }
+        .mapIndexed { i, model ->
+          val ms = if (sliceMs == null) timeoutMs else if (i == 0) sliceMs else timeoutMs - sliceMs
+          ocNode(solver, decisionProcedure, model, ms, arithmetic, ptrSizeInMemory).also {
+            if (i == 0 && sliceMs != null) sliced.add(it)
+          }
+        }
     }
 
     /**
      * Links the memory models of an OC step: a failure other than a timeout retries the step under
-     * the next model, and after the last one goes to [failure]; a timeout goes to [timeout].
+     * the next model, and after the last one goes to [failure]; a timeout goes to [timeout], or
+     * after a [oc] slice to the next model.
      */
     fun link(step: List<ConfigNode>, failure: Node, timeout: Node = failure) {
       step.forEachIndexed { i, node ->
         val next = step.getOrNull(i + 1) ?: failure
+        val onTimeout = if (node in sliced) next else timeout
         // the first matching edge is taken, so the non-timeout edge goes first
-        if (next !== timeout) edges.add(Edge(node, next, anythingButTimeout))
-        edges.add(Edge(node, timeout, anyError))
+        if (next !== onTimeout) edges.add(Edge(node, next, anythingButTimeout))
+        edges.add(Edge(node, onTimeout, anyError))
       }
     }
 
@@ -296,7 +310,7 @@ fun multithreadPortfolio27(
               val config_OC_PROP_INT =
                 oc("Z3:new", OcDecisionProcedureType.PROPAGATOR, 100_000, ArithmeticType.integer)
               // The propagator gives up on programs whose reads are matched across addresses.
-              val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, 820_000)
+              val config_OC_IDL = oc(YICES, OcDecisionProcedureType.IDL, 820_000, slice = 80_000)
               val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 300_000)
               link(config_OC_PROP_INT, config_OC_IDL.first())
               link(config_OC_IDL, config_OC_Z3.first(), config_MULTITHREAD_EXPL_COI_SEQ_ITP)
@@ -306,14 +320,20 @@ fun multithreadPortfolio27(
               baseConfig.inputConfig.property.inputProperty in setOf(MEMSAFETY, MEMCLEANUP)
             ) {
               val config_OC_MEM_YICES =
-                oc(YICES, OcDecisionProcedureType.IDL, 750_000, ptrSizeInMemory = true)
+                oc(
+                  YICES,
+                  OcDecisionProcedureType.IDL,
+                  750_000,
+                  ptrSizeInMemory = true,
+                  slice = 250_000,
+                )
               // Yices cannot do this under flat if the program joins on a thread's result.
               val config_OC_MEM = oc("Z3:new", OcDecisionProcedureType.IDL, 100_000)
               link(config_OC_MEM_YICES, config_OC_MEM.first())
               link(config_OC_MEM, config_MULTITHREAD_EXPL_COI_SEQ_ITP)
               config_OC_MEM_YICES.first()
             } else {
-              val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000)
+              val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000, slice = 60_000)
               // yices has no arrays, which symbolic mutexes need
               val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 400_000)
               link(config_OC_YICES, config_OC_Z3.first(), config_MULTITHREAD_EXPL_COI_SEQ_ITP)
@@ -364,7 +384,7 @@ fun multithreadPortfolio27(
             )
 
           if (ArithmeticTrait.ARR in parseContext.arithmeticTraits) {
-            val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000)
+            val config_OC_YICES = oc(YICES, OcDecisionProcedureType.IDL, 800_000, slice = 60_000)
             // yices has no arrays, which symbolic mutexes need
             val config_OC_Z3 = oc("Z3:new", OcDecisionProcedureType.IDL, 300_000)
             link(config_OC_YICES, config_OC_Z3.first(), config_MULTITHREAD_PRED_SEQ_ITP)

@@ -37,8 +37,9 @@ import org.junit.jupiter.params.provider.EnumSource
 
 /**
  * The OC nodes leave the memory model to the frontend and its fallbacks, or use the one an earlier
- * fallback pinned. A stronger model is only tried after a failure other than a timeout, and no node
- * runs right before a copy of itself.
+ * fallback pinned. A stronger model is only tried after a failure other than a timeout, except for
+ * the `flat` retry after the first slice of an unpinned step, and no node runs right before a copy
+ * of itself.
  */
 class Multithread27MemoryModelTest {
 
@@ -109,6 +110,12 @@ class Multithread27MemoryModelTest {
           from.outEdges
             .filter { it.target in nodes && (it.target as ConfigNode).memoryModel != pinned }
             .forEach { edge ->
+              val slice =
+                pinned == null &&
+                  from in nodes &&
+                  (from as ConfigNode).memoryModel == null &&
+                  (edge.target as ConfigNode).memoryModel == MemoryModelType.flat
+              if (slice) return@forEach
               val trigger = (edge.trigger as ExceptionTrigger).label
               assertEquals("AnythingButTimeout", trigger, "${from.name} -> ${edge.target.name}")
             }
