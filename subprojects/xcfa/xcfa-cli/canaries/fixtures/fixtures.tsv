@@ -269,6 +269,7 @@ flat_field_after_nested_member.c	efficient	LP64	SAFE:valid-memsafety	a reference
 malloc_may_fail.c	efficient	ILP32	UNSAFE	malloc may return NULL
 realloc_failure_keeps_block.c	efficient	ILP32	SAFE:valid-memsafety	a failed realloc returns NULL and keeps the old block
 calloc_failure_skips_fill.c	efficient	ILP32	SAFE:valid-memsafety	the zero-fill of calloc is skipped when it returns NULL
+calloc_overflow_null.c	bitvector	ILP32	SAFE	calloc whose count times size overflows size_t returns NULL instead of a wrapped-around block
 alloca_void_pointer.c	efficient	ILP32	SAFE	an explicit alloca returning void * is lowered
 barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until count threads arrive
 barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
