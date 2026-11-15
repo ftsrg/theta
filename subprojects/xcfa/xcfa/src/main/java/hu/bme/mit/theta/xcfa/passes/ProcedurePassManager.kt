@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.passes.library.NondetFunctionPass
 import hu.bme.mit.theta.xcfa.passes.library.PrintfReturnBoundPass
 import hu.bme.mit.theta.xcfa.passes.library.StringLiteralInitPass
 import hu.bme.mit.theta.xcfa.passes.library.SvCompIntrinsicsPass
+import hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass
 import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
 import hu.bme.mit.theta.xcfa.passes.memory.AllocaFunctionPass
 import hu.bme.mit.theta.xcfa.passes.memory.ByteMemoryPass
@@ -100,6 +101,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // procedure's handles unrolled when it decides whether handles need to hold thread ids
       PthreadArrayHandleUnrollPass(parseContext),
     ),
+    // in a phase of its own: it reads every procedure's thread-specific data calls before
+    // CLibraryFunctionsPass lowers the thread functions
+    listOf(ThreadSpecificDataPass(parseContext)),
     listOf(
       CLibraryFunctionsPass(
         parseContext,

@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificKey
 import java.math.BigInteger
 import java.util.*
 
@@ -72,6 +73,9 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    * original variable keeps no value in the procedures that split it.
    */
   val splitPointers: MutableMap<VarDecl<*>, Pair<VarDecl<*>, VarDecl<*>>> = LinkedHashMap()
+
+  /** The keys of [hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass], once known. */
+  var threadSpecificKeys: List<ThreadSpecificKey>? = null
 
   fun getVars(): Set<XcfaGlobalVar> = vars
 
