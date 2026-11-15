@@ -208,39 +208,46 @@ class IDLOcChecker<E : Event>(solverFactory: SolverFactory, private val isSc: Bo
       }
     }
 
-    // FR
+    // FR: a w2 preserved-program-ordered after the read, or before its source, gives an implied
+    // clause
     rfs.forEach { (v, vRfs) ->
-      val writes = events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE }
-      val rfsFrom = vRfs.groupBy { it.from }
-      writes?.forEach { w1 ->
-        writes.forEach { w2 ->
-          // a read from w1 is of the cell of w1, which w2 may never write; w2 before w1 is no ws
-          if (
-            w1 != w2 &&
-              w1.potentialSameMemory(w2) &&
-              (w1.clkId == w2.clkId || !ppos[w2.clkId, w1.clkId])
-          ) {
-            rfsFrom[w1]?.forEach { rf ->
-              val r = rf.to
-              // nothing to enforce when the read is before w2 anyway
-              if (r.potentialSameMemory(w2) && (r.clkId == w2.clkId || !ppos[r.clkId, w2.clkId])) {
-                val wsExpr =
-                  And(
-                    w1.guardExpr,
-                    w2.guardExpr,
-                    if (w1.clkId == w2.clkId) {
-                      Lt(w1.clkAtomicVar.ref, w2.clkAtomicVar.ref)
-                    } else {
-                      hbVar(w1.clkId, w2.clkId)
-                    },
-                  )
-                val sameCell = rf.to.interferenceCond(w2)
-                addHb(listOfNotNull(wsExpr, rf.declRef, sameCell).toAnd(), rf.to, w2)
+      val writes =
+        events[v]?.values?.flatten()?.filter { it.type == EventType.WRITE } ?: return@forEach
+      val writeSet = writes.toHashSet()
+      vRfs
+        .groupBy { it.to }
+        .forEach { (r, rRfs) ->
+          val others =
+            writes.filter { w2 ->
+              r.potentialSameMemory(w2) && (r.clkId == w2.clkId || !ppos[r.clkId, w2.clkId])
+            }
+          rRfs.forEach { rf ->
+            val w1 = rf.from
+            if (w1 in writeSet) {
+              others.forEach { w2 ->
+                if (
+                  w1 != w2 &&
+                    w1.potentialSameMemory(w2) &&
+                    (w1.clkId == w2.clkId || !ppos[w2.clkId, w1.clkId])
+                ) {
+                  // a read from w1 is of the cell of w1, which w2 may never write
+                  val wsExpr =
+                    And(
+                      w1.guardExpr,
+                      w2.guardExpr,
+                      if (w1.clkId == w2.clkId) {
+                        Lt(w1.clkAtomicVar.ref, w2.clkAtomicVar.ref)
+                      } else {
+                        hbVar(w1.clkId, w2.clkId)
+                      },
+                    )
+                  val sameCell = rf.to.interferenceCond(w2)
+                  addHb(listOfNotNull(wsExpr, rf.declRef, sameCell).toAnd(), rf.to, w2)
+                }
               }
             }
           }
         }
-      }
     }
 
     // Transitivity

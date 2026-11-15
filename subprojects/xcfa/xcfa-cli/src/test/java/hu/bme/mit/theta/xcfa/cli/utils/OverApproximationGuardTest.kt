@@ -124,4 +124,18 @@ class OverApproximationGuardTest {
     val labels = listOf(StmtLabel(Havoc(n)), assume(fact), assume(Gt(n.ref, Int(0))))
     assertTrue(dependsOnOverApproximation(labels, recorded) { it == fact })
   }
+
+  @Test
+  fun `a race whose address is computed from the recorded value depends on it`() {
+    val labels = listOf(StmtLabel(Havoc(n)), typeRange(), StmtLabel(Assign(k, n.ref)))
+    assertFalse(dependsOnOverApproximation(labels, recorded))
+    assertTrue(dependsOnOverApproximation(labels, recorded, Roots(setOf(k.name))))
+  }
+
+  @Test
+  fun `a per-thread copy of the recorded variable is the variable itself`() {
+    val copy = Var("T1::_::${n.name}", Int())
+    val labels = listOf(StmtLabel(Havoc(copy)), assume(Gt(copy.ref, Int(100))))
+    assertTrue(dependsOnOverApproximation(labels, recorded))
+  }
 }

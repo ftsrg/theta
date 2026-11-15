@@ -157,12 +157,7 @@ class YamlWitnessWriter : XcfaWitnessWriter {
             lasso?.trace
               ?: withTimeout(CONCRETIZATION_TIMEOUT_SECONDS) {
                 XcfaTraceConcretizer()
-                  .concretize(
-                    trace,
-                    cexSolverFactory,
-                    parseContext,
-                    wrapExprTraceCheckerWithDataRaceCondition(property, parseContext),
-                  )
+                  .concretize(trace, cexSolverFactory, parseContext, property, logger)
               }
 
           val witness =

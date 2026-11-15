@@ -44,6 +44,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.analysis.HintedTrace
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
@@ -308,7 +309,11 @@ class XcfaMultiThreadToMonolithicAdapter(
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
+    return HintedTrace.of(
+      trace.states.map(this::valToState),
+      trace.states.drop(1).map(this::valToAction),
+      trace.states,
+    )
   }
 
   override fun proofToModelProof(proof: InvariantProof): LocationInvariants {

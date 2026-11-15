@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,13 +27,16 @@ import java.util.List;
  * Represents an immutable, alternating trace in the form of a (State, Action, State, ..., State,
  * Action, State) sequence. A trace always contains at least one state and the number of actions is
  * one less than the number of states.
+ *
+ * <p>Subclasses may carry hints about the path, such as values a backend found. A derived trace
+ * (e.g. {@link #reverse()}) is a plain trace without them.
  */
-public final class Trace<S, A> implements Cex {
+public class Trace<S, A> implements Cex {
 
     private final ImmutableList<S> states;
     private final ImmutableList<A> actions;
 
-    private Trace(final List<? extends S> states, final List<? extends A> actions) {
+    protected Trace(final List<? extends S> states, final List<? extends A> actions) {
         checkNotNull(states);
         checkNotNull(actions);
         checkArgument(!states.isEmpty(), "A trace must contain at least one state.");

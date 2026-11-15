@@ -6,7 +6,7 @@ Gradle module: `:theta-solver-javasmt`. Backend multiplexer over [JavaSMT](https
 
 Standard backend skeleton (`{Decl,Expr,Term,Type}Transformer` + `JavaSMTTransformationManager`/`JavaSMTTermTransformer` + `JavaSMTSymbolTable`) plus:
 
-- `JavaSMTSolver` (Solver/UCSolver) and `JavaSMTItpSolver` — interpolation availability depends on the *underlying* solver (SMTInterpol/Princess yes; not all).
+- `JavaSMTSolver` (Solver/UCSolver/AssumingSolver/InterruptibleSolver: each solver has a `ShutdownManager` of its own, so `interrupt()` stops that one context) and `JavaSMTItpSolver` — interpolation availability depends on the *underlying* solver (SMTInterpol/Princess yes; not all).
 - **`JavaSMTUserPropagator`** — the only backend implementing `SolverFactory.createSolverWithPropagators` (Z3 through JavaSMT): adapts a solver-agnostic `UserPropagator` to JavaSMT's propagator interface. Its sole consumer is `analysis`'s `oc/UserPropagatorOcChecker`, which `xcfa-analysis` gives a JavaSMT Z3 factory.
 - `JavaSMTSolverException` — wraps underlying-solver failures.
 

@@ -68,6 +68,7 @@ constructor(
       check(!xcfa.hasInvariantChecks) {
         "Witness invariants are checked only in sequential programs"
       }
+      val untransformed = property.copy()
       try {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
       } catch (e: IllegalStateException) {
@@ -78,7 +79,7 @@ constructor(
           logger.info(
             "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
           )
-          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
+          XcfaMultiThreadToMonolithicAdapter(xcfa, untransformed, parseContext, initValues, true)
         } else throw e
       }
     } else {
