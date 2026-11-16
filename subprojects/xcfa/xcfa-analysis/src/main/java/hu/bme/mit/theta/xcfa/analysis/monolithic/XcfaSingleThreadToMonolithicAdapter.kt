@@ -72,6 +72,7 @@ private constructor(
   parseContext: ParseContext,
   initValues: Boolean,
   private val blocks: BlockEncoding?,
+  private val quantifiedInvariants: Boolean,
 ) :
   XcfaToMonolithicAdapter(
     model,
@@ -81,7 +82,11 @@ private constructor(
     initValues,
   ) {
 
-  /** [blockEncoding]: one transition per block instead of per edge (see [BlockEncoding]). */
+  /**
+   * [blockEncoding]: one transition per block instead of per edge (see [BlockEncoding]).
+   *
+   * [quantifiedInvariants]: existentially quantify out-of-scope variables in invariants
+   */
   @JvmOverloads
   constructor(
     model: XCFA,
@@ -89,6 +94,7 @@ private constructor(
     parseContext: ParseContext,
     initValues: Boolean = false,
     blockEncoding: Boolean = false,
+    quantifiedInvariants: Boolean = false,
   ) : this(
     model,
     property,
@@ -97,6 +103,7 @@ private constructor(
     if (blockEncoding && property.verifiedProperty == ERROR_LOCATION && onlyLocalLabels(model))
       BlockEncoding(parseContext)
     else null,
+    quantifiedInvariants,
   )
 
   private lateinit var locVar: VarDecl<Type>
@@ -281,11 +288,12 @@ private constructor(
             location,
             listOf(
               PredState.of(
-                withoutChoices(
+                exported(
+                  location,
                   ExprUtils.simplify(
                     proof.getInvariant(),
                     ImmutableValuation.builder().put(locVar, smtInt(index)).build(),
-                  )
+                  ),
                 )
               )
             ),
@@ -344,6 +352,17 @@ private constructor(
   private fun withoutChoices(invariant: Expr<BoolType>): Expr<BoolType> =
     if (ExprUtils.getVars(invariant).any { BlockEncoding.CHOICE_PREFIX in it.name }) True()
     else invariant
+
+  private fun exported(location: XcfaLocation, invariant: Expr<BoolType>): Expr<BoolType> =
+    when {
+      !quantifiedInvariants -> withoutChoices(invariant)
+      // locations from which the error location is unreachable get `true`
+      blocks != null &&
+        model.initProcedures.first().first.errorLoc.isPresent &&
+        !location.error &&
+        location.outgoingEdges.isEmpty() -> True()
+      else -> invariant
+    }
 
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()

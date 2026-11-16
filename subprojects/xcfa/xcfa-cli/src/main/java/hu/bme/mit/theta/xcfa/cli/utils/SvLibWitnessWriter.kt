@@ -210,7 +210,13 @@ private fun Expr<BoolType>.projectToScope(
   if (outOfScope.isEmpty()) return this
 
   val params =
-    outOfScope.mapIndexed { i, v -> v to Decls.Param("${v.name}__proj_$i", v.type) }.toMap()
+    outOfScope
+      .mapIndexed { i, v ->
+        val name =
+          "${v.name}__proj_$i".let { if (it.contains('|')) "|${it.replace("|", "")}|" else it }
+        v to Decls.Param(name, v.type)
+      }
+      .toMap()
   val quantified = BoolExprs.Exists(params.values, ExprUtils.changeDecls(this, params))
   return ExprUtils.simplify(quantified)
 }
