@@ -1,0 +1,61 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: "2.2"
+    uuid: "a6b7c8d9-e0f1-4234-b012-345678901234"
+    creation_time: "2026-11-16T12:00:00Z"
+    producer:
+      name: "Handcrafted"
+      version: "1.0"
+    task:
+      input_files:
+        - "function-return-temporary.i"
+      input_file_hashes:
+        "function-return-temporary.i": "0000000000000000000000000000000000000000000000000000000000000000"
+      specification: "G ! call(reach_error())"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: function_return
+        action: follow
+        constraint:
+          value: "\\result == 1"
+          format: ext_c_expression
+        location:
+          file_name: "function-return-temporary.i"
+          line: 8
+          column: 49
+          function: "main"
+  - segment:
+    - waypoint:
+        type: function_return
+        action: follow
+        constraint:
+          value: "\\result == 2"
+          format: ext_c_expression
+        location:
+          file_name: "function-return-temporary.i"
+          line: 10
+          column: 34
+          function: "main"
+  - segment:
+    - waypoint:
+        # avoiding the only branch that leads to the target: a wrong witness
+        type: branching
+        action: avoid
+        constraint:
+          value: "true"
+        location:
+          file_name: "function-return-temporary.i"
+          line: 11
+          column: 5
+          function: "main"
+    - waypoint:
+        type: target
+        action: follow
+        location:
+          file_name: "function-return-temporary.i"
+          line: 12
+          column: 9
+          function: "main"

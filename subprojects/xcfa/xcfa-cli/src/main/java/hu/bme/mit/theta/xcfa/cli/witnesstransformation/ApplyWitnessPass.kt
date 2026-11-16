@@ -162,6 +162,25 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
     }
 
+    /**
+     * Refuses a violation [witness] with avoid waypoints: the instrumentation does not forbid
+     * passing them, so a witness that is wrong only because of them would be confirmed.
+     */
+    fun checkNoAvoidWaypoints(witness: YamlWitness) {
+      val avoid =
+        witness.content
+          .mapNotNull { it.segment }
+          .withIndex()
+          .flatMap { (segmentIndex, segment) ->
+            segment
+              .filter { it.waypoint.action == Action.AVOID }
+              .map { "segment $segmentIndex: ${it.waypoint.describe()}" }
+          }
+      check(avoid.isEmpty()) {
+        "Cannot validate a violation witness with avoid waypoints: " + avoid.joinToString("; ")
+      }
+    }
+
     private fun WaypointContent.describe(): String =
       "${type.name.lowercase()} waypoint at line ${location.line}" +
         (location.column?.let { ", column $it" } ?: "") +

@@ -40,7 +40,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -245,6 +244,16 @@ class XcfaCliValidateTest {
           null,
           "SafetyResult Safe",
         ),
+      )
+    }
+
+    @JvmStatic
+    fun refusedWitnesses(): Stream<Arguments> {
+      return Stream.of(
+        // a waypoint that matches no program location
+        Arguments.of("/c/witness-validation/function-return-temporary.unmatched-witness.yml"),
+        // an avoid waypoint, which would not be enforced
+        Arguments.of("/c/witness-validation/function-return-temporary.avoid-witness.yml"),
       )
     }
 
@@ -492,9 +501,10 @@ class XcfaCliValidateTest {
     println("Witness validation of $filePath with $witnessPath: ${output.getVerdict()}")
   }
 
-  /** A witness with a waypoint that matches no location is rejected as an error, not refuted. */
-  @Test
-  fun testUnmatchedWaypointFails() {
+  /** A witness that cannot be applied faithfully is rejected as an error, not refuted. */
+  @ParameterizedTest
+  @MethodSource("refusedWitnesses")
+  fun testRefusedWitnessFails(witnessPath: String) {
     val params =
       arrayOf(
         "--input-type",
@@ -502,9 +512,7 @@ class XcfaCliValidateTest {
         "--input",
         javaClass.getResource("/c/witness-validation/function-return-temporary.i")!!.path,
         "--witness",
-        javaClass
-          .getResource("/c/witness-validation/function-return-temporary.unmatched-witness.yml")!!
-          .path,
+        javaClass.getResource(witnessPath)!!.path,
         "--stacktrace",
         "--debug",
         "--output-directory",

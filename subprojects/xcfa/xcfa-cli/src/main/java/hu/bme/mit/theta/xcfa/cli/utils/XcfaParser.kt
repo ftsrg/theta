@@ -232,6 +232,8 @@ private fun parseC(
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
+  val violationWitness = property.witness?.witness?.takeIf { it.entryType == EntryType.VIOLATION }
+  violationWitness?.let { ApplyWitnessPass.checkNoAvoidWaypoints(it) }
   var input =
     if (input.name.endsWith(".yml")) {
       try {
@@ -323,10 +325,7 @@ private fun parseC(
     }
   logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
   // outside the retry above: reparsing cannot locate a waypoint that this parse did not
-  property.witness
-    ?.witness
-    ?.takeIf { it.entryType == EntryType.VIOLATION }
-    ?.let { ApplyWitnessPass.checkAllWaypointsMatched(xcfaFromC, it) }
+  violationWitness?.let { ApplyWitnessPass.checkAllWaypointsMatched(xcfaFromC, it) }
   return xcfaFromC
 }
 
