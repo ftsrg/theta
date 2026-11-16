@@ -325,7 +325,7 @@ fun multithreadPortfolio27(
                   OcDecisionProcedureType.IDL,
                   750_000,
                   ptrSizeInMemory = true,
-                  slice = 250_000,
+                  slice = 600_000,
                 )
               // Yices cannot do this under flat if the program joins on a thread's result.
               val config_OC_MEM = oc("Z3:new", OcDecisionProcedureType.IDL, 100_000)
