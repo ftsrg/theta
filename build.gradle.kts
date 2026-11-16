@@ -106,3 +106,13 @@ tasks {
 
     project.tasks["sonar"].dependsOn(jacocoRootReport)
 }
+allprojects {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+        /*maven {
+            url = uri("https://ghp.refinery.tools/maven")
+        }*/
+    }
+}

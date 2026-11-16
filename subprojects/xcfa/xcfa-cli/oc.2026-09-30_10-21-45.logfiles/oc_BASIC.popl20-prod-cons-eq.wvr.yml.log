@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/weaver/popl20-prod-cons-eq.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_b6add016-a8b9-45a3-b214-d5bdb7e4128b1203906434326761924/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_b6add016-a8b9-45a3-b214-d5bdb7e4128b1203906434326761924/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/popl20-prod-cons-eq.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_b6add016-a8b9-45a3-b214-d5bdb7e4128b1203906434326761924/tools/theta/solvers
-Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionBrackets$0(ExpressionVisitor.java:929), java.lang.RuntimeException: Non-array expression used as array!)
-Error: class java.lang.RuntimeException Non-array expression used as array! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor#lambda$visitPostfixExpressionBrackets$0:929, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#visitPostfixExpression:716)

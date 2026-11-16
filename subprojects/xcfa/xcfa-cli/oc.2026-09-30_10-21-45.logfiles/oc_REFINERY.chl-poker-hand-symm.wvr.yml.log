@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/weaver/chl-poker-hand-symm.wvr.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_59da03a8-6c1c-4716-8176-fbbdd797567b4769714726080235626/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_59da03a8-6c1c-4716-8176-fbbdd797567b4769714726080235626/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/weaver/chl-poker-hand-symm.wvr.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_59da03a8-6c1c-4716-8176-fbbdd797567b4769714726080235626/tools/theta/solvers
-Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker.check(XcfaOcSafetyChecker.kt:158), hu.bme.mit.theta.common.exception.NotSolvableException: Task is not solvable with this configuration!)
-Error: class hu.bme.mit.theta.common.exception.NotSolvableException Task is not solvable with this configuration! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker#check:158, hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcSafetyChecker#check:36)

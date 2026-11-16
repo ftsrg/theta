@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/goblint-regression/28-race_reach_71-funloop_racing.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_79b4000a-f2ad-460f-bf48-3747bdc943708252726957544126266/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_79b4000a-f2ad-460f-bf48-3747bdc943708252726957544126266/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure BASIC --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/goblint-regression/28-race_reach_71-funloop_racing.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_79b4000a-f2ad-460f-bf48-3747bdc943708252726957544126266/tools/theta/solvers
-Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor.visitUnaryExpressionCast(ExpressionVisitor.java:674), java.lang.IllegalStateException: Referencing non-variable expressions is not allowed!)
-Error: class java.lang.IllegalStateException Referencing non-variable expressions is not allowed! (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor#visitUnaryExpressionCast:674)

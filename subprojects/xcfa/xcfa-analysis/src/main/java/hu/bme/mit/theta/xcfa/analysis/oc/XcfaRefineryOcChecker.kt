@@ -28,6 +28,8 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.*
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.solver.SolverStatus
+import tools.refinery.generator.InvalidProblemException
+import tools.refinery.generator.UnsatisfiableProblemException
 import tools.refinery.generator.standalone.StandaloneRefinery
 
 internal class XcfaRefineryOcChecker : XcfaOcChecker {
@@ -38,8 +40,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   override val status: SolverStatus?
     get() = currentStatus
   private var helperCount = 0
-  override val model: Valuation?
-    get() = TODO("Not yet implemented") // retrieve the model from refinery, if SAT, null otherwise
+  override var model: Valuation? = null
 
   override fun initialize(eg: XcfaToEventGraph.EventGraph) {
     // see XcfaSmtOcChecker for reference on what needs to be done in this initialization
@@ -75,7 +76,6 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
   private fun generateMetamodel(): String {
     return """
             import builtin::strategy.
-            import builtin::theory::ibex.
             
             abstract class Event {
                 int value
@@ -179,12 +179,76 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
             
             propagation rule fromReadPropagation3(Write w1, Read r) <->
                 ws(w1, w2), hb(w2, r) ==> !rf(w1, r).
+                
+            propagation rule rfSomeRule(Write w, Read r) <->
+                may(rf(w, r)), count { may(rf(_, r)) } == 1, guard(r) ==> rf(w, r).
         """.trimIndent()
+  }
+
+
+
+  /** Maps a [RefExpr] to the `value(<refineryId>)` refinery term of the referenced event, or null. */
+  private fun Expr<*>.asEventValueTerm(
+    events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>
+  ): String? {
+    if (this !is RefExpr<*>) return null
+    val constDecl = decl as? IndexedConstDecl<*> ?: return null
+    val targetEvent = events[constDecl.varDecl]?.values?.firstNotNullOfOrNull { list ->
+      list.find { it.const == constDecl }
+    } ?: return null
+    return "value(${targetEvent.refineryId})"
+  }
+
+  private fun Expr<*>.toRefineryActionOrAssert(
+    events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
+    helperScripts: MutableSet<String>,
+    identifier: String
+  ): String {
+    if (this is EqExpr<*>) {
+      val left = leftOp
+      val right = rightOp
+
+      val refExpr = when {
+        left is RefExpr<*> && right.asConstant != null -> left
+        right is RefExpr<*> && left.asConstant != null -> right
+        else -> null
+      }
+      val constant = when {
+        left is RefExpr<*> -> right.asConstant
+        right is RefExpr<*> -> left.asConstant
+        else -> null
+      }
+      if (refExpr != null && constant != null) {
+        val constDecl = refExpr.decl as IndexedConstDecl<*>
+        val targetEvent = events[constDecl.varDecl]?.values?.firstNotNullOfOrNull { list ->
+          list.find { it.const == constDecl }
+        }
+        if (targetEvent != null) {
+          return "value(${targetEvent.refineryId}): $constant"
+        }
+      }
+
+      val leftTerm = left.asEventValueTerm(events)
+      val rightTerm = right.asEventValueTerm(events)
+      if (leftTerm != null || rightTerm != null) {
+        val leftExpr = left.toRefineryExpr(events, helperScripts, identifier)
+        val rightExpr = right.toRefineryExpr(events, helperScripts, identifier)
+        val actions = buildList {
+          if (leftTerm != null) add("$leftTerm: $rightExpr")
+          if (rightTerm != null) add("$rightTerm: $leftExpr")
+        }
+        return (actions + "assert $leftExpr == $rightExpr").joinToString(",\n\t")
+      }
+    }
+    return "assert ${this.toRefineryExpr(events, helperScripts, identifier)}"
   }
 
   private fun generateEvents(eg: XcfaToEventGraph.EventGraph): Pair<String, String> {
     val sb = StringBuilder("\n% Events\n")
     val rfPredicatesSb = StringBuilder("\n% Possible Read-From Predicates\n")
+
+    val guardGroups = LinkedHashMap<Set<Expr<BoolType>>, MutableList<XcfaEvent>>()
+
     eg.events.values.flatMap { it.values }.flatten().forEach { event ->
       val valueExpr = event.assignment
       val helperScripts = mutableSetOf<String>()
@@ -194,7 +258,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
           "propagation rule ${event.refineryId}ValueRule() <->\n" +
           "\ttrue\n" +
           "==>\n" +
-          "\tassert ${valueExpr.toRefineryExpr(eg.events, helperScripts, event.refineryId)}.")
+          "\t${valueExpr.toRefineryActionOrAssert(eg.events, helperScripts, event.refineryId)}.")
       }
       when(valueExpr) {
         null, is TrueExpr -> {}
@@ -228,42 +292,18 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       sb.appendLine("${if (event.type == EventType.READ) "Read" else "Write" }(${event.refineryId}).")
 
       sb.appendLine("atom ${event.refineryId}.")
-
       if (event.guard.isEmpty()) {
         sb.appendLine("guard(${event.refineryId}).")
       } else {
-        val (guardString, assertGuard, assertNotGuard) =
-          if (event.guard.size == 1) {
-            event.guard.first().toRefineryExpr(eg.events, helperScripts, event.refineryId).let {
-              Triple(it, "assert $it", "assert !($it)")
-            }
-          } else {
-            val helperScriptName = "${event.refineryId}_guard_helper"
-            sb.appendLine(
-              """
-                |pred $helperScriptName() <->
-                |${'\t'}${event.guard.joinToString(" ,\n|\t") {
-                  it.toRefineryExpr(eg.events, helperScripts, event.refineryId)
-                }}.
-              """.trimMargin()
-            )
-            "${helperScriptName}()".let { Triple(it, it, "!$it") }
-          }
-        sb.appendLine("error pred guard${event.refineryId}() <->\n" +
-                      "\t!guard(${event.refineryId}) , ($guardString);\n" +
-                      "\tguard(${event.refineryId}) , !($guardString).")
-        // propagation rule, as well:
-        sb.appendLine("propagation rule guard${event.refineryId}_pos() <->\n" +
-                      "\tguard(${event.refineryId}) ==> $assertGuard." +
-                      "\npropagation rule guard${event.refineryId}_neg() <->\n" +
-                      "\t!guard(${event.refineryId}) ==> $assertNotGuard."
-                      )
+        guardGroups.getOrPut(event.guard) { mutableListOf() }.add(event)
       }
 
       helperScripts.forEach {
         sb.appendLine(it)
       }
     }
+
+    generateGuardGroups(eg, guardGroups, sb)
 
     eg.rfs.forEach { (v, list) ->
       list
@@ -286,6 +326,58 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     }
 
     return Pair(sb.toString(), rfPredicatesSb.toString())
+  }
+
+  private fun generateGuardGroups(
+    eg: XcfaToEventGraph.EventGraph,
+    guardGroups: Map<Set<Expr<BoolType>>, List<XcfaEvent>>,
+    sb: StringBuilder,
+  ) {
+    guardGroups.entries.forEachIndexed { index, (guard, members) ->
+      val groupId = "guardGroup$index"
+      val helperScripts = mutableSetOf<String>()
+
+      val (guardString, assertGuard, assertNotGuard) =
+        if (guard.size == 1) {
+          guard.first().let { guardExpr ->
+            val condString = guardExpr.toRefineryExpr(eg.events, helperScripts, groupId)
+            val positive = guardExpr.toRefineryActionOrAssert(eg.events, helperScripts, groupId)
+            Triple(condString, positive, "assert !($condString)")
+          }
+        } else {
+          val helperScriptName = "${groupId}_guard_helper"
+          sb.appendLine(
+            """
+              |pred $helperScriptName() <->
+              |${'\t'}${guard.joinToString(" ,\n|\t") {
+                it.toRefineryExpr(eg.events, helperScripts, groupId)
+              }}.
+            """.trimMargin()
+          )
+
+          val inlinedGuard = guard.joinToString(",\n\t") {
+            it.toRefineryActionOrAssert(eg.events, helperScripts, groupId)
+          }
+          Triple("${helperScriptName}()", inlinedGuard, "!${helperScriptName}()")
+        }
+
+      sb.appendLine("pred $groupId(Event e).")
+      members.forEach { sb.appendLine("$groupId(${it.refineryId}).") }
+
+      sb.appendLine(
+        "error pred ${groupId}Error(Event e) <->\n" +
+          "\t$groupId(e) , !guard(e) , ($guardString);\n" +
+          "\t$groupId(e) , guard(e) , !($guardString)."
+      )
+      sb.appendLine(
+        "propagation rule ${groupId}_pos(Event e) <->\n" +
+          "\t$groupId(e) , guard(e) ==> $assertGuard." +
+          "\npropagation rule ${groupId}_neg(Event e) <->\n" +
+          "\t$groupId(e) , !guard(e) ==> $assertNotGuard."
+      )
+
+      helperScripts.forEach { sb.appendLine(it) }
+    }
   }
 
   private fun generateRelations(eg: XcfaToEventGraph.EventGraph): String {
@@ -360,10 +452,18 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       return SolverStatus.SAT
 
     } catch (e: Exception) {
+      if(e is UnsatisfiableProblemException || e is InvalidProblemException){
+      println(e.message)
       currentStatus = SolverStatus.UNSAT
       println("unsat")
-      return SolverStatus.UNSAT
+        return SolverStatus.UNSAT
+      }
+      else{
+        e.printStackTrace()
+        return null}
+
     }
+    return null
   }
 
   override fun getHappensBefore(): GlobalRelation? {
@@ -377,7 +477,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     // TODO print refinery statistics, implement later...
   }
 
-  private val Event.refineryId: String get() = "${ if (type == EventType.WRITE) "W" else "R"}_${const.name.toRefineryString()}"
+  private val Event.refineryId: String get() = "${ if (type == EventType.WRITE) "W" else "R"}_${const.name.toRefineryString()}".replace("$", "")
 
   private fun String.toRefineryString() = replace(":", "_")
 
@@ -433,12 +533,14 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     is NotExpr -> "!(${op.toRefineryExpr(events, helperScripts, identifier)})"
     is EqExpr<*> -> "${leftOp.toRefineryExpr(events, helperScripts, identifier)} == ${rightOp.toRefineryExpr(events, helperScripts, identifier)}"
     is NeqExpr<*> -> ops.joinToString("!=") { it.toRefineryExpr(events, helperScripts, identifier)}
+    is NegExpr<*> -> "-(${op.toRefineryExpr(events, helperScripts, identifier)})"
     is AddExpr<*> -> ops.joinToString("+")  { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
     is LtExpr<*> -> ops.joinToString("<") { it.toRefineryExpr(events, helperScripts, identifier)}
     is LeqExpr<*> -> ops.joinToString("<=") { it.toRefineryExpr(events, helperScripts, identifier)}
     is GtExpr<*> -> ops.joinToString(">") { it.toRefineryExpr(events, helperScripts, identifier)}
     is GeqExpr<*> -> ops.joinToString(">=") { it.toRefineryExpr(events, helperScripts, identifier)}
     is SubExpr<*> -> ops.joinToString("-")  { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
+    is MulExpr<*> -> ops.joinToString("*") { "(${it.toRefineryExpr(events, helperScripts, identifier)})"}
     is IteExpr<*> -> {
       val currentHelperId = ++helperCount
       val helperName = "${identifier}_helper_$currentHelperId"
@@ -469,7 +571,7 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
       val rightStr = r.toRefineryExpr(events, helperScripts, identifier)
 
       val result = "($leftStr - (($leftStr / $rightStr) * $rightStr))"
-      println("DEBUG ModExpr: $this -> converted to: $result")
+      //println("DEBUG ModExpr: $this -> converted to: $result")
       result
     }
     else -> throw UnsupportedOperationException("Unsupported expression $this in refinery expression conversion.")

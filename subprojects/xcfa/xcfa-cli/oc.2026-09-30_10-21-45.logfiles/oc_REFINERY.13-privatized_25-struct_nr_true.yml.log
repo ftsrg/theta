@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/goblint-regression/13-privatized_25-struct_nr_true.c --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_87ee1e9e-899e-41cb-8668-eaefc658d7f05572732351883745811/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_87ee1e9e-899e-41cb-8668-eaefc658d7f05572732351883745811/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/goblint-regression/13-privatized_25-struct_nr_true.c --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_87ee1e9e-899e-41cb-8668-eaefc658d7f05572732351883745811/tools/theta/solvers
-Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor.getDeclarations(DeclarationVisitor.java:96), java.lang.IllegalStateException: Initializer list designators not yet implemented!)
-Error: class java.lang.IllegalStateException Initializer list designators not yet implemented! (com.google.common.base.Preconditions#checkState:502, hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor#getDeclarations:96)

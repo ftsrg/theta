@@ -1,9 +1,0 @@
-tools/theta/theta-start.sh sv-benchmarks/c/pthread-theta/unwind3-1.i --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000
-
-
---------------------------------------------------------------------------------
-
-
-LD_LIBRARY_PATH=/tmp/vcloud_worker_meres_on_bme-233008/run_dir_5667c0da-22fe-44da-bdd8-de654227da3316652542454722111038/tools/theta/lib java -Xss120m -Xmx14210m -jar /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5667c0da-22fe-44da-bdd8-de654227da3316652542454722111038/tools/theta/theta.jar --backend OC --lbe NO_LBE --force-unroll 2 --oc-decision-procedure REFINERY --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --memlimit 15000000000 --input sv-benchmarks/c/pthread-theta/unwind3-1.i --smt-home /tmp/vcloud_worker_meres_on_bme-233008/run_dir_5667c0da-22fe-44da-bdd8-de654227da3316652542454722111038/tools/theta/solvers
-Process failed! (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker.toRefineryExpr(XcfaRefineryOcChecker.kt:460), java.lang.UnsupportedOperationException: Unsupported expression (* 2 __N:5) in refinery expression conversion.)
-Error: class java.lang.UnsupportedOperationException Unsupported expression (* 2 __N:5) in refinery expression conversion. (hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr:460, hu.bme.mit.theta.xcfa.analysis.oc.XcfaRefineryOcChecker#toRefineryExpr$lambda$3:435)
