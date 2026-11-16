@@ -97,6 +97,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     val registrations: List<ThreadRegistration>,
     /** every procedure started as a thread, whether or not the witness registers it */
     val threadRoots: Set<String>,
+    /** (segment index, waypoint index) of the waypoints located in some procedure */
+    val matchedWaypoints: MutableSet<Pair<Int, Int>> = mutableSetOf(),
   )
 
   private interface LastSegmentManager<T : Type> {
@@ -133,6 +135,38 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
      * counter/flag [VarDecl]s, and the thread registry is global to the witness.
      */
     private val instrumentations = mutableMapOf<XcfaBuilder, Instrumentation>()
+
+    /**
+     * Fails if a non-avoid waypoint of the violation [witness] applied to [xcfa] was located in no
+     * procedure. Its segment could never be passed, so the witness would be refuted for a reason
+     * that is not in the program.
+     */
+    fun checkAllWaypointsMatched(xcfa: XCFA, witness: YamlWitness) {
+      val matched =
+        xcfa.procedureBuilders.firstOrNull()?.let { instrumentations[it.parent] }?.matchedWaypoints
+          ?: emptySet()
+      val unmatched =
+        witness.content
+          .mapNotNull { it.segment }
+          .withIndex()
+          .flatMap { (segmentIndex, segment) ->
+            segment.withIndex().mapNotNull { (waypointIndex, waypoint) ->
+              val wp = waypoint.waypoint
+              if (wp.action == Action.AVOID || Pair(segmentIndex, waypointIndex) in matched) null
+              else "segment $segmentIndex: ${wp.describe()}"
+            }
+          }
+      check(unmatched.isEmpty()) {
+        "Cannot apply the violation witness, no program location matches " +
+          unmatched.joinToString("; ")
+      }
+    }
+
+    private fun WaypointContent.describe(): String =
+      "${type.name.lowercase()} waypoint at line ${location.line}" +
+        (location.column?.let { ", column $it" } ?: "") +
+        (location.function?.let { " (function $it)" } ?: "") +
+        (constraint?.let { " with constraint '${it.value}'" } ?: "")
   }
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -326,19 +360,21 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       // All (non-avoid) waypoints of the segment share the segment index: in a multi-follow
       // segment (e.g., the racing pair of a no-data-race witness) this leaves the waypoints
       // mutually unordered.
-      val waypoints = segment.filter { waypoint -> waypoint.waypoint.action != Action.AVOID }
+      val waypoints =
+        segment.withIndex().filter { (_, waypoint) -> waypoint.waypoint.action != Action.AVOID }
 
       val isLastSegment = segmentIndex == segmentCount - 1
 
-      for (wp in waypoints) {
+      for ((waypointIndex, wp) in waypoints) {
         // Thread-creating function_enter waypoints are handled by registerThreads.
         if (
           threadingEnabled &&
             wp.waypoint.type == WaypointType.FUNCTION_ENTER &&
             isThreadRegistration(instrumentation, wp.waypoint, segmentIndex)
-        )
+        ) {
+          instrumentation.matchedWaypoints.add(Pair(segmentIndex, waypointIndex))
           continue
-        if (!mayExecuteInProcedure(wp.waypoint, builder, instrumentation)) continue
+        }
         val loc = wp.waypoint.location
 
         // The segment is only passed once the counter is on it AND the executing thread is the one
@@ -368,7 +404,8 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           statementToEdge
             .filter { (statement, label, edge) ->
               if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) {
-                statement.lineNumberStart == loc.line &&
+                // the format anchors function_return at the call's closing parenthesis
+                statement.lineNumberStop == loc.line &&
                   (loc.column == null ||
                     statement.colNumberStop + 1 - 1 == loc.column ||
                     statement.colNumberStop + 1 == loc.column) &&
@@ -404,14 +441,25 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
               }
             }
             .map { (_, label, edge) -> Pair(label, edge) }
+        // A location counts as matched even where the waypoint's thread does not run.
+        if (labelsOnEdges.isNotEmpty()) {
+          instrumentation.matchedWaypoints.add(Pair(segmentIndex, waypointIndex))
+        }
+        if (!mayExecuteInProcedure(wp.waypoint, builder, instrumentation)) continue
         if (labelsOnEdges.isEmpty()) {
           // The waypoint's location is not in this procedure (e.g., it belongs to another
           // thread's code); it is instrumented wherever it matches.
           continue
         }
 
-        val expr = Imply(guardPred, waypointConstraint(wp.waypoint, statementToEdge, builder))
-        val assumption = StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
+        // per matched label: a function_return constrains the variable its own call is havoced into
+        val assumptions = mutableMapOf<XcfaLabel, XcfaLabel>()
+        fun assumption(label: XcfaLabel) =
+          assumptions.getOrPut(label) {
+            val expr =
+              Imply(guardPred, waypointConstraint(wp.waypoint, label, statementToEdge, builder))
+            StmtLabel(AssumeStmt.of(expr), ChoiceType.NONE, EmptyMetaData)
+          }
 
         val edgeLabels = LinkedHashMap<XcfaEdge, MutableSet<XcfaLabel>>()
         for ((label, edge) in labelsOnEdges) {
@@ -428,16 +476,21 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
           // matching segment fire). Indexing by label (indexOf) would instead collapse every
           // occurrence onto the first, leaving later visits uninstrumented and stalling the
           // sequence.
-          val annotatedIndices =
-            oldLabels.indices
-              .filter { oldLabels[it] in matchedLabels }
-              .map { it + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0 }
-              .sorted()
-          for ((i, index) in annotatedIndices.withIndex()) {
+          val annotatedIndices = oldLabels.indices.filter { oldLabels[it] in matchedLabels }
+          for ((i, labelIndex) in annotatedIndices.withIndex()) {
             val flagUpdate = if (i == 0) segmentFlagUpdate else null
+            val index = labelIndex + if (wp.waypoint.type == WaypointType.FUNCTION_RETURN) 1 else 0
             modifications
               .computeIfAbsent(edge) { LinkedList() }
-              .add(Annotation(edge, index, assumption, segmentUpdate, flagUpdate))
+              .add(
+                Annotation(
+                  edge,
+                  index,
+                  assumption(oldLabels[labelIndex]),
+                  segmentUpdate,
+                  flagUpdate,
+                )
+              )
           }
         }
       }
@@ -550,9 +603,10 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
     return builder
   }
 
-  /** The constraint that has to hold when the waypoint is passed. */
+  /** The constraint that has to hold when the waypoint is passed at the [matched] label. */
   private fun waypointConstraint(
     wp: WaypointContent,
+    matched: XcfaLabel,
     statementToEdge: LinkedHashSet<Triple<CStatement, XcfaLabel, XcfaEdge>>,
     builder: XcfaProcedureBuilder,
   ): Expr<BoolType> {
@@ -577,46 +631,32 @@ class ApplyWitnessPass(val parseContext: ParseContext, val witness: YamlWitness)
       }
 
       WaypointType.FUNCTION_RETURN -> {
-        val vars =
-          statementToEdge
-            .filter { (statement, label, _) ->
-              statement.lineNumberStart == loc.line &&
-                (loc.column == null ||
-                  statement.colNumberStop + 1 - 1 == loc.column ||
-                  statement.colNumberStop + 1 == loc.column) &&
-                label is StmtLabel &&
-                label.stmt is HavocStmt<*>
-            }
-            .map { (_, label, _) -> ((label as StmtLabel).stmt as HavocStmt<*>).varDecl }
-
-        if (vars.size != 1) {
-          True() // no or multiple vars
-        } else {
-          val v = vars.first()
-          val cNameOpt = parseContext.metadata.getMetadataValue(v.name, "cName")
-          if (cNameOpt.isPresent) {
-            val constraint = wp.constraint!!
-            check(
-              constraint.format!! == Format.C_EXPRESSION ||
-                constraint.format!! == Format.EXT_C_EXPRESSION
-            ) {
-              "Not handled: $constraint"
-            }
-            // Names resolve to the last variable with that C name, so `v` goes last: an inlined
-            // callee may have a variable of the same name (e.g. the parameter the result is passed
-            // to)
-            getBoolExpressionFromC(
-              constraint.value.replace("\\result", cNameOpt.get() as String),
-              parseContext,
-              false,
-              false,
-              NullLogger.getInstance(),
-              (builder.getVars() + builder.parent.getVars().map { it.wrappedVar }).toList() + v,
-            )
-          } else {
-            True() // no cname
-          }
+        val v = ((matched as StmtLabel).stmt as HavocStmt<*>).varDecl
+        val constraint = wp.constraint!!
+        check(
+          constraint.format!! == Format.C_EXPRESSION ||
+            constraint.format!! == Format.EXT_C_EXPRESSION
+        ) {
+          "Not handled: $constraint"
         }
+        // a frontend temporary (e.g. the result of a call inside a larger expression) has no C
+        // name, but the expression parser also resolves a variable by its own name
+        val name =
+          parseContext.metadata.getMetadataValue(v.name, "cName").getOrNull() as String? ?: v.name
+        check(name.matches(Regex("[A-Za-z_][A-Za-z0-9_]*"))) {
+          "Cannot refer to the result of the call at line ${loc.line} in a C expression: $name"
+        }
+        // Names resolve to the last variable with that C name, so `v` goes last: an inlined
+        // callee may have a variable of the same name (e.g. the parameter the result is passed
+        // to)
+        getBoolExpressionFromC(
+          constraint.value.replace("\\result", name),
+          parseContext,
+          false,
+          false,
+          NullLogger.getInstance(),
+          (builder.getVars() + builder.parent.getVars().map { it.wrappedVar }).toList() + v,
+        )
       }
 
       WaypointType.BRANCHING -> {
