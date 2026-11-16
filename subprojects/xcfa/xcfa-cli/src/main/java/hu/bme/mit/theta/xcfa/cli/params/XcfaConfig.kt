@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
+import hu.bme.mit.theta.xcfa.analysis.oc.RefinerySolverStrategy
 import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcMemoryConsistencyModel
 import hu.bme.mit.theta.xcfa.cli.utils.StringToXcfaPropertyConverter
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -554,6 +555,11 @@ data class OcConfig(
   var memoryConsistencyModel: XcfaOcMemoryConsistencyModel = XcfaOcMemoryConsistencyModel.SC,
   @Parameter(names = ["--oc-solver"], description = "SMT solver for OC solving")
   var smtSolver: String = "Z3:new",
+  @Parameter(
+    names = ["--refinery-solver-strategy"],
+    description = "Z3 solver strategy for the Refinery-based OC decision procedure",
+  )
+  var refinerySolverStrategy: RefinerySolverStrategy = RefinerySolverStrategy.DEFAULT,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

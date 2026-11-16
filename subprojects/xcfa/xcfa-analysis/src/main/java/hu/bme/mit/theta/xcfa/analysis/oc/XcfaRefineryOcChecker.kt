@@ -30,7 +30,9 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.solver.SolverStatus
 import tools.refinery.generator.standalone.StandaloneRefinery
 
-internal class XcfaRefineryOcChecker : XcfaOcChecker {
+internal class XcfaRefineryOcChecker(
+  private val solverStrategy: RefinerySolverStrategy = RefinerySolverStrategy.DEFAULT
+) : XcfaOcChecker {
 
 
   private var currentStatus: SolverStatus? = null
@@ -55,6 +57,11 @@ internal class XcfaRefineryOcChecker : XcfaOcChecker {
     val (eventsCode, rfPredicatesCode) = generateEvents(eg)
 
     baseRefineryCode = buildString {
+      if (solverStrategy != RefinerySolverStrategy.DEFAULT) {
+        appendLine("import builtin::theory::z3.")
+        appendLine("#z3SolverStrategy(\"${solverStrategy.name}\").")
+        appendLine()
+      }
       append(generateMetamodel())
       append(eventsCode)
       append(generateRelations(eg))

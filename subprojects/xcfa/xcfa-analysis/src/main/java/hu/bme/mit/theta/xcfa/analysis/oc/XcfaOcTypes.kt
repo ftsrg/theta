@@ -27,15 +27,24 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(
-  internal val checker: (String, XcfaOcMemoryConsistencyModel) -> XcfaOcChecker
+  internal val checker:
+    (String, XcfaOcMemoryConsistencyModel, RefinerySolverStrategy) -> XcfaOcChecker
 ) {
 
-  IDL({ solver, mcm ->
+  IDL({ solver, mcm, _ ->
     XcfaSmtOcChecker(IDLOcChecker(solver, mcm == XcfaOcMemoryConsistencyModel.SC))
   }),
-  BASIC({ solver, _ -> XcfaSmtOcChecker(BasicOcChecker(solver)) }),
-  PROPAGATOR({ _, _ -> XcfaSmtOcChecker(UserPropagatorOcChecker()) }),
-  REFINERY({ _, _ -> XcfaRefineryOcChecker() })
+  BASIC({ solver, _, _ -> XcfaSmtOcChecker(BasicOcChecker(solver)) }),
+  PROPAGATOR({ _, _, _ -> XcfaSmtOcChecker(UserPropagatorOcChecker()) }),
+  REFINERY({ _, _, strategy -> XcfaRefineryOcChecker(strategy) }),
+}
+
+/** Z3 solver strategy used by the Refinery-based OC checker. */
+enum class RefinerySolverStrategy {
+  DEFAULT,
+  RESET,
+  POP_REPLAY,
+  GUARDED_ASSUMPTIONS,
 }
 
 internal class XcfaEvent(

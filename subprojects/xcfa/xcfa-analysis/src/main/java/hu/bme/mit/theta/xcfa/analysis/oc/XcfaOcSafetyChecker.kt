@@ -46,6 +46,7 @@ class XcfaOcSafetyChecker(
   autoConflictBound: Int,
   private val memoryModel: XcfaOcMemoryConsistencyModel = SC,
   private val acceptUnreliableSafe: Boolean = false,
+  refinerySolverStrategy: RefinerySolverStrategy = RefinerySolverStrategy.DEFAULT,
 ) : SafetyChecker<EmptyProof, Cex, XcfaPrec<UnitPrec>> {
 
   init {
@@ -69,7 +70,7 @@ class XcfaOcSafetyChecker(
   private val conflictFinder = autoConflictConfig.conflictFinder(autoConflictBound)
 
   private val ocChecker: XcfaOcChecker =
-    decisionProcedure.checker(smtSolver, memoryModel).let { ocChecker ->
+    decisionProcedure.checker(smtSolver, memoryModel, refinerySolverStrategy).let { ocChecker ->
       if (conflictInput == null) ocChecker
       else {
         @Suppress("UNCHECKED_CAST")

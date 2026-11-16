@@ -47,6 +47,7 @@ fun getOcChecker(
       autoConflictBound = ocConfig.autoConflictBound,
       memoryModel = ocConfig.memoryConsistencyModel,
       acceptUnreliableSafe = config.outputConfig.acceptUnreliableSafe,
+      refinerySolverStrategy = ocConfig.refinerySolverStrategy,
     )
   return SafetyChecker { ocChecker.check() }
 }
