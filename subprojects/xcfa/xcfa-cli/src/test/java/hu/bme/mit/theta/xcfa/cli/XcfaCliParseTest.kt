@@ -145,6 +145,7 @@ class XcfaCliParseTest {
         Arguments.of("/svlib/loop-simple-safe.svlib"),
         Arguments.of("/svlib/multi-assign.svlib"),
         Arguments.of("/svlib/procedure-call.svlib"),
+        Arguments.of("/svlib/procedure-contracts.svlib"),
         Arguments.of("/svlib/return.svlib"),
         Arguments.of("/svlib/return-if.svlib"),
         Arguments.of("/svlib/return-while.svlib"),

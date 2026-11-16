@@ -15,14 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.passes.procedures
 
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.recordRemovedLocation
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 /** Removes procedures that are not used anymore. */
-class InlinedProcedureRemovalPass : ProcedurePass {
+class InlinedProcedureRemovalPass(private val parseContext: ParseContext? = null) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (builder in builder.parent.getInitProcedures().map { it.first }) return builder
@@ -37,6 +40,12 @@ class InlinedProcedureRemovalPass : ProcedurePass {
         }
       }
     if (!isCalled) {
+      parseContext?.let { context ->
+        builder
+          .getLocs()
+          .filter { it.metadata.keepsLocation() }
+          .forEach { context.recordRemovedLocation(it, False()) }
+      }
       builder.parent.removeProcedure(builder)
     }
     return builder

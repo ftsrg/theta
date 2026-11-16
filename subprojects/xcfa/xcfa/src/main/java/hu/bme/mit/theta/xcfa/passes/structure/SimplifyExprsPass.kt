@@ -16,10 +16,12 @@
 package hu.bme.mit.theta.xcfa.passes.structure
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection
@@ -34,6 +36,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.recordPassInvariants
 import hu.bme.mit.theta.xcfa.utils.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.utils.dereferencesWithAccessType
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -51,15 +54,18 @@ import hu.bme.mit.theta.xcfa.utils.simplify
  */
 private const val MAX_PATHS = 4
 
-class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProperty? = null) :
-  ProcedurePass {
+class SimplifyExprsPass(
+  val parseContext: ParseContext,
+  val property: XcfaProperty? = null,
+  private val recordPassInvariants: Boolean = false,
+) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
     if (property?.verifiedProperty?.equals(ErrorDetection.OVERFLOW) ?: false) {
       return builder
     }
     checkNotNull(builder.metaData["deterministic"])
-    val unusedLocRemovalPass = UnusedLocRemovalPass()
+    val unusedLocRemovalPass = UnusedLocRemovalPass(parseContext.takeIf { recordPassInvariants })
     var edges = LinkedHashSet(builder.getEdges())
     val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
     // without threads nothing runs concurrently with the entry procedure: its globals change only
@@ -167,6 +173,18 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
       edges = LinkedHashSet(builder.getEdges())
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
+    if (recordPassInvariants) {
+      val unassignedAt = builder.unassignedConsts(constValuation)
+      valuations
+        .map { (edge, valuation) ->
+          edge.target to
+            ImmutableValuation.from(valuation.toMap() - unassignedAt(edge.target)).toExpr()
+        }
+        .groupBy { it.first }
+        .forEach { (location, invariants) ->
+          parseContext.recordPassInvariants(location, BoolExprs.Or(invariants.map { it.second }))
+        }
+    }
     return builder
   }
 
@@ -299,5 +317,33 @@ class SimplifyExprsPass(val parseContext: ParseContext, val property: XcfaProper
         } ?: true // no writing label found for v -> remove
       }
     } while (changed) // no change, no point in iterating further
+  }
+
+  /**
+   * The constants that may still be unassigned at a location, i.e., their single write is not on
+   * every path to it.
+   */
+  private fun XcfaProcedureBuilder.unassignedConsts(
+    constValuation: Valuation
+  ): (XcfaLocation) -> Set<VarDecl<*>> {
+    val unassignedLocs =
+      constValuation.toMap().keys.filterIsInstance<VarDecl<*>>().associateWith { v ->
+        val writes = getEdges().filter { it.collectVarsWithAccessType()[v]?.isWritten == true }
+        if (writes.isEmpty()) getLocs() else initLoc.reachableAvoiding(writes.toSet())
+      }
+    return { location -> unassignedLocs.filterValues { location in it }.keys }
+  }
+
+  private fun XcfaLocation.reachableAvoiding(edges: Set<XcfaEdge>): Set<XcfaLocation> {
+    val reached = mutableSetOf(this)
+    val toVisit = ArrayDeque(listOf(this))
+    while (toVisit.isNotEmpty()) {
+      toVisit
+        .removeFirst()
+        .outgoingEdges
+        .filter { it !in edges }
+        .forEach { if (reached.add(it.target)) toVisit.add(it.target) }
+    }
+    return reached
   }
 }

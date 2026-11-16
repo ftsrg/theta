@@ -15,23 +15,57 @@
  */
 package hu.bme.mit.theta.frontend.svlib
 
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class SvLibTagMetadata(val tags: Set<String> = setOf()) : MetaData() {
+class SvLibTagMetadata(tags: Set<String> = setOf(), val procedure: String? = null) : MetaData() {
+  val tags = tags.toMutableSet()
+
+  /** set by the [SvLibXcfaBuilder] once the whole script is parsed */
+  var liveVars: Set<VarDecl<*>> = setOf()
+
   override fun combine(other: MetaData) =
-    if (other is SvLibTagMetadata) SvLibTagMetadata(this.tags + other.tags) else this
+    if (other is SvLibTagMetadata)
+      SvLibTagMetadata(this.tags + other.tags, this.procedure ?: other.procedure).also {
+        it.liveVars = this.liveVars intersect other.liveVars
+      }
+    else this
+
+  override fun keepsLocation() = tags.isNotEmpty()
 
   override fun isSubstantial() = tags.isNotEmpty()
 
   override fun toString() = tags.joinToString(" ")
 }
 
-class SvLibSourceMetadata(val source: String) : MetaData() {
-  override fun combine(other: MetaData) =
-    if (other is SvLibSourceMetadata) SvLibSourceMetadata("${this.source} ${other.source}")
-    else this
+/** Marks the end of a procedure body, where the [tags] annotating the whole body terminate. */
+class SvLibProcedureExit(
+  val procedure: String,
+  val inputs: Set<VarDecl<*>>,
+  val outputs: Set<VarDecl<*>>,
+) : MetaData() {
+  /** set by the [SvLibXcfaBuilder] once the whole script is parsed */
+  val tags = mutableSetOf<String>()
 
-  override fun isSubstantial() = source.isNotEmpty()
+  override fun combine(other: MetaData) = this
 
-  override fun toString() = source
+  override fun keepsLocation() = tags.isNotEmpty()
+
+  override fun isSubstantial() = tags.isNotEmpty()
+}
+
+sealed class SvLibWitnessMetadata : MetaData() {
+  override fun combine(other: MetaData) = other as? SvLibWitnessMetadata ?: this
+
+  override fun isSubstantial() = true
+
+  /** [initVars]: variables that the call can initialize (outputs and locals) */
+  data class InitProcVars(val procedure: String, val initVars: Set<VarDecl<*>>) :
+    SvLibWitnessMetadata()
+
+  data class Havoc(val vars: List<VarDecl<*>>) : SvLibWitnessMetadata()
+
+  data class Choice(val index: Int) : SvLibWitnessMetadata()
+
+  data class Annotation(val property: String, val tag: String?) : SvLibWitnessMetadata()
 }
