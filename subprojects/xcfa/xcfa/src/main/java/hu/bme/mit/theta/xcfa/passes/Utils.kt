@@ -22,6 +22,11 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -299,3 +304,64 @@ fun <P : Type, O : Type, D : Type> buildMemoryAssign(
   deref: Dereference<P, O, D>,
   expr: Expr<*>,
 ): MemoryAssignStmt<P, O, D> = MemoryAssignStmt.create(deref, cast(expr, deref.type))
+
+fun ParseContext.recordPassInvariants(location: XcfaLocation, invariant: Expr<BoolType>) {
+  recordPassInvariant(location, invariant)
+  recordPassInvariant(location.name, invariant) // to handle XCFA copies
+}
+
+private fun <T> ParseContext.recordPassInvariant(owner: T, invariant: Expr<BoolType>) =
+  metadata
+    .getMetadataValue(owner, "passInvariants")
+    .ifPresentOrElse(
+      { invariants -> (invariants as? MutableList<Expr<BoolType>>)?.add(invariant) },
+      { metadata.create(owner, "passInvariants", mutableListOf(invariant)) },
+    )
+
+/** Record invariants for dead code: `false` for unreachable, the existing otherwise. */
+internal fun recordRemovedLocations(
+  builder: XcfaProcedureBuilder,
+  removed: Set<XcfaEdge>,
+  reachableEdges: Set<XcfaEdge>,
+  parseContext: ParseContext,
+) {
+  builder
+    .getLocs()
+    .filter { location ->
+      location.metadata.keepsLocation() &&
+        (location.incomingEdges + location.outgoingEdges).all { it in removed }
+    }
+    .forEach { location ->
+      val reachable = location.initial || location.incomingEdges.any { it in reachableEdges }
+      val invariant =
+        if (!reachable) False()
+        else
+          parseContext.metadata
+            .getMetadataValue(location, "passInvariants")
+            .map { ExprUtils.simplify(And(it as List<Expr<BoolType>>)) }
+            .orElse(True())
+      parseContext.recordRemovedLocation(location, invariant)
+    }
+}
+
+private const val REMOVED_LOCATIONS = "__theta_lost_locations"
+
+/**
+ * Records an [invariant] for a location that passes must keep ([MetaData.keepsLocation]) but that a
+ * pass removed.
+ */
+fun ParseContext.recordRemovedLocation(location: XcfaLocation, invariant: Expr<BoolType>) =
+  metadata
+    .getMetadataValue(REMOVED_LOCATIONS, REMOVED_LOCATIONS)
+    .ifPresentOrElse(
+      { lost ->
+        (lost as MutableList<Pair<XcfaLocation, Expr<BoolType>>>) += location to invariant
+      },
+      {
+        metadata.create(REMOVED_LOCATIONS, REMOVED_LOCATIONS, mutableListOf(location to invariant))
+      },
+    )
+
+fun ParseContext.removedLocations(): List<Pair<XcfaLocation, Expr<BoolType>>> =
+  metadata.getMetadataValue(REMOVED_LOCATIONS, REMOVED_LOCATIONS).orElse(null)
+    as? List<Pair<XcfaLocation, Expr<BoolType>>> ?: emptyList()

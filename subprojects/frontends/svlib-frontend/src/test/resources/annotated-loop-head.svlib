@@ -22,5 +22,5 @@
 
 (declare-const input Int)
 
-(verify-call loopHeadExample (input))
+(verify-call loopHeadExample ())
 (get-witness)

@@ -18,12 +18,19 @@ package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.functype.FuncType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibLexer
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.utils.collectVars
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.io.FileInputStream
 import java.nio.file.Path
 import org.antlr.v4.runtime.CharStreams
@@ -109,6 +116,7 @@ internal class SvLibFrontendTest {
     assertNotNull(taggedLocation)
     assertEquals(2, taggedLocation!!.outgoingEdges.size)
     assertTrue(taggedLocation.outgoingEdges.any { it.target.error })
+    assertEquals("tagCheckExample", (taggedLocation.metadata as SvLibTagMetadata).procedure)
   }
 
   @Test
@@ -119,7 +127,11 @@ internal class SvLibFrontendTest {
     val vars = xcfa.collectVars()
     assertTrue(vars.any { it.name.contains("__theta") })
 
-    val sequenceLabels = procedure.edges.map(XcfaEdge::label).filterIsInstance<SequenceLabel>()
+    val sequenceLabels =
+      procedure.edges
+        .filter { it.source != procedure.initLoc }
+        .map(XcfaEdge::label)
+        .filterIsInstance<SequenceLabel>()
     assertEquals(2, sequenceLabels.size)
 
     val initAssign = sequenceLabels[0]
@@ -135,9 +147,138 @@ internal class SvLibFrontendTest {
     val procedure = xcfa.procedures.first()
 
     assertTrue(
-      procedure.edges.map(XcfaEdge::label).filterIsInstance<StmtLabel>().any {
-        it.stmt is HavocStmt<*>
+      procedure.edges
+        .filter { it.source != procedure.initLoc }
+        .flatMap(XcfaEdge::getFlatLabels)
+        .filterIsInstance<StmtLabel>()
+        .any { it.stmt is HavocStmt<*> }
+    )
+  }
+
+  @Test
+  fun havocStatementStartsWithWitnessMarker() {
+    val xcfa: XCFA = parseResource("havoc.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val havocEdge =
+      procedure.edges.single { edge ->
+        edge.getFlatLabels().any {
+          (it.metadata as? SvLibWitnessMetadata) is SvLibWitnessMetadata.Havoc
+        }
       }
+    val labels = havocEdge.getFlatLabels()
+    assertTrue(labels.first().isWitnessStep())
+    assertTrue(labels.all { it.metadata === labels.first().metadata })
+    assertTrue(labels.drop(1).all { (it as StmtLabel).stmt is HavocStmt<*> })
+  }
+
+  @Test
+  fun procedureBodyStartsWithWitnessMarker() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+    val entry = xcfa.initProcedures.single().first
+    val initializable = mapOf("add" to setOf("sum"), "callExample" to setOf("x", "y"))
+
+    (xcfa.procedures - entry).forEach { procedure ->
+      val labels = procedure.initLoc.outgoingEdges.single().getFlatLabels()
+      assertTrue(labels.first().isWitnessStep())
+      assertTrue(labels.all { it.metadata === labels.first().metadata })
+      val metadata = labels.first().metadata as SvLibWitnessMetadata.InitProcVars
+      assertEquals(procedure.name, metadata.procedure)
+      assertEquals(initializable[procedure.name], metadata.initVars.map { it.name }.toSet())
+    }
+  }
+
+  @Test
+  fun procedureEntryHavocsVarsReadBeforeAssignment() {
+    val xcfa: XCFA = parseResource("uninitialized-read.svlib")
+
+    val entryHavocs =
+      xcfa.procedures
+        .single { it.name == "uninitializedRead" }
+        .initLoc
+        .outgoingEdges
+        .single()
+        .getFlatLabels()
+        .mapNotNull { ((it as? StmtLabel)?.stmt as? HavocStmt<*>)?.varDecl?.name }
+        .toSet()
+
+    assertEquals(setOf("x", "r"), entryHavocs)
+  }
+
+  @Test
+  fun taggedLocationKnowsItsLiveVars() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+
+    val metadata =
+      xcfa.procedures
+        .flatMap { it.locs }
+        .map { it.metadata }
+        .filterIsInstance<SvLibTagMetadata>()
+        .single { "check-after-increment" in it.tags }
+    assertEquals(setOf("x"), metadata.liveVars.map { it.name }.toSet())
+  }
+
+  @Test
+  fun procedureExitKnowsTheTagsAnnotatingOnlyWholeBodies() {
+    val xcfa: XCFA = parseResource("procedure-contracts.svlib")
+
+    val exits =
+      xcfa.procedures
+        .mapNotNull { it.finalLoc.get().metadata as? SvLibProcedureExit }
+        .associateBy { it.procedure }
+    assertEquals(setOf("inc-body", "inc-alias"), exits["inc"]?.tags)
+    assertEquals(setOf("twice-body", "twice-outer"), exits["twice"]?.tags)
+    assertEquals(emptySet<String>(), exits["other"]?.tags)
+    assertEquals(setOf("x"), exits["twice"]?.inputs?.map { it.name }?.toSet())
+    assertEquals(setOf("y"), exits["twice"]?.outputs?.map { it.name }?.toSet())
+  }
+
+  @Test
+  fun verifyCallBindsInputsInEntryWrapper() {
+    val xcfa: XCFA = parseResource("procedure-call.svlib")
+
+    val call =
+      xcfa.initProcedures
+        .single()
+        .first
+        .edges
+        .flatMap { it.getFlatLabels() }
+        .filterIsInstance<InvokeLabel>()
+        .single()
+    assertEquals("callExample", call.name)
+    assertEquals("input", (call.params.first() as RefExpr<*>).decl.name)
+  }
+
+  @Test
+  fun entryWrapperAssumesAssertionsBeforeTheCall() {
+    val xcfa: XCFA = parseResource("model-symbols.svlib")
+
+    val labels = xcfa.initProcedures.single().first.edges.single().getFlatLabels()
+    val assumption = (labels.first() as StmtLabel).stmt as AssumeStmt
+    assertEquals(setOf("c"), ExprUtils.getVars(assumption.cond).map { it.name }.toSet())
+    assertTrue(labels.last() is InvokeLabel)
+  }
+
+  @Test
+  fun modelSymbolsAreRecordedInDeclarationOrder() {
+    val metadata = mutableMapOf<Pair<Any, String>, Any>()
+    parseResource("model-symbols.svlib") { owner, key, value -> metadata[owner to key] = value }
+
+    val symbols = metadata[MODEL_SYMBOLS to "modelSymbols"] as List<Decl<*>>
+    assertEquals(listOf("f", "c", "input"), symbols.map { it.name })
+    assertTrue(symbols.first().type is FuncType<*, *>)
+    assertTrue(symbols.drop(1).all { it is VarDecl<*> })
+  }
+
+  @Test
+  fun inlineCheckTrueIsAttributedToItsTag() {
+    val xcfa: XCFA = parseResource("check-true-middle.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val metadata = procedure.edges.single { it.target.error }.label.metadata as SvLibWitnessMetadata
+    assertEquals(
+      SvLibWitnessMetadata.Annotation(":check-true (<= 0 x)", "check-before-first-increment"),
+      metadata,
     )
   }
 
@@ -179,15 +320,28 @@ internal class SvLibFrontendTest {
     val xcfa: XCFA = parseResource("choice.svlib")
     val procedure = xcfa.procedures.first()
 
-    assertTrue(procedure.initLoc.outgoingEdges.size == 3)
+    assertTrue(procedure.locs.any { it.outgoingEdges.size == 3 })
+  }
+
+  @Test
+  fun choiceBranchesStartWithWitnessMarkers() {
+    val xcfa: XCFA = parseResource("choice.svlib")
+    val procedure = xcfa.procedures.first()
+
+    val branches = procedure.locs.single { it.outgoingEdges.size == 3 }.outgoingEdges
+    assertTrue(branches.all { it.label.isWitnessStep() })
+    assertEquals(
+      (0..2).map { SvLibWitnessMetadata.Choice(it) }.toSet(),
+      branches.map { (it.label.metadata as SvLibWitnessMetadata) }.toSet(),
+    )
   }
 
   @Test
   fun multipleProceduresCreated() {
     val xcfa: XCFA = parseResource("procedure-call.svlib")
-    assertEquals(2, xcfa.procedures.size)
+    assertEquals(3, xcfa.procedures.size)
 
-    val procedure = xcfa.initProcedures.first().first
+    val procedure = xcfa.procedures.single { it.name == "callExample" }
     val calledProcedure = xcfa.procedures.first()
     val calls = procedure.edges.map(XcfaEdge::label).filterIsInstance<InvokeLabel>()
     assertEquals(1, calls.size)
@@ -255,14 +409,17 @@ internal class SvLibFrontendTest {
     }
   }
 
-  private fun parseResource(name: String) =
+  private fun parseResource(
+    name: String,
+    recordMetadata: (Any, String, Any) -> Unit = { _, _, _ -> },
+  ) =
     try {
       val resource = SvLibFrontendTest::class.java.getClassLoader().getResource(name)
       val file = Path.of(resource!!.toURI()).toFile()
       SvLibFrontend()
         .buildXcfa(
           FileInputStream(file),
-          { _, _, _ -> },
+          recordMetadata,
           ConsoleLogger(Logger.Level.INFO),
           ProcedurePassManager(),
         )

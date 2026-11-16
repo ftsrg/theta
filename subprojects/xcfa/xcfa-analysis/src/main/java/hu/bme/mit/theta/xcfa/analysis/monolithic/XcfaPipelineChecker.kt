@@ -56,6 +56,7 @@ constructor(
   private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
   blockEncoding: Boolean = false,
+  quantifiedInvariants: Boolean = false,
 ) :
   FormalismPipelineChecker<
     XCFA,
@@ -83,7 +84,14 @@ constructor(
         } else throw e
       }
     } else {
-      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, blockEncoding)
+      XcfaSingleThreadToMonolithicAdapter(
+        xcfa,
+        property,
+        parseContext,
+        initValues,
+        blockEncoding,
+        quantifiedInvariants,
+      )
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   ) {

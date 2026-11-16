@@ -16,10 +16,14 @@
 package hu.bme.mit.theta.frontend.svlib
 
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvExprs
 import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
@@ -29,6 +33,7 @@ import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.utils.strongLiveVars
 import org.antlr.v4.runtime.CharStream
 
 class SvLibXcfaBuilder(
@@ -41,12 +46,28 @@ class SvLibXcfaBuilder(
   private val globalSymbolTable = SvLibSymbolTable()
   private val procedures = LinkedHashMap<XcfaProcedureBuilder, SvLibSymbolTable>()
   private val taggedLocations: MutableMap<String, Set<XcfaLocation>> = LinkedHashMap()
+  private val bodyLocations = mutableSetOf<XcfaLocation>()
+  private val modelSymbols = mutableListOf<Decl<*>>()
+  private val assertions = mutableListOf<Expr<BoolType>>()
 
   var generateWitness: Boolean = false
     private set
 
   fun buildXcfa(parser: SvLibParser): XCFA {
     visit(parser.script())
+    // contract for tags annotating whole bodies
+    val contractTags = taggedLocations.filterValues { bodyLocations.containsAll(it) }.keys
+    procedures.keys.forEach { procedure ->
+      procedure.havocUninitializedVars()
+      val liveVars = strongLiveVars(procedure)
+      val exit = procedure.finalLoc.get().metadata as SvLibProcedureExit
+      procedure.getLocs().forEach {
+        val metadata = it.metadata as? SvLibTagMetadata ?: return@forEach
+        metadata.liveVars = liveVars[it].orEmpty()
+        if (it in bodyLocations) exit.tags += metadata.tags intersect contractTags
+      }
+    }
+    recordMetadata(MODEL_SYMBOLS, "modelSymbols", modelSymbols.toList())
     return xcfaBuilder.build()
   }
 
@@ -56,7 +77,7 @@ class SvLibXcfaBuilder(
 
   override fun visitDeclareConstCommand(ctx: DeclareConstCommandContext) {
     val cmd = ctx.cmd_declareConst()
-    createGlobalVar(cmd.symbol(), sortOf(cmd.sort()))
+    modelSymbols += createGlobalVar(cmd.symbol(), sortOf(cmd.sort()))
   }
 
   override fun visitDefineProc(ctx: DefineProcContext) {
@@ -92,12 +113,38 @@ class SvLibXcfaBuilder(
         ?: throw ctx.symbol().illegal("no such procedure '$name'")
 
     val termTransformer = SvLibTermTransformer(globalSymbolTable)
-    val args =
-      procedure.getParams().zip(ctx.term()).map { (param, term) ->
-        termTransformer.toExpr(term.original, param.first.type)
+    val inputs =
+      procedure.getParams().filter { (_, dir) -> dir == ParamDirection.IN }.map { it.first }
+    if (inputs.size != ctx.term().size)
+      throw ctx.illegal("mismatched arguments for procedure '$name'")
+    val inputArgs =
+      inputs.zip(ctx.term()).associate { (param, term) ->
+        param to termTransformer.toExpr(term.original, param.type)
       }
 
-    xcfaBuilder.addEntryPoint(procedure, args)
+    // the inputs are bound by a call, so the procedure stays unchanged for its other callers
+    val entry = XcfaProcedureBuilder("${tmpVarPrefix}_verify_$name", procedurePassManager)
+    entry.createInitLoc()
+    entry.createFinalLoc()
+    val args =
+      procedure.getParams().map { (param, _) ->
+        inputArgs[param] ?: param.createTemp().also(entry::addVar).ref
+      }
+    val assumptions = assertions.map { StmtLabel(Stmts.Assume(it)) }
+    entry.addEdge(
+      XcfaEdge(
+        entry.initLoc,
+        entry.finalLoc.get(),
+        SequenceLabel(assumptions + InvokeLabel(procedure, args, EmptyMetaData)),
+        EmptyMetaData,
+      )
+    )
+    xcfaBuilder.addEntryPoint(entry, listOf())
+  }
+
+  override fun visitAssertCommand(ctx: AssertCommandContext) {
+    val term = ctx.cmd_assert().term().original
+    assertions += SvLibTermTransformer(globalSymbolTable).toExpr(term, Bool())
   }
 
   override fun visitAnnotateTagCommand(ctx: AnnotateTagCommandContext) {
@@ -108,7 +155,10 @@ class SvLibXcfaBuilder(
       when (attribute) {
         is TagAttributeContext -> { // annotating a tag with a tag
           val newTag = attribute.symbol().original
-          taggedLocations[newTag] = taggedLocations[tag] ?: emptySet()
+          taggedLocations[newTag] =
+            (taggedLocations[tag] ?: emptySet()).apply {
+              forEach { (it.metadata as? SvLibTagMetadata)?.tags?.add(newTag) }
+            }
         }
         is TagPropertyContext -> {
           when (val property = attribute.property()) {
@@ -116,7 +166,7 @@ class SvLibXcfaBuilder(
               locations.forEach {
                 it.insertCheck(
                   property.relationalTerm().original,
-                  SvLibSourceMetadata("${ctx.symbol().original} ${attribute.original}"),
+                  SvLibWitnessMetadata.Annotation(attribute.original, tag),
                 )
               }
             }
@@ -135,12 +185,17 @@ class SvLibXcfaBuilder(
     throw ctx.unsupported("command 'select-trace'")
 
   override fun visitDeclareFunCommand(ctx: DeclareFunCommandContext) {
-    val sorts = ctx.cmd_declareFun().sort().map { sortOf(it) }
-    val type =
-      if (sorts.size == 1) sorts.first()
-      else sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) }
-    val name = ctx.cmd_declareFun().symbol().original
-    globalSymbolTable.put(Decls.Const(name, type), name, ctx.original)
+    val cmd = ctx.cmd_declareFun()
+    val sorts = cmd.sort().map { sortOf(it) }
+    // a nullary function is a constant, handled like declare-const
+    if (sorts.size == 1) {
+      modelSymbols += createGlobalVar(cmd.symbol(), sorts.first())
+      return
+    }
+    val name = cmd.symbol().original
+    val function = Decls.Const(name, sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) })
+    globalSymbolTable.put(function, name, ctx.original)
+    modelSymbols += function
   }
 
   private fun declareProcedure(
@@ -154,11 +209,13 @@ class SvLibXcfaBuilder(
     xcfaBuilder.addProcedure(procedure)
     procedures[procedure] = procedureSymbolTable
 
-    inputs.getVars().forEach {
+    val inputVars = inputs.getVars()
+    val outputVars = outputs.getVars()
+    inputVars.forEach {
       procedure.addParam(it, ParamDirection.IN)
       procedureSymbolTable.registerVar(it)
     }
-    outputs.getVars().forEach {
+    outputVars.forEach {
       procedure.addParam(it, ParamDirection.OUT)
       procedureSymbolTable.registerVar(it)
     }
@@ -168,10 +225,10 @@ class SvLibXcfaBuilder(
     }
 
     procedure.createInitLoc()
-    procedure.createFinalLoc()
+    procedure.createFinalLoc(
+      SvLibProcedureExit(procedure.name, inputVars.toSet(), outputVars.toSet())
+    )
     procedure.createErrorLoc()
-
-    procedure.getVars().forEach { recordMetadata(it, "declaredIn", procedure.name) }
 
     return procedure
   }
@@ -187,6 +244,7 @@ class SvLibXcfaBuilder(
     )
 
     taggedLocations.putAll(statementVisitor.taggedLocations, Set<XcfaLocation>::plus)
+    bodyLocations += statementVisitor.bodyLocations
   }
 
   private fun sortOf(sort: SortContext): Type =
@@ -227,9 +285,10 @@ class SvLibXcfaBuilder(
     Decls.Var(symbol.original, type).also {
       xcfaBuilder.addVar(XcfaGlobalVar(it))
       globalSymbolTable.registerVar(it)
+      recordMetadata(it, "isGlobal", true)
     }
 
-  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibSourceMetadata) =
+  private fun XcfaLocation.insertCheck(term: String, metadata: SvLibWitnessMetadata) =
     context.let { (procedure, symbolTable) ->
       procedure.insertCheck(this, SvLibTermTransformer(symbolTable).toExpr(term, Bool()), metadata)
     }
