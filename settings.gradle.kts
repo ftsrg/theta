@@ -79,10 +79,11 @@ for (project in rootProject.children) {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
-        maven {
+        /*maven {
             url = uri("https://ghp.refinery.tools/maven")
-        }
+        }*/
     }
 }
