@@ -431,11 +431,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
         final List<ParamDecl<? extends Type>> paramDecls =
                 ctx.sorted_var().stream()
-                        .map(
-                                sv ->
-                                        Param(
-                                                encodeSymbol(getSymbol(sv.symbol())),
-                                                transformSort(sv.sort())))
+                        .map(sv -> Param(getSymbol(sv.symbol()), transformSort(sv.sort())))
                         .collect(toList());
 
         pushParams(paramDecls, vars);
@@ -557,8 +553,9 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             final SmtLibModel model,
             final Stack<ParamDecl<?>> vars) {
         final Expr<?> funcExpr;
-        if (symbolTable.definesSymbol(funName)) {
-            final var decl = symbolTable.getConst(funName);
+        final var symbol = encodeSymbol(funName);
+        if (symbolTable.definesSymbol(symbol)) {
+            final var decl = symbolTable.getConst(symbol);
             final var mathFunction = SmtLibMathFuncDecls.functionOf(decl);
             if (mathFunction.isPresent() && funAppParams.size() == 1) {
                 return FpMathFuncExpr.create(
@@ -683,7 +680,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         assert model != null;
         assert vars != null;
 
-        final var value = encodeSymbol(getSymbol(ctx));
+        final var name = getSymbol(ctx);
+        final var value = encodeSymbol(name);
         switch (value) {
             case "true":
                 return BoolExprs.True();
@@ -692,7 +690,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             default:
                 final var filter =
                         vars.toCollection().stream()
-                                .filter(it -> it.getName().equals(value))
+                                .filter(it -> it.getName().equals(name))
                                 .toList();
                 if (!filter.isEmpty()) {
                     final var decl = filter.get(filter.size() - 1);

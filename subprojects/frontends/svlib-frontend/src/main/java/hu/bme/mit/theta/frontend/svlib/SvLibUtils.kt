@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibBaseVisitor
+import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.SymbolContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.utils.getAllLabels
 import hu.bme.mit.theta.xcfa.utils.strongLiveVars
@@ -101,6 +102,9 @@ open class SvLibVisitor<T>(protected val charStream: CharStream, protected val l
   SvLibBaseVisitor<T>() {
   val ParserRuleContext.original: String
     get() = charStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+
+  val SymbolContext.name: String
+    get() = original.let { if (quotedSymbol() != null) it.substring(1, it.length - 1) else it }
 
   fun warn(message: String) {
     logger.writeln(Logger.Level.INFO, "WARNING: $message")
