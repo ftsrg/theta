@@ -55,6 +55,7 @@ internal class XcfaRefineryOcChecker(
     // do not add po and ws relation constraints here!
 
     val helperScripts = mutableSetOf<String>()
+    guardGroupNames.clear()
     val (eventsCode, rfPredicatesCode) = generateEvents(eg)
 
     baseRefineryCode = buildString {
@@ -187,8 +188,11 @@ internal class XcfaRefineryOcChecker(
             propagation rule fromReadPropagation3(Write w1, Read r) <->
                 ws(w1, w2), hb(w2, r) ==> !rf(w1, r).
                 
+            shadow pred otherRfSource(Write excluded, Read r) <->
+                may(rf(w, r)), w != excluded.
+                
             propagation rule rfSomeRule(Write w, Read r) <->
-                may(rf(w, r)), count { may(rf(_, r)) } == 1, guard(r) ==> rf(w, r).
+                may(rf(w, r)), !otherRfSource(w, r), guard(r) ==> rf(w, r).
         """.trimIndent()
   }
 
@@ -335,56 +339,128 @@ internal class XcfaRefineryOcChecker(
     return Pair(sb.toString(), rfPredicatesSb.toString())
   }
 
+  /** Refinery predicate names of the already encoded guard groups, keyed by their conjunct set. */
+  private val guardGroupNames = HashMap<Set<Expr<BoolType>>, String>()
+
+  /**
+   * Encodes each distinct guard (set of conjuncts) as a nullary base predicate `guardGroupN()`.
+   *
+   * - Every conjunct is encoded exactly once, as its own single-conjunct group, which is linked to
+   *   the conjunct's expression.
+   * - A guard with several conjuncts is the conjunction of the largest already encoded group that
+   *   is a proper subset of it, plus the conjunct groups of its remaining conjuncts. Guards are
+   *   processed in increasing size so that such subsets are encoded first.
+   * - Events are tied to the group of their guard through a `guardGroupNMember(Event e)` relation.
+   */
   private fun generateGuardGroups(
     eg: XcfaToEventGraph.EventGraph,
     guardGroups: Map<Set<Expr<BoolType>>, List<XcfaEvent>>,
     sb: StringBuilder,
   ) {
-    guardGroups.entries.forEachIndexed { index, (guard, members) ->
-      val groupId = "guardGroup$index"
-      val helperScripts = mutableSetOf<String>()
+    sb.appendLine("\n% Guard groups")
+    fun group(guard: Set<Expr<BoolType>>) = guardGroup(guard, eg, sb)
 
-      val (guardString, assertGuard, assertNotGuard) =
-        if (guard.size == 1) {
-          guard.first().let { guardExpr ->
-            val condString = guardExpr.toRefineryExpr(eg.events, helperScripts, groupId)
-            val positive = guardExpr.toRefineryActionOrAssert(eg.events, helperScripts, groupId)
-            Triple(condString, positive, "assert !($condString)")
-          }
-        } else {
-          val helperScriptName = "${groupId}_guard_helper"
-          sb.appendLine(
-            """
-              |pred $helperScriptName() <->
-              |${'\t'}${guard.joinToString(" ,\n|\t") {
-                it.toRefineryExpr(eg.events, helperScripts, groupId)
-              }}.
-            """.trimMargin()
-          )
+    guardGroups.entries
+      .sortedBy { it.key.size }
+      .forEach { (guard, members) ->
+        val name = group(guard)
+        val member = "${name}Member"
+        sb.appendLine("pred $member(Event e).")
+        sb.appendLine("default !$member(*).")
+        members.forEach { sb.appendLine("$member(${it.refineryId}).") }
+        sb.appendLine(
+          "error pred ${member}Error(Event e) <->\n" +
+            "\t$member(e) , guard(e) , !$name() ;\n" +
+            "\t$member(e) , !guard(e) , $name()."
+        )
+        sb.appendLine(
+          "propagation rule ${member}_pos(Event e) <->\n\t$member(e) , $name() ==> guard(e).\n" +
+            "propagation rule ${member}_neg(Event e) <->\n\t$member(e) , !$name() ==> !guard(e).\n" +
+            "propagation rule ${member}_up() <->\n\t$member(e) , guard(e) ==> $name().\n" +
+            "propagation rule ${member}_down() <->\n\t$member(e) , !guard(e) ==> !$name()."
+        )
+      }
+  }
 
-          val inlinedGuard = guard.joinToString(",\n\t") {
-            it.toRefineryActionOrAssert(eg.events, helperScripts, groupId)
-          }
-          Triple("${helperScriptName}()", inlinedGuard, "!${helperScriptName}()")
-        }
+  /** Returns the group predicate of a single conjunct, encoding it first if needed. */
+  private fun conjunctGroup(
+    conjunct: Expr<BoolType>,
+    eg: XcfaToEventGraph.EventGraph,
+    sb: StringBuilder,
+  ): String =
+    guardGroupNames[setOf(conjunct)]
+      ?: run {
+        val name = "guardGroup${guardGroupNames.size}"
+        guardGroupNames[setOf(conjunct)] = name
+        val helperScripts = mutableSetOf<String>()
+        val cond = conjunct.toRefineryExpr(eg.events, helperScripts, name)
+        val action = conjunct.toRefineryActionOrAssert(eg.events, helperScripts, name)
+        sb.appendLine("pred $name().")
+        sb.appendLine(
+          "error pred ${name}Error() <->\n" +
+            "\t$name() , !($cond) ;\n" +
+            "\t!$name() , ($cond)."
+        )
+        sb.appendLine("propagation rule ${name}_pos() <->\n\t$name() ==> $action.")
+        sb.appendLine("propagation rule ${name}_neg() <->\n\t!$name() ==> assert !($cond).")
+        helperScripts.forEach { sb.appendLine(it) }
+        name
+      }
 
-      sb.appendLine("pred $groupId(Event e).")
-      members.forEach { sb.appendLine("$groupId(${it.refineryId}).") }
-
-      sb.appendLine(
-        "error pred ${groupId}Error(Event e) <->\n" +
-          "\t$groupId(e) , !guard(e) , ($guardString);\n" +
-          "\t$groupId(e) , guard(e) , !($guardString)."
-      )
-      sb.appendLine(
-        "propagation rule ${groupId}_pos(Event e) <->\n" +
-          "\t$groupId(e) , guard(e) ==> $assertGuard." +
-          "\npropagation rule ${groupId}_neg(Event e) <->\n" +
-          "\t$groupId(e) , !guard(e) ==> $assertNotGuard."
-      )
-
-      helperScripts.forEach { sb.appendLine(it) }
+  /**
+   * Splits a guard (non-empty conjunct set) into already encoded group predicates whose conjunction
+   * is the guard, without encoding a new composite group for it: the group of the guard itself if
+   * it exists, otherwise the largest encoded proper subset group plus the conjunct groups of the
+   * remaining conjuncts.
+   */
+  private fun guardParts(
+    guard: Set<Expr<BoolType>>,
+    eg: XcfaToEventGraph.EventGraph,
+    sb: StringBuilder,
+  ): List<String> {
+    guardGroupNames[guard]?.let {
+      return listOf(it)
     }
+    if (guard.size == 1) return listOf(conjunctGroup(guard.first(), eg, sb))
+    val base =
+      guardGroupNames.keys
+        .filter { it.size > 1 && it.size < guard.size && guard.containsAll(it) }
+        .maxByOrNull { it.size }
+    return buildList {
+      base?.let { add(guardGroupNames.getValue(it)) }
+      (guard - base.orEmpty()).forEach { add(conjunctGroup(it, eg, sb)) }
+    }
+  }
+
+  /** Returns the group predicate of a guard (non-empty conjunct set), encoding it first if needed. */
+  private fun guardGroup(
+    guard: Set<Expr<BoolType>>,
+    eg: XcfaToEventGraph.EventGraph,
+    sb: StringBuilder,
+  ): String {
+    val parts = guardParts(guard, eg, sb)
+    if (guard in guardGroupNames) return guardGroupNames.getValue(guard)
+    val partAtoms = parts.map { "$it()" }
+
+    val name = "guardGroup${guardGroupNames.size}"
+    guardGroupNames[guard] = name
+    sb.appendLine("pred $name().")
+    sb.appendLine(
+      "error pred ${name}Error() <->\n\t" +
+        (partAtoms.map { "$name() , !$it" } + "!$name() , ${partAtoms.joinToString(" , ")}")
+          .joinToString(" ;\n\t") +
+        "."
+    )
+    sb.appendLine(
+      "propagation rule ${name}_pos() <->\n\t$name() ==> ${partAtoms.joinToString(" , ")}."
+    )
+    sb.appendLine(
+      "propagation rule ${name}_all() <->\n\t${partAtoms.joinToString(" , ")} ==> $name()."
+    )
+    partAtoms.forEachIndexed { i, part ->
+      sb.appendLine("propagation rule ${name}_neg$i() <->\n\t!$part ==> !$name().")
+    }
+    return name
   }
 
   private fun generateRelations(eg: XcfaToEventGraph.EventGraph): String {
@@ -409,25 +485,58 @@ internal class XcfaRefineryOcChecker(
     return sb.toString()
   }
 
+  /**
+   * Encodes that at least one violation is reachable. The violation guards (an OR over violations,
+   * each an OR over the guards of the incoming paths) are flattened into a list of disjunct guards,
+   * each encoded via (possibly shared) guard groups:
+   * - a single disjunct is asserted directly by stating its group predicates as facts,
+   * - multiple disjuncts become nullary helper predicates over their group predicates, at least one
+   *   of which must hold.
+   */
   private fun generateErrors(eg: XcfaToEventGraph.EventGraph): String {
     if (eg.violations.isEmpty()) return ""
 
     val sb = StringBuilder("\n% Reach errors\n")
-    val errorNames = mutableListOf<String>()
-
-    eg.violations.forEachIndexed { index, violation ->
-      val errorId = "err${index}_pid${violation.pid}"
-      errorNames.add(errorId)
-      val helperScripts = mutableSetOf<String>()
-      val guardExpr = violation.guard.toTopLevelRefineryExpr(eg.events, helperScripts, identifier = errorId)
-      sb.appendLine("pred $errorId() <->\n\t$guardExpr.")
-      helperScripts.forEach {
-        sb.appendLine(it)
-      }
+    val disjuncts = eg.violations.flatMap { violation -> violation.guard.toGuardDisjuncts() }
+    if (disjuncts.any { it.isEmpty() }) {
+      sb.appendLine("% a violation is unconditionally reachable")
+      return sb.toString()
     }
-    sb.appendLine("error pred violationNotFound() <-> ${errorNames.joinToString(" , ") { "!$it()" }}.")
+
+    val single = disjuncts.singleOrNull()
+    if (single != null) {
+      guardParts(single, eg, sb).forEach { sb.appendLine("$it().") }
+      return sb.toString()
+    }
+
+    val errorAtoms =
+      disjuncts.mapIndexed { index, disjunct ->
+        val parts = guardParts(disjunct, eg, sb).map { "$it()" }
+        if (parts.size == 1) {
+          parts.first()
+        } else {
+          sb.appendLine("pred err$index() <->\n\t${parts.joinToString(" , ")}.")
+          "err$index()"
+        }
+      }
+    sb.appendLine("error pred violationNotFound() <-> ${errorAtoms.joinToString(" , ") { "!$it" }}.")
 
     return sb.toString()
+  }
+
+  /**
+   * Splits a violation guard (`Or` of `And`s, see [XcfaToEventGraph]) into its disjuncts, each given
+   * as a conjunct set. An empty set stands for `true`.
+   */
+  private fun Expr<BoolType>.toGuardDisjuncts(): List<Set<Expr<BoolType>>> {
+    val disjuncts = if (this is OrExpr) ops else listOf(this)
+    return disjuncts.map { disjunct ->
+      when (disjunct) {
+        is TrueExpr -> emptySet()
+        is AndExpr -> disjunct.ops.filter { it !is TrueExpr }.toSet()
+        else -> setOf(disjunct)
+      }
+    }
   }
 
   override fun addConflict(conflict: Reason) {
@@ -503,26 +612,6 @@ internal class XcfaRefineryOcChecker(
       is BoolLitExpr -> if (value) "1" else "0"
       else -> null
     }
-
-  private fun Expr<*>.toTopLevelRefineryExpr(
-    events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
-    helperScripts: MutableSet<String>,
-    identifier: String,
-  ): String = when (this) {
-    is AndExpr ->
-      if (ops.size == 1) {
-        ops.first().toTopLevelRefineryExpr(events, helperScripts, identifier)
-      } else {
-        ops.joinToString(" ,\n\t") { it.toRefineryExpr(events, helperScripts, identifier) }
-      }
-    is OrExpr ->
-      if (ops.size == 1) {
-        ops.first().toTopLevelRefineryExpr(events, helperScripts, identifier)
-      } else {
-        ops.joinToString(" ;\n\t") { it.toRefineryExpr(events, helperScripts, identifier) }
-      }
-    else -> toRefineryExpr(events, helperScripts, identifier)
-  }
 
   private fun Expr<*>.toRefineryExpr(
     events: Map<VarDecl<*>, Map<Int, List<E>>>,
