@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificKey
 import java.math.BigInteger
 import java.util.*
 
@@ -65,6 +66,22 @@ constructor(var name: String, private val vars: MutableSet<XcfaGlobalVar> = Link
    * elements are not arrays, each with the value of its cells that nothing wrote.
    */
   val mutexArrays: MutableMap<VarDecl<*>, LitExpr<*>> = LinkedHashMap()
+
+  /**
+   * The global pointers the `multi` memory model split into a base and an offset variable, see
+   * [hu.bme.mit.theta.xcfa.passes.memory.ReferenceElimination], each with its two halves. The
+   * original variable keeps no value in the procedures that split it.
+   */
+  val splitPointers: MutableMap<VarDecl<*>, Pair<VarDecl<*>, VarDecl<*>>> = LinkedHashMap()
+
+  /**
+   * The entry point's `argv`, whose memory
+   * [hu.bme.mit.theta.xcfa.passes.library.EntryArgumentsPass] allocates.
+   */
+  val entryArguments: MutableSet<VarDecl<*>> = LinkedHashSet()
+
+  /** The keys of [hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass], once known. */
+  var threadSpecificKeys: List<ThreadSpecificKey>? = null
 
   fun getVars(): Set<XcfaGlobalVar> = vars
 

@@ -35,11 +35,13 @@ import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.XcfaProperty
 import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.witnesstransformation.ApplyWitnessPass
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.witnesses.EntryType
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -230,6 +232,8 @@ private fun parseC(
   logger: Logger,
   uniqueWarningLogger: Logger,
 ): XCFA {
+  val violationWitness = property.witness?.witness?.takeIf { it.entryType == EntryType.VIOLATION }
+  violationWitness?.let { ApplyWitnessPass.checkNoAvoidWaypoints(it) }
   var input =
     if (input.name.endsWith(".yml")) {
       try {
@@ -320,6 +324,8 @@ private fun parseC(
       }
     }
   logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
+  // outside the retry above: reparsing cannot locate a waypoint that this parse did not
+  violationWitness?.let { ApplyWitnessPass.checkAllWaypointsMatched(xcfaFromC, it) }
   return xcfaFromC
 }
 

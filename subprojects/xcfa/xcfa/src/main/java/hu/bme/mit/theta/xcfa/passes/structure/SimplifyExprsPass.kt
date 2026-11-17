@@ -85,9 +85,11 @@ class SimplifyExprsPass(
     val constValuation = MutableValuation()
     val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
-    val modifiedGlobals = mutableListOf<VarDecl<*>>()
-    builder.parent
-      .getVars()
+    val (threadLocals, sharedGlobals) = builder.parent.getVars().partition { it.threadLocal }
+    // a thread-local variable takes its initial value at each thread's start (ThreadLocalVarPass),
+    // which no write here shows: a single write does not make it a constant
+    val modifiedGlobals = threadLocals.map { it.wrappedVar }.toMutableList<VarDecl<*>>()
+    sharedGlobals
       .map { it.wrappedVar }
       .getConstAndModifiedVars(builder.parent.getProcedures(), constValuation, modifiedGlobals)
 

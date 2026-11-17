@@ -206,6 +206,7 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
     }
 
     for (label in labels) {
+      var effect = false
       when {
         label is AtomicBeginLabel -> inAtomic = true
         label is AtomicEndLabel -> inAtomic = false
@@ -216,7 +217,7 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
             is SkipStmt -> {}
             is MemoryAssignStmt<*, *, *> -> {
               if (keepsAccessesApart()) {
-                mark(null)
+                effect = true
               } else {
                 checkedWrite(stmt.deref, stmt.expr) {
                   StmtLabel(buildMemoryAssign(stmt.deref, it), metadata = label.metadata)
@@ -226,20 +227,24 @@ class SpinLoopEffectPass(private val property: XcfaProperty) : ProcedurePass {
             }
             is AssignStmt<*> ->
               if (stmt.varDecl in globals && keepsAccessesApart()) {
-                mark(null)
+                effect = true
               } else if (stmt.varDecl in globals) {
                 checkedWrite(stmt.varDecl.ref, stmt.expr) {
                   AssignStmtLabel(stmt.varDecl, it, label.metadata)
                 }
                 continue
               }
-            is HavocStmt<*> -> if (stmt.varDecl in globals) mark(null)
-            else -> mark(null)
+            is HavocStmt<*> -> if (stmt.varDecl in globals) effect = true
+            else -> effect = true
           }
         }
-        else -> mark(null) // mutex and thread operations, calls, returns, nondeterministic choices
+        else ->
+          effect = true // mutex and thread operations, calls, returns, nondeterministic choices
       }
       result.add(label)
+      // After the label: a label that later passes expand into a choice (a trylock) must keep
+      // starting each branch with its condition, as the OC checker requires.
+      if (effect) mark(null)
     }
     return result
   }
