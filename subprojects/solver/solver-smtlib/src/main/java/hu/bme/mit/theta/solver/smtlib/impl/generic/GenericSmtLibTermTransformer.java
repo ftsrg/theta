@@ -1071,7 +1071,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                             roundingMode,
                             cast(expr, type),
                             FpExprs.FpType(exponent, significand),
-                            type.getSigned());
+                            true);
                 }
 
                 throw new SmtLibSolverException(

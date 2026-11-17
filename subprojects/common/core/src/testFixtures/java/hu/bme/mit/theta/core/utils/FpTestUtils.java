@@ -238,6 +238,26 @@ public class FpTestUtils {
                                 FpType(5, 11),
                                 true)
                     },
+                    {
+                        FpFromBvExpr.class,
+                        Fp32("65535"),
+                        FromBv(
+                                RNE,
+                                BvUtils.bigIntegerToNeutralBvLitExpr(
+                                        BigInteger.valueOf(0xFFFF), 16),
+                                FpType(8, 24),
+                                false)
+                    },
+                    {
+                        FpFromBvExpr.class,
+                        Fp32("-1"),
+                        FromBv(
+                                RNE,
+                                BvUtils.bigIntegerToNeutralBvLitExpr(
+                                        BigInteger.valueOf(0xFFFF), 16),
+                                FpType(8, 24),
+                                true)
+                    },
                 });
     }
 
