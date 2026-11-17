@@ -65,7 +65,12 @@ fun getPortfolioChecker(
     when (portfolioName) {
       "COMPLEX",
       "STABLE",
-      "COMPLEX27" -> complex27(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+      "COMPLEX27" ->
+        if (config.frontendConfig.inputType == InputType.SVLIB)
+          complex27svlib(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        else complex27(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+      "COMPLEX27SVLIB" -> complex27svlib(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
       "EMERGENT" -> emergent27(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
