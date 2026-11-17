@@ -40,6 +40,7 @@ import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import hu.bme.mit.theta.xcfa.passes.SvLibPasses
 import hu.bme.mit.theta.xcfa.passes.memory.UnsupportedPointerSplitException
+import hu.bme.mit.theta.xcfa.utils.collectArithmeticTraits
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -377,6 +378,19 @@ private fun parseSvLib(
       SvLibPasses(parseContext, logger),
     )
   svLibOutputConfig.generateWitness = svLibOutputConfig.generateWitness || frontend.generateWitness
+  // The portfolios pick solvers and algorithm order from these, as the C frontend records them.
+  xcfa.collectArithmeticTraits().forEach(parseContext::addArithmeticTrait)
+  if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+    parseContext.arithmetic =
+      if (
+        ArithmeticTrait.BITWISE in parseContext.arithmeticTraits ||
+          ArithmeticTrait.FLOAT in parseContext.arithmeticTraits
+      )
+        ArchitectureConfig.ArithmeticType.bitvector
+      else ArchitectureConfig.ArithmeticType.integer
+    parseContext.isArithmeticAutoSelected = true
+  }
+  logger.benchmark("%s", "Arithmetic: ${parseContext.arithmeticTraits}\n")
   return xcfa
 }
 
