@@ -548,6 +548,7 @@ fun getDssChecker(
             .mapNotNull { global -> global.initValue?.let { global.wrappedVar to it } }
             .toMap()
         )
+      // Without a program path the UNSAFE rests on block conditions alone, so it is not reported
       val path =
         stitchViolationPath(dssSolverFactory, logger) { solver ->
           when (dssRun.network) {
@@ -561,8 +562,8 @@ fun getDssChecker(
                 meetPath(meet, forwardGraph!!, backwardGraph!!, reversal!!, witnesses, solver)
               }
           }
-        }
-      val trace = violationTrace(xcfa, procedure.initLoc, path.orEmpty(), initial)
+        } ?: return@SafetyChecker SafetyResult.unknown()
+      val trace = violationTrace(xcfa, procedure.initLoc, path, initial)
       SafetyResult.unsafe(trace, EmptyProof.getInstance())
     }
   }
@@ -664,11 +665,11 @@ private fun stitchViolationPath(
     withSolverConstructionLock { solverFactory.createSolver() }
       .use(stitch)
       .also {
-        if (it == null) logger.write(Logger.Level.INFO, "DSS: no violation path to stitch\n")
+        if (it == null) logger.write(Logger.Level.RESULT, "DSS: no violation path to stitch\n")
       }
   } catch (e: Exception) {
     logger.write(
-      Logger.Level.INFO,
+      Logger.Level.RESULT,
       "DSS: stitching the violation path failed: %s\n",
       e.stackTraceToString().lines().take(STITCH_TRACE_LINES).joinToString("\n"),
     )

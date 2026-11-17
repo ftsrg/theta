@@ -538,6 +538,26 @@ class XcfaCliDssTest {
     assertTrue(verdictWithWitness("loop_unsafe", witness).contains("SafetyResult Unsafe"))
   }
 
+  /**
+   * A bounded checker's memory pass havocs the heap at the start of the loop block; as an aux
+   * variable in the condition, that heap would let the root reach it from any state.
+   */
+  @Test
+  fun `a heap read in a bounded block is never turned into an UNSAFE`() {
+    val (output, _) =
+      runDss(
+        "heap_list",
+        "--dss-decomposition",
+        "MIN_CUT_ABSORB_SELF_LOOPS",
+        "--dss-checker-backends",
+        "KIND",
+        "--dss-solver",
+        "Z3:new",
+      )
+    assertTrue(!output.contains("SafetyResult Unsafe")) { output }
+    assertTrue(output.contains("variables outside the program")) { output }
+  }
+
   /** The verdict line of a DSS run on [program] against `<property>.prp`. */
   private fun dssVerdict(
     program: String,

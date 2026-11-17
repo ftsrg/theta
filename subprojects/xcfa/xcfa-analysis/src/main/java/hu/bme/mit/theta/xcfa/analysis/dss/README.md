@@ -90,7 +90,8 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
 * **A violation condition reached from top is always reported**, also when it was sent before: the
   predecessor replaces its stored condition with each new one, so suppressing it would lose it.
 * **Witnesses**: correctness witnesses from the block invariants, violation witnesses stitched along
-  the violation conditions. CPAchecker's DSS reports none.
+  the violation conditions. CPAchecker's DSS reports none. An UNSAFE whose path cannot be stitched
+  is reported as unknown.
 
 ## Soundness and termination
 

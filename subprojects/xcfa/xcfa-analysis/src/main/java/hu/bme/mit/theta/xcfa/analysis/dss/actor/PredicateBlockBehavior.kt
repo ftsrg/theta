@@ -647,12 +647,18 @@ class PredicateBlockBehavior(
     fun XcfaAction.isOn(edge: XcfaEdge?) =
       edge != null && source == edge.source && target == edge.target
     val path = actions.drop(actions.indexOfFirst { it.isOn(extraction.preconditionEdge) } + 1)
-    val condition = computePathViolationCondition(path.map { it.label.changeVars(originalOf) })
+    val labels = path.map { it.label.changeVars(originalOf) }
+    // Checked on the path, not the condition: the wp turns a havoc into an aux variable, so a
+    // checker-local variable (a memory array a pass havocs at the block's start) would vanish
     val unknown =
-      ExprUtils.getVars(condition).filterNot { it in programVars || DssAuxVars.isAux(it) }
+      labels
+        .flatMap { it.collectVars() }
+        .distinct()
+        .filterNot { it in programVars || DssAuxVars.isAux(it) }
     check(unknown.isEmpty()) {
-      "Block ${block.id}: path violation condition over unknown variables $unknown: $condition"
+      "Block ${block.id}: error path over variables outside the program $unknown: $labels"
     }
+    val condition = computePathViolationCondition(labels)
     val clonesByEnds = extraction.originalEdges.keys.groupBy { it.source to it.target }
     val edges =
       path.mapNotNull { action ->
