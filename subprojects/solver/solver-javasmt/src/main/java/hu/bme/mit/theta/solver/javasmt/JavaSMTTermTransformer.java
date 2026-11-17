@@ -443,6 +443,27 @@ final class JavaSMTTermTransformer {
                                 FpType.of(
                                         type.getExponentSize(),
                                         type.getMantissaSizeWithoutHiddenBit() + 1),
+                                true);
+                    } else {
+                        throw new JavaSMTSolverException("Unsupported:" + op.getType());
+                    }
+                });
+        environment.put(
+                Tuple2.of(FunctionDeclarationKind.BV_UCASTTO_FP, 2),
+                (term, args, model, vars) -> {
+                    FloatingPointType type =
+                            (FloatingPointType)
+                                    context.getFormulaManager()
+                                            .getFormulaType((FloatingPointFormula) term);
+                    final var roundingmode = getRoundingMode(args.get(0).toString());
+                    final Expr<?> op = transform(args.get(1), model, vars);
+                    if (op.getType() instanceof BvType) {
+                        return FpFromBvExpr.of(
+                                roundingmode,
+                                (Expr<BvType>) op,
+                                FpType.of(
+                                        type.getExponentSize(),
+                                        type.getMantissaSizeWithoutHiddenBit() + 1),
                                 false);
                     } else {
                         throw new JavaSMTSolverException("Unsupported:" + op.getType());
@@ -470,7 +491,7 @@ final class JavaSMTTermTransformer {
                                 FpType.of(
                                         type.getExponentSize(),
                                         type.getMantissaSizeWithoutHiddenBit() + 1),
-                                false);
+                                true);
                     } else {
                         throw new JavaSMTSolverException("Unsupported:" + op.getType());
                     }

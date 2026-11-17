@@ -210,13 +210,7 @@ private fun Expr<BoolType>.projectToScope(
   if (outOfScope.isEmpty()) return this
 
   val params =
-    outOfScope
-      .mapIndexed { i, v ->
-        val name =
-          "${v.name}__proj_$i".let { if (it.contains('|')) "|${it.replace("|", "")}|" else it }
-        v to Decls.Param(name, v.type)
-      }
-      .toMap()
+    outOfScope.mapIndexed { i, v -> v to Decls.Param("${v.name}__proj_$i", v.type) }.toMap()
   val quantified = BoolExprs.Exists(params.values, ExprUtils.changeDecls(this, params))
   return ExprUtils.simplify(quantified)
 }
@@ -281,7 +275,8 @@ private fun Trace<XcfaState<ExplState>, XcfaAction>.toSvLibViolationWitness(
         }
         is SvLibWitnessMetadata.Choice -> ChoiceStep(metadata.index)
         is SvLibWitnessMetadata.Annotation -> {
-          property = "${metadata.tag ?: ""} ${metadata.property}"
+          property =
+            "${metadata.tag?.let(GenericSmtLibSymbolTable::encodeSymbol) ?: ""} ${metadata.property}"
           null
         }
       }
@@ -401,7 +396,7 @@ private data class SvLibViolationWitness(
       ((select-trace 
         (model${if (model.isEmpty()) "" else "\n" + model.joinToString("\n") { "          $it" }})
         (init-global-vars ${globalVarValuation.toSvLib()})
-        (entry-proc $entryProcedure)
+        (entry-proc ${GenericSmtLibSymbolTable.encodeSymbol(entryProcedure)})
         (steps${if (steps.isEmpty()) "" else "\n" + steps.joinToString("\n" ) { "          $it" }})
         (incorrect-annotation $violatedProperty)
       ))
@@ -415,7 +410,8 @@ private sealed class SvLibViolationWitnessStep
 private data class InitProcVarsStep(val procedure: String, val arguments: Valuation) :
   SvLibViolationWitnessStep() {
 
-  override fun toString() = "(init-proc-vars $procedure ${arguments.toSvLib()})"
+  override fun toString() =
+    "(init-proc-vars ${GenericSmtLibSymbolTable.encodeSymbol(procedure)} ${arguments.toSvLib()})"
 }
 
 private data class HavocStep(val values: Valuation) : SvLibViolationWitnessStep() {

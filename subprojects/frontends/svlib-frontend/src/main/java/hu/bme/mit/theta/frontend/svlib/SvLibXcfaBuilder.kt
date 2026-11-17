@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.fptype.FpExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.rattype.RatExprs
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable.encodeSymbol
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser
 import hu.bme.mit.theta.svlib.frontend.dsl.gen.SvLibParser.*
 import hu.bme.mit.theta.xcfa.model.*
@@ -107,7 +108,7 @@ class SvLibXcfaBuilder(
   }
 
   override fun visitVerifyCall(ctx: VerifyCallContext) {
-    val name = ctx.symbol().original
+    val name = ctx.symbol().name
     val procedure =
       procedures.keys.find { it.name == name }
         ?: throw ctx.symbol().illegal("no such procedure '$name'")
@@ -148,13 +149,13 @@ class SvLibXcfaBuilder(
   }
 
   override fun visitAnnotateTagCommand(ctx: AnnotateTagCommandContext) {
-    val tag = ctx.symbol().original
+    val tag = ctx.symbol().name
     val locations = taggedLocations[tag] ?: return warn("Annotated tag '$tag' doesn't exist")
 
     for (attribute in ctx.attributeSvLib().reversed()) {
       when (attribute) {
         is TagAttributeContext -> { // annotating a tag with a tag
-          val newTag = attribute.symbol().original
+          val newTag = attribute.symbol().name
           taggedLocations[newTag] =
             (taggedLocations[tag] ?: emptySet()).apply {
               forEach { (it.metadata as? SvLibTagMetadata)?.tags?.add(newTag) }
@@ -192,9 +193,9 @@ class SvLibXcfaBuilder(
       modelSymbols += createGlobalVar(cmd.symbol(), sorts.first())
       return
     }
-    val name = cmd.symbol().original
+    val name = cmd.symbol().name
     val function = Decls.Const(name, sorts.reduceRight { sort, acc -> FuncType.of(sort, acc) })
-    globalSymbolTable.put(function, name, ctx.original)
+    globalSymbolTable.put(function, encodeSymbol(name), ctx.original)
     modelSymbols += function
   }
 
@@ -204,7 +205,7 @@ class SvLibXcfaBuilder(
     outputs: ProcDeclarationArgumentsContext,
     locals: ProcDeclarationArgumentsContext,
   ): XcfaProcedureBuilder {
-    val procedure = XcfaProcedureBuilder(name.original, procedurePassManager)
+    val procedure = XcfaProcedureBuilder(name.name, procedurePassManager)
     val procedureSymbolTable = SvLibSymbolTable(globalSymbolTable)
     xcfaBuilder.addProcedure(procedure)
     procedures[procedure] = procedureSymbolTable
@@ -282,7 +283,7 @@ class SvLibXcfaBuilder(
     }
 
   private fun createGlobalVar(symbol: SymbolContext, type: Type) =
-    Decls.Var(symbol.original, type).also {
+    Decls.Var(symbol.name, type).also {
       xcfaBuilder.addVar(XcfaGlobalVar(it))
       globalSymbolTable.registerVar(it)
       recordMetadata(it, "isGlobal", true)
@@ -294,7 +295,7 @@ class SvLibXcfaBuilder(
     }
 
   private fun ProcDeclarationArgumentsContext.getVars() =
-    symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.original, sortOf(sort)) }
+    symbol().zip(sort()).map { (symbol, sort) -> Decls.Var(symbol.name, sortOf(sort)) }
 
   private val XcfaLocation.context
     get() =

@@ -65,7 +65,7 @@ class SvLibStatementVisitor(
   }
 
   override fun visitAssignStatement(ctx: AssignStatementContext) {
-    val vars = ctx.symbol().map { symbolTable.getVar(it.original) }
+    val vars = ctx.symbol().map { symbolTable.getVar(it.name) }
     val exprs =
       vars.zip(ctx.term()).map { (varDecl, term) ->
         termTransformer.toExpr(term.original, varDecl.getType())
@@ -94,7 +94,7 @@ class SvLibStatementVisitor(
   }
 
   override fun visitHavocStatement(ctx: HavocStatementContext) {
-    val vars = ctx.symbol().map { symbol -> symbolTable.getVar(symbol.original) }
+    val vars = ctx.symbol().map { symbol -> symbolTable.getVar(symbol.name) }
     val metadata = SvLibWitnessMetadata.Havoc(vars)
     val havocs = vars.map { StmtLabel(Stmts.Havoc(it), metadata = metadata) }
 
@@ -151,7 +151,7 @@ class SvLibStatementVisitor(
   }
 
   override fun visitCallStatement(ctx: CallStatementContext) {
-    val name = ctx.symbol(0).original
+    val name = ctx.symbol(0).name
     val calledProcedure =
       procedure.parent.getProcedures().find { it.name == name }
         ?: throw ctx.illegal("no such procedure '$name'")
@@ -169,7 +169,7 @@ class SvLibStatementVisitor(
       outputParams
         .map { it.first }
         .zip(ctx.symbol().drop(1))
-        .associate { (param, arg) -> param to symbolTable.getVar(arg.original).ref }
+        .associate { (param, arg) -> param to symbolTable.getVar(arg.name).ref }
     val args =
       calledProcedure.getParams().map { (param, _) ->
         inputs[param]
@@ -187,14 +187,14 @@ class SvLibStatementVisitor(
   }
 
   override fun visitLabelStatement(ctx: LabelStatementContext) {
-    labeledLocations[ctx.symbol().original] = current
+    labeledLocations[ctx.symbol().name] = current
   }
 
   override fun visitGotoStatement(ctx: GotoStatementContext) {
     val to = newLoc()
     val placeholder = XcfaEdge(current, to, NopLabel, EmptyMetaData)
     procedure.addEdge(placeholder)
-    gotos[placeholder] = ctx.symbol().original
+    gotos[placeholder] = ctx.symbol().name
     current = to
   }
 
@@ -213,11 +213,7 @@ class SvLibStatementVisitor(
 
   override fun visitAnnotatedStatement(ctx: AnnotatedStatementContext) {
     val tags =
-      ctx
-        .attributeSvLib()
-        .filterIsInstance<TagAttributeContext>()
-        .map { it.symbol().original }
-        .toSet()
+      ctx.attributeSvLib().filterIsInstance<TagAttributeContext>().map { it.symbol().name }.toSet()
     current = current.extend(NopLabel, "__THETA_", tags)
     tags.forEach { taggedLocations.getOrPut(it, { mutableSetOf() }).add(current) }
     if (ctx in wholeBody) bodyLocations += current
