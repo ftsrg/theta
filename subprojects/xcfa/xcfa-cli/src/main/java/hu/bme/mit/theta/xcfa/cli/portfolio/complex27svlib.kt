@@ -34,8 +34,6 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
 import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
-import hu.bme.mit.theta.xcfa.passes.structure.LbePass
 import hu.bme.mit.theta.xcfa.utils.dereferences
 
 /**
@@ -177,54 +175,6 @@ fun complex27svlib(
       )
     }
 
-    /**
-     * The leading configuration again, but with the program re-read under bitvector arithmetic.
-     *
-     * `efficient` resolves to integer wherever integer can express the program, and that is the
-     * right first bet: on the tasks both encodings can parse, integer solves more than bitvector in
-     * every algorithm measured, and solves it faster. It is not a free win though -- bitvector
-     * still decides several hundred tasks per algorithm that integer cannot -- so once the integer
-     * attempt is spent, the last slice pays for a re-parse and tries the other encoding.
-     *
-     * Interpolation has to move with the encoding: Z3's legacy API refuses to interpolate
-     * bitvectors, so this configuration interpolates on MathSAT whatever the rest of the chain
-     * uses.
-     */
-    fun bitvectorRetry(timeout: Long, solver: String): ConfigNode {
-      val adapted =
-        baseCegarConfig.adaptConfig(
-          inProcess = inProcess,
-          domain = PRED_CART,
-          refinement = Refinement.BW_BIN_ITP,
-          exprSplitter = ExprSplitterOptions.WHOLE,
-          timeoutMs = timeout,
-          abstractionSolver = solver,
-          refinementSolver = solver,
-        )
-      return ConfigNode(
-        "PRED_CART-BW_BIN_ITP-bitvector-$solver-$inProcess",
-        XcfaConfig<CFrontendConfig, CegarConfig>(
-          inputConfig =
-            portfolioConfig.inputConfig.copy(
-              xcfaWCtx = null, // re-read the program: the parsed one is integer-encoded
-              propertyFile = null,
-              property = portfolioConfig.inputConfig.property,
-            ),
-          frontendConfig =
-            FrontendConfig(
-              lbeLevel = LbePass.defaultLevel,
-              loopUnroll = UnrollPass.UNROLL_LIMIT,
-              inputType = InputType.C,
-              specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
-            ),
-          backendConfig = adapted.backendConfig,
-          outputConfig = baseCegarConfig.outputConfig,
-          debugConfig = portfolioConfig.debugConfig,
-        ),
-        checker,
-      )
-    }
-
     // Which solver each kind of configuration runs on, and what it falls back to.
     //
     // This is decided by the theories the program actually contains, not by which chain it takes.
@@ -290,14 +240,9 @@ fun complex27svlib(
         val steps =
           order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
 
-        // The last slice changes the encoding rather than the algorithm. Past this point
-        // another algorithm is worth tens of tasks, while the encoding the frontend did not
-        // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
-        // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
-        // reproduce the same XCFA, and a float program has no bitvector encoding at all.
-        val lastResort =
-          if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
-          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.19")
+        // The C chain's last resort re-reads the program as bitvector C; SV-LIB declares its
+        // sorts, so there is no other encoding to retry and the lead runs on the other solver.
+        val lastResort = lead(RETRY_SLICE_MS, itpAlt)
         steps to lastResort
       } else {
         // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
