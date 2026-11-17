@@ -57,6 +57,9 @@ internal class XcfaRefineryOcChecker(
     val helperScripts = mutableSetOf<String>()
     guardGroupNames.clear()
     val (eventsCode, rfPredicatesCode) = generateEvents(eg)
+    val hasMemoryEvents = eg.events.values.flatMap { it.values }.flatten().any {
+      it.array != null || it.offset != null
+    }
 
     baseRefineryCode = buildString {
       if (solverStrategy != RefinerySolverStrategy.DEFAULT) {
@@ -64,7 +67,7 @@ internal class XcfaRefineryOcChecker(
         appendLine("#z3SolverStrategy(\"${solverStrategy.name}\").")
         appendLine()
       }
-      append(generateMetamodel())
+      append(generateMetamodel(hasMemoryEvents))
       append(eventsCode)
       append(generateRelations(eg))
       append(rfPredicatesCode)
@@ -81,7 +84,7 @@ internal class XcfaRefineryOcChecker(
     //println("-------------------------------")
   }
 
-  private fun generateMetamodel(): String {
+  private fun generateMetamodel(hasMemoryEvents: Boolean): String {
     return """
             import builtin::strategy.
             
@@ -157,6 +160,28 @@ internal class XcfaRefineryOcChecker(
                 guard(w), guard(r),
                 value(w): value(r), value(r): value(w),
                 assert value(w) == value(r).
+
+            ${if (hasMemoryEvents) """
+            abstract class MemoryEvent {
+                int array
+                int offset
+            }
+
+            class MemoryRead extends Read, MemoryEvent.
+            class MemoryWrite extends Write, MemoryEvent.
+
+            error pred rfViolationMemory(MemoryWrite w, MemoryRead r) <->
+                rf(w, r), w != memoryGarbage,
+                array(w) != array(r), offset(w) != offset(r).
+
+            propagation rule rfValMemory(MemoryWrite w, MemoryRead r) <->
+                rf(w, r), w != memoryGarbage
+            ==>
+                array(w): array(r), array(r): array(w),
+                offset(w): offset(r), offset(r): offset(w),
+                assert array(w) == array(r),
+                assert offset(w) == offset(r).
+            """ else ""}
             
             propagation rule notRf1(Write w, Read r) <->
                 !guard(w) ==> !rf(w, r).
@@ -257,12 +282,17 @@ internal class XcfaRefineryOcChecker(
   private fun generateEvents(eg: XcfaToEventGraph.EventGraph): Pair<String, String> {
     val sb = StringBuilder("\n% Events\n")
     val rfPredicatesSb = StringBuilder("\n% Possible Read-From Predicates\n")
+    val hasMemoryEvents = eg.events.values.flatMap { it.values }.flatten().any {
+      it.array != null || it.offset != null
+    }
 
     val guardGroups = LinkedHashMap<Set<Expr<BoolType>>, MutableList<XcfaEvent>>()
 
     eg.events.values.flatMap { it.values }.flatten().forEach { event ->
       val valueExpr = event.assignment
       val helperScripts = mutableSetOf<String>()
+      val isMemoryGarbage = event.const == eg.memoryGarbage
+      val isMemoryEvent = event.array != null || event.offset != null
       val default = {
         sb.appendLine("error pred ${event.refineryId}ValueError() <->\n" +
           "\t!(${valueExpr!!.toRefineryExpr(eg.events, helperScripts, event.refineryId)}).\n\n" +
@@ -300,9 +330,29 @@ internal class XcfaRefineryOcChecker(
         else -> default()
       }
 
-      sb.appendLine("${if (event.type == EventType.READ) "Read" else "Write" }(${event.refineryId}).")
+      val eventClass = when {
+        event.type == EventType.READ && isMemoryEvent -> "MemoryRead"
+        event.type == EventType.WRITE && (isMemoryEvent || (isMemoryGarbage && hasMemoryEvents)) -> "MemoryWrite"
+        event.type == EventType.READ -> "Read"
+        else -> "Write"
+      }
+      sb.appendLine("$eventClass(${event.refineryId}).")
 
       sb.appendLine("atom ${event.refineryId}.")
+      if (isMemoryEvent) {
+        listOf("array" to event.array!!, "offset" to event.offset!!).forEach { (field, expr) ->
+          val refineryExpr = expr.toRefineryExpr(eg.events, helperScripts, event.refineryId)
+          val constant = expr.asConstant
+          if (constant != null) {
+            sb.appendLine("$field(${event.refineryId}): $constant.")
+          } else {
+            sb.appendLine(
+              "propagation rule ${event.refineryId}${field.replaceFirstChar { it.uppercase() }}Rule() <->\n" +
+                "\ttrue ==> $field(${event.refineryId}): $refineryExpr."
+            )
+          }
+        }
+      }
       if (event.guard.isEmpty()) {
         sb.appendLine("guard(${event.refineryId}).")
       } else {
@@ -593,7 +643,9 @@ internal class XcfaRefineryOcChecker(
     // TODO print refinery statistics, implement later...
   }
 
-  private val Event.refineryId: String get() = "${ if (type == EventType.WRITE) "W" else "R"}_${const.name.toRefineryString()}".replace("$", "")
+  private val Event.refineryId: String get() =
+    if (this is XcfaEvent && const == XcfaEvent.memoryGarbage) "memoryGarbage"
+    else "${ if (type == EventType.WRITE) "W" else "R"}_${const.name.toRefineryString()}".replace("$", "")
 
   private fun String.toRefineryString() = replace(":", "_")
 
