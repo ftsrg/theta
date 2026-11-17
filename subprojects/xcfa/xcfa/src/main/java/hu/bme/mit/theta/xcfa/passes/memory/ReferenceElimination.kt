@@ -940,6 +940,7 @@ class ReferenceElimination(
       )
     }
     if (isGlobal) {
+      builder.parent.splitPointers[original] = baseVar to offsetVar
       if (builder.parent.getVars().none { it.wrappedVar == baseVar }) {
         builder.parent.addVar(XcfaGlobalVar(baseVar))
       }

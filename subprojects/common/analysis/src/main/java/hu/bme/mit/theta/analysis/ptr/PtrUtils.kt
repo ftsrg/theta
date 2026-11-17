@@ -83,6 +83,16 @@ val Expr<*>.dereferences: List<Dereference<*, *, *>>
       ops.flatMap { it.dereferences }
     }
 
+private fun Stmt.accessesMemory(): Boolean =
+  when (this) {
+    is NonDetStmt -> stmts.any { it.accessesMemory() }
+    is SequenceStmt -> stmts.any { it.accessesMemory() }
+    is MemoryAssignStmt<*, *, *> -> true
+    is AssignStmt<*> -> expr.dereferences.isNotEmpty()
+    is AssumeStmt -> cond.dereferences.isNotEmpty()
+    else -> false
+  }
+
 fun SequenceStmt.collapse(): Stmt =
   if (stmts.size == 1 && stmts[0] is SequenceStmt) {
     (stmts[0] as SequenceStmt).collapse()
@@ -121,7 +131,11 @@ fun Stmt.uniqueDereferences(
       is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
       is HavocStmt<*> -> this
       is SkipStmt -> this
-      is NonDetStmt -> this
+      // Write tracking is sequential, so it cannot follow the branches of a choice.
+      is NonDetStmt ->
+        this.also {
+          check(!accessesMemory()) { "Memory access in a nondeterministic choice: $this" }
+        }
       is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
       is IfStmt -> error("IfStmt do not have a clearly defined sequence")
       else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")

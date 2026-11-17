@@ -80,13 +80,14 @@ data class DataRace(
     get() = prefix1.isEmpty() && prefix2.isEmpty()
 
   /**
-   * Runs both prefixes, in either order (both are real interleavings), then assumes [condition].
+   * One label per order of the two prefixes (both are real interleavings), each running both
+   * prefixes and then assuming [condition].
    */
-  fun conditionLabel(): XcfaLabel {
+  fun conditionLabels(): List<SequenceLabel> {
     fun seq(stmts: List<Stmt>) =
       SequenceLabel(stmts.map { StmtLabel(it) } + StmtLabel(AssumeStmt.of(condition)))
-    return if (prefix1.isEmpty() || prefix2.isEmpty()) seq(prefix1 + prefix2)
-    else NondetLabel(setOf(seq(prefix1 + prefix2), seq(prefix2 + prefix1)))
+    return if (prefix1.isEmpty() || prefix2.isEmpty()) listOf(seq(prefix1 + prefix2))
+    else listOf(seq(prefix1 + prefix2), seq(prefix2 + prefix1))
   }
 }
 
@@ -225,14 +226,14 @@ fun <T : Refutation> wrapExprTraceCheckerWithDataRaceCondition(
   } else {
     // Every candidate's addresses are only known after statements of its own label. A refuted trace
     // here would mark a reachable state infeasible, hiding any race after it, so only a confirmed
-    // race is reported and the analysis gives up otherwise.
-    val conditions = races.map { it.conditionLabel() }.toSet()
-    val status =
-      exprTraceChecker.check(withLastLabel(conditions.singleOrNull() ?: NondetLabel(conditions)))
-    if (status.isInfeasible) {
-      throw NotSolvableException()
-    }
-    status
+    // race is reported and the analysis gives up otherwise. The candidates are checked one by one,
+    // as a pointer action cannot track the memory accesses of a nondeterministic choice.
+    races
+      .flatMap { it.conditionLabels() }
+      .distinct()
+      .firstNotNullOfOrNull { label ->
+        exprTraceChecker.check(withLastLabel(label)).takeIf { it.isFeasible }
+      } ?: throw NotSolvableException()
   }
 }
 

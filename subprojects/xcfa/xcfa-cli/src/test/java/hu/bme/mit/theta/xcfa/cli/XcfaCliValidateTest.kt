@@ -19,6 +19,8 @@ import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.solver.smtlib.testing.SolverInstallations
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import hu.bme.mit.theta.xcfa.cli.params.ErrorCodeException
+import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.witnesses.Format
 import hu.bme.mit.theta.xcfa.witnesses.WaypointType
 import hu.bme.mit.theta.xcfa.witnesses.WitnessYamlConfig
@@ -32,6 +34,8 @@ import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlinx.serialization.decodeFromString
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
@@ -220,6 +224,36 @@ class XcfaCliValidateTest {
           null,
           "SafetyResult Unsafe",
         ),
+      )
+    }
+
+    @JvmStatic
+    fun functionReturnWitnesses(): Stream<Arguments> {
+      return Stream.of(
+        // the results are havoced into frontend temporaries, which the constraints must pin
+        Arguments.of(
+          "/c/witness-validation/function-return-temporary.i",
+          "/c/witness-validation/function-return-temporary.witness.yml",
+          null,
+          "SafetyResult Unsafe",
+        ),
+        // the same witness pinning a value that avoids the violation is refuted
+        Arguments.of(
+          "/c/witness-validation/function-return-temporary.i",
+          "/c/witness-validation/function-return-temporary.refuted-witness.yml",
+          null,
+          "SafetyResult Safe",
+        ),
+      )
+    }
+
+    @JvmStatic
+    fun refusedWitnesses(): Stream<Arguments> {
+      return Stream.of(
+        // a waypoint that matches no program location
+        Arguments.of("/c/witness-validation/function-return-temporary.unmatched-witness.yml"),
+        // an avoid waypoint, which would not be enforced
+        Arguments.of("/c/witness-validation/function-return-temporary.avoid-witness.yml"),
       )
     }
 
@@ -431,8 +465,8 @@ class XcfaCliValidateTest {
   }
 
   @ParameterizedTest
-  @MethodSource("multithreadedWitnesses")
-  fun testMultithreadedWitnessValidation(
+  @MethodSource("multithreadedWitnesses", "functionReturnWitnesses")
+  fun testWitnessValidation(
     filePath: String,
     witnessPath: String,
     extraArgs: String?,
@@ -465,6 +499,30 @@ class XcfaCliValidateTest {
       "Expected $expectedVerdict for $filePath with $witnessPath, got: ${output.getVerdict()}"
     }
     println("Witness validation of $filePath with $witnessPath: ${output.getVerdict()}")
+  }
+
+  /** A witness that cannot be applied faithfully is rejected as an error, not refuted. */
+  @ParameterizedTest
+  @MethodSource("refusedWitnesses")
+  fun testRefusedWitnessFails(witnessPath: String) {
+    val params =
+      arrayOf(
+        "--input-type",
+        "C",
+        "--input",
+        javaClass.getResource("/c/witness-validation/function-return-temporary.i")!!.path,
+        "--witness",
+        javaClass.getResource(witnessPath)!!.path,
+        "--stacktrace",
+        "--debug",
+        "--output-directory",
+        createTempDirectory().absolutePathString(),
+        "--svcomp",
+        "--backend",
+        "CEGAR",
+      )
+    val code = assertThrows(ErrorCodeException::class.java) { runCatchingOutput(params) }.code
+    assertEquals(ExitCodes.FRONTEND_FAILED.code, code)
   }
 
   @ParameterizedTest

@@ -3773,7 +3773,25 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
      * it) with its return variable typed correctly, and return the call's value. Returns null
      * otherwise, so ordinary builtin handling proceeds.
      */
+    // GCC's legacy `__sync` read-modify-writes are full barriers that return the old value: the C11
+    // operations at the sequentially consistent order, which is the only one modelled.
+    private static final java.util.Map<String, String> SYNC_FETCH_ATOMICS =
+            java.util.Map.of(
+                    "__sync_fetch_and_add", "atomic_fetch_add",
+                    "__sync_fetch_and_sub", "atomic_fetch_sub",
+                    "__sync_fetch_and_or", "atomic_fetch_or",
+                    "__sync_fetch_and_and", "atomic_fetch_and",
+                    "__sync_fetch_and_xor", "atomic_fetch_xor");
+
     private Expr<?> atomicBuiltinCall(String name, List<AssignmentExpressionContext> args) {
+        String sync = SYNC_FETCH_ATOMICS.get(name);
+        if (sync != null) {
+            if (args.size() != 2) {
+                throw new UnsupportedFrontendElementException(
+                        name + " with a list of protected variables is not supported");
+            }
+            return atomicCall(sync, args, AtomicReturn.POINTEE, name);
+        }
         name = CLANG_C11_ATOMICS.getOrDefault(name, name);
         if (ATOMIC_RETURNS_POINTEE.contains(name)) {
             return atomicCall(name, args, AtomicReturn.POINTEE);
@@ -3817,12 +3835,27 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
 
     private Expr<?> atomicCall(
             String name, List<AssignmentExpressionContext> args, AtomicReturn returnKind) {
+        return atomicCall(name, args, returnKind, null);
+    }
+
+    /**
+     * [syncName]: the `__sync` builtin emitted as [name], whose pointer step GCC does not scale.
+     */
+    private Expr<?> atomicCall(
+            String name,
+            List<AssignmentExpressionContext> args,
+            AtomicReturn returnKind,
+            String syncName) {
         if (functionVisitor == null) {
             return null;
         }
         List<CStatement> arguments = new ArrayList<>();
         for (AssignmentExpressionContext arg : args) {
             arguments.add(arg.accept(functionVisitor));
+        }
+        if (syncName != null && pointeeOf(arguments.get(0).getExpression()) instanceof CPointer) {
+            throw new UnsupportedFrontendElementException(
+                    syncName + " on a pointer object is not supported");
         }
         if (ATOMIC_FLAG_OPERATIONS.contains(name) && !arguments.isEmpty()) {
             arguments.set(0, flagAddress(arguments.get(0)));
@@ -4510,6 +4543,8 @@ public class ExpressionVisitor extends IncludeHandlingCBaseVisitor<Expr<?>> {
                 // pthread_create(&t, ...); }` had its handle freed on every iteration and the next
                 // access reported a false `valid-deref`.
                 final String calleeName = ((RefExpr<?>) expr).getDecl().getName();
+                // its init routine may be a function pointer, which is called indirectly
+                if (calleeName.equals("pthread_once")) FunctionIds.markIndirectCall();
                 final boolean wasSuppressing =
                         functionVisitor != null && functionVisitor.isSuppressingScopedRelease();
                 if (calleeName.startsWith("pthread_") && functionVisitor != null)

@@ -17,9 +17,16 @@ package hu.bme.mit.theta.xcfa.passes.memory
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
@@ -31,6 +38,7 @@ import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.boundCell
 import hu.bme.mit.theta.xcfa.utils.boundTarget
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
@@ -51,6 +59,9 @@ import java.math.BigInteger
  * pointer (a variable or a memory cell) cannot be laid out, and the build is retried under `bytes`
  * rather than handing back a block that is silently not zeroed. The fill is skipped when the
  * allocation failed.
+ *
+ * A `num * size` that does not fit in `size_t` describes no object, so such a call returns NULL
+ * (C23 7.24.3.2) instead of allocating the wrapped-around product.
  */
 class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
@@ -64,6 +75,7 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     // Phase 1 -- turn each `calloc` into the allocation, remembering what still needs zeroing.
     val pending = mutableListOf<Triple<Expr<*>, Expr<*>, Expr<*>>>()
     val mallocs = LinkedHashMap<InvokeLabel, Triple<Expr<*>, Expr<*>, Expr<*>>>()
+    val overflowing = LinkedHashMap<InvokeLabel, Expr<BoolType>>()
     for (edge in LinkedHashSet(builder.getEdges())) {
       val labels = edge.getFlatLabels()
       if (labels.none { it is InvokeLabel && it.name in CALLOC && it.name !in defined }) continue
@@ -75,11 +87,14 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
           label as InvokeLabel
           if (label.params.size < 3) return@map label
           val ret = label.params[0]
+          changed = true
+          val overflow = overflows(label.params[1], label.params[2])
+          if (overflow == True()) return@map nullResult(ret)
           val count = count(label.params[1], label.params[2])
           val zero = CComplexType.getType(label.params[2], parseContext).getValue("0")
-          changed = true
           val malloc =
             InvokeLabel.retFirst("malloc", listOf(ret, count), label.metadata, label.tempLookup)
+          if (overflow != False()) overflowing[malloc] = overflow
           if (parseContext.memoryModel.byteAddressed()) mallocs[malloc] = Triple(ret, zero, count)
           else pending.add(Triple(ret, zero, count))
           malloc
@@ -89,6 +104,19 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         builder.removeEdge(edge)
         builder.addEdge(edge.withLabel(SequenceLabel(flat, edge.label.metadata)))
       }
+    }
+    // An overflowing product returns NULL; only the other branch allocates (and is zeroed below).
+    for ((malloc, overflow) in overflowing) {
+      val edge = builder.getEdges().first { e -> e.getFlatLabels().any { it === malloc } }
+      val labels = edge.getFlatLabels()
+      val at = labels.indexOfFirst { it === malloc }
+      builder.removeEdge(edge)
+      val before = location(edge)
+      val after = location(edge)
+      addEdge(builder, edge, edge.source, before, labels.subList(0, at))
+      addEdge(builder, edge, before, after, listOf(assume(Not(overflow)), malloc))
+      addEdge(builder, edge, before, after, listOf(assume(overflow), nullResult(malloc.params[0])))
+      addEdge(builder, edge, after, edge.target, labels.subList(at + 1, labels.size))
     }
     // Under bytes a cell is a byte whatever the pointee: the fill goes right after the allocation.
     for ((malloc, fill) in mallocs) {
@@ -141,24 +169,55 @@ class CallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     zero: Expr<*>,
     count: Expr<*>,
   ) {
-    val loc = {
-      XcfaLocation(
-        "${edge.source.name}_calloc${XcfaLocation.uniqueCounter()}",
-        metadata = edge.source.metadata,
-      )
-    }
-    val before = loc()
-    val after = loc()
+    val before = location(edge)
+    val after = location(edge)
     val nullValue = CComplexType.getType(target, parseContext).nullValue
     val memset =
       InvokeLabel.retFirst("memset", listOf(target, target, zero, count), EmptyMetaData, emptyMap())
-    val add = { s: XcfaLocation, t: XcfaLocation, l: List<XcfaLabel> ->
-      builder.addEdge(XcfaEdge(s, t, SequenceLabel(l, edge.label.metadata), edge.metadata))
-    }
-    add(edge.source, before, labels.subList(0, at))
-    add(before, after, listOf(assume(Neq(target, nullValue)), memset))
-    add(before, after, listOf(assume(Eq(target, nullValue))))
-    add(after, edge.target, labels.subList(at, labels.size))
+    addEdge(builder, edge, edge.source, before, labels.subList(0, at))
+    addEdge(builder, edge, before, after, listOf(assume(Neq(target, nullValue)), memset))
+    addEdge(builder, edge, before, after, listOf(assume(Eq(target, nullValue))))
+    addEdge(builder, edge, after, edge.target, labels.subList(at, labels.size))
+  }
+
+  private fun location(edge: XcfaEdge): XcfaLocation =
+    XcfaLocation(
+      "${edge.source.name}_calloc${XcfaLocation.uniqueCounter()}",
+      metadata = edge.source.metadata,
+    )
+
+  /** An edge from [source] to [target] carrying [labels], with [edge]'s metadata. */
+  private fun addEdge(
+    builder: XcfaProcedureBuilder,
+    edge: XcfaEdge,
+    source: XcfaLocation,
+    target: XcfaLocation,
+    labels: List<XcfaLabel>,
+  ) {
+    builder.addEdge(
+      XcfaEdge(source, target, SequenceLabel(labels, edge.label.metadata), edge.metadata)
+    )
+  }
+
+  private fun nullResult(ret: Expr<*>): XcfaLabel =
+    AssignStmtLabel(ret as RefExpr<*>, CComplexType.getType(ret, parseContext).nullValue)
+
+  /**
+   * Whether `num * size` exceeds `SIZE_MAX`: folded to `true` or `false` when both are literals, a
+   * `size != 0 && num > SIZE_MAX / size` check that cannot wrap otherwise.
+   */
+  private fun overflows(num: Expr<*>, size: Expr<*>): Expr<BoolType> {
+    val sizeT = CComplexType.getUnsignedLong(parseContext)
+    val sizeMax = BigInteger.ONE.shiftLeft(sizeT.width()) - BigInteger.ONE
+    val n = literalValue(num)
+    val s = literalValue(size)
+    if (n != null && s != null) return if (n.multiply(s) > sizeMax) True() else False()
+    val numT = cast(sizeT.castTo(num), sizeT.smtType)
+    val sizeTExpr = cast(sizeT.castTo(size), sizeT.smtType)
+    return And(
+      Neq(sizeTExpr, sizeT.nullValue),
+      Gt(numT, Div(sizeT.getValue(sizeMax.toString()), sizeTExpr)),
+    )
   }
 
   @Suppress("UNCHECKED_CAST")

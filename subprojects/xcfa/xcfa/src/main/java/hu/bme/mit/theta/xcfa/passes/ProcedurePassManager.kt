@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.concurrency.PthreadBarrierPass
 import hu.bme.mit.theta.xcfa.passes.concurrency.ThreadLocalVarPass
 import hu.bme.mit.theta.xcfa.passes.concurrency.ThreadResultPass
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass
+import hu.bme.mit.theta.xcfa.passes.library.EntryArgumentsPass
 import hu.bme.mit.theta.xcfa.passes.library.FormatAccessPass
 import hu.bme.mit.theta.xcfa.passes.library.FpFunctionsToExprsPass
 import hu.bme.mit.theta.xcfa.passes.library.LibraryStubsPass
@@ -35,6 +36,7 @@ import hu.bme.mit.theta.xcfa.passes.library.NondetFunctionPass
 import hu.bme.mit.theta.xcfa.passes.library.PrintfReturnBoundPass
 import hu.bme.mit.theta.xcfa.passes.library.StringLiteralInitPass
 import hu.bme.mit.theta.xcfa.passes.library.SvCompIntrinsicsPass
+import hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass
 import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
 import hu.bme.mit.theta.xcfa.passes.memory.AllocaFunctionPass
 import hu.bme.mit.theta.xcfa.passes.memory.ByteMemoryPass
@@ -100,6 +102,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       // procedure's handles unrolled when it decides whether handles need to hold thread ids
       PthreadArrayHandleUnrollPass(parseContext),
     ),
+    // in a phase of their own: ThreadSpecificDataPass reads every procedure's thread-specific data
+    // calls before CLibraryFunctionsPass lowers the thread functions
+    listOf(ThreadSpecificDataPass(parseContext), EntryArgumentsPass(parseContext)),
     listOf(
       CLibraryFunctionsPass(
         parseContext,

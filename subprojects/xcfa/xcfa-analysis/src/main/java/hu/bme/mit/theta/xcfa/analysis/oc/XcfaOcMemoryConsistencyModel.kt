@@ -66,7 +66,7 @@ private fun getClosedPo(pos: List<R>): BooleanGlobalRelation {
     order.add(v)
     succ[v].forEach { if (--indeg[it] == 0) queue.add(it) }
   }
-  check(order.size == n) { "Self-loop not allowed." }
+  check(order.size == n) { "Program order between atomic units is cyclic." }
   val reach = arrayOfNulls<java.util.BitSet>(n)
   for (v in order.asReversed()) {
     val r = java.util.BitSet(n)

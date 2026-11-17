@@ -269,6 +269,7 @@ flat_field_after_nested_member.c	efficient	LP64	SAFE:valid-memsafety	a reference
 malloc_may_fail.c	efficient	ILP32	UNSAFE	malloc may return NULL
 realloc_failure_keeps_block.c	efficient	ILP32	SAFE:valid-memsafety	a failed realloc returns NULL and keeps the old block
 calloc_failure_skips_fill.c	efficient	ILP32	SAFE:valid-memsafety	the zero-fill of calloc is skipped when it returns NULL
+calloc_overflow_null.c	bitvector	ILP32	SAFE	calloc whose count times size overflows size_t returns NULL instead of a wrapped-around block
 alloca_void_pointer.c	efficient	ILP32	SAFE	an explicit alloca returning void * is lowered
 barrier_orders_threads.c	efficient	ILP32	SAFE	pthread_barrier_wait blocks until count threads arrive
 barrier_wait_too_early.c	efficient	ILP32	UNSAFE	a read before pthread_barrier_wait is not ordered by it
@@ -563,7 +564,6 @@ ternary_builtin_case.c	efficient	LP64	SAFE	?: as a __builtin_expect argument or 
 address_taken_union_size.c	efficient	ILP32	SAFE:valid-memsafety	an address-taken global union spans the cells its initialization writes
 address_taken_union_overrun.c	efficient	ILP32	UNSAFE:valid-memsafety	an address-taken global union is bounded by its own size
 calloc_bool_bytes.c	bitvector	ILP32	SAFE	a _Bool cell is its byte under bytes, so calloc's zero fill and a char view reach it	bytes
-main_argv_memsafety.c	efficient	ILP32	FRONTEND-FAIL:valid-memsafety	memory safety of a main that reads argv is refused: nothing allocates what argv points to
 race_index_from_unknown_call.c	efficient	ILP32	UNKNOWN:no-data-race	a race whose address needs an over-approximated library value is not reported
 pthread_join_runtime_handle.c	efficient	ILP32	SAFE	with a variable handle index the handles hold thread ids, and a join waits for the thread its handle holds
 pthread_join_runtime_handle_unsafe.c	efficient	ILP32	UNSAFE	planted bug: with handles that hold thread ids, a thread left unjoined may write after the check
@@ -577,3 +577,4 @@ flat_pointer_copy_use_after_free.c	efficient	ILP32	UNSAFE:valid-memsafety	a copy
 memcpy_layout_mismatch.c	efficient	ILP32	SAFE:valid-memsafety	memcpy from a struct of another cell layout is not walked by the destination's cells
 pointer_param_end_bound.c	efficient	LP64	SAFE	a pointer parameter compared with a walked pointer keeps the offset its caller binds (one past the end)
 pointer_param_end_bound_bug.c	efficient	LP64	UNSAFE	a walk up to a one-past-the-end parameter still sees every element
+memtrack_split_global_safe.c	efficient	LP64	SAFE:valid-memsafety	a global pointer split under multi still keeps its block from being lost	multi

@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
@@ -59,11 +60,14 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.memory.MAIN_THREAD_EXIT
+import hu.bme.mit.theta.xcfa.passes.procedures.FunctionPointerCallsPass
+import hu.bme.mit.theta.xcfa.passes.procedures.FunctionPointerCallsPass.Companion.INDIRECT_CALL
 import hu.bme.mit.theta.xcfa.passes.splitIf
 import hu.bme.mit.theta.xcfa.utils.AssignStmtLabel
 import hu.bme.mit.theta.xcfa.utils.SubObjects
@@ -367,53 +371,72 @@ class CLibraryFunctionsPass(
                 builder.addEdge(XcfaEdge(loc, target, SequenceLabel(exit), metadata))
               }
 
-              // 0: not run, 1: running, 2: done. The first caller runs the routine; the others wait
-              // until it has returned.
+              // The state is kept in the control object: 0 (PTHREAD_ONCE_INIT) not run, 1 running,
+              // 2 done. The first caller runs the routine; the others wait until it has returned.
               "pthread_once" -> {
-                val control = invokeLabel.params[1]
-                check(control is Reference<*, *> && control.expr is RefExpr<*>) {
-                  "Unsupported pthread_once control: $control"
-                }
-                val state = onceState((control.expr as RefExpr<*>).decl as VarDecl<*>, builder)
-                val routineName = invokeLabel.getParam(2).name
-                val routine =
-                  checkNotNull(builder.parent.getProcedures().find { it.name == routineName }) {
-                    "Unsupported pthread_once init routine `$routineName`"
-                  }
-                check(routine.getParams().all { it.second == ParamDirection.OUT }) {
-                  "pthread_once init routine `$routineName` takes parameters"
-                }
-                val routineRet =
-                  routine.getParams().map { (p, _) ->
-                    Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type)
-                      .also(builder::addVar)
-                      .ref
-                  }
-                val run =
+                val control = pointee(invokeLabel.params[1], "pthread_once")
+                val state = { v: Int -> control.type.integerOf(v) }
+                val old =
+                  Decls.Var("__theta_once_old_${uniqueCounter++}", control.type)
+                    .also(builder::addVar)
+                val location = { kind: String ->
                   XcfaLocation(
-                    "${it.source.name}_once_run_${uniqueCounter++}",
+                    "${it.source.name}_once_${kind}_${uniqueCounter++}",
                     metadata = it.source.metadata,
                   )
-                val ran =
-                  XcfaLocation(
-                    "${it.source.name}_once_ran_${uniqueCounter++}",
-                    metadata = it.source.metadata,
-                  )
-                val stateIs = { v: Int -> StmtLabel(AssumeStmt.of(Eq(state.ref, Int(v)))) }
-                val stateTo = { v: Int -> AssignStmtLabel(state, Int(v), metadata) }
+                }
+                val claimed = location("claimed")
+                val run = location("run")
+                val ran = location("ran")
+                // One edge, so that the test-and-set is atomic, and then a branch on its result: a
+                // branch has to start with its condition.
                 builder.addEdge(
-                  XcfaEdge(it.source, run, SequenceLabel(listOf(stateIs(0), stateTo(1))), metadata)
+                  XcfaEdge(
+                    it.source,
+                    claimed,
+                    SequenceLabel(
+                      atomically(
+                        listOf(
+                          AssignStmtLabel(old, control, metadata),
+                          AssignStmtLabel(
+                            control,
+                            Ite<Type>(Eq(control, state(0)), state(1), control),
+                            metadata,
+                          ),
+                        )
+                      )
+                    ),
+                    metadata,
+                  )
+                )
+                builder.addEdge(
+                  XcfaEdge(
+                    claimed,
+                    run,
+                    SequenceLabel(listOf(StmtLabel(Assume(Eq(old.ref, state(0)))))),
+                    metadata,
+                  )
                 )
                 builder.addEdge(
                   XcfaEdge(
                     run,
                     ran,
-                    SequenceLabel(listOf(InvokeLabel(routine, routineRet, metadata))),
+                    SequenceLabel(
+                      listOf(onceRoutineCall(invokeLabel.params[2], builder, metadata))
+                    ),
                     metadata,
                   )
                 )
-                addSeqFrom(ran, listOf(stateTo(2), assignRet(0)))
-                addSeq(listOf(stateIs(2), assignRet(0)))
+                addSeqFrom(
+                  ran,
+                  atomically(listOf(AssignStmtLabel(control, state(2), metadata))) + assignRet(0),
+                )
+                addSeqFrom(
+                  claimed,
+                  listOf(StmtLabel(Assume(Neq(old.ref, state(0))))) +
+                    atomically(listOf(StmtLabel(Assume(Eq(control, state(2)))))) +
+                    assignRet(0),
+                )
               }
 
               "pthread_join" -> {
@@ -738,12 +761,13 @@ class CLibraryFunctionsPass(
       else -> error("strcpy on a non-pointer argument of type $t: $ptr")
     }
 
-  /** `*ptr`: the variable itself for `&x`, otherwise a [Dereference] at offset 0. */
-  private fun pointee(ptr: Expr<*>): Expr<*> {
-    if (ptr is Reference<*, *> && ptr.expr is RefExpr<*>) return ptr.expr
+  /** `*ptr`: the object itself for `&x` or `&*p`, otherwise a [Dereference] at offset 0. */
+  private fun pointee(ptr: Expr<*>, function: String = "pthread_key_create"): Expr<*> {
+    if (ptr is Reference<*, *> && (ptr.expr is RefExpr<*> || ptr.expr is Dereference<*, *, *>))
+      return ptr.expr
     val pointee =
       (CComplexType.getType(ptr, parseContext) as? CPointer)?.embeddedType
-        ?: error("pthread_key_create on a non-pointer argument: $ptr")
+        ?: error("$function on a non-pointer argument: $ptr")
     val offset = CComplexType.getSignedLong(parseContext).nullValue
     return Dereference(cast(ptr, ptr.type), cast(offset, ptr.type), pointee.smtType)
   }
@@ -1065,14 +1089,21 @@ class CLibraryFunctionsPass(
   /** Whether [getParam] names this call's handle (`params[1]`) by a variable. */
   private fun InvokeLabel.hasStaticHandle(): Boolean {
     var param = params.getOrNull(1) ?: return true
-    while (param is Reference<*, *>) param = param.expr
+    var referenced = false
+    while (param is Reference<*, *>) {
+      param = param.expr
+      referenced = true
+    }
+    // A handle reached through a pointer variable is whatever object the pointer holds at the time.
+    fun isObject(base: Expr<*>) = CComplexType.getType(base, parseContext) !is CPointer
     return when (param) {
-      is RefExpr<*> -> true
-      is Dereference<*, *, *> -> param.array is RefExpr<*> && param.offset.asConstant() != null
+      is RefExpr<*> -> referenced || isObject(param)
+      is Dereference<*, *, *> ->
+        param.array is RefExpr<*> && param.offset.asConstant() != null && isObject(param.array)
       is AddExpr<*> -> {
         var base = param.ops.filter { it.asConstant() == null }.singleOrNull()
         while (base is PosExpr<*>) base = base.op
-        base is RefExpr<*>
+        base is RefExpr<*> && isObject(base)
       }
       else -> false
     }
@@ -1190,33 +1221,35 @@ class CLibraryFunctionsPass(
   private fun InvokeLabel.getMutexHandle(index: Int = 1): Expr<*> = params[index]
 
   /**
-   * The state of a `pthread_once_t`, kept in an atomic global so it is never raced on. The initial
-   * value of a global is not part of every encoding, so the entry procedure assigns it.
+   * The call of a `pthread_once` init routine: a function the program defines, called directly, or
+   * a function pointer, which [FunctionPointerCallsPass] dispatches over its candidates later.
    */
-  @Suppress("UNCHECKED_CAST")
-  private fun onceState(control: VarDecl<*>, builder: XcfaProcedureBuilder): VarDecl<IntType> {
-    val name = "__theta_once_${control.name}"
-    // Every procedure has its own instance of this pass, so the state is found in the model.
-    builder.parent
-      .getVars()
-      .find { it.wrappedVar.name == name }
-      ?.let {
-        return it.wrappedVar as VarDecl<IntType>
+  private fun onceRoutineCall(
+    routine: Expr<*>,
+    builder: XcfaProcedureBuilder,
+    metadata: MetaData,
+  ): InvokeLabel {
+    val designator = if (routine is Reference<*, *>) routine.expr else routine
+    val name = ((designator as? RefExpr<*>)?.decl as? VarDecl<*>)?.name
+    val procedure = builder.parent.getProcedures().find { it.name == name }
+    if (procedure != null) {
+      check(procedure.getParams().all { it.second == ParamDirection.OUT }) {
+        "pthread_once init routine `$name` takes parameters"
       }
-    return Decls.Var(name, Int()).also { state ->
-      builder.parent.addVar(XcfaGlobalVar(state, Int(0), atomic = true))
-      builder.parent.getInitProcedures().forEach { (proc, _) ->
-        val initEdge = proc.initLoc.outgoingEdges.single()
-        proc.removeEdge(initEdge)
-        proc.addEdge(
-          initEdge.withLabel(
-            SequenceLabel(
-              initEdge.getFlatLabels() + AssignStmtLabel(state, Int(0)),
-              initEdge.label.metadata,
-            )
-          )
-        )
-      }
+      val ret =
+        procedure.getParams().map { (p, _) ->
+          Decls.Var("__theta_once_ret_${uniqueCounter++}", p.type).also(builder::addVar).ref
+        }
+      return InvokeLabel(procedure, ret, metadata)
     }
+    // the routine is a `void (*)(void)`, also when the pointer holding it is declared otherwise
+    check(CComplexType.getType(routine, parseContext) is CPointer) {
+      "Unsupported pthread_once init routine: $routine"
+    }
+    val returnType = CVoid(null, parseContext)
+    val ret = Decls.Var("__theta_once_ret_${uniqueCounter++}", returnType.smtType)
+    parseContext.metadata.create(ret.ref, "cType", returnType)
+    builder.addVar(ret)
+    return InvokeLabel.retFirst(INDIRECT_CALL, listOf(ret.ref, routine), metadata)
   }
 }

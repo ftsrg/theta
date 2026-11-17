@@ -134,9 +134,20 @@ internal class XcfaOcValueAnalysis(
 
   private val evaluatedAddresses = HashMap<Expr<*>, Set<LitExpr<*>>?>()
 
-  private val guardedValues = HashMap<Pair<E, Expr<*>>, Set<LitExpr<*>>?>()
+  /** The values left to some constants while evaluating a condition, see [isCertainlyFalse]. */
+  private var restriction: Map<Decl<*>, Set<LitExpr<*>>> = emptyMap()
 
-  private val conditionsOf = HashMap<E, Map<ConstDecl<*>, List<Expr<BoolType>>>>()
+  private val restrictedEvaluated = HashMap<Expr<*>, Set<LitExpr<*>>?>()
+
+  // keyed by guard identity, see [impliedBy]
+  private val guardedValues =
+    IdentityHashMap<Set<Expr<BoolType>>, HashMap<Expr<*>, Set<LitExpr<*>>?>>()
+
+  private val guardedAddresses =
+    IdentityHashMap<Set<Expr<BoolType>>, HashMap<Expr<*>, Set<LitExpr<*>>?>>()
+
+  private val conditionsOf =
+    IdentityHashMap<Set<Expr<BoolType>>, Map<ConstDecl<*>, List<Expr<BoolType>>>>()
 
   private val constantShapes = IdentityHashMap<Expr<*>, Any>()
 
@@ -166,9 +177,51 @@ internal class XcfaOcValueAnalysis(
     return unreachable.distinct()
   }
 
-  /** Whether [condition] holds in no execution, as all values it can be evaluated on falsify it. */
+  /**
+   * Whether [condition] holds in no execution, as all values it can be evaluated on falsify it. A
+   * disjunct is evaluated on the values its conditions over a single constant leave, as these hold
+   * wherever it does: like the bounds check of an access behind the `i >= 0` that guards it.
+   */
   fun isCertainlyFalse(condition: Expr<BoolType>): Boolean =
-    inMode(false) { evaluate(condition) == FALSE }
+    inMode(false) {
+      evaluate(condition) == FALSE ||
+        disjuncts(condition).all { disjunct ->
+          restricted(disjunct) { evaluate(disjunct) }.let { it != null && True() !in it }
+        }
+    }
+
+  private fun disjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
+    if (expr is OrExpr) expr.ops.flatMap { disjuncts(it) } else listOf(expr)
+
+  private fun <T> restricted(condition: Expr<BoolType>, body: () -> T): T {
+    restriction =
+      singleConstantConditions(setOf(condition))
+        .mapNotNull { (constant, conditions) ->
+          val values = valueOf(constant) ?: return@mapNotNull null
+          constant as Decl<*> to
+            values.filterTo(HashSet()) { satisfiesAll(constant, it, conditions) }
+        }
+        .toMap()
+    restrictedEvaluated.clear()
+    return try {
+      body()
+    } finally {
+      restriction = emptyMap()
+    }
+  }
+
+  private fun satisfiesAll(
+    constant: ConstDecl<*>,
+    value: LitExpr<*>,
+    conditions: List<Expr<BoolType>>,
+  ): Boolean {
+    val valuation = ImmutableValuation.builder().put(constant, value).build()
+    return try {
+      conditions.all { it.eval(valuation) != False() }
+    } catch (_: RuntimeException) {
+      true
+    }
+  }
 
   private fun fixpoint() {
     do {
@@ -176,6 +229,7 @@ internal class XcfaOcValueAnalysis(
       evaluated.clear()
       evaluatedAddresses.clear()
       guardedValues.clear()
+      guardedAddresses.clear()
       for (decl in order) {
         changed = update(decl, false) || changed
         if (addressValues !== values) changed = update(decl, true) || changed
@@ -204,7 +258,8 @@ internal class XcfaOcValueAnalysis(
   private fun compute(decl: Decl<*>): Set<LitExpr<*>>? {
     var result: Set<LitExpr<*>>? = NOTHING
     definitions[decl]?.forEach { definition ->
-      if (holds(definition.guard)) result = result.join(definition.value?.let { evaluate(it) })
+      if (holds(definition.guard))
+        result = result.join(definition.value?.let { guarded(definition.guard, it) })
     }
     // not conditional on the event's guard: the guard of a branch read refers to the read itself
     eventsOf[decl]?.forEach { e -> result = result.join(eventValue(e)) }
@@ -216,7 +271,7 @@ internal class XcfaOcValueAnalysis(
     if (e.type == WRITE) {
       val value =
         (assignment as? EqExpr<*>)?.takeIf { (it.leftOp as? RefExpr<*>)?.decl == e.const }?.rightOp
-      return value?.let { evaluate(it) }
+      return value?.let { guarded(e.guard, it) }
     }
     if (assignment != null || e !in boundReads) return null
     var result: Set<LitExpr<*>>? = NOTHING
@@ -298,35 +353,53 @@ internal class XcfaOcValueAnalysis(
     }
   }
 
-  /**
-   * The values of [address] in an execution of [e]: the guard rules out those contradicting a
-   * condition over the address's only constant, like the check that ends the path at NULL.
-   */
   private fun valuesAt(e: E, address: Expr<*>): Set<LitExpr<*>>? =
-    inMode(true) { guardedAddress(e, address) }
+    inMode(true) { guarded(e.guard, address) }
 
-  private fun guardedAddress(e: E, address: Expr<*>): Set<LitExpr<*>>? =
-    guardedValues.getOrPut(e to address) {
-      val all = evaluate(address) ?: return@getOrPut null
-      val constant =
-        constantsOf.getOrPut(address) { ExprUtils.getConstants(address).toList() }.singleOrNull()
-          ?: return@getOrPut all
-      val conditions = conditionsOf.getOrPut(e) { singleConstantConditions(e) }[constant].orEmpty()
-      if (conditions.isEmpty()) return@getOrPut all
-      val domain = valueOf(constant) ?: return@getOrPut null
-      try {
-        domain
-          .map { ImmutableValuation.builder().put(constant, it).build() }
-          .filter { valuation -> conditions.all { it.eval(valuation) != False() } }
-          .map { address.eval(it) as LitExpr<*> }
-          .toSet()
-      } catch (_: RuntimeException) {
-        all
+  /**
+   * The values of [expr] where [guard] holds: it rules out the values of a constant that contradict
+   * a condition over that constant alone, like the check that ends the path at NULL, or the `x >=
+   * 0` that a write of `x` is under. Not for a read's own value, which its branch guard refers to.
+   */
+  private fun guarded(guard: Set<Expr<BoolType>>, expr: Expr<*>): Set<LitExpr<*>>? {
+    val cache = if (forAddress && addressValues !== values) guardedAddresses else guardedValues
+    val known = cache.getOrPut(guard) { HashMap() }
+    return if (expr in known) known[expr] else bounded(guard, expr).also { known[expr] = it }
+  }
+
+  private fun bounded(guard: Set<Expr<BoolType>>, expr: Expr<*>): Set<LitExpr<*>>? {
+    val conditions = conditionsOf.getOrPut(guard) { singleConstantConditions(guard) }
+    val constants =
+      constantsOf
+        .getOrPut(expr) { ExprUtils.getConstants(expr).toList() }
+        .filter { it in conditions }
+    if (constants.isEmpty()) return evaluate(expr)
+    return try {
+      var valuations = listOf(ImmutableValuation.empty() as Valuation)
+      for (constant in constants) {
+        val allowed =
+          (valueOf(constant) ?: return evaluate(expr)).filter { value ->
+            val valuation = ImmutableValuation.builder().put(constant, value).build()
+            conditions.getValue(constant).all { it.eval(valuation) != False() }
+          }
+        valuations =
+          valuations.flatMap { valuation ->
+            allowed.map { MutableValuation.copyOf(valuation).put(constant, it) }
+          }
+        if (valuations.size > MAX_VALUES) return evaluate(expr)
       }
+      valuations.fold(NOTHING as Set<LitExpr<*>>?) { result, valuation ->
+        result.join(evaluate(ExprUtils.simplify(expr, valuation)))
+      }
+    } catch (_: RuntimeException) {
+      evaluate(expr)
     }
+  }
 
-  private fun singleConstantConditions(e: E): Map<ConstDecl<*>, List<Expr<BoolType>>> =
-    e.guard
+  private fun singleConstantConditions(
+    guard: Set<Expr<BoolType>>
+  ): Map<ConstDecl<*>, List<Expr<BoolType>>> =
+    guard
       .flatMapTo(hashSetOf()) { conjuncts(it) }
       .mapNotNull { condition -> soleConstant(condition)?.let { it to condition } }
       .groupBy({ it.first }, { it.second })
@@ -379,6 +452,7 @@ internal class XcfaOcValueAnalysis(
 
   private fun valueOf(decl: Decl<*>): Set<LitExpr<*>>? =
     when {
+      decl in restriction -> restriction[decl]
       decl !in eventsOf && decl !in definitions -> null
       decl in currentValues -> currentValues[decl]
       else -> NOTHING
@@ -388,7 +462,12 @@ internal class XcfaOcValueAnalysis(
     get() = if (forAddress) addressValues else values
 
   private fun evaluate(expr: Expr<*>): Set<LitExpr<*>>? {
-    val cache = if (forAddress && addressValues !== values) evaluatedAddresses else evaluated
+    val cache =
+      when {
+        restriction.isNotEmpty() -> restrictedEvaluated
+        forAddress && addressValues !== values -> evaluatedAddresses
+        else -> evaluated
+      }
     return if (expr in cache) cache[expr] else structural(expr).also { cache[expr] = it }
   }
 
