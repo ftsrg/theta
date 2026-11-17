@@ -1,9 +1,0 @@
-((select-trace 
-  (model
-    (define-fun input () Int (- 1)))
-  (init-global-vars )
-  (entry-proc ifExample)
-  (steps
-    (init-proc-vars ifExample ))
-  (incorrect-annotation check-before-increment :check-true (= x 0))
-))
