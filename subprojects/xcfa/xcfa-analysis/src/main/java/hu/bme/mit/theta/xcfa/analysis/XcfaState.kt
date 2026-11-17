@@ -17,13 +17,13 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.common.Tuple4
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.model.*
@@ -300,7 +300,8 @@ data class XcfaProcessState(
   val invokeParameterCounter: Int = 0,
 ) {
 
-  internal var popped: XcfaLocation? =
+  internal var popped:
+    Tuple4<XcfaLocation, Map<VarDecl<*>, VarDecl<*>>, XcfaLabel, Pair<XcfaLabel, XcfaLabel>>? =
     null // stores if the stack was popped due to abstract stack covering
 
   fun withNewLoc(l: XcfaLocation): XcfaProcessState {
@@ -380,6 +381,32 @@ data class XcfaProcessState(
     varLookup.pop()
     returnStmts.pop()
     paramStmts.pop()
+    return copy(
+      locs = deque,
+      varLookup = varLookup,
+      returnStmts = returnStmts,
+      paramStmts = paramStmts,
+    )
+  }
+
+  fun pop(): XcfaProcessState {
+    val popped = Tuple4.of(locs.peek(), varLookup.peek(), returnStmts.peek(), paramStmts.peek())
+    return exitFunction().also { it.popped = popped }
+  }
+
+  fun withPopRestored(): XcfaProcessState {
+    val deque = LinkedList(locs)
+    val varLookup = LinkedList(varLookup)
+    val returnStmts = LinkedList(returnStmts)
+    val paramStmts = LinkedList(paramStmts)
+
+    popped?.let { (loc, lookup, returnStmt, paramStmt) ->
+      deque.push(loc)
+      varLookup.push(lookup)
+      returnStmts.push(returnStmt)
+      paramStmts.push(paramStmt)
+    }
+
     return copy(
       locs = deque,
       varLookup = varLookup,

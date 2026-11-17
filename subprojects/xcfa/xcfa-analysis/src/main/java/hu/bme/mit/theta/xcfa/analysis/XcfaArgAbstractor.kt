@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,12 +110,18 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     for (candidate in candidates) {
       if (candidate.mayCover(node)) {
         var onlyStackCovers = false
-        (node.state as XcfaState<*>).processes.forEach { (pid: Int, proc: XcfaProcessState) ->
-          if (proc != (candidate.state as XcfaState<*>).processes[pid]) {
-            if (popCovered) proc.popped = proc.locs.pop()
-            onlyStackCovers = true
-          }
-        }
+        val state = node.state as XcfaState<*>
+        val poppedStates =
+          state.processes
+            .mapNotNull { (pid: Int, proc: XcfaProcessState) ->
+              if (proc != (candidate.state as XcfaState<*>).processes[pid]) {
+                onlyStackCovers = true
+                if (popCovered) pid to proc.pop() else null
+              } else null
+            }
+            .toMap()
+        if (poppedStates.isNotEmpty())
+          node.state = state.copy(processes = state.processes + poppedStates) as S?
         if (!onlyStackCovers) {
           node.cover(candidate)
         }
