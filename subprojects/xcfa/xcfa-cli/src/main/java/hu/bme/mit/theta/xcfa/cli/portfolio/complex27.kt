@@ -246,7 +246,7 @@ fun complex27(
             FrontendConfig(
               lbeLevel = LbePass.defaultLevel,
               loopUnroll = UnrollPass.UNROLL_LIMIT,
-              inputType = portfolioConfig.frontendConfig.inputType,
+              inputType = InputType.C,
               specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
             ),
           backendConfig = adapted.backendConfig,

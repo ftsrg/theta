@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode
 import hu.bme.mit.theta.xcfa.cli.portfolio.Node
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.complex27
+import hu.bme.mit.theta.xcfa.cli.portfolio.complex27svlib
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
@@ -93,7 +94,7 @@ class Complex27ChainTest {
     witness: File? = null,
     inputType: InputType = InputType.C,
   ): STM =
-    complex27(
+    (if (inputType == InputType.SVLIB) ::complex27svlib else ::complex27)(
       program,
       emptySet(),
       parseContext,
@@ -330,6 +331,14 @@ class Complex27ChainTest {
     )
     assertTrue(last.name.startsWith("PRED_CART-BW_BIN_ITP"), "last slice was ${last.name}")
     assertTrue(last.name.contains("mathsat"), "last slice was ${last.name}")
+  }
+
+  @Test
+  fun anSvLibProgramRunsNoBoundedEngine() {
+    for (program in listOf(looping(), loopFree())) {
+      val names = nodesOf(stmFor(program, inputType = InputType.SVLIB)).map { it.name }
+      assertTrue(names.none { it.startsWith("BMC") || it.startsWith("KIND") }, "chain was $names")
+    }
   }
 
   @Test
