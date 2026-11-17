@@ -58,7 +58,6 @@ fun complex27(
   portfolioConfig: XcfaConfig<*, *>,
   logger: Logger,
   uniqueLogger: Logger,
-  bounded: Boolean = true,
 ): STM {
   val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
@@ -350,7 +349,7 @@ fun complex27(
             mainTrait == NONLIN_INT ->
               listOf(boundedBmc, boundedKind, predCartBw, explicitSeq, predCartSeq)
             else -> listOf(predCartBw, boundedBmc, explicitSeq, boundedKind, predCartSeq)
-          }.let { if (bounded) it else it - setOf(boundedBmc, boundedKind) }
+          }
 
         val steps =
           order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
@@ -425,13 +424,3 @@ fun complex27(
   return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, complexity, false)
   else STM(inProcess, setOf(fallbackEdge))
 }
-
-/** [complex27] without the BMC and k-induction steps, for SV-LIB inputs. */
-fun complex27svlib(
-  xcfa: XCFA,
-  mcm: MCM,
-  parseContext: ParseContext,
-  portfolioConfig: XcfaConfig<*, *>,
-  logger: Logger,
-  uniqueLogger: Logger,
-): STM = complex27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger, bounded = false)
