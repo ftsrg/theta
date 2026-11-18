@@ -50,6 +50,7 @@ class XcfaCliDssTest {
           listOf("--dss-reset-precision"),
           listOf("--dss-reuse-block-precision"),
           listOf("--dss-global-predicate-pool", "false"),
+          listOf("--dss-solver", "Z3:new"),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "PRIORITY"),
           listOf("--dss-checker-backends", "CEGAR,KIND", "--dss-checker-selection", "FASTEST"),
           listOf("--dss-checker-backends", "CEGAR,BMC", "--dss-checker-selection", "ROUND_ROBIN"),
@@ -85,6 +86,26 @@ class XcfaCliDssTest {
   fun `a backend outside the DSS-compatible subset is rejected`() {
     val (output, thrown) = runDss("safe", "--dss-checker-backends", "OC")
     assertTrue(thrown != null && "OC" in output) { output }
+  }
+
+  @Test
+  fun `each solver option is used only by its own executor`() {
+    assertTrue(
+      dssVerdict("safe", "--dss-concurrent-solver", "NoSuchSolver").contains("SafetyResult Safe")
+    )
+    assertTrue(
+      dssVerdict("safe", "--dss-executor", "CONCURRENT", "--dss-solver", "NoSuchSolver")
+        .contains("SafetyResult Safe")
+    )
+  }
+
+  @Test
+  fun `an unknown solver of the running executor is rejected`() {
+    val (output, thrown) = runDss("safe", "--dss-solver", "NoSuchSolver")
+    assertTrue(thrown != null && "NoSuchSolver" in output) { output }
+    val (concurrentOutput, concurrentThrown) =
+      runDss("safe", "--dss-executor", "CONCURRENT", "--dss-concurrent-solver", "NoSuchSolver")
+    assertTrue(concurrentThrown != null && "NoSuchSolver" in concurrentOutput) { concurrentOutput }
   }
 
   @Test

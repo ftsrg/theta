@@ -20,6 +20,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.CONCURRENT_DSS_SOLVER
+import hu.bme.mit.theta.xcfa.analysis.dss.actor.DEFAULT_DSS_SOLVER
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
@@ -44,7 +46,7 @@ enum class DssDecomposition {
 }
 
 enum class DssExecutor {
-  /** One thread per block; uses `Z3:new`, as legacy Z3 is not thread-safe. */
+  /** One thread per block, with a thread-safe solver (`--dss-concurrent-solver`). */
   CONCURRENT,
   /** Deterministic, single-threaded round-robin. */
   SEQUENTIAL,
@@ -83,6 +85,16 @@ data class DssConfig(
   var checkerSelection: DssCheckerSelectionMethod = DssCheckerSelectionMethod.PRIORITY,
   @Parameter(names = ["--dss-executor"], description = "How the block analyses are run")
   var executor: DssExecutor = DssExecutor.SEQUENTIAL,
+  @Parameter(
+    names = ["--dss-solver"],
+    description = "The solver of the SEQUENTIAL and PROCESS executors",
+  )
+  var solver: String = DEFAULT_DSS_SOLVER,
+  @Parameter(
+    names = ["--dss-concurrent-solver"],
+    description = "The solver of the CONCURRENT executor, which must be thread-safe",
+  )
+  var concurrentSolver: String = CONCURRENT_DSS_SOLVER,
   @Parameter(
     names = ["--dss-global-predicate-pool"],
     description = "Seed every block's initial precision with every assume condition of the program",
