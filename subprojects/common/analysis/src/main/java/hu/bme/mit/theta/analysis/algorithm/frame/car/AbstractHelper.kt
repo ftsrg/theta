@@ -1,0 +1,184 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.analysis.algorithm.frame.car
+
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.algorithm.bounded.action
+import hu.bme.mit.theta.analysis.algorithm.mdd.varordering.Event
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
+import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.Exprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.IffExpr
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
+
+class AbstractHelper
+@JvmOverloads
+constructor(
+  val traceCheckerFactory: (MonolithicExpr) -> ExprTraceChecker<ItpRefutation>,
+  val logger: Logger = NullLogger.getInstance(),
+  val initPrec: (MonolithicExpr) -> PredPrec = { monolithicExpr ->
+    PredPrec.of(listOf(monolithicExpr.propExpr, monolithicExpr.initExpr))
+  },
+  val refine: (PredPrec, Expr<BoolType>) -> PredPrec = { prec, expr ->
+    prec.join(PredPrec.of(expr))
+  },
+) {
+  private lateinit var literalToPred: Map<Decl<*>, Expr<BoolType>>
+  private lateinit var concreteModel: MonolithicExpr
+  lateinit var currentPrec: PredPrec
+
+  // Activation literals already minted for a predicate are reused across CEGAR iterations
+  // (createAbstract is called again with a growing PredPrec every refinement round), so that
+  // frame/node content built from earlier iterations still refers to the same Var instances.
+  private val predToActivationLiteral = HashMap<Expr<BoolType>, VarDecl<BoolType>>()
+  private var nextActivationLiteralIndex = 0
+
+  fun createPrec(monolithicExpr: MonolithicExpr): MonolithicExpr {
+    concreteModel = monolithicExpr
+    currentPrec = initPrec(concreteModel)
+    val abstractModel = createAbstract(concreteModel, currentPrec)
+    return abstractModel
+  }
+
+  fun createAbstract(model: MonolithicExpr, prec: PredPrec): MonolithicExpr {
+    val lambdaList = ArrayList<IffExpr>()
+    val lambdaPrimeList = ArrayList<IffExpr>()
+    val activationLiterals = ArrayList<VarDecl<*>>()
+    val literalToPred = HashMap<Decl<*>, Expr<BoolType>>()
+    var reusedCount = 0
+    var mintedCount = 0
+
+    prec.preds
+      .filter { !model.ctrlVars.containsAll(ExprUtils.getVars(it)) }
+      .forEach { expr ->
+        val alreadyCached = predToActivationLiteral.containsKey(expr)
+        val v =
+          predToActivationLiteral.getOrPut(expr) {
+            Decls.Var("v${nextActivationLiteralIndex++}", BoolType.getInstance())
+          }
+        val singleLinePred = expr.toString().replace(Regex("\\s+"), " ").trim()
+        if (alreadyCached) {
+          reusedCount++
+          logger.write(
+            Logger.Level.VERBOSE,
+            "\tReusing activation literal %s for known predicate %s%n",
+            v.name,
+            singleLinePred,
+          )
+        } else {
+          mintedCount++
+          logger.write(
+            Logger.Level.VERBOSE,
+            "\tMinting new activation literal %s for new predicate %s%n",
+            v.name,
+            singleLinePred,
+          )
+        }
+        activationLiterals.add(v)
+        literalToPred[v] = expr
+        lambdaList.add(IffExpr.of(v.ref, expr))
+        lambdaPrimeList.add(
+          BoolExprs.Iff(Exprs.Prime(v.ref), ExprUtils.applyPrimes(expr, model.transOffsetIndex))
+        )
+      }
+
+    logger.write(
+      Logger.Level.INFO,
+      "Abstraction built with %d predicates (%d reused, %d newly minted); activation literal cache size: %d%n",
+      reusedCount + mintedCount,
+      reusedCount,
+      mintedCount,
+      predToActivationLiteral.size,
+    )
+
+    this.literalToPred = literalToPred
+
+    var indexingBuilder = VarIndexingFactory.indexingBuilder(1)
+    model.vars
+      .filter { it !in model.ctrlVars }
+      .forEach { decl ->
+        repeat(model.transOffsetIndex[decl]) { indexingBuilder = indexingBuilder.inc(decl) }
+      }
+    val transOffsetIndex = indexingBuilder.build()
+    return MonolithicExpr(
+      initExpr = SmartBoolExprs.And(SmartBoolExprs.And(lambdaList), model.initExpr),
+      transExpr = SmartBoolExprs.And(
+        SmartBoolExprs.And(lambdaList), SmartBoolExprs.And(lambdaPrimeList), model.transExpr
+      ),
+      propExpr = SmartBoolExprs.Not(
+        SmartBoolExprs.And(SmartBoolExprs.And(lambdaList), SmartBoolExprs.Not(model.propExpr))
+      ),
+      transOffsetIndex = transOffsetIndex,
+      vars = activationLiterals + model.ctrlVars,
+      ctrlVars = model.ctrlVars,
+      events =
+        model.events.map {
+          val originalAffectedVars = it.getAffectedVars()
+          val affectedCtrlVars = originalAffectedVars.filter { v -> v in model.ctrlVars }
+          val affectedActivationLiterals =
+            activationLiterals.filter { v ->
+              literalToPred[v]!!.let { pred ->
+                ExprUtils.getVars(pred).any { v2 -> v2 in originalAffectedVars }
+              }
+            }
+          object : Event<VarDecl<*>> {
+            override fun getAffectedVars(): List<VarDecl<*>> =
+              affectedCtrlVars + affectedActivationLiterals
+          }
+        },
+    )
+  }
+
+  fun getConcretisationResult(cex: Trace<ExplState, ExprAction>): ExprTraceStatus<ItpRefutation?>? {
+    val trace =
+      cex.let {
+        Trace.of(
+          it.states.map(this::activationLiteralsToPredicates),
+          it.actions.map { concreteModel.action() },
+        )
+      }
+    return traceCheckerFactory(concreteModel).check(trace)
+  }
+
+  fun activationLiteralsToPredicates(valuation: Valuation) =
+    PredState.of(
+      valuation.toMap().minus(concreteModel.ctrlVars.toSet()).map {
+        when ((it.value as BoolLitExpr).value) {
+          true -> literalToPred[it.key]
+          false -> currentPrec.negate(literalToPred[it.key])
+        }
+      }
+    )
+}

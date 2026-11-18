@@ -1,5 +1,5 @@
 /*
- *  Copyright 2025 Budapest University of Technology and Economics
+ *  Copyright 2026 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ package hu.bme.mit.theta.sts.analysis;
  *  limitations under the License.
  */
 
-import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.frame.ic3.Ic3Checker;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -65,9 +65,7 @@ public class StsIc3Test {
                     {"src/test/resources/counter.system", true},
                     {"src/test/resources/counter_bad.system", false},
                     {"src/test/resources/counter_parametric.system", true},
-
-                    //                {"src/test/resources/loop.system", true},
-
+                    {"src/test/resources/loop.system", true},
                     {"src/test/resources/loop_bad.system", false},
                     {"src/test/resources/multipleinitial.system", false},
                     {"src/test/resources/readerswriters.system", true},
@@ -103,12 +101,6 @@ public class StsIc3Test {
                                 new Ic3Checker(
                                         monolithicExpr,
                                         Z3LegacySolverFactory.getInstance(),
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
-                                        true,
                                         logger),
                         List.of(),
                         List.of(),
