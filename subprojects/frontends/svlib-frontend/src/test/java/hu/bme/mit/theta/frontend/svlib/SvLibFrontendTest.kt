@@ -250,6 +250,30 @@ internal class SvLibFrontendTest {
   }
 
   @Test
+  fun quotedSymbolsAreNamedWithoutTheirQuotes() {
+    val xcfa: XCFA = parseResource("quoted-symbols.svlib")
+
+    val vars = xcfa.collectVars()
+    assertEquals(
+      setOf("g::x", "y", "a::in", "b::out", "c::loc", "r::v"),
+      vars.map { it.name }.toSet(),
+    )
+    assertTrue(xcfa.procedures.any { it.name == "p::q" })
+    assertTrue(
+      xcfa.procedures
+        .flatMap { it.locs }
+        .any { "check::r" in ((it.metadata as? SvLibTagMetadata)?.tags ?: emptySet()) }
+    )
+
+    val usedVars = xcfa.procedures.flatMap { it.edges }.flatMap { it.label.collectVars() }.toSet()
+    assertEquals(1, usedVars.count { it.name == "y" }, "|y| and y must be the same variable")
+
+    val transformer = SvLibExprTransformer()
+    assertEquals("|g::x|", transformer.toTerm(vars.single { it.name == "g::x" }.ref))
+    assertEquals("y", transformer.toTerm(vars.single { it.name == "y" }.ref))
+  }
+
+  @Test
   fun entryWrapperAssumesAssertionsBeforeTheCall() {
     val xcfa: XCFA = parseResource("model-symbols.svlib")
 

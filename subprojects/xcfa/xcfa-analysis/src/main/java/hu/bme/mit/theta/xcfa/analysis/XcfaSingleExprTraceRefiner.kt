@@ -31,7 +31,6 @@ import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
-import java.util.*
 
 /**
  * Abstract actions only know their own memory writes, so a read would bind to the unconstrained
@@ -113,10 +112,8 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
       state.processes.entries
         .find { (_, processState) -> processState.popped != null }
         ?.let { (pid, processState) ->
-          val stackBeforePop = LinkedList(processState.locs)
-          stackBeforePop.push(processState.popped)
           val processesBeforePop = state.processes.toMutableMap()
-          processesBeforePop[pid] = processState.copy(locs = stackBeforePop)
+          processesBeforePop[pid] = processState.withPopRestored()
           val stateBeforePop = state.copy(processes = processesBeforePop)
           return Pair(i, stateBeforePop)
         }

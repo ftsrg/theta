@@ -16,7 +16,7 @@ Paths are relative to [src/main/java/hu/bme/mit/theta/xcfa/cli/](src/main/java/h
 
 - `XcfaCli.kt` calls `runConfig` in `ExecuteConfig.kt`, which validates the input, runs `frontend` and `backend`, maps the result and writes the witness.
 - `params/`: `XcfaConfig.kt` (the config tree, with one `SpecBackendConfig` per backend), `ParamValues.kt` (the `Backend`, `Domain`, `Refinement`, `POR`, ... enums, which carry their factories), `ExitCodes.kt`.
-- `checkers/`: `ConfigToChecker.kt` dispatches on `Backend` to a `ConfigTo<X>Checker.kt`. `ConfigToPortfolio.kt` maps `--portfolio` names to `portfolio/` (`STABLE` is `complex27`).
+- `checkers/`: `ConfigToChecker.kt` dispatches on `Backend` to a `ConfigTo<X>Checker.kt`. `ConfigToPortfolio.kt` maps `--portfolio` names to `portfolio/` (`STABLE` is `complex27`; SV-LIB inputs get `complex27svlib`, which drops BMC and k-induction).
 - `utils/XcfaParser.kt` (one parser per input type), `witnesstransformation/` (trace concretization, witness application), `utils/*WitnessWriter.kt`.
 
 ## Invariants / gotchas

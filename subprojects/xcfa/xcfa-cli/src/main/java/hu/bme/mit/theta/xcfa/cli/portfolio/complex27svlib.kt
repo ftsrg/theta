@@ -1,0 +1,362 @@
+/*
+ *  Copyright 2026 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package hu.bme.mit.theta.xcfa.cli.portfolio
+
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.isInlined
+import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.params.Domain.*
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.ARR
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.BITWISE
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.FLOAT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.LIN_INT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.MULTITHREAD
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.NONLIN_INT
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.PTR
+import hu.bme.mit.theta.xcfa.cli.portfolio.MainTrait.TERMINATION
+import hu.bme.mit.theta.xcfa.cli.runConfig
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
+import hu.bme.mit.theta.xcfa.passes.structure.LbePass
+import hu.bme.mit.theta.xcfa.utils.dereferences
+
+/**
+ * Per-configuration slices of the 900 s budget.
+ *
+ * Sized from a 16-configuration sweep of the whole suite: 80 % of every configuration's correct
+ * answers arrive within 16 s and 95 % within 25-120 s, so a long slice buys very little while a
+ * configuration that never gets a slice costs everything it would have solved. Breadth first, and
+ * only the leader gets an extended second attempt. The previous chain spent 300+300+200+150 ms =
+ * 950 s of slices inside a 900 s limit, so its last configuration could never run at all.
+ */
+private const val LEAD_SLICE_MS = 150_000L
+private const val NEXT_SLICE_MS = 100_000L
+private const val RETRY_SLICE_MS = 200_000L
+
+/** The [complex27] chain without BMC and k-induction, for SV-LIB inputs. */
+fun complex27svlib(
+  xcfa: XCFA,
+  mcm: MCM,
+  parseContext: ParseContext,
+  portfolioConfig: XcfaConfig<*, *>,
+  logger: Logger,
+  uniqueLogger: Logger,
+): STM {
+  val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
+
+  var baseCegarConfig = baseCegarConfig(xcfa, parseContext, portfolioConfig)
+  // A witness instruments the program with a segment counter; follow the witness along it.
+  if (portfolioConfig.inputConfig.witness != null)
+    baseCegarConfig = baseCegarConfig.adaptConfig(search = Search.SEGMENT_ORDER)
+  val baseBoundedConfig = baseBoundedConfig(portfolioConfig)
+  // Single-threaded only: multithreaded programs that are not inlined also reach this chain.
+  val blockEncoding = !parseContext.multiThreading
+  val baseMddConfig = baseMddConfig(portfolioConfig)
+  val baseIc3Config = baseIc3Config(portfolioConfig)
+
+  fun getStm(mainTrait: MainTrait, loopFree: Boolean, complexity: Int, inProcess: Boolean): STM {
+    fun cegar(
+      timeout: Long,
+      solver: String,
+      domain: Domain = Domain.PRED_CART,
+      refinement: Refinement = Refinement.SEQ_ITP,
+    ): ConfigNode {
+      return ConfigNode(
+        "${domain.name}-${refinement.name}-${solver}-$inProcess",
+        baseCegarConfig.adaptConfig(
+          inProcess = inProcess,
+          domain = domain,
+          refinement = refinement,
+          exprSplitter = ExprSplitterOptions.WHOLE,
+          timeoutMs = timeout,
+          abstractionSolver = solver,
+          refinementSolver = solver,
+        ),
+        checker,
+      )
+    }
+
+    val imc = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IMC-${solver}-$inProcess",
+        baseBoundedConfig.adaptConfig(
+          inProcess = inProcess,
+          bmcEnabled = false,
+          indEnabled = false,
+          itpEnabled = true,
+          timeoutMs = timeout,
+          itpSolver = solver,
+          blockEncoding = blockEncoding,
+        ),
+        checker,
+      )
+    }
+
+    val ic3 = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IC3-${solver}-$inProcess",
+        baseIc3Config.copy(
+          backendConfig =
+            baseIc3Config.backendConfig.copy(
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              specConfig =
+                baseIc3Config.backendConfig.specConfig!!.copy(solver = solver, reversed = true),
+            )
+        ),
+        checker,
+      )
+    }
+
+    val ic3Cegar = { timeout: Long, solver: String ->
+      ConfigNode(
+        "IC3-cegar-${solver}-$inProcess",
+        baseIc3Config.copy(
+          backendConfig =
+            baseIc3Config.backendConfig.copy(
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              specConfig =
+                baseIc3Config.backendConfig.specConfig!!.copy(
+                  solver = solver,
+                  cegar = true,
+                  reversed = true,
+                ),
+            )
+        ),
+        checker,
+      )
+    }
+
+    val mdd = { timeout: Long, solver: String ->
+      ConfigNode(
+        "MDD-${solver}-$inProcess",
+        baseMddConfig.copy(
+          backendConfig =
+            baseMddConfig.backendConfig.copy(
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              specConfig = baseMddConfig.backendConfig.specConfig!!.copy(solver = solver),
+            )
+        ),
+        checker,
+      )
+    }
+
+    val mddCegar = { timeout: Long, solver: String ->
+      ConfigNode(
+        "MDD-cegar-${solver}-$inProcess",
+        baseMddConfig.copy(
+          backendConfig =
+            baseMddConfig.backendConfig.copy(
+              timeoutMs = timeout,
+              inProcess = inProcess,
+              specConfig =
+                baseMddConfig.backendConfig.specConfig!!.copy(cegar = true, solver = solver),
+            )
+        ),
+        checker,
+      )
+    }
+
+    /**
+     * The leading configuration again, but with the program re-read under bitvector arithmetic.
+     *
+     * `efficient` resolves to integer wherever integer can express the program, and that is the
+     * right first bet: on the tasks both encodings can parse, integer solves more than bitvector in
+     * every algorithm measured, and solves it faster. It is not a free win though -- bitvector
+     * still decides several hundred tasks per algorithm that integer cannot -- so once the integer
+     * attempt is spent, the last slice pays for a re-parse and tries the other encoding.
+     *
+     * Interpolation has to move with the encoding: Z3's legacy API refuses to interpolate
+     * bitvectors, so this configuration interpolates on MathSAT whatever the rest of the chain
+     * uses.
+     */
+    fun bitvectorRetry(timeout: Long, solver: String): ConfigNode {
+      val adapted =
+        baseCegarConfig.adaptConfig(
+          inProcess = inProcess,
+          domain = PRED_CART,
+          refinement = Refinement.BW_BIN_ITP,
+          exprSplitter = ExprSplitterOptions.WHOLE,
+          timeoutMs = timeout,
+          abstractionSolver = solver,
+          refinementSolver = solver,
+        )
+      return ConfigNode(
+        "PRED_CART-BW_BIN_ITP-bitvector-$solver-$inProcess",
+        XcfaConfig<CFrontendConfig, CegarConfig>(
+          inputConfig =
+            portfolioConfig.inputConfig.copy(
+              xcfaWCtx = null, // re-read the program: the parsed one is integer-encoded
+              propertyFile = null,
+              property = portfolioConfig.inputConfig.property,
+            ),
+          frontendConfig =
+            FrontendConfig(
+              lbeLevel = LbePass.defaultLevel,
+              loopUnroll = UnrollPass.UNROLL_LIMIT,
+              inputType = portfolioConfig.frontendConfig.inputType,
+              specConfig = CFrontendConfig(arithmetic = ArithmeticType.bitvector),
+            ),
+          backendConfig = adapted.backendConfig,
+          outputConfig = baseCegarConfig.outputConfig,
+          debugConfig = portfolioConfig.debugConfig,
+        ),
+        checker,
+      )
+    }
+
+    // Which solver each kind of configuration runs on, and what it falls back to.
+    //
+    // This is decided by the theories the program actually contains, not by which chain it takes.
+    // The two are independent: `mainTrait` picks the *order* of algorithms, but the encoding comes
+    // from the frontend, and a pointer-manipulating program full of bitwise operators is encoded
+    // over bitvectors while still being routed down the pointer chain. Keying the solver off the
+    // chain sent exactly those programs to Z3, whose legacy API is the only Z3 that interpolates
+    // and which refuses bitvectors outright ("theory not supported by interpolation").
+    //
+    // Floats outrank bitvectors here: MathSAT rejects the combination with
+    // "FP<->BV combination unsupported by the current configuration", so a program with both has to
+    // go to cvc5, which decides them together.
+    val bitvectorEncoded =
+      parseContext.arithmetic == ArithmeticType.bitvector ||
+        ArithmeticTrait.BITWISE in parseContext.arithmeticTraits
+    val hasFloats = ArithmeticTrait.FLOAT in parseContext.arithmeticTraits
+
+    val itpSolver: String
+    val itpAlt: String
+    when {
+      hasFloats -> {
+        itpSolver = "cvc5:1.3.4"
+        // MathSAT rejects floats combined with bitvectors, and cvc5 is the only solver packaged
+        // that decides the combination, so there is no alternative to fall back to there.
+        itpAlt = if (bitvectorEncoded) itpSolver else "mathsat:5.6.19"
+      }
+      bitvectorEncoded -> {
+        itpSolver = "mathsat:5.6.19"
+        // The only other packaged solver that interpolates over bitvectors.
+        itpAlt = "bitwuzla:0.9.1"
+      }
+      else -> {
+        itpSolver = "Z3"
+        itpAlt = "mathsat:5.6.19"
+      }
+    }
+
+    val isMemsafety =
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.MEMSAFETY
+
+    val lead = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.BW_BIN_ITP) }
+    val explSeq = { ms: Long, solver: String -> cegar(ms, solver, EXPL, Refinement.SEQ_ITP) }
+    val predSeq = { ms: Long, solver: String -> cegar(ms, solver, PRED_CART, Refinement.SEQ_ITP) }
+
+    val (steps, lastResort) =
+      if (xcfa.isInlined) {
+        // Budgets go by position, not by algorithm: whatever leads gets the lead slice.
+        val predCartBw = { ms: Long -> step(lead, ms, itpSolver, itpAlt) }
+        val explicitSeq = { ms: Long -> step(explSeq, ms, itpSolver, itpAlt) }
+        val predCartSeq = { ms: Long -> step(predSeq, ms, itpSolver, itpAlt) }
+
+        // The orders of complex27 with the BMC and k-induction steps removed.
+        val order =
+          when {
+            loopFree -> listOf(predCartBw, explicitSeq, predCartSeq)
+            hasFloats -> listOf(explicitSeq, predCartBw, predCartSeq)
+            isMemsafety || complexity > EXPLICIT_FIRST_COMPLEXITY ->
+              listOf(explicitSeq, predCartBw, predCartSeq)
+            mainTrait == NONLIN_INT -> listOf(predCartBw, explicitSeq, predCartSeq)
+            else -> listOf(predCartBw, explicitSeq, predCartSeq)
+          }
+
+        val steps =
+          order.mapIndexed { i, make -> make(if (i == 0) LEAD_SLICE_MS else NEXT_SLICE_MS) }
+
+        // The last slice changes the encoding rather than the algorithm. Past this point
+        // another algorithm is worth tens of tasks, while the encoding the frontend did not
+        // pick is worth several hundred per algorithm. It is skipped where it cannot pay:
+        // `efficient` already resolves to bitvector for a bitwise program, so re-parsing would
+        // reproduce the same XCFA, and a float program has no bitvector encoding at all.
+        val lastResort =
+          if (bitvectorEncoded || hasFloats) lead(RETRY_SLICE_MS, itpAlt)
+          else bitvectorRetry(RETRY_SLICE_MS, "mathsat:5.6.19")
+        steps to lastResort
+      } else {
+        // Not inlined: recursion survived, so the bounded engines cannot bound it and only the
+        // CEGAR configurations are applicable.
+        listOf(
+          step(lead, LEAD_SLICE_MS, itpSolver, itpAlt),
+          step(explSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+          step(predSeq, NEXT_SLICE_MS, itpSolver, itpAlt),
+        ) to lead(RETRY_SLICE_MS, itpAlt)
+      }
+
+    return STM(steps.first().first, chainEdges(steps, lastResort, inProcess))
+  }
+
+  // Only three of these values still change what the portfolio does: TERMINATION and MULTITHREAD
+  // hand the program to a different portfolio, and NONLIN_INT reorders the chain. PTR, ARR, FLOAT,
+  // BITWISE and LIN_INT all fall through to the same chain now.
+  //
+  // They used to select the solver, which was actively wrong: PTR is tested before BITWISE and
+  // almost every real program dereferences something, so a bitwise program took the pointer branch
+  // and interpolated on a Z3 that refuses bitvectors. The solver now comes from the theories the
+  // program actually contains, and the ordering from the property and the shape of the control
+  // flow -- measured over the suite, the property separates the algorithms about twice as well as
+  // the benchmark family does, and the family barely beats picking one algorithm for everything.
+  val mainTrait =
+    when {
+      portfolioConfig.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION ->
+        MainTrait.TERMINATION
+      parseContext.multiThreading -> MULTITHREAD
+      xcfa.procedures.any { p -> p.edges.any { it.label.dereferences.isNotEmpty() } } -> PTR
+      ArithmeticTrait.FLOAT in parseContext.arithmeticTraits -> FLOAT
+      ArithmeticTrait.ARR in parseContext.arithmeticTraits -> ARR
+      ArithmeticTrait.BITWISE in parseContext.arithmeticTraits -> BITWISE
+      ArithmeticTrait.NONLIN_INT in parseContext.arithmeticTraits -> NONLIN_INT
+      else -> LIN_INT
+    }
+
+  logger.benchmark("Using portfolio: $mainTrait\n")
+
+  // These portfolios have their own in-process fallback, so they are not wrapped in this one's.
+  if (mainTrait == MULTITHREAD)
+    return multithreadPortfolio27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+  if (mainTrait == TERMINATION)
+    return termination27(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
+
+  val loopFree = xcfa.boundedIsComplete
+  logger.benchmark("Bounded engines complete: $loopFree\n")
+
+  val complexity = xcfa.cyclomaticComplexity
+  logger.benchmark("Cyclomatic complexity: $complexity\n")
+
+  val inProcessStm = getStm(mainTrait, loopFree, complexity, true)
+  val notInProcessStm = getStm(mainTrait, loopFree, complexity, false)
+
+  val inProcess = HierarchicalNode("InProcess", inProcessStm)
+  val notInProcess = HierarchicalNode("NotInprocess", notInProcessStm)
+
+  val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
+
+  return if (portfolioConfig.debugConfig.debug) getStm(mainTrait, loopFree, complexity, false)
+  else STM(inProcess, setOf(fallbackEdge))
+}

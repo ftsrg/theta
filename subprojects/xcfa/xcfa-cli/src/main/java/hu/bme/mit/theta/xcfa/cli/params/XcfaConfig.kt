@@ -877,6 +877,7 @@ data class OutputConfig(
       cOutputConfig.getObjects() union
       xcfaOutputConfig.getObjects() union
       chcOutputConfig.getObjects() union
+      svLibOutputConfig.getObjects() union
       precOutputConfig.getObjects() union
       witnessConfig.getObjects() union
       argConfig.getObjects()
@@ -887,6 +888,7 @@ data class OutputConfig(
         cOutputConfig,
         xcfaOutputConfig,
         chcOutputConfig,
+        svLibOutputConfig,
         precOutputConfig,
         witnessConfig,
         argConfig,
