@@ -25,10 +25,12 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.reachedset.Partition
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Function
+import java.util.stream.Collectors
 
 class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
   argBuilder: ArgBuilder<S, A, P>,
@@ -37,6 +39,8 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
   stopCriterion: StopCriterion<S, A>,
   logger: Logger,
 ) : BasicArgAbstractor<S, A, P>(argBuilder, projection, waitlist, stopCriterion, logger) {
+
+  private val pops = LinkedHashMap<ArgNode<S, A>, Pop<ArgNode<S, A>>>()
 
   override fun check(arg: ARG<S, A>, prec: P): AbstractorResult {
     logger.write(Logger.Level.DETAIL, "|  |  Precision: %s%n", prec)
@@ -58,6 +62,8 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     )
     logger.write(Logger.Level.SUBSTEP, "|  |  Building ARG...")
 
+    updatePops(arg)
+
     val reachedSet: Partition<ArgNode<S, A>, *> =
       Partition.of { n: ArgNode<S, A> -> projection.apply(n.state) }
     waitlist.clear()
@@ -68,18 +74,22 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     if (!stopCriterion.canStop(arg)) {
       while (!waitlist.isEmpty) {
         val node = waitlist.remove()
-        var newNodes: Collection<ArgNode<S, A>>? = emptyList()
-        if ((node.state as XcfaState<*>).xcfa!!.isInlined) {
-          close(node, reachedSet[node])
-        } else {
-          val expandProcedureCall = (node.state as XcfaState<*>) in (prec as XcfaPrec<P>).noPop
-          closePop(node, reachedSet[node], !expandProcedureCall)
-        }
-        if (!node.isSubsumed && !node.isTarget) {
+        var newNodes: Collection<ArgNode<S, A>> = emptyList()
+        val popSuccessors =
+          if ((node.state as XcfaState<*>).xcfa!!.isInlined) {
+            close(node, reachedSet[node])
+            null
+          } else {
+            val expandProcedureCall = (node.state as XcfaState<*>) in (prec as XcfaPrec<P>).noPop
+            closePop(arg, node, reachedSet[node], !expandProcedureCall, prec)
+          }
+        if (popSuccessors != null) {
+          newNodes = popSuccessors
+        } else if (!node.isSubsumed && !node.isTarget) {
           newNodes = argBuilder.expand(node, prec)
-          reachedSet.addAll(newNodes)
-          waitlist.addAll(newNodes)
         }
+        reachedSet.addAll(newNodes)
+        waitlist.addAll(newNodes)
         if (stopCriterion.canStop(arg, newNodes)) break
       }
     }
@@ -103,32 +113,69 @@ class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     }
   }
 
-  fun closePop(node: ArgNode<S, A>, candidates: Collection<ArgNode<S, A>>, popCovered: Boolean) {
-    if (!node.isLeaf) {
-      return
-    }
-    for (candidate in candidates) {
-      if (candidate.mayCover(node)) {
-        var onlyStackCovers = false
-        val state = node.state as XcfaState<*>
-        val poppedStates =
-          state.processes
-            .mapNotNull { (pid: Int, proc: XcfaProcessState) ->
-              if (proc != (candidate.state as XcfaState<*>).processes[pid]) {
-                onlyStackCovers = true
-                if (popCovered) pid to proc.pop() else null
-              } else null
-            }
-            .toMap()
-        if (poppedStates.isNotEmpty())
-          node.state = state.copy(processes = state.processes + poppedStates) as S?
-        if (!onlyStackCovers) {
-          node.cover(candidate)
+  /**
+   * Covers [node] if possible. If not, it checks for stack cover and leaps to the end of the
+   * current procedure with an edge havocing written globals and output variables then returns the
+   * successors. Returns null otherwise.
+   */
+  fun closePop(
+    arg: ARG<S, A>,
+    node: ArgNode<S, A>,
+    candidates: Collection<ArgNode<S, A>>,
+    popCovered: Boolean,
+    prec: P,
+  ): Collection<ArgNode<S, A>>? {
+    if (!node.isLeaf || node.isTarget) return null
+    val state = node.state as XcfaState<*>
+    val covering = candidates.filter { it.mayCover(node) }
+    covering
+      .firstOrNull { candidate -> state.processes == (candidate.state as XcfaState<*>).processes }
+      ?.let {
+        node.cover(it)
+        return null
+      }
+    if (!popCovered) return null
+    val stackCovering = covering.firstOrNull() ?: return null
+    val (pid, process) =
+      state.processes.entries.singleOrNull() ?: return null // no popping in concurrency
+    val nextCnt = (state.sGlobal as? PtrState<*>)?.nextCnt ?: 0
+    val actions = state.xcfa?.leapToReturn(pid, process, nextCnt) ?: return null
+    val transFunc = argBuilder.analysis.transFunc
+    val successors =
+      actions.flatMap { action ->
+        transFunc.getSuccStates(node.state, action as A, prec).map { succState ->
+          arg.createSuccNode(node, action, succState, argBuilder.target.test(succState))
         }
-        return
+      }
+    node.expanded = true
+    pops[node] = Pop(stackCovering, successors)
+    return successors
+  }
+
+  /**
+   * Updates [pops] if the node or its covering node has been pruned. Prunes successors in the
+   * latter case.
+   */
+  private fun updatePops(arg: ARG<S, A>) {
+    if (pops.isEmpty()) return
+    val nodes = arg.nodes.collect(Collectors.toSet())
+    pops.entries.removeIf { (node, pop) ->
+      when {
+        // remove if node has been pruned or is to be expanded
+        node !in nodes || !node.isExpanded -> true
+        // if covering node has been pruned, prune successors and remove
+        pop.covering !in nodes -> {
+          pop.successors.filter { it in nodes }.forEach(arg::prune)
+          node.expanded = false
+          true
+        }
+        // keep otherwise
+        else -> false
       }
     }
   }
+
+  private data class Pop<N>(val covering: N, val successors: List<N>)
 
   companion object {
 

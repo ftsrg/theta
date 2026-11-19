@@ -106,20 +106,11 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     nodePruner: NodePruner<S, A>,
   ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner)
 
-  private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
-    trace.states.forEachIndexed { i, s ->
-      val state = s as XcfaState<S>
-      state.processes.entries
-        .find { (_, processState) -> processState.popped != null }
-        ?.let { (pid, processState) ->
-          val processesBeforePop = state.processes.toMutableMap()
-          processesBeforePop[pid] = processState.withPopRestored()
-          val stateBeforePop = state.copy(processes = processesBeforePop)
-          return Pair(i, stateBeforePop)
-        }
-    }
-    return null
-  }
+  /** The position of the first edge that skipped the rest of a frame, see [XcfaArgAbstractor]. */
+  private fun findPop(trace: Trace<S, A>): Int? =
+    trace.actions
+      .indexOfFirst { (it as XcfaAction).edge.metadata is StackPopMetaData }
+      .takeIf { it >= 0 }
 
   fun refineTemp(arg: ARG<S, A>, prec: P?): RefinerResult<P?, Trace<S, A>> {
     Preconditions.checkNotNull(arg)
@@ -176,11 +167,12 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     val checkForPop = !(traceToConcretize.states.first() as XcfaState<*>).xcfa!!.isInlined
 
     return if (checkForPop && refinerResult.isUnsafe)
-      findPoppedState(traceToConcretize)?.let { (i, state) ->
+      findPop(traceToConcretize)?.let { i ->
         when (pruneStrategy) {
           PruneStrategy.LAZY -> {
-            logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", i)
-            val nodeToPrune = cexToConcretize.node(i)
+            logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", i + 1)
+            // prune after the pop, not the popped state
+            val nodeToPrune = cexToConcretize.node(i + 1)
             nodePruner.prune(arg, nodeToPrune)
           }
 
@@ -193,7 +185,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         }
 
         val refinedPrec = (prec as XcfaPrec<P>).copy(noPop = prec.noPop.toMutableList())
-        refinedPrec.noPop.add(state)
+        refinedPrec.noPop.add(traceToConcretize.getState(i) as XcfaState<*>)
         RefinerResult.spurious(refinedPrec as P?)
       } ?: refinerResult
     else refinerResult
