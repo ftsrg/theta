@@ -49,6 +49,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.changeVars
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
+import hu.bme.mit.theta.xcfa.analysis.foldVarLookup
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.cli.witnesstransformation.XcfaTraceConcretizer
@@ -314,7 +315,7 @@ class SvLibXcfaTraceConcretizer : XcfaTraceConcretizer() {
     parseContext: ParseContext,
   ): ExplState {
     val currentState = state.processes.values.first()
-    val varLookup = currentState.varLookup.firstOrNull()?.reverseMapping() ?: emptyMap()
+    val varLookup = currentState.foldVarLookup().reverseMapping()
     return ExplState.of(valuation.changeVars(varLookup, keepAll = true))
   }
 

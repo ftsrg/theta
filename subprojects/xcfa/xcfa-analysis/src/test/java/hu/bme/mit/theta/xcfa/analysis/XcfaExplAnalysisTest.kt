@@ -68,6 +68,8 @@ class XcfaExplAnalysisTest {
         arrayOf("/02functionparam.c", SafetyResult<*, *>::isSafe),
         arrayOf("/03nondetfunction.c", SafetyResult<*, *>::isUnsafe),
         arrayOf("/04multithread.c", SafetyResult<*, *>::isUnsafe),
+        arrayOf("/52recursive_return_safe.c", SafetyResult<*, *>::isSafe),
+        arrayOf("/52recursive_return_unsafe.c", SafetyResult<*, *>::isUnsafe),
       )
     }
 

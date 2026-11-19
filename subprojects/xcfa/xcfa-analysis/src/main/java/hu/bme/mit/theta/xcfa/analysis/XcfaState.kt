@@ -326,7 +326,7 @@ data class XcfaProcessState(
     deque.push(xcfaProcedure.initLoc)
     val lookup = xcfaProcedure.createLookup(prefix, "P${procCnt++}")
     varLookup.push(lookup)
-    returnStmts.push(returnStmt)
+    returnStmts.push(returnStmt.changeVars(lookup))
     paramStmts.push(
       Pair(
         /* init */
@@ -343,18 +343,7 @@ data class XcfaProcessState(
             }
         ),
         /* deinit */
-        SequenceLabel(
-          paramList
-            .filter { it.value != ParamDirection.IN }
-            .map {
-              StmtLabel(
-                Assign(
-                  cast(it.key.changeVars(tempLookup), it.key.type),
-                  cast(it.key.changeVars(lookup).ref, it.key.type),
-                )
-              )
-            }
-        ),
+        NopLabel,
       )
     )
     return copy(
