@@ -79,7 +79,7 @@ fun XCFA.toThreadModularCHC(): List<Relation> {
   // Unique parameter names, as the locals of different procedures may share names.
   var paramCnt = 0
   fun params(vars: List<VarDecl<*>>, suffix: String): Map<VarDecl<*>, ParamDecl<*>> =
-    vars.associateWith { Param("|${it.name}_${suffix}${paramCnt++}|", it.type) }
+    vars.associateWith { Param("${it.name}_${suffix}${paramCnt++}", it.type) }
 
   val sharedOld = params(shared, "")
   val sharedNew = params(shared, "new")

@@ -17,7 +17,6 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.WrapperState
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.common.Tuple4
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
@@ -300,10 +299,6 @@ data class XcfaProcessState(
   val invokeParameterCounter: Int = 0,
 ) {
 
-  internal var popped:
-    Tuple4<XcfaLocation, Map<VarDecl<*>, VarDecl<*>>, XcfaLabel, Pair<XcfaLabel, XcfaLabel>>? =
-    null // stores if the stack was popped due to abstract stack covering
-
   fun withNewLoc(l: XcfaLocation): XcfaProcessState {
     val deque: LinkedList<XcfaLocation> = LinkedList(locs)
     deque.pop()
@@ -331,7 +326,7 @@ data class XcfaProcessState(
     deque.push(xcfaProcedure.initLoc)
     val lookup = xcfaProcedure.createLookup(prefix, "P${procCnt++}")
     varLookup.push(lookup)
-    returnStmts.push(returnStmt)
+    returnStmts.push(returnStmt.changeVars(lookup))
     paramStmts.push(
       Pair(
         /* init */
@@ -348,18 +343,7 @@ data class XcfaProcessState(
             }
         ),
         /* deinit */
-        SequenceLabel(
-          paramList
-            .filter { it.value != ParamDirection.IN }
-            .map {
-              StmtLabel(
-                Assign(
-                  cast(it.key.changeVars(tempLookup), it.key.type),
-                  cast(it.key.changeVars(lookup).ref, it.key.type),
-                )
-              )
-            }
-        ),
+        NopLabel,
       )
     )
     return copy(
@@ -381,32 +365,6 @@ data class XcfaProcessState(
     varLookup.pop()
     returnStmts.pop()
     paramStmts.pop()
-    return copy(
-      locs = deque,
-      varLookup = varLookup,
-      returnStmts = returnStmts,
-      paramStmts = paramStmts,
-    )
-  }
-
-  fun pop(): XcfaProcessState {
-    val popped = Tuple4.of(locs.peek(), varLookup.peek(), returnStmts.peek(), paramStmts.peek())
-    return exitFunction().also { it.popped = popped }
-  }
-
-  fun withPopRestored(): XcfaProcessState {
-    val deque = LinkedList(locs)
-    val varLookup = LinkedList(varLookup)
-    val returnStmts = LinkedList(returnStmts)
-    val paramStmts = LinkedList(paramStmts)
-
-    popped?.let { (loc, lookup, returnStmt, paramStmt) ->
-      deque.push(loc)
-      varLookup.push(lookup)
-      returnStmts.push(returnStmt)
-      paramStmts.push(paramStmt)
-    }
-
     return copy(
       locs = deque,
       varLookup = varLookup,

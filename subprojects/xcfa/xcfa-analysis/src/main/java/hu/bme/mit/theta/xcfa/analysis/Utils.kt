@@ -29,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.InvokeLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
+import java.util.WeakHashMap
 import kotlin.reflect.KProperty
 
 fun <K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }
@@ -80,18 +81,10 @@ private fun <S : ExprState> S.getState(varLookup: Map<VarDecl<*>, VarDecl<*>>): 
     as S
 
 class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
+  private val properties = WeakHashMap<T, P>()
 
-  private var calculated = false
-  private lateinit var property: P
-
-  operator fun getValue(thisRef: T, property: KProperty<*>): P {
-    return if (calculated) this.property
-    else
-      thisRef.getProperty().also {
-        this.property = it
-        this.calculated = true
-      }
-  }
+  operator fun getValue(thisRef: T, property: KProperty<*>): P =
+    properties[thisRef] ?: thisRef.getProperty().also { properties[thisRef] = it }
 }
 
 val XCFA.isInlined: Boolean by LazyDelegate {
