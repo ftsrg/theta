@@ -234,8 +234,6 @@ internal class XcfaRefineryOcChecker(
             propagation rule rfSomeRule(Write w, Read r) <->
                 may(rf(w, r)), !otherRfSource(w, r), guard(r) ==> rf(w, r).
                 
-            propagation rule rfSomeProp(Write w, Read r) <->
-                guard(r) ==> rf(w, r).
         """.trimIndent()
   }
 
@@ -547,6 +545,10 @@ internal class XcfaRefineryOcChecker(
     eg.wss.forEach { (varDecl, relations) ->
       relations.forEach { rel ->
         sb.append("?ws(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
+        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_1() <->" +
+          "          !ws(${rel.from.refineryId}, ${rel.to.refineryId}) ==> ws(${rel.to.refineryId}, ${rel.from.refineryId}).")
+        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_2() <->" +
+          "          ws(${rel.from.refineryId}, ${rel.to.refineryId}) ==> !ws(${rel.to.refineryId}, ${rel.from.refineryId}).")
       }
     }
 
