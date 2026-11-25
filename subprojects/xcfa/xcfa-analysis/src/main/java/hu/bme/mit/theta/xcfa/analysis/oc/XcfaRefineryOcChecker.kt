@@ -18,10 +18,23 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool as BoolLit
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int as IntLit
+import hu.bme.mit.theta.core.type.inttype.IntType
+import java.math.BigInteger
+import tools.refinery.generator.ModelGenerator
+import tools.refinery.logic.AbstractValue
+import tools.refinery.logic.term.truthvalue.TruthValue
+import tools.refinery.store.reasoning.interpretation.PartialInterpretation
+import tools.refinery.store.reasoning.representation.AnyPartialSymbol
+import tools.refinery.store.tuple.Tuple
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -43,6 +56,8 @@ internal class XcfaRefineryOcChecker(
     get() = currentStatus
   private var helperCount = 0
   override var model: Valuation? = null
+    private set
+  private var happensBefore: GlobalRelation? = null
 
   override fun initialize(eg: XcfaToEventGraph.EventGraph) {
     // see XcfaSmtOcChecker for reference on what needs to be done in this initialization
@@ -218,6 +233,9 @@ internal class XcfaRefineryOcChecker(
                 
             propagation rule rfSomeRule(Write w, Read r) <->
                 may(rf(w, r)), !otherRfSource(w, r), guard(r) ==> rf(w, r).
+                
+            propagation rule rfSomeProp(Write w, Read r) <->
+                guard(r) ==> rf(w, r).
         """.trimIndent()
   }
 
@@ -608,11 +626,14 @@ internal class XcfaRefineryOcChecker(
       //append("\n% Dynamic relations from check()\n")
       // wss és pos listák stringgé konvertálása
     }
+    model = null
+    happensBefore = null
     val problem = StandaloneRefinery.getProblemLoader().loadString(finalCode)
     try {
-      var generator = StandaloneRefinery.getGeneratorFactory().createGenerator(problem)
-
-      generator.generate()
+      StandaloneRefinery.getGeneratorFactory().createGenerator(problem).use { generator ->
+        generator.generate()
+        extractSolution(generator, events, pos, rfs, wss)
+      }
       currentStatus = SolverStatus.SAT
       println("sat")
       return SolverStatus.SAT
@@ -632,9 +653,88 @@ internal class XcfaRefineryOcChecker(
     return null
   }
 
-  override fun getHappensBefore(): GlobalRelation? {
-    TODO("Not yet implemented")
-    // retrieve all happens-before relations from the refinery solution, if SAT, null otherwise
+  override fun getHappensBefore(): GlobalRelation? =
+    if (currentStatus?.isSat == true) happensBefore?.copy() else null
+
+  /**
+   * Reads the generated refinery model:
+   * - value of event -> assigned to the event's indexed constant,
+   * - value of every possible rf and ws edge (boolean) -> assigned to the relation's declaration,
+   * - po edges, enabled rf/ws edges and the hb predicate -> the (transitively closed) happens-before relation over clkIds.
+   */
+  private fun extractSolution(
+    generator: ModelGenerator,
+    events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
+    pos: List<Relation<XcfaEvent>>,
+    rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
+    wss: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
+  ) {
+    val trace = generator.problemTrace
+    fun interpretation(symbol: AnyPartialSymbol) =
+      generator.getPartialInterpretation(symbol) as PartialInterpretation<*, *>
+
+    val valueInterpretation = interpretation(trace.getPartialFunction("Event::value"))
+    val rfInterpretation = interpretation(trace.getPartialRelation("rf"))
+    val wsInterpretation = interpretation(trace.getPartialRelation("ws"))
+    val hbInterpretation = interpretation(trace.getPartialRelation("hb"))
+
+    val allEvents = events.values.flatMap { it.values }.flatten()
+    val nodeIds = HashMap<XcfaEvent, Int>()
+    val eventsByNodeId = HashMap<Int, XcfaEvent>()
+    allEvents.forEach { event ->
+      val id = runCatching { trace.getNodeId(event.refineryId) }.getOrNull() ?: return@forEach
+      if (id < 0) return@forEach
+      nodeIds[event] = id
+      eventsByNodeId[id] = event
+    }
+
+    fun PartialInterpretation<*, *>.isTrue(vararg nodes: Int): Boolean =
+      get(Tuple.of(*nodes)) == TruthValue.TRUE
+
+    val valuation = mutableMapOf<Decl<*>, LitExpr<*>>()
+
+    allEvents.forEach { event ->
+      val id = nodeIds[event] ?: return@forEach
+      val abstractValue = valueInterpretation.get(Tuple.of(id)) as? AbstractValue<*, *>
+      val value = (abstractValue?.concrete ?: abstractValue?.arbitrary) as? BigInteger
+        ?: return@forEach
+      val lit: LitExpr<*> =
+        when (event.const.type) {
+          is IntType -> IntLit(value)
+          is BoolType -> BoolLit(value != BigInteger.ZERO)
+          else -> return@forEach
+        }
+      valuation[event.const] = lit
+    }
+
+    val initials = mutableListOf<Triple<Int, Int, Reason>>()
+    fun addEdge(from: XcfaEvent, to: XcfaEvent, reason: Reason) {
+      if (from.clkId != to.clkId) initials.add(Triple(from.clkId, to.clkId, reason))
+    }
+
+    pos.forEach { addEdge(it.from, it.to, PoReason) }
+
+    listOf(rfs to rfInterpretation, wss to wsInterpretation).forEach { (relations, interp) ->
+      relations.values.flatten().forEach { rel ->
+        val from = nodeIds[rel.from]
+        val to = nodeIds[rel.to]
+        val enabled = from != null && to != null && interp.isTrue(from, to)
+        valuation[rel.decl] = BoolLit(enabled)
+        if (enabled) addEdge(rel.from, rel.to, RelationReason(rel))
+      }
+    }
+
+    val cursor = hbInterpretation.all
+    while (cursor.move()) {
+      if (cursor.value != TruthValue.TRUE) continue
+      val key = cursor.key
+      val from = eventsByNodeId[key[0]] ?: continue
+      val to = eventsByNodeId[key[1]] ?: continue
+      addEdge(from, to, UndetailedReason)
+    }
+
+    model = ImmutableValuation.from(valuation)
+    happensBefore = GlobalRelation(Event.clkSize) { null }.apply { close(initials) }
   }
 
   override fun getPropagatedClauses(): List<Reason> = emptyList()
@@ -689,6 +789,7 @@ internal class XcfaRefineryOcChecker(
     is GeqExpr<*> -> ops.joinToString(">=") { it.toRefineryExpr(events, helperScripts, identifier)}
     is SubExpr<*> -> ops.joinToString("-")  { "(${it.toRefineryExpr(events, helperScripts, identifier)})" }
     is MulExpr<*> -> ops.joinToString("*") { "(${it.toRefineryExpr(events, helperScripts, identifier)})"}
+    is DivExpr<*> -> "(${leftOp.toRefineryExpr(events, helperScripts, identifier)} / ${rightOp.toRefineryExpr(events, helperScripts, identifier)})"
     is IteExpr<*> -> {
       val currentHelperId = ++helperCount
       val helperName = "${identifier}_helper_$currentHelperId"
