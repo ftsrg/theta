@@ -42,6 +42,32 @@ import org.junit.jupiter.params.provider.ValueSource
 
 private const val CUT = "--dss-cut-on-timeout"
 
+/** emergent27's lead DSS step (`portfolio/emergent27.kt`, "BUDGET-CUT"). */
+private val EMERGENT_LEAD =
+  arrayOf(
+    "--dss-decomposition",
+    "MIN_CUT_ABSORB_SELF_LOOPS",
+    "--dss-checker-backends",
+    "KIND,CEGAR",
+    "--dss-checker-selection",
+    "PRIORITY",
+    "--dss-checker-budget",
+    "90000",
+    CUT,
+    "--dss-cut-strategy",
+    "MERGE_ACYCLIC",
+    "--dss-cut-restart",
+    "BLOCK",
+    "--dss-interpolate-bounded-proofs",
+    "false",
+    "--dss-solver",
+    "JavaSMT:MATHSAT5",
+    "--dss-fallback-solver",
+    "Z3:new",
+    "--dss-nonlinear-solver",
+    "Z3:new",
+  )
+
 class XcfaCliDssTest {
 
   companion object {
@@ -539,23 +565,25 @@ class XcfaCliDssTest {
   }
 
   /**
-   * A bounded checker's memory pass havocs the heap at the start of the loop block; as an aux
-   * variable in the condition, that heap would let the root reach it from any state.
+   * The memory is converted to arrays once, before the decomposition, so every block shares them.
+   * Converted per block, a bounded checker's memory pass havocked the heap at the start of the loop
+   * block, and as an aux variable in the condition that heap let the root reach it from any state
+   * (a wrong UNSAFE). With emergent27's lead settings the program is now proven safe.
    */
   @Test
-  fun `a heap read in a bounded block is never turned into an UNSAFE`() {
-    val (output, _) =
-      runDss(
-        "heap_list",
-        "--dss-decomposition",
-        "MIN_CUT_ABSORB_SELF_LOOPS",
-        "--dss-checker-backends",
-        "KIND",
-        "--dss-solver",
-        "Z3:new",
-      )
-    assertTrue(!output.contains("SafetyResult Unsafe")) { output }
-    assertTrue(output.contains("variables outside the program")) { output }
+  fun `blocks share the memory arrays, so a heap program is proven safe`() {
+    val (output, thrown) = runDss("heap_list", *EMERGENT_LEAD)
+    if (thrown != null) throw AssertionError(output, thrown)
+    assertTrue(!output.contains("variables outside the program")) { output }
+    val verdict = output.lines().lastOrNull { it.contains("SafetyResult") }.orEmpty()
+    assertTrue(verdict.contains("SafetyResult Safe")) { verdict }
+  }
+
+  /** A heap over-read found through memory safety, which DSS checks as an error location. */
+  @Test
+  fun `a heap over-read is UNSAFE for valid-memsafety`() {
+    val verdict = dssVerdict("heap_oob", *EMERGENT_LEAD, property = "valid-memsafety")
+    assertTrue(verdict.contains("SafetyResult Unsafe")) { verdict }
   }
 
   /** The verdict line of a DSS run on [program] against `<property>.prp`. */

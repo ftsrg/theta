@@ -125,6 +125,10 @@ import hu.bme.mit.theta.xcfa.cli.params.toJson
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.memory.DereferenceToArrayPass
+import hu.bme.mit.theta.xcfa.utils.dereferences
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -156,14 +160,34 @@ internal fun DssConfig.forArithmetic(traits: Set<ArithmeticTrait>): DssConfig {
   return if (applies) copy(solver = nonlinear, fallbackSolver = solver ?: fallbackSolver) else this
 }
 
+/**
+ * [xcfa] with its dereferences turned into the memory arrays of [DereferenceToArrayPass], once for
+ * the whole program and before the decomposition. The arrays are then ordinary global variables,
+ * shared by every block: the root block's init edge havocs (or zeroes) them, and every other block
+ * reads them through its precondition. Left to the block checkers (the monolithic adapter runs the
+ * pass on each block program), every block got arrays of its own, havoced at its entry, so its
+ * violation condition held for some memory rather than for the program's, and DSS's own weakest
+ * preconditions met the unconverted dereferences. On the converted program the adapter's pass finds
+ * no dereference and adds nothing. Workers come through [getDssChecker] too, so they convert the
+ * same way and their arrays have the same names.
+ */
+internal fun withSharedMemory(xcfa: XCFA): XCFA {
+  val converted = xcfa.optimizeFurther(ProcedurePassManager(listOf(DereferenceToArrayPass())))
+  check(converted.procedures.none { p -> p.edges.any { it.label.dereferences.isNotEmpty() } }) {
+    "DSS: dereferences left after DereferenceToArrayPass"
+  }
+  return converted
+}
+
 /** `--backend DSS`: distributed summary synthesis (`xcfa-analysis's dss/README.md`). */
 fun getDssChecker(
-  xcfa: XCFA,
+  inputXcfa: XCFA,
   mcm: MCM,
   config: XcfaConfig<*, *>,
   parseContext: ParseContext,
   logger: Logger,
 ): SafetyChecker<Proof, Cex, XcfaPrec<*>> = SafetyChecker { _ ->
+  val xcfa = withSharedMemory(inputXcfa)
   val dssConfig =
     (config.backendConfig.specConfig as DssConfig).forArithmetic(parseContext.arithmeticTraits)
   logger.write(
