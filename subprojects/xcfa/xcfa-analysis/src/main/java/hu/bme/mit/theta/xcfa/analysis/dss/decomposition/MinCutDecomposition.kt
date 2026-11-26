@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.decomposition
 
+import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 
 const val DEFAULT_CUT_BLOCK_COUNT = 2
 
@@ -30,20 +32,65 @@ enum class CutLoopHandling(val decompositionName: String) {
   FORBID("MIN_CUT_ACYCLIC"),
 }
 
-/** A cut with the fewest edges between blocks, then the most equal block sizes. */
+/** What the size of a block is, for the balance of a cut. */
+enum class CutSizeMeasure {
+  /** The locations of the block. */
+  LOCATIONS,
+  /** The labels on the edges of the block, without nops; an edge counts at least once. */
+  LABELS;
+
+  fun of(block: Block): Int =
+    when (this) {
+      LOCATIONS -> block.locations.size
+      LABELS ->
+        block.edges.sumOf { edge ->
+          edge.getFlatLabels().count { it !is NopLabel }.coerceAtLeast(1)
+        }
+    }
+}
+
+/**
+ * A cut with the fewest edges between blocks, then the most equal block sizes.
+ *
+ * A cut whose smallest block has less than [minShare] of the summed block sizes (by [sizeMeasure])
+ * is only taken when no cut reaches that share. A cut whose smallest block is still under
+ * [minBlockSize] leaves the procedure a single block.
+ */
 class MinCutDecomposition(
   private val blockCount: Int = DEFAULT_CUT_BLOCK_COUNT,
   private val loopHandling: CutLoopHandling = CutLoopHandling.ALLOW,
   private val searchBudget: Long = DEFAULT_CUT_SEARCH_BUDGET,
+  private val minShare: Double = 0.0,
+  private val sizeMeasure: CutSizeMeasure = CutSizeMeasure.LOCATIONS,
+  private val minBlockSize: Int = 0,
 ) : DssBlockDecomposition {
 
   init {
     require(blockCount >= 1) { "The cut block count must be positive, got $blockCount" }
+    require(minShare in 0.0..0.5) { "The minimal block share must be in 0..0.5, got $minShare" }
+    require(minBlockSize >= 0) { "The minimal block size must not be negative, got $minBlockSize" }
   }
 
   override fun decompose(procedure: XcfaProcedure): BlockGraph = cut(procedure).blockGraph
 
   fun cut(procedure: XcfaProcedure): MinCut {
+    val cut = loopAwareCut(procedure)
+    if (minBlockSize == 0 || cut.blockGraph.blocks.size < 2) return cut
+    val smallest = cut.blockGraph.blocks.minOf(sizeMeasure::of)
+    if (smallest >= minBlockSize) return cut
+    return MinCut(
+      null,
+      blockCount,
+      SingleBlockDecomposition.decompose(procedure),
+      cut.exhaustive,
+      cut.fallbackReason,
+      singleBlockReason =
+        "the smallest block of the cut at ${cut.cutLocations.map { it.name }} has $smallest " +
+          "${sizeMeasure.name.lowercase()}, under $minBlockSize",
+    )
+  }
+
+  private fun loopAwareCut(procedure: XcfaProcedure): MinCut {
     if (loopHandling == CutLoopHandling.ALLOW) return plainCut(procedure)
     val reason =
       try {
@@ -60,7 +107,7 @@ class MinCutDecomposition(
   }
 
   private fun plainCut(procedure: XcfaProcedure): MinCut {
-    val search = CutSearch(procedure, acyclicOnly = false, searchBudget)
+    val search = CutSearch(procedure, acyclicOnly = false, searchBudget, minShare, sizeMeasure)
     for (count in blockCount downTo 2) {
       val found = search.best(count - 1) ?: continue
       return MinCut(found, blockCount, found.graph, search.exhaustive)
@@ -75,7 +122,7 @@ class MinCutDecomposition(
 
   private fun loopHandledCut(procedure: XcfaProcedure): MinCut? {
     val acyclicOnly = loopHandling == CutLoopHandling.FORBID
-    val search = CutSearch(procedure, acyclicOnly, searchBudget)
+    val search = CutSearch(procedure, acyclicOnly, searchBudget, minShare, sizeMeasure)
     for (count in blockCount downTo 2) {
       val found = search.best(count - 1) ?: continue
       if (acyclicOnly) return MinCut(found, blockCount, found.graph, search.exhaustive)
@@ -101,10 +148,12 @@ internal constructor(
   val blockGraph: BlockGraph,
   val exhaustive: Boolean,
   val fallbackReason: String? = null,
+  /** Why the procedure is a single block although it can be cut (its smallest block is too small). */
+  val singleBlockReason: String? = null,
 ) {
 
   internal fun withFallback(reason: String) =
-    MinCut(candidate, requestedBlockCount, blockGraph, exhaustive, reason)
+    MinCut(candidate, requestedBlockCount, blockGraph, exhaustive, reason, singleBlockReason)
 
   val cutLocations: List<XcfaLocation> = candidate?.cutLocations.orEmpty()
   val cutEdges: List<XcfaEdge> = candidate?.cutEdges.orEmpty()
@@ -115,7 +164,9 @@ internal constructor(
       if (blockGraph.blocks.size != cutBlocks.size.coerceAtLeast(1))
         ", ${blockGraph.blocks.size} blocks after collapsing self loops"
       else ""
-    val fallback = fallbackReason?.let { ", fell back to MIN_CUT: $it" }.orEmpty()
+    val fallback =
+      fallbackReason?.let { ", fell back to MIN_CUT: $it" }.orEmpty() +
+        singleBlockReason?.let { ", kept as a single block: $it" }.orEmpty()
     add(
       "DSS min cut: ${cutBlocks.size.coerceAtLeast(1)} blocks (requested $requestedBlockCount), " +
         "${cutEdges.size} cut edges at ${cutLocations.map { it.name }}, " +
@@ -156,12 +207,16 @@ internal class CutCandidate(
   val graph: BlockGraph,
   val spread: Int,
   val deviation: Int,
+  /** The smallest block's part of the summed block sizes. */
+  val share: Double,
 )
 
 private class CutSearch(
   private val procedure: XcfaProcedure,
   private val acyclicOnly: Boolean,
   private val budget: Long,
+  private val minShare: Double = 0.0,
+  private val sizeMeasure: CutSizeMeasure = CutSizeMeasure.LOCATIONS,
 ) {
 
   private val reachableEdges: Set<XcfaEdge> = buildSet {
@@ -190,26 +245,44 @@ private class CutSearch(
   var exhaustive = true
     private set
 
+  /**
+   * The cheapest valid cut at [cuts] locations, the most balanced of the equally cheap ones. With a
+   * [minShare], the cheapest of the cuts that reach the share, or the cheapest one if none does.
+   */
   fun best(cuts: Int): CutCandidate? {
     if (cuts > candidates.size) return null
     var best: CutCandidate? = null
     var bestCost = Int.MAX_VALUE
+    var balanced: CutCandidate? = null
+    var balancedCost = Int.MAX_VALUE
+    // The cheapest cut bounds the search, or with a share to reach the cheapest balanced one
+    fun bound() = if (minShare > 0.0) balancedCost else bestCost
+    fun improves(candidate: CutCandidate, cost: Int, over: CutCandidate?, overCost: Int) =
+      over == null || cost < overCost || (cost == overCost && isBetterBalanced(candidate, over))
     val chosen = ArrayList<Int>(cuts)
 
     fun search(from: Int, cost: Int) {
       if (chosen.size == cuts) {
-        if (cost > bestCost) return
+        if (cost > bound()) return
         val candidate = evaluate(chosen.map(candidates::get)) ?: return
-        if (best == null || cost < bestCost || isBetterBalanced(candidate, best!!)) {
+        if (improves(candidate, cost, best, bestCost)) {
           best = candidate
           bestCost = cost
+        }
+        if (
+          minShare > 0.0 &&
+            candidate.share >= minShare &&
+            improves(candidate, cost, balanced, balancedCost)
+        ) {
+          balanced = candidate
+          balancedCost = cost
         }
         return
       }
       val needed = cuts - chosen.size
       for (index in from..candidates.size - needed) {
         // candidates are sorted by cost, so the rest cost at least as much as this one
-        if (cost + costs[index] * needed > bestCost) break
+        if (cost + costs[index] * needed > bound()) break
         if (visits > budget) {
           exhaustive = false
           return
@@ -221,7 +294,7 @@ private class CutSearch(
     }
 
     search(0, 0)
-    return best
+    return balanced ?: best
   }
 
   private fun isBetterBalanced(a: CutCandidate, b: CutCandidate): Boolean =
@@ -261,7 +334,7 @@ private class CutSearch(
     val graph = BlockGraph.fromBlocksWithoutEdges(blocks)
     if (acyclicOnly && graph.getStatistics().cyclicSccs > 0) return null
     val wired = blocks.map { block -> graph.blocks.single { it.id == block.id } }
-    val sizes = wired.map { it.locations.size }
+    val sizes = wired.map(sizeMeasure::of)
     return CutCandidate(
       cutLocations,
       reachableEdges
@@ -271,6 +344,7 @@ private class CutSearch(
       graph,
       spread = sizes.max() - sizes.min(),
       deviation = sizes.sumOf { kotlin.math.abs(it * sizes.size - sizes.sum()) },
+      share = if (sizes.sum() == 0) 0.0 else sizes.min().toDouble() / sizes.sum(),
     )
   }
 }

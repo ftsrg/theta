@@ -220,6 +220,129 @@ class MinCutDecompositionTest {
     )
   }
 
+  /** init -> h, h -> b -> c -> h, h -> final: setup and a single loop. */
+  private fun initAndLoopProcedure(): XcfaProcedure =
+    xcfa("init-and-loop") {
+        procedure("main") {
+          "x" type Int()
+          (init to "h") { "x" assign "0" }
+          ("h" to "b") { assume("(< x 10)") }
+          ("b" to "c") { "x" assign "(+ x 1)" }
+          ("c" to "h") { nop() }
+          ("h" to final) { assume("(>= x 10)") }
+        }
+      }
+      .procedures
+      .single()
+
+  /** init -> a, then two diamonds a..m and m..n, then n -> final: `a` is cheap, `m` balanced. */
+  private fun twoDiamondProcedure(): XcfaProcedure =
+    xcfa("two-diamonds") {
+        procedure("main") {
+          "x" type Int()
+          (init to "a") { "x" assign "0" }
+          ("a" to "b1") { assume("(< x 1)") }
+          ("a" to "b2") { assume("(>= x 1)") }
+          ("b1" to "m") { "x" assign "(+ x 1)" }
+          ("b2" to "m") { "x" assign "(+ x 2)" }
+          ("m" to "c1") { assume("(< x 3)") }
+          ("m" to "c2") { assume("(>= x 3)") }
+          ("c1" to "n") { "x" assign "(+ x 1)" }
+          ("c2" to "n") { "x" assign "(+ x 2)" }
+          ("n" to final) { nop() }
+        }
+      }
+      .procedures
+      .single()
+
+  @Test
+  fun `a single cut of a loop program is at the loop head, two cuts split the loop body`() {
+    val procedure = initAndLoopProcedure()
+
+    val two = MinCutDecomposition(blockCount = 2).cut(procedure)
+    two.assertCovers(procedure)
+    assertEquals(listOf("h"), two.cutLocations.map { it.name })
+    assertEquals(2, two.sizes().min())
+
+    val three = MinCutDecomposition(blockCount = 3).cut(procedure)
+    three.assertCovers(procedure)
+    assertEquals(setOf("h", "b"), three.cutLocations.map { it.name }.toSet())
+    assertEquals(3, three.blockGraph.blocks.size)
+    assertEquals(1, three.blockGraph.getStatistics().cyclicSccs)
+  }
+
+  @Test
+  fun `a minimal share takes a dearer cut when the cheapest one is lopsided`() {
+    val procedure = twoDiamondProcedure()
+
+    val cheapest = MinCutDecomposition().cut(procedure)
+    assertEquals(listOf("a"), cheapest.cutLocations.map { it.name })
+    assertEquals(1, cheapest.cutEdges.size)
+
+    val balanced = MinCutDecomposition(minShare = 0.25).cut(procedure)
+    balanced.assertCovers(procedure)
+    assertEquals(listOf("m"), balanced.cutLocations.map { it.name })
+    assertEquals(2, balanced.cutEdges.size)
+    assertEquals(listOf(5, 5), balanced.sizes())
+
+    // No cut of the loop program reaches half, so its cheapest cut stays
+    val loop = initAndLoopProcedure()
+    assertEquals(
+      MinCutDecomposition().cut(loop).cutLocations,
+      MinCutDecomposition(minShare = 0.5).cut(loop).cutLocations,
+    )
+  }
+
+  @Test
+  fun `a cut with a too small block leaves the procedure a single block`() {
+    val procedure = twoDiamondProcedure()
+
+    val kept = MinCutDecomposition(minBlockSize = 2).cut(procedure)
+    assertEquals(2, kept.blockGraph.blocks.size)
+    assertEquals(null, kept.singleBlockReason)
+
+    val single = MinCutDecomposition(minBlockSize = 3).cut(procedure)
+    assertEquals(1, single.blockGraph.blocks.size)
+    assertEquals(procedure.edges, single.blockGraph.blocks.single().edges)
+    assertTrue(single.singleBlockReason!!.contains("under 3"), single.singleBlockReason)
+    assertTrue(single.describe()[0].contains("kept as a single block"), single.describe()[0])
+
+    // With a share the balanced cut is found first, and it is large enough
+    assertEquals(
+      2,
+      MinCutDecomposition(minShare = 0.25, minBlockSize = 3).cut(procedure).blockGraph.blocks.size,
+    )
+  }
+
+  @Test
+  fun `measured by labels, a cut balances the statements instead of the locations`() {
+    val procedure =
+      xcfa("heavy-start") {
+          procedure("main") {
+            "x" type Int()
+            (init to "a") {
+              "x" assign "0"
+              "x" assign "1"
+              "x" assign "2"
+              "x" assign "3"
+            }
+            ("a" to "b") { "x" assign "4" }
+            ("b" to "c") { "x" assign "5" }
+            ("c" to final) { nop() }
+          }
+        }
+        .procedures
+        .single()
+
+    val byLocations = MinCutDecomposition().cut(procedure)
+    assertEquals(listOf("b"), byLocations.cutLocations.map { it.name })
+
+    val byLabels = MinCutDecomposition(sizeMeasure = CutSizeMeasure.LABELS).cut(procedure)
+    byLabels.assertCovers(procedure)
+    assertEquals(listOf("a"), byLabels.cutLocations.map { it.name })
+    assertEquals(listOf(4, 3), byLabels.cutBlocks.map(CutSizeMeasure.LABELS::of))
+  }
+
   @Test
   fun `a search stopped at its budget still returns a valid cut`() {
     val procedure = chainProcedure()

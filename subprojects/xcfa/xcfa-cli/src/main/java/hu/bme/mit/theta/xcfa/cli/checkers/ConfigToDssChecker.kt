@@ -93,6 +93,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecompositio
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DssBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
@@ -197,7 +198,7 @@ fun getDssChecker(
     dssConfig.fallbackSolver,
   )
   checkDssSupports(config.inputConfig.property)
-  val cutDecomposition = decompositionOf(cutStrategyOf(dssConfig))
+  val cutDecomposition = decompositionOf(cutStrategyOf(dssConfig), dssConfig)
   val procedure =
     (if (xcfa.isInlined) xcfa.initProcedures.singleOrNull()?.first
     else xcfa.procedures.singleOrNull())
@@ -206,7 +207,7 @@ fun getDssChecker(
           "procedures) - see xcfa-analysis's dss/README.md's Known Limitations."
       )
 
-  val decomposition = decompositionOf(dssConfig.decomposition)
+  val decomposition = decompositionOf(dssConfig.decomposition, dssConfig)
   val direction = dssConfig.direction
   val reversal = if (direction == DssDirection.FORWARD) null else reverseProgram(xcfa)
   // Shared block boundaries are where the two directions can meet
@@ -237,6 +238,15 @@ fun getDssChecker(
   fun graphStatistics() =
     listOfNotNull(forwardGraph, backwardGraph).joinToString(" | ") { "${it.getStatistics()}" }
   logger.write(Logger.Level.INFO, "DSS block graph statistics: %s\n", graphStatistics())
+  logger.write(
+    Logger.Level.INFO,
+    "DSS block sizes (locations/labels): %s\n",
+    listOfNotNull(forwardGraph, backwardGraph).joinToString(" | ") { graph ->
+      graph.blocks.joinToString(" ") {
+        "${it.id}=${CutSizeMeasure.LOCATIONS.of(it)}/${CutSizeMeasure.LABELS.of(it)}"
+      }
+    },
+  )
 
   require(dssConfig.checkerBackends.isNotEmpty()) {
     "--dss-checker-backends must list at least one backend"
@@ -593,18 +603,29 @@ fun getDssChecker(
   }
 }
 
-private fun decompositionOf(decomposition: DssDecomposition): DssBlockDecomposition =
-  when (decomposition) {
+private fun decompositionOf(
+  decomposition: DssDecomposition,
+  dssConfig: DssConfig,
+): DssBlockDecomposition {
+  fun minCut(loopHandling: CutLoopHandling) =
+    MinCutDecomposition(
+      blockCount = dssConfig.cutBlockCount,
+      loopHandling = loopHandling,
+      minShare = dssConfig.cutMinShare,
+      sizeMeasure = dssConfig.cutSize,
+      minBlockSize = dssConfig.cutMinBlockSize,
+    )
+  return when (decomposition) {
     DssDecomposition.LINEAR -> LinearBlockDecomposition()
     DssDecomposition.MERGE -> MergeBlockDecomposition()
     DssDecomposition.MERGE_ABSORB_SELF_LOOPS -> SelfLoopAbsorbingDecomposition()
     DssDecomposition.MERGE_ACYCLIC -> AcyclicMergeDecomposition()
-    DssDecomposition.MIN_CUT -> MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW)
-    DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS ->
-      MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS)
-    DssDecomposition.MIN_CUT_ACYCLIC -> MinCutDecomposition(loopHandling = CutLoopHandling.FORBID)
+    DssDecomposition.MIN_CUT -> minCut(CutLoopHandling.ALLOW)
+    DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS -> minCut(CutLoopHandling.ABSORB_SELF_LOOPS)
+    DssDecomposition.MIN_CUT_ACYCLIC -> minCut(CutLoopHandling.FORBID)
     DssDecomposition.NONE -> SingleBlockDecomposition
   }
+}
 
 /** What cuts a block: the decomposition of the run, which for `NONE` cuts nothing, so another. */
 private fun cutStrategyOf(dssConfig: DssConfig): DssDecomposition =

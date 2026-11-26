@@ -24,6 +24,8 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_CUT_BLOCK_COUNT
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import kotlinx.serialization.Serializable
 
@@ -103,6 +105,38 @@ data class DssConfig(
     description = "How to decompose the input procedure into DSS blocks",
   )
   var decomposition: DssDecomposition = DssDecomposition.MERGE,
+  @Parameter(
+    names = ["--dss-cut-block-count"],
+    hidden = true,
+    description =
+      "MIN_CUT*: the blocks to cut the procedure into (fewer if no such cut exists); with 3, a " +
+        "loop can be cut at its head and inside its body",
+  )
+  var cutBlockCount: Int = DEFAULT_CUT_BLOCK_COUNT,
+  @Parameter(
+    names = ["--dss-cut-min-share"],
+    hidden = true,
+    description =
+      "MIN_CUT*: the cheapest cut whose smallest block has at least this part (0..0.5) of the " +
+        "summed block sizes; the cheapest cut if none has (0: only the cut edges count)",
+  )
+  var cutMinShare: Double = 0.0,
+  @Parameter(
+    names = ["--dss-cut-size"],
+    hidden = true,
+    description =
+      "MIN_CUT*: what a block's size is for the balance of a cut: its LOCATIONS, or the LABELS " +
+        "on its edges",
+  )
+  var cutSize: CutSizeMeasure = CutSizeMeasure.LOCATIONS,
+  @Parameter(
+    names = ["--dss-cut-min-block-size"],
+    hidden = true,
+    description =
+      "MIN_CUT*: a cut with a block smaller than this (by --dss-cut-size) leaves the procedure a " +
+        "single block (0: any cut is kept)",
+  )
+  var cutMinBlockSize: Int = 0,
   @Parameter(
     names = ["--dss-direction"],
     hidden = true,
