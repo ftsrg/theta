@@ -33,6 +33,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.AcyclicMergeDecompositio
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_PORT_BLOCK_LIMIT
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MinCutDecomposition
@@ -60,6 +61,12 @@ class DssVerdictTest {
     MERGE({ MergeBlockDecomposition(2).decompose(it) }),
     ABSORB_SELF_LOOPS({ SelfLoopAbsorbingDecomposition().decompose(it) }),
     ACYCLIC({ AcyclicMergeDecomposition().decompose(it) }),
+    ABSORB_SELF_LOOPS_PORTS({
+      SelfLoopAbsorbingDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT).decompose(it)
+    }),
+    ACYCLIC_PORTS({
+      AcyclicMergeDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT).decompose(it)
+    }),
     MIN_CUT({ MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW).cut(it).blockGraph }),
     MIN_CUT_ABSORB({
       MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS).cut(it).blockGraph
@@ -101,7 +108,12 @@ class DssVerdictTest {
      * the block graph (termination is not guaranteed).
      */
     private val cyclic =
-      setOf(Decomposition.LINEAR, Decomposition.MERGE, Decomposition.ABSORB_SELF_LOOPS)
+      setOf(
+        Decomposition.LINEAR,
+        Decomposition.MERGE,
+        Decomposition.ABSORB_SELF_LOOPS,
+        Decomposition.ABSORB_SELF_LOOPS_PORTS,
+      )
 
     /** Loop-free programs only need the decompositions that do not special-case loops. */
     @JvmStatic

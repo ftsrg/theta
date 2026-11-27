@@ -35,6 +35,10 @@ message-passing network with its executors. The `--backend DSS` wiring lives in 
   `extractBlockXcfa`), and must keep the block's paths: every piece takes all of the block's edges
   out of each location it passes through, and a piece reaching an exit that has successors ends
   there. `keepsPaths` refuses anything else, so a new decomposition needs no cut-specific code.
+- Port blocks (`portBlockLimit`, the `*_PORTS` decompositions) share edges and inner locations: a
+  region becomes one block per entry and exit reachable from it. Nothing may assume that blocks
+  partition the edges; `reverseBlockGraph` falls back to a linear cut and `keepsPaths` refuses them.
+  No location may be both a port block's entry and an exit, or the block would succeed itself.
 - In `BIDIRECTIONAL` a cut is of a forward block (a backward block's request cuts the forward
   block it reverses, `cutTargetOf`), and the backward graph is rebuilt from the cut forward one,
   so the two directions keep sharing their block boundaries.

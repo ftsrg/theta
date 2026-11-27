@@ -276,6 +276,9 @@ class BlockCutTest {
       "MERGE" to MergeBlockDecomposition(),
       "MERGE_ABSORB_SELF_LOOPS" to SelfLoopAbsorbingDecomposition(),
       "MERGE_ACYCLIC" to AcyclicMergeDecomposition(),
+      "MERGE_ABSORB_SELF_LOOPS_PORTS" to
+        SelfLoopAbsorbingDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT),
+      "MERGE_ACYCLIC_PORTS" to AcyclicMergeDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT),
       "MIN_CUT" to MinCutDecomposition(loopHandling = CutLoopHandling.ALLOW),
       "MIN_CUT_ABSORB_SELF_LOOPS" to
         MinCutDecomposition(loopHandling = CutLoopHandling.ABSORB_SELF_LOOPS),

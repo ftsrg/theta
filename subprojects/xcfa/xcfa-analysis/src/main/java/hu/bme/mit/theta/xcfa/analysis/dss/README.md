@@ -31,7 +31,7 @@ Only single-procedure programs and error-location reachability are supported.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
+| `--dss-decomposition` | `MERGE` | `LINEAR`, `MERGE` (CPAchecker's default), `NONE` (single block), and the Theta-only `MERGE_ABSORB_SELF_LOOPS`, `MERGE_ACYCLIC`, `MERGE_ABSORB_SELF_LOOPS_PORTS`, `MERGE_ACYCLIC_PORTS`, `MIN_CUT`, `MIN_CUT_ABSORB_SELF_LOOPS`, `MIN_CUT_ACYCLIC` |
 | `--dss-checker-backends` | `CEGAR` | Block checkers, as `--backend` values: `CEGAR` (predicate Cartesian), `BMC`, `KIND`, `IMC`, `KINDIMC`, `BOUNDED`; a failing checker is retried with the next one |
 | `--dss-checker-selection` | `PRIORITY` | `PRIORITY` (first entry, the others as fallbacks), `ROUND_ROBIN`, `FASTEST` (per block, after trying all once), `FINISHER` (the last entry runs first on the blocks without successors) |
 | `--dss-expl-checker` | off | Add an `EXPL` `CEGAR` checker after `--dss-checker-backends` |

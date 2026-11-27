@@ -84,6 +84,8 @@ class SingleBlockDecompositionTest {
         MergeBlockDecomposition(),
         SelfLoopAbsorbingDecomposition(),
         AcyclicMergeDecomposition(),
+        SelfLoopAbsorbingDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT),
+        AcyclicMergeDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT),
       ) + CutLoopHandling.entries.map { MinCutDecomposition(loopHandling = it) }
 
     for (decomposition in decompositions) {

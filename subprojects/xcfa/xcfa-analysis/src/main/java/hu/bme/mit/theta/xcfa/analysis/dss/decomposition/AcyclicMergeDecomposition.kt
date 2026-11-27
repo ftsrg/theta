@@ -18,12 +18,16 @@ package hu.bme.mit.theta.xcfa.analysis.dss.decomposition
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-/** [MergeBlockDecomposition], then every cycle is collapsed into one block, to a fixpoint. */
+/**
+ * [MergeBlockDecomposition], then every cycle is collapsed, to a fixpoint: into one block, or with
+ * a [portBlockLimit] into port blocks (see [collapseToPortBlocks]), which need no single exit.
+ */
 class AcyclicMergeDecomposition(
   private val targetBlockCount: Int = DEFAULT_TARGET_BLOCK_COUNT,
   private val largestHorizontalMerge: Int = NO_MERGE_LIMIT,
   private val allowSingleBlockDecomposition: Boolean = false,
   private val linearDecomposition: DssBlockDecomposition = LinearBlockDecomposition(),
+  private val portBlockLimit: Int = NO_PORT_BLOCKS,
 ) : DssBlockDecomposition {
 
   override fun decompose(procedure: XcfaProcedure): BlockGraph {
@@ -36,20 +40,25 @@ class AcyclicMergeDecomposition(
         )
         .decompose(procedure)
     while (true) {
-      val collapsed = collapseCycles(current)
+      val collapsed = collapseCycles(current, portBlockLimit = portBlockLimit)
       if (collapsed === current) return current
       current = mergeToTargetBlockCount(collapsed, targetBlockCount, largestHorizontalMerge)
     }
   }
 }
 
-/** Collapses each cyclic SCC, smallest first, into one block `MC<n>`. */
-fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): BlockGraph {
-  var nextId =
-    blockGraph.blocks
-      .mapNotNull { it.id.removePrefix(COLLAPSED_PREFIX).toIntOrNull() }
-      .maxOrNull()
-      ?.plus(1) ?: 0
+/**
+ * Collapses each cyclic SCC, smallest first, into one block `MC<n>`, or with a [portBlockLimit]
+ * into port blocks `MP<n>_<k>` where it can.
+ */
+fun collapseCycles(
+  blockGraph: BlockGraph,
+  onlySelfLoops: Boolean = false,
+  portBlockLimit: Int = NO_PORT_BLOCKS,
+): BlockGraph {
+  var nextId = nextCollapsedIndex(blockGraph)
+  // Port blocks can take part in further cycles; past this many, single blocks guarantee an end
+  var portCollapses = 2 * blockGraph.blocks.size + 8
   var current = blockGraph
   while (true) {
     val successors = current.blocks.associate { it.id to it.successorIds }
@@ -60,7 +69,12 @@ fun collapseCycles(blockGraph: BlockGraph, onlySelfLoops: Boolean = false): Bloc
             scc.size == 1 && scc.single().let { it in successors.getValue(it) }
         }
         .minWithOrNull(compareBy<Set<String>> { it.size }.thenBy { it.min() }) ?: return current
-    current = collapseRegion(current, cycle, "$COLLAPSED_PREFIX${nextId++}")
+    val id = nextId++
+    val ports =
+      if (portBlockLimit > 0 && portCollapses-- > 0) {
+        collapseToPortBlocks(current, cycle, "$PORT_PREFIX$id", portBlockLimit)
+      } else null
+    current = ports ?: collapseRegion(current, cycle, "$COLLAPSED_PREFIX$id")
   }
 }
 

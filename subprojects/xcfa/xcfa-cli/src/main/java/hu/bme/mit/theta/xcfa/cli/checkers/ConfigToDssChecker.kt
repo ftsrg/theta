@@ -95,6 +95,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutLoopHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_PORT_BLOCK_LIMIT
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DssBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.LinearBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.MergeBlockDecomposition
@@ -640,6 +641,10 @@ private fun decompositionOf(
     DssDecomposition.MERGE -> MergeBlockDecomposition()
     DssDecomposition.MERGE_ABSORB_SELF_LOOPS -> SelfLoopAbsorbingDecomposition()
     DssDecomposition.MERGE_ACYCLIC -> AcyclicMergeDecomposition()
+    DssDecomposition.MERGE_ABSORB_SELF_LOOPS_PORTS ->
+      SelfLoopAbsorbingDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
+    DssDecomposition.MERGE_ACYCLIC_PORTS ->
+      AcyclicMergeDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
     DssDecomposition.MIN_CUT -> minCut(CutLoopHandling.ALLOW)
     DssDecomposition.MIN_CUT_ABSORB_SELF_LOOPS -> minCut(CutLoopHandling.ABSORB_SELF_LOOPS)
     DssDecomposition.MIN_CUT_ACYCLIC -> minCut(CutLoopHandling.FORBID)

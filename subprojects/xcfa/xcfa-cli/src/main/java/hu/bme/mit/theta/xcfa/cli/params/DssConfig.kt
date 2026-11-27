@@ -40,6 +40,10 @@ enum class DssDecomposition {
   MERGE_ABSORB_SELF_LOOPS,
   /** `MERGE`, then every cycle of the block graph is collapsed into one block. */
   MERGE_ACYCLIC,
+  /** `MERGE_ABSORB_SELF_LOOPS`, absorbing a loop with several neighbours too, as port blocks. */
+  MERGE_ABSORB_SELF_LOOPS_PORTS,
+  /** `MERGE_ACYCLIC`, collapsing a cycle into a block per entry and exit instead, where it can. */
+  MERGE_ACYCLIC_PORTS,
   /** A cut into two blocks with the fewest edges between them; cycles between blocks allowed. */
   MIN_CUT,
   /** `MIN_CUT`, then every self-loop block is absorbed into a neighbour. */

@@ -178,4 +178,88 @@ class AcyclicMergeDecompositionTest {
     val merged = acyclic.blocks.single { it.id == "MC0" }
     assertEquals(listOf("A", "C"), listOf(merged.initialLocation.name, merged.finalLocation.name))
   }
+
+  private fun block(id: String, vararg path: XcfaLocation) =
+    Block(
+      id,
+      path.first(),
+      path.last(),
+      path.toSet(),
+      path.toList().zipWithNext { s, t -> XcfaEdge(s, t, NopLabel, EmptyMetaData) }.toSet(),
+    )
+
+  /** A loop at H, entered from B, left by a break at C and normally at H. */
+  private fun breakGraph(): BlockGraph {
+    val (a, b, h, c) = listOf(loc("A"), loc("B"), loc("H"), loc("C"))
+    val (x, y) = listOf(loc("X"), loc("Y"))
+    return BlockGraph.fromBlocksWithoutEdges(
+      listOf(
+        block("r", a, b),
+        block("p", b, h),
+        block("l1", h, c),
+        block("l2", c, h),
+        block("b", c, x),
+        block("n", h, y),
+      )
+    )
+  }
+
+  @Test
+  fun `with port blocks a loop with two exits becomes a block per exit`() {
+    val acyclic = collapseCycles(breakGraph(), portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
+
+    acyclic.checkConsistency()
+    assertEquals(0, acyclic.getStatistics().cyclicSccs)
+    assertEquals(setOf("r", "MP0_0", "MP0_1", "b", "n"), acyclic.blocks.map { it.id }.toSet())
+    val ports = acyclic.blocks.filter { it.id.startsWith("MP") }
+    assertEquals(listOf("B", "B"), ports.map { it.initialLocation.name })
+    assertEquals(setOf("C", "H"), ports.map { it.finalLocation.name }.toSet())
+    assertEquals(setOf("b"), ports.single { it.finalLocation.name == "C" }.successorIds)
+    assertEquals(setOf("n"), ports.single { it.finalLocation.name == "H" }.successorIds)
+    // Both hold the whole loop: leaving by the other exit ends inside the block
+    assertTrue(ports.all { port -> port.edges.size == 3 })
+  }
+
+  @Test
+  fun `a region that needs more port blocks than allowed becomes one block`() {
+    val acyclic = collapseCycles(breakGraph(), portBlockLimit = 1)
+
+    acyclic.checkConsistency()
+    assertEquals(0, acyclic.getStatistics().cyclicSccs)
+    assertTrue(acyclic.blocks.none { it.id.startsWith("MP") })
+    assertTrue(acyclic.blocks.any { it.id == "MC0" })
+  }
+
+  @Test
+  fun `a loop at the root with two exits grows to where they join, as the root stays one block`() {
+    val (a, h, c, j, z) = listOf(loc("A"), loc("H"), loc("C"), loc("J"), loc("Z"))
+    val graph =
+      BlockGraph.fromBlocksWithoutEdges(
+        listOf(
+          block("r", a, h),
+          block("l1", h, c),
+          block("l2", c, h),
+          block("b", c, j),
+          block("n", h, j),
+          block("f", j, z),
+        )
+      )
+
+    val acyclic = collapseCycles(graph, portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
+
+    acyclic.checkConsistency()
+    assertEquals(setOf("MP0_0", "f"), acyclic.blocks.map { it.id }.toSet())
+    val root = acyclic.root
+    assertEquals(listOf("A", "J"), listOf(root.initialLocation.name, root.finalLocation.name))
+  }
+
+  @Test
+  fun `port blocks leave the procedures acyclic and covered`() {
+    val ports = AcyclicMergeDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
+    for (procedure in listOf(errorInLoopProcedure(), breakProcedure(), nestedProcedure())) {
+      val acyclic = procedure.decomposedWith(ports)
+      acyclic.assertAcyclicCover(procedure)
+      assertTrue(acyclic.blocks.none { it.initialLocation == it.finalLocation })
+    }
+  }
 }
