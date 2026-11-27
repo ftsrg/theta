@@ -44,6 +44,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
@@ -113,6 +114,7 @@ class PredicateBlockBehavior(
   quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
   private val treePostcondition: Boolean = false,
   private val treeExitPaths: Boolean = false,
+  private val treeAbstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -654,6 +656,7 @@ class PredicateBlockBehavior(
           precision,
           solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
           exactExits = treeExitPaths,
+          abstraction = treeAbstraction,
         )
         ?.also { statistics.treePostconditions++ }
     } catch (e: InterruptedException) {

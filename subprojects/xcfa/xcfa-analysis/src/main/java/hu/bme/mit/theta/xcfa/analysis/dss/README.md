@@ -61,7 +61,9 @@ reversed program, `ProgramReversal.kt`, or both directions meeting in `DssMeetin
 every checker times out on, `BlockCut.kt`), `--dss-tree-postcondition` (a CEGAR block's
 postcondition from the paths of its ARG, abstracted onto the block's predicates once at the exit,
 like CPAchecker's block abstraction; `TreePostcondition.kt`; with `--dss-tree-exit-paths`, paths
-meeting at the exit keep their own exact paths), and their tuning flags.
+meeting at the exit keep their own exact paths; `--dss-tree-abstraction BOOLEAN` abstracts them
+onto predicate cubes instead of single predicates), `--dss-cegar-domain` (`PRED_CART`, `PRED_BOOL`,
+`EXPL`), and their tuning flags.
 
 ## Packages
 

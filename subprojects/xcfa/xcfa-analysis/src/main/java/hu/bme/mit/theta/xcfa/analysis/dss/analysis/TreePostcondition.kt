@@ -17,11 +17,14 @@ package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.pred.PredAbstractors
+import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not
@@ -40,6 +43,17 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
+/** How [packTreePostcondition] abstracts an exit node's exact path onto the predicates. */
+enum class DssTreeAbstraction {
+  /** Each predicate or its negation, if the path implies it: two queries per predicate. */
+  CARTESIAN,
+  /**
+   * Every combination of the predicates the path allows, as a disjunction of cubes (CPAchecker's
+   * Boolean predicate abstraction): one query per cube, so up to exponentially many.
+   */
+  BOOLEAN,
+}
+
 /**
  * A postcondition at [location] read off the paths of a CEGAR checker's reachability tree
  * ([LocationInvariants.tree]) instead of its abstract states: CPAchecker's block abstraction, which
@@ -47,7 +61,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
  *
  * For every uncovered exit node, the path to it from its nearest ancestor that covers some node (or
  * from the root) is taken exactly, starting from that ancestor's abstract state, and the result is
- * abstracted onto [predicates] (Cartesian: each predicate or its negation, if implied).
+ * abstracted onto [predicates] as [abstraction] says.
  *
  * Sound: a node that covers no other node is reached only along its tree edge, so the concrete
  * states of an exit node lie within its anchor's state followed by the path. Each exit node's part
@@ -69,6 +83,7 @@ fun packTreePostcondition(
   predicates: Set<Expr<BoolType>>,
   solverFactory: SolverFactory,
   exactExits: Boolean = false,
+  abstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
 ): Expr<BoolType>? {
   val nodes = proof.tree?.nodes ?: return null
   // A node past the final location has no process left; one with several is not a block's tree
@@ -82,7 +97,7 @@ fun packTreePostcondition(
   if (exits.isEmpty()) return False()
   val solver = withSolverConstructionLock { solverFactory.createSolver() }
   try {
-    return Or(exits.mapNotNull { exitPart(solver, it, predicates, exactExits) })
+    return Or(exits.mapNotNull { exitPart(solver, it, predicates, exactExits, abstraction) })
   } finally {
     runCatching { solver.close() }
   }
@@ -94,6 +109,7 @@ private fun exitPart(
   exit: ArgNode<*, *>,
   predicates: Set<Expr<BoolType>>,
   exactExits: Boolean,
+  abstraction: DssTreeAbstraction,
 ): Expr<BoolType>? {
   val path = ArrayDeque<XcfaAction>()
   var anchor = exit
@@ -115,6 +131,19 @@ private fun exitPart(
       indexing = indexing.add(action.nextIndexing())
     }
     if (solver.check().isUnsat) return null
+    val own = ExprUtils.changeDecls(stateExpr(exit), toProgram)
+    if (abstraction == DssTreeAbstraction.BOOLEAN) {
+      // The path is already on the solver: the abstractor only enumerates the cubes over it
+      val inChecker = PredPrec.of(predicates.map { ExprUtils.changeDecls(it, toChecker) })
+      val cubes =
+        PredAbstractors.booleanSplitAbstractor(solver)
+          .createStatesForExpr(True(), indexing, inChecker, indexing)
+          .map { ExprUtils.changeDecls(it.toExpr(), toProgram) }
+      val cover = Or(cubes)
+      // Own atoms outside the predicates cannot be implied by the cubes
+      val implied = predicates.containsAll(ExprUtils.getAtoms(own))
+      return if (implied) cover else And(cover, own)
+    }
     val literals =
       predicates.mapNotNull { predicate ->
         val atEnd = PathUtils.unfold(ExprUtils.changeDecls(predicate, toChecker), indexing)
@@ -124,7 +153,6 @@ private fun exitPart(
           else -> null
         }
       }
-    val own = ExprUtils.changeDecls(stateExpr(exit), toProgram)
     val ownLiterals = if (own is AndExpr) own.ops.toSet() else setOf(own)
     return if (literals.containsAll(ownLiterals)) And(literals) else And(literals + own)
   }

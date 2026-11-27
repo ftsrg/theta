@@ -195,6 +195,16 @@ class XcfaCliDssTest {
           listOf("--dss-tree-postcondition", "--dss-decomposition", "MIN_CUT_ABSORB_SELF_LOOPS"),
           listOf("--dss-tree-postcondition", "--dss-executor", "PROCESS"),
           listOf("--dss-tree-postcondition", "--dss-tree-exit-paths"),
+          listOf("--dss-cegar-domain", "PRED_BOOL"),
+          listOf("--dss-tree-postcondition", "--dss-tree-abstraction", "BOOLEAN"),
+          listOf(
+            "--dss-cegar-domain",
+            "PRED_BOOL",
+            "--dss-tree-postcondition",
+            "--dss-tree-exit-paths",
+            "--dss-tree-abstraction",
+            "BOOLEAN",
+          ),
           listOf(
             "--dss-tree-postcondition",
             "--dss-tree-exit-paths",

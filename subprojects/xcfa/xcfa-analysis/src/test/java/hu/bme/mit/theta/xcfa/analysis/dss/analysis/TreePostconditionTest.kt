@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Add
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Geq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Gt
@@ -88,6 +90,19 @@ class TreePostconditionTest {
           ("c2" to "b2") { "x" assign "y" }
           ("b1" to final) { "x" assign "(+ x 1)" }
           ("b2" to final) { "x" assign "(+ x 2)" }
+        }
+      main.start()
+    }
+
+  /** `assume(x == y || x == y + 1)`: only a disjunction of predicates describes the end. */
+  private val choice: XCFA =
+    xcfa("tree-choice") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          "y" type Int()
+          (init to "a") { nop() }
+          ("a" to final) { assume("(or (= x y) (= x (+ y 1)))") }
         }
       main.start()
     }
@@ -214,5 +229,52 @@ class TreePostconditionTest {
       packTreePostcondition(proof, exit, predicates + xIsTen, solverFactory, exactExits = true)!!
 
     assertFalse(operators.isUnsat(And(exact, xIsTen)), "exact exits: $exact")
+  }
+
+  @Test
+  fun `a Boolean tree abstraction keeps a disjunction that a Cartesian one loses`() {
+    val x = choice.int("x")
+    val y = choice.int("y")
+    val equal = Eq(x.ref, y.ref)
+    val above = Eq(x.ref, Add(y.ref, Int(1)))
+    val predicates = setOf(equal, above)
+    val proof = prove(choice, predicates)
+    val exit = choice.finalLocation()
+
+    val cartesian = packTreePostcondition(proof, exit, predicates, solverFactory)!!
+    val boolean =
+      packTreePostcondition(
+        proof,
+        exit,
+        predicates,
+        solverFactory,
+        abstraction = DssTreeAbstraction.BOOLEAN,
+      )!!
+
+    assertTrue(equivalent(cartesian, True()), "Cartesian: $cartesian")
+    assertTrue(equivalent(boolean, Or(equal, above)), "Boolean: $boolean")
+  }
+
+  @Test
+  fun `a Boolean tree abstraction is never weaker than the Cartesian one`() {
+    val x = loop.int("x")
+    val predicates = setOf(Geq(x.ref, Int(0)), Leq(x.ref, Int(10)), Eq(x.ref, Int(10)))
+    val proof = prove(loop, predicates.take(2).toSet())
+    val exit = loop.finalLocation()
+
+    val cartesian =
+      packTreePostcondition(proof, exit, predicates, solverFactory, exactExits = true)!!
+    val boolean =
+      packTreePostcondition(
+        proof,
+        exit,
+        predicates,
+        solverFactory,
+        exactExits = true,
+        abstraction = DssTreeAbstraction.BOOLEAN,
+      )!!
+
+    assertTrue(operators.isLeq(boolean, cartesian), "Boolean $boolean, Cartesian $cartesian")
+    assertFalse(operators.isUnsat(And(boolean, Eq(x.ref, Int(10)))), "Boolean: $boolean")
   }
 }

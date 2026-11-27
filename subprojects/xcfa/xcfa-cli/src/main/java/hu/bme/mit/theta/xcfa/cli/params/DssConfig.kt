@@ -24,6 +24,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_CUT_BLOCK_COUNT
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -94,6 +95,8 @@ enum class DssCheckerSelectionMethod {
 /** The abstract domain of the `CEGAR` entries of [DssConfig.checkerBackends]. */
 enum class DssCegarDomain(val domain: Domain) {
   PRED_CART(Domain.PRED_CART),
+  /** Boolean predicate abstraction: the abstract states may keep disjunctions. */
+  PRED_BOOL(Domain.PRED_BOOL),
   /** Tracks the variables of the predicates DSS passes as precision. */
   EXPL(Domain.EXPL),
 }
@@ -170,8 +173,8 @@ data class DssConfig(
     names = ["--dss-cegar-domain"],
     hidden = true,
     description =
-      "Abstract domain of the CEGAR block checkers: PRED_CART, or EXPL tracking the variables of " +
-        "the predicates DSS passes as precision",
+      "Abstract domain of the CEGAR block checkers: PRED_CART, PRED_BOOL, or EXPL tracking the " +
+        "variables of the predicates DSS passes as precision",
   )
   var cegarDomain: DssCegarDomain = DssCegarDomain.PRED_CART,
   @Parameter(
@@ -229,6 +232,14 @@ data class DssConfig(
         "are not abstracted there",
   )
   var treeExitPaths: Boolean = false,
+  @Parameter(
+    names = ["--dss-tree-abstraction"],
+    hidden = true,
+    description =
+      "With --dss-tree-postcondition, how an exit path is abstracted onto the block's predicates: " +
+        "CARTESIAN (each predicate or its negation) or BOOLEAN (a disjunction of predicate cubes)",
+  )
+  var treeAbstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

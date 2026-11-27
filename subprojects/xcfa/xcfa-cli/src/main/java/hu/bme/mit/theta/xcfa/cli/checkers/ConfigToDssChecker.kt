@@ -76,6 +76,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
@@ -312,6 +313,11 @@ fun getDssChecker(
   require(!dssConfig.treeExitPaths || dssConfig.treePostcondition) {
     "--dss-tree-exit-paths refines --dss-tree-postcondition, which is not set"
   }
+  require(
+    dssConfig.treeAbstraction == DssTreeAbstraction.CARTESIAN || dssConfig.treePostcondition
+  ) {
+    "--dss-tree-abstraction refines --dss-tree-postcondition, which is not set"
+  }
   require(dssConfig.semanticUnrollings >= 0) { "--dss-semantic-unrollings must not be negative" }
   require(
     dssConfig.quantifiedPredicates != DssQuantifiedPredicates.FALLBACK ||
@@ -406,6 +412,7 @@ fun getDssChecker(
             reuseBlockPrecision = dssConfig.reuseBlockPrecision,
             treePostcondition = dssConfig.treePostcondition,
             treeExitPaths = dssConfig.treeExitPaths,
+            treeAbstraction = dssConfig.treeAbstraction,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,
