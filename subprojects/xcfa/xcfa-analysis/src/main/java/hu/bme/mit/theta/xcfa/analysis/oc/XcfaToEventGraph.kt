@@ -102,10 +102,10 @@ internal class XcfaToEventGraph(private val xcfa: XCFA) {
     for ((v, map) in events) {
       if (map.values.all { it.all { e -> e.assignment == null } })
         exit("variable $v is not initialized")
-      for ((pid1, list1) in map) for ((pid2, list2) in map) if (pid1 != pid2)
+      for ((pid1, list1) in map) for ((pid2, list2) in map)
         for (e1 in list1.filter { it.type == WRITE }) for (e2 in list2) {
-          if (e2.type == READ) rfs.add(RelationType.RF, e1, e2)
-          if (e2.type == WRITE) wss.add(RelationType.WS, e1, e2)
+          if (pid1 != pid2 && e2.type == READ) rfs.add(RelationType.RF, e1, e2)
+          if (e2.type == WRITE && e1 != e2) wss.add(RelationType.WS, e1, e2)
         }
     }
   }

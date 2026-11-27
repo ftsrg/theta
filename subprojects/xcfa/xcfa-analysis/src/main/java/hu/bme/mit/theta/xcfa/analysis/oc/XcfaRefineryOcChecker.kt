@@ -44,6 +44,7 @@ import hu.bme.mit.theta.solver.SolverStatus
 import tools.refinery.generator.InvalidProblemException
 import tools.refinery.generator.UnsatisfiableProblemException
 import tools.refinery.generator.standalone.StandaloneRefinery
+import kotlin.collections.forEach
 
 internal class XcfaRefineryOcChecker(
   private val solverStrategy: RefinerySolverStrategy = RefinerySolverStrategy.DEFAULT
@@ -105,6 +106,7 @@ internal class XcfaRefineryOcChecker(
             
             abstract class Event {
                 int value
+                int block
             }
             
             pred guard(Event e).
@@ -234,6 +236,14 @@ internal class XcfaRefineryOcChecker(
             propagation rule rfSomeRule(Write w, Read r) <->
                 may(rf(w, r)), !otherRfSource(w, r), guard(r) ==> rf(w, r).
                 
+            error pred atomicViolation(Event a1, Event a2, Event b) <->
+                hb(a1, b), hb(b, a2), block(a1) == block(a2), block(a1) != block(b).
+            
+            propagation rule atomicRule1(Event a2, Event b) <->
+                hb(a1, b), block(a1) == block(a2), block(a1) != block(b) ==> hb(a2, b).
+            
+            propagation rule atomicRule2(Event a2, Event b) <->
+                hb(b, a1), block(a1) == block(a2), block(a1) != block(b) ==> hb(b, a2).
         """.trimIndent()
   }
 
@@ -355,6 +365,7 @@ internal class XcfaRefineryOcChecker(
       sb.appendLine("$eventClass(${event.refineryId}).")
 
       sb.appendLine("atom ${event.refineryId}.")
+      sb.appendLine("block(${event.refineryId}): ${event.clkId}.")
       if (isMemoryEvent) {
         listOf("array" to event.array!!, "offset" to event.offset!!).forEach { (field, expr) ->
           val refineryExpr = expr.toRefineryExpr(eg.events, helperScripts, event.refineryId)
@@ -542,13 +553,17 @@ internal class XcfaRefineryOcChecker(
         }
     }
 
-    eg.wss.forEach { (varDecl, relations) ->
+    eg.wss.forEach { (_, relations) ->
       relations.forEach { rel ->
         sb.append("?ws(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
-        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_1() <->" +
-          "          !ws(${rel.from.refineryId}, ${rel.to.refineryId}) ==> ws(${rel.to.refineryId}, ${rel.from.refineryId}).")
-        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_2() <->" +
-          "          ws(${rel.from.refineryId}, ${rel.to.refineryId}) ==> !ws(${rel.to.refineryId}, ${rel.from.refineryId}).")
+        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_1() <->\n" +
+          "    !ws(${rel.from.refineryId}, ${rel.to.refineryId}), guard(${rel.from.refineryId}), guard(${rel.to.refineryId})\n" +
+          "==> ws(${rel.to.refineryId}, ${rel.from.refineryId}).\n")
+        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_2() <->\n" +
+          "    ws(${rel.from.refineryId}, ${rel.to.refineryId}) ==> !ws(${rel.to.refineryId}, ${rel.from.refineryId}).\n")
+        sb.append("propagation rule WS_${rel.from.refineryId}_${rel.to.refineryId}_3() <->\n" +
+          "    hb(${rel.from.refineryId}, ${rel.to.refineryId}), guard(${rel.from.refineryId}), guard(${rel.to.refineryId})\n" +
+          "==> ws(${rel.from.refineryId}, ${rel.to.refineryId}).\n")
       }
     }
 
