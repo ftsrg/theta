@@ -61,6 +61,8 @@ class DssBlockStatistics {
   var mayViolationsSent = 0
   var conjectureFailures = 0
   var quantifiedFormulas = 0
+  var treePostconditions = 0
+  var treePostconditionFailures = 0
 
   fun toMap(): Map<String, String> =
     linkedMapOf(
@@ -76,6 +78,8 @@ class DssBlockStatistics {
         "mayVcSent" to mayViolationsSent,
         "conjectureFailures" to conjectureFailures,
         "quantified" to quantifiedFormulas,
+        "treePost" to treePostconditions,
+        "treePostFailed" to treePostconditionFailures,
       )
       .mapValues { it.value.toString() }
 }

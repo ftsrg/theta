@@ -148,7 +148,9 @@ internal constructor(
   val blockGraph: BlockGraph,
   val exhaustive: Boolean,
   val fallbackReason: String? = null,
-  /** Why the procedure is a single block although it can be cut (its smallest block is too small). */
+  /**
+   * Why the procedure is a single block although it can be cut (its smallest block is too small).
+   */
   val singleBlockReason: String? = null,
 ) {
 

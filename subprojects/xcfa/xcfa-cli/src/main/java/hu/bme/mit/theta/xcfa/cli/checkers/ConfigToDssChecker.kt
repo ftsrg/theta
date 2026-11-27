@@ -340,7 +340,15 @@ fun getDssChecker(
           }
       return@blockCheckers { blockXcfa: XCFA ->
         if (backend == Backend.CEGAR) {
-          val cegar = getCegarChecker(blockXcfa, mcm, parseContext, blockConfig, blockLogger)
+          val cegar =
+            getCegarChecker(
+              blockXcfa,
+              mcm,
+              parseContext,
+              blockConfig,
+              blockLogger,
+              keepProofTree = dssConfig.treePostcondition,
+            )
           if (domain == DssCegarDomain.EXPL) adaptExplChecker(cegar) else cegar
         } else
           adaptBoundedChecker(getBoundedChecker(blockXcfa, parseContext, blockConfig, blockLogger))
@@ -393,6 +401,7 @@ fun getDssChecker(
             useGlobalPredicatePool = dssConfig.globalPredicatePool,
             resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
             reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+            treePostcondition = dssConfig.treePostcondition,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,

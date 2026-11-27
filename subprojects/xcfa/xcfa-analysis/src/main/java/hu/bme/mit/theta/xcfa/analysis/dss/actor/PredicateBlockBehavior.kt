@@ -60,10 +60,12 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasQuantifier
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packTreePostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withoutAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cutBlock
+import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.analysis.reverseMapping
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -109,6 +111,7 @@ class PredicateBlockBehavior(
   private val semanticUnrollings: Int = DEFAULT_SEMANTIC_UNROLLINGS,
   private val fallbackSolverFactory: SolverFactory? = null,
   quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
+  private val treePostcondition: Boolean = false,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -626,10 +629,38 @@ class PredicateBlockBehavior(
         )
     }
     val reached = proof.getPartitions().values.flatten().map { quantifierFree(it.toExpr()) }
-    return RunResult.Safe(
-      normalize(quantifierFree(packPostcondition(result, extraction.exitLocation))),
-      reached.collectPreds() + start.precision,
-    )
+    val precision = reached.collectPreds() + start.precision
+    val postcondition =
+      treePostconditionOf(proof, extraction.exitLocation, precision)
+        ?: packPostcondition(result, extraction.exitLocation)
+    return RunResult.Safe(normalize(quantifierFree(postcondition)), precision)
+  }
+
+  /**
+   * With [treePostcondition], the postcondition from the paths of a CEGAR checker's tree; null
+   * without a tree, or if a query fails (the plain postcondition is just as sound).
+   */
+  private fun treePostconditionOf(
+    proof: LocationInvariants,
+    exit: XcfaLocation,
+    precision: Set<Expr<BoolType>>,
+  ): Expr<BoolType>? {
+    if (!treePostcondition || proof.tree == null) return null
+    return try {
+      packTreePostcondition(
+          proof,
+          exit,
+          precision,
+          solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
+        )
+        ?.also { statistics.treePostconditions++ }
+    } catch (e: InterruptedException) {
+      throw e
+    } catch (e: Exception) {
+      if (e.isDssBudgetExceeded()) throw e
+      statistics.treePostconditionFailures++
+      null
+    }
   }
 
   private fun pathViolation(

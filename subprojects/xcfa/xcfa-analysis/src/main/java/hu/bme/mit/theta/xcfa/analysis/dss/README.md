@@ -58,7 +58,9 @@ These are for benchmarking and may change: `--dss-direction BACKWARD|BIDIRECTION
 reversed program, `ProgramReversal.kt`, or both directions meeting in `DssMeetingActor`),
 `--dss-generalizers` (probes with generalized violation conditions, `Generalizers.kt`),
 `--dss-conjecture-invariants` (`DssConjectureActor`), `--dss-cut-on-timeout` (cut a block that
-every checker times out on, `BlockCut.kt`), and their tuning flags.
+every checker times out on, `BlockCut.kt`), `--dss-tree-postcondition` (a CEGAR block's
+postcondition from the paths of its ARG, abstracted onto the block's predicates once at the exit,
+like CPAchecker's block abstraction; `TreePostcondition.kt`), and their tuning flags.
 
 ## Packages
 
@@ -82,6 +84,8 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
   run without targets.
 * **Blocks with an internal cycle** (Theta-only decompositions) get per-path violation conditions:
   the weakest precondition along each counterexample, accumulated as a disjunction.
+* **Postconditions abstract at every location** by default; `--dss-tree-postcondition` abstracts
+  only at the exit, from the exact paths of the ARG since the nearest covering node.
 * **Precision** is the set of atoms of the reached states plus the start precision, not
   location-specific; the start state's own atoms are always added.
 * **Valid postconditions are normalized to `true`**, and non-top start states are analyzed first.

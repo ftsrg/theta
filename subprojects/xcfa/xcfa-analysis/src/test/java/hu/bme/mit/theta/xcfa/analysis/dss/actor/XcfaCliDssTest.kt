@@ -190,6 +190,10 @@ class XcfaCliDssTest {
           listOf("--dss-quantified-predicates", "ELIMINATE"),
           listOf("--dss-quantified-predicates", "FALLBACK", "--dss-fallback-solver", "Z3:new"),
           listOf("--dss-block-local-pool"),
+          listOf("--dss-tree-postcondition"),
+          listOf("--dss-tree-postcondition", "--dss-cegar-domain", "EXPL"),
+          listOf("--dss-tree-postcondition", "--dss-decomposition", "MIN_CUT_ABSORB_SELF_LOOPS"),
+          listOf("--dss-tree-postcondition", "--dss-executor", "PROCESS"),
         )
         .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
         .stream()

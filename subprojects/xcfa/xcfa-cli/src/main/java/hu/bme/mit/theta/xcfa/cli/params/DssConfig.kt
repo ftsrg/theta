@@ -213,6 +213,14 @@ data class DssConfig(
   )
   var reuseBlockPrecision: Boolean = false,
   @Parameter(
+    names = ["--dss-tree-postcondition"],
+    hidden = true,
+    description =
+      "Compute a CEGAR block's postcondition from the paths of its reachability tree, abstracted " +
+        "onto the block's predicates once at the exit, instead of from the abstract exit states",
+  )
+  var treePostcondition: Boolean = false,
+  @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,
     description =
