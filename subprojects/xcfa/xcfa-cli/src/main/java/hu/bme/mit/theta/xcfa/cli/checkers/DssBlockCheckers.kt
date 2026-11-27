@@ -15,11 +15,15 @@
  */
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.CheckerFactory
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DeadlineSolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.XcfaChecker
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasQuantifier
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withQuantifierFreePrecondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withSolverConstructionLock
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
@@ -65,23 +69,29 @@ internal fun XcfaConfig<*, *>.useSolver(solver: String) {
 /**
  * [primary], and if it throws, [fallback] once; a budget overrun or an interruption is passed on,
  * as the budget belongs to the block analysis, not to the solver.
+ *
+ * The fallback gets the block without quantifiers in its precondition and its precision: they come
+ * from `Z3:new` interpolants, and a fallback solver without quantifiers (MathSAT) fails on them. A
+ * weaker precondition and a smaller precision keep the block's result sound
+ * ([withQuantifierFreePrecondition]).
  */
 internal fun withSolverFallback(primary: CheckerFactory, fallback: CheckerFactory): CheckerFactory =
   { xcfa ->
     val first = primary(xcfa)
     object : XcfaChecker {
-      override fun check() = attempt { it.check() }
+      override fun check() = attempt({ it.check() }, { it.check() })
 
-      override fun check(input: XcfaPrec<*>?) = attempt { it.check(input) }
+      override fun check(input: XcfaPrec<*>?) =
+        attempt({ it.check(input) }, { it.check(withoutQuantifiedPredicates(input)) })
 
-      private fun <R> attempt(run: (XcfaChecker) -> R): R =
+      private fun <R> attempt(run: (XcfaChecker) -> R, rerun: (XcfaChecker) -> R): R =
         try {
           run(first)
         } catch (e: Exception) {
           if (e is InterruptedException || e.isDssBudgetExceeded()) throw e
-          val second = withSolverConstructionLock { fallback(xcfa) }
+          val second = withSolverConstructionLock { fallback(withQuantifierFreePrecondition(xcfa)) }
           try {
-            run(second)
+            rerun(second)
           } catch (f: Exception) {
             f.addSuppressed(e)
             throw f
@@ -89,3 +99,12 @@ internal fun withSolverFallback(primary: CheckerFactory, fallback: CheckerFactor
         }
     }
   }
+
+/** [prec] without its quantified predicates; other precisions are returned as they are. */
+internal fun withoutQuantifiedPredicates(prec: XcfaPrec<*>?): XcfaPrec<*>? {
+  val ptr = prec?.p as? PtrPrec<*> ?: return prec
+  val pred = ptr.innerPrec as? PredPrec ?: return prec
+  if (pred.preds.none(::hasQuantifier)) return prec
+  val kept = PredPrec.of(pred.preds.filterNot(::hasQuantifier))
+  return XcfaPrec(PtrPrec(kept, ptr.set, ptr.smth), prec.noPop)
+}

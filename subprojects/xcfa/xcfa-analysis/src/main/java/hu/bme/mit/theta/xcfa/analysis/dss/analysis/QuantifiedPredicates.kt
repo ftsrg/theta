@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
@@ -31,6 +33,14 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.optimizeFurther
+import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
 /**
  * What DSS does with the quantified formulas a block checker's proof can bring in: `Z3:new`
@@ -70,6 +80,47 @@ private fun weaken(expr: Expr<BoolType>, positive: Boolean): Expr<BoolType> =
     expr is ImplyExpr -> Or(Not(weaken(expr.leftOp, !positive)), weaken(expr.rightOp, positive))
     positive -> True()
     else -> False()
+  }
+
+/**
+ * [xcfa] with the quantified parts of the assumptions leaving its initial locations weakened away
+ * ([withoutQuantifiers]), or [xcfa] itself if there are none. These assumptions are a block
+ * program's precondition, so the result is a block program for a solver without quantifiers: a
+ * weaker precondition keeps the block's SAFE sound, and only the root's UNSAFE is a verdict, which
+ * has no precondition. The copy's locations equal the original ones.
+ */
+fun withQuantifierFreePrecondition(xcfa: XCFA): XCFA {
+  val quantified =
+    xcfa.procedures.any { procedure ->
+      procedure.initLoc.outgoingEdges.any { weakenAssumes(it.label) != it.label }
+    }
+  if (!quantified) return xcfa
+  return xcfa.optimizeFurther(ProcedurePassManager(listOf(WeakenQuantifiedPreconditionPass)))
+}
+
+private object WeakenQuantifiedPreconditionPass : ProcedurePass {
+  override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    for (edge in builder.initLoc.outgoingEdges.toList()) {
+      val label = weakenAssumes(edge.label)
+      if (label != edge.label) {
+        builder.removeEdge(edge)
+        builder.addEdge(edge.withLabel(label))
+      }
+    }
+    return builder
+  }
+}
+
+private fun weakenAssumes(label: XcfaLabel): XcfaLabel =
+  when (label) {
+    is SequenceLabel -> label.copy(labels = label.labels.map(::weakenAssumes))
+    is StmtLabel -> {
+      val stmt = label.stmt
+      if (stmt is AssumeStmt && hasQuantifier(stmt.cond))
+        label.copy(stmt = Assume(withoutQuantifiers(stmt.cond)))
+      else label
+    }
+    else -> label
   }
 
 /** [expr] with every outermost quantified subformula replaced by [eliminate]'s equivalent. */
