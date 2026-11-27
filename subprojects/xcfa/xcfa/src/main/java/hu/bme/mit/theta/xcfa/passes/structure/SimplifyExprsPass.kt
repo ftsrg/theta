@@ -161,8 +161,9 @@ class SimplifyExprsPass(
         }
 
         // Only the edges leaving a location read what reached it, so once they are done it can go:
-        // kept to the end, a long procedure holds a copy of its constants per edge.
-        if (edge.source.outgoingEdges.all { it in visited }) {
+        // kept to the end, a long procedure holds a copy of its constants per edge. The pass
+        // invariants are recorded from them at the end, so then they stay.
+        if (!recordPassInvariants && edge.source.outgoingEdges.all { it in visited }) {
           edge.source.incomingEdges.forEach {
             valuations.remove(it)
             pathValuations.remove(it)
@@ -177,11 +178,16 @@ class SimplifyExprsPass(
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
     if (recordPassInvariants) {
-      val unassignedAt = builder.unassignedConsts(constValuation)
+      // the constants are only a fallback of the valuations (global and local), not in their maps
+      val constants = ImmutableValuation.from(shared.constGlobals.toMap() + constValuation.toMap())
+      val unassignedAt = builder.unassignedConsts(constants)
       valuations
         .map { (edge, valuation) ->
           edge.target to
-            ImmutableValuation.from(valuation.toMap() - unassignedAt(edge.target)).toExpr()
+            ImmutableValuation.from(
+                constants.toMap() + valuation.toMap() - unassignedAt(edge.target)
+              )
+              .toExpr()
         }
         .groupBy { it.first }
         .forEach { (location, invariants) ->
