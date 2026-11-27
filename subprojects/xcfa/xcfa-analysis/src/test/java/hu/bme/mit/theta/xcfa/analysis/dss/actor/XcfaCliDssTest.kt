@@ -196,6 +196,9 @@ class XcfaCliDssTest {
           listOf("--dss-tree-postcondition", "--dss-executor", "PROCESS"),
           listOf("--dss-tree-postcondition", "--dss-tree-exit-paths"),
           listOf("--dss-cegar-domain", "PRED_BOOL"),
+          listOf("--dss-violation-conditions", "PATHS"),
+          listOf("--dss-violation-conditions", "PATHS", "--dss-executor", "PROCESS"),
+          listOf("--dss-violation-conditions", "PATHS", "--dss-checker-backends", "KIND,CEGAR"),
           listOf("--dss-tree-postcondition", "--dss-tree-abstraction", "BOOLEAN"),
           listOf(
             "--dss-cegar-domain",
@@ -232,6 +235,24 @@ class XcfaCliDssTest {
   fun `every decomposition gives the right verdict`(decomposition: String, program: String) {
     assertTrue(
       dssVerdict(program, "--dss-decomposition", decomposition).contains(expected(program))
+    )
+  }
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict with per-path violation conditions`(
+    decomposition: String,
+    program: String,
+  ) {
+    assertTrue(
+      dssVerdict(
+          program,
+          "--dss-decomposition",
+          decomposition,
+          "--dss-violation-conditions",
+          "PATHS",
+        )
+        .contains(expected(program))
     )
   }
 

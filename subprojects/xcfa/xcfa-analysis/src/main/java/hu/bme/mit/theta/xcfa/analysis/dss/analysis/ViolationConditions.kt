@@ -103,6 +103,22 @@ object DssAuxVars {
   }
 }
 
+/** How a block builds the violation conditions it sends (`--dss-violation-conditions`). */
+enum class DssViolationConditions {
+  /**
+   * One exact condition over all of the block's paths to its targets ([computeViolationCondition]);
+   * blocks with an internal cycle, which have none, fall back to [PATHS].
+   */
+  ALL_PATHS,
+  /**
+   * One condition per error path a run finds, along that path only, accumulated as a disjunction
+   * ([computePathViolationCondition]); further paths come from later runs. As CPAchecker's paper
+   * version does (`DistributedPredicateCPA.computeVerificationCondition` on one ARG path per
+   * target).
+   */
+  PATHS,
+}
+
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
 fun computeViolationCondition(
   block: Block,

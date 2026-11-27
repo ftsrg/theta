@@ -49,6 +49,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalizers
@@ -129,6 +130,7 @@ class PredicateBlockBehavior(
   private val treePostcondition: Boolean = false,
   private val treeExitPaths: Boolean = false,
   private val treeAbstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
+  private val violationConditionMode: DssViolationConditions = DssViolationConditions.ALL_PATHS,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -157,7 +159,12 @@ class PredicateBlockBehavior(
     val edges: List<XcfaEdge>,
   )
 
-  private val usesPathViolations: Boolean by lazy { hasInternalCycle(block) }
+  /** No exact condition over all paths exists, so only per-path ones can be computed. */
+  private val hasCycle: Boolean by lazy { hasInternalCycle(block) }
+
+  private val usesPathViolations: Boolean by lazy {
+    violationConditionMode == DssViolationConditions.PATHS || hasCycle
+  }
 
   private val pathViolationsSoFar = linkedSetOf<Expr<BoolType>>()
 
@@ -542,8 +549,9 @@ class PredicateBlockBehavior(
 
   private fun analyzeMayViolation(id: Int, target: Expr<BoolType>, hopsLeft: Int): DssMessage? {
     statistics.mayAnalyses++
-    // Per-path conditions would have to search the other paths too, as violation conditions do
-    if (usesPathViolations) return conjectureFailed(id)
+    // Per-path conditions would have to search the other paths too, as violation conditions do;
+    // without a cycle the exact condition exists, whatever the sent conditions are made of
+    if (hasCycle) return conjectureFailed(id)
     val condition =
       try {
         val reached =
@@ -984,14 +992,13 @@ class PredicateBlockBehavior(
    * may still reach it: the probe then fails. Not deciding is "no".
    */
   private fun unreachableFromStartStates(): ((Expr<BoolType>) -> Boolean)? {
-    if (usesPathViolations && semanticUnrollings <= 0) return null
+    if (hasCycle && semanticUnrollings <= 0) return null
     val start = And(Or(startStates().map { it.first.state }), startRestriction())
     return { condition ->
       val targets = mapOf(block.finalLocation to condition)
       try {
         val atEntry =
-          if (usesPathViolations)
-            computeBoundedViolationCondition(block, targets, semanticUnrollings)
+          if (hasCycle) computeBoundedViolationCondition(block, targets, semanticUnrollings)
           else computeViolationCondition(block, targets)
         operators.isUnsat(And(start, atEntry))
       } catch (e: InterruptedException) {

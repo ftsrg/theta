@@ -25,6 +25,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_CUT_BLOCK_COUNT
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -257,6 +258,15 @@ data class DssConfig(
         "CARTESIAN (each predicate or its negation) or BOOLEAN (a disjunction of predicate cubes)",
   )
   var treeAbstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
+  @Parameter(
+    names = ["--dss-violation-conditions"],
+    hidden = true,
+    description =
+      "How a block builds the violation conditions it sends: ALL_PATHS (one exact condition over " +
+        "all of its paths; blocks with a cycle use PATHS) or PATHS (one per error path found, " +
+        "accumulated, as CPAchecker's paper version)",
+  )
+  var violationConditions: DssViolationConditions = DssViolationConditions.ALL_PATHS,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

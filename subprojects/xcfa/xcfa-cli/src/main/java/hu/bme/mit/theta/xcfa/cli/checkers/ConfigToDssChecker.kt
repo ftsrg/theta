@@ -420,6 +420,7 @@ fun getDssChecker(
             treePostcondition = dssConfig.treePostcondition,
             treeExitPaths = dssConfig.treeExitPaths,
             treeAbstraction = dssConfig.treeAbstraction,
+            violationConditionMode = dssConfig.violationConditions,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,

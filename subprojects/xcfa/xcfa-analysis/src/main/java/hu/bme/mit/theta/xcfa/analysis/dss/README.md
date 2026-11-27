@@ -63,7 +63,9 @@ postcondition from the paths of its ARG, abstracted onto the block's predicates 
 like CPAchecker's block abstraction; `TreePostcondition.kt`; with `--dss-tree-exit-paths`, paths
 meeting at the exit keep their own exact paths; `--dss-tree-abstraction BOOLEAN` abstracts them
 onto predicate cubes instead of single predicates), `--dss-cegar-domain` (`PRED_CART`, `PRED_BOOL`,
-`EXPL`), and their tuning flags.
+`EXPL`), `--dss-violation-conditions PATHS` (per-path violation conditions for every block,
+accumulated, as CPAchecker's paper version builds them; by default only blocks with a cycle use
+them), and their tuning flags.
 
 ## Packages
 
