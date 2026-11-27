@@ -65,7 +65,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
             final JavaSMTTermTransformer termTransformer,
             final SolverContext context,
             final InterpolatingProverEnvironment interpolatingProverEnvironment,
-            final ShutdownManager shutdownManager) {
+            final ShutdownManager interrupter) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.context = context;
@@ -77,7 +77,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                         termTransformer,
                         context,
                         interpolatingProverEnvironment,
-                        shutdownManager);
+                        interrupter);
         this.interpolatingProverEnvironment = interpolatingProverEnvironment;
 
         markers = new StackImpl<>();

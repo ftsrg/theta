@@ -39,6 +39,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.monolithic.XcfaPipelineChecker
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
+import hu.bme.mit.theta.xcfa.cli.params.InputType
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -125,6 +126,7 @@ internal fun getPipelineChecker(
     logger,
     config.outputConfig.acceptUnreliableSafe,
     blockEncoding = blockEncoding,
+    quantifiedInvariants = config.frontendConfig.inputType == InputType.SVLIB,
   )
 }
 

@@ -430,6 +430,7 @@ fun getDefaultOutputConfig(portfolioConfig: XcfaConfig<*, *>) =
     cOutputConfig = portfolioConfig.outputConfig.cOutputConfig,
     xcfaOutputConfig = portfolioConfig.outputConfig.xcfaOutputConfig,
     chcOutputConfig = portfolioConfig.outputConfig.chcOutputConfig,
+    svLibOutputConfig = portfolioConfig.outputConfig.svLibOutputConfig,
     witnessConfig =
       WitnessConfig(
         enabled = portfolioConfig.outputConfig.witnessConfig.enabled,

@@ -50,6 +50,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.ErrorDetection.ERROR_LOCATION
 import hu.bme.mit.theta.xcfa.ErrorDetection.TERMINATION
 import hu.bme.mit.theta.xcfa.XcfaProperty
+import hu.bme.mit.theta.xcfa.analysis.HintedTrace
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
@@ -71,6 +72,7 @@ private constructor(
   parseContext: ParseContext,
   initValues: Boolean,
   private val blocks: BlockEncoding?,
+  private val quantifiedInvariants: Boolean,
 ) :
   XcfaToMonolithicAdapter(
     model,
@@ -80,7 +82,11 @@ private constructor(
     initValues,
   ) {
 
-  /** [blockEncoding]: one transition per block instead of per edge (see [BlockEncoding]). */
+  /**
+   * [blockEncoding]: one transition per block instead of per edge (see [BlockEncoding]).
+   *
+   * [quantifiedInvariants]: existentially quantify out-of-scope variables in invariants
+   */
   @JvmOverloads
   constructor(
     model: XCFA,
@@ -88,6 +94,7 @@ private constructor(
     parseContext: ParseContext,
     initValues: Boolean = false,
     blockEncoding: Boolean = false,
+    quantifiedInvariants: Boolean = false,
   ) : this(
     model,
     property,
@@ -96,6 +103,7 @@ private constructor(
     if (blockEncoding && property.verifiedProperty == ERROR_LOCATION && onlyLocalLabels(model))
       BlockEncoding(parseContext)
     else null,
+    quantifiedInvariants,
   )
 
   private lateinit var locVar: VarDecl<Type>
@@ -266,7 +274,11 @@ private constructor(
   override fun traceToModelTrace(
     trace: Trace<ExplState, ExprAction>
   ): Trace<XcfaState<PtrState<ExplState>>, XcfaAction> {
-    return Trace.of(trace.states.map(this::valToState), trace.states.drop(1).map(this::valToAction))
+    return HintedTrace.of(
+      trace.states.map(this::valToState),
+      trace.states.drop(1).map(this::valToAction),
+      trace.states,
+    )
   }
 
   /**
@@ -290,7 +302,7 @@ private constructor(
                 ExprUtils.simplify(invariant, valuation.build())
               }
             )
-          Pair(location, listOf(PredState.of(withoutChoices(ExprUtils.simplify(atLocation)))))
+          Pair(location, listOf(PredState.of(exported(location, ExprUtils.simplify(atLocation)))))
         }
         .toMap()
     )
@@ -355,6 +367,17 @@ private constructor(
   private fun withoutChoices(invariant: Expr<BoolType>): Expr<BoolType> =
     if (ExprUtils.getVars(invariant).any { BlockEncoding.CHOICE_PREFIX in it.name }) True()
     else invariant
+
+  private fun exported(location: XcfaLocation, invariant: Expr<BoolType>): Expr<BoolType> =
+    when {
+      !quantifiedInvariants -> withoutChoices(invariant)
+      // locations from which the error location is unreachable get `true`
+      blocks != null &&
+        model.initProcedures.first().first.errorLoc.isPresent &&
+        !location.error &&
+        location.outgoingEdges.isEmpty() -> True()
+      else -> invariant
+    }
 
   fun valToState(valuation: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = valuation.toMap()

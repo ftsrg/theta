@@ -18,8 +18,13 @@ package hu.bme.mit.theta.xcfa.witnesses
 import com.charleskorn.kaml.MultiLineStringStyle
 import com.charleskorn.kaml.SingleLineStringStyle
 import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 val WitnessYamlConfig =
   Yaml(
@@ -242,11 +247,11 @@ typealias Segment = List<Waypoint>
  * @param action Action `follow` means that the waypoint should be passed through. Action `avoid`
  *   means that the waypoint should be avoided.
  * @param threadId The optional `thread_id` (witness format 2.2, concurrency extension) names the
- *   thread that executes the waypoint: `0` (or an absent field) is the main thread, and `k` is the
- *   thread registered by the k-th thread-creating `function_enter` waypoint of the witness (a
- *   `function_enter` waypoint located at a thread-creating call such as `pthread_create`, which
- *   itself belongs to the spawning thread). The segment order of the witness is the cross-thread
- *   (happens-before) order of the waypoints.
+ *   thread that executes the waypoint: `0` (or an absent field) is the main thread, `any`
+ *   ([ANY_THREAD_ID]) is any thread, and `k` is the thread registered by the k-th thread-creating
+ *   `function_enter` waypoint of the witness (a `function_enter` waypoint located at a
+ *   thread-creating call such as `pthread_create`, which itself belongs to the spawning thread).
+ *   The segment order of the witness is the cross-thread (happens-before) order of the waypoints.
  */
 @Serializable
 data class WaypointContent(
@@ -254,8 +259,28 @@ data class WaypointContent(
   val constraint: Constraint? = null,
   val location: Location,
   val action: Action,
-  @SerialName("thread_id") val threadId: Int? = null,
-)
+  @Serializable(with = ThreadIdSerializer::class) @SerialName("thread_id") val threadId: Int? = null,
+) {
+  companion object {
+    /** The `thread_id` value `any`: the waypoint may be executed by any thread. */
+    const val ANY_THREAD_ID = Int.MIN_VALUE
+  }
+}
+
+/** A `thread_id` is either a non-negative integer or the keyword `any` ([ANY_THREAD_ID]). */
+object ThreadIdSerializer : KSerializer<Int> {
+  override val descriptor = PrimitiveSerialDescriptor("ThreadId", PrimitiveKind.STRING)
+
+  override fun serialize(encoder: Encoder, value: Int) =
+    if (value == WaypointContent.ANY_THREAD_ID) encoder.encodeString("any")
+    else encoder.encodeInt(value)
+
+  override fun deserialize(decoder: Decoder): Int =
+    when (val value = decoder.decodeString()) {
+      "any" -> WaypointContent.ANY_THREAD_ID
+      else -> value.toInt()
+    }
+}
 
 @Serializable
 enum class WaypointType {

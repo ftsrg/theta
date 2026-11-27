@@ -99,6 +99,8 @@ class SymbolicMutexPass : ProcedurePass {
         model.addVar(XcfaGlobalVar(it, value, atomic = true))
         initializers.add(StmtLabel(Assign(it, value)))
       }
+    fun <T : Type> ownership(name: String, index: Type, initial: LitExpr<T>) =
+      global(name, constant(index, initial)).also { model.mutexArrays[it] = initial }
 
     val arrays =
       labels
@@ -118,10 +120,9 @@ class SymbolicMutexPass : ProcedurePass {
                 it is RWLockUnlockLabel) && (it as FenceLabel).lock.type == type
             }
           Arrays(
-              if (simple) global("__theta_simple_mutexes_$i", constant(type, Int(-1))) else null,
-              if (recursive) global("__theta_recursive_$i", constant(type, False())) else null,
-              if (simple && recursive) global("__theta_acquisitions_$i", constant(type, Int(0)))
-              else null,
+              if (simple) ownership("__theta_simple_mutexes_$i", type, Int(-1)) else null,
+              if (recursive) ownership("__theta_recursive_$i", type, False()) else null,
+              if (simple && recursive) ownership("__theta_acquisitions_$i", type, Int(0)) else null,
               if (rw) global("__theta_rw_mutexes_$i", constant(type, constant(Int(), emptyOwners)))
               else null,
             )

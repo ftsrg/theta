@@ -1,0 +1,40 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(define-proc inc
+  ((x Int))
+  ((y Int))
+  ()
+  (!
+    (assign (y (+ x 1)))
+    :tag inc-body))
+
+(define-proc twice
+  ((x Int))
+  ((y Int))
+  ((t Int))
+  (!
+    (!
+      (sequence
+        (call inc (x) (t))
+        (!
+          (call inc (t) (y))
+          :tag shared))
+      :tag twice-body)
+    :tag twice-outer))
+
+(define-proc other
+  ()
+  ()
+  ()
+  (!
+    (sequence)
+    :tag shared))
+
+(annotate-tag inc-body :tag inc-alias)
+
+(declare-const input Int)
+
+(verify-call twice (input))
+(get-witness)

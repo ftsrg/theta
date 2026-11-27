@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.passes.structure
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
+import hu.bme.mit.theta.xcfa.passes.recordRemovedLocations
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import java.util.stream.Collectors
 
@@ -25,8 +26,11 @@ import java.util.stream.Collectors
  * Removes edges that reach neither the error nor the final location. Enable it only for
  * reachability: other properties can be violated on such edges.
  */
-class RemoveDeadEnds(val parseContext: ParseContext, private val enabled: Boolean = true) :
-  ProcedurePass {
+class RemoveDeadEnds(
+  val parseContext: ParseContext,
+  private val enabled: Boolean = true,
+  private val recordPassInvariants: Boolean = false,
+) : ProcedurePass {
 
   // TODO: thread start and procedure call should not be dead-end! Use-case: while(1)
   // pthread_create(..);
@@ -61,6 +65,7 @@ class RemoveDeadEnds(val parseContext: ParseContext, private val enabled: Boolea
           (!nonDeadEndEdges.contains(xcfaEdge) || !reachableEdges.contains(xcfaEdge))
         }
         .collect(Collectors.toSet())
+    if (recordPassInvariants) recordRemovedLocations(builder, collect, reachableEdges, parseContext)
     for (edge in collect) {
       builder.removeEdge(edge!!)
     }

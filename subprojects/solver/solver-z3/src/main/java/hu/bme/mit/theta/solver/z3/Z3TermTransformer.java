@@ -251,6 +251,23 @@ final class Z3TermTransformer {
                                 roundingmode,
                                 (Expr<BvType>) op,
                                 FpType.of(type.getExponent(), type.getSignificand()),
+                                true);
+                    } else {
+                        throw new com.microsoft.z3.Z3Exception("Unsupported:" + op.getType());
+                    }
+                });
+        this.environment.put(
+                Tuple2.of("to_fp_unsigned", 2),
+                (term, model, vars) -> {
+                    FpType type = (FpType) transformSort(term.getSort());
+                    FpRoundingMode roundingmode =
+                            this.getRoundingMode((term.getArgs()[0]).toString());
+                    Expr<?> op = this.transform(term.getArgs()[1], model, vars);
+                    if (op.getType() instanceof BvType) {
+                        return FpFromBvExpr.of(
+                                roundingmode,
+                                (Expr<BvType>) op,
+                                FpType.of(type.getExponent(), type.getSignificand()),
                                 false);
                     } else {
                         throw new com.microsoft.z3.Z3Exception("Unsupported:" + op.getType());

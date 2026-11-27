@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.passes.concurrency.PthreadBarrierPass
 import hu.bme.mit.theta.xcfa.passes.concurrency.ThreadLocalVarPass
 import hu.bme.mit.theta.xcfa.passes.concurrency.ThreadResultPass
 import hu.bme.mit.theta.xcfa.passes.library.CLibraryFunctionsPass
+import hu.bme.mit.theta.xcfa.passes.library.EntryArgumentsPass
 import hu.bme.mit.theta.xcfa.passes.library.FormatAccessPass
 import hu.bme.mit.theta.xcfa.passes.library.FpFunctionsToExprsPass
 import hu.bme.mit.theta.xcfa.passes.library.LibraryStubsPass
@@ -35,6 +36,7 @@ import hu.bme.mit.theta.xcfa.passes.library.NondetFunctionPass
 import hu.bme.mit.theta.xcfa.passes.library.PrintfReturnBoundPass
 import hu.bme.mit.theta.xcfa.passes.library.StringLiteralInitPass
 import hu.bme.mit.theta.xcfa.passes.library.SvCompIntrinsicsPass
+import hu.bme.mit.theta.xcfa.passes.library.ThreadSpecificDataPass
 import hu.bme.mit.theta.xcfa.passes.loops.UnrollPass
 import hu.bme.mit.theta.xcfa.passes.memory.AllocaFunctionPass
 import hu.bme.mit.theta.xcfa.passes.memory.ByteMemoryPass
@@ -96,11 +98,19 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       SvCompIntrinsicsPass(),
       FpFunctionsToExprsPass(parseContext),
       // must run before CLibraryFunctionsPass reads the handle, and before ReferenceElimination
-      // rewrites `&t[i]`
+      // rewrites `&t[i]`; in a phase of its own, so that CLibraryFunctionsPass sees every
+      // procedure's handles unrolled when it decides whether handles need to hold thread ids
       PthreadArrayHandleUnrollPass(parseContext),
+    ),
+    // in a phase of their own: ThreadSpecificDataPass reads every procedure's thread-specific data
+    // calls before CLibraryFunctionsPass lowers the thread functions
+    listOf(ThreadSpecificDataPass(parseContext), EntryArgumentsPass(parseContext)),
+    listOf(
       CLibraryFunctionsPass(
         parseContext,
         modelStringLength = property.inputProperty != ErrorDetection.TERMINATION,
+        // a join that waits on a flag blocks where a termination analysis expects a join label
+        runtimeThreadHandles = property.inputProperty != ErrorDetection.TERMINATION,
       ),
       // before ReferenceElimination, which folds the `&barrier` handle away
       PthreadBarrierPass(parseContext),
@@ -113,7 +123,9 @@ class CPasses(property: XcfaProperty, parseContext: ParseContext, uniqueWarningL
       LibraryStubsPass(parseContext, uniqueWarningLogger),
     ),
     listOf(
-      ReferenceElimination(parseContext),
+      // leaves procedures with pointer parameters to the run after inlining, which sees what the
+      // callers pass
+      ReferenceElimination(parseContext, beforeInlining = true),
       // lowers to malloc + memset, so it precedes both
       CallocFunctionPass(parseContext),
       MallocFunctionPass(parseContext),
@@ -306,11 +318,11 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
       DeterministicPass(),
       // removing redundant elements
       EmptyEdgeRemovalPass(),
-      UnusedLocRemovalPass(),
+      UnusedLocRemovalPass(parseContext),
     ),
     listOf(
       // optimizing
-      SimplifyExprsPass(parseContext),
+      SimplifyExprsPass(parseContext, recordPassInvariants = true),
       UnrollPass(),
       EmptyEdgeRemovalPass(),
     ),
@@ -320,13 +332,13 @@ class SvLibPasses(parseContext: ParseContext, logger: Logger) :
     ),
     listOf(
       // Clean up procedures after inlining
-      //    InlinedProcedureRemovalPass()
+      InlinedProcedureRemovalPass(parseContext)
     ),
     listOf(
       EmptyEdgeRemovalPass(),
-      SimplifyExprsPass(parseContext),
-      UnusedLocRemovalPass(),
-      RemoveDeadEnds(parseContext),
+      SimplifyExprsPass(parseContext, recordPassInvariants = true),
+      UnusedLocRemovalPass(parseContext),
+      RemoveDeadEnds(parseContext, recordPassInvariants = true),
       EliminateSelfLoops(),
     ),
     listOf(StaticCoiPass()),

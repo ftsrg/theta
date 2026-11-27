@@ -69,13 +69,9 @@ fun XcfaProcedure.toCHC(
   }
 
   val types = vars.map { it.type }.toTypedArray()
-  val oldParams =
-    vars.withIndex().associate { (i, v) -> v to Param("|" + v.name.trim('|') + "_$i|", v.type) }
+  val oldParams = vars.withIndex().associate { (i, v) -> v to Param("${v.name}_$i", v.type) }
   val oldParamList = vars.map { oldParams[it]!!.ref }.toTypedArray()
-  val newParams =
-    vars.withIndex().associate { (i, v) ->
-      v to Param("|" + v.name.trim('|') + "_${i}_new|", v.type)
-    }
+  val newParams = vars.withIndex().associate { (i, v) -> v to Param("${v.name}_${i}_new", v.type) }
 
   val ufs = locs.associateWith { Relation(it.name, *types) }
 

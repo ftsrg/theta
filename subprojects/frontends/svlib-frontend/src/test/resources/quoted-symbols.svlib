@@ -1,0 +1,29 @@
+(set-logic LIA)
+(set-option :produce-witnesses true)
+(set-info :format-version "1.0")
+
+(declare-var |g::x| Int)
+(declare-var y Int)
+
+(define-proc |p::q|
+  ((|a::in| Int))
+  ((|b::out| Int))
+  ((|c::loc| Int))
+  (sequence
+    (assign (|c::loc| (+ |a::in| |y|)))
+    (assign (|b::out| |c::loc|))))
+
+(define-proc main
+  ()
+  ()
+  ((|r::v| Int))
+  (sequence
+    (assign (|y| 0) (|g::x| 1))
+    (call |p::q| (|g::x|) (|r::v|))
+    (!
+      (sequence)
+      :tag |check::r|
+      :check-true (= |r::v| (+ |g::x| y)))))
+
+(verify-call main ())
+(get-witness)

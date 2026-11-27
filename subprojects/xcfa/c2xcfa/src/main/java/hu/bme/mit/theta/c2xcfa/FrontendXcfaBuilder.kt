@@ -1111,19 +1111,25 @@ class FrontendXcfaBuilder(
     declaration: CDeclaration,
   ) {
     val type = declaration.actualType
+    // C requires a constant initializer here: the value every thread starts with
+    val init =
+      unwrapScalarInitializer(declaration.initExpr)
+        ?.takeIf { it.expression !is UnsupportedInitializer }
+        ?.let { ExprUtils.simplify(type.castTo(it.expression.asPointerValue(type, parseContext))) }
     if (
-      type is CPointer ||
-        type is CArray ||
+      type is CArray ||
         type is CStruct ||
         type.isAtomic ||
-        declaration.initExpr != null
+        (declaration.initExpr != null && init !is LitExpr<*>)
     ) {
       throw UnsupportedFrontendElementException(
-        "Only uninitialized non-atomic scalar thread-local variables are supported in " +
-          "multithreaded programs: ${declaration.name}"
+        "Only non-atomic scalar thread-local variables with a constant initializer are supported" +
+          " in multithreaded programs: ${declaration.name}"
       )
     }
-    builder.addVar(XcfaGlobalVar(variable, type.nullValue, threadLocal = true))
+    builder.addVar(
+      XcfaGlobalVar(variable, init as LitExpr<*>? ?: type.nullValue, threadLocal = true)
+    )
   }
 
   private fun initializeGlobalVariable(

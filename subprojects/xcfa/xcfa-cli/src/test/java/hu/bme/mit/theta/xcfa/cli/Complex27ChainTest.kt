@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.cli.portfolio.ConfigNode
 import hu.bme.mit.theta.xcfa.cli.portfolio.Node
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.complex27
+import hu.bme.mit.theta.xcfa.cli.portfolio.complex27svlib
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.procedure
 import hu.bme.mit.theta.xcfa.model.xcfa
@@ -91,13 +92,15 @@ class Complex27ChainTest {
     parseContext: ParseContext = ParseContext(),
     property: ErrorDetection = ErrorDetection.ERROR_LOCATION,
     witness: File? = null,
+    inputType: InputType = InputType.C,
   ): STM =
-    complex27(
+    (if (inputType == InputType.SVLIB) ::complex27svlib else ::complex27)(
       program,
       emptySet(),
       parseContext,
       XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(
         inputConfig = InputConfig(property = XcfaProperty(property), witness = witness),
+        frontendConfig = FrontendConfig(inputType = inputType),
         debugConfig = DebugConfig(debug = true),
       ),
       NullLogger.getInstance(),
@@ -315,6 +318,27 @@ class Complex27ChainTest {
       nodesOf(stm).none { arithmeticOf(it) == ArithmeticType.bitvector },
       "a bitwise program should not re-parse under bitvector",
     )
+  }
+
+  @Test
+  fun aNonCProgramDoesNotRetryUnderTheCFrontend() {
+    // The retry re-reads the input as C, which only a C input survives.
+    val stm = stmFor(looping(), inputType = InputType.SVLIB)
+    val last = nodesOf(stm).first { it.name == chain(stm).last() }
+    assertTrue(
+      nodesOf(stm).all { it.config.frontendConfig.inputType == InputType.SVLIB },
+      "a configuration re-reads the program under another frontend",
+    )
+    assertTrue(last.name.startsWith("PRED_CART-BW_BIN_ITP"), "last slice was ${last.name}")
+    assertTrue(last.name.contains("mathsat"), "last slice was ${last.name}")
+  }
+
+  @Test
+  fun anSvLibProgramRunsNoBoundedEngine() {
+    for (program in listOf(looping(), loopFree())) {
+      val names = nodesOf(stmFor(program, inputType = InputType.SVLIB)).map { it.name }
+      assertTrue(names.none { it.startsWith("BMC") || it.startsWith("KIND") }, "chain was $names")
+    }
   }
 
   @Test

@@ -35,7 +35,5 @@ dependencies {
     testImplementation(project(":theta-graph-solver"))
 }
 
-tasks.test {
-    // Z3 solvers keep their native contexts until the JVM exits, and the DSS tests build many
-    forkEvery = 1
-}
+// Native solver memory outlives the tests that used it: a JVM per class keeps it bounded.
+tasks.test { forkEvery = 1 }

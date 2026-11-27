@@ -56,6 +56,7 @@ constructor(
   private val acceptUnreliableSafe: Boolean,
   initValues: Boolean = false,
   blockEncoding: Boolean = false,
+  quantifiedInvariants: Boolean = false,
 ) :
   FormalismPipelineChecker<
     XCFA,
@@ -68,6 +69,7 @@ constructor(
       check(!xcfa.hasInvariantChecks) {
         "Witness invariants are checked only in sequential programs"
       }
+      val untransformed = property.copy()
       try {
         XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues)
       } catch (e: IllegalStateException) {
@@ -78,11 +80,18 @@ constructor(
           logger.info(
             "Multithreaded XCFA to monolithic expression transformation failed, falling back to force unrolling loops."
           )
-          XcfaMultiThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, true)
+          XcfaMultiThreadToMonolithicAdapter(xcfa, untransformed, parseContext, initValues, true)
         } else throw e
       }
     } else {
-      XcfaSingleThreadToMonolithicAdapter(xcfa, property, parseContext, initValues, blockEncoding)
+      XcfaSingleThreadToMonolithicAdapter(
+        xcfa,
+        property,
+        parseContext,
+        initValues,
+        blockEncoding,
+        quantifiedInvariants,
+      )
     },
     MEPipelineCheckerConstructorArguments(checkerFactory, passes, logger = logger),
   ) {

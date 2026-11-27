@@ -46,6 +46,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.RequiresByteAddressedMemoryException
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
@@ -205,11 +206,14 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     aggregateOf(dst)?.let { (pointee, cells, bytes) ->
       if (literalValue(invoke.params[3]) != bytes) return giveUp(invoke)
       val types = (0 until cells).map { cellTypeAt(pointee, it) }
+      if (!laidOutAs(src, types)) return giveUp(invoke)
       return SequenceLabel(copyCells(invoke, builder, dst, src, types) + returns(invoke, dst))
     }
 
     val element = elementOf(dst) ?: elementOf(src) ?: return giveUp(invoke)
     val count = elementCount(invoke.params[3], element) ?: return giveUp(invoke)
+    if (!laidOutAs(dst, List(count) { element }) || !laidOutAs(src, List(count) { element }))
+      return giveUp(invoke)
     return SequenceLabel(
       copyCells(invoke, builder, dst, src, List(count) { element }) + returns(invoke, dst)
     )
@@ -569,6 +573,24 @@ class MemoryFunctionsPass(val parseContext: ParseContext, val uniqueWarningLogge
     val bits = ObjectLayout.of(pointee, parseContext.architecture).bitSize()
     if (bits <= 0 || bits % 8 != 0) return null
     return Triple(pointee, cells, BigInteger.valueOf((bits / 8).toLong()))
+  }
+
+  /**
+   * Whether the object [pointer] points at starts with cells of exactly [types]. Both sides of a
+   * copy are walked by one cell list, so a source of another layout (a different struct, a char
+   * buffer behind a struct) would be read at the wrong cells. A `void *` says nothing and passes.
+   */
+  private fun laidOutAs(pointer: Expr<*>, types: List<CComplexType>): Boolean {
+    val pointee = pointeeOf(pointer) ?: return true
+    if (pointee is CVoid) return true
+    val cells =
+      if (pointee is CStruct || pointee is CArray) flatCells(pointee) ?: return false
+      else Int.MAX_VALUE
+    if (cells < types.size) return false
+    return types.withIndex().all { (i, type) ->
+      val actual = if (pointee is CStruct || pointee is CArray) cellTypeAt(pointee, i) else pointee
+      actual.javaClass == type.javaClass && actual.width() == type.width()
+    }
   }
 
   /** How many cells [type] occupies when all of them are scalars; null if any is not. */

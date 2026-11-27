@@ -19,50 +19,20 @@ import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import hu.bme.mit.theta.core.decl.ConstDecl
 import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.solver.Stack
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
 class SvLibTermTransformer(private val svLibSymbolTable: SvLibSymbolTable = SvLibSymbolTable()) :
   GenericSmtLibTermTransformer(svLibSymbolTable) {
-  override fun transformSymbol(
-    ctx: SMTLIBv2Parser.SymbolContext,
-    model: SmtLibModel,
-    vars: Stack<ParamDecl<*>>,
-  ): Expr<*> {
-    when (val value = ctx.text) {
-      "true" -> return BoolExprs.True()
-      "false" -> return BoolExprs.False()
-      else -> {
-        val filtered = vars.filter { it.name == value }
-        return if (!filtered.isEmpty()) {
-          filtered.last().getRef()
-        } else if (svLibSymbolTable.definesSymbol(value)) {
-          svLibSymbolTable.getConst(value).getRef()
-        } else if (svLibSymbolTable.definesEnumLiteral(value)) {
-          svLibSymbolTable.getEnumLiteral(value)
-        } else {
-          throw SmtLibSolverException("Transformation of symbol not supported: " + value)
-        }
-      }
-    }
-  }
-
-  override fun getSymbol(symbol: SMTLIBv2Parser.SymbolContext): String = symbol.text
-
   fun <T : Type> toExpr(term: String, type: T): Expr<T> =
     super.toExpr(term, type, SmtLibModel(emptyMap())).changeVars(svLibSymbolTable.constToVar)
 }
@@ -77,6 +47,8 @@ class SvLibExprTransformer {
     val constExpr = ExprUtils.changeDecls(expr, symbolTable.varToConst)
     return transformationManager.toTerm(constExpr)
   }
+
+  fun toSort(type: Type): String = transformationManager.toSort(type)
 }
 
 class SvLibSymbolTable : GenericSmtLibSymbolTable {
@@ -94,15 +66,16 @@ class SvLibSymbolTable : GenericSmtLibSymbolTable {
   val constToVar: Map<ConstDecl<*>, VarDecl<*>> = varConstants.inverse()
 
   fun registerVar(varDecl: VarDecl<*>) {
-    if (definesSymbol(varDecl.name)) return
+    if (definesSymbol(encodeSymbol(varDecl.name))) return
 
     val constDecl = Decls.Const(varDecl.name, varDecl.type)
     transformConst(constDecl)
     varConstants.putIfAbsent(varDecl, constDecl)
   }
 
-  fun getVar(symbol: String) =
-    constToVar[getConst(symbol)] ?: throw IllegalStateException("Unknown SV-LIB variable '$symbol'")
+  fun getVar(name: String) =
+    constToVar[getConst(encodeSymbol(name))]
+      ?: throw IllegalStateException("Unknown SV-LIB variable '$name'")
 
   override fun put(constDecl: ConstDecl<*>, symbol: String, declaration: String) {
     constToSymbol[constDecl] = symbol
