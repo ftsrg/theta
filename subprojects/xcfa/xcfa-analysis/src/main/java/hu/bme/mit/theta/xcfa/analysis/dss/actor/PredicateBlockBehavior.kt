@@ -112,6 +112,7 @@ class PredicateBlockBehavior(
   private val fallbackSolverFactory: SolverFactory? = null,
   quantifiedPredicates: DssQuantifiedPredicates = DssQuantifiedPredicates.KEEP,
   private val treePostcondition: Boolean = false,
+  private val treeExitPaths: Boolean = false,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -652,6 +653,7 @@ class PredicateBlockBehavior(
           exit,
           precision,
           solverFactory ?: SolverManager.resolveSolverFactory(DEFAULT_DSS_SOLVER),
+          exactExits = treeExitPaths,
         )
         ?.also { statistics.treePostconditions++ }
     } catch (e: InterruptedException) {

@@ -309,6 +309,9 @@ fun getDssChecker(
   require(probeGeneralizers.isEmpty() || dssConfig.generalizationGas > 0) {
     "--dss-generalization-gas must be positive"
   }
+  require(!dssConfig.treeExitPaths || dssConfig.treePostcondition) {
+    "--dss-tree-exit-paths refines --dss-tree-postcondition, which is not set"
+  }
   require(dssConfig.semanticUnrollings >= 0) { "--dss-semantic-unrollings must not be negative" }
   require(
     dssConfig.quantifiedPredicates != DssQuantifiedPredicates.FALLBACK ||
@@ -402,6 +405,7 @@ fun getDssChecker(
             resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
             reuseBlockPrecision = dssConfig.reuseBlockPrecision,
             treePostcondition = dssConfig.treePostcondition,
+            treeExitPaths = dssConfig.treeExitPaths,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,

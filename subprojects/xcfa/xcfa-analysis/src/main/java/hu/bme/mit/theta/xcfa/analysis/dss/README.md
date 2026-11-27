@@ -60,7 +60,8 @@ reversed program, `ProgramReversal.kt`, or both directions meeting in `DssMeetin
 `--dss-conjecture-invariants` (`DssConjectureActor`), `--dss-cut-on-timeout` (cut a block that
 every checker times out on, `BlockCut.kt`), `--dss-tree-postcondition` (a CEGAR block's
 postcondition from the paths of its ARG, abstracted onto the block's predicates once at the exit,
-like CPAchecker's block abstraction; `TreePostcondition.kt`), and their tuning flags.
+like CPAchecker's block abstraction; `TreePostcondition.kt`; with `--dss-tree-exit-paths`, paths
+meeting at the exit keep their own exact paths), and their tuning flags.
 
 ## Packages
 

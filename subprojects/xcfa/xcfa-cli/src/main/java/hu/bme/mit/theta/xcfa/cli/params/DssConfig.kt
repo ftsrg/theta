@@ -221,6 +221,15 @@ data class DssConfig(
   )
   var treePostcondition: Boolean = false,
   @Parameter(
+    names = ["--dss-tree-exit-paths"],
+    hidden = true,
+    description =
+      "With --dss-tree-postcondition, every exit node of the tree keeps its own exact path, also " +
+        "when it covers or is covered by another exit node, so paths meeting at the block's exit " +
+        "are not abstracted there",
+  )
+  var treeExitPaths: Boolean = false,
+  @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,
     description =

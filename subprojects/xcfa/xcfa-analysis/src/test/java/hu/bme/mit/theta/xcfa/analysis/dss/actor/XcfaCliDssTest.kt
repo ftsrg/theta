@@ -194,6 +194,13 @@ class XcfaCliDssTest {
           listOf("--dss-tree-postcondition", "--dss-cegar-domain", "EXPL"),
           listOf("--dss-tree-postcondition", "--dss-decomposition", "MIN_CUT_ABSORB_SELF_LOOPS"),
           listOf("--dss-tree-postcondition", "--dss-executor", "PROCESS"),
+          listOf("--dss-tree-postcondition", "--dss-tree-exit-paths"),
+          listOf(
+            "--dss-tree-postcondition",
+            "--dss-tree-exit-paths",
+            "--dss-decomposition",
+            "MIN_CUT_ABSORB_SELF_LOOPS",
+          ),
         )
         .flatMap { o -> listOf("safe", "unsafe").map { Arguments.of(o, it) } }
         .stream()

@@ -54,6 +54,12 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
  * also implies the node's own abstract state, so the result is never weaker than
  * [packPostcondition]'s.
  *
+ * With [exactExits], every exit node counts, also one covered by another, and each starts its path
+ * from its nearest *proper* covering ancestor: an exit node that covers others keeps its own exact
+ * path instead of its abstract state, so paths meeting at the exit are not abstracted there. Also
+ * sound: the states a covered exit node stands for are counted by its own part, and states that
+ * continue from a covering exit node are anchored at it by its descendants.
+ *
  * Returns null when the proof has no tree (a bounded checker) or the tree has several processes;
  * the caller then packs the plain postcondition.
  */
@@ -62,18 +68,21 @@ fun packTreePostcondition(
   location: XcfaLocation,
   predicates: Set<Expr<BoolType>>,
   solverFactory: SolverFactory,
+  exactExits: Boolean = false,
 ): Expr<BoolType>? {
   val nodes = proof.tree?.nodes ?: return null
   // A node past the final location has no process left; one with several is not a block's tree
   if (nodes.any { xcfaState(it).processes.size > 1 }) return null
   val exits =
     nodes.filter { node ->
-      !node.isCovered && !xcfaState(node).bottom && process(node)?.locs?.peek() == location
+      (exactExits || !node.isCovered) &&
+        !xcfaState(node).bottom &&
+        process(node)?.locs?.peek() == location
     }
   if (exits.isEmpty()) return False()
   val solver = withSolverConstructionLock { solverFactory.createSolver() }
   try {
-    return Or(exits.mapNotNull { exitPart(solver, it, predicates) })
+    return Or(exits.mapNotNull { exitPart(solver, it, predicates, exactExits) })
   } finally {
     runCatching { solver.close() }
   }
@@ -84,10 +93,14 @@ private fun exitPart(
   solver: Solver,
   exit: ArgNode<*, *>,
   predicates: Set<Expr<BoolType>>,
+  exactExits: Boolean,
 ): Expr<BoolType>? {
   val path = ArrayDeque<XcfaAction>()
   var anchor = exit
-  while (anchor.coveredNodes.findAny().isEmpty) {
+  // With exactExits, the exit node itself never anchors, even if it covers others
+  var ownStep = exactExits
+  while (ownStep || anchor.coveredNodes.findAny().isEmpty) {
+    ownStep = false
     val edge = anchor.inEdge.orElse(null) ?: break
     path.addFirst(edge.action as XcfaAction)
     anchor = edge.source
