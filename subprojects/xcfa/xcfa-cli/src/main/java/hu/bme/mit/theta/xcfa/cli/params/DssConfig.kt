@@ -182,6 +182,19 @@ data class DssConfig(
   )
   var cegarDomain: DssCegarDomain = DssCegarDomain.PRED_CART,
   @Parameter(
+    names = ["--dss-cegar-refinement"],
+    hidden = true,
+    description =
+      "Refinement of the CEGAR block checkers, as --refinement (e.g. NWT_WP for the EXPL domain)",
+  )
+  var cegarRefinement: Refinement = Refinement.SEQ_ITP,
+  @Parameter(
+    names = ["--dss-cegar-search"],
+    hidden = true,
+    description = "Search strategy of the CEGAR block checkers' abstraction, as --search",
+  )
+  var cegarSearch: Search = Search.ERR,
+  @Parameter(
     names = ["--dss-interpolate-bounded-proofs"],
     hidden = true,
     description =

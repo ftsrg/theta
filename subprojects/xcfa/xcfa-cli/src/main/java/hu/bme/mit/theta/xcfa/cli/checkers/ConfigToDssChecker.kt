@@ -110,6 +110,7 @@ import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
 import hu.bme.mit.theta.xcfa.cli.XcfaCli
 import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
+import hu.bme.mit.theta.xcfa.cli.params.CegarConfig
 import hu.bme.mit.theta.xcfa.cli.params.CexMonitorOptions
 import hu.bme.mit.theta.xcfa.cli.params.DssCegarDomain
 import hu.bme.mit.theta.xcfa.cli.params.DssCheckerSelectionMethod
@@ -340,7 +341,12 @@ fun getDssChecker(
     blockCheckers(dssConfig, solver) { backend, domain, blockSolver ->
       val blockConfig =
         if (backend == Backend.CEGAR)
-          getDefaultPredCegarConfig(domain.domain, blockSolver ?: solver, cexMonitor)
+          getDefaultPredCegarConfig(domain.domain, blockSolver ?: solver, cexMonitor).also { config
+            ->
+            val cegar = config.backendConfig.specConfig as CegarConfig
+            cegar.refinerConfig.refinement = dssConfig.cegarRefinement
+            cegar.abstractorConfig.search = dssConfig.cegarSearch
+          }
         else
           getDefaultConfig(backend).also { config ->
             blockSolver?.let { config.useSolver(it) }
