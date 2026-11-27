@@ -352,15 +352,79 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
 /**
  * A condition without auxiliary variables equivalent to [condition], or null. Conjuncts over
  * auxiliary variables only are dropped if satisfiable, else the condition is false.
+ *
+ * An auxiliary variable tied to program variables is eliminated if the conjuncts over it alone
+ * force a single value: [uniqueValue] returns that value of the variable under the constraint (null
+ * if there is none or more than one), and `exists a. a == v && P(a)` is `P(v)`. Typical: a havoced
+ * object base `b <= p && p - b < size[b]` for a constant address `p` and a constant size table.
  */
 fun withoutAuxVars(
   condition: Expr<BoolType>,
+  uniqueValue: ((VarDecl<*>, Expr<BoolType>) -> Expr<*>?)? = null,
   isSatisfiable: (Expr<BoolType>) -> Boolean,
 ): Expr<BoolType>? {
   fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
     if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
+  var current = substituteAuxDefinitions(conjuncts(condition))
+  eliminate@ while (true) {
+    val kept = mutableListOf<Expr<BoolType>>()
+    for ((vars, exprs) in auxComponents(current)) {
+      when {
+        vars.none(DssAuxVars::isAux) -> kept += exprs
+        vars.any { !DssAuxVars.isAux(it) } -> {
+          val (aux, value) =
+            uniqueValue?.let { unique ->
+              vars.filter(DssAuxVars::isAux).firstNotNullOfOrNull { aux ->
+                val own = current.filter { ExprUtils.getVars(it) == setOf(aux) }
+                if (own.isEmpty()) null else unique(aux, And(own))?.let { aux to it }
+              }
+            } ?: return null
+          val substitution = BasicSubstitution.builder().put(aux, value).build()
+          current =
+            substituteAuxDefinitions(
+              current.map { ExprUtils.simplify(substitution.apply(it)) }.flatMap(::conjuncts)
+            )
+          continue@eliminate
+        }
+        !isSatisfiable(And(exprs)) -> return False()
+      }
+    }
+    return And(kept)
+  }
+}
+
+/**
+ * The auxiliary variables of [condition] that [withoutAuxVars] may fail on: those sharing a
+ * conjunct group with program variables once the definitions `a == t` are substituted.
+ */
+fun tiedAuxVars(condition: Expr<BoolType>): Set<VarDecl<*>> {
+  fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
+    if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
+  return auxComponents(substituteAuxDefinitions(conjuncts(condition)))
+    .filter { (vars, _) -> vars.any { !DssAuxVars.isAux(it) } }
+    .flatMapTo(linkedSetOf()) { (vars, _) -> vars.filter(DssAuxVars::isAux) }
+}
+
+/**
+ * [condition] with [values] for some of its auxiliary variables. As they are existential, the
+ * result implies [condition]: excluding it excludes a part of the states [condition] describes.
+ */
+fun instantiateAuxVars(
+  condition: Expr<BoolType>,
+  values: Map<VarDecl<*>, Expr<*>>,
+): Expr<BoolType> {
+  require(values.keys.all(DssAuxVars::isAux)) { "Only auxiliary variables are instantiated" }
+  val substitution = BasicSubstitution.builder()
+  values.forEach { (decl, value) -> substitution.put(decl, value) }
+  return ExprUtils.simplify(substitution.build().apply(condition))
+}
+
+/** [conjuncts] grouped by shared auxiliary variables, with the variables of each group. */
+private fun auxComponents(
+  conjuncts: List<Expr<BoolType>>
+): List<Pair<Set<VarDecl<*>>, List<Expr<BoolType>>>> {
   val components = mutableListOf<Pair<MutableSet<VarDecl<*>>, MutableList<Expr<BoolType>>>>()
-  for (conjunct in substituteAuxDefinitions(conjuncts(condition))) {
+  for (conjunct in conjuncts) {
     val vars = ExprUtils.getVars(conjunct).toMutableSet()
     val linked =
       components.filter { (other, _) -> vars.any { it in other && DssAuxVars.isAux(it) } }
@@ -369,15 +433,7 @@ fun withoutAuxVars(
     linked.forEach { vars.addAll(it.first) }
     components += vars to exprs
   }
-  val kept = mutableListOf<Expr<BoolType>>()
-  for ((vars, exprs) in components) {
-    when {
-      vars.none(DssAuxVars::isAux) -> kept += exprs
-      vars.any { !DssAuxVars.isAux(it) } -> return null
-      !isSatisfiable(And(exprs)) -> return False()
-    }
-  }
-  return And(kept)
+  return components
 }
 
 /**

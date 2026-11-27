@@ -17,8 +17,11 @@ package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.BasicSubstitution
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -59,10 +62,12 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.extractBlockXcfa
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.getPredPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasInternalCycle
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.hasQuantifier
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.instantiateAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.isDssBudgetExceeded
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.packTreePostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.runWorkerConfig
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.tiedAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.withoutAuxVars
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cutBlock
@@ -91,6 +96,15 @@ const val CONCURRENT_DSS_SOLVER = "Z3:new"
  * conjecture is checked in a separate pass, which never touches the violation conditions or
  * invariants.
  */
+/**
+ * Experimental (`-Dtheta.dss.quantifiedExclusions=true`): a known error path whose condition cannot
+ * be freed of auxiliary variables is excluded by a quantified formula instead of failing the block.
+ */
+private val QUANTIFIED_EXCLUSIONS = java.lang.Boolean.getBoolean("theta.dss.quantifiedExclusions")
+
+/** How many instances of one known error path a block excludes before its verdict is unknown. */
+private const val MAX_PATH_INSTANCES = 16
+
 class PredicateBlockBehavior(
   private val wholeProgram: XCFA,
   private val sourceProcedure: XcfaProcedure,
@@ -718,21 +732,85 @@ class PredicateBlockBehavior(
     violationCondition: Expr<BoolType>?,
   ): PathViolation? {
     if (found.condition !in pathViolationsSoFar) return found
-    val exclusions =
-      pathViolationsSoFar.map {
-        checkNotNull(withoutAuxVars(it) { condition -> !operators.isUnsat(condition) }) {
-          "Block ${block.id}: a path violation condition ties nondeterministic values to program " +
-            "variables, so the known error paths cannot be excluded: $it"
-        }
+    repeat(MAX_PATH_INSTANCES) {
+      val exclusions = pathViolationsSoFar.flatMap { exclusionsOf(it, start.state) }
+      val outside = start.copy(state = And(start.state, Not(Or(exclusions))))
+      val next =
+        (run(outside, violationCondition, recordInvariants = false) as? RunResult.Unsafe)?.path
+          ?: return null
+      if (next.condition !in pathViolationsSoFar) return next
+      // Only an instantiated exclusion leaves states of a known path in: exclude more of them
+      check(next.condition in pathInstances) {
+        "Block ${block.id}: an excluded error path recurred: ${next.condition}"
       }
-    val outside = start.copy(state = And(start.state, Not(Or(exclusions))))
-    val next =
-      (run(outside, violationCondition, recordInvariants = false) as? RunResult.Unsafe)?.path
-        ?: return null
-    check(next.condition !in pathViolationsSoFar) {
-      "Block ${block.id}: an excluded error path recurred: ${next.condition}"
+      addInstance(next.condition, outside.state)
     }
-    return next
+    throw DssUndecidedQueryException(
+      IllegalStateException(
+        "Block ${block.id}: a known error path still recurs after $MAX_PATH_INSTANCES instances " +
+          "of its nondeterministic values were excluded"
+      )
+    )
+  }
+
+  /**
+   * Instances of the path violation conditions that [withoutAuxVars] cannot free of auxiliary
+   * variables, each with concrete values for the tied ones (see [addInstance]).
+   */
+  private val pathInstances = HashMap<Expr<BoolType>, MutableList<Expr<BoolType>>>()
+
+  /**
+   * What to exclude of known path [condition]'s states: the condition itself, freed of auxiliary
+   * variables, if that is exact; else its instances so far, at least one (from [start]).
+   */
+  private fun exclusionsOf(condition: Expr<BoolType>, start: Expr<BoolType>): List<Expr<BoolType>> {
+    pathInstances[condition]?.let {
+      return it
+    }
+    withoutAuxVars(condition, operators::uniqueValue) { !operators.isUnsat(it) }
+      ?.let {
+        return listOf(it)
+      }
+    if (QUANTIFIED_EXCLUSIONS) return listOf(existentialClosure(condition))
+    addInstance(condition, start)
+    return pathInstances.getValue(condition)
+  }
+
+  /**
+   * Adds an instance of [condition]: its tied auxiliary variables (`exists a. P(a)`) take their
+   * values in a model of [context] && [condition], giving `P(v)`. `P(v)` implies `exists a. P(a)`,
+   * so excluding it excludes only states of the known path, never those of another one, and a model
+   * in which the path recurs yields the next instance. Unsatisfiable: the path has no state left.
+   */
+  private fun addInstance(condition: Expr<BoolType>, context: Expr<BoolType>) {
+    statistics.pathInstances++
+    val tied = tiedAuxVars(condition)
+    val values = operators.modelOf(And(context, condition), tied)
+    val instance =
+      if (values == null) False()
+      else
+        checkNotNull(
+          withoutAuxVars(instantiateAuxVars(condition, values), operators::uniqueValue) {
+            !operators.isUnsat(it)
+          }
+        ) {
+          "Block ${block.id}: an instance of a path violation condition still ties auxiliary " +
+            "variables to program variables: $condition with $values"
+        }
+    pathInstances.getOrPut(condition) { mutableListOf() } += instance
+  }
+
+  /**
+   * [condition] with its auxiliary variables bound by an explicit `exists`, which they implicitly
+   * are; negated, it excludes the path for every value of them. Experimental: the block checker and
+   * the DSS solver then get quantified formulas (only Z3 takes them).
+   */
+  private fun existentialClosure(condition: Expr<BoolType>): Expr<BoolType> {
+    val aux = DssAuxVars.collectVars(condition)
+    val params = aux.map { Param("${it.name}_q", it.type) }
+    val substitution = BasicSubstitution.builder()
+    aux.zip(params).forEach { (decl, param) -> substitution.put(decl, param.ref) }
+    return Exists(params, substitution.build().apply(condition))
   }
 
   /** Predecessors keep only the last condition per sender, so refuted paths must stay in. */

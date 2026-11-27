@@ -166,7 +166,9 @@ class DssConjectureActor(
     // An invariant over havocked values would not say what it seems to
     val condition =
       if (DssAuxVars.collectVars(generalized).isEmpty()) generalized
-      else withoutAuxVars(generalized) { !operators.isUnsat(it) } ?: return null
+      else
+        withoutAuxVars(generalized, operators::uniqueValue) { !operators.isUnsat(it) }
+          ?: return null
     if (condition == False()) return null
     val conjecture = nextId++
     live[conjecture] = Live(location, condition, generalization)
