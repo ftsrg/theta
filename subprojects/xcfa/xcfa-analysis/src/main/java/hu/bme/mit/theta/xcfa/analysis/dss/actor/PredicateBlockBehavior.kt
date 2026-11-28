@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.analysis.dss.actor
 
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls.Param
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -150,7 +152,8 @@ class PredicateBlockBehavior(
     data class Safe(val postcondition: Expr<BoolType>, val precision: Set<Expr<BoolType>>) :
       RunResult
 
-    data class Unsafe(val path: PathViolation?) : RunResult
+    /** [paths]: the counterexample's first, then the graph's other ones (GRAPH_PATHS). */
+    data class Unsafe(val paths: List<PathViolation>) : RunResult
   }
 
   private data class PathViolation(
@@ -163,7 +166,7 @@ class PredicateBlockBehavior(
   private val hasCycle: Boolean by lazy { hasInternalCycle(block) }
 
   private val usesPathViolations: Boolean by lazy {
-    violationConditionMode == DssViolationConditions.PATHS || hasCycle
+    violationConditionMode != DssViolationConditions.ALL_PATHS || hasCycle
   }
 
   private val pathViolationsSoFar = linkedSetOf<Expr<BoolType>>()
@@ -324,10 +327,13 @@ class PredicateBlockBehavior(
           )
       is RunResult.Unsafe -> {
         containsViolationInsideBlock = true
-        result.path?.let {
-          violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
-          reportViolationCondition(accumulatePathViolations(listOf(it.condition)))
-        } ?: reportViolationConditions(targetsOfOwnViolations())
+        if (result.paths.isEmpty()) reportViolationConditions(targetsOfOwnViolations())
+        else {
+          result.paths.forEach {
+            violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
+          }
+          reportViolationCondition(accumulatePathViolations(result.paths.map { it.condition }))
+        }
       }
     }
   }
@@ -428,7 +434,7 @@ class PredicateBlockBehavior(
           } catch (e: Exception) {
             if (e is DssBlockCutRequest || e.isDssBudgetExceeded()) throw e
             // The exact run below decides; a probe must not fail an analysis that would succeed
-            RunResult.Unsafe(null)
+            RunResult.Unsafe(emptyList())
           }
         if (result is RunResult.Safe) {
           statistics.probesRefuted++
@@ -464,18 +470,17 @@ class PredicateBlockBehavior(
           targetReached = true
           // Never suppressed: the predecessor replaces its stored condition with every new one
           if (violations.isNotEmpty()) reportReceivedViolations = true
-          result.path
-            ?.let { newPathFrom(startState, it, violationCondition) }
-            ?.let {
-              pathViolations += it.condition
-              violationRecords +=
-                DssPathViolation(
-                  it.condition,
-                  it.edges,
-                  it.reachedReceivedViolation,
-                  if (it.reachedReceivedViolation) received else emptyList(),
-                )
-            }
+          for (path in newPathsOf(startState, result, violationCondition)) {
+            if (path.condition in pathViolations) continue
+            pathViolations += path.condition
+            violationRecords +=
+              DssPathViolation(
+                path.condition,
+                path.edges,
+                path.reachedReceivedViolation,
+                if (path.reachedReceivedViolation) received else emptyList(),
+              )
+          }
         }
       }
     }
@@ -625,9 +630,12 @@ class PredicateBlockBehavior(
     }
     if (result.isUnsafe) {
       // A probe's path may end in its may condition, so it says nothing about real error paths
-      return RunResult.Unsafe(
-        if (usesPathViolations && !probe) pathViolation(result.asUnsafe().cex, extraction) else null
-      )
+      if (!usesPathViolations || probe) return RunResult.Unsafe(emptyList())
+      val cexPath = pathViolation(result.asUnsafe().cex, extraction)
+      val others =
+        if (violationConditionMode != DssViolationConditions.GRAPH_PATHS) emptyList()
+        else graphPaths(result.asUnsafe().proof, extraction, start)
+      return RunResult.Unsafe((listOf(cexPath) + others).distinctBy { it.condition })
     }
     val proof = result.asSafe().proof
     // Witness invariants need a start state that covers the block's entries; a retracted
@@ -690,6 +698,50 @@ class PredicateBlockBehavior(
     }
   }
 
+  /**
+   * GRAPH_PATHS: the error paths to the other target nodes of the checker's graph that are feasible
+   * from [start]. Abstract paths, which the checker has not refined yet, may be spurious; the exact
+   * path condition then contradicts the start state. A covered target node still ends its own path
+   * (the second path into an error location is covered by the first); below a covered node, the
+   * graph has no paths.
+   */
+  @Suppress("UNCHECKED_CAST")
+  private fun graphPaths(
+    proof: LocationInvariants,
+    extraction: BlockXcfaExtraction,
+    start: Summary,
+  ): List<PathViolation> {
+    val tree = proof.tree ?: return emptyList()
+    val precondition = And(start.state, startRestriction())
+    return tree.nodes
+      .filter { node -> node.isTarget && node.properAncestors().noneMatch { it.isSubsumed } }
+      .mapNotNull { node ->
+        val trace = ArgTrace.to(node as ArgNode<XcfaState<PtrState<*>>, XcfaAction>).toTrace()
+        val path = pathViolation(trace, extraction)
+        if (operators.isUnsat(And(precondition, path.condition))) {
+          statistics.graphPathsInfeasible++
+          null
+        } else {
+          statistics.graphPaths++
+          path
+        }
+      }
+  }
+
+  /**
+   * The paths of [result] not known yet; if all of them are, paths from [start] outside all known
+   * ones ([newPathFrom]).
+   */
+  private fun newPathsOf(
+    start: Summary,
+    result: RunResult.Unsafe,
+    violationCondition: Expr<BoolType>?,
+  ): List<PathViolation> {
+    val fresh = result.paths.filter { it.condition !in pathViolationsSoFar }
+    if (fresh.isNotEmpty() || result.paths.isEmpty()) return fresh
+    return newPathFrom(start, violationCondition)
+  }
+
   private fun pathViolation(
     cex: Trace<XcfaState<PtrState<*>>, XcfaAction>,
     extraction: BlockXcfaExtraction,
@@ -730,28 +782,29 @@ class PredicateBlockBehavior(
   }
 
   /**
-   * [found], or if its path is already known, a path from [start] outside all known ones (null if
-   * there is none). A run yields one path, and its predecessors may refute every path sent so far,
-   * so a known path must not hide the others; [pathsPending] makes the block look again.
+   * Paths from [start] outside all known ones (none if there is none), for a run that found known
+   * paths only. A run yields few paths, and its predecessors may refute every path sent so far, so
+   * a known path must not hide the others; [pathsPending] makes the block look again.
    */
   private fun newPathFrom(
     start: Summary,
-    found: PathViolation,
     violationCondition: Expr<BoolType>?,
-  ): PathViolation? {
-    if (found.condition !in pathViolationsSoFar) return found
+  ): List<PathViolation> {
     repeat(MAX_PATH_INSTANCES) {
       val exclusions = pathViolationsSoFar.flatMap { exclusionsOf(it, start.state) }
       val outside = start.copy(state = And(start.state, Not(Or(exclusions))))
       val next =
-        (run(outside, violationCondition, recordInvariants = false) as? RunResult.Unsafe)?.path
-          ?: return null
-      if (next.condition !in pathViolationsSoFar) return next
+        (run(outside, violationCondition, recordInvariants = false) as? RunResult.Unsafe)?.paths
+          ?: return emptyList()
+      val fresh = next.filter { it.condition !in pathViolationsSoFar }
+      if (fresh.isNotEmpty()) return fresh
       // Only an instantiated exclusion leaves states of a known path in: exclude more of them
-      check(next.condition in pathInstances) {
-        "Block ${block.id}: an excluded error path recurred: ${next.condition}"
+      for (path in next) {
+        check(path.condition in pathInstances) {
+          "Block ${block.id}: an excluded error path recurred: ${path.condition}"
+        }
+        addInstance(path.condition, outside.state)
       }
-      addInstance(next.condition, outside.state)
     }
     throw DssUndecidedQueryException(
       IllegalStateException(

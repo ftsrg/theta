@@ -18,9 +18,10 @@ package hu.bme.mit.theta.xcfa.analysis.proof
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 
 /**
- * The nodes of the complete, safe reachability tree (ARG) a CEGAR checker's [LocationInvariants]
- * come from, kept only when the checker is asked to (DSS's `--dss-tree-postcondition`). The states
- * are `XcfaState`s and the actions `XcfaAction`s, over the checker's own (process-renamed)
- * variables.
+ * The nodes of a CEGAR checker's last reachability tree (ARG), kept only when the checker is asked
+ * to (DSS's `--dss-tree-postcondition` and `--dss-violation-conditions GRAPH_PATHS`). On a safe
+ * result it is the complete tree the [LocationInvariants] come from; on an unsafe one, the tree the
+ * counterexample was found in, with its other target nodes. The states are `XcfaState`s and the
+ * actions `XcfaAction`s, over the checker's own (process-renamed) variables.
  */
 class ProofTree(val nodes: List<ArgNode<*, *>>)

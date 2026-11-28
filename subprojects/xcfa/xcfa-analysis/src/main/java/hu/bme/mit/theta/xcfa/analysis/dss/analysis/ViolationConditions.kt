@@ -117,6 +117,13 @@ enum class DssViolationConditions {
    * target).
    */
   PATHS,
+  /**
+   * [PATHS], with one condition per target node of a CEGAR checker's last reachability graph that
+   * is feasible from the start state, not only the counterexample's: CPAchecker's paper version
+   * reports a path to every target state of its ARG. Fully explored with `--dss-cegar-refinement
+   * MULTI_SEQ`; blocks whose checker keeps no graph (BMC, KIND, IMC) get the counterexample's path.
+   */
+  GRAPH_PATHS,
 }
 
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */

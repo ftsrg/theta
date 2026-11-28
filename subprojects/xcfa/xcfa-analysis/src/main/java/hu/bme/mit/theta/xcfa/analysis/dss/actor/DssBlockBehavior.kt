@@ -63,6 +63,8 @@ class DssBlockStatistics {
   var quantifiedFormulas = 0
   var treePostconditions = 0
   var treePostconditionFailures = 0
+  var graphPaths = 0
+  var graphPathsInfeasible = 0
   var pathInstances = 0
 
   fun toMap(): Map<String, String> =
@@ -81,6 +83,8 @@ class DssBlockStatistics {
         "quantified" to quantifiedFormulas,
         "treePost" to treePostconditions,
         "treePostFailed" to treePostconditionFailures,
+        "graphPaths" to graphPaths,
+        "graphPathsInfeasible" to graphPathsInfeasible,
         "pathInstances" to pathInstances,
       )
       .mapValues { it.value.toString() }

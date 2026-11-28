@@ -186,7 +186,9 @@ data class DssConfig(
     names = ["--dss-cegar-refinement"],
     hidden = true,
     description =
-      "Refinement of the CEGAR block checkers, as --refinement (e.g. NWT_WP for the EXPL domain)",
+      "Refinement of the CEGAR block checkers, as --refinement (e.g. NWT_WP for the EXPL " +
+        "domain; MULTI_SEQ explores fully, so with --dss-violation-conditions GRAPH_PATHS a run " +
+        "finds all of a block's error paths)",
   )
   var cegarRefinement: Refinement = Refinement.SEQ_ITP,
   @Parameter(
@@ -264,7 +266,8 @@ data class DssConfig(
     description =
       "How a block builds the violation conditions it sends: ALL_PATHS (one exact condition over " +
         "all of its paths; blocks with a cycle use PATHS) or PATHS (one per error path found, " +
-        "accumulated, as CPAchecker's paper version)",
+        "accumulated, as CPAchecker's paper version) or GRAPH_PATHS (PATHS with one condition " +
+        "per feasible target of a CEGAR block checker's reachability graph)",
   )
   var violationConditions: DssViolationConditions = DssViolationConditions.ALL_PATHS,
   @Parameter(
@@ -417,12 +420,16 @@ fun getDefaultPredCegarConfig(
   domain: Domain = Domain.PRED_CART,
   solver: String? = null,
   cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
+  refinement: Refinement = Refinement.SEQ_ITP,
 ): XcfaConfig<SpecFrontendConfig, SpecBackendConfig> {
   val config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
   config.backendConfig.createSpecConfig()
   val cegarConfig = config.backendConfig.specConfig as CegarConfig
   cegarConfig.abstractorConfig.domain = domain
-  cegarConfig.cexMonitor = cexMonitor
+  cegarConfig.refinerConfig.refinement = refinement
+  // The counterexample monitor is not implemented for MULTI_SEQ
+  cegarConfig.cexMonitor =
+    if (refinement == Refinement.MULTI_SEQ) CexMonitorOptions.DISABLE else cexMonitor
   if (solver != null) {
     cegarConfig.abstractorConfig.abstractionSolver = solver
     cegarConfig.refinerConfig.refinementSolver = solver

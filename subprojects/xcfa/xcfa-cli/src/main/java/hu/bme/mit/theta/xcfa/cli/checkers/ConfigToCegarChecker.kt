@@ -215,9 +215,12 @@ fun getCegarChecker(
         if (keepProofTree) proof.tree = ProofTree(arg.nodes.toList())
         return SafetyResult.safe(proof, null, ret.prec.orElse(null))
       } else {
+        val proof = LocationInvariants()
+        // DSS's GRAPH_PATHS violation conditions read the other target nodes too
+        if (keepProofTree) proof.tree = ProofTree(ret.asUnsafe().proof.nodes.toList())
         return SafetyResult.unsafe(
           ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-          LocationInvariants(),
+          proof,
           null,
           ret.prec.orElse(null),
         )

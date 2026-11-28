@@ -200,6 +200,30 @@ class XcfaCliDssTest {
           listOf("--dss-violation-conditions", "PATHS", "--dss-executor", "PROCESS"),
           listOf("--dss-violation-conditions", "PATHS", "--dss-checker-backends", "KIND,CEGAR"),
           listOf("--dss-tree-postcondition", "--dss-tree-abstraction", "BOOLEAN"),
+          listOf("--dss-cegar-refinement", "MULTI_SEQ"),
+          listOf("--dss-violation-conditions", "GRAPH_PATHS"),
+          listOf(
+            "--dss-violation-conditions",
+            "GRAPH_PATHS",
+            "--dss-cegar-refinement",
+            "MULTI_SEQ",
+          ),
+          listOf(
+            "--dss-violation-conditions",
+            "GRAPH_PATHS",
+            "--dss-cegar-refinement",
+            "MULTI_SEQ",
+            "--dss-executor",
+            "PROCESS",
+          ),
+          listOf(
+            "--dss-violation-conditions",
+            "GRAPH_PATHS",
+            "--dss-cegar-refinement",
+            "MULTI_SEQ",
+            "--dss-checker-backends",
+            "KIND,CEGAR",
+          ),
           listOf(
             "--dss-cegar-domain",
             "PRED_BOOL",
@@ -251,6 +275,26 @@ class XcfaCliDssTest {
           decomposition,
           "--dss-violation-conditions",
           "PATHS",
+        )
+        .contains(expected(program))
+    )
+  }
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict with violation conditions from the whole graph`(
+    decomposition: String,
+    program: String,
+  ) {
+    assertTrue(
+      dssVerdict(
+          program,
+          "--dss-decomposition",
+          decomposition,
+          "--dss-violation-conditions",
+          "GRAPH_PATHS",
+          "--dss-cegar-refinement",
+          "MULTI_SEQ",
         )
         .contains(expected(program))
     )

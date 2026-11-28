@@ -78,6 +78,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FastestCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.FinisherCheckerSelectionStrategy
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.PriorityCheckerSelectionStrategy
@@ -341,12 +342,16 @@ fun getDssChecker(
     blockCheckers(dssConfig, solver) { backend, domain, blockSolver ->
       val blockConfig =
         if (backend == Backend.CEGAR)
-          getDefaultPredCegarConfig(domain.domain, blockSolver ?: solver, cexMonitor).also { config
-            ->
-            val cegar = config.backendConfig.specConfig as CegarConfig
-            cegar.refinerConfig.refinement = dssConfig.cegarRefinement
-            cegar.abstractorConfig.search = dssConfig.cegarSearch
-          }
+          getDefaultPredCegarConfig(
+              domain.domain,
+              blockSolver ?: solver,
+              cexMonitor,
+              dssConfig.cegarRefinement,
+            )
+            .also { config ->
+              (config.backendConfig.specConfig as CegarConfig).abstractorConfig.search =
+                dssConfig.cegarSearch
+            }
         else
           getDefaultConfig(backend).also { config ->
             blockSolver?.let { config.useSolver(it) }
@@ -363,7 +368,9 @@ fun getDssChecker(
               parseContext,
               blockConfig,
               blockLogger,
-              keepProofTree = dssConfig.treePostcondition,
+              keepProofTree =
+                dssConfig.treePostcondition ||
+                  dssConfig.violationConditions == DssViolationConditions.GRAPH_PATHS,
             )
           if (domain == DssCegarDomain.EXPL) adaptExplChecker(cegar) else cegar
         } else
