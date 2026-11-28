@@ -67,7 +67,9 @@ import java.math.BigInteger
  * Leaving the float in an array of its own -- what this pass used to do -- is worse than refusing,
  * because it is silent: a `double` and the bytes overlapping it become unrelated storage, so
  * `u.value = 1.0; u.parts.msw` reads cells nothing ever wrote and returns an unconstrained value.
- * Refusing says the same thing out loud.
+ * Refusing says the same thing out loud. `--separate-float-cells` asks for that array regardless,
+ * accepting that a float and the bytes overlapping it no longer alias, for programs where a float
+ * merely has to fit somewhere: libc++ keeps one in every hash table, as its load factor.
  *
  * A `_Bool` cell (`Bv1`) is kept in its byte, which reads as true unless it is 0: left in an array
  * of its own, it never saw the bytes a `memset` or a `char` view wrote, so `calloc`'d flags read
@@ -98,7 +100,7 @@ class ByteMemoryPass(val parseContext: ParseContext) : ProcedurePass {
       when (type) {
         is BvType -> type.size
         // Reached for any float that lives in memory under this model: refuse, do not encode.
-        is FpType -> refuseFloatCell(type)
+        is FpType -> if (parseContext.isSeparateFloatCells) return null else refuseFloatCell(type)
         else -> return null
       }
     return if (bits > 8 && bits % 8 == 0) bits / 8 else null

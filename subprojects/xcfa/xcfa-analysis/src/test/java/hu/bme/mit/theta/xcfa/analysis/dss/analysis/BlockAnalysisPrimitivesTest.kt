@@ -185,6 +185,72 @@ class BlockAnalysisPrimitivesTest {
     assertTrue(size(vc20) < 4 * size(vc10), "${size(vc10)} vs ${size(vc20)}: should grow linearly")
   }
 
+  /** A hand-built block from `(source, target, label)` edges. */
+  private fun block(
+    initial: XcfaLocation,
+    final: XcfaLocation,
+    vararg edges: Triple<XcfaLocation, XcfaLocation, XcfaLabel>,
+  ): Block {
+    val built =
+      edges.map { (from, to, label) ->
+        XcfaEdge(from, to, label, EmptyMetaData).also {
+          from.outgoingEdges.add(it)
+          to.incomingEdges.add(it)
+        }
+      }
+    val locations = built.flatMapTo(linkedSetOf(initial, final)) { listOf(it.source, it.target) }
+    return Block("C", initial, final, locations, built.toSet())
+  }
+
+  @Test
+  fun `a bounded condition covers the paths through at most the given back edges`() {
+    val (l0, head, l1) = listOf(loc("l0"), loc("head"), loc("l1"))
+    val loop =
+      block(
+        l0,
+        l1,
+        Triple(l0, head, StmtLabel(Assign(x, Int(0)))),
+        Triple(head, head, StmtLabel(Assign(x, Add(x.ref, Int(1))))),
+        Triple(head, l1, NopLabel),
+      )
+    val target = mapOf(l1 to Eq(x.ref, Int(2)))
+
+    assertTrue(hasInternalCycle(loop))
+    assertTrue(operators.isUnsat(computeBoundedViolationCondition(loop, target, unrollings = 1)))
+    assertTrue(equivalent(computeBoundedViolationCondition(loop, target, unrollings = 2), True()))
+  }
+
+  @Test
+  fun `a bounded condition of an acyclic block is the exact one`() {
+    val block =
+      chain(
+        StmtLabel(Assign(x, Add(x.ref, Int(1)))),
+        NondetLabel(setOf(StmtLabel(Assume(Gt(x.ref, Int(3)))), StmtLabel(Assign(x, y.ref)))),
+      )
+    val target = mapOf(block.finalLocation to Lt(x.ref, Int(10)))
+
+    val bounded = computeBoundedViolationCondition(block, target, unrollings = 0)
+
+    assertTrue(equivalent(bounded, computeViolationCondition(block, target)), "$bounded")
+  }
+
+  @Test
+  fun `an edge back into a split loop head ends the block, it is no back edge`() {
+    val (head, body) = listOf(loc("head"), loc("body"))
+    val loop =
+      block(
+        head,
+        head,
+        Triple(head, body, StmtLabel(Assign(x, Add(x.ref, Int(1))))),
+        Triple(body, head, NopLabel),
+      )
+
+    val vc =
+      computeBoundedViolationCondition(loop, mapOf(head to Eq(x.ref, Int(1))), unrollings = 0)
+
+    assertTrue(equivalent(vc, Eq(x.ref, Int(0))), "$vc")
+  }
+
   /** init -(x := 0)-> branch; branch -(x < 10)-> final; branch -(x >= 10)-> err. */
   private fun branching(): XcfaProcedure =
     xcfa("primitives") {

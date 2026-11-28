@@ -229,6 +229,18 @@ data class CFrontendConfig(
   )
   var cir2cDir: File = File("./cir2c"),
   @Parameter(
+    names = ["--no-inlining"],
+    description =
+      "Keep procedures separate in the XCFA, instead of inlining the calls of known ones",
+  )
+  var noInlining: Boolean = false,
+  @Parameter(
+    names = ["--separate-float-cells"],
+    description =
+      "Under the bytes memory model, keep floats in cells of their own instead of refusing them. A float then does not alias the bytes overlapping it.",
+  )
+  var separateFloatCells: Boolean = false,
+  @Parameter(
     names = ["--enable-signed-wraparound"],
     description =
       "Model signed integer overflow as modular (two's complement) wraparound. Signed overflow is" +
@@ -557,6 +569,15 @@ data class BoundedConfig(
   var cegar: Boolean = false,
   @Parameter(names = ["--initprec"], description = "Wrap the check in a predicate-based CEGAR loop")
   var initPrec: InitPrec = InitPrec.EMPTY,
+  @Parameter(
+    names = ["--interpolate-proof"],
+    hidden = true,
+    description =
+      "Express a BMC/k-induction safety proof over the program variables by interpolation, " +
+        "as an invariant that need not be inductive (otherwise it is an inductive path " +
+        "formula over fresh, implicitly existential variables)",
+  )
+  var interpolateProof: Boolean = false,
   @Parameter(
     names = ["--block-encoding"],
     description = "One step per loop-free block instead of per edge (single-threaded reachability)",

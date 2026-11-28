@@ -110,9 +110,17 @@ class StructCopyTest {
   fun structCopyInitCopiesFields() {
     // The shape the aws-c-common harnesses use: `struct aws_byte_buf buf =
     // aws_byte_buf_from_array(a, len);`. It reaches the same assignment, through the initializer.
-    assertCopiesBothFields(
-      fieldCopies("struct T b = mk(n); return (int) (b.len + b.cap);"),
-      "`struct T b = mk(n);`",
+    // `mk` is inlined: its `return t;` copies `t` into the result object, which the
+    // initializer copies into `b`, so a struct result is never the callee's local
+    val copies = fieldCopies("struct T b = mk(n); return (int) (b.len + b.cap);")
+    val byTarget = copies.groupBy { it.first.array }
+    assertEquals(2, byTarget.size, "a copy out of `t` and one into `b` (copies: $copies)")
+    byTarget.values.forEach { assertCopiesBothFields(it, "`struct T b = mk(n);`") }
+    val sources = copies.map { it.second.array }.toSet()
+    assertEquals(
+      1,
+      byTarget.keys.count { it in sources },
+      "the result object is written by `return t;` and read by `b`'s initializer (copies: $copies)",
     )
   }
 }

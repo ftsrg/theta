@@ -28,7 +28,7 @@ import hu.bme.mit.theta.xcfa.passes.splitIf
 class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
   override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-    if (!builder.canInline()) {
+    if (!parseContext.isInlineProcedures || !builder.canInline()) {
       for (edge in ArrayList(builder.getEdges())) {
         val label = builder.convertCallArguments(edge.label, parseContext)
         if (label != edge.label) {

@@ -30,5 +30,12 @@ data class LocationInvariants(
 
   constructor() : this(emptyMap())
 
+  /**
+   * The reachability tree the invariants were read from (on an unsafe result, the one the
+   * counterexample was found in), if the checker kept it. Outside the constructor, so it takes no
+   * part in equality or printing.
+   */
+  var tree: ProofTree? = null
+
   override fun getPartitions(): Map<XcfaLocation, Collection<ExprState>> = locationInvariants
 }

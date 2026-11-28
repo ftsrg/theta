@@ -25,6 +25,10 @@ class LinearBlockDecomposition(
 ) : DssBlockDecomposition {
 
   override fun decompose(procedure: XcfaProcedure): BlockGraph {
+    // Passes can remove every edge; such a procedure is one empty block, not none
+    if (procedure.initLoc.outgoingEdges.isEmpty()) {
+      return SingleBlockDecomposition.decompose(procedure)
+    }
     val blocks = mutableListOf<Block>()
     val visitedEdges = mutableSetOf<XcfaEdge>()
     var nextId = 0

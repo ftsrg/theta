@@ -237,6 +237,11 @@ class Z3Solver implements UCSolver, Solver, ItpSolver {
     }
 
     @Override
+    public void interrupt() {
+        z3Context.interrupt();
+    }
+
+    @Override
     public void close() {
         z3Context.interrupt();
     }

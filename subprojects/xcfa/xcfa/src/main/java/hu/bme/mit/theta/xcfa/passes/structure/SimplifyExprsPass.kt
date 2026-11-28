@@ -70,10 +70,8 @@ class SimplifyExprsPass(
     val isInitProcedure = builder in builder.parent.getInitProcedures().map { it.first }
     // without threads nothing runs concurrently with the entry procedure: its globals change only
     // through its own edges and calls (which still clear them below)
-    val singleThreaded =
-      builder.parent.getProcedures().none { proc ->
-        proc.getEdges().any { e -> e.getFlatLabels().any { it is StartLabel } }
-      }
+    val shared = sharedScan(builder)
+    val singleThreaded = shared.singleThreaded
     val initEdges =
       LinkedHashSet(
         if (isInitProcedure) getNonConcurrentEdges(builder.parent, true).first else emptySet()
@@ -82,16 +80,10 @@ class SimplifyExprsPass(
 
     val valuations = LinkedHashMap<XcfaEdge, Valuation>()
     val pathValuations = LinkedHashMap<XcfaEdge, List<Valuation>>()
-    val constValuation = MutableValuation()
+    val constValuation = MutableValuation.withFallback(shared.constGlobals)
     val globalVars = builder.parent.getVars()
     val preserveSharedAccesses = property?.inputProperty == ErrorDetection.DATA_RACE
-    val (threadLocals, sharedGlobals) = builder.parent.getVars().partition { it.threadLocal }
-    // a thread-local variable takes its initial value at each thread's start (ThreadLocalVarPass),
-    // which no write here shows: a single write does not make it a constant
-    val modifiedGlobals = threadLocals.map { it.wrappedVar }.toMutableList<VarDecl<*>>()
-    sharedGlobals
-      .map { it.wrappedVar }
-      .getConstAndModifiedVars(builder.parent.getProcedures(), constValuation, modifiedGlobals)
+    val modifiedGlobals = shared.modifiedGlobals
 
     builder.getVars().getConstAndModifiedVars(setOf(builder), constValuation)
 
@@ -108,11 +100,11 @@ class SimplifyExprsPass(
         toVisit.remove(edge)
         visited.add(edge)
         val incomingValuations = mergeIncomingValuations(edge.source, valuations, initLoops)
-        val localValuation = MutableValuation.copyOf(incomingValuations)
-        localValuation.putAll(constValuation)
+        val localValuation = MutableValuation.withFallback(constValuation)
+        localValuation.putAll(incomingValuations)
         val localPaths =
           mergeIncomingPaths(edge.source, valuations, pathValuations, initLoops).map {
-            MutableValuation.copyOf(it).apply { putAll(constValuation) }
+            MutableValuation.withFallback(constValuation).apply { putAll(it) }
           }
 
         val oldLabels = edge.getFlatLabels()
@@ -168,6 +160,16 @@ class SimplifyExprsPass(
           pathValuations[edge] = feasiblePaths
         }
 
+        // Only the edges leaving a location read what reached it, so once they are done it can go:
+        // kept to the end, a long procedure holds a copy of its constants per edge. The pass
+        // invariants are recorded from them at the end, so then they stay.
+        if (!recordPassInvariants && edge.source.outgoingEdges.all { it in visited }) {
+          edge.source.incomingEdges.forEach {
+            valuations.remove(it)
+            pathValuations.remove(it)
+          }
+        }
+
         toVisit.addAll(edge.target.outgoingEdges.filter { it !in visited })
       }
       unusedLocRemovalPass.runChecked(builder)
@@ -176,11 +178,16 @@ class SimplifyExprsPass(
     } while (lastEdges != edges)
     builder.metaData["simplifiedExprs"] = Unit
     if (recordPassInvariants) {
-      val unassignedAt = builder.unassignedConsts(constValuation)
+      // the constants are only a fallback of the valuations (global and local), not in their maps
+      val constants = ImmutableValuation.from(shared.constGlobals.toMap() + constValuation.toMap())
+      val unassignedAt = builder.unassignedConsts(constants)
       valuations
         .map { (edge, valuation) ->
           edge.target to
-            ImmutableValuation.from(valuation.toMap() - unassignedAt(edge.target)).toExpr()
+            ImmutableValuation.from(
+                constants.toMap() + valuation.toMap() - unassignedAt(edge.target)
+              )
+              .toExpr()
         }
         .groupBy { it.first }
         .forEach { (location, invariants) ->
@@ -253,6 +260,44 @@ class SimplifyExprsPass(
         (access.isRead && !kept.isRead) || (access.isWritten && !kept.isWritten)
       }
     return lostGlobal || derefCount(new) < derefCount(old)
+  }
+
+  private class SharedScan(
+    val phase: Int,
+    val singleThreaded: Boolean,
+    val constGlobals: Valuation,
+    val modifiedGlobals: List<VarDecl<*>>,
+  )
+
+  /**
+   * What takes a look at all procedures, once per optimization phase rather than per procedure: on
+   * a program of thousands of procedures that is what the pass spends its time on. Within a phase
+   * only what the phase's own passes do changes, and those add no writes to a global: the answers
+   * can only have become more conservative than they need to be.
+   */
+  private fun sharedScan(builder: XcfaProcedureBuilder): SharedScan {
+    val phase = builder.currentPhase
+    (builder.parent.metaData[SHARED_SCAN] as? SharedScan)
+      ?.takeIf { it.phase == phase }
+      ?.let {
+        return it
+      }
+    val procedures = builder.parent.getProcedures()
+    val constGlobals = MutableValuation()
+    val (threadLocals, sharedGlobals) = builder.parent.getVars().partition { it.threadLocal }
+    // a thread-local variable takes its initial value at each thread's start (ThreadLocalVarPass),
+    // which no write here shows: a single write does not make it a constant
+    val modifiedGlobals = threadLocals.map { it.wrappedVar }.toMutableList<VarDecl<*>>()
+    sharedGlobals
+      .map { it.wrappedVar }
+      .getConstAndModifiedVars(procedures, constGlobals, modifiedGlobals)
+    val singleThreaded =
+      procedures.none { proc ->
+        proc.getEdges().any { e -> e.getFlatLabels().any { it is StartLabel } }
+      }
+    return SharedScan(phase, singleThreaded, constGlobals, modifiedGlobals).also {
+      builder.parent.metaData[SHARED_SCAN] = it
+    }
   }
 
   /**
@@ -349,3 +394,5 @@ class SimplifyExprsPass(
     return reached
   }
 }
+
+private const val SHARED_SCAN = "simplifyExprsSharedScan"

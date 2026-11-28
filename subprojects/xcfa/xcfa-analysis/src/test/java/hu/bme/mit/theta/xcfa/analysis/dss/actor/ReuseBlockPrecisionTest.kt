@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
@@ -27,7 +28,9 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.XcfaChecker
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.collectPreds
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
+import hu.bme.mit.theta.xcfa.cli.checkers.adaptExplChecker
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
+import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -62,22 +65,38 @@ class ReuseBlockPrecisionTest {
       main.start()
     }
 
+  /** x := 0; y := x; y > x is unreachable, but EXPL CEGAR has to start tracking x and y. */
+  private val explProgram: XCFA =
+    xcfa("reuse-precision-expl") {
+      val main =
+        procedure("main") {
+          "x" type Int()
+          "y" type Int()
+          (init to "a") { "x" assign "0" }
+          ("a" to "b") { "y" assign "x" }
+          ("b" to err) { assume("(> y x)") }
+          ("b" to final) { assume("(<= y x)") }
+        }
+      main.start()
+    }
+
   private class Recorded {
     val initial = mutableListOf<Set<Expr<BoolType>>>()
     val last = mutableListOf<Set<Expr<BoolType>>>()
   }
 
-  private fun recordingRoster(recorded: Recorded) =
+  private fun recordingRoster(recorded: Recorded, domain: Domain) =
     DssCheckerRoster(
       listOf { x ->
-        val inner =
+        val cegar =
           getCegarChecker(
             x,
             emptySet(),
             ParseContext(),
-            getDefaultPredCegarConfig(),
+            getDefaultPredCegarConfig(domain),
             NullLogger.getInstance(),
           )
+        val inner = if (domain == Domain.EXPL) adaptExplChecker(cegar) else cegar
         object : XcfaChecker by inner {
           override fun check(input: XcfaPrec<*>?) =
             inner.check(input).also { record(input?.collectPreds().orEmpty(), it) }
@@ -92,15 +111,19 @@ class ReuseBlockPrecisionTest {
       }
     )
 
-  private fun analyzeTwice(reuseBlockPrecision: Boolean): Recorded {
+  private fun analyzeTwice(
+    reuseBlockPrecision: Boolean,
+    domain: Domain = Domain.PRED_CART,
+  ): Recorded {
     val recorded = Recorded()
-    val procedure = program.procedures.single()
+    val input = if (domain == Domain.EXPL) explProgram else program
+    val procedure = input.procedures.single()
     val behavior =
       PredicateBlockBehavior(
-        program,
+        input,
         procedure,
         SingleBlockDecomposition.decompose(procedure).blocks.single(),
-        recordingRoster(recorded),
+        recordingRoster(recorded, domain),
         useGlobalPredicatePool = false,
         reuseBlockPrecision = reuseBlockPrecision,
       )
@@ -124,6 +147,24 @@ class ReuseBlockPrecisionTest {
   fun `without the flag every run starts from scratch`() {
     val recorded = analyzeTwice(reuseBlockPrecision = false)
     assertEquals(2, recorded.initial.size)
+    assertTrue(recorded.last[0].isNotEmpty()) { "the first run should have refined" }
+    assertTrue(recorded.initial[1].isEmpty()) { "second run: ${recorded.initial[1]}" }
+  }
+
+  @Test
+  fun `EXPL blocks reuse the variables the first run tracked`() {
+    val recorded = analyzeTwice(reuseBlockPrecision = true, domain = Domain.EXPL)
+    assertEquals(2, recorded.initial.size)
+    val learned = ExprUtils.getVars(recorded.last[0])
+    assertTrue(learned.isNotEmpty()) { "the first run should have refined" }
+    assertTrue(ExprUtils.getVars(recorded.initial[1]).containsAll(learned)) {
+      "second run started with ${recorded.initial[1]}, first ended with ${recorded.last[0]}"
+    }
+  }
+
+  @Test
+  fun `EXPL blocks without the flag start from scratch`() {
+    val recorded = analyzeTwice(reuseBlockPrecision = false, domain = Domain.EXPL)
     assertTrue(recorded.last[0].isNotEmpty()) { "the first run should have refined" }
     assertTrue(recorded.initial[1].isEmpty()) { "second run: ${recorded.initial[1]}" }
   }

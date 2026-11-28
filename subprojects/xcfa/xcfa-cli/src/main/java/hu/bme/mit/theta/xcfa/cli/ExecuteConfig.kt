@@ -369,6 +369,8 @@ private fun buildFrontend(
     parseContext.arithmetic = cConfig.arithmetic
     parseContext.architecture = cConfig.architecture
     parseContext.signedWraparound = cConfig.enableSignedWraparound
+    parseContext.isInlineProcedures = !cConfig.noInlining
+    parseContext.isSeparateFloatCells = cConfig.separateFloatCells
     // Yices divides integers only by constants
     parseContext.isConstantIntDivisorsOnly =
       (config.backendConfig.specConfig?.solverNames().orEmpty() +

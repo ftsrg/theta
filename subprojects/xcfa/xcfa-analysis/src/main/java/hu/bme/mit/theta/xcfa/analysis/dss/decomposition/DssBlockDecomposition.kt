@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.dss.decomposition
 
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-interface DssBlockDecomposition {
+fun interface DssBlockDecomposition {
 
   fun decompose(procedure: XcfaProcedure): BlockGraph
 }

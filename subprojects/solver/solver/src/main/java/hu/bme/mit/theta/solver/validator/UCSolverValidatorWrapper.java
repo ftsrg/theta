@@ -78,6 +78,11 @@ public class UCSolverValidatorWrapper implements UCSolver {
     }
 
     @Override
+    public void interrupt() {
+        solver.interrupt();
+    }
+
+    @Override
     public void close() throws Exception {
         solver.close();
     }

@@ -15,13 +15,21 @@
  */
 package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
+import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayType
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
@@ -203,5 +211,129 @@ class ViolationConditionTest {
     assertEquals(setOf(Lt(x, Int(10)), Geq(x, Int(3))), combinePredPrecs(listOf(p1, p2)))
     val p3 = setOf(Gt(y, Int(1)))
     assertEquals(p2 + p3, combinePredPrecs(listOf(p2, p3)))
+  }
+
+  @Test
+  fun `auxiliary variables are dropped from a condition only when they constrain nothing else`() {
+    val x = Var("x", Int()).ref
+    val y = Var("y", Int()).ref
+    @Suppress("UNCHECKED_CAST") val a = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    val bounded = And(Gt(a, Int(0)), Lt(a, Int(10)), Eq(x, Int(1)))
+    assertEquals(Eq(x, Int(1)), withoutAuxVars(bounded) { true })
+    assertEquals(False(), withoutAuxVars(bounded) { false })
+    assertEquals(null, withoutAuxVars(And(Gt(a, y), Eq(x, Int(1)))) { true })
+    assertEquals(Eq(x, y), withoutAuxVars(Eq(x, y)) { error("no auxiliary conjuncts to check") })
+  }
+
+  /** The old values of a reversed `y := y + 1`, run twice from `y == 0`. */
+  @Test
+  fun `auxiliary variables defined by an equality are replaced by their value`() {
+    val y = Var("y", Int()).ref
+    @Suppress("UNCHECKED_CAST") val a = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    @Suppress("UNCHECKED_CAST") val b = (DssAuxVars.of(1, Int()) as VarDecl<IntType>).ref
+    val twice =
+      And(
+        listOf(
+          Geq(y, Int(2)),
+          Eq(y, Add(a, Int(1))),
+          Lt(a, Int(2)),
+          Eq(a, Add(b, Int(1))),
+          Eq(b, Int(0)),
+        )
+      )
+    val one = Add(Int(0), Int(1))
+    assertEquals(
+      And(listOf(Geq(y, Int(2)), Eq(y, Add(one, Int(1))), Lt(one, Int(2)))),
+      withoutAuxVars(twice) { error("no auxiliary conjuncts to check") },
+    )
+    // `y == a + 1` alone does not define `a`, so `a` stays tied to `y`
+    assertEquals(null, withoutAuxVars(And(Eq(y, Add(a, Int(1))), Lt(a, Int(2)))) { true })
+  }
+
+  /**
+   * The base of the object holding 4099 under a program array `ext` is not determined by constants
+   * (tinyxml2 SetStr, block K1): it is tied, and an instance with a model value frees the condition
+   * of it while implying it.
+   */
+  @Test
+  fun `a tied auxiliary variable is instantiated into a condition that implies the original`() {
+    @Suppress("UNCHECKED_CAST") val b = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    @Suppress("UNCHECKED_CAST") val c = (DssAuxVars.of(1, Int()) as VarDecl<IntType>).ref
+    val malloc = Var("__malloc", Int()).ref
+    val x = Var("x", Int()).ref
+    val ext = Var("ext", ArrayType.of(Int(), Int())).ref
+    val p = Int(4099)
+    val containsP = And(listOf(Leq(b, p), Lt(Sub(p, b), Read(ext, b)), Gt(Read(ext, b), Int(0))))
+    val condition =
+      And(listOf(Or(Geq(p, malloc), containsP), Gt(c, Int(0)), Lt(c, Int(5)), Eq(x, Int(1))))
+
+    assertEquals(setOf(DssAuxVars.of(0, Int())), tiedAuxVars(condition))
+    assertEquals(null, withoutAuxVars(condition, operators::uniqueValue) { !operators.isUnsat(it) })
+    val values = operators.modelOf(condition, tiedAuxVars(condition))!!
+    val instance =
+      withoutAuxVars(instantiateAuxVars(condition, values), operators::uniqueValue) {
+        !operators.isUnsat(it)
+      }!!
+    assertTrue(DssAuxVars.collectVars(instance).isEmpty())
+    assertFalse(operators.isUnsat(instance))
+    // With the base at its value, every state of the instance is a state of the condition
+    val atValue = Eq(b, values.getValue(DssAuxVars.of(0, Int())) as IntLitExpr)
+    assertTrue(
+      operators.isLeq(And(listOf(instance, atValue, Gt(c, Int(0)), Lt(c, Int(5)))), condition)
+    )
+    assertEquals(null, operators.modelOf(And(condition, Lt(x, Int(0))), tiedAuxVars(condition)))
+  }
+
+  /**
+   * The base `b` of the object holding address 4098, havocked by the memory-safety check: with the
+   * constant size table {4096: 2, 4098: 2, 4100: 4} only `b == 4098` fits, so `b` is eliminated
+   * although it is read in a conjunct over the program array `size` (tinyxml2 SetStr, block K1).
+   */
+  @Test
+  fun `an auxiliary variable forced to a single value is eliminated even next to program variables`() {
+    @Suppress("UNCHECKED_CAST") val b = (DssAuxVars.of(0, Int()) as VarDecl<IntType>).ref
+    val malloc = Var("__malloc", Int()).ref
+    val size = Var("size", ArrayType.of(Int(), Int())).ref
+    val table =
+      ArrayLitExpr.of(
+        listOf(
+          Tuple2.of(Int(4096), Int(2)),
+          Tuple2.of(Int(4098), Int(2)),
+          Tuple2.of(Int(4100), Int(4)),
+        ),
+        Int(0),
+        ArrayType.of(Int(), Int()),
+      )
+    val p = Int(4098)
+    fun base(at: IntLitExpr) =
+      listOf(Leq(b, at), Lt(Sub(at, b), Read(table, b)), Gt(Read(table, b), Int(0)))
+    val tied = Or(Geq(Int(4098), malloc), Leq(Read(size, b), Add(Sub(p, b), Int(1))))
+    val condition = And(base(p) + tied)
+
+    assertEquals(null, withoutAuxVars(condition) { !operators.isUnsat(it) })
+    val eliminated = withoutAuxVars(condition, operators::uniqueValue) { !operators.isUnsat(it) }!!
+    assertTrue(DssAuxVars.collectVars(eliminated).isEmpty())
+    val expected = Or(Geq(Int(4098), malloc), Leq(Read(size, p), Int(1)))
+    assertTrue(operators.isLeq(eliminated, expected))
+    assertTrue(operators.isLeq(expected, eliminated))
+
+    // With overlapping objects at 4099 and 4100, address 4101 has two candidate bases: not unique,
+    // so `b` stays and the condition still cannot be freed of it.
+    val overlapping =
+      ArrayLitExpr.of(
+        listOf(Tuple2.of(Int(4099), Int(4)), Tuple2.of(Int(4100), Int(4))),
+        Int(0),
+        ArrayType.of(Int(), Int()),
+      )
+    val ambiguous =
+      And(
+        listOf(
+          Leq(b, Int(4101)),
+          Lt(Sub(Int(4101), b), Read(overlapping, b)),
+          Gt(Read(overlapping, b), Int(0)),
+          Leq(Read(size, b), Int(1)),
+        )
+      )
+    assertEquals(null, withoutAuxVars(ambiguous, operators::uniqueValue) { !operators.isUnsat(it) })
   }
 }

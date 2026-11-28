@@ -200,6 +200,12 @@ public class ItpSolverValidatorWrapper implements ItpSolver {
     }
 
     @Override
+    public void interrupt() {
+        solver.interrupt();
+        checker.interrupt();
+    }
+
+    @Override
     public void close() throws Exception {
         solver.close();
         checker.close();

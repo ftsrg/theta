@@ -152,4 +152,71 @@ class SelfLoopAbsorbingDecompositionTest {
     val graph = twoEntriesGraph(secondExit = true)
     assertSame(graph, absorbSelfLoops(graph))
   }
+
+  /** [twoEntriesGraph] with edges, as port blocks take the region's edges reachable per entry. */
+  private fun twoEntriesGraphWithEdges(): BlockGraph {
+    fun block(id: String, vararg path: XcfaLocation) =
+      Block(
+        id,
+        path.first(),
+        path.last(),
+        path.toSet(),
+        path.toList().zipWithNext { s, t -> XcfaEdge(s, t, NopLabel, EmptyMetaData) }.toSet(),
+      )
+    val (a, b, c, d) = listOf(loc("A"), loc("B"), loc("C"), loc("D"))
+    val (e, f, k) = listOf(loc("E"), loc("F"), loc("K"))
+    return BlockGraph.fromBlocksWithoutEdges(
+      listOf(
+        block("r", a, b),
+        block("p", b, c),
+        block("q", b, d),
+        block("s", d, c),
+        block("l", c, k, c),
+        block("e1", c, e),
+        block("e2", c, f),
+      )
+    )
+  }
+
+  @Test
+  fun `with port blocks a loop with several neighbours on both sides goes into each entering one`() {
+    val graph = twoEntriesGraphWithEdges()
+
+    val absorbed = absorbSelfLoops(graph, portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT)
+
+    absorbed.checkConsistency()
+    assertTrue(absorbed.selfLoops().isEmpty())
+    assertEquals(
+      setOf("r", "q", "MP0_0", "MP0_1", "e1", "e2"),
+      absorbed.blocks.map { it.id }.toSet(),
+    )
+    val ports = absorbed.blocks.filter { it.id.startsWith("MP") }
+    assertEquals(setOf("B", "D"), ports.map { it.initialLocation.name }.toSet())
+    for (port in ports) {
+      assertEquals("C", port.finalLocation.name)
+      assertEquals(setOf("e1", "e2"), port.successorIds)
+      assertTrue(port.locations.any { it.name == "K" }, "${port.id} holds the loop")
+    }
+    assertEquals(
+      graph.blocks.flatMap { it.edges }.toSet(),
+      absorbed.blocks.flatMap { it.edges }.toSet(),
+    )
+  }
+
+  @Test
+  fun `without port blocks the same loop is still left alone`() {
+    val graph = twoEntriesGraphWithEdges()
+    assertSame(graph, absorbSelfLoops(graph))
+  }
+
+  @Test
+  fun `port blocks absorb every self loop of the procedures`() {
+    val procedure = branchingLoopProcedure()
+    val absorbed =
+      SelfLoopAbsorbingDecomposition(portBlockLimit = DEFAULT_PORT_BLOCK_LIMIT).decompose(procedure)
+
+    absorbed.checkConsistency()
+    assertTrue(absorbed.selfLoops().isEmpty())
+    absorbed.assertCovers(procedure)
+  }
 }

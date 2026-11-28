@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Havoc
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
+import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.cloneBlock
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
@@ -55,42 +56,18 @@ fun extractBlockXcfa(
 ): BlockXcfaExtraction {
   val name = "${sourceProcedure.name}__${block.id}"
 
-  fun cloneOf(original: XcfaLocation, nameSuffix: String = "") =
-    XcfaLocation(
-      original.name + nameSuffix,
-      original.initial,
-      original.final,
-      original.error && keepSpecificationTargets,
-      original.metadata,
-    )
-
-  val clonedLocations: Map<XcfaLocation, XcfaLocation> = block.locations.associateWith(::cloneOf)
-  // Split loop head (CPAchecker's INITIAL vs. FINAL): one analysis covers one iteration
-  val splitEntry = block.initialLocation == block.finalLocation
-  val blockEntry =
-    if (splitEntry) cloneOf(block.initialLocation, "__entry")
-    else clonedLocations.getValue(block.initialLocation)
-
+  val clone = cloneBlock(block, keepSpecificationTargets)
+  val clonedLocations = clone.locations
+  val blockEntry = clone.entry
   val allLocations = clonedLocations.values.toMutableSet().apply { add(blockEntry) }
-  val clonedEdges = mutableSetOf<XcfaEdge>()
-  val originalEdges = mutableMapOf<XcfaEdge, XcfaEdge>()
+  val clonedEdges = clone.edges.toMutableSet()
   fun connect(source: XcfaLocation, target: XcfaLocation, edge: XcfaEdge) {
     source.outgoingEdges.add(edge)
     target.incomingEdges.add(edge)
     clonedEdges.add(edge)
   }
 
-  for (original in block.edges) {
-    val source =
-      if (splitEntry && original.source == block.initialLocation) blockEntry
-      else clonedLocations.getValue(original.source)
-    val target = clonedLocations.getValue(original.target)
-    val clone = XcfaEdge(source, target, original.label, original.metadata)
-    connect(source, target, clone)
-    originalEdges[clone] = original
-  }
-
-  val exitLocation = clonedLocations.getValue(block.finalLocation)
+  val exitLocation = clone.exit
   val procedureVars = sourceProcedure.vars.toMutableSet()
 
   var errorLocation = allLocations.firstOrNull { it.error }
@@ -142,8 +119,7 @@ fun extractBlockXcfa(
     exitLocation,
     preconditionEdge,
     violationConditionEdge,
-    clonedLocations.entries.associate { (original, clone) -> clone to original } +
-      (blockEntry to block.initialLocation),
-    originalEdges,
+    clone.originalLocations,
+    clone.originalEdges,
   )
 }

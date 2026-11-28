@@ -19,13 +19,32 @@ import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.BasicSubstitution
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.IteExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.FalseExpr
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr
+import hu.bme.mit.theta.core.type.booltype.NotExpr
+import hu.bme.mit.theta.core.type.booltype.OrExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr
+import hu.bme.mit.theta.core.type.inttype.IntGtExpr
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLtExpr
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr
+import hu.bme.mit.theta.core.type.inttype.IntNegExpr
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr
+import hu.bme.mit.theta.core.type.inttype.IntSubExpr
+import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.actor.DssInvariants
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.toC
@@ -33,11 +52,11 @@ import hu.bme.mit.theta.xcfa.utils.collectVars
 import hu.bme.mit.theta.xcfa.utils.getFlatLabels
 import hu.bme.mit.theta.xcfa.witnesses.*
 import java.io.File
-import java.util.*
+import java.math.BigInteger
 
 /**
- * DSS's invariants at C statements that start an edge, where the program point is its source;
- * positions also used inside an edge, or with unknown states, are skipped.
+ * DSS's invariants at C statements that start an edge. Each state keeps only the conjuncts that
+ * validators read as Theta does ([isExactInC]) and that are in scope, which only weakens it.
  */
 internal fun DssInvariants.toContent(
   inputFile: File,
@@ -55,13 +74,19 @@ internal fun DssInvariants.toContent(
       .filter { (name, vars) -> name != null && vars.size > 1 }
       .keys
   fun isCVar(decl: VarDecl<*>) = cNameOf(decl)?.let { it !in shared } ?: false
-  val sources = LinkedHashMap<Pair<Int, Int>, MutableSet<XcfaLocation>>()
-  val inside = HashSet<Pair<Int, Int>>()
+  val sources = LinkedHashMap<Position, MutableSet<XcfaLocation>>()
+  // The functions whose statement-declared locals a position's labels use (see [isInScope])
+  val users = HashMap<Position, MutableSet<String>>()
+  val inside = HashSet<Position>()
   for (edge in edges) {
     edge.label.getFlatLabels().forEachIndexed { index, label ->
-      for (statement in (label.metadata as? CMetaData)?.astNodes.orEmpty()) {
+      val metadata = label.metadata as? CMetaData ?: return@forEachIndexed
+      val functions =
+        label.collectVars().mapNotNullTo(hashSetOf()) { declaringFunction(it, parseContext) }
+      for (statement in metadata.astNodes) {
         if (statement.lineNumberStart < 0 || statement.colNumberStart < 0) continue
-        val position = statement.lineNumberStart to statement.colNumberStart + 1
+        val position = Position(statement.lineNumberStart, statement.colNumberStart + 1)
+        users.getOrPut(position) { hashSetOf() } += functions
         if (index == 0) sources.getOrPut(position) { linkedSetOf() } += edge.source
         else inside += position
       }
@@ -69,13 +94,17 @@ internal fun DssInvariants.toContent(
   }
   return sources.mapNotNull { (position, locations) ->
     if (position in inside) return@mapNotNull null
-    // Only conjuncts over C variables are kept: that weakens each state, so it stays valid
+    val function = users[position]?.singleOrNull()
+    fun isUsable(decl: VarDecl<*>) =
+      isCVar(decl) && isInScope(decl, function, position, parseContext)
     val states =
       locations
         .flatMap { invariants[it] ?: return@mapNotNull null }
         .map { state ->
           SmartBoolExprs.And(
-            ExprUtils.getConjuncts(state).filter { ExprUtils.getVars(it).all(::isCVar) }
+            ExprUtils.getConjuncts(state).filter {
+              isExactInC(it) && ExprUtils.getVars(it).all(::isUsable)
+            }
           )
         }
     val value = ExprUtils.simplify(SmartBoolExprs.Or(states))
@@ -89,10 +118,82 @@ internal fun DssInvariants.toContent(
       invariant =
         Invariant(
           type = InvariantType.LOCATION_INVARIANT,
-          location = Location(inputFile.name, position.first, position.second),
+          location = Location(inputFile.name, position.line, position.column),
           value = inC.toC(parseContext),
           format = Format.C_EXPRESSION,
         )
     )
   }
+}
+
+/** A statement's start in the input file; the column is 1-based, as in witnesses. */
+private data class Position(val line: Int, val column: Int)
+
+/** Where the statement declaring a local starts: absent for globals and parameters. */
+private fun declaration(decl: VarDecl<*>, parseContext: ParseContext): Position? {
+  val line = parseContext.metadata.getMetadataValue(decl.name, "locationLine").orElse(null)
+  val column = parseContext.metadata.getMetadataValue(decl.name, "locationColumn").orElse(null)
+  // The recorded column is 0-based
+  return if (line is Int && column is Int) Position(line, column + 1) else null
+}
+
+/**
+ * The C function whose statement declares [decl] (locals are named `function::...::name`), or null.
+ * Parameters do not count: inlining assigns a callee's parameters at its call site.
+ */
+private fun declaringFunction(decl: VarDecl<*>, parseContext: ParseContext): String? {
+  val segments = decl.name.split("::")
+  if (segments.size < 2 || declaration(decl, parseContext) == null) return null
+  return segments[0]
+}
+
+/**
+ * Whether [decl] may be named at [position] of C function [function]: globals always, and
+ * function-level locals and parameters of [function] once declared.
+ */
+private fun isInScope(
+  decl: VarDecl<*>,
+  function: String?,
+  position: Position,
+  parseContext: ParseContext,
+): Boolean {
+  val segments = decl.name.split("::")
+  if (segments.size == 1) return true
+  if (segments.size != 2 || segments[0] != function) return false
+  val declared = declaration(decl, parseContext) ?: return true
+  return declared.line < position.line ||
+    declared.line == position.line && declared.column < position.column
+}
+
+private val LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE)
+
+/**
+ * Whether `toC` prints [expr] as a C expression with the same meaning: integer and Boolean terms
+ * without division or modulo (which follow SMT-LIB), with `long long` literals.
+ */
+private fun isExactInC(expr: Expr<*>): Boolean {
+  val operands =
+    when (expr) {
+      is RefExpr<*> -> return expr.type == IntType.getInstance() || expr.type is BoolType
+      is IntLitExpr -> return expr.value.abs() <= LONG_MAX
+      is TrueExpr,
+      is FalseExpr -> return true
+      is AndExpr,
+      is OrExpr,
+      is NotExpr,
+      is ImplyExpr,
+      is IteExpr<*>,
+      is IntEqExpr,
+      is IntNeqExpr,
+      is IntLtExpr,
+      is IntLeqExpr,
+      is IntGtExpr,
+      is IntGeqExpr,
+      is IntAddExpr,
+      is IntSubExpr,
+      is IntMulExpr,
+      is IntNegExpr -> expr.ops
+      else -> return false
+    }
+  return operands.all(::isExactInC)
 }

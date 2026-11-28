@@ -220,6 +220,55 @@ class PredicateBlockBehaviorStepTest {
   }
 
   @Test
+  fun `a replaced predecessor's postcondition stands for its pieces until they send their own`() {
+    val f = linear(branching("5"))
+    val x = f.program.intVar("x").ref
+    val block = f.errorBlock()
+    val behavior = f.behavior(block)
+    val sender = f.graph.root.id
+    behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(3))))
+
+    behavior.onNeighborReplaced(
+      sender,
+      block.copy(predecessorIds = setOf("piece_0", "piece_1")),
+      setOf("piece_0", "piece_1"),
+    )
+
+    // Each piece repeats what the predecessor sent, so the block need not analyze it again
+    assertFalse(behavior.storePrecondition(DssPostConditionMessage("piece_0", Lt(x, Int(3)))))
+    assertFalse(behavior.storePrecondition(DssPostConditionMessage("piece_1", Lt(x, Int(3)))))
+    // A piece's own postcondition replaces it, and nothing is left under the old id
+    assertTrue(behavior.storePrecondition(DssPostConditionMessage("piece_0", Lt(x, Int(1)))))
+    assertTrue(behavior.storePrecondition(DssPostConditionMessage(sender, Lt(x, Int(3)))))
+  }
+
+  @Test
+  fun `a replaced successor's violation condition stands for its pieces until they send their own`() {
+    val f = linear(branching("5"))
+    val x = f.program.intVar("x").ref
+    val block = f.graph.root
+    val behavior = f.behavior(block)
+    val sender = f.errorBlock().id
+    behavior.storeViolationCondition(DssViolationConditionMessage(sender, Gt(x, Int(1))))
+
+    behavior.onNeighborReplaced(
+      sender,
+      block.copy(successorIds = setOf("piece_0")),
+      setOf("piece_0"),
+    )
+
+    assertFalse(
+      behavior.storeViolationCondition(DssViolationConditionMessage("piece_0", Gt(x, Int(1))))
+    )
+    assertTrue(
+      behavior.storeViolationCondition(DssViolationConditionMessage("piece_0", Gt(x, Int(2))))
+    )
+    assertTrue(
+      behavior.storeViolationCondition(DssViolationConditionMessage(sender, Gt(x, Int(1))))
+    )
+  }
+
+  @Test
   fun `a block without violations still publishes the postcondition of a new precondition`() {
     val f = linear(branching("5"))
     val x = f.program.intVar("x").ref

@@ -17,7 +17,10 @@ package hu.bme.mit.theta.xcfa.analysis.dss.analysis
 
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -32,11 +35,15 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 
 /**
  * Solver-backed operators of CPAchecker's distributed predicate CPA. A query the solver fails on
- * throws [DssUndecidedQueryException]: it must never be taken as satisfiable or unsatisfiable.
+ * (also on [fallbackSolverFactory], if given) throws [DssUndecidedQueryException].
  */
-class DssPredicateOperators(solverFactory: SolverFactory) {
+class DssPredicateOperators(
+  solverFactory: SolverFactory,
+  fallbackSolverFactory: SolverFactory? = null,
+) {
 
   private val solver = OperatorSolver(solverFactory)
+  private val fallback = fallbackSolverFactory?.let(::OperatorSolver)
 
   fun isUnsat(expr: Expr<BoolType>): Boolean {
     if (expr == False()) return true
@@ -44,12 +51,45 @@ class DssPredicateOperators(solverFactory: SolverFactory) {
     return try {
       solver.isUnsat(expr)
     } catch (e: Exception) {
-      throw DssUndecidedQueryException(e)
+      // A budget or an interruption belongs to the analysis, not to the solver
+      val second =
+        fallback.takeUnless { e is InterruptedException || e.isDssBudgetExceeded() }
+          ?: throw DssUndecidedQueryException(e)
+      try {
+        second.isUnsat(expr)
+      } catch (f: Exception) {
+        f.addSuppressed(e)
+        throw DssUndecidedQueryException(f)
+      }
     }
   }
 
   fun isLeq(state1: Expr<BoolType>, state2: Expr<BoolType>): Boolean =
     state2 == True() || state1 == state2 || isUnsat(And(state1, Not(state2)))
+
+  /**
+   * The only value of [decl] satisfying [constraint], or null if there is none, more than one, or
+   * the solver cannot tell (eliminating nothing is always safe).
+   */
+  fun uniqueValue(decl: VarDecl<*>, constraint: Expr<BoolType>): LitExpr<*>? =
+    try {
+      solver.uniqueValue(decl, constraint)
+    } catch (e: Exception) {
+      if (e is InterruptedException || e.isDssBudgetExceeded()) throw e
+      null
+    }
+
+  /**
+   * The values of [decls] in a model of [expr]; null if [expr] is unsatisfiable. A query the solver
+   * fails on throws [DssUndecidedQueryException], as for [isUnsat].
+   */
+  fun modelOf(expr: Expr<BoolType>, decls: Collection<VarDecl<*>>): Map<VarDecl<*>, LitExpr<*>>? =
+    try {
+      solver.modelOf(expr, decls)
+    } catch (e: Exception) {
+      if (e is InterruptedException || e.isDssBudgetExceeded()) throw e
+      throw DssUndecidedQueryException(e)
+    }
 }
 
 /** A query of [DssPredicateOperators] the solver failed on; DSS reports an unknown verdict. */
@@ -61,14 +101,45 @@ private class OperatorSolver(private val factory: SolverFactory) {
 
   private var solver: Solver? = null
 
-  fun isUnsat(expr: Expr<BoolType>): Boolean {
+  fun isUnsat(expr: Expr<BoolType>): Boolean = withSolver { current ->
+    WithPushPop(current).use {
+      current.add(PathUtils.unfold(expr, 0))
+      current.check().isUnsat
+    }
+  }
+
+  fun uniqueValue(decl: VarDecl<*>, constraint: Expr<BoolType>): LitExpr<*>? =
+    withSolver { current ->
+      WithPushPop(current).use {
+        current.add(PathUtils.unfold(constraint, 0))
+        if (!current.check().isSat) return@withSolver null
+        val value =
+          PathUtils.extractValuation(current.model, 0).eval(decl).orElse(null)
+            ?: return@withSolver null
+        current.add(PathUtils.unfold(Not(Eq(decl.ref, value)), 0))
+        if (current.check().isUnsat) value else null
+      }
+    }
+
+  fun modelOf(expr: Expr<BoolType>, decls: Collection<VarDecl<*>>): Map<VarDecl<*>, LitExpr<*>>? =
+    withSolver { current ->
+      WithPushPop(current).use {
+        current.add(PathUtils.unfold(expr, 0))
+        if (!current.check().isSat) return@withSolver null
+        val valuation = PathUtils.extractValuation(current.model, 0)
+        decls.associateWith { decl ->
+          valuation.eval(decl).orElseThrow {
+            IllegalStateException("No model value for ${decl.name} in a satisfiable query")
+          }
+        }
+      }
+    }
+
+  private inline fun <T> withSolver(query: (Solver) -> T): T {
     val current =
       solver ?: withSolverConstructionLock { factory.createSolver() }.also { solver = it }
     try {
-      WithPushPop(current).use {
-        current.add(PathUtils.unfold(expr, 0))
-        return current.check().isUnsat
-      }
+      return query(current)
     } catch (e: Exception) {
       solver = null
       runCatching { current.close() }

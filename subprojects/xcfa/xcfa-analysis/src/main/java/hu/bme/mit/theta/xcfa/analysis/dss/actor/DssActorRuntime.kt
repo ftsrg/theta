@@ -19,6 +19,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.Block
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.BlockGraph
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.Semaphore
 
 private const val OBSERVER_ID = "__observer__"
 
@@ -26,24 +27,54 @@ private const val VISUALIZER_ID = "__visualizer__"
 private const val VISUALIZER_JOIN_TIMEOUT_MILLIS = 10_000L
 private const val BLOCK_THREAD_JOIN_TIMEOUT_MILLIS = 10_000L
 
-/** CPAchecker's `MultithreadingDssExecutor`: one thread per block. */
+/**
+ * CPAchecker's `MultithreadingDssExecutor`: one thread per block. With [maxParallelBlocks] > 0, at
+ * most that many behavior calls run at a time (0: no limit).
+ */
 fun runDssActors(
   blockGraph: BlockGraph,
   behaviorFor: (Block) -> DssBlockBehavior,
   pollIntervalMillis: Long = 10,
   visualizationLog: MutableList<DssLogEntry>? = null,
-): DssResult {
+  maxParallelBlocks: Int = 0,
+): DssResult =
+  runDssNetworks(
+      listOf(DssNetwork(blockGraph, behaviorFor)),
+      pollIntervalMillis = pollIntervalMillis,
+      visualizationLog = visualizationLog,
+      maxParallelBlocks = maxParallelBlocks,
+    )
+    .result
+
+private fun monitorId(networks: List<DssNetwork>, index: Int) =
+  if (networks.size == 1) "dss-monitor" else "dss-monitor-$index"
+
+/** [runDssActors] for several [networks] at once, each with its own quiescence monitor. */
+fun runDssNetworks(
+  networks: List<DssNetwork>,
+  coordinator: DssCoordinatorFactory? = null,
+  pollIntervalMillis: Long = 10,
+  visualizationLog: MutableList<DssLogEntry>? = null,
+  maxParallelBlocks: Int = 0,
+): DssRun {
+  checkUniqueBlockIds(networks)
+  val separate = networks.size > 1
   val active = ConcurrentHashMap.newKeySet<String>()
-  val extraIds = if (visualizationLog != null) setOf(VISUALIZER_ID) else emptySet()
+  val blockIds = networks.flatMap { it.blockIds }
+  val extraIds =
+    listOfNotNull(
+      VISUALIZER_ID.takeIf { visualizationLog != null },
+      COORDINATOR_ID.takeIf { coordinator != null },
+    )
   val inboxes =
-    (blockGraph.blocks.map { it.id } + OBSERVER_ID + extraIds).associateWith {
+    (blockIds + OBSERVER_ID + extraIds).associateWith {
       // Arrival order, so the final messages can't end the visualizer's run early
       if (it == VISUALIZER_ID) LinkedBlockingQueue<DssMessage>() else createDssMessageQueue()
     }
+  val blockIdSet = blockIds.toSet()
   val connectionsForBroadcaster =
     inboxes.mapValues { (id, queue) ->
-      (if (id == OBSERVER_ID || id == VISUALIZER_ID) DssActorRole.OBSERVER
-      else DssActorRole.BLOCK) to queue
+      (if (id in blockIdSet) DssActorRole.BLOCK else DssActorRole.OBSERVER) to queue
     }
   val broadcaster = DssMessageBroadcaster(connectionsForBroadcaster)
 
@@ -51,58 +82,122 @@ fun runDssActors(
     DssObserverActor(
       OBSERVER_ID,
       DssConnection(inboxes.getValue(OBSERVER_ID), broadcaster, active),
-      blockGraph.blocks.size,
+      blockIds.size,
+      if (separate) networks.map { it.blockIds } else emptyList(),
     )
+  // Fair, so a block with queued messages can't be starved by busier ones
+  val permits = if (maxParallelBlocks > 0) Semaphore(maxParallelBlocks, true) else null
   val blockActors =
-    blockGraph.blocks.map { block ->
-      DssBlockActor(
-        block,
-        DssConnection(inboxes.getValue(block.id), broadcaster, active),
-        behaviorFor(block),
-      )
+    networks.map { network ->
+      network.blockGraph.blocks.map { block ->
+        DssBlockActor(
+          block,
+          DssConnection(
+            inboxes.getValue(block.id),
+            broadcaster,
+            active,
+            network.blockIds.takeIf { separate },
+          ),
+          network.behaviorFor(block).let {
+            if (permits == null) it else CappedBlockBehavior(it, permits)
+          },
+        )
+      }
     }
   val visualizer =
     visualizationLog?.let {
       DssVisualizationActor(
         VISUALIZER_ID,
         DssConnection(inboxes.getValue(VISUALIZER_ID), broadcaster, active),
-        blockGraph.blocks.size,
+        blockIds.size,
         it,
       )
     }
+  val coordinatorActor =
+    coordinator?.invoke(DssConnection(inboxes.getValue(COORDINATOR_ID), broadcaster, active))
 
-  val blockThreads =
-    blockActors.map { actor ->
-      Thread(actor, actor.id).apply {
-        isDaemon = true
-        start()
-      }
+  fun daemon(runnable: Runnable, name: String) =
+    Thread(runnable, name).apply {
+      isDaemon = true
+      start()
     }
-  val visualizerThread =
-    visualizer?.let {
-      Thread(it, it.id).apply {
-        isDaemon = true
-        start()
-      }
+  val blockThreads = blockActors.map { actors -> actors.map { daemon(it, it.id) } }
+  val visualizerThread = visualizer?.let { daemon(it, it.id) }
+  val coordinatorThread = coordinatorActor?.let { daemon(it, it.id) }
+  // A single network's coordinator takes part in its quiescence (DssConjectureActor)
+  require(!separate || coordinatorActor !is DssConjectureActor) {
+    "Conjectures need a single network: each network's quiescence leaves the coordinator out"
+  }
+  val quiescenceCoordinator = listOfNotNull(coordinatorThread.takeIf { !separate })
+  val monitors =
+    networks.indices.map { index ->
+      DssThreadMonitor(
+          blockThreads[index] + quiescenceCoordinator,
+          broadcaster,
+          active,
+          monitorId(networks, index),
+          pollIntervalMillis,
+          networks[index].blockIds.takeIf { separate },
+        )
+        .apply {
+          isDaemon = true
+          start()
+        }
     }
-  val monitor =
-    DssThreadMonitor(blockThreads, broadcaster, active, pollIntervalMillis = pollIntervalMillis)
-      .apply {
-        isDaemon = true
-        start()
-      }
 
   try {
     val result = observer.observe()
     visualizerThread?.join(VISUALIZER_JOIN_TIMEOUT_MILLIS)
-    return result
+    return DssRun(result, networkOf(networks, observer.resultSender) { monitorId(networks, it) })
   } finally {
-    // The monitor only stops on its own after SAFE
-    monitor.interrupt()
-    blockThreads.forEach { it.interrupt() }
+    // A monitor only stops on its own after SAFE
+    monitors.forEach { it.interrupt() }
+    blockThreads.flatten().forEach { it.interrupt() }
     visualizerThread?.interrupt()
+    coordinatorThread?.interrupt()
     // Leftover solver threads corrupted the solver state of later runs in the same JVM
-    blockThreads.forEach { it.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS) }
-    monitor.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS)
+    blockThreads.flatten().forEach { it.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS) }
+    coordinatorThread?.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS)
+    monitors.forEach { it.join(BLOCK_THREAD_JOIN_TIMEOUT_MILLIS) }
+  }
+}
+
+/**
+ * Waiting for a permit happens inside the caller's `active` marker, so it never looks quiescent.
+ */
+private class CappedBlockBehavior(
+  private val behavior: DssBlockBehavior,
+  private val permits: Semaphore,
+) : DssBlockBehavior by behavior {
+
+  private fun <T> withPermit(analysis: () -> T): T {
+    permits.acquire()
+    try {
+      return analysis()
+    } finally {
+      permits.release()
+    }
+  }
+
+  override fun initialMessages() = withPermit { behavior.initialMessages() }
+
+  override fun onPostCondition(message: DssPostConditionMessage) = withPermit {
+    behavior.onPostCondition(message)
+  }
+
+  override fun onViolationCondition(message: DssViolationConditionMessage) = withPermit {
+    behavior.onViolationCondition(message)
+  }
+
+  override fun onRestriction(message: DssRestrictionMessage) = withPermit {
+    behavior.onRestriction(message)
+  }
+
+  override fun onConjecture(message: DssConjectureMessage) = withPermit {
+    behavior.onConjecture(message)
+  }
+
+  override fun onMayViolation(message: DssMayViolationMessage) = withPermit {
+    behavior.onMayViolation(message)
   }
 }

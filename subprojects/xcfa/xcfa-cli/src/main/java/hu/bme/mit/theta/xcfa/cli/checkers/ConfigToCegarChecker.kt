@@ -44,6 +44,7 @@ import hu.bme.mit.theta.xcfa.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.proof.LocationInvariants
+import hu.bme.mit.theta.xcfa.analysis.proof.ProofTree
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -55,6 +56,7 @@ fun getCegarChecker(
   parseContext: ParseContext,
   config: XcfaConfig<*, *>,
   logger: Logger,
+  keepProofTree: Boolean = false,
 ): SafetyChecker<LocationInvariants, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
   if (config.inputConfig.property.verifiedProperty == ErrorDetection.TERMINATION)
     error("Termination cannot be checked with CEGAR, use LIVENESS_CEGAR as a backend.")
@@ -209,11 +211,16 @@ fun getCegarChecker(
         val locmap =
           locationInvariants(arg.nodes.toList().map { it.state as XcfaState<PtrState<*>> })
 
-        return SafetyResult.safe(LocationInvariants(locmap), null, ret.prec.orElse(null))
+        val proof = LocationInvariants(locmap)
+        if (keepProofTree) proof.tree = ProofTree(arg.nodes.toList())
+        return SafetyResult.safe(proof, null, ret.prec.orElse(null))
       } else {
+        val proof = LocationInvariants()
+        // DSS's GRAPH_PATHS violation conditions read the other target nodes too
+        if (keepProofTree) proof.tree = ProofTree(ret.asUnsafe().proof.nodes.toList())
         return SafetyResult.unsafe(
           ret.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>,
-          LocationInvariants(),
+          proof,
           null,
           ret.prec.orElse(null),
         )

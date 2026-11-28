@@ -22,12 +22,19 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr
 import hu.bme.mit.theta.core.type.booltype.AndExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.WpState
@@ -81,6 +88,112 @@ object DssAuxVars {
     vars.forEachIndexed { index, decl -> substitution.put(decl, get(index, decl.type).ref) }
     return substitution.build().apply(expr)
   }
+
+  /** The first index no auxiliary variable of [expr] uses. */
+  fun nextIndex(expr: Expr<*>): Int =
+    collectVars(expr).mapNotNull(::indexOf).maxOrNull()?.plus(1) ?: 0
+
+  /** [expr] with its auxiliary variables moved by [offset], so a conjunction keeps them apart. */
+  fun <T : Type> shift(expr: Expr<T>, offset: Int): Expr<T> {
+    val vars = collectVars(expr)
+    if (vars.isEmpty() || offset == 0) return expr
+    val substitution = BasicSubstitution.builder()
+    for (decl in vars) substitution.put(decl, get(indexOf(decl)!! + offset, decl.type).ref)
+    return substitution.build().apply(expr)
+  }
+}
+
+/** How a block builds the violation conditions it sends (`--dss-violation-conditions`). */
+enum class DssViolationConditions {
+  /**
+   * One exact condition over all of the block's paths to its targets ([computeViolationCondition]);
+   * blocks with an internal cycle, which have none, fall back to [PATHS].
+   */
+  ALL_PATHS,
+  /**
+   * One condition per error path a run finds, along that path only, accumulated as a disjunction
+   * ([computePathViolationCondition]); further paths come from later runs. As CPAchecker's paper
+   * version does (`DistributedPredicateCPA.computeVerificationCondition` on one ARG path per
+   * target).
+   */
+  PATHS,
+  /**
+   * [PATHS], with one condition per target node of a CEGAR checker's last reachability graph that
+   * is feasible from the start state, not only the counterexample's: CPAchecker's paper version
+   * reports a path to every target state of its ARG. Fully explored with `--dss-cegar-refinement
+   * MULTI_SEQ`; blocks whose checker keeps no graph (BMC, KIND, IMC) get the counterexample's path.
+   */
+  GRAPH_PATHS,
+}
+
+/** How a block that uses per-path violation conditions sends them (`--dss-violation-messages`). */
+enum class DssViolationMessages {
+  /**
+   * One message with the disjunction of every path found so far, which replaces the sender's
+   * earlier one at the predecessor; that then analyzes all of the sender's paths at once.
+   */
+  DISJUNCTION,
+  /**
+   * One message per new path, which the predecessor adds to the sender's earlier ones and analyzes
+   * alone, as CPAchecker's paper version does (`DCPAAlgorithm.runAnalysisUnderCondition`). Blocks
+   * with one condition over all paths ([DssViolationConditions.ALL_PATHS]) still send that one.
+   */
+  PER_PATH,
+}
+
+/** Which received violation conditions a block keeps (`--dss-violation-storage`). */
+enum class DssViolationStorage {
+  /**
+   * Per sender: the sender's conditions, which a new precondition analyzes in one run, under their
+   * disjunction.
+   */
+  SENDER,
+  /**
+   * CPAchecker's paper version (`DCPAAlgorithm.errors`): by origin, the edges of the condition's
+   * path from its error to the receiver. A condition whose origin includes a kept one's is
+   * analyzed, but not kept. A new precondition runs the block once under each kept condition, for
+   * violation conditions only; its postcondition and own errors come from the run
+   * [DssOriginPostcondition] names. Needs per-path conditions sent [DssViolationMessages.PER_PATH].
+   */
+  ORIGIN,
+}
+
+/** With [DssViolationStorage.ORIGIN], the run a new precondition's postcondition comes from. */
+enum class DssOriginPostcondition {
+  /**
+   * A run under all kept conditions, as with [DssViolationStorage.SENDER]; its paths into them are
+   * dropped, as their origin is not known.
+   */
+  KEPT_CONDITIONS,
+  /**
+   * A run without received conditions, as CPAchecker's `DCPAAlgorithm.runAnalysis`. Needs
+   * `--dss-reset-precision`: the precision a predecessor sends carries the atoms of every state it
+   * reached, and with it the postconditions of a loop (`x = 0`, `x = 1`, ...) never converge.
+   */
+  NO_CONDITIONS,
+}
+
+/** When a block reruns on a new precondition, and from what (`--dss-precondition-handling`). */
+enum class DssPreconditionHandling {
+  /**
+   * A precondition is new if the union of its states changes; the block then runs from every stored
+   * one, and speculatively from top while a predecessor has sent nothing, and sends its
+   * postcondition and violation conditions.
+   */
+  THETA,
+  /**
+   * CPAchecker's paper version (`DCPAAlgorithm.runAnalysis`). A postcondition is new only if it
+   * does not imply its sender's stored one. A new one from a predecessor outside the block's loop
+   * forgets the loop predecessors' (`BlockNode.getLoopPredecessorIds`: those in the block's
+   * strongly connected component); one that is top from a loop predecessor is forgotten. Runs start
+   * from the stored postconditions only, or from top if there is none. A new precondition reruns
+   * the block under each kept violation condition only, and what those runs find is sent only once
+   * every loop predecessor is sound: it repeated its postcondition or reported its exit
+   * unreachable. A run under a condition sends its postcondition only if no start state reaches an
+   * error, and the initial run from top sends one from every block, not only the root. Needs
+   * [DssViolationStorage.ORIGIN].
+   */
+  CPACHECKER,
 }
 
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
@@ -120,6 +233,70 @@ private class BackwardConditions(
     for (edge in edgesFrom(location)) disjuncts += wep(edge.label, at(edge.target))
     onStack.remove(location)
     return orStates(disjuncts).also { memo[location] = it }
+  }
+}
+
+/**
+ * [computeViolationCondition] over the paths of [block] taking at most [unrollings] back edges, so
+ * for cyclic blocks too; an under-approximation of the weakest precondition.
+ */
+fun computeBoundedViolationCondition(
+  block: Block,
+  targets: Map<XcfaLocation, Expr<BoolType>>,
+  unrollings: Int,
+): Expr<BoolType> {
+  require(unrollings >= 0) { "Negative unrolling bound: $unrollings" }
+  val conditions = BoundedBackwardConditions(block, targets, unrollings)
+  return toViolationCondition(
+    orStates(conditions.entryEdges.mapNotNull { conditions.through(it, taken = 0) })
+  )
+}
+
+private class BoundedBackwardConditions(
+  private val block: Block,
+  private val targets: Map<XcfaLocation, Expr<BoolType>>,
+  private val unrollings: Int,
+) {
+
+  val entryEdges: List<XcfaEdge> = block.initialLocation.outgoingEdges.filter { it in block.edges }
+
+  private fun edgesFrom(location: XcfaLocation): List<XcfaEdge> =
+    location.outgoingEdges.filter { it in block.edges && location != block.finalLocation }
+
+  /** Without these the block is acyclic, and each one taken moves a path to the next copy. */
+  private val backEdges: Set<XcfaEdge> =
+    HashSet<XcfaEdge>().also { back ->
+      val done = HashSet<XcfaLocation>()
+      val onStack = HashSet<XcfaLocation>()
+      fun visit(location: XcfaLocation) {
+        onStack += location
+        for (edge in edgesFrom(location)) {
+          if (edge.target in onStack) back += edge else if (edge.target !in done) visit(edge.target)
+        }
+        onStack -= location
+        done += location
+      }
+      // A split loop head ends the block where it starts: an edge into it closes no cycle
+      if (block.initialLocation != block.finalLocation) visit(block.initialLocation)
+      else entryEdges.forEach { if (it.target !in done) visit(it.target) }
+    }
+
+  private val memo = HashMap<Pair<XcfaLocation, Int>, WpState>()
+
+  /** The condition of taking [edge] after [taken] back edges, or null past the bound. */
+  fun through(edge: XcfaEdge, taken: Int): WpState? {
+    val next = if (edge in backEdges) taken + 1 else taken
+    return if (next > unrollings) null else wep(edge.label, at(edge.target, next))
+  }
+
+  private fun at(location: XcfaLocation, taken: Int): WpState {
+    memo[location to taken]?.let {
+      return it
+    }
+    val disjuncts = mutableListOf<WpState>()
+    targets[location]?.let { disjuncts += WpState.of(it) }
+    for (edge in edgesFrom(location)) through(edge, taken)?.let { disjuncts += it }
+    return orStates(disjuncts).also { memo[location to taken] = it }
   }
 }
 
@@ -263,4 +440,125 @@ private fun or(disjuncts: List<Expr<BoolType>>): Expr<BoolType> {
       }
     }
   return Or(factored)
+}
+
+/**
+ * A condition without auxiliary variables equivalent to [condition], or null. Conjuncts over
+ * auxiliary variables only are dropped if satisfiable, else the condition is false.
+ *
+ * An auxiliary variable tied to program variables is eliminated if the conjuncts over it alone
+ * force a single value: [uniqueValue] returns that value of the variable under the constraint (null
+ * if there is none or more than one), and `exists a. a == v && P(a)` is `P(v)`. Typical: a havoced
+ * object base `b <= p && p - b < size[b]` for a constant address `p` and a constant size table.
+ */
+fun withoutAuxVars(
+  condition: Expr<BoolType>,
+  uniqueValue: ((VarDecl<*>, Expr<BoolType>) -> Expr<*>?)? = null,
+  isSatisfiable: (Expr<BoolType>) -> Boolean,
+): Expr<BoolType>? {
+  fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
+    if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
+  var current = substituteAuxDefinitions(conjuncts(condition))
+  eliminate@ while (true) {
+    val kept = mutableListOf<Expr<BoolType>>()
+    for ((vars, exprs) in auxComponents(current)) {
+      when {
+        vars.none(DssAuxVars::isAux) -> kept += exprs
+        vars.any { !DssAuxVars.isAux(it) } -> {
+          val (aux, value) =
+            uniqueValue?.let { unique ->
+              vars.filter(DssAuxVars::isAux).firstNotNullOfOrNull { aux ->
+                val own = current.filter { ExprUtils.getVars(it) == setOf(aux) }
+                if (own.isEmpty()) null else unique(aux, And(own))?.let { aux to it }
+              }
+            } ?: return null
+          val substitution = BasicSubstitution.builder().put(aux, value).build()
+          current =
+            substituteAuxDefinitions(
+              current.map { ExprUtils.simplify(substitution.apply(it)) }.flatMap(::conjuncts)
+            )
+          continue@eliminate
+        }
+        !isSatisfiable(And(exprs)) -> return False()
+      }
+    }
+    return And(kept)
+  }
+}
+
+/**
+ * The auxiliary variables of [condition] that [withoutAuxVars] may fail on: those sharing a
+ * conjunct group with program variables once the definitions `a == t` are substituted.
+ */
+fun tiedAuxVars(condition: Expr<BoolType>): Set<VarDecl<*>> {
+  fun conjuncts(expr: Expr<BoolType>): List<Expr<BoolType>> =
+    if (expr is AndExpr) expr.ops.flatMap(::conjuncts) else listOf(expr)
+  return auxComponents(substituteAuxDefinitions(conjuncts(condition)))
+    .filter { (vars, _) -> vars.any { !DssAuxVars.isAux(it) } }
+    .flatMapTo(linkedSetOf()) { (vars, _) -> vars.filter(DssAuxVars::isAux) }
+}
+
+/**
+ * [condition] with [values] for some of its auxiliary variables. As they are existential, the
+ * result implies [condition]: excluding it excludes a part of the states [condition] describes.
+ */
+fun instantiateAuxVars(
+  condition: Expr<BoolType>,
+  values: Map<VarDecl<*>, Expr<*>>,
+): Expr<BoolType> {
+  require(values.keys.all(DssAuxVars::isAux)) { "Only auxiliary variables are instantiated" }
+  val substitution = BasicSubstitution.builder()
+  values.forEach { (decl, value) -> substitution.put(decl, value) }
+  return ExprUtils.simplify(substitution.build().apply(condition))
+}
+
+/** [conjuncts] grouped by shared auxiliary variables, with the variables of each group. */
+private fun auxComponents(
+  conjuncts: List<Expr<BoolType>>
+): List<Pair<Set<VarDecl<*>>, List<Expr<BoolType>>>> {
+  val components = mutableListOf<Pair<MutableSet<VarDecl<*>>, MutableList<Expr<BoolType>>>>()
+  for (conjunct in conjuncts) {
+    val vars = ExprUtils.getVars(conjunct).toMutableSet()
+    val linked =
+      components.filter { (other, _) -> vars.any { it in other && DssAuxVars.isAux(it) } }
+    components.removeAll(linked)
+    val exprs = linked.flatMap { it.second }.toMutableList().apply { add(conjunct) }
+    linked.forEach { vars.addAll(it.first) }
+    components += vars to exprs
+  }
+  return components
+}
+
+/**
+ * [conjuncts] with each definition `a == t` of an auxiliary variable substituted, as `exists a. a
+ * == t && P(a)` is `P(t)`. Only exact equalities count: an IEEE `fp.eq` is none.
+ */
+private fun substituteAuxDefinitions(conjuncts: List<Expr<BoolType>>): List<Expr<BoolType>> {
+  var current = conjuncts
+  while (true) {
+    val (definition, aux, value) =
+      current.firstNotNullOfOrNull { conjunct ->
+        auxDefinition(conjunct)?.let { (aux, value) -> Triple(conjunct, aux, value) }
+      } ?: return current
+    val substitution = BasicSubstitution.builder().put(aux, value).build()
+    current = current.filter { it !== definition }.map { substitution.apply(it) }
+  }
+}
+
+private fun auxDefinition(conjunct: Expr<BoolType>): Pair<VarDecl<*>, Expr<*>>? {
+  val equality =
+    when (conjunct) {
+      is IntEqExpr,
+      is RatEqExpr,
+      is BvEqExpr,
+      is IffExpr,
+      is ArrayEqExpr<*, *> -> conjunct as EqExpr<*>
+      else -> return null
+    }
+  for ((side, other) in
+    listOf(equality.leftOp to equality.rightOp, equality.rightOp to equality.leftOp)) {
+    val decl = (side as? RefExpr<*>)?.decl as? VarDecl<*> ?: continue
+    if (DssAuxVars.isAux(decl) && decl !in ExprUtils.getVars(other)) return decl to other
+  }
+  return null
 }

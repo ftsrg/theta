@@ -209,6 +209,11 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     }
 
     @Override
+    public void interrupt() {
+        solver.interrupt();
+    }
+
+    @Override
     public void close() {
         solver.close();
     }
