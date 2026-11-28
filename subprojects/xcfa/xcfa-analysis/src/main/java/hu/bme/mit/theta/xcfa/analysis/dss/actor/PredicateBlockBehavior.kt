@@ -47,6 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPreconditionHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
@@ -143,6 +144,14 @@ class PredicateBlockBehavior(
   /** Whether every run's precision gets the atoms of its start state ([prepared]). */
   private val startStateAtoms: Boolean = true,
   private val originPostcondition: DssOriginPostcondition = DssOriginPostcondition.KEPT_CONDITIONS,
+  private val preconditionHandling: DssPreconditionHandling = DssPreconditionHandling.THETA,
+  /** The predecessors in the block's strongly connected component (`BlockGraph`). */
+  private val loopPredecessorIds: Set<String> = emptySet(),
+  /**
+   * CPAchecker's `seenPrefixes`: a condition with a new origin, in a block with loop predecessors,
+   * takes its violation conditions from a run from top instead of from the preconditions.
+   */
+  private val newOriginFromTop: Boolean = false,
 ) : DssBlockBehavior {
 
   init {
@@ -161,7 +170,22 @@ class PredicateBlockBehavior(
       "--dss-origin-postcondition NO_CONDITIONS needs --dss-violation-storage ORIGIN and " +
         "--dss-reset-precision"
     }
+    require(
+      violationStorage == DssViolationStorage.ORIGIN ||
+        (preconditionHandling == DssPreconditionHandling.THETA && !newOriginFromTop)
+    ) {
+      "--dss-precondition-handling CPACHECKER and --dss-new-origin-from-top need " +
+        "--dss-violation-storage ORIGIN"
+    }
   }
+
+  private val cpachecker = preconditionHandling == DssPreconditionHandling.CPACHECKER
+
+  /** CPACHECKER: the loop predecessors that repeated their postcondition or are unreachable. */
+  private val soundPredecessors = hashSetOf<String>()
+
+  /** [newOriginFromTop]: the origins of every received condition, kept or not. */
+  private val seenOrigins = mutableListOf<Set<String>>()
 
   private val byOrigin = violationStorage == DssViolationStorage.ORIGIN
 
@@ -319,7 +343,54 @@ class PredicateBlockBehavior(
   override fun initialMessages(): Collection<DssMessage> = runInitialAnalysis()
 
   override fun onPostCondition(message: DssPostConditionMessage): Collection<DssMessage> =
-    if (storePrecondition(message) || pathsPending) analyzePrecondition() else emptyList()
+    if (cpachecker) onPostConditionAsCpachecker(message)
+    else if (storePrecondition(message) || pathsPending) analyzePrecondition() else emptyList()
+
+  /**
+   * CPAchecker's `runAnalysis` ([DssPreconditionHandling.CPACHECKER]). CPAchecker reruns also while
+   * a loop predecessor is not sound and drops what it finds; this block does not run then, as a
+   * dropped path would count as sent.
+   */
+  private fun onPostConditionAsCpachecker(
+    message: DssPostConditionMessage
+  ): Collection<DssMessage> {
+    val sender = message.senderId
+    inputVersions[sender] = message.version
+    if (message.restricted) restrictedInputs += sender else restrictedInputs -= sender
+    val received = message.postconditions.filter { it != False() }
+    val isLoopPredecessor = sender in loopPredecessorIds
+    var changed = false
+    if (received.isEmpty()) {
+      preconditions.remove(sender)
+      if (isLoopPredecessor) soundPredecessors += sender
+    } else {
+      val state = Or(received)
+      fun impliesStored(): Boolean {
+        val stored = preconditions[sender] ?: return false
+        return operators.isLeq(state, Or(stored.map { it.state }))
+      }
+      if (loopPredecessorIds.isNotEmpty() && !isLoopPredecessor && !impliesStored()) {
+        changed = true
+        loopPredecessorIds.forEach { preconditions.remove(it) }
+        soundPredecessors.clear()
+      }
+      if (isLoopPredecessor && state == True()) {
+        preconditions.remove(sender)
+        changed = true
+        soundPredecessors -= sender
+      } else {
+        if (!impliesStored()) {
+          changed = true
+          soundPredecessors -= sender
+        } else if (isLoopPredecessor) soundPredecessors += sender
+        preconditions[sender] = received.map { Summary(it, message.precision) }.toMutableList()
+      }
+    }
+    if (!changed || !soundPredecessors.containsAll(loopPredecessorIds)) return emptyList()
+    return violationConditions
+      .flatMap { (from, conditions) -> conditions.map { from to it } }
+      .flatMap { analyzeReceived(listOf(it)) }
+  }
 
   override fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage> =
     if (byOrigin) onViolationConditionByOrigin(message)
@@ -350,7 +421,22 @@ class PredicateBlockBehavior(
       violationConditions.getOrPut(sender) { mutableListOf() } += condition
       generalizer?.record(sender, condition)
     }
-    return analyzeReceived(listOf(sender to condition))
+    val seen = seenOrigins.any { message.origin.containsAll(it) }
+    seenOrigins += message.origin
+    if (!newOriginFromTop || seen || loopPredecessorIds.isEmpty()) {
+      return analyzeReceived(listOf(sender to condition))
+    }
+    // CPAchecker's paths from the preconditions are dropped, so they must not count as sent
+    statistics.newOriginRuns++
+    val atStart = analyzeViolationCondition(listOf(sender to condition), recordPaths = false)
+    val fromTop =
+      analyzeViolationCondition(
+        listOf(sender to condition),
+        keepSummaries = false,
+        startsFrom = listOf(top() to false),
+      )
+    return reportPostconditions(atStart.summaries) +
+      reportViolationConditions(fromTop.violationConditions)
   }
 
   /** A stronger start state can only refute more, so only received conditions are re-analyzed. */
@@ -403,8 +489,11 @@ class PredicateBlockBehavior(
    */
   fun runInitialAnalysis(): Collection<DssMessage> {
     return when (val result = run(top(), violationCondition = null)) {
+      // CPAchecker's `reportUnreachableBlockEnd` tells the successors' loops this block is sound
       is RunResult.Safe ->
-        if (!block.isRoot) emptyList()
+        if (cpachecker && result.postcondition == False())
+          listOf(DssPostConditionMessage(block.id, listOf(False())))
+        else if (!block.isRoot && !cpachecker) emptyList()
         else
           reportPostconditions(
             listOf(Summary(result.postcondition, result.precision)).filter { it.state != False() }
@@ -541,6 +630,8 @@ class PredicateBlockBehavior(
     received: List<Pair<String, Expr<BoolType>>>,
     keepSummaries: Boolean = true,
     receivedPaths: Boolean = true,
+    recordPaths: Boolean = true,
+    startsFrom: List<Pair<Summary, Boolean>>? = null,
   ): AnalysisResult {
     val violations = received.map { it.second }
     val receivedOrigin = received.flatMapTo(linkedSetOf()) { receivedOrigins[it.second].orEmpty() }
@@ -551,7 +642,7 @@ class PredicateBlockBehavior(
     var targetReached = false
     var reportReceivedViolations = false
     val pathViolations = mutableListOf<Expr<BoolType>>()
-    for ((start, discardSummary) in startStates()) {
+    for ((start, discardSummary) in startsFrom ?: startStates()) {
       val startState = prepared(start)
 
       // A speculative run looks for violations only, which a probe cannot find
@@ -607,6 +698,7 @@ class PredicateBlockBehavior(
           for (path in newPathsOf(startState, result, violationCondition)) {
             if (path.condition in pathViolations) continue
             if (!receivedPaths && path.reachedReceivedViolation) continue
+            if (!recordPaths) continue
             pathViolations += path.condition
             if (byOrigin) {
               pathOrigins[path.condition] =
@@ -629,6 +721,9 @@ class PredicateBlockBehavior(
       pathsPending = false
       return AnalysisResult(summaries, SentViolations.NONE)
     }
+    // CPAchecker sends a postcondition only from a run that reaches no error
+    if (cpachecker) summaries.clear()
+    if (!recordPaths) return AnalysisResult(summaries, SentViolations.NONE)
     if (usesPathViolations) {
       val sent = accumulatePathViolations(pathViolations)
       return AnalysisResult(summaries, sent.copy(origins = pathOrigins))
@@ -656,6 +751,11 @@ class PredicateBlockBehavior(
    * speculative run from top while a predecessor has not sent anything. Top comes at most once.
    */
   private fun startStates(): List<Pair<Summary, Boolean>> {
+    // CPAchecker's `prepareReachedSet`: the stored postconditions, or top if there are none
+    if (cpachecker) {
+      val stored = preconditions.values.flatten().distinct()
+      return stored.ifEmpty { listOf(top()) }.map { it to false }
+    }
     val startStates = linkedSetOf<Summary>()
     startStates.addAll(preconditions.values.flatten())
     if (block.isRoot) startStates.add(top())

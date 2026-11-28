@@ -24,6 +24,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPreconditionHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
@@ -324,6 +325,27 @@ data class DssConfig(
         "them, as CPAchecker; needs --dss-reset-precision, without which loops do not converge)",
   )
   var originPostcondition: DssOriginPostcondition = DssOriginPostcondition.KEPT_CONDITIONS,
+  @Parameter(
+    names = ["--dss-precondition-handling"],
+    hidden = true,
+    description =
+      "When a block reruns on a new precondition: THETA (the union of its states changed; runs " +
+        "from every stored one, and from top while a predecessor is silent) or CPACHECKER (it " +
+        "does not imply the sender's stored one; loop predecessors are forgotten when the rest " +
+        "change; runs from the stored ones or top, under each kept violation condition only, " +
+        "and sends once every loop predecessor is stable). CPACHECKER needs " +
+        "--dss-violation-storage ORIGIN",
+  )
+  var preconditionHandling: DssPreconditionHandling = DssPreconditionHandling.THETA,
+  @Parameter(
+    names = ["--dss-new-origin-from-top"],
+    hidden = true,
+    description =
+      "With --dss-violation-storage ORIGIN, a violation condition with a new origin, in a block " +
+        "with predecessors in its loop, is analyzed from top for the violation conditions it " +
+        "sends, as CPAchecker's seenPrefixes",
+  )
+  var newOriginFromTop: Boolean = false,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

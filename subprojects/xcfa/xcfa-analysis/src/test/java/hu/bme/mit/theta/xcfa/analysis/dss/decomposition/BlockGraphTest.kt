@@ -48,6 +48,30 @@ class BlockGraphTest {
   }
 
   @Test
+  fun `the loop predecessors are the predecessors the block reaches`() {
+    val a = loc("A")
+    val h = loc("H")
+    val b = loc("B")
+    val x = loc("X")
+    val entry = Block("entry", a, h, setOf(a, h), emptySet())
+    val body = Block("body", h, b, setOf(h, b), emptySet())
+    val back = Block("back", b, h, setOf(b, h), emptySet())
+    val exit = Block("exit", h, x, setOf(h, x), emptySet())
+    val graph = BlockGraph.fromBlocksWithoutEdges(listOf(entry, body, back, exit))
+    fun loopPredecessors(id: String) = graph.loopPredecessorIds(graph.blocks.single { it.id == id })
+
+    assertEquals(setOf("back"), loopPredecessors("body"))
+    assertEquals(emptySet<String>(), loopPredecessors("entry"))
+    assertEquals(setOf("body"), loopPredecessors("back"))
+    // The exit leaves the loop, so it reaches none of its predecessors
+    assertEquals(emptySet<String>(), loopPredecessors("exit"))
+    assertEquals(
+      emptySet<String>(),
+      graph.loopPredecessorIds(Block("cut", a, x, setOf(a, x), emptySet())),
+    )
+  }
+
+  @Test
   fun `checkConsistency rejects a one-sided predecessor link`() {
     val a = loc("A")
     val b = loc("B")

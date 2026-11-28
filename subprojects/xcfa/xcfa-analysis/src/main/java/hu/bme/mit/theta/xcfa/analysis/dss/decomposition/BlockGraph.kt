@@ -31,6 +31,21 @@ class BlockGraph(val blocks: Set<Block>) {
 
   fun predecessorsOf(block: Block): Set<Block> = block.predecessorIds.map(::requireBlock).toSet()
 
+  /**
+   * CPAchecker's `BlockNode.getLoopPredecessorIds`: the predecessors of [block] in its strongly
+   * connected component, those that [block] reaches. Empty for a block not in this graph.
+   */
+  fun loopPredecessorIds(block: Block): Set<String> {
+    if (block.id !in blocksById) return emptySet()
+    val reached = hashSetOf<String>()
+    val stack = ArrayDeque(block.successorIds)
+    while (stack.isNotEmpty()) {
+      val id = stack.removeLast()
+      if (reached.add(id)) blocksById[id]?.successorIds?.let { stack.addAll(it) }
+    }
+    return block.predecessorIds.filterTo(linkedSetOf()) { it in reached }
+  }
+
   private fun requireBlock(id: String): Block =
     blocksById[id] ?: error("BlockGraph is inconsistent: no block with id '$id'.")
 

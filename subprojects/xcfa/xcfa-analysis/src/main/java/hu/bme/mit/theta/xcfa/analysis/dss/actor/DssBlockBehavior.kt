@@ -53,6 +53,7 @@ class DssBlockStatistics {
   var violationConditionsReceived = 0
   var violationConditionsSent = 0
   var violationConditionsKept = 0
+  var newOriginRuns = 0
   var largestViolationCondition = 0
   var probes = 0
   var probesRefuted = 0
@@ -74,6 +75,7 @@ class DssBlockStatistics {
         "vcReceived" to violationConditionsReceived,
         "vcSent" to violationConditionsSent,
         "vcKept" to violationConditionsKept,
+        "newOriginRuns" to newOriginRuns,
         "vcMaxAtoms" to largestViolationCondition,
         "probes" to probes,
         "probesRefuted" to probesRefuted,

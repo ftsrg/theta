@@ -414,52 +414,59 @@ fun getDssChecker(
     processWitnesses.clear()
     meeting = null
     conjectures = null
-    fun behaviorsOf(program: XCFA, programProcedure: XcfaProcedure, finishing: Set<String>) =
-      { block: Block ->
-        PredicateBlockBehavior(
-            program,
-            programProcedure,
-            block,
-            checkerRoster,
-            useGlobalPredicatePool = dssConfig.globalPredicatePool,
-            resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
-            reuseBlockPrecision = dssConfig.reuseBlockPrecision,
-            treePostcondition = dssConfig.treePostcondition,
-            treeExitPaths = dssConfig.treeExitPaths,
-            treeAbstraction = dssConfig.treeAbstraction,
-            violationConditionMode = dssConfig.violationConditions,
-            knownPathSearch = dssConfig.knownPathSearch,
-            violationMessages = dssConfig.violationMessages,
-            violationStorage = dssConfig.violationStorage,
-            startStateAtoms = dssConfig.startStateAtoms,
-            originPostcondition = dssConfig.originPostcondition,
-            blockLocalPool = dssConfig.blockLocalPool,
-            checkerFallback = true,
-            solverFactory = dssSolverFactory,
-            trackSummaries = bidirectional,
-            finishing = block.id in finishing,
-            generalizationGas = if (probeGeneralizers.isEmpty()) 0 else dssConfig.generalizationGas,
-            generalizers = probeGeneralizers,
-            generalizerCombination = dssConfig.generalizerCombination,
-            semanticUnrollings = dssConfig.semanticUnrollings,
-            fallbackSolverFactory = queryFallbackFactory,
-            quantifiedPredicates = dssConfig.quantifiedPredicates,
-            cutOnTimeout = dssConfig.cutOnTimeout,
-            hasCut = {
-              if (cutInPlace) cutBlock(block, cutDecomposition) != null
-              else
-                cutTargetOf(block.id, forward)?.let { target ->
-                  cutBlock(cutGraph.blocks.single { it.id == target }, cutDecomposition) != null
-                } == true
-            },
-          )
-          .also { behaviors[block.id] = it }
-      }
+    fun behaviorsOf(
+      program: XCFA,
+      programProcedure: XcfaProcedure,
+      finishing: Set<String>,
+      graph: BlockGraph,
+    ) = { block: Block ->
+      PredicateBlockBehavior(
+          program,
+          programProcedure,
+          block,
+          checkerRoster,
+          useGlobalPredicatePool = dssConfig.globalPredicatePool,
+          resetPrecisionForEveryRun = dssConfig.resetPrecisionForEveryRun,
+          reuseBlockPrecision = dssConfig.reuseBlockPrecision,
+          treePostcondition = dssConfig.treePostcondition,
+          treeExitPaths = dssConfig.treeExitPaths,
+          treeAbstraction = dssConfig.treeAbstraction,
+          violationConditionMode = dssConfig.violationConditions,
+          knownPathSearch = dssConfig.knownPathSearch,
+          violationMessages = dssConfig.violationMessages,
+          violationStorage = dssConfig.violationStorage,
+          startStateAtoms = dssConfig.startStateAtoms,
+          originPostcondition = dssConfig.originPostcondition,
+          preconditionHandling = dssConfig.preconditionHandling,
+          loopPredecessorIds = graph.loopPredecessorIds(block),
+          newOriginFromTop = dssConfig.newOriginFromTop,
+          blockLocalPool = dssConfig.blockLocalPool,
+          checkerFallback = true,
+          solverFactory = dssSolverFactory,
+          trackSummaries = bidirectional,
+          finishing = block.id in finishing,
+          generalizationGas = if (probeGeneralizers.isEmpty()) 0 else dssConfig.generalizationGas,
+          generalizers = probeGeneralizers,
+          generalizerCombination = dssConfig.generalizerCombination,
+          semanticUnrollings = dssConfig.semanticUnrollings,
+          fallbackSolverFactory = queryFallbackFactory,
+          quantifiedPredicates = dssConfig.quantifiedPredicates,
+          cutOnTimeout = dssConfig.cutOnTimeout,
+          hasCut = {
+            if (cutInPlace) cutBlock(block, cutDecomposition) != null
+            else
+              cutTargetOf(block.id, forward)?.let { target ->
+                cutBlock(cutGraph.blocks.single { it.id == target }, cutDecomposition) != null
+              } == true
+          },
+        )
+        .also { behaviors[block.id] = it }
+    }
     val networks =
       listOfNotNull(
-        forward?.let { DssNetwork(it, behaviorsOf(xcfa, procedure, it.finishingBlocks())) },
+        forward?.let { DssNetwork(it, behaviorsOf(xcfa, procedure, it.finishingBlocks(), it)) },
         backward?.let {
-          DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure, it.finishingBlocks()))
+          DssNetwork(it, behaviorsOf(reversal!!.xcfa, reversal.procedure, it.finishingBlocks(), it))
         },
       )
     val backwardIds = backward?.blocks?.mapTo(hashSetOf()) { it.id }.orEmpty()

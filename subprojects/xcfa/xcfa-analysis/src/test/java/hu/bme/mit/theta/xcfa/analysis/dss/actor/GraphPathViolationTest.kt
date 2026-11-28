@@ -28,6 +28,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPreconditionHandling
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
@@ -290,6 +291,59 @@ class GraphPathViolationTest {
         violationStorage = DssViolationStorage.ORIGIN,
         originPostcondition = DssOriginPostcondition.NO_CONDITIONS,
       )
+    }
+  }
+
+  @Test
+  fun `with CPAchecker's precondition handling, a postcondition implying the stored one is no news`() {
+    val x = twoErrors.intVar("x").ref
+    val procedure = twoErrors.procedures.single()
+    val block =
+      SingleBlockDecomposition.decompose(procedure).root.copy(predecessorIds = setOf("pred"))
+    val behavior =
+      PredicateBlockBehavior(
+        twoErrors,
+        procedure,
+        block,
+        roster(Refinement.SEQ_ITP, false),
+        useGlobalPredicatePool = false,
+        violationConditionMode = DssViolationConditions.PATHS,
+        violationMessages = DssViolationMessages.PER_PATH,
+        violationStorage = DssViolationStorage.ORIGIN,
+        preconditionHandling = DssPreconditionHandling.CPACHECKER,
+      )
+    fun analyses() = behavior.statistics().getValue("analyses").toInt()
+    behavior.onViolationCondition(
+      DssViolationConditionMessage("succ", Gt(x, Int(100)), addsPath = true, origin = setOf("e"))
+    )
+
+    val beforeFirst = analyses()
+    behavior.onPostCondition(DssPostConditionMessage("pred", Gt(x, Int(0))))
+    val afterFirst = analyses()
+    behavior.onPostCondition(DssPostConditionMessage("pred", Gt(x, Int(3))))
+    val afterStronger = analyses()
+    behavior.onPostCondition(DssPostConditionMessage("pred", Gt(x, Int(-1))))
+    val afterWeaker = analyses()
+
+    assertTrue(afterFirst > beforeFirst, "the first postcondition reruns the kept condition")
+    assertEquals(afterFirst, afterStronger, "a stronger postcondition reruns nothing")
+    assertTrue(afterWeaker > afterStronger, "a weaker postcondition reruns")
+  }
+
+  @Test
+  fun `CPAchecker's precondition handling and the rerun from top need storage by origin`() {
+    for ((handling, fromTop) in
+      listOf(DssPreconditionHandling.CPACHECKER to false, DssPreconditionHandling.THETA to true)) {
+      assertThrows(IllegalArgumentException::class.java) {
+        PredicateBlockBehavior(
+          twoErrors,
+          twoErrors.procedures.single(),
+          SingleBlockDecomposition.decompose(twoErrors.procedures.single()).root,
+          roster(Refinement.MULTI_SEQ, true),
+          preconditionHandling = handling,
+          newOriginFromTop = fromTop,
+        )
+      }
     }
   }
 

@@ -173,6 +173,29 @@ enum class DssOriginPostcondition {
   NO_CONDITIONS,
 }
 
+/** When a block reruns on a new precondition, and from what (`--dss-precondition-handling`). */
+enum class DssPreconditionHandling {
+  /**
+   * A precondition is new if the union of its states changes; the block then runs from every stored
+   * one, and speculatively from top while a predecessor has sent nothing, and sends its
+   * postcondition and violation conditions.
+   */
+  THETA,
+  /**
+   * CPAchecker's paper version (`DCPAAlgorithm.runAnalysis`). A postcondition is new only if it
+   * does not imply its sender's stored one. A new one from a predecessor outside the block's loop
+   * forgets the loop predecessors' (`BlockNode.getLoopPredecessorIds`: those in the block's
+   * strongly connected component); one that is top from a loop predecessor is forgotten. Runs start
+   * from the stored postconditions only, or from top if there is none. A new precondition reruns
+   * the block under each kept violation condition only, and what those runs find is sent only once
+   * every loop predecessor is sound: it repeated its postcondition or reported its exit
+   * unreachable. A run under a condition sends its postcondition only if no start state reaches an
+   * error, and the initial run from top sends one from every block, not only the root. Needs
+   * [DssViolationStorage.ORIGIN].
+   */
+  CPACHECKER,
+}
+
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
 fun computeViolationCondition(
   block: Block,

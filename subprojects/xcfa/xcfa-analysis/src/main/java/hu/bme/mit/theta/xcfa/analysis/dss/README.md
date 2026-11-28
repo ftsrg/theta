@@ -76,6 +76,10 @@ CPAchecker does; a new precondition is still analyzed under all of them at once)
 path, as CPAchecker's `DCPAAlgorithm.errors`, and a new precondition reruns the block once under
 each; the postcondition comes from a run under all of them, or, with `--dss-origin-postcondition
 NO_CONDITIONS` and `--dss-reset-precision`, from a run without them, as in CPAchecker),
+`--dss-precondition-handling CPACHECKER` (with ORIGIN: CPAchecker's rules for when a block
+reruns, from which states, and when it may send, `DssPreconditionHandling`),
+`--dss-new-origin-from-top` (with ORIGIN: a condition with a new origin, in a block with loop
+predecessors, gets its violation conditions from a run from top, as CPAchecker's `seenPrefixes`),
 `--dss-start-state-atoms false` (no atoms of the start state in a run's
 precision; with `--dss-reset-precision` and no global pool, every run starts from the empty
 precision, as in CPAchecker), and their tuning flags.

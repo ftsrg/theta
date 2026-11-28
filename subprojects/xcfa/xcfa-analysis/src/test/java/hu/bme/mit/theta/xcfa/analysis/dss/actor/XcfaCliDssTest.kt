@@ -204,6 +204,19 @@ class XcfaCliDssTest {
           listOf("--dss-violation-conditions", "PATHS", "--dss-known-path-search", "false"),
           listOf("--dss-violation-conditions", "PATHS", "--dss-violation-messages", "PER_PATH"),
           listOf("--dss-start-state-atoms", "false"),
+          listOf(
+            "--dss-violation-conditions",
+            "PATHS",
+            "--dss-violation-messages",
+            "PER_PATH",
+            "--dss-violation-storage",
+            "ORIGIN",
+            "--dss-precondition-handling",
+            "CPACHECKER",
+            "--dss-new-origin-from-top",
+            "--dss-executor",
+            "PROCESS",
+          ),
           listOf("--dss-reset-precision", "--dss-start-state-atoms", "false"),
           listOf(
             "--dss-violation-conditions",
@@ -394,6 +407,38 @@ class XcfaCliDssTest {
           "ORIGIN",
           "--dss-origin-postcondition",
           "NO_CONDITIONS",
+        )
+        .contains(expected(program))
+    )
+  }
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict with CPAchecker's precondition handling`(
+    decomposition: String,
+    program: String,
+  ) {
+    assertTrue(
+      dssVerdict(
+          program,
+          "--dss-decomposition",
+          decomposition,
+          "--dss-reset-precision",
+          "--dss-start-state-atoms",
+          "false",
+          "--dss-violation-conditions",
+          "GRAPH_PATHS",
+          "--dss-cegar-refinement",
+          "MULTI_SEQ",
+          "--dss-violation-messages",
+          "PER_PATH",
+          "--dss-violation-storage",
+          "ORIGIN",
+          "--dss-origin-postcondition",
+          "NO_CONDITIONS",
+          "--dss-precondition-handling",
+          "CPACHECKER",
+          "--dss-new-origin-from-top",
         )
         .contains(expected(program))
     )
