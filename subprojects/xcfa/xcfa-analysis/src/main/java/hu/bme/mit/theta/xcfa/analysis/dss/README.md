@@ -74,8 +74,9 @@ per new path, which the predecessor adds to the sender's earlier ones and analyz
 CPAchecker does; a new precondition is still analyzed under all of them at once),
 `--dss-violation-storage ORIGIN` (with PER_PATH: received conditions kept by the edges of their
 path, as CPAchecker's `DCPAAlgorithm.errors`, and a new precondition reruns the block once under
-each; the postcondition still comes from a run under all of them, as Theta's would not converge on
-loops without them), `--dss-start-state-atoms false` (no atoms of the start state in a run's
+each; the postcondition comes from a run under all of them, or, with `--dss-origin-postcondition
+NO_CONDITIONS` and `--dss-reset-precision`, from a run without them, as in CPAchecker),
+`--dss-start-state-atoms false` (no atoms of the start state in a run's
 precision; with `--dss-reset-precision` and no global pool, every run starts from the empty
 precision, as in CPAchecker), and their tuning flags.
 

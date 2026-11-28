@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
@@ -274,6 +275,22 @@ class GraphPathViolationTest {
     val stats = receiver.statistics()
     assertEquals("4", stats["vcReceived"], "$stats")
     assertEquals("2", stats["vcKept"], "$stats")
+  }
+
+  @Test
+  fun `the postcondition without received conditions needs reset precisions`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      PredicateBlockBehavior(
+        twoErrors,
+        twoErrors.procedures.single(),
+        SingleBlockDecomposition.decompose(twoErrors.procedures.single()).root,
+        roster(Refinement.MULTI_SEQ, true),
+        violationConditionMode = DssViolationConditions.PATHS,
+        violationMessages = DssViolationMessages.PER_PATH,
+        violationStorage = DssViolationStorage.ORIGIN,
+        originPostcondition = DssOriginPostcondition.NO_CONDITIONS,
+      )
+    }
   }
 
   @Test

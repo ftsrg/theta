@@ -392,6 +392,8 @@ class XcfaCliDssTest {
           "PER_PATH",
           "--dss-violation-storage",
           "ORIGIN",
+          "--dss-origin-postcondition",
+          "NO_CONDITIONS",
         )
         .contains(expected(program))
     )

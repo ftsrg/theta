@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster.Companion.BU
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssDeadline
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
@@ -141,6 +142,7 @@ class PredicateBlockBehavior(
   private val violationStorage: DssViolationStorage = DssViolationStorage.SENDER,
   /** Whether every run's precision gets the atoms of its start state ([prepared]). */
   private val startStateAtoms: Boolean = true,
+  private val originPostcondition: DssOriginPostcondition = DssOriginPostcondition.KEPT_CONDITIONS,
 ) : DssBlockBehavior {
 
   init {
@@ -151,6 +153,13 @@ class PredicateBlockBehavior(
     ) {
       "--dss-violation-storage ORIGIN needs --dss-violation-messages PER_PATH and " +
         "--dss-violation-conditions PATHS or GRAPH_PATHS"
+    }
+    require(
+      originPostcondition == DssOriginPostcondition.KEPT_CONDITIONS ||
+        (violationStorage == DssViolationStorage.ORIGIN && resetPrecisionForEveryRun)
+    ) {
+      "--dss-origin-postcondition NO_CONDITIONS needs --dss-violation-storage ORIGIN and " +
+        "--dss-reset-precision"
     }
   }
 
@@ -486,15 +495,18 @@ class PredicateBlockBehavior(
 
   /**
    * As CPAchecker's `runAnalysis`, the violation conditions of a run under each kept condition. The
-   * postcondition and the block's own errors come from a run under all of them, as with SENDER:
-   * CPAchecker's comes from a run without them, but Theta's postconditions are refined against the
-   * conditions at the exit, and without them a loop's postconditions never converge. That run's
-   * paths into a received condition are dropped, as their origin is not known.
+   * postcondition and the block's own errors come from a run without received conditions, as in
+   * CPAchecker ([DssOriginPostcondition.NO_CONDITIONS]), or by default from a run under all of
+   * them, as with SENDER; that run's paths into a received condition are dropped, as their origin
+   * is not known.
    */
   private fun analyzePreconditionByOrigin(
     received: List<Pair<String, Expr<BoolType>>>
   ): Collection<DssMessage> {
-    val plain = analyzeViolationCondition(received, receivedPaths = false)
+    val plain =
+      if (originPostcondition == DssOriginPostcondition.NO_CONDITIONS)
+        analyzeViolationCondition(emptyList())
+      else analyzeViolationCondition(received, receivedPaths = false)
     val underConditions =
       received.map { analyzeViolationCondition(listOf(it), keepSummaries = false) }
     val sent = (listOf(plain) + underConditions).map { it.violationConditions }

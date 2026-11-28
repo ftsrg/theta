@@ -23,6 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DEFAULT_SEMANTIC_UNROLLINGS
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerCombination
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssOriginPostcondition
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
@@ -314,6 +315,15 @@ data class DssConfig(
         "--dss-violation-messages PER_PATH and --dss-violation-conditions PATHS or GRAPH_PATHS",
   )
   var violationStorage: DssViolationStorage = DssViolationStorage.SENDER,
+  @Parameter(
+    names = ["--dss-origin-postcondition"],
+    hidden = true,
+    description =
+      "With --dss-violation-storage ORIGIN, the run a new precondition's postcondition comes " +
+        "from: KEPT_CONDITIONS (under all kept violation conditions) or NO_CONDITIONS (without " +
+        "them, as CPAchecker; needs --dss-reset-precision, without which loops do not converge)",
+  )
+  var originPostcondition: DssOriginPostcondition = DssOriginPostcondition.KEPT_CONDITIONS,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

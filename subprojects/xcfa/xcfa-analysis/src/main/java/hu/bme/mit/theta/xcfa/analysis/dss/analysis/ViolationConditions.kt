@@ -152,11 +152,25 @@ enum class DssViolationStorage {
    * CPAchecker's paper version (`DCPAAlgorithm.errors`): by origin, the edges of the condition's
    * path from its error to the receiver. A condition whose origin includes a kept one's is
    * analyzed, but not kept. A new precondition runs the block once under each kept condition, for
-   * violation conditions only; its postcondition and own errors come from a run under all of them
-   * (CPAchecker's from a run without them). Needs per-path conditions sent
-   * [DssViolationMessages.PER_PATH].
+   * violation conditions only; its postcondition and own errors come from the run
+   * [DssOriginPostcondition] names. Needs per-path conditions sent [DssViolationMessages.PER_PATH].
    */
   ORIGIN,
+}
+
+/** With [DssViolationStorage.ORIGIN], the run a new precondition's postcondition comes from. */
+enum class DssOriginPostcondition {
+  /**
+   * A run under all kept conditions, as with [DssViolationStorage.SENDER]; its paths into them are
+   * dropped, as their origin is not known.
+   */
+  KEPT_CONDITIONS,
+  /**
+   * A run without received conditions, as CPAchecker's `DCPAAlgorithm.runAnalysis`. Needs
+   * `--dss-reset-precision`: the precision a predecessor sends carries the atoms of every state it
+   * reached, and with it the postconditions of a loop (`x = 0`, `x = 1`, ...) never converge.
+   */
+  NO_CONDITIONS,
 }
 
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
