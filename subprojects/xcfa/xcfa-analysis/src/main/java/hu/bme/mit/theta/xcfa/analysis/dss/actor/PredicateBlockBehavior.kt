@@ -52,6 +52,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifierCleaner
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssUndecidedQueryException
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalization
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.GeneralizationContext
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.Generalizers
@@ -135,6 +136,7 @@ class PredicateBlockBehavior(
   private val violationConditionMode: DssViolationConditions = DssViolationConditions.ALL_PATHS,
   /** Whether [newPathFrom] looks for another path when a run found known ones only. */
   private val knownPathSearch: Boolean = true,
+  private val violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -179,10 +181,23 @@ class PredicateBlockBehavior(
    */
   private var pathsPending = false
 
+  /** [violationConditions]: what to send, by [reportViolationConditions]. */
   private data class AnalysisResult(
     val summaries: List<Summary>,
-    val violationCondition: Expr<BoolType>?,
+    val violationConditions: SentViolations,
   )
+
+  /** Conditions to send; [addPaths] ones each name one more path (PER_PATH). */
+  private data class SentViolations(
+    val conditions: List<Expr<BoolType>>,
+    val addPaths: Boolean = false,
+  ) {
+    companion object {
+      val NONE = SentViolations(emptyList())
+
+      fun of(condition: Expr<BoolType>?) = SentViolations(listOfNotNull(condition))
+    }
+  }
 
   private val operators by lazy {
     DssPredicateOperators(
@@ -219,6 +234,11 @@ class PredicateBlockBehavior(
 
   private val preconditions = LinkedHashMap<String, MutableList<Summary>>()
   private val violationConditions = LinkedHashMap<String, MutableList<Expr<BoolType>>>()
+
+  /**
+   * Senders whose stored conditions came from the neighbor they replaced ([onNeighborReplaced]).
+   */
+  private val inheritedViolations = hashSetOf<String>()
   private var containsViolationInsideBlock = false
 
   private val ownTargets: List<XcfaLocation> = block.locations.filter { it.error }
@@ -268,8 +288,10 @@ class PredicateBlockBehavior(
     if (storePrecondition(message) || pathsPending) analyzePrecondition() else emptyList()
 
   override fun onViolationCondition(message: DssViolationConditionMessage): Collection<DssMessage> =
-    if (storeViolationCondition(message)) analyzeViolationCondition(message.senderId)
-    else emptyList()
+    if (!storeViolationCondition(message)) emptyList()
+    else if (message.addsPath)
+      analyzeReceived(listOf(message.senderId to message.violationCondition!!))
+    else analyzeViolationCondition(message.senderId)
 
   /** A stronger start state can only refute more, so only received conditions are re-analyzed. */
   override fun onRestriction(message: DssRestrictionMessage): Collection<DssMessage> {
@@ -334,7 +356,7 @@ class PredicateBlockBehavior(
           result.paths.forEach {
             violationRecords += DssPathViolation(it.condition, it.edges, false, emptyList())
           }
-          reportViolationCondition(accumulatePathViolations(result.paths.map { it.condition }))
+          reportViolationConditions(accumulatePathViolations(result.paths.map { it.condition }))
         }
       }
     }
@@ -370,12 +392,25 @@ class PredicateBlockBehavior(
     return operators.isLeq(union1, union2) && operators.isLeq(union2, union1)
   }
 
-  /** Returns false if the condition is unsatisfiable or repeats the sender's last one. */
+  /**
+   * Returns false if the condition is unsatisfiable or repeats the sender's last one, or, if it
+   * [adds a path][DssViolationConditionMessage.addsPath], one of the sender's stored ones.
+   */
   fun storeViolationCondition(message: DssViolationConditionMessage): Boolean {
     val condition =
       requireNotNull(message.violationCondition) { "Expected a violation condition in $message" }
     val sender = message.senderId
     statistics.violationConditionsReceived++
+    // The sender's own first message replaces what the neighbor it replaced sent
+    if (inheritedViolations.remove(sender) && message.addsPath) violationConditions.remove(sender)
+    if (message.addsPath) {
+      if (operators.isUnsat(condition)) return false
+      val stored = violationConditions.getOrPut(sender) { mutableListOf() }
+      if (condition in stored) return false
+      stored += condition
+      generalizer?.record(sender, condition)
+      return true
+    }
     val old = violationConditions.remove(sender).orEmpty().toSet()
     if (operators.isUnsat(condition)) return false
     violationConditions[sender] = mutableListOf(condition)
@@ -390,7 +425,7 @@ class PredicateBlockBehavior(
     val received =
       violationConditions.flatMap { (sender, conditions) -> conditions.map { sender to it } }
     val result = analyzeViolationCondition(received)
-    return reportViolationCondition(result.violationCondition) +
+    return reportViolationConditions(result.violationConditions) +
       reportPostconditions(result.summaries) +
       analyzeMayViolations(obligations.keys + mayViolations.keys)
   }
@@ -398,9 +433,16 @@ class PredicateBlockBehavior(
   fun analyzeViolationCondition(sender: String): Collection<DssMessage> {
     val violations = violationConditions[sender]
     require(!violations.isNullOrEmpty()) { "No violation condition found for sender ID: $sender" }
-    val result = analyzeViolationCondition(violations.map { sender to it })
+    return analyzeReceived(violations.map { sender to it })
+  }
+
+  /** The analysis under [received] only: all of a sender's conditions, or its one new path. */
+  private fun analyzeReceived(
+    received: List<Pair<String, Expr<BoolType>>>
+  ): Collection<DssMessage> {
+    val result = analyzeViolationCondition(received)
     return reportPostconditions(result.summaries) +
-      reportViolationCondition(result.violationCondition)
+      reportViolationConditions(result.violationConditions)
   }
 
   /**
@@ -489,11 +531,10 @@ class PredicateBlockBehavior(
 
     if (!targetReached) {
       pathsPending = false
-      return AnalysisResult(summaries, null)
+      return AnalysisResult(summaries, SentViolations.NONE)
     }
     if (usesPathViolations) {
-      val condition = accumulatePathViolations(pathViolations)
-      return AnalysisResult(summaries, condition)
+      return AnalysisResult(summaries, accumulatePathViolations(pathViolations))
     }
     // The cex does not tell which target it reached, so the condition covers all of them
     val targets = buildMap {
@@ -510,7 +551,7 @@ class PredicateBlockBehavior(
           val used = if (reportReceivedViolations) received else emptyList()
           violationRecords += DssAllPathsViolation(condition, targets, used)
         }
-    return AnalysisResult(summaries, newViolationCondition)
+    return AnalysisResult(summaries, SentViolations.of(newViolationCondition))
   }
 
   /**
@@ -876,13 +917,18 @@ class PredicateBlockBehavior(
     return Exists(params, substitution.build().apply(condition))
   }
 
-  /** Predecessors keep only the last condition per sender, so refuted paths must stay in. */
-  private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): Expr<BoolType>? {
-    val before = pathViolationsSoFar.size
-    pathViolationsSoFar += new
-    pathsPending = !block.isRoot && pathViolationsSoFar.size > before
-    if (new.isEmpty()) return null
-    return Or(pathViolationsSoFar)
+  /**
+   * With DISJUNCTION, predecessors keep only the last condition per sender, so refuted paths must
+   * stay in; with PER_PATH they keep every path, so only the unknown ones are sent.
+   */
+  private fun accumulatePathViolations(new: Collection<Expr<BoolType>>): SentViolations {
+    val fresh = new.distinct().filter { it !in pathViolationsSoFar }
+    pathViolationsSoFar += fresh
+    pathsPending = !block.isRoot && fresh.isNotEmpty()
+    if (new.isEmpty()) return SentViolations.NONE
+    return if (violationMessages == DssViolationMessages.PER_PATH)
+      SentViolations(fresh, addPaths = true)
+    else SentViolations.of(Or(pathViolationsSoFar))
   }
 
   private val programVars: Set<VarDecl<*>> by lazy {
@@ -1014,17 +1060,23 @@ class PredicateBlockBehavior(
   ): Collection<DssMessage> {
     val condition = computeViolationCondition(block, targets)
     violationRecords += DssAllPathsViolation(condition, targets, emptyList())
-    return reportViolationCondition(condition)
+    return reportViolationConditions(SentViolations.of(condition))
   }
 
-  private fun reportViolationCondition(condition: Expr<BoolType>?): Collection<DssMessage> {
-    if (condition == null || condition == False()) return emptyList()
+  private fun reportViolationConditions(sent: SentViolations): Collection<DssMessage> =
+    sent.conditions.flatMap { reportViolationCondition(it, sent.addPaths) }
+
+  private fun reportViolationCondition(
+    condition: Expr<BoolType>,
+    addsPath: Boolean,
+  ): Collection<DssMessage> {
+    if (condition == False()) return emptyList()
     if (block.isRoot && operators.isUnsat(condition)) return emptyList()
     reportedViolationConditions += condition
     statistics.violationConditionsSent++
     statistics.largestViolationCondition =
       maxOf(statistics.largestViolationCondition, ExprUtils.getAtoms(condition).size)
-    return listOf(DssViolationConditionMessage(block.id, condition))
+    return listOf(DssViolationConditionMessage(block.id, condition, addsPath))
   }
 
   /** A query the solver cannot decide skips the generalization, never the analysis. */
@@ -1082,7 +1134,9 @@ class PredicateBlockBehavior(
     if (restrictedInputs.remove(oldId)) restrictedInputs += predecessors
     violationConditions.remove(oldId)?.let { stored ->
       successors.forEach { violationConditions[it] = stored.toMutableList() }
+      inheritedViolations += successors
     }
+    inheritedViolations -= oldId
     mayViolations.values.forEach { it.remove(oldId) }
   }
 

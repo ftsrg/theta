@@ -126,6 +126,21 @@ enum class DssViolationConditions {
   GRAPH_PATHS,
 }
 
+/** How a block that uses per-path violation conditions sends them (`--dss-violation-messages`). */
+enum class DssViolationMessages {
+  /**
+   * One message with the disjunction of every path found so far, which replaces the sender's
+   * earlier one at the predecessor; that then analyzes all of the sender's paths at once.
+   */
+  DISJUNCTION,
+  /**
+   * One message per new path, which the predecessor adds to the sender's earlier ones and analyzes
+   * alone, as CPAchecker's paper version does (`DCPAAlgorithm.runAnalysisUnderCondition`). Blocks
+   * with one condition over all paths ([DssViolationConditions.ALL_PATHS]) still send that one.
+   */
+  PER_PATH,
+}
+
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
 fun computeViolationCondition(
   block: Block,

@@ -382,6 +382,7 @@ private fun writeMessage(out: DataOutputStream, codec: DssExprCodec, message: Ds
       writeString(out, message.senderId)
       out.writeBoolean(message.violationCondition != null)
       message.violationCondition?.let { codec.write(out, it) }
+      out.writeBoolean(message.addsPath)
     }
     is DssRestrictionMessage -> {
       out.writeByte(MESSAGE_RESTRICTION)
@@ -409,6 +410,7 @@ private fun readMessage(input: DataInputStream, codec: DssExprCodec): DssMessage
       DssViolationConditionMessage(
         readString(input),
         if (input.readBoolean()) codec.read(input) else null,
+        addsPath = input.readBoolean(),
       )
     else -> error("Unknown DSS message kind $kind")
   }

@@ -85,9 +85,14 @@ data class DssPostConditionMessage(
     get() = postconditions.takeIf { it.isNotEmpty() }?.let { Or(it) }
 }
 
+/**
+ * A condition that [addsPath] is one more error path of its sender (`--dss-violation-messages
+ * PER_PATH`): the receiver keeps the sender's earlier ones. Otherwise it replaces them.
+ */
 data class DssViolationConditionMessage(
   override val senderId: String,
   val violationCondition: Expr<BoolType>? = null,
+  val addsPath: Boolean = false,
 ) : DssMessage()
 
 /**

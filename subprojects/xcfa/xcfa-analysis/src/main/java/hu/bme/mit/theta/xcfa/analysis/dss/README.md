@@ -69,7 +69,10 @@ them; `GRAPH_PATHS` takes one per feasible target node of a CEGAR block's last A
 counterexample's, as CPAchecker reports a path to every target state), `--dss-cegar-refinement
 MULTI_SEQ` (CEGAR blocks explore fully, so that ARG has every target), `--dss-known-path-search
 false` (no rerun with the known paths excluded when a run finds only those, as in CPAchecker; a
-block's other error paths can then be missed), and their tuning flags.
+block's other error paths can then be missed), `--dss-violation-messages PER_PATH` (one message
+per new path, which the predecessor adds to the sender's earlier ones and analyzes alone, as
+CPAchecker does; a new precondition is still analyzed under all of them at once), and their tuning
+flags.
 
 ## Packages
 
@@ -92,7 +95,8 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
   paths, covering all of its targets at once. The postcondition of an unsafe run comes from a second
   run without targets.
 * **Blocks with an internal cycle** (Theta-only decompositions) get per-path violation conditions:
-  the weakest precondition along each counterexample, accumulated as a disjunction.
+  the weakest precondition along each counterexample, accumulated as a disjunction (one message per
+  path with `--dss-violation-messages PER_PATH`).
 * **Postconditions abstract at every location** by default; `--dss-tree-postcondition` abstracts
   only at the exit, from the exact paths of the ARG since the nearest covering node.
 * **Precision** is the set of atoms of the reached states plus the start precision, not

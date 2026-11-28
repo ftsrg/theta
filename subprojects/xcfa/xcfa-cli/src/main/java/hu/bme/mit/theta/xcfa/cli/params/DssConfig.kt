@@ -26,6 +26,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssGeneralizerKind
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_CUT_BLOCK_COUNT
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -281,6 +282,16 @@ data class DssConfig(
     arity = 1,
   )
   var knownPathSearch: Boolean = true,
+  @Parameter(
+    names = ["--dss-violation-messages"],
+    hidden = true,
+    description =
+      "How blocks with per-path violation conditions send them: DISJUNCTION (one message with " +
+        "every path found so far, which replaces the sender's earlier one) or PER_PATH (one " +
+        "message per new path, which the predecessor adds to the earlier ones and analyzes " +
+        "alone, as CPAchecker does)",
+  )
+  var violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

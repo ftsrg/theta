@@ -32,9 +32,13 @@ class DssMessageBroadcaster(
   private val observerQueues: List<BlockingQueue<DssMessage>> =
     connections.values.filter { (role, _) -> role == DssActorRole.OBSERVER }.map { it.second }
 
-  /** The last postcondition and violation condition each sender delivered to its neighbors. */
+  /**
+   * The last postcondition and violation condition each sender delivered to its neighbors; a
+   * violation condition that adds a path keeps the ones before it.
+   */
   private val lastPostConditions = ConcurrentHashMap<String, DssPostConditionMessage>()
-  private val lastViolationConditions = ConcurrentHashMap<String, DssViolationConditionMessage>()
+  private val lastViolationConditions =
+    ConcurrentHashMap<String, List<DssViolationConditionMessage>>()
 
   init {
     connections.forEach { (id, roleAndQueue) -> queuesById[id] = roleAndQueue.second }
@@ -54,8 +58,8 @@ class DssMessageBroadcaster(
 
   fun lastPostCondition(senderId: String): DssPostConditionMessage? = lastPostConditions[senderId]
 
-  fun lastViolationCondition(senderId: String): DssViolationConditionMessage? =
-    lastViolationConditions[senderId]
+  fun lastViolationConditions(senderId: String): List<DssViolationConditionMessage> =
+    lastViolationConditions[senderId].orEmpty()
 
   fun isEmpty(): Boolean = queuesById.values.all { it.isEmpty() }
 
@@ -64,7 +68,10 @@ class DssMessageBroadcaster(
   fun broadcastToIds(message: DssMessage, ids: Set<String>) {
     when (message) {
       is DssPostConditionMessage -> lastPostConditions[message.senderId] = message
-      is DssViolationConditionMessage -> lastViolationConditions[message.senderId] = message
+      is DssViolationConditionMessage ->
+        lastViolationConditions.merge(message.senderId, listOf(message)) { old, new ->
+          if (message.addsPath) old + new else new
+        }
       else -> {}
     }
     for (id in ids) {

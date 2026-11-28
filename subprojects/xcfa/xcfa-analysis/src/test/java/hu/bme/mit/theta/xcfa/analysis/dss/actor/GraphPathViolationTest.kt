@@ -29,6 +29,7 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
@@ -114,6 +115,7 @@ class GraphPathViolationTest {
     refinement: Refinement = Refinement.MULTI_SEQ,
     keepProofTree: Boolean = true,
     knownPathSearch: Boolean = true,
+    violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
   ): PredicateBlockBehavior {
     val procedure = program.procedures.single()
     val block = SingleBlockDecomposition.decompose(procedure).root
@@ -126,6 +128,7 @@ class GraphPathViolationTest {
       useGlobalPredicatePool = false,
       violationConditionMode = mode,
       knownPathSearch = knownPathSearch,
+      violationMessages = violationMessages,
     )
   }
 
@@ -190,6 +193,42 @@ class GraphPathViolationTest {
     // The initial run, then the run that finds the known path and the one without targets for the
     // postcondition: no search run
     assertEquals("3", behavior.statistics()["analyses"], "${behavior.statistics()}")
+  }
+
+  @Test
+  fun `with per-path messages, each error path is sent on its own`() {
+    val x = twoErrors.intVar("x").ref
+    val behavior =
+      behavior(
+        twoErrors,
+        DssViolationConditions.GRAPH_PATHS,
+        violationMessages = DssViolationMessages.PER_PATH,
+      )
+
+    val messages = behavior.runInitialAnalysis().filterIsInstance<DssViolationConditionMessage>()
+
+    assertEquals(2, messages.size, "$messages")
+    assertTrue(messages.all { it.addsPath }, "$messages")
+    val conditions = messages.map { it.violationCondition!! }
+    assertTrue(conditions.any { equivalent(it, Gt(x, Int(5))) }, "$conditions")
+    assertTrue(conditions.any { equivalent(it, Lt(x, Int(-5))) }, "$conditions")
+  }
+
+  @Test
+  fun `a per-path message adds to the sender's earlier paths`() {
+    val x = twoErrors.intVar("x").ref
+    val receiver = behavior(twoErrors, DssViolationConditions.PATHS)
+    val high = DssViolationConditionMessage("succ", Gt(x, Int(5)), addsPath = true)
+    val low = DssViolationConditionMessage("succ", Lt(x, Int(-5)), addsPath = true)
+
+    assertTrue(receiver.storeViolationCondition(high))
+    assertTrue(receiver.storeViolationCondition(low))
+    assertFalse(receiver.storeViolationCondition(high), "a known path is no news")
+    // A message without the flag replaces both, so the other path is news again
+    assertFalse(
+      receiver.storeViolationCondition(DssViolationConditionMessage("succ", Gt(x, Int(5))))
+    )
+    assertTrue(receiver.storeViolationCondition(low))
   }
 
   @Test

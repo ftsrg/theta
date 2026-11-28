@@ -169,7 +169,7 @@ fun runDssNetworksSequentially(
         }
       }
       for (id in old.successorIds - blockId) {
-        broadcaster.lastViolationCondition(id)?.let { message ->
+        broadcaster.lastViolationConditions(id).forEach { message ->
           exits.forEach { inboxes.getValue(it.id).add(message) }
         }
       }

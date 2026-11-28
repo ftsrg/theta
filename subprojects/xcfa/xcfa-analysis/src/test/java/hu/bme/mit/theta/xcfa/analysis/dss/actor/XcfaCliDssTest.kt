@@ -202,6 +202,17 @@ class XcfaCliDssTest {
           listOf("--dss-tree-postcondition", "--dss-tree-abstraction", "BOOLEAN"),
           listOf("--dss-cegar-refinement", "MULTI_SEQ"),
           listOf("--dss-violation-conditions", "PATHS", "--dss-known-path-search", "false"),
+          listOf("--dss-violation-conditions", "PATHS", "--dss-violation-messages", "PER_PATH"),
+          listOf(
+            "--dss-violation-conditions",
+            "GRAPH_PATHS",
+            "--dss-cegar-refinement",
+            "MULTI_SEQ",
+            "--dss-violation-messages",
+            "PER_PATH",
+            "--dss-executor",
+            "PROCESS",
+          ),
           listOf("--dss-violation-conditions", "GRAPH_PATHS"),
           listOf(
             "--dss-violation-conditions",
@@ -296,6 +307,28 @@ class XcfaCliDssTest {
           "GRAPH_PATHS",
           "--dss-cegar-refinement",
           "MULTI_SEQ",
+        )
+        .contains(expected(program))
+    )
+  }
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict with one violation message per path`(
+    decomposition: String,
+    program: String,
+  ) {
+    assertTrue(
+      dssVerdict(
+          program,
+          "--dss-decomposition",
+          decomposition,
+          "--dss-violation-conditions",
+          "GRAPH_PATHS",
+          "--dss-cegar-refinement",
+          "MULTI_SEQ",
+          "--dss-violation-messages",
+          "PER_PATH",
         )
         .contains(expected(program))
     )
