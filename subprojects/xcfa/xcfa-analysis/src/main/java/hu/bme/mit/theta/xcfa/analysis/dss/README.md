@@ -67,7 +67,9 @@ onto predicate cubes instead of single predicates), `--dss-cegar-domain` (`PRED_
 accumulated, as CPAchecker's paper version builds them; by default only blocks with a cycle use
 them; `GRAPH_PATHS` takes one per feasible target node of a CEGAR block's last ARG, not only the
 counterexample's, as CPAchecker reports a path to every target state), `--dss-cegar-refinement
-MULTI_SEQ` (CEGAR blocks explore fully, so that ARG has every target), and their tuning flags.
+MULTI_SEQ` (CEGAR blocks explore fully, so that ARG has every target), `--dss-known-path-search
+false` (no rerun with the known paths excluded when a run finds only those, as in CPAchecker; a
+block's other error paths can then be missed), and their tuning flags.
 
 ## Packages
 

@@ -133,6 +133,8 @@ class PredicateBlockBehavior(
   private val treeExitPaths: Boolean = false,
   private val treeAbstraction: DssTreeAbstraction = DssTreeAbstraction.CARTESIAN,
   private val violationConditionMode: DssViolationConditions = DssViolationConditions.ALL_PATHS,
+  /** Whether [newPathFrom] looks for another path when a run found known ones only. */
+  private val knownPathSearch: Boolean = true,
 ) : DssBlockBehavior {
 
   private val checkerRoster = checkerRoster.forBlock(finishing)
@@ -730,7 +732,7 @@ class PredicateBlockBehavior(
 
   /**
    * The paths of [result] not known yet; if all of them are, paths from [start] outside all known
-   * ones ([newPathFrom]).
+   * ones ([newPathFrom]), unless [knownPathSearch] is off.
    */
   private fun newPathsOf(
     start: Summary,
@@ -738,7 +740,7 @@ class PredicateBlockBehavior(
     violationCondition: Expr<BoolType>?,
   ): List<PathViolation> {
     val fresh = result.paths.filter { it.condition !in pathViolationsSoFar }
-    if (fresh.isNotEmpty() || result.paths.isEmpty()) return fresh
+    if (fresh.isNotEmpty() || result.paths.isEmpty() || !knownPathSearch) return fresh
     return newPathFrom(start, violationCondition)
   }
 

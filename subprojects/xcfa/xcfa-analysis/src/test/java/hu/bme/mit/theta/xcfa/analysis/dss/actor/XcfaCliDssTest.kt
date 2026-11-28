@@ -201,6 +201,7 @@ class XcfaCliDssTest {
           listOf("--dss-violation-conditions", "PATHS", "--dss-checker-backends", "KIND,CEGAR"),
           listOf("--dss-tree-postcondition", "--dss-tree-abstraction", "BOOLEAN"),
           listOf("--dss-cegar-refinement", "MULTI_SEQ"),
+          listOf("--dss-violation-conditions", "PATHS", "--dss-known-path-search", "false"),
           listOf("--dss-violation-conditions", "GRAPH_PATHS"),
           listOf(
             "--dss-violation-conditions",

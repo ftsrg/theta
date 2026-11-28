@@ -271,6 +271,17 @@ data class DssConfig(
   )
   var violationConditions: DssViolationConditions = DssViolationConditions.ALL_PATHS,
   @Parameter(
+    names = ["--dss-known-path-search"],
+    hidden = true,
+    description =
+      "With per-path violation conditions, rerun a block whose run found only known error paths " +
+        "with those paths excluded, to find another one. CPAchecker has no such search; without " +
+        "it, a block whose runs keep finding refuted paths sends nothing new, so its other error " +
+        "paths can be missed (a SAFE verdict may be unsound)",
+    arity = 1,
+  )
+  var knownPathSearch: Boolean = true,
+  @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,
     description =

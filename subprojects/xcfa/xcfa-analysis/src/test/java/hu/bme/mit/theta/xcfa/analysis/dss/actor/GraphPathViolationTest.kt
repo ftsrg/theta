@@ -108,24 +108,34 @@ class GraphPathViolationTest {
   private fun equivalent(a: Expr<BoolType>, b: Expr<BoolType>) =
     operators.isLeq(a, b) && operators.isLeq(b, a)
 
+  private fun behavior(
+    program: XCFA,
+    mode: DssViolationConditions,
+    refinement: Refinement = Refinement.MULTI_SEQ,
+    keepProofTree: Boolean = true,
+    knownPathSearch: Boolean = true,
+  ): PredicateBlockBehavior {
+    val procedure = program.procedures.single()
+    val block = SingleBlockDecomposition.decompose(procedure).root
+    return PredicateBlockBehavior(
+      program,
+      procedure,
+      block,
+      roster(refinement, keepProofTree),
+      // The program's assumptions as predicates would refute the spurious path abstractly
+      useGlobalPredicatePool = false,
+      violationConditionMode = mode,
+      knownPathSearch = knownPathSearch,
+    )
+  }
+
   private fun initialAnalysis(
     program: XCFA,
     mode: DssViolationConditions,
     refinement: Refinement = Refinement.MULTI_SEQ,
     keepProofTree: Boolean = true,
   ): Pair<Expr<BoolType>, Map<String, String>> {
-    val procedure = program.procedures.single()
-    val block = SingleBlockDecomposition.decompose(procedure).root
-    val behavior =
-      PredicateBlockBehavior(
-        program,
-        procedure,
-        block,
-        roster(refinement, keepProofTree),
-        // The program's assumptions as predicates would refute the spurious path abstractly
-        useGlobalPredicatePool = false,
-        violationConditionMode = mode,
-      )
+    val behavior = behavior(program, mode, refinement, keepProofTree)
     val messages = behavior.runInitialAnalysis()
     val vc = messages.filterIsInstance<DssViolationConditionMessage>().single().violationCondition!!
     return vc to behavior.statistics()
@@ -153,6 +163,33 @@ class GraphPathViolationTest {
 
     assertTrue(operators.isLeq(paths, both), "PATHS: $paths")
     assertFalse(operators.isLeq(both, paths), "PATHS: $paths")
+  }
+
+  @Test
+  fun `a run that finds only the known path looks for the other one`() {
+    val x = twoErrors.intVar("x").ref
+    val both = Or(Gt(x, Int(5)), Lt(x, Int(-5)))
+    val behavior = behavior(twoErrors, DssViolationConditions.PATHS, Refinement.SEQ_ITP)
+    behavior.runInitialAnalysis()
+
+    val again = behavior.analyzePrecondition()
+
+    val vc = again.filterIsInstance<DssViolationConditionMessage>().single().violationCondition!!
+    assertTrue(equivalent(vc, both), "after the search: $vc")
+  }
+
+  @Test
+  fun `without the known path search, a run that finds only the known path sends nothing`() {
+    val behavior =
+      behavior(twoErrors, DssViolationConditions.PATHS, Refinement.SEQ_ITP, knownPathSearch = false)
+    behavior.runInitialAnalysis()
+
+    val again = behavior.analyzePrecondition()
+
+    assertTrue(again.none { it is DssViolationConditionMessage }, "$again")
+    // The initial run, then the run that finds the known path and the one without targets for the
+    // postcondition: no search run
+    assertEquals("3", behavior.statistics()["analyses"], "${behavior.statistics()}")
   }
 
   @Test

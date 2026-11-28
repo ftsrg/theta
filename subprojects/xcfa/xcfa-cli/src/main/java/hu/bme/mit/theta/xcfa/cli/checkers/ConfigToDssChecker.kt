@@ -428,6 +428,7 @@ fun getDssChecker(
             treeExitPaths = dssConfig.treeExitPaths,
             treeAbstraction = dssConfig.treeAbstraction,
             violationConditionMode = dssConfig.violationConditions,
+            knownPathSearch = dssConfig.knownPathSearch,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,
