@@ -431,6 +431,7 @@ fun getDssChecker(
             knownPathSearch = dssConfig.knownPathSearch,
             violationMessages = dssConfig.violationMessages,
             violationStorage = dssConfig.violationStorage,
+            startStateAtoms = dssConfig.startStateAtoms,
             blockLocalPool = dssConfig.blockLocalPool,
             checkerFallback = true,
             solverFactory = dssSolverFactory,

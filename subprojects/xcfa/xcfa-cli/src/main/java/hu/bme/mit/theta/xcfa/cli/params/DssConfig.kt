@@ -238,6 +238,16 @@ data class DssConfig(
   )
   var reuseBlockPrecision: Boolean = false,
   @Parameter(
+    names = ["--dss-start-state-atoms"],
+    hidden = true,
+    description =
+      "Add the atoms of a block run's start state (its precondition and restrictions) to the " +
+        "run's precision. CPAchecker adds none: with false, --dss-reset-precision and no " +
+        "--dss-global-predicate-pool, every run starts from the empty precision as there",
+    arity = 1,
+  )
+  var startStateAtoms: Boolean = true,
+  @Parameter(
     names = ["--dss-tree-postcondition"],
     hidden = true,
     description =

@@ -139,6 +139,8 @@ class PredicateBlockBehavior(
   private val knownPathSearch: Boolean = true,
   private val violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
   private val violationStorage: DssViolationStorage = DssViolationStorage.SENDER,
+  /** Whether every run's precision gets the atoms of its start state ([prepared]). */
+  private val startStateAtoms: Boolean = true,
 ) : DssBlockBehavior {
 
   init {
@@ -660,7 +662,9 @@ class PredicateBlockBehavior(
     val precision =
       if (resetPrecisionForEveryRun || start.isTop) startPrecision
       else combinePrecisionIfPossible() ?: start.precision
-    // Without the start state's atoms, the block-end abstraction can forget the precondition
+    // Without the start state's atoms, the block-end abstraction can forget the precondition;
+    // CPAchecker adds none
+    if (!startStateAtoms) return start.copy(precision = precision)
     val startAtoms = listOf(start.state, startRestriction()).collectPreds()
     return start.copy(precision = precision + startAtoms)
   }

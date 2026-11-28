@@ -75,7 +75,9 @@ CPAchecker does; a new precondition is still analyzed under all of them at once)
 `--dss-violation-storage ORIGIN` (with PER_PATH: received conditions kept by the edges of their
 path, as CPAchecker's `DCPAAlgorithm.errors`, and a new precondition reruns the block once under
 each; the postcondition still comes from a run under all of them, as Theta's would not converge on
-loops without them), and their tuning flags.
+loops without them), `--dss-start-state-atoms false` (no atoms of the start state in a run's
+precision; with `--dss-reset-precision` and no global pool, every run starts from the empty
+precision, as in CPAchecker), and their tuning flags.
 
 ## Packages
 
@@ -103,7 +105,8 @@ Checkers are injected as `(XCFA) -> XcfaChecker`, so these packages do not depen
 * **Postconditions abstract at every location** by default; `--dss-tree-postcondition` abstracts
   only at the exit, from the exact paths of the ARG since the nearest covering node.
 * **Precision** is the set of atoms of the reached states plus the start precision, not
-  location-specific; the start state's own atoms are always added.
+  location-specific; the start state's own atoms are added too, unless `--dss-start-state-atoms
+  false`.
 * **Valid postconditions are normalized to `true`**, and non-top start states are analyzed first.
 * **A sender's repeated postcondition is detected by its union**, not state by state: Theta's
   predicate states are not canonical, so the same entry states can arrive split differently.
