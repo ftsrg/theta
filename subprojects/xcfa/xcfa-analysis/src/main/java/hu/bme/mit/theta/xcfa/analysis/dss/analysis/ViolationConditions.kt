@@ -141,6 +141,24 @@ enum class DssViolationMessages {
   PER_PATH,
 }
 
+/** Which received violation conditions a block keeps (`--dss-violation-storage`). */
+enum class DssViolationStorage {
+  /**
+   * Per sender: the sender's conditions, which a new precondition analyzes in one run, under their
+   * disjunction.
+   */
+  SENDER,
+  /**
+   * CPAchecker's paper version (`DCPAAlgorithm.errors`): by origin, the edges of the condition's
+   * path from its error to the receiver. A condition whose origin includes a kept one's is
+   * analyzed, but not kept. A new precondition runs the block once under each kept condition, for
+   * violation conditions only; its postcondition and own errors come from a run under all of them
+   * (CPAchecker's from a run without them). Needs per-path conditions sent
+   * [DssViolationMessages.PER_PATH].
+   */
+  ORIGIN,
+}
+
 /** CPAchecker's `ViolationConditionOperator`: the weakest precondition of reaching [targets]. */
 fun computeViolationCondition(
   block: Block,

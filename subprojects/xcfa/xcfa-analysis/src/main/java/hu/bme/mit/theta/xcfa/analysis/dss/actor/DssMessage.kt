@@ -87,12 +87,14 @@ data class DssPostConditionMessage(
 
 /**
  * A condition that [addsPath] is one more error path of its sender (`--dss-violation-messages
- * PER_PATH`): the receiver keeps the sender's earlier ones. Otherwise it replaces them.
+ * PER_PATH`): the receiver keeps the sender's earlier ones. Otherwise it replaces them. [origin]:
+ * the edges of the path from its error to the sender's entry (`--dss-violation-storage ORIGIN`).
  */
 data class DssViolationConditionMessage(
   override val senderId: String,
   val violationCondition: Expr<BoolType>? = null,
   val addsPath: Boolean = false,
+  val origin: Set<String> = emptySet(),
 ) : DssMessage()
 
 /**

@@ -71,8 +71,11 @@ MULTI_SEQ` (CEGAR blocks explore fully, so that ARG has every target), `--dss-kn
 false` (no rerun with the known paths excluded when a run finds only those, as in CPAchecker; a
 block's other error paths can then be missed), `--dss-violation-messages PER_PATH` (one message
 per new path, which the predecessor adds to the sender's earlier ones and analyzes alone, as
-CPAchecker does; a new precondition is still analyzed under all of them at once), and their tuning
-flags.
+CPAchecker does; a new precondition is still analyzed under all of them at once),
+`--dss-violation-storage ORIGIN` (with PER_PATH: received conditions kept by the edges of their
+path, as CPAchecker's `DCPAAlgorithm.errors`, and a new precondition reruns the block once under
+each; the postcondition still comes from a run under all of them, as Theta's would not converge on
+loops without them), and their tuning flags.
 
 ## Packages
 

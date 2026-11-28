@@ -205,6 +205,16 @@ class XcfaCliDssTest {
           listOf("--dss-violation-conditions", "PATHS", "--dss-violation-messages", "PER_PATH"),
           listOf(
             "--dss-violation-conditions",
+            "PATHS",
+            "--dss-violation-messages",
+            "PER_PATH",
+            "--dss-violation-storage",
+            "ORIGIN",
+            "--dss-executor",
+            "PROCESS",
+          ),
+          listOf(
+            "--dss-violation-conditions",
             "GRAPH_PATHS",
             "--dss-cegar-refinement",
             "MULTI_SEQ",
@@ -329,6 +339,30 @@ class XcfaCliDssTest {
           "MULTI_SEQ",
           "--dss-violation-messages",
           "PER_PATH",
+        )
+        .contains(expected(program))
+    )
+  }
+
+  @ParameterizedTest(name = "{0} on {1}")
+  @MethodSource("decompositions")
+  fun `every decomposition gives the right verdict with violation conditions kept by origin`(
+    decomposition: String,
+    program: String,
+  ) {
+    assertTrue(
+      dssVerdict(
+          program,
+          "--dss-decomposition",
+          decomposition,
+          "--dss-violation-conditions",
+          "GRAPH_PATHS",
+          "--dss-cegar-refinement",
+          "MULTI_SEQ",
+          "--dss-violation-messages",
+          "PER_PATH",
+          "--dss-violation-storage",
+          "ORIGIN",
         )
         .contains(expected(program))
     )

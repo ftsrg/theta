@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssQuantifiedPredicates
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssTreeAbstraction
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationStorage
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.CutSizeMeasure
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.DEFAULT_CUT_BLOCK_COUNT
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -292,6 +293,17 @@ data class DssConfig(
         "alone, as CPAchecker does)",
   )
   var violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
+  @Parameter(
+    names = ["--dss-violation-storage"],
+    hidden = true,
+    description =
+      "Which received violation conditions a block keeps: SENDER (per sender; a new " +
+        "precondition is analyzed under all of them at once) or ORIGIN (as CPAchecker: by the " +
+        "edges of each condition's path, skipping one whose path includes a kept one's; a new " +
+        "precondition reruns the block under each). ORIGIN needs " +
+        "--dss-violation-messages PER_PATH and --dss-violation-conditions PATHS or GRAPH_PATHS",
+  )
+  var violationStorage: DssViolationStorage = DssViolationStorage.SENDER,
   @Parameter(
     names = ["--dss-generalizers"],
     hidden = true,

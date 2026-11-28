@@ -30,6 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssCheckerRoster
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssPredicateOperators
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationConditions
 import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationMessages
+import hu.bme.mit.theta.xcfa.analysis.dss.analysis.DssViolationStorage
 import hu.bme.mit.theta.xcfa.analysis.dss.decomposition.SingleBlockDecomposition
 import hu.bme.mit.theta.xcfa.analysis.dss.ensureDefaultSolversRegistered
 import hu.bme.mit.theta.xcfa.cli.checkers.getCegarChecker
@@ -38,6 +39,7 @@ import hu.bme.mit.theta.xcfa.cli.params.getDefaultPredCegarConfig
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -116,6 +118,7 @@ class GraphPathViolationTest {
     keepProofTree: Boolean = true,
     knownPathSearch: Boolean = true,
     violationMessages: DssViolationMessages = DssViolationMessages.DISJUNCTION,
+    violationStorage: DssViolationStorage = DssViolationStorage.SENDER,
   ): PredicateBlockBehavior {
     val procedure = program.procedures.single()
     val block = SingleBlockDecomposition.decompose(procedure).root
@@ -129,6 +132,7 @@ class GraphPathViolationTest {
       violationConditionMode = mode,
       knownPathSearch = knownPathSearch,
       violationMessages = violationMessages,
+      violationStorage = violationStorage,
     )
   }
 
@@ -229,6 +233,58 @@ class GraphPathViolationTest {
       receiver.storeViolationCondition(DssViolationConditionMessage("succ", Gt(x, Int(5))))
     )
     assertTrue(receiver.storeViolationCondition(low))
+  }
+
+  @Test
+  fun `with storage by origin, each path is sent with the edges it takes`() {
+    val behavior =
+      behavior(
+        twoErrors,
+        DssViolationConditions.GRAPH_PATHS,
+        violationMessages = DssViolationMessages.PER_PATH,
+        violationStorage = DssViolationStorage.ORIGIN,
+      )
+
+    val messages = behavior.runInitialAnalysis().filterIsInstance<DssViolationConditionMessage>()
+
+    assertEquals(2, messages.size, "$messages")
+    assertTrue(messages.all { it.origin.isNotEmpty() }, "$messages")
+    assertEquals(2, messages.map { it.origin }.toSet().size, "$messages")
+  }
+
+  @Test
+  fun `with storage by origin, a condition whose path includes a kept one's is not kept`() {
+    val x = twoErrors.intVar("x").ref
+    val receiver =
+      behavior(
+        twoErrors,
+        DssViolationConditions.PATHS,
+        Refinement.SEQ_ITP,
+        violationMessages = DssViolationMessages.PER_PATH,
+        violationStorage = DssViolationStorage.ORIGIN,
+      )
+    fun path(condition: Expr<BoolType>, vararg edges: String) =
+      DssViolationConditionMessage("succ", condition, addsPath = true, origin = edges.toSet())
+
+    receiver.onViolationCondition(path(Gt(x, Int(5)), "a->b"))
+    receiver.onViolationCondition(path(Gt(x, Int(6)), "a->b", "b->c"))
+    receiver.onViolationCondition(path(Lt(x, Int(-5)), "a->d"))
+    receiver.onViolationCondition(path(Lt(x, Int(-5)), "a->d"))
+
+    val stats = receiver.statistics()
+    assertEquals("4", stats["vcReceived"], "$stats")
+    assertEquals("2", stats["vcKept"], "$stats")
+  }
+
+  @Test
+  fun `storage by origin needs per-path messages`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      behavior(
+        twoErrors,
+        DssViolationConditions.PATHS,
+        violationStorage = DssViolationStorage.ORIGIN,
+      )
+    }
   }
 
   @Test
